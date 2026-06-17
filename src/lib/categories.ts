@@ -132,7 +132,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "Cotton-linen blend bodice, cotton voile blouse",
           "180–220 GSM",
-          "100 pieces per style",
+          "50 pieces per style",
           "40–55 days",
           "XS–XXL, custom plus sizes available",
           "Burgundy, forest green, navy, pastel ranges",
@@ -151,7 +151,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "Pure linen vest, 100% cotton poplin shirt",
           "Vest 240 GSM / shirt 130 GSM",
-          "75 sets",
+          "50 sets",
           "45 days",
           "S–XXXL slim & regular",
           "Charcoal, loden green, cream, custom",
@@ -220,7 +220,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "94% polyester / 6% spandex tricot",
           "260 GSM",
-          "100 sets per color",
+          "50 sets per color",
           "35–45 days",
           "XS–3XL",
           "Black, navy, grey, custom Pantone",
@@ -239,7 +239,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "80% nylon / 20% spandex 4-way stretch",
           "200 GSM",
-          "75 sets per color",
+          "50 sets per color",
           "30–40 days",
           "XS–2XL men/women",
           "Black, navy, charcoal, custom",
@@ -289,7 +289,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "Full-grain cowhide 1.0–1.2mm, quilted satin lining",
           "Leather equivalent 380 GSM",
-          "30 pieces per design",
+          "50 pieces per design",
           "55–70 days",
           "XS–3XL slim & regular",
           "Black, brown, cognac, oxblood, custom",
@@ -308,7 +308,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "Napa lambskin 0.7–0.9mm, viscose lining",
           "Leather equivalent 280 GSM",
-          "30 pieces per design",
+          "50 pieces per design",
           "50–65 days",
           "XS–XXL women",
           "Black, taupe, cognac, blush, custom",
@@ -327,7 +327,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "Lambskin 0.6–0.8mm, bonded jersey lining",
           "Leather equivalent 240 GSM",
-          "30 pieces per design",
+          "50 pieces per design",
           "50 days",
           "Waist 26–40, custom inseam",
           "Black, brown, custom",
@@ -346,7 +346,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "Cowhide 1.0mm, quilted poly lining, rib-knit trims",
           "Leather equivalent 360 GSM",
-          "30 pieces",
+          "50 pieces",
           "55–70 days",
           "S–3XL",
           "Cognac, black, navy, olive",
@@ -396,7 +396,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "100% combed ring-spun cotton",
           "240 GSM",
-          "100 pieces per color",
+          "50 pieces per color",
           "25–35 days",
           "XS–3XL unisex",
           "Garment dyed, any Pantone",
@@ -415,7 +415,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "100% cotton ripstop or poly-cotton blend",
           "320 GSM",
-          "75 pieces per color",
+          "50 pieces per color",
           "35–45 days",
           "Waist 28–40",
           "Black, olive, sand, custom",
@@ -484,7 +484,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "100% organic cotton French terry",
           "320 GSM",
-          "75 sets per color",
+          "50 sets per color",
           "35–45 days",
           "XS–3XL unisex",
           "Natural, sage, dusty pink, custom",
@@ -503,7 +503,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "95% bamboo viscose / 5% spandex",
           "180 GSM",
-          "100 sets per color",
+          "50 sets per color",
           "30–40 days",
           "XS–2XL",
           "Cream, sage, sky, custom",
@@ -572,7 +572,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "95% Tencel modal / 5% elastane, stretch lace bodice",
           "120 GSM",
-          "75 pieces per color",
+          "50 pieces per color",
           "35–45 days",
           "XS–2XL",
           "Black, ivory, dusty rose, custom",
@@ -591,7 +591,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "100% brushed cotton flannel",
           "180 GSM",
-          "75 sets per color",
+          "50 sets per color",
           "35–45 days",
           "XS–3XL unisex",
           "Check, stripe, solid — any custom",
@@ -610,7 +610,7 @@ export const CATEGORIES: Category[] = [
         details: mk(
           "Poly satin or silk satin upgrade",
           "Poly 140 GSM / silk 19mm",
-          "100 pieces per color",
+          "50 pieces per color",
           "30–40 days",
           "XS–2XL + plus on request",
           "11 standard + custom Pantone",

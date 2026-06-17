@@ -7,8 +7,8 @@ const FAQS = [
   {
     group: "Ordering & MOQ",
     items: [
-      { q: "What is your minimum order quantity (MOQ)?", a: "MOQs start at 50 pieces per design/color for streetwear and trachten programs, 30 pieces for leather, and 75–100 for performance and lounge categories. Our emerging-brand program allows mixed-size runs at the lower end." },
-      { q: "Can I order mixed sizes and colors within the MOQ?", a: "Yes. Within a single style/print, you can split across sizes (XS–3XL) freely. Color splits within MOQ are accepted at 25 pieces per color minimum after the initial MOQ is met." },
+      { q: "What is your minimum order quantity (MOQ)?", a: "Our standard MOQ is 50 pieces per design/color across all categories — streetwear, trachten, leather, performance and lounge. Our emerging-brand program allows mixed-size runs at this 50-piece minimum." },
+      { q: "Can I order mixed sizes and colors within the MOQ?", a: "Yes. Within a single style/print, you can split across sizes (XS–3XL) freely. Color splits within the 50-piece MOQ are accepted at 25 pieces per color minimum after the initial MOQ is met." },
       { q: "Do you accept small trial orders before bulk?", a: "Absolutely. We offer paid sampling and a 'pilot run' option (typically 25–50 pieces) before committing to full bulk, so you can validate fit, fabric and finish on your retail floor." },
     ],
   },

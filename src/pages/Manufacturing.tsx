@@ -17,10 +17,10 @@ const steps = [
 ];
 
 const CAPACITY = [
-  { cat: "Knits (tees, polos, hoodies)", monthly: "120,000 pcs", lead: "25–35 days", moq: "100 pcs" },
-  { cat: "Wovens (shirts, chinos)", monthly: "60,000 pcs", lead: "35–45 days", moq: "100 pcs" },
+  { cat: "Knits (tees, polos, hoodies)", monthly: "120,000 pcs", lead: "25–35 days", moq: "50 pcs" },
+  { cat: "Wovens (shirts, chinos)", monthly: "60,000 pcs", lead: "35–45 days", moq: "50 pcs" },
   { cat: "Sportswear (sublimated)", monthly: "80,000 pcs", lead: "25–35 days", moq: "50 sets" },
-  { cat: "Leather garments", monthly: "12,000 pcs", lead: "55–70 days", moq: "30 pcs" },
+  { cat: "Leather garments", monthly: "12,000 pcs", lead: "55–70 days", moq: "50 pcs" },
   { cat: "Trachten / Lederhosen", monthly: "8,000 sets", lead: "45–60 days", moq: "50 sets" },
   { cat: "Silk & nightwear", monthly: "20,000 pcs", lead: "35–55 days", moq: "50 sets" },
 ];
