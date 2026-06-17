@@ -43,22 +43,42 @@ export default function Products() {
                 PDF · A4 · 2026 collection
               </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {CATEGORIES.map((c) => (
-                <a
-                  key={c.slug}
-                  href={c.catalog}
-                  download
-                  className="group flex flex-col gap-2 p-4 border border-border/60 hover:border-primary hover:bg-card/40 transition-colors"
-                >
-                  <Download size={16} className="text-gold" />
-                  <span className="font-display text-base leading-tight">{c.name}</span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-foreground/50">
-                    Download PDF
-                  </span>
-                </a>
+                <div key={c.slug} className="group flex flex-col">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewCat(c)}
+                    className="relative aspect-[3/4] overflow-hidden border border-border/60 bg-card hover:border-primary transition-colors"
+                    aria-label={`Preview ${c.name} catalog`}
+                  >
+                    <img
+                      src={`/catalogs/thumbs/${c.slug}-catalog-1.jpg`}
+                      alt={`${c.name} catalog preview`}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-gold">
+                        <Eye size={14} /> Preview
+                      </span>
+                    </div>
+                  </button>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <span className="font-display text-sm leading-tight">{c.name}</span>
+                    <a
+                      href={c.catalog}
+                      download
+                      className="text-gold hover:text-primary transition-colors"
+                      aria-label={`Download ${c.name} catalog`}
+                    >
+                      <Download size={14} />
+                    </a>
+                  </div>
+                </div>
               ))}
             </div>
+
           </div>
         </div>
       </section>
