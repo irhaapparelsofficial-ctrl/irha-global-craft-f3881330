@@ -242,7 +242,7 @@ export default function Home() {
 
       {/* FINAL CTA */}
       <section className="relative py-28 md:py-36 border-t border-border/60 overflow-hidden">
-        <img src={flatlay} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-15" />
+        <img src={leatherFlatlayFallback} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-15" />
         <div className="absolute inset-0 bg-background/80" />
         <div className="container-luxe relative text-center max-w-4xl mx-auto">
           <p className="eyebrow justify-center inline-flex mb-6">Begin Your Order</p>
