@@ -19,10 +19,25 @@ export default function Products() {
   return (
     <>
       <SEO
-        title="Collections — Bavarian, Sportswear, Leather, Streetwear | Irha Apparels"
-        description="Premium apparel collections by Irha Apparels: Bavarian wear, sportswear, leatherwear, streetwear, leisurewear, nightwear. 600+ styles across sub-categories. OEM, ODM & private label."
+        title="Apparel Collections — 600+ Styles | Irha Apparels"
+        description="Premium apparel by Irha Apparels: Bavarian, sportswear, leather, streetwear, leisure & nightwear. 600+ styles. OEM, ODM and private-label programs."
         path="/products"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Apparel Collections — Irha Apparels",
+          url: "https://www.irhaapparels.com/products",
+          description:
+            "Six apparel categories produced in Sialkot: Bavarian, sportswear, leather, streetwear, leisurewear and nightwear. OEM, ODM and private-label programs.",
+          isPartOf: { "@type": "WebSite", name: "Irha Apparels", url: "https://www.irhaapparels.com/" },
+          hasPart: CATEGORIES.map((c) => ({
+            "@type": "CollectionPage",
+            name: c.name,
+            url: `https://www.irhaapparels.com/products#${c.slug}`,
+          })),
+        }}
       />
+
 
       <section className="relative pt-40 pb-20 border-b border-border/60 overflow-hidden">
         <img src={flatlay} alt="" loading="eager" className="absolute inset-0 w-full h-full object-cover opacity-20" />

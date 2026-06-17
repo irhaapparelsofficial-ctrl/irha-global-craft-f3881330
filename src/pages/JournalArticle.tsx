@@ -69,6 +69,25 @@ export default function JournalArticle() {
         title={`${article.title} — Irha Apparels Journal`}
         description={article.excerpt}
         path={`/journal/${article.slug}`}
+        image={typeof article.image === "string" ? article.image : undefined}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: article.title,
+          description: article.excerpt,
+          image: typeof article.image === "string"
+            ? `https://www.irhaapparels.com${article.image}`
+            : undefined,
+          datePublished: article.date,
+          author: { "@type": "Organization", name: "Irha Apparels" },
+          publisher: {
+            "@type": "Organization",
+            name: "Irha Apparels",
+            logo: { "@type": "ImageObject", url: "https://www.irhaapparels.com/favicon.ico" },
+          },
+          mainEntityOfPage: `https://www.irhaapparels.com/journal/${article.slug}`,
+        }}
       />
 
       <section className="pt-32 pb-12 border-b border-border/60">

@@ -7,8 +7,9 @@ type Props = {
   description: string;
   path?: string;
   image?: string;
-  jsonLd?: object;
+  jsonLd?: object | object[];
   noindex?: boolean;
+  type?: "website" | "article";
 };
 
 export default function SEO({
@@ -18,6 +19,7 @@ export default function SEO({
   image,
   jsonLd,
   noindex,
+  type = "website",
 }: Props) {
   // Always emit absolute canonical / og:url so crawlers attribute each
   // page to its real URL (relative URLs silently break attribution).
@@ -40,7 +42,7 @@ export default function SEO({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
-      <meta property="og:type" content="website" />
+      <meta property="og:type" content={type} />
       <meta property="og:site_name" content="Irha Apparels" />
       {ogImage && <meta property="og:image" content={ogImage} />}
 
@@ -49,9 +51,12 @@ export default function SEO({
       <meta name="twitter:description" content={description} />
       {ogImage && <meta name="twitter:image" content={ogImage} />}
 
-      {jsonLd && (
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-      )}
+      {jsonLd &&
+        (Array.isArray(jsonLd) ? jsonLd : [jsonLd]).map((schema, i) => (
+          <script key={i} type="application/ld+json">
+            {JSON.stringify(schema)}
+          </script>
+        ))}
     </Helmet>
   );
 }
