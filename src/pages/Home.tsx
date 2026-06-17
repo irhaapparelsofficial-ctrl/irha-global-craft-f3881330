@@ -1,10 +1,16 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Download, MessageCircle, ShieldCheck, Globe2, Factory, Award } from "lucide-react";
-import heroImg from "@/assets/hero.jpg";
+import heroImg from "@/assets/hero.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
+import heroFallback from "@/assets/hero.jpg?w=1600&format=webp&quality=72";
 import manufacturingImg from "@/assets/manufacturing.jpg";
-import flatlay from "@/assets/banners/products-flatlay.jpg";
-import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
-import sustainabilityBanner from "@/assets/banners/sustainability.jpg";
+import manufacturingHero from "@/assets/manufacturing.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
+import manufacturingHeroFallback from "@/assets/manufacturing.jpg?w=1600&format=webp&quality=72";
+import flatlay from "@/assets/banners/products-flatlay.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
+import flatlayFallback from "@/assets/banners/products-flatlay.jpg?w=1600&format=webp&quality=72";
+import factoryCinematic from "@/assets/banners/factory-cinematic.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
+import factoryCinematicFallback from "@/assets/banners/factory-cinematic.jpg?w=1600&format=webp&quality=72";
+import sustainabilityBanner from "@/assets/banners/sustainability.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
+import sustainabilityFallback from "@/assets/banners/sustainability.jpg?w=1600&format=webp&quality=72";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import { CATEGORIES } from "@/lib/categories";
 import { whatsappLink, BRAND } from "@/lib/constants";
@@ -36,12 +42,13 @@ export default function Home() {
       <section className="relative min-h-screen flex items-end overflow-hidden">
         <HeroSlideshow
           slides={[
-            { src: heroImg, alt: "Irha Apparels luxury manufacturing" },
-            { src: factoryCinematic, alt: "Cinematic view of Irha Apparels factory in Sialkot" },
-            { src: flatlay, alt: "Premium apparel flatlay — Irha Apparels collection" },
-            { src: manufacturingImg, alt: "Skilled craftsmen at Irha Apparels manufacturing facility" },
-            { src: sustainabilityBanner, alt: "Sustainable apparel manufacturing at Irha Apparels" },
+            { src: heroFallback, srcSet: heroImg, alt: "Irha Apparels luxury manufacturing" },
+            { src: factoryCinematicFallback, srcSet: factoryCinematic, alt: "Cinematic view of Irha Apparels factory in Sialkot" },
+            { src: flatlayFallback, srcSet: flatlay, alt: "Premium apparel flatlay — Irha Apparels collection" },
+            { src: manufacturingHeroFallback, srcSet: manufacturingHero, alt: "Skilled craftsmen at Irha Apparels manufacturing facility" },
+            { src: sustainabilityFallback, srcSet: sustainabilityBanner, alt: "Sustainable apparel manufacturing at Irha Apparels" },
           ]}
+          sizes="100vw"
           interval={5000}
         />
         <div className="absolute inset-0 bg-gradient-hero" />
