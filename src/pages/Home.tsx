@@ -25,18 +25,27 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Irha Apparels — Premium Apparel Manufacturer in Sialkot, Pakistan"
-        description="OEM, ODM & Private Label apparel manufacturer in Sialkot. Bavarian wear, sportswear, leatherwear, streetwear, leisurewear & nightwear. Worldwide export to USA, EU, UAE."
+        title="Irha Apparels — Premium Apparel Manufacturer, Sialkot"
+        description="OEM, ODM & private-label apparel manufacturer in Sialkot, Pakistan. Bavarian, sportswear, leather, streetwear, leisure & nightwear — exported worldwide."
         path="/"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Organization",
           name: BRAND.name,
           url: "https://www.irhaapparels.com/",
+          logo: "https://www.irhaapparels.com/favicon.ico",
+          description:
+            "OEM, ODM and private-label apparel manufacturer in Sialkot, Pakistan. Bavarian, sportswear, leather, streetwear, leisure and nightwear exported worldwide.",
           telephone: BRAND.phone,
           address: { "@type": "PostalAddress", addressLocality: "Sialkot", addressCountry: "PK" },
+          sameAs: [
+            "https://www.instagram.com/irhaapparels",
+            "https://www.facebook.com/irhaapparels",
+            "https://www.linkedin.com/company/irha-apparels",
+          ],
         }}
       />
+
 
       {/* HERO — cinematic with subtle Ken Burns */}
       <section className="relative min-h-screen flex items-end overflow-hidden">
