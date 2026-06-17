@@ -44,6 +44,7 @@ export type Category = {
   description: string;
   image: string;
   details: string[];
+  catalog: string;
   products: Product[];
 };
 
