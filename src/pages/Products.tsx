@@ -10,6 +10,8 @@ const previewPages = (slug: string) =>
 
 
 export default function Products() {
+  const [previewCat, setPreviewCat] = useState<Category | null>(null);
+
   return (
     <>
       <SEO
