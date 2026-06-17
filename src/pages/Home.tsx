@@ -42,12 +42,13 @@ export default function Home() {
       <section className="relative min-h-screen flex items-end overflow-hidden">
         <HeroSlideshow
           slides={[
-            { src: heroImg, alt: "Irha Apparels luxury manufacturing" },
-            { src: factoryCinematic, alt: "Cinematic view of Irha Apparels factory in Sialkot" },
-            { src: flatlay, alt: "Premium apparel flatlay — Irha Apparels collection" },
-            { src: manufacturingImg, alt: "Skilled craftsmen at Irha Apparels manufacturing facility" },
-            { src: sustainabilityBanner, alt: "Sustainable apparel manufacturing at Irha Apparels" },
+            { src: heroFallback, srcSet: heroImg, alt: "Irha Apparels luxury manufacturing" },
+            { src: factoryCinematicFallback, srcSet: factoryCinematic, alt: "Cinematic view of Irha Apparels factory in Sialkot" },
+            { src: flatlayFallback, srcSet: flatlay, alt: "Premium apparel flatlay — Irha Apparels collection" },
+            { src: manufacturingHeroFallback, srcSet: manufacturingHero, alt: "Skilled craftsmen at Irha Apparels manufacturing facility" },
+            { src: sustainabilityFallback, srcSet: sustainabilityBanner, alt: "Sustainable apparel manufacturing at Irha Apparels" },
           ]}
+          sizes="100vw"
           interval={5000}
         />
         <div className="absolute inset-0 bg-gradient-hero" />
