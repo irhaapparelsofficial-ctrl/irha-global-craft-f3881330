@@ -23,7 +23,7 @@ export default function Home() {
           "@context": "https://schema.org",
           "@type": "Organization",
           name: BRAND.name,
-          url: "/",
+          url: "https://www.irhaapparels.com/",
           telephone: BRAND.phone,
           address: { "@type": "PostalAddress", addressLocality: "Sialkot", addressCountry: "PK" },
         }}
