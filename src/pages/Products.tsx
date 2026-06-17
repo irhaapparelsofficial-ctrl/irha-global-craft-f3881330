@@ -1,7 +1,13 @@
 import SEO from "@/components/SEO";
-import { CATEGORIES } from "@/lib/categories";
+import { CATEGORIES, type Category } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download } from "lucide-react";
+import { ArrowUpRight, Download, Eye } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+const previewPages = (slug: string) =>
+  [1, 2, 3, 4].map((n) => `/catalogs/thumbs/${slug}-catalog-${n}.jpg`);
+
 
 export default function Products() {
   return (
