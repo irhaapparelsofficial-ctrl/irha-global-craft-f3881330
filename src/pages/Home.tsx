@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Download, MessageCircle, ShieldCheck, Globe2, Factory, Award } from "lucide-react";
-import heroImg from "@/assets/hero.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
-import heroFallback from "@/assets/hero.jpg?w=1600&format=webp&quality=72";
 import manufacturingImg from "@/assets/manufacturing.jpg";
-import manufacturingHero from "@/assets/manufacturing.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
-import manufacturingHeroFallback from "@/assets/manufacturing.jpg?w=1600&format=webp&quality=72";
-import flatlay from "@/assets/banners/products-flatlay.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
-import flatlayFallback from "@/assets/banners/products-flatlay.jpg?w=1600&format=webp&quality=72";
-import factoryCinematic from "@/assets/banners/factory-cinematic.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
-import factoryCinematicFallback from "@/assets/banners/factory-cinematic.jpg?w=1600&format=webp&quality=72";
-import sustainabilityBanner from "@/assets/banners/sustainability.jpg?w=1920;1280;800&format=webp&quality=70&as=srcset";
-import sustainabilityFallback from "@/assets/banners/sustainability.jpg?w=1600&format=webp&quality=72";
+import leatherJacket from "@/assets/banners/leather-jacket.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
+import leatherJacketFallback from "@/assets/banners/leather-jacket.jpg?w=1600&format=webp&quality=74";
+import leatherFlatlay from "@/assets/banners/leather-flatlay.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
+import leatherFlatlayFallback from "@/assets/banners/leather-flatlay.jpg?w=1600&format=webp&quality=74";
+import leatherStitch from "@/assets/banners/leather-stitch.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
+import leatherStitchFallback from "@/assets/banners/leather-stitch.jpg?w=1600&format=webp&quality=74";
+import leatherShowroom from "@/assets/banners/leather-showroom.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
+import leatherShowroomFallback from "@/assets/banners/leather-showroom.jpg?w=1600&format=webp&quality=74";
+import leatherStack from "@/assets/banners/leather-stack.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
+import leatherStackFallback from "@/assets/banners/leather-stack.jpg?w=1600&format=webp&quality=74";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import { CATEGORIES } from "@/lib/categories";
 import { whatsappLink, BRAND } from "@/lib/constants";
@@ -51,11 +51,11 @@ export default function Home() {
       <section className="relative min-h-screen flex items-end overflow-hidden">
         <HeroSlideshow
           slides={[
-            { src: heroFallback, srcSet: heroImg, alt: "Irha Apparels luxury manufacturing" },
-            { src: factoryCinematicFallback, srcSet: factoryCinematic, alt: "Cinematic view of Irha Apparels factory in Sialkot" },
-            { src: flatlayFallback, srcSet: flatlay, alt: "Premium apparel flatlay — Irha Apparels collection" },
-            { src: manufacturingHeroFallback, srcSet: manufacturingHero, alt: "Skilled craftsmen at Irha Apparels manufacturing facility" },
-            { src: sustainabilityFallback, srcSet: sustainabilityBanner, alt: "Sustainable apparel manufacturing at Irha Apparels" },
+            { src: leatherJacketFallback, srcSet: leatherJacket, alt: "Premium leather jacket — Irha Apparels luxury leatherwear" },
+            { src: leatherShowroomFallback, srcSet: leatherShowroom, alt: "Irha Apparels leather jacket showroom — premium manufacturing" },
+            { src: leatherFlatlayFallback, srcSet: leatherFlatlay, alt: "Luxury leather goods flatlay — wallets, belts and gloves" },
+            { src: leatherStitchFallback, srcSet: leatherStitch, alt: "Hand-stitched premium full-grain leather detail" },
+            { src: leatherStackFallback, srcSet: leatherStack, alt: "Folded premium leather garments — Irha Apparels collection" },
           ]}
           sizes="100vw"
           interval={5000}
@@ -98,9 +98,8 @@ export default function Home() {
               <ArrowUpRight size={18} />
             </a>
             <a
-              href={whatsappLink("Hi, please share the Irha Apparels catalog.")}
-              target="_blank"
-              rel="noreferrer"
+              href="/catalogs/master-catalogue-2026.pdf"
+              download="Irha-Apparels-Master-Catalogue-2026.pdf"
               className="group inline-flex items-center justify-between border border-foreground/15 hover:border-foreground/40 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-colors text-foreground/70"
             >
               <span className="flex items-center gap-3"><Download size={16}/> Download Catalog</span>
