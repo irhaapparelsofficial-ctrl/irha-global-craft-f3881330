@@ -7,8 +7,9 @@ type Props = {
   description: string;
   path?: string;
   image?: string;
-  jsonLd?: object;
+  jsonLd?: object | object[];
   noindex?: boolean;
+  type?: "website" | "article";
 };
 
 export default function SEO({
@@ -18,6 +19,7 @@ export default function SEO({
   image,
   jsonLd,
   noindex,
+  type = "website",
 }: Props) {
   // Always emit absolute canonical / og:url so crawlers attribute each
   // page to its real URL (relative URLs silently break attribution).
