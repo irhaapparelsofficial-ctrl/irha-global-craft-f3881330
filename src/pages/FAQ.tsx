@@ -61,6 +61,17 @@ export default function FAQ() {
         title="FAQ — MOQ, Samples, Shipping & Pricing | Irha Apparels"
         description="Common questions about ordering apparel from Irha Apparels — MOQs, sampling, customization, shipping, payment terms and quality standards for B2B buyers."
         path="/faq"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: FAQS.flatMap((g) =>
+            g.items.map((item) => ({
+              "@type": "Question",
+              name: item.q,
+              acceptedAnswer: { "@type": "Answer", text: item.a },
+            }))
+          ),
+        }}
       />
 
       <section className="pt-40 pb-20 border-b border-border/60">
