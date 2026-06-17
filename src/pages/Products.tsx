@@ -1,7 +1,7 @@
 import SEO from "@/components/SEO";
 import { CATEGORIES } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Download } from "lucide-react";
 
 export default function Products() {
   return (
@@ -23,6 +23,35 @@ export default function Products() {
             Every collection below is produced in-house at our Sialkot atelier, with OEM, ODM and
             private-label programs tailored to your brand specifications.
           </p>
+
+          {/* Catalog downloads */}
+          <div className="mt-14 border-t border-border/60 pt-10">
+            <div className="flex flex-wrap items-end justify-between gap-6 mb-6">
+              <div>
+                <p className="eyebrow mb-2">Wholesale Catalogs</p>
+                <h2 className="font-display text-2xl md:text-3xl">Download the line sheets</h2>
+              </div>
+              <p className="text-xs uppercase tracking-[0.3em] text-foreground/50">
+                PDF · A4 · 2026 collection
+              </p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {CATEGORIES.map((c) => (
+                <a
+                  key={c.slug}
+                  href={c.catalog}
+                  download
+                  className="group flex flex-col gap-2 p-4 border border-border/60 hover:border-primary hover:bg-card/40 transition-colors"
+                >
+                  <Download size={16} className="text-gold" />
+                  <span className="font-display text-base leading-tight">{c.name}</span>
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-foreground/50">
+                    Download PDF
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

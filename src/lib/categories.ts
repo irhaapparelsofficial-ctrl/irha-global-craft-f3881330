@@ -44,12 +44,14 @@ export type Category = {
   description: string;
   image: string;
   details: string[];
+  catalog: string;
   products: Product[];
 };
 
 export const CATEGORIES: Category[] = [
   {
     slug: "bavarian",
+    catalog: "/catalogs/bavarian-catalog.pdf",
     name: "Bavarian Wear",
     short: "Trachten & Lederhosen",
     description:
@@ -89,6 +91,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     slug: "sportswear",
+    catalog: "/catalogs/sportswear-catalog.pdf",
     name: "Sportswear",
     short: "Performance & Teamwear",
     description:
@@ -128,6 +131,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     slug: "leatherwear",
+    catalog: "/catalogs/leatherwear-catalog.pdf",
     name: "Leatherwear",
     short: "Luxury Leather Garments",
     description:
@@ -167,6 +171,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     slug: "streetwear",
+    catalog: "/catalogs/streetwear-catalog.pdf",
     name: "Streetwear",
     short: "Urban Fashion Apparel",
     description:
@@ -206,6 +211,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     slug: "leisurewear",
+    catalog: "/catalogs/leisurewear-catalog.pdf",
     name: "Leisurewear",
     short: "Lifestyle Comfort",
     description:
@@ -245,6 +251,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     slug: "nightwear",
+    catalog: "/catalogs/nightwear-catalog.pdf",
     name: "Nightwear",
     short: "Soft Luxury Indoor",
     description:
