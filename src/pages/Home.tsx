@@ -2,9 +2,15 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, Download, MessageCircle, ShieldCheck, Globe2, Factory, Award } from "lucide-react";
 import heroImg from "@/assets/hero.jpg";
 import manufacturingImg from "@/assets/manufacturing.jpg";
+import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { CATEGORIES } from "@/lib/categories";
 import { whatsappLink, BRAND } from "@/lib/constants";
 import SEO from "@/components/SEO";
+import ClientsMarquee from "@/components/sections/ClientsMarquee";
+import Certifications from "@/components/sections/Certifications";
+import KpiCounters from "@/components/sections/KpiCounters";
+import Testimonials from "@/components/sections/Testimonials";
+import ProcessTimeline from "@/components/sections/ProcessTimeline";
 
 export default function Home() {
   return (
@@ -23,17 +29,22 @@ export default function Home() {
         }}
       />
 
-      {/* HERO */}
+      {/* HERO — cinematic with subtle Ken Burns */}
       <section className="relative min-h-screen flex items-end overflow-hidden">
-        <img
-          src={heroImg}
-          alt="Irha Apparels luxury manufacturing"
-          className="absolute inset-0 w-full h-full object-cover"
-          width={1920}
-          height={1280}
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src={heroImg}
+            alt="Irha Apparels luxury manufacturing"
+            className="absolute inset-0 w-full h-full object-cover animate-[kenburns_22s_ease-in-out_infinite_alternate]"
+            width={1920}
+            height={1280}
+          />
+        </div>
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="absolute inset-0 bg-background/30" />
+        {/* gold accent line */}
+        <div className="absolute top-1/3 left-0 w-24 md:w-40 h-px bg-gradient-gold opacity-70" />
+        <div className="absolute top-1/3 right-0 w-24 md:w-40 h-px bg-gradient-gold opacity-70" />
 
         <div className="container-luxe relative pb-24 md:pb-32 pt-40 grid lg:grid-cols-12 gap-10 items-end">
           <div className="lg:col-span-8 animate-fade-in">
@@ -79,21 +90,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TRUST MARQUEE */}
-      <section className="border-y border-border/60 bg-background overflow-hidden">
-        <div className="flex whitespace-nowrap animate-marquee py-6">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="flex shrink-0 items-center gap-16 px-8 text-foreground/40">
-              {["OEM Manufacturing", "ODM Development", "Private Label", "Worldwide Export", "Sialkot Heritage", "Premium Quality", "Low MOQ Friendly"].map((t) => (
-                <span key={t} className="text-xs uppercase tracking-[0.4em] flex items-center gap-16">
-                  {t}
-                  <span className="text-primary">✦</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* TRUSTED BY MARQUEE */}
+      <ClientsMarquee />
 
       {/* INTRO / VALUE */}
       <section className="py-28 md:py-40">
@@ -113,22 +111,12 @@ export default function Home() {
               Every order is treated as a runway piece: cut, stitched and finished to specifications
               that survive the most demanding retail floors in Berlin, Dubai and New York.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-6">
-              {[
-                { n: "12+", l: "Years" },
-                { n: "30+", l: "Countries" },
-                { n: "500K", l: "Units/Year" },
-                { n: "98%", l: "QC Pass" },
-              ].map((s) => (
-                <div key={s.l}>
-                  <p className="font-display text-4xl text-gold">{s.n}</p>
-                  <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mt-2">{s.l}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
+
+      {/* KPI COUNTERS */}
+      <KpiCounters />
 
       {/* COLLECTIONS */}
       <section className="py-20 md:py-32 bg-secondary/40">
@@ -150,7 +138,7 @@ export default function Home() {
             {CATEGORIES.map((c, i) => (
               <Link
                 key={c.slug}
-                to="/products"
+                to={`/products#${c.slug}`}
                 className="group relative aspect-[3/4] overflow-hidden bg-muted"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
@@ -176,6 +164,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* PROCESS TIMELINE */}
+      <ProcessTimeline />
+
+      {/* CERTIFICATIONS */}
+      <Certifications />
+
+      {/* TESTIMONIALS */}
+      <Testimonials />
 
       {/* MANUFACTURING TEASER */}
       <section className="relative py-28 md:py-40 overflow-hidden">
@@ -225,8 +222,10 @@ export default function Home() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-28 md:py-36 border-t border-border/60">
-        <div className="container-luxe text-center max-w-4xl mx-auto">
+      <section className="relative py-28 md:py-36 border-t border-border/60 overflow-hidden">
+        <img src={flatlay} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-15" />
+        <div className="absolute inset-0 bg-background/80" />
+        <div className="container-luxe relative text-center max-w-4xl mx-auto">
           <p className="eyebrow justify-center inline-flex mb-6">Begin Your Order</p>
           <h2 className="font-display text-4xl md:text-6xl leading-[1.02]">
             Ready to build your <br />

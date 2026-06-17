@@ -3,11 +3,20 @@ import { BRAND, whatsappLink } from "@/lib/constants";
 import { CATEGORIES } from "@/lib/categories";
 import { Mail, MapPin, Phone } from "lucide-react";
 
+const COMPANY = [
+  { to: "/about", label: "About" },
+  { to: "/manufacturing", label: "Manufacturing" },
+  { to: "/sustainability", label: "Sustainability" },
+  { to: "/journal", label: "Journal" },
+  { to: "/faq", label: "FAQ" },
+  { to: "/inquiry", label: "Get a Quote" },
+];
+
 export default function Footer() {
   return (
     <footer className="relative bg-background border-t border-border/60 pt-20 pb-10">
-      <div className="container-luxe grid gap-14 md:grid-cols-4">
-        <div className="md:col-span-2">
+      <div className="container-luxe grid gap-14 md:grid-cols-12">
+        <div className="md:col-span-5">
           <p className="eyebrow mb-4">Sialkot · Pakistan</p>
           <h3 className="font-display text-3xl md:text-4xl leading-tight max-w-md">
             Crafting <span className="text-gold">premium apparel</span> for the world's most discerning brands.
@@ -17,12 +26,12 @@ export default function Footer() {
           </p>
         </div>
 
-        <div>
+        <div className="md:col-span-3">
           <p className="eyebrow mb-5">Collections</p>
           <ul className="space-y-3 text-sm">
             {CATEGORIES.map((c) => (
               <li key={c.slug}>
-                <Link to="/products" className="text-foreground/75 hover:text-primary transition-colors">
+                <Link to={`/products#${c.slug}`} className="text-foreground/75 hover:text-primary transition-colors">
                   {c.name}
                 </Link>
               </li>
@@ -30,7 +39,20 @@ export default function Footer() {
           </ul>
         </div>
 
-        <div>
+        <div className="md:col-span-2">
+          <p className="eyebrow mb-5">Company</p>
+          <ul className="space-y-3 text-sm">
+            {COMPANY.map((l) => (
+              <li key={l.to}>
+                <Link to={l.to} className="text-foreground/75 hover:text-primary transition-colors">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="md:col-span-2">
           <p className="eyebrow mb-5">Contact</p>
           <ul className="space-y-4 text-sm text-foreground/75">
             <li className="flex items-start gap-3">
@@ -45,7 +67,7 @@ export default function Footer() {
             </li>
             <li className="flex items-start gap-3">
               <Mail size={16} className="text-primary mt-0.5 shrink-0" />
-              <a href={`mailto:${BRAND.email}`} className="hover:text-primary">{BRAND.email}</a>
+              <a href={`mailto:${BRAND.email}`} className="hover:text-primary break-all">{BRAND.email}</a>
             </li>
           </ul>
         </div>

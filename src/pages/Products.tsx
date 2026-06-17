@@ -1,37 +1,41 @@
 import SEO from "@/components/SEO";
 import { CATEGORIES, type Category, type Product } from "@/lib/categories";
+import { CATALOG, findGroup } from "@/lib/catalog";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Download, Eye, Maximize2 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ProductDetailModal from "@/components/ProductDetailModal";
+import flatlay from "@/assets/banners/products-flatlay.jpg";
 
 const previewPages = (slug: string) =>
   [1, 2, 3, 4].map((n) => `/catalogs/thumbs/${slug}-catalog-${n}.jpg`);
 
-
 export default function Products() {
   const [previewCat, setPreviewCat] = useState<Category | null>(null);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [activeSub, setActiveSub] = useState<Record<string, string>>({});
 
   return (
     <>
       <SEO
         title="Collections — Bavarian, Sportswear, Leather, Streetwear | Irha Apparels"
-        description="Premium apparel collections by Irha Apparels: Bavarian wear, sportswear, leatherwear, streetwear, leisurewear, nightwear. OEM, ODM & private label manufacturing."
+        description="Premium apparel collections by Irha Apparels: Bavarian wear, sportswear, leatherwear, streetwear, leisurewear, nightwear. 600+ styles across sub-categories. OEM, ODM & private label."
         path="/products"
       />
 
-      <section className="pt-40 pb-20 border-b border-border/60">
-        <div className="container-luxe">
+      <section className="relative pt-40 pb-20 border-b border-border/60 overflow-hidden">
+        <img src={flatlay} alt="" loading="eager" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background" />
+        <div className="container-luxe relative">
           <p className="eyebrow mb-6">The Collections</p>
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-5xl">
             Six categories. <br />
-            One obsession with <span className="text-gold italic">craft</span>.
+            600+ <span className="text-gold italic">styles</span>.
           </h1>
           <p className="mt-10 text-lg text-foreground/70 max-w-2xl">
-            Every collection below is produced in-house at our Sialkot atelier, with OEM, ODM and
-            private-label programs tailored to your brand specifications.
+            Every collection below is produced in-house at our Sialkot atelier. Click any sub-category
+            to browse the full range — OEM, ODM and private-label programs available across every product.
           </p>
 
           {/* Catalog downloads */}
@@ -80,7 +84,6 @@ export default function Products() {
                 </div>
               ))}
             </div>
-
           </div>
         </div>
       </section>
@@ -89,6 +92,12 @@ export default function Products() {
         <div className="container-luxe space-y-32">
           {CATEGORIES.map((c, i) => {
             const reverse = i % 2 === 1;
+            const group = findGroup(c.slug);
+            const subs = group?.subs ?? [];
+            const currentSubSlug = activeSub[c.slug] || subs[0]?.slug;
+            const currentSub = subs.find((s) => s.slug === currentSubSlug) ?? subs[0];
+            const totalProducts = subs.reduce((n, s) => n + s.products.length, 0);
+
             return (
               <article key={c.slug} id={c.slug} className="scroll-mt-32">
                 <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
@@ -116,84 +125,90 @@ export default function Products() {
                         </li>
                       ))}
                     </ul>
+                    <p className="mt-8 text-xs uppercase tracking-[0.3em] text-foreground/50">
+                      {subs.length} sub-categories · {totalProducts} styles
+                    </p>
                     <Link
                       to="/inquiry"
-                      className="mt-10 inline-flex items-center gap-3 border border-primary text-primary hover:bg-primary hover:text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
+                      className="mt-6 inline-flex items-center gap-3 border border-primary text-primary hover:bg-primary hover:text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
                     >
                       Request a Quote <ArrowUpRight size={16} />
                     </Link>
                   </div>
                 </div>
 
-                {/* Products grid */}
-                <div className="mt-20">
-                  <div className="flex items-end justify-between mb-10 border-b border-border/60 pb-6">
-                    <div>
-                      <p className="eyebrow mb-2">Featured Styles</p>
-                      <h3 className="font-display text-2xl md:text-3xl">
-                        {c.name} <span className="text-foreground/40">— Signature Pieces</span>
-                      </h3>
+                {/* Sub-category tabs */}
+                {subs.length > 0 && currentSub && (
+                  <div className="mt-20">
+                    <div className="flex items-end justify-between mb-8 border-b border-border/60 pb-6 flex-wrap gap-4">
+                      <div>
+                        <p className="eyebrow mb-2">Browse {c.name}</p>
+                        <h3 className="font-display text-2xl md:text-3xl">
+                          Sub-categories
+                        </h3>
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-foreground/50">
+                        {currentSub.products.length} styles in {currentSub.name}
+                      </p>
                     </div>
-                    <p className="hidden md:block text-xs uppercase tracking-[0.3em] text-foreground/50">
-                      {c.products.length} styles
-                    </p>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-                    {c.products.map((p) => (
-                      <div key={p.name} className="group flex flex-col">
+                    {/* Sub tabs */}
+                    <div className="flex flex-wrap gap-2 mb-10">
+                      {subs.map((s) => (
                         <button
+                          key={s.slug}
+                          type="button"
+                          onClick={() => setActiveSub((prev) => ({ ...prev, [c.slug]: s.slug }))}
+                          className={`px-4 py-2.5 text-[11px] uppercase tracking-[0.22em] border transition-all ${
+                            currentSubSlug === s.slug
+                              ? "border-primary text-primary bg-primary/5"
+                              : "border-border/60 text-foreground/65 hover:text-foreground hover:border-foreground/40"
+                          }`}
+                        >
+                          {s.name}
+                          <span className="ml-2 text-foreground/40 normal-case tracking-normal">
+                            ({s.products.length})
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <p className="text-sm text-foreground/65 mb-8 max-w-2xl">{currentSub.short}</p>
+
+                    {/* Products grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 lg:gap-7">
+                      {currentSub.products.map((p) => (
+                        <button
+                          key={p.name}
                           type="button"
                           onClick={() => setActiveProduct(p)}
-                          className="relative aspect-[3/4] overflow-hidden bg-card mb-5 text-left"
+                          className="group flex flex-col text-left"
                           aria-label={`View ${p.name} details`}
                         >
-                          <img
-                            src={p.image}
-                            alt={p.name}
-                            loading="lazy"
-                            width={1024}
-                            height={1024}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
-                            <span className="text-[10px] uppercase tracking-[0.3em] text-gold">View Details</span>
-                            <Maximize2 size={14} className="text-gold" />
+                          <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
+                            <img
+                              src={p.image}
+                              alt={p.name}
+                              loading="lazy"
+                              className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
+                              <span className="text-[9px] uppercase tracking-[0.3em] text-gold">Details</span>
+                              <Maximize2 size={12} className="text-gold" />
+                            </div>
                           </div>
-                          {p.gallery.length > 1 && (
-                            <span className="absolute top-3 right-3 bg-background/80 backdrop-blur text-[10px] uppercase tracking-[0.2em] px-2 py-1 text-foreground/80">
-                              +{p.gallery.length} pics
-                            </span>
-                          )}
+                          <h4 className="font-display text-base leading-tight group-hover:text-primary transition-colors">
+                            {p.name}
+                          </h4>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">
+                            MOQ {p.details.find((d) => d.label === "MOQ")?.value.split(/[,/]/)[0] || "—"}
+                          </p>
                         </button>
-                        <h4 className="font-display text-xl leading-tight">{p.name}</h4>
-                        <p className="text-sm text-foreground/65 mt-3 leading-relaxed line-clamp-3">
-                          {p.description}
-                        </p>
-                        <ul className="mt-4 space-y-1.5">
-                          {p.specs.slice(0, 3).map((s) => (
-                            <li
-                              key={s}
-                              className="text-[11px] uppercase tracking-[0.18em] text-foreground/55 flex items-center gap-2"
-                            >
-                              <span className="text-gold">—</span> {s}
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-5 flex items-center gap-4">
-                          <button
-                            type="button"
-                            onClick={() => setActiveProduct(p)}
-                            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary hover:gap-3 transition-all"
-                          >
-                            View Details <ArrowUpRight size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </article>
             );
           })}
@@ -243,5 +258,4 @@ export default function Products() {
       <ProductDetailModal product={activeProduct} onClose={() => setActiveProduct(null)} />
     </>
   );
-
 }
