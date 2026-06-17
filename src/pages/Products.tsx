@@ -32,7 +32,7 @@ export default function Products() {
           isPartOf: { "@type": "WebSite", name: "Irha Apparels", url: "https://www.irhaapparels.com/" },
           hasPart: CATEGORIES.map((c) => ({
             "@type": "CollectionPage",
-            name: c.title,
+            name: c.name,
             url: `https://www.irhaapparels.com/products#${c.slug}`,
           })),
         }}
