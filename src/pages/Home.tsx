@@ -3,6 +3,9 @@ import { ArrowUpRight, Download, MessageCircle, ShieldCheck, Globe2, Factory, Aw
 import heroImg from "@/assets/hero.jpg";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
+import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
+import sustainabilityBanner from "@/assets/banners/sustainability.jpg";
+import HeroSlideshow from "@/components/HeroSlideshow";
 import { CATEGORIES } from "@/lib/categories";
 import { whatsappLink, BRAND } from "@/lib/constants";
 import SEO from "@/components/SEO";
@@ -31,15 +34,16 @@ export default function Home() {
 
       {/* HERO — cinematic with subtle Ken Burns */}
       <section className="relative min-h-screen flex items-end overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <img
-            src={heroImg}
-            alt="Irha Apparels luxury manufacturing"
-            className="absolute inset-0 w-full h-full object-cover animate-[kenburns_22s_ease-in-out_infinite_alternate]"
-            width={1920}
-            height={1280}
-          />
-        </div>
+        <HeroSlideshow
+          slides={[
+            { src: heroImg, alt: "Irha Apparels luxury manufacturing" },
+            { src: factoryCinematic, alt: "Cinematic view of Irha Apparels factory in Sialkot" },
+            { src: flatlay, alt: "Premium apparel flatlay — Irha Apparels collection" },
+            { src: manufacturingImg, alt: "Skilled craftsmen at Irha Apparels manufacturing facility" },
+            { src: sustainabilityBanner, alt: "Sustainable apparel manufacturing at Irha Apparels" },
+          ]}
+          interval={5000}
+        />
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="absolute inset-0 bg-background/30" />
         {/* gold accent line */}
