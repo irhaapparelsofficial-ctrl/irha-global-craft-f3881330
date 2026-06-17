@@ -180,6 +180,47 @@ export default function Products() {
           })}
         </div>
       </section>
+
+      <Dialog open={!!previewCat} onOpenChange={(o) => !o && setPreviewCat(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-background border-border/60">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl md:text-3xl">
+              {previewCat?.name} <span className="text-foreground/40">— Catalog Preview</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs uppercase tracking-[0.3em] text-foreground/50">
+              First 4 pages · A4 · 2026 collection
+            </DialogDescription>
+          </DialogHeader>
+          {previewCat && (
+            <>
+              <div className="overflow-y-auto flex-1 -mx-6 px-6 py-4 space-y-4 bg-card/30">
+                {previewPages(previewCat.slug).map((src, i) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt={`${previewCat.name} catalog page ${i + 1}`}
+                    loading="lazy"
+                    className="w-full shadow-lg border border-border/40"
+                  />
+                ))}
+              </div>
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/60">
+                <p className="text-xs text-foreground/60">
+                  Full catalog includes complete product specs & MOQs.
+                </p>
+                <a
+                  href={previewCat.catalog}
+                  download
+                  className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
+                >
+                  <Download size={14} /> Download PDF
+                </a>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
+
 }
