@@ -1,9 +1,17 @@
 import SEO from "@/components/SEO";
-import { CATEGORIES } from "@/lib/categories";
+import { CATEGORIES, type Category } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download } from "lucide-react";
+import { ArrowUpRight, Download, Eye } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+const previewPages = (slug: string) =>
+  [1, 2, 3, 4].map((n) => `/catalogs/thumbs/${slug}-catalog-${n}.jpg`);
+
 
 export default function Products() {
+  const [previewCat, setPreviewCat] = useState<Category | null>(null);
+
   return (
     <>
       <SEO
@@ -35,22 +43,42 @@ export default function Products() {
                 PDF · A4 · 2026 collection
               </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {CATEGORIES.map((c) => (
-                <a
-                  key={c.slug}
-                  href={c.catalog}
-                  download
-                  className="group flex flex-col gap-2 p-4 border border-border/60 hover:border-primary hover:bg-card/40 transition-colors"
-                >
-                  <Download size={16} className="text-gold" />
-                  <span className="font-display text-base leading-tight">{c.name}</span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-foreground/50">
-                    Download PDF
-                  </span>
-                </a>
+                <div key={c.slug} className="group flex flex-col">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewCat(c)}
+                    className="relative aspect-[3/4] overflow-hidden border border-border/60 bg-card hover:border-primary transition-colors"
+                    aria-label={`Preview ${c.name} catalog`}
+                  >
+                    <img
+                      src={`/catalogs/thumbs/${c.slug}-catalog-1.jpg`}
+                      alt={`${c.name} catalog preview`}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-gold">
+                        <Eye size={14} /> Preview
+                      </span>
+                    </div>
+                  </button>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <span className="font-display text-sm leading-tight">{c.name}</span>
+                    <a
+                      href={c.catalog}
+                      download
+                      className="text-gold hover:text-primary transition-colors"
+                      aria-label={`Download ${c.name} catalog`}
+                    >
+                      <Download size={14} />
+                    </a>
+                  </div>
+                </div>
               ))}
             </div>
+
           </div>
         </div>
       </section>
@@ -152,6 +180,47 @@ export default function Products() {
           })}
         </div>
       </section>
+
+      <Dialog open={!!previewCat} onOpenChange={(o) => !o && setPreviewCat(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-background border-border/60">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl md:text-3xl">
+              {previewCat?.name} <span className="text-foreground/40">— Catalog Preview</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs uppercase tracking-[0.3em] text-foreground/50">
+              First 4 pages · A4 · 2026 collection
+            </DialogDescription>
+          </DialogHeader>
+          {previewCat && (
+            <>
+              <div className="overflow-y-auto flex-1 -mx-6 px-6 py-4 space-y-4 bg-card/30">
+                {previewPages(previewCat.slug).map((src, i) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt={`${previewCat.name} catalog page ${i + 1}`}
+                    loading="lazy"
+                    className="w-full shadow-lg border border-border/40"
+                  />
+                ))}
+              </div>
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/60">
+                <p className="text-xs text-foreground/60">
+                  Full catalog includes complete product specs & MOQs.
+                </p>
+                <a
+                  href={previewCat.catalog}
+                  download
+                  className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
+                >
+                  <Download size={14} /> Download PDF
+                </a>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
+
 }
