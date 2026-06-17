@@ -14,6 +14,7 @@ import leatherStackFallback from "@/assets/banners/leather-stack.jpg?w=1600&form
 import HeroSlideshow from "@/components/HeroSlideshow";
 import { CATEGORIES } from "@/lib/categories";
 import { whatsappLink, BRAND } from "@/lib/constants";
+import { forceDownload } from "@/lib/download";
 import SEO from "@/components/SEO";
 import ClientsMarquee from "@/components/sections/ClientsMarquee";
 import Certifications from "@/components/sections/Certifications";

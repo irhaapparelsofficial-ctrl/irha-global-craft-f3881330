@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
+import { forceDownload } from "@/lib/download";
 
 const previewPages = (slug: string) =>
   [1, 2, 3, 4].map((n) => `/catalogs/thumbs/${slug}-catalog-${n}.jpg`);
@@ -87,14 +88,14 @@ export default function Products() {
                   </button>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <span className="font-display text-sm leading-tight">{c.name}</span>
-                    <a
-                      href={c.catalog}
-                      download
+                    <button
+                      type="button"
+                      onClick={() => forceDownload(c.catalog, `Irha-${c.slug}-catalog.pdf`)}
                       className="text-gold hover:text-primary transition-colors"
                       aria-label={`Download ${c.name} catalog`}
                     >
                       <Download size={14} />
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -257,13 +258,13 @@ export default function Products() {
                 <p className="text-xs text-foreground/60">
                   Full catalog includes complete product specs & MOQs.
                 </p>
-                <a
-                  href={previewCat.catalog}
-                  download
+                <button
+                  type="button"
+                  onClick={() => forceDownload(previewCat.catalog, `Irha-${previewCat.slug}-catalog.pdf`)}
                   className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
                 >
                   <Download size={14} /> Download PDF
-                </a>
+                </button>
               </div>
             </>
           )}
