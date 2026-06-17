@@ -14,6 +14,7 @@ import leatherStackFallback from "@/assets/banners/leather-stack.jpg?w=1600&form
 import HeroSlideshow from "@/components/HeroSlideshow";
 import { CATEGORIES } from "@/lib/categories";
 import { whatsappLink, BRAND } from "@/lib/constants";
+import { forceDownload } from "@/lib/download";
 import SEO from "@/components/SEO";
 import ClientsMarquee from "@/components/sections/ClientsMarquee";
 import Certifications from "@/components/sections/Certifications";
@@ -97,14 +98,14 @@ export default function Home() {
               <span className="flex items-center gap-3"><MessageCircle size={16}/> WhatsApp Now</span>
               <ArrowUpRight size={18} />
             </a>
-            <a
-              href="/catalogs/master-catalogue-2026.pdf"
-              download="Irha-Apparels-Master-Catalogue-2026.pdf"
+            <button
+              type="button"
+              onClick={() => forceDownload("/catalogs/master-catalogue-2026.pdf", "Irha-Apparels-Master-Catalogue-2026.pdf")}
               className="group inline-flex items-center justify-between border border-foreground/15 hover:border-foreground/40 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-colors text-foreground/70"
             >
               <span className="flex items-center gap-3"><Download size={16}/> Download Catalog</span>
               <ArrowUpRight size={18} />
-            </a>
+            </button>
           </div>
         </div>
       </section>
