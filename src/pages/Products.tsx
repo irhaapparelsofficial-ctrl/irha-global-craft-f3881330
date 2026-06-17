@@ -1,9 +1,10 @@
 import SEO from "@/components/SEO";
-import { CATEGORIES, type Category } from "@/lib/categories";
+import { CATEGORIES, type Category, type Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Eye } from "lucide-react";
+import { ArrowUpRight, Download, Eye, Maximize2 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import ProductDetailModal from "@/components/ProductDetailModal";
 
 const previewPages = (slug: string) =>
   [1, 2, 3, 4].map((n) => `/catalogs/thumbs/${slug}-catalog-${n}.jpg`);
@@ -11,6 +12,7 @@ const previewPages = (slug: string) =>
 
 export default function Products() {
   const [previewCat, setPreviewCat] = useState<Category | null>(null);
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
   return (
     <>
@@ -140,7 +142,12 @@ export default function Products() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                     {c.products.map((p) => (
                       <div key={p.name} className="group flex flex-col">
-                        <div className="relative aspect-[3/4] overflow-hidden bg-card mb-5">
+                        <button
+                          type="button"
+                          onClick={() => setActiveProduct(p)}
+                          className="relative aspect-[3/4] overflow-hidden bg-card mb-5 text-left"
+                          aria-label={`View ${p.name} details`}
+                        >
                           <img
                             src={p.image}
                             alt={p.name}
@@ -149,14 +156,23 @@ export default function Products() {
                             height={1024}
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        </div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
+                            <span className="text-[10px] uppercase tracking-[0.3em] text-gold">View Details</span>
+                            <Maximize2 size={14} className="text-gold" />
+                          </div>
+                          {p.gallery.length > 1 && (
+                            <span className="absolute top-3 right-3 bg-background/80 backdrop-blur text-[10px] uppercase tracking-[0.2em] px-2 py-1 text-foreground/80">
+                              +{p.gallery.length} pics
+                            </span>
+                          )}
+                        </button>
                         <h4 className="font-display text-xl leading-tight">{p.name}</h4>
-                        <p className="text-sm text-foreground/65 mt-3 leading-relaxed">
+                        <p className="text-sm text-foreground/65 mt-3 leading-relaxed line-clamp-3">
                           {p.description}
                         </p>
                         <ul className="mt-4 space-y-1.5">
-                          {p.specs.map((s) => (
+                          {p.specs.slice(0, 3).map((s) => (
                             <li
                               key={s}
                               className="text-[11px] uppercase tracking-[0.18em] text-foreground/55 flex items-center gap-2"
@@ -165,12 +181,15 @@ export default function Products() {
                             </li>
                           ))}
                         </ul>
-                        <Link
-                          to="/inquiry"
-                          className="mt-5 inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary hover:gap-3 transition-all"
-                        >
-                          Inquire <ArrowUpRight size={14} />
-                        </Link>
+                        <div className="mt-5 flex items-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setActiveProduct(p)}
+                            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary hover:gap-3 transition-all"
+                          >
+                            View Details <ArrowUpRight size={14} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -220,6 +239,8 @@ export default function Products() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ProductDetailModal product={activeProduct} onClose={() => setActiveProduct(null)} />
     </>
   );
 
