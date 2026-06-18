@@ -7,6 +7,7 @@ import { CATEGORY_SEO } from "@/lib/categorySeo";
 import { forceDownload } from "@/lib/download";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
+import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
 import { ArrowUpRight, Download, ChevronRight, Eye, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
