@@ -99,6 +99,13 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
           <a
             href={catalogPdf(slug)}
             download={`Irha-${slug}-catalog.pdf`}
+            onClick={() =>
+              trackDownload({
+                page: window.location.pathname + window.location.search,
+                cta_location: "flipbook-header",
+                catalog: slug,
+              })
+            }
             className="hidden sm:inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
           >
             <Download size={13} /> Download PDF
@@ -203,6 +210,13 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
           <a
             href={catalogPdf(slug)}
             download={`Irha-${slug}-catalog.pdf`}
+            onClick={() =>
+              trackDownload({
+                page: window.location.pathname + window.location.search,
+                cta_location: "flipbook-footer",
+                catalog: slug,
+              })
+            }
             className="sm:hidden inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
           >
             <Download size={13} /> Download PDF
