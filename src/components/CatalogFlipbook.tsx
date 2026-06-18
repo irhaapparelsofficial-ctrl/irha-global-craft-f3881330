@@ -98,20 +98,6 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
         <div className="flex items-center gap-2">
           <a
             href={catalogPdf(slug)}
-            download={`Irha-${slug}-catalog.pdf`}
-            onClick={() =>
-              trackDownload({
-                page: window.location.pathname + window.location.search,
-                cta_location: "flipbook-header",
-                catalog: slug,
-              })
-            }
-            className="hidden sm:inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
-          >
-            <Download size={13} /> Download PDF
-          </a>
-          <a
-            href={catalogPdf(slug)}
             target="_blank"
             rel="noreferrer"
             className="hidden md:inline-flex items-center gap-2 border border-border/60 hover:border-primary px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
@@ -207,20 +193,6 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
         </div>
         <div className="flex items-center gap-3 ml-auto">
           {action}
-          <a
-            href={catalogPdf(slug)}
-            download={`Irha-${slug}-catalog.pdf`}
-            onClick={() =>
-              trackDownload({
-                page: window.location.pathname + window.location.search,
-                cta_location: "flipbook-footer",
-                catalog: slug,
-              })
-            }
-            className="sm:hidden inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
-          >
-            <Download size={13} /> Download PDF
-          </a>
         </div>
       </footer>
     </div>

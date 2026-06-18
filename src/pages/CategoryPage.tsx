@@ -212,20 +212,6 @@ export default function CategoryPage() {
             >
               <Eye size={14} /> Preview Catalogue
             </button>
-            <a
-              href={category.catalog}
-              download={`Irha-${category.slug}-catalog.pdf`}
-              onClick={() =>
-                trackDownload({
-                  page: `/products/${category.slug}`,
-                  cta_location: "category-page",
-                  catalog: category.slug,
-                })
-              }
-              className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
-            >
-              <Download size={14} /> Download PDF
-            </a>
             <span className="text-xs uppercase tracking-[0.3em] text-foreground/55 ml-2">
               {totalProducts} styles · MOQ 50 · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
             </span>
