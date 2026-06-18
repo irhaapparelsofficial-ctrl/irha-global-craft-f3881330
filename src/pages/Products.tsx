@@ -156,12 +156,14 @@ export default function Products() {
                       >
                         View {c.name} <ArrowUpRight size={16} />
                       </Link>
-                      <Link
-                        to="/inquiry"
-                        className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
+                      <a
+                        href={whatsappLink(`Hello Irha Apparels — I'd like a quote for ${c.name}.`)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
                       >
-                        Request a Quote
-                      </Link>
+                        <MessageCircle size={16} /> Request a Quote
+                      </a>
                     </div>
                   </div>
                 </div>
