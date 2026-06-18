@@ -1,5 +1,7 @@
 // GSC Search Analytics — returns top queries / pages / countries for the property.
+// Admin-only: validates the caller's JWT and checks `user_roles.role = 'admin'`.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
 const SITE_URL = "https://irhaapparels.com/";
@@ -8,10 +10,25 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // ── auth: must be an admin ───────────────────────────────
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    if (!token) return json({ error: "Unauthorized" }, 401);
+
+    const supaUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const sb = createClient(supaUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+
+    const { data: userRes, error: uErr } = await sb.auth.getUser();
+    if (uErr || !userRes.user) return json({ error: "Unauthorized" }, 401);
+    const { data: roleRow } = await sb.from("user_roles").select("role").eq("user_id", userRes.user.id).eq("role", "admin").maybeSingle();
+    if (!roleRow) return json({ error: "Forbidden — admin only" }, 403);
+
     const { dimension = "query", days = 28 } = await req.json().catch(() => ({}));
     if (!["query", "page", "country", "device"].includes(dimension)) {
       return json({ error: "invalid dimension" }, 400);
     }
+
 
     const LOVABLE = Deno.env.get("LOVABLE_API_KEY");
     const GSC_KEY = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
