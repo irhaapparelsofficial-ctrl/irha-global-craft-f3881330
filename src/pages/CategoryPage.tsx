@@ -172,7 +172,7 @@ export default function CategoryPage() {
         title={seo.title}
         description={seo.description}
         path={`/products/${category.slug}`}
-        image={category.image}
+        image={seo.ogImage}
         jsonLd={jsonLd}
       />
 
