@@ -97,21 +97,13 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
 }
 
 function ClaimAdminButton() {
-  const [busy, setBusy] = useState(false);
-  const claim = async () => {
-    setBusy(true);
-    const { data, error } = await supabase.rpc("claim_admin");
-    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
-    else if (data === true) { toast({ title: "Admin granted", description: "Reloading…" }); setTimeout(() => window.location.reload(), 800); }
-    else toast({ title: "An admin already exists", variant: "destructive" });
-    setBusy(false);
-  };
   return (
-    <button onClick={claim} disabled={busy} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] bg-gradient-gold text-primary-foreground px-4 py-2.5 hover:shadow-gold transition-all disabled:opacity-60">
-      <Shield size={14} /> {busy ? "Claiming…" : "Claim admin"}
-    </button>
+    <div className="text-xs uppercase tracking-[0.25em] text-foreground/60 border border-border/60 px-4 py-2.5">
+      <Shield size={14} className="inline mr-2" /> Admin access locked
+    </div>
   );
 }
+
 
 // ──────────────────────────────────────────────────────────
 // INQUIRIES
