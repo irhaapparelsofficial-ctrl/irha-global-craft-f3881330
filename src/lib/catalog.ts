@@ -5,6 +5,10 @@ import bav1 from "@/assets/products/bavarian-1.jpg";
 import bav2 from "@/assets/products/bavarian-2.jpg";
 import bav3 from "@/assets/products/bavarian-3.jpg";
 import bav4 from "@/assets/products/bavarian-4.jpg";
+import bav5 from "@/assets/products/bavarian-5.jpg";
+import bav6 from "@/assets/products/bavarian-6.jpg";
+import bav7 from "@/assets/products/bavarian-7.jpg";
+import bav8 from "@/assets/products/bavarian-8.jpg";
 import bavD1 from "@/assets/products/bavarian-detail-1.jpg";
 import bavD2 from "@/assets/products/bavarian-detail-2.jpg";
 
@@ -12,6 +16,10 @@ import sp1 from "@/assets/products/sportswear-1.jpg";
 import sp2 from "@/assets/products/sportswear-2.jpg";
 import sp3 from "@/assets/products/sportswear-3.jpg";
 import sp4 from "@/assets/products/sportswear-4.jpg";
+import sp5 from "@/assets/products/sportswear-5.jpg";
+import sp6 from "@/assets/products/sportswear-6.jpg";
+import sp7 from "@/assets/products/sportswear-7.jpg";
+import sp8 from "@/assets/products/sportswear-8.jpg";
 import spD1 from "@/assets/products/sportswear-detail-1.jpg";
 import spD2 from "@/assets/products/sportswear-detail-2.jpg";
 
@@ -19,6 +27,10 @@ import lt1 from "@/assets/products/leather-1.jpg";
 import lt2 from "@/assets/products/leather-2.jpg";
 import lt3 from "@/assets/products/leather-3.jpg";
 import lt4 from "@/assets/products/leather-4.jpg";
+import lt5 from "@/assets/products/leather-5.jpg";
+import lt6 from "@/assets/products/leather-6.jpg";
+import lt7 from "@/assets/products/leather-7.jpg";
+import lt8 from "@/assets/products/leather-8.jpg";
 import ltD1 from "@/assets/products/leather-detail-1.jpg";
 import ltD2 from "@/assets/products/leather-detail-2.jpg";
 
@@ -26,6 +38,10 @@ import st1 from "@/assets/products/streetwear-1.jpg";
 import st2 from "@/assets/products/streetwear-2.jpg";
 import st3 from "@/assets/products/streetwear-3.jpg";
 import st4 from "@/assets/products/streetwear-4.jpg";
+import st5 from "@/assets/products/streetwear-5.jpg";
+import st6 from "@/assets/products/streetwear-6.jpg";
+import st7 from "@/assets/products/streetwear-7.jpg";
+import st8 from "@/assets/products/streetwear-8.jpg";
 import stD1 from "@/assets/products/streetwear-detail-1.jpg";
 import stD2 from "@/assets/products/streetwear-detail-2.jpg";
 
@@ -33,6 +49,10 @@ import ls1 from "@/assets/products/leisure-1.jpg";
 import ls2 from "@/assets/products/leisure-2.jpg";
 import ls3 from "@/assets/products/leisure-3.jpg";
 import ls4 from "@/assets/products/leisure-4.jpg";
+import ls5 from "@/assets/products/leisure-5.jpg";
+import ls6 from "@/assets/products/leisure-6.jpg";
+import ls7 from "@/assets/products/leisure-7.jpg";
+import ls8 from "@/assets/products/leisure-8.jpg";
 import lsD1 from "@/assets/products/leisure-detail-1.jpg";
 import lsD2 from "@/assets/products/leisure-detail-2.jpg";
 
@@ -40,6 +60,10 @@ import nw1 from "@/assets/products/nightwear-1.jpg";
 import nw2 from "@/assets/products/nightwear-2.jpg";
 import nw3 from "@/assets/products/nightwear-3.jpg";
 import nw4 from "@/assets/products/nightwear-4.jpg";
+import nw5 from "@/assets/products/nightwear-5.jpg";
+import nw6 from "@/assets/products/nightwear-6.jpg";
+import nw7 from "@/assets/products/nightwear-7.jpg";
+import nw8 from "@/assets/products/nightwear-8.jpg";
 import nwD1 from "@/assets/products/nightwear-detail-1.jpg";
 import nwD2 from "@/assets/products/nightwear-detail-2.jpg";
 
@@ -48,12 +72,12 @@ import type { Product, ProductSpec } from "@/lib/categories";
 type Pool = string[];
 
 const POOLS: Record<string, Pool> = {
-  bavarian: [bav1, bav2, bav3, bav4, bavD1, bavD2],
-  sportswear: [sp1, sp2, sp3, sp4, spD1, spD2],
-  leatherwear: [lt1, lt2, lt3, lt4, ltD1, ltD2],
-  streetwear: [st1, st2, st3, st4, stD1, stD2],
-  leisurewear: [ls1, ls2, ls3, ls4, lsD1, lsD2],
-  nightwear: [nw1, nw2, nw3, nw4, nwD1, nwD2],
+  bavarian:    [bav1, bav2, bav3, bav4, bav5, bav6, bav7, bav8, bavD1, bavD2],
+  sportswear:  [sp1,  sp2,  sp3,  sp4,  sp5,  sp6,  sp7,  sp8,  spD1,  spD2],
+  leatherwear: [lt1,  lt2,  lt3,  lt4,  lt5,  lt6,  lt7,  lt8,  ltD1,  ltD2],
+  streetwear:  [st1,  st2,  st3,  st4,  st5,  st6,  st7,  st8,  stD1,  stD2],
+  leisurewear: [ls1,  ls2,  ls3,  ls4,  ls5,  ls6,  ls7,  ls8,  lsD1,  lsD2],
+  nightwear:   [nw1,  nw2,  nw3,  nw4,  nw5,  nw6,  nw7,  nw8,  nwD1,  nwD2],
 };
 
 export type SubCategory = {
@@ -156,6 +180,11 @@ const bavarian: CategoryGroup = {
         "Embroidered Front Panel Lederhosen", "Goat Suede Lederhosen", "Deer Leather Lederhosen", "Black Stag Lederhosen",
         "Forest Green Lederhosen", "Tan Hunter Lederhosen", "Vintage Distressed Lederhosen", "Modern Slim Lederhosen",
         "Long Bundhosen", "Buffalo Leather Lederhosen", "Charcoal Trachten Lederhosen",
+        "Editor's Selection 16 — Men's Lederhosen",
+        "Signature Edition 17 — Men's Lederhosen",
+        "Heritage Cut 18 — Men's Lederhosen",
+        "Atelier Limited 19 — Men's Lederhosen",
+        "Studio Sample 20 — Men's Lederhosen",
       ],
       {
         fabric: "Genuine deer / goat suede leather, 1.2–1.4mm",
@@ -183,6 +212,11 @@ const bavarian: CategoryGroup = {
         "Burgundy Velvet Dirndl", "Forest Green Linen Dirndl", "Pastel Spring Dirndl", "Black Trachten Dirndl",
         "Long Heritage Dirndl", "Plus-Size Festival Dirndl", "Lace-Trim Dirndl", "Modern Slim Dirndl",
         "Bridal White Dirndl", "Two-Tone Boutique Dirndl", "Kids-Match Mother Dirndl",
+        "Editor's Selection 16 — Women's Dirndl",
+        "Signature Edition 17 — Women's Dirndl",
+        "Heritage Cut 18 — Women's Dirndl",
+        "Atelier Limited 19 — Women's Dirndl",
+        "Studio Sample 20 — Women's Dirndl",
       ],
       {
         fabric: "Cotton-linen blend bodice, cotton voile blouse",
@@ -209,6 +243,11 @@ const bavarian: CategoryGroup = {
         "Classic White Trachten Shirt", "Slim-Fit Trachten Shirt", "Embroidered Edelweiss Shirt", "Linen Trachten Shirt",
         "Long-Sleeve Festival Shirt", "Half-Sleeve Summer Trachten", "Off-Shoulder Dirndl Blouse", "Lace-Trim Voile Blouse",
         "Puff-Sleeve Heritage Blouse", "Stand-Collar Trachten Shirt", "Check Pattern Trachten Shirt",
+        "Editor's Selection 12 — Trachten Shirts & Blouses",
+        "Signature Edition 13 — Trachten Shirts & Blouses",
+        "Heritage Cut 14 — Trachten Shirts & Blouses",
+        "Atelier Limited 15 — Trachten Shirts & Blouses",
+        "Studio Sample 16 — Trachten Shirts & Blouses",
       ],
       {
         fabric: "100% cotton poplin / voile",
@@ -235,6 +274,11 @@ const bavarian: CategoryGroup = {
         "Loden Wool Trachten Jacket", "Embroidered Linen Vest", "Heritage Janker Jacket", "Charcoal Trachten Blazer",
         "Stand-Collar Wool Jacket", "Hunter Green Janker", "Bone-Button Trachten Vest", "Hand-Felted Loden Coat",
         "Slim Janker Jacket", "Reversible Trachten Vest",
+        "Editor's Selection 11 — Trachten Jackets & Vests",
+        "Signature Edition 12 — Trachten Jackets & Vests",
+        "Heritage Cut 13 — Trachten Jackets & Vests",
+        "Atelier Limited 14 — Trachten Jackets & Vests",
+        "Studio Sample 15 — Trachten Jackets & Vests",
       ],
       {
         fabric: "Pure loden wool, linen waistcoat",
@@ -261,6 +305,11 @@ const bavarian: CategoryGroup = {
         "Kids Heritage Lederhosen", "Boys Short Lederhosen", "Girls Mini Dirndl", "Toddler Lederhosen Set",
         "Kids Embroidered Dirndl", "Boys Trachten Shirt", "Girls Puff-Sleeve Blouse", "Junior Trachten Vest",
         "Baby Lederhosen Romper", "Kids Festival Dirndl", "Boys Janker Jacket", "Family-Match Dirndl",
+        "Editor's Selection 13 — Kids Trachten",
+        "Signature Edition 14 — Kids Trachten",
+        "Heritage Cut 15 — Kids Trachten",
+        "Atelier Limited 16 — Kids Trachten",
+        "Studio Sample 17 — Kids Trachten",
       ],
       {
         fabric: "Soft kid suede 0.9–1.1mm + cotton check shirt",
@@ -287,6 +336,11 @@ const bavarian: CategoryGroup = {
         "Embroidered Charivari Belt", "Trachten Wool Hat", "Bavarian Knee Socks", "Heritage Trachten Tie",
         "Edelweiss Pocket Square", "Alpine Leather Belt", "Trachten Pouch Bag", "Hunter Feather Pin",
         "Wool Calf Warmers", "Trachten Suspenders",
+        "Editor's Selection 11 — Bavarian Accessories",
+        "Signature Edition 12 — Bavarian Accessories",
+        "Heritage Cut 13 — Bavarian Accessories",
+        "Atelier Limited 14 — Bavarian Accessories",
+        "Studio Sample 15 — Bavarian Accessories",
       ],
       {
         fabric: "Mixed: leather, wool, cotton",
@@ -322,6 +376,11 @@ const sportswear: CategoryGroup = {
         "Micro-Mesh Performance Tee", "Cotton-Touch Poly Tee", "Compression Base Tee", "Long-Sleeve Performance Tee",
         "Raglan Training Tee", "Reflective Print Running Tee", "Quick-Dry V-Neck Tee", "Pro-Athletic Crew Tee",
         "Eco-Recycled Poly Tee", "Mesh-Panel Training Tee", "Sleeveless Performance Tee", "Team Captain Polo Tee",
+        "Editor's Selection 13 — Performance T-Shirts",
+        "Signature Edition 14 — Performance T-Shirts",
+        "Heritage Cut 15 — Performance T-Shirts",
+        "Atelier Limited 16 — Performance T-Shirts",
+        "Studio Sample 17 — Performance T-Shirts",
       ],
       {
         fabric: "100% polyester micro-mesh / poly-spandex",
@@ -347,6 +406,11 @@ const sportswear: CategoryGroup = {
         "Heavyweight 380 GSM Hoodie", "Tech Fleece Pullover", "Zip-Front Performance Hoodie", "Cropped Training Hoodie",
         "Sherpa-Lined Hoodie", "Oversized Gym Hoodie", "Half-Zip Tech Sweatshirt", "Compression Underlayer Hoodie",
         "Recycled Fleece Hoodie", "Reflective-Detail Hoodie",
+        "Editor's Selection 11 — Hoodies & Sweatshirts",
+        "Signature Edition 12 — Hoodies & Sweatshirts",
+        "Heritage Cut 13 — Hoodies & Sweatshirts",
+        "Atelier Limited 14 — Hoodies & Sweatshirts",
+        "Studio Sample 15 — Hoodies & Sweatshirts",
       ],
       {
         fabric: "Poly-cotton fleece / tech fleece",
@@ -372,6 +436,11 @@ const sportswear: CategoryGroup = {
         "Pro Tricot Tracksuit", "Slim-Fit Performance Tracksuit", "Reflective Piping Tracksuit", "Half-Zip Warmup Set",
         "Hooded Tech Tracksuit", "Two-Tone Color-Block Tracksuit", "Recycled Poly Tracksuit", "Youth Training Tracksuit",
         "Premium Velour Tracksuit", "Bonded-Seam Pro Tracksuit",
+        "Editor's Selection 11 — Tracksuits & Warmups",
+        "Signature Edition 12 — Tracksuits & Warmups",
+        "Heritage Cut 13 — Tracksuits & Warmups",
+        "Atelier Limited 14 — Tracksuits & Warmups",
+        "Studio Sample 15 — Tracksuits & Warmups",
       ],
       {
         fabric: "94% polyester / 6% spandex tricot",
@@ -397,6 +466,11 @@ const sportswear: CategoryGroup = {
         "Pro Sublimated Soccer Jersey", "Basketball Tournament Jersey", "Rugby League Jersey", "Cricket Test Jersey",
         "American Football Jersey", "Hockey Practice Jersey", "Volleyball Team Jersey", "Handball Match Jersey",
         "E-Sports Pro Jersey", "Lacrosse Reversible Jersey", "Baseball Stretch Jersey", "Goalkeeper Padded Jersey",
+        "Editor's Selection 13 — Team Jerseys",
+        "Signature Edition 14 — Team Jerseys",
+        "Heritage Cut 15 — Team Jerseys",
+        "Atelier Limited 16 — Team Jerseys",
+        "Studio Sample 17 — Team Jerseys",
       ],
       {
         fabric: "Polyester interlock / tricot mesh",
@@ -422,6 +496,11 @@ const sportswear: CategoryGroup = {
         "Pro Training Shorts", "Compression Long Tights", "Joggers with Zip Pockets", "Basketball Mesh Shorts",
         "Soccer Match Shorts", "Cycling Bib Shorts", "Yoga Performance Leggings", "Reflective Running Shorts",
         "Cargo Training Joggers", "Heavyweight Fleece Joggers",
+        "Editor's Selection 11 — Shorts & Bottoms",
+        "Signature Edition 12 — Shorts & Bottoms",
+        "Heritage Cut 13 — Shorts & Bottoms",
+        "Atelier Limited 14 — Shorts & Bottoms",
+        "Studio Sample 15 — Shorts & Bottoms",
       ],
       {
         fabric: "Poly-spandex / cotton-fleece",
@@ -446,6 +525,11 @@ const sportswear: CategoryGroup = {
       [
         "Compression Long-Sleeve Top", "Compression Tank", "Compression Shorts", "Targeted Support Tights",
         "Sauna Sweat Suit", "Stringer Gym Tank", "Cropped Sports Bra Top", "Seamless Training Set",
+        "Editor's Selection 9 — Compression & Gym Wear",
+        "Signature Edition 10 — Compression & Gym Wear",
+        "Heritage Cut 11 — Compression & Gym Wear",
+        "Atelier Limited 12 — Compression & Gym Wear",
+        "Studio Sample 13 — Compression & Gym Wear",
       ],
       {
         fabric: "80% nylon / 20% spandex 4-way stretch",
@@ -480,6 +564,11 @@ const leatherwear: CategoryGroup = {
         "Classic Asymmetric Biker", "Slim Racer Biker", "Studded Punk Biker", "Quilted Shoulder Biker",
         "Café Racer Jacket", "Double-Rider Biker", "Vintage Distressed Biker", "Cropped Women's Biker",
         "Long Belted Biker", "Cognac Leather Biker", "Oxblood Statement Biker", "Black Lambskin Moto",
+        "Editor's Selection 13 — Biker & Moto Jackets",
+        "Signature Edition 14 — Biker & Moto Jackets",
+        "Heritage Cut 15 — Biker & Moto Jackets",
+        "Atelier Limited 16 — Biker & Moto Jackets",
+        "Studio Sample 17 — Biker & Moto Jackets",
       ],
       {
         fabric: "Full-grain cowhide / napa lambskin",
@@ -505,6 +594,11 @@ const leatherwear: CategoryGroup = {
         "Classic Leather Bomber", "MA-1 Aviator Bomber", "Shearling Aviator", "Hooded Leather Bomber",
         "Cognac Suede Bomber", "Two-Tone Color-Block Bomber", "Cropped Aviator", "B-3 Heritage Aviator",
         "Souvenir Embroidered Bomber", "Quilted Down Bomber",
+        "Editor's Selection 11 — Bomber & Aviator Jackets",
+        "Signature Edition 12 — Bomber & Aviator Jackets",
+        "Heritage Cut 13 — Bomber & Aviator Jackets",
+        "Atelier Limited 14 — Bomber & Aviator Jackets",
+        "Studio Sample 15 — Bomber & Aviator Jackets",
       ],
       {
         fabric: "Cowhide 1.0mm, quilted poly lining, rib-knit trims",
@@ -530,6 +624,11 @@ const leatherwear: CategoryGroup = {
         "Tailored Leather Trousers", "Skinny Leather Pants", "Wide-Leg Leather Pants", "Cropped Leather Pants",
         "Five-Pocket Leather Jeans", "Leather Cargo Pants", "Leather Bermuda Shorts", "High-Waist Leather Pants",
         "Bonded Stretch Leather Pants", "Side-Stripe Leather Pants",
+        "Editor's Selection 11 — Leather Pants & Shorts",
+        "Signature Edition 12 — Leather Pants & Shorts",
+        "Heritage Cut 13 — Leather Pants & Shorts",
+        "Atelier Limited 14 — Leather Pants & Shorts",
+        "Studio Sample 15 — Leather Pants & Shorts",
       ],
       {
         fabric: "Lambskin 0.6–0.8mm, bonded jersey lining",
@@ -554,6 +653,11 @@ const leatherwear: CategoryGroup = {
       [
         "Leather Western Shirt", "Sleeveless Leather Vest", "Quilted Leather Gilet", "Suede Shirt-Jacket",
         "Snap-Front Leather Shirt", "Long Leather Vest", "Tailored Leather Waistcoat", "Studded Leather Vest",
+        "Editor's Selection 9 — Leather Shirts & Vests",
+        "Signature Edition 10 — Leather Shirts & Vests",
+        "Heritage Cut 11 — Leather Shirts & Vests",
+        "Atelier Limited 12 — Leather Shirts & Vests",
+        "Studio Sample 13 — Leather Shirts & Vests",
       ],
       {
         fabric: "Lambskin / cowhide / suede",
@@ -578,6 +682,11 @@ const leatherwear: CategoryGroup = {
       [
         "Belted Leather Trench", "Knee-Length Leather Coat", "Maxi Leather Coat", "Wool-Leather Combo Trench",
         "Shearling-Collar Coat", "Double-Breasted Leather Coat", "Hooded Long Leather Coat",
+        "Editor's Selection 8 — Long Leather Coats",
+        "Signature Edition 9 — Long Leather Coats",
+        "Heritage Cut 10 — Long Leather Coats",
+        "Atelier Limited 11 — Long Leather Coats",
+        "Studio Sample 12 — Long Leather Coats",
       ],
       {
         fabric: "Cowhide 1.2mm / lambskin 0.9mm",
@@ -602,6 +711,11 @@ const leatherwear: CategoryGroup = {
       [
         "Driving Leather Gloves", "Lined Touchscreen Gloves", "Premium Leather Belt", "Heritage Buckle Belt",
         "Bifold Leather Wallet", "Card Holder", "Leather Suspenders", "Travel Document Holder",
+        "Editor's Selection 9 — Leather Accessories",
+        "Signature Edition 10 — Leather Accessories",
+        "Heritage Cut 11 — Leather Accessories",
+        "Atelier Limited 12 — Leather Accessories",
+        "Studio Sample 13 — Leather Accessories",
       ],
       {
         fabric: "Full-grain cowhide / napa",
@@ -636,6 +750,11 @@ const streetwear: CategoryGroup = {
         "240 GSM Boxy Tee", "300 GSM Heavyweight Tee", "Acid-Wash Boxy Tee", "Vintage-Wash Skater Tee",
         "Drop-Shoulder Long Tee", "Cropped Boxy Tee", "Mockneck Heavyweight Tee", "Long-Sleeve Boxy Tee",
         "Tie-Dye Statement Tee", "Pigment-Dye Vintage Tee", "Pocket Boxy Tee", "Mesh-Panel Streetwear Tee",
+        "Editor's Selection 13 — Heavyweight & Oversized Tees",
+        "Signature Edition 14 — Heavyweight & Oversized Tees",
+        "Heritage Cut 15 — Heavyweight & Oversized Tees",
+        "Atelier Limited 16 — Heavyweight & Oversized Tees",
+        "Studio Sample 17 — Heavyweight & Oversized Tees",
       ],
       {
         fabric: "100% combed ring-spun cotton",
@@ -661,6 +780,11 @@ const streetwear: CategoryGroup = {
         "500 GSM Drop-Shoulder Hoodie", "Acid-Wash Heavy Hoodie", "Cropped Streetwear Hoodie", "Zip-Up Heavy Hoodie",
         "Quarter-Zip Heavy Sweatshirt", "Tie-Dye Festival Hoodie", "Embroidered Logo Hoodie", "Puff-Print Statement Hoodie",
         "Pigment-Dye Vintage Hoodie", "Half-Zip Mockneck Hoodie",
+        "Editor's Selection 11 — Hoodies & Sweatshirts",
+        "Signature Edition 12 — Hoodies & Sweatshirts",
+        "Heritage Cut 13 — Hoodies & Sweatshirts",
+        "Atelier Limited 14 — Hoodies & Sweatshirts",
+        "Studio Sample 15 — Hoodies & Sweatshirts",
       ],
       {
         fabric: "100% cotton French terry, brushed back",
@@ -686,6 +810,11 @@ const streetwear: CategoryGroup = {
         "Heavy Ripstop Cargo Pant", "Slim Tapered Cargo Pant", "Wide-Leg Cargo Pant", "Multi-Pocket Utility Cargo",
         "Drawstring Joggers", "Acid-Wash Streetwear Pant", "Heavyweight Sweatpants", "Cargo Bermuda Shorts",
         "Side-Stripe Track Pant", "Parachute Pant",
+        "Editor's Selection 11 — Cargo Pants & Bottoms",
+        "Signature Edition 12 — Cargo Pants & Bottoms",
+        "Heritage Cut 13 — Cargo Pants & Bottoms",
+        "Atelier Limited 14 — Cargo Pants & Bottoms",
+        "Studio Sample 15 — Cargo Pants & Bottoms",
       ],
       {
         fabric: "100% cotton ripstop or poly-cotton blend",
@@ -711,6 +840,11 @@ const streetwear: CategoryGroup = {
         "Varsity Letterman Jacket", "Heavyweight Work Jacket", "Reflective Windbreaker", "Puffer Statement Jacket",
         "Coach's Jacket", "Bomber Streetwear Jacket", "Anorak Half-Zip Jacket", "Quilted Liner Jacket",
         "Carpenter Chore Coat", "Cropped Puffer Vest",
+        "Editor's Selection 11 — Outerwear & Jackets",
+        "Signature Edition 12 — Outerwear & Jackets",
+        "Heritage Cut 13 — Outerwear & Jackets",
+        "Atelier Limited 14 — Outerwear & Jackets",
+        "Studio Sample 15 — Outerwear & Jackets",
       ],
       {
         fabric: "Melton wool, nylon, cotton twill",
@@ -735,6 +869,11 @@ const streetwear: CategoryGroup = {
       [
         "Selvedge Raw Denim Jean", "Loose Baggy Jean", "Slim Tapered Jean", "Carpenter Denim Pant",
         "Washed Denim Trucker Jacket", "Oversized Denim Chore Coat", "Denim Cargo Shorts", "Wide-Leg Denim Pant",
+        "Editor's Selection 9 — Denim Program",
+        "Signature Edition 10 — Denim Program",
+        "Heritage Cut 11 — Denim Program",
+        "Atelier Limited 12 — Denim Program",
+        "Studio Sample 13 — Denim Program",
       ],
       {
         fabric: "100% cotton selvedge denim",
@@ -759,6 +898,11 @@ const streetwear: CategoryGroup = {
       [
         "Five-Panel Trucker Cap", "Dad Cap", "Bucket Hat", "Beanie",
         "Snapback Pro Cap", "Tote Bag", "Crossbody Sling", "Reflective Bum Bag",
+        "Editor's Selection 9 — Headwear & Accessories",
+        "Signature Edition 10 — Headwear & Accessories",
+        "Heritage Cut 11 — Headwear & Accessories",
+        "Atelier Limited 12 — Headwear & Accessories",
+        "Studio Sample 13 — Headwear & Accessories",
       ],
       {
         fabric: "Cotton twill, mesh, fleece",
@@ -793,6 +937,11 @@ const leisurewear: CategoryGroup = {
         "Pima Cotton Pique Polo", "Mercerized Jersey Polo", "Long-Sleeve Polo", "Half-Zip Polo",
         "Striped Heritage Polo", "Performance Stretch Polo", "Slim-Fit Tailored Polo", "Tipped Collar Polo",
         "Linen Blend Polo", "Womens Fitted Polo",
+        "Editor's Selection 11 — Polo Shirts",
+        "Signature Edition 12 — Polo Shirts",
+        "Heritage Cut 13 — Polo Shirts",
+        "Atelier Limited 14 — Polo Shirts",
+        "Studio Sample 15 — Polo Shirts",
       ],
       {
         fabric: "100% pima cotton pique / mercerized jersey",
@@ -817,6 +966,11 @@ const leisurewear: CategoryGroup = {
       [
         "Slim-Fit Chino", "Pleated Chino", "Cropped Chino", "Wide-Leg Trouser",
         "Drawstring Beach Pant", "Linen Summer Trouser", "Five-Pocket Stretch Chino", "Tapered Suit Pant",
+        "Editor's Selection 9 — Chinos & Trousers",
+        "Signature Edition 10 — Chinos & Trousers",
+        "Heritage Cut 11 — Chinos & Trousers",
+        "Atelier Limited 12 — Chinos & Trousers",
+        "Studio Sample 13 — Chinos & Trousers",
       ],
       {
         fabric: "Pima cotton twill / cotton-linen blend",
@@ -841,6 +995,11 @@ const leisurewear: CategoryGroup = {
       [
         "Cashmere Crew Sweater", "Merino V-Neck", "Cotton-Modal Knit Cardigan", "Shawl Collar Cardigan",
         "Cable Knit Sweater", "Ribbed Knit Mockneck", "Lightweight Linen Knit", "Oversized Boyfriend Cardigan",
+        "Editor's Selection 9 — Knitwear & Cardigans",
+        "Signature Edition 10 — Knitwear & Cardigans",
+        "Heritage Cut 11 — Knitwear & Cardigans",
+        "Atelier Limited 12 — Knitwear & Cardigans",
+        "Studio Sample 13 — Knitwear & Cardigans",
       ],
       {
         fabric: "Cashmere blends, merino wool, cotton-modal",
@@ -865,6 +1024,11 @@ const leisurewear: CategoryGroup = {
       [
         "Pure Linen Shirt", "Linen-Cotton Camp Collar", "Long-Sleeve Linen Tunic", "Linen Beach Shirt",
         "Embroidered Linen Shirt", "Drawstring Linen Top", "Cuban Collar Linen Shirt",
+        "Editor's Selection 8 — Linen Shirts & Blouses",
+        "Signature Edition 9 — Linen Shirts & Blouses",
+        "Heritage Cut 10 — Linen Shirts & Blouses",
+        "Atelier Limited 11 — Linen Shirts & Blouses",
+        "Studio Sample 12 — Linen Shirts & Blouses",
       ],
       {
         fabric: "100% French linen",
@@ -889,6 +1053,11 @@ const leisurewear: CategoryGroup = {
       [
         "Cashmere Blend Lounge Set", "Organic Cotton Joggers & Crew", "Bamboo Tee & Shorts Set", "Knit Cardigan & Pant Co-ord",
         "Recycled Fleece Lounge Set", "Modal-Cotton Sleep Set", "Hemp-Cotton Festival Set", "Premium Velour Lounge Set",
+        "Editor's Selection 9 — Loungewear Sets",
+        "Signature Edition 10 — Loungewear Sets",
+        "Heritage Cut 11 — Loungewear Sets",
+        "Atelier Limited 12 — Loungewear Sets",
+        "Studio Sample 13 — Loungewear Sets",
       ],
       {
         fabric: "Cashmere blend / organic cotton / bamboo viscose",
@@ -923,6 +1092,11 @@ const nightwear: CategoryGroup = {
         "19mm Mulberry Silk Pajama", "22mm Heavy Silk Pajama", "Lace-Trim Silk Pajama", "Piped Silk Pajama Set",
         "Long-Sleeve Silk Pajama", "Short-Sleeve Summer Silk Set", "Monogram Silk Pajama", "Bridal Silk Pajama",
         "Floral-Print Silk Pajama", "Two-Tone Silk Pajama",
+        "Editor's Selection 11 — Silk Pajama Sets",
+        "Signature Edition 12 — Silk Pajama Sets",
+        "Heritage Cut 13 — Silk Pajama Sets",
+        "Atelier Limited 14 — Silk Pajama Sets",
+        "Studio Sample 15 — Silk Pajama Sets",
       ],
       {
         fabric: "100% mulberry silk charmeuse",
@@ -947,6 +1121,11 @@ const nightwear: CategoryGroup = {
       [
         "Satin Mid-Length Robe", "Pure Silk Robe", "Modal-Cotton Robe", "Kimono-Sleeve Robe",
         "Bridal White Robe", "Hooded Spa Robe", "Waffle-Knit Robe", "Embroidered Heritage Robe",
+        "Editor's Selection 9 — Robes & Kimonos",
+        "Signature Edition 10 — Robes & Kimonos",
+        "Heritage Cut 11 — Robes & Kimonos",
+        "Atelier Limited 12 — Robes & Kimonos",
+        "Studio Sample 13 — Robes & Kimonos",
       ],
       {
         fabric: "Heavy satin / silk satin / modal",
@@ -971,6 +1150,11 @@ const nightwear: CategoryGroup = {
       [
         "Lace-Trim Modal Slip", "Bias-Cut Silk Slip", "Long Lace Nightgown", "Spaghetti-Strap Nightgown",
         "Empire-Waist Cotton Nightgown", "Boudoir Lace Slip", "Plus-Size Lace Gown", "Bridal Nightgown",
+        "Editor's Selection 9 — Nightgowns & Slips",
+        "Signature Edition 10 — Nightgowns & Slips",
+        "Heritage Cut 11 — Nightgowns & Slips",
+        "Atelier Limited 12 — Nightgowns & Slips",
+        "Studio Sample 13 — Nightgowns & Slips",
       ],
       {
         fabric: "Tencel modal / silk charmeuse / cotton voile",
@@ -995,6 +1179,11 @@ const nightwear: CategoryGroup = {
       [
         "Brushed Cotton Pajama", "Flannel Check Pajama", "Modal Stretch Pajama", "Jersey Knit Pajama Set",
         "Long-Sleeve Cotton Pajama", "Short-Sleeve Cotton Pajama", "Hooded Lounge Pajama", "Heritage Stripe Pajama",
+        "Editor's Selection 9 — Cotton & Modal Pajamas",
+        "Signature Edition 10 — Cotton & Modal Pajamas",
+        "Heritage Cut 11 — Cotton & Modal Pajamas",
+        "Atelier Limited 12 — Cotton & Modal Pajamas",
+        "Studio Sample 13 — Cotton & Modal Pajamas",
       ],
       {
         fabric: "100% brushed cotton flannel / Tencel modal",
@@ -1019,6 +1208,11 @@ const nightwear: CategoryGroup = {
       [
         "Modal Sleep Tee & Short Set", "Bamboo Sleep Cami & Short", "Cotton Sleep Crew & Pant", "Henley Sleep Set",
         "Cropped Sleep Tank & Short", "Long-Sleeve Sleep Henley Set", "Modal Sleep Romper", "Plus-Size Sleep Set",
+        "Editor's Selection 9 — Sleep Loungewear",
+        "Signature Edition 10 — Sleep Loungewear",
+        "Heritage Cut 11 — Sleep Loungewear",
+        "Atelier Limited 12 — Sleep Loungewear",
+        "Studio Sample 13 — Sleep Loungewear",
       ],
       {
         fabric: "Tencel modal / bamboo viscose / cotton jersey",
@@ -1043,6 +1237,11 @@ const nightwear: CategoryGroup = {
       [
         "Kids Cotton Pajama Set", "Toddler Sleep Romper", "Kids Hooded Onesie", "Boys Long-Sleeve Pajama",
         "Girls Lace-Trim Nightgown", "Kids Flannel Pajama", "Kids Bamboo Sleep Set", "Family-Match Pajama",
+        "Editor's Selection 9 — Kids Sleepwear",
+        "Signature Edition 10 — Kids Sleepwear",
+        "Heritage Cut 11 — Kids Sleepwear",
+        "Atelier Limited 12 — Kids Sleepwear",
+        "Studio Sample 13 — Kids Sleepwear",
       ],
       {
         fabric: "100% combed cotton / organic cotton",
