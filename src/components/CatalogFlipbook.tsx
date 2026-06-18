@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Maximize2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CATALOG_PAGES, catalogPdf, catalogThumb } from "@/lib/catalogPages";
-import { trackDownload } from "@/lib/analytics";
+
 
 
 type Props = {
@@ -96,20 +96,6 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
           <h2 className="font-display text-base sm:text-lg md:text-2xl leading-tight tracking-tight line-clamp-2 break-words">{title}</h2>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href={catalogPdf(slug)}
-            download={`Irha-${slug}-catalog.pdf`}
-            onClick={() =>
-              trackDownload({
-                page: window.location.pathname + window.location.search,
-                cta_location: "flipbook-header",
-                catalog: slug,
-              })
-            }
-            className="hidden sm:inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
-          >
-            <Download size={13} /> Download PDF
-          </a>
           <a
             href={catalogPdf(slug)}
             target="_blank"
@@ -207,20 +193,6 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
         </div>
         <div className="flex items-center gap-3 ml-auto">
           {action}
-          <a
-            href={catalogPdf(slug)}
-            download={`Irha-${slug}-catalog.pdf`}
-            onClick={() =>
-              trackDownload({
-                page: window.location.pathname + window.location.search,
-                cta_location: "flipbook-footer",
-                catalog: slug,
-              })
-            }
-            className="sm:hidden inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
-          >
-            <Download size={13} /> Download PDF
-          </a>
         </div>
       </footer>
     </div>

@@ -2,14 +2,14 @@ import SEO from "@/components/SEO";
 import { CATEGORIES, type Category, type Product } from "@/lib/categories";
 import { CATALOG, findGroup } from "@/lib/catalog";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Eye, Maximize2, MessageCircle } from "lucide-react";
+import { ArrowUpRight, Eye, Maximize2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 
 import { whatsappLink, BRAND } from "@/lib/constants";
-import { trackDownload } from "@/lib/analytics";
+
 
 
 export default function Products() {
@@ -54,60 +54,6 @@ export default function Products() {
             to browse the full range — OEM, ODM and private-label programs available across every product.
           </p>
 
-          {/* Catalog downloads */}
-          <div className="mt-14 border-t border-border/60 pt-10">
-            <div className="flex flex-wrap items-end justify-between gap-6 mb-6">
-              <div>
-                <p className="eyebrow mb-2">Wholesale Catalogues</p>
-                <h2 className="font-display text-2xl md:text-3xl">Download the line sheets</h2>
-              </div>
-              <p className="text-xs uppercase tracking-[0.3em] text-foreground/50">
-                PDF · A4 · 2026 collection
-              </p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {CATEGORIES.map((c) => (
-                <div key={c.slug} className="group flex flex-col">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewCat(c)}
-                    className="relative aspect-[3/4] overflow-hidden border border-border/60 bg-card hover:border-primary transition-colors"
-                    aria-label={`Preview ${c.name} catalog`}
-                  >
-                    <img
-                      src={`/catalogs/thumbs/${c.slug}-catalog-1.jpg`}
-                      alt={`${c.name} catalog preview`}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-gold">
-                        <Eye size={14} /> Preview
-                      </span>
-                    </div>
-                  </button>
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <span className="font-display text-sm leading-tight">{c.name}</span>
-                    <a
-                      href={c.catalog}
-                      download={`Irha-${c.slug}-catalog.pdf`}
-                      onClick={() =>
-                        trackDownload({
-                          page: "/products",
-                          cta_location: "products-grid",
-                          catalog: c.slug,
-                        })
-                      }
-                      className="text-gold hover:text-primary transition-colors"
-                      aria-label={`Download ${c.name} catalog`}
-                    >
-                      <Download size={14} />
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
