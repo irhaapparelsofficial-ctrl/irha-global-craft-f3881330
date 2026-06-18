@@ -222,6 +222,19 @@ export default function CategoryPage() {
               {totalProducts} styles · MOQ 50 · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
             </span>
           </div>
+
+          {/* Catalog page thumbnails — peek inside */}
+          <div className="mt-8 pt-6 border-t border-border/40">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-foreground/55 mb-3">
+              {category.name} catalogue · peek inside
+            </p>
+            <CatalogThumbnailStrip
+              slug={category.slug}
+              count={6}
+              skip={1}
+              onClick={() => setFlipOpen(true)}
+            />
+          </div>
         </div>
       </section>
 
