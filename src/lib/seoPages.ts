@@ -994,5 +994,9 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
 
 SEO_PAGES.push(...COUNTRY_PAGES);
 
+// 30 hand-crafted location × product B2B landing pages
+import { LOCATION_PAGES } from "./seoLocationPages";
+SEO_PAGES.push(...LOCATION_PAGES);
+
 export const SEO_PAGE_SLUGS = SEO_PAGES.map((p) => p.slug);
 export const getSeoPage = (slug: string) => SEO_PAGES.find((p) => p.slug === slug);

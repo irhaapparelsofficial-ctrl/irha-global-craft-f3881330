@@ -38,6 +38,47 @@ const seoLandingSlugs = [
   "oktoberfest-clothing-manufacturer",
   "streetwear-manufacturer-pakistan",
   "custom-apparel-manufacturer-pakistan",
+  // Country pages
+  "germany-apparel-manufacturer",
+  "austria-lederhosen-manufacturer",
+  "uae-sportswear-manufacturer",
+  "usa-private-label-clothing-manufacturer",
+  "uk-custom-apparel-manufacturer",
+  // 30 location × product pages — leatherwear
+  "leather-jacket-manufacturer-new-york",
+  "wholesale-leather-gloves-london",
+  "custom-leather-pants-berlin",
+  "b2b-leather-bags-supplier-sydney",
+  "leather-jacket-wholesale-toronto",
+  "leather-bags-manufacturer-dubai",
+  // Bavarian
+  "lederhosen-manufacturer-munich",
+  "dirndl-wholesale-supplier-vienna",
+  "trachten-jackets-manufacturer-salzburg",
+  "oktoberfest-clothing-wholesale-zurich",
+  "trachten-manufacturer-stuttgart",
+  // Sportswear
+  "tracksuit-manufacturer-manchester",
+  "custom-team-jerseys-los-angeles",
+  "wholesale-leggings-supplier-madrid",
+  "gym-wear-oem-dubai",
+  "sportswear-manufacturer-amsterdam",
+  "sports-bras-manufacturer-melbourne",
+  "team-wear-supplier-paris",
+  // Streetwear
+  "hoodie-manufacturer-tokyo",
+  "cargo-pants-supplier-berlin",
+  "oversized-tees-wholesale-london",
+  "streetwear-manufacturer-new-york",
+  "private-label-streetwear-paris",
+  "hoodie-wholesale-supplier-toronto",
+  // Leisurewear
+  "loungewear-manufacturer-copenhagen",
+  "robe-manufacturer-milan",
+  "casual-sets-supplier-stockholm",
+  "loungewear-wholesale-paris",
+  "robe-wholesale-supplier-dubai",
+  "casual-sets-manufacturer-sydney",
 ];
 
 const categorySlugs = ["bavarian", "sportswear", "leatherwear", "streetwear", "leisurewear", "nightwear"];
