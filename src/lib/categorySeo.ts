@@ -1,6 +1,13 @@
 // Per-category SEO metadata + FAQ blocks targeting export-buyer keywords
 // (USA, EU, UK, UAE, Germany, Australia). Used by /products/:slug pages.
 
+import ogBavarian from "@/assets/og/og-bavarian.jpg";
+import ogSportswear from "@/assets/og/og-sportswear.jpg";
+import ogLeather from "@/assets/og/og-leather.jpg";
+import ogStreetwear from "@/assets/og/og-streetwear.jpg";
+import ogLeisure from "@/assets/og/og-leisure.jpg";
+import ogNightwear from "@/assets/og/og-nightwear.jpg";
+
 export type CategoryFAQ = { q: string; a: string };
 
 export type CategorySEO = {
@@ -10,6 +17,7 @@ export type CategorySEO = {
   h1: string;
   intro: string;          // long-form intro paragraph for the page
   exportMarkets: string[];
+  ogImage: string;        // 1200x630 share card for OG/Twitter
   faqs: CategoryFAQ[];
 };
 
@@ -24,6 +32,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     intro:
       "Authentic European trachten produced at our Sialkot atelier for Oktoberfest retailers, alpine boutiques and trachten chains across Germany, Austria, Switzerland and the United States. Genuine deer suede, hand-embroidered florals, antique alpine hardware and made-to-measure sizing — at wholesale MOQs starting from 50 sets.",
     exportMarkets: ["Germany", "Austria", "Switzerland", "USA", "Italy"],
+    ogImage: ogBavarian,
     faqs: [
       { q: "Do you export lederhosen and trachten to Germany and Austria?", a: "Yes. Bavarian wear is our largest export program — we ship full container loads and air-freight orders weekly to importers and Oktoberfest retailers in Germany, Austria, Switzerland and South Tyrol. We handle EU customs paperwork, REACH compliance and OEKO-TEX certificates with every shipment." },
       { q: "What is the MOQ for wholesale lederhosen?", a: "Our standard MOQ is 50 sets per design and colorway. Inside the MOQ you may split sizes EU 44–60 (men) and equivalent women's and kids' sizing freely, so you can stock a full size run for a single shop or test launch." },
@@ -43,6 +52,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     intro:
       "Sialkot's sportswear heritage applied to modern teamwear, performance training kits and gym apparel. In-house dye-sublimation, recycled polyester knits, four-way stretch and bonded seams — engineered for sports brands, e-commerce activewear labels and clubs across the USA, UK, UAE, Australia and the EU.",
     exportMarkets: ["USA", "UK", "Australia", "UAE", "Germany", "France"],
+    ogImage: ogSportswear,
     faqs: [
       { q: "Do you manufacture fully sublimated custom team jerseys?", a: "Yes. We run full dye-sublimation in-house on 140–180 GSM micro-mesh and interlock polyester — unlimited print colors, custom crests, numbers, names and sponsor logos at no extra setup beyond the digitizing fee." },
       { q: "What is the MOQ for custom sportswear and tracksuits?", a: "Our MOQ is 50 sets per design. Within the 50-set MOQ you can split sizes XS–3XL freely; multi-color splits within one print are accepted from 25 sets per colorway." },
@@ -62,6 +72,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     intro:
       "Three generations of Sialkot leatherworking, applied to premium fashion outerwear, biker jackets, bomber jackets, vests and skirts. We work with lambskin, cowhide nappa, sheep nappa and genuine suede from LWG-rated tanneries — built for fashion houses, motorcycle apparel brands and private-label boutiques across the USA, EU, UK and the Gulf.",
     exportMarkets: ["USA", "UK", "Germany", "Italy", "UAE", "Canada"],
+    ogImage: ogLeather,
     faqs: [
       { q: "What leather types do you stock for jacket production?", a: "We work with 0.7–1.2 mm lambskin nappa, cowhide aniline, sheep suede, goatskin and waxed buffalo. All hides come from LWG Gold and Silver-rated tanneries with REACH and CITES documentation." },
       { q: "What is the MOQ for custom leather jackets?", a: "MOQ is 50 pieces per design and colorway. Pattern, sample and tech-pack support is included for confirmed POs. Bespoke single-design runs under MOQ are quoted separately as a sampling program." },
@@ -81,6 +92,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     intro:
       "A dedicated streetwear program for emerging fashion labels and established drops — 320–500 GSM heavyweight fleece, garment dye, acid wash, puff print, 3D embroidery and applique. Built for streetwear brands, influencer drops and private-label retailers across the USA, UK, Canada, Germany and Australia, with low-MOQ start-up support.",
     exportMarkets: ["USA", "UK", "Canada", "Germany", "Australia"],
+    ogImage: ogStreetwear,
     faqs: [
       { q: "What GSM weights do you produce for hoodies?", a: "Standard weights are 320, 380, 420 and 500 GSM brushed-back fleece in cotton and cotton-poly blends. Above 500 GSM (winter sherpa-lined hoodies) is available on request." },
       { q: "Is there a low-MOQ program for emerging streetwear brands?", a: "Yes. Our Start-Up Program allows MOQ 50 pieces per color across hoodies, tees and sweatpants — with the same heavyweight fabric, finishing and trims used for larger brands. Tech-pack support is free for confirmed POs." },
@@ -100,6 +112,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     intro:
       "Soft-hand loungewear, athleisure sets and resort co-ords for DTC lounge brands, hotel boutiques and lifestyle retailers. French terry, modal jersey, bamboo viscose and recycled cotton — built for the USA, UK, EU, UAE, Australia and GCC resort markets with full private-label and packaging support.",
     exportMarkets: ["USA", "UK", "UAE", "Saudi Arabia", "Australia", "France"],
+    ogImage: ogLeisure,
     faqs: [
       { q: "What fabrics do you use for loungewear sets?", a: "180–280 GSM French terry, modal-cotton jersey, bamboo viscose, slub jersey, waffle knit and recycled-cotton fleece. All fabrics are OEKO-TEX Standard 100 certified and GOTS-organic options are available on request." },
       { q: "What is the MOQ for wholesale loungewear sets?", a: "MOQ is 50 sets per design and colorway, with free size splits XS–3XL inside the MOQ. Co-ord sets (top + bottom) count as one set." },
@@ -119,6 +132,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     intro:
       "Luxury sleepwear and intimate loungewear produced for boutique lingerie brands, bridal stores and hotel retail across the USA, UK, EU, UAE and Australia. Mulberry silk, French satin, brushed cotton and bamboo — finished with French seams, custom lace trims and signature packaging.",
     exportMarkets: ["USA", "UK", "France", "UAE", "Australia", "Italy"],
+    ogImage: ogNightwear,
     faqs: [
       { q: "Do you produce mulberry silk pyjama sets?", a: "Yes. We stock 19 and 22 momme grade-6A mulberry silk in piece-dyed and printed forms. All silk is OEKO-TEX Standard 100 certified with mill-issued grade certificates." },
       { q: "What is the MOQ for custom nightwear?", a: "MOQ is 50 sets per design and colorway across silk, satin and cotton programs. Size splits XS–3XL inside the MOQ are free; printed satin requires 25 yards minimum per custom print colorway." },
