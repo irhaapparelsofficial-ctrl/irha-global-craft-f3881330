@@ -38,8 +38,8 @@ export default function PrivacyPolicy() {
         <h2 className="text-xl font-semibold">Contact</h2>
         <p>
           Questions about this policy?{" "}
-          <a className="underline" href="mailto:info@irhaapparels.com">
-            info@irhaapparels.com
+          <a className="underline" href="mailto:irhaapparelsofficial@gmail.com">
+            irhaapparelsofficial@gmail.com
           </a>
         </p>
       </div>
