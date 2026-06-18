@@ -1,9 +1,9 @@
-import bavarian from "@/assets/cat-bavarian.jpg";
-import sportswear from "@/assets/cat-sportswear.jpg";
-import leather from "@/assets/cat-leather.jpg";
-import streetwear from "@/assets/cat-streetwear.jpg";
-import leisure from "@/assets/cat-leisure.jpg";
-import nightwear from "@/assets/cat-nightwear.jpg";
+import bavarian from "@/assets/cat-bavarian.jpg?w=1600&format=webp&quality=80";
+import sportswear from "@/assets/cat-sportswear.jpg?w=1600&format=webp&quality=80";
+import leather from "@/assets/cat-leather.jpg?w=1600&format=webp&quality=80";
+import streetwear from "@/assets/cat-streetwear.jpg?w=1600&format=webp&quality=80";
+import leisure from "@/assets/cat-leisure.jpg?w=1600&format=webp&quality=80";
+import nightwear from "@/assets/cat-nightwear.jpg?w=1600&format=webp&quality=80";
 
 import bav1 from "@/assets/products/bavarian-1.jpg?w=900&format=webp&quality=78";
 import bav2 from "@/assets/products/bavarian-2.jpg?w=900&format=webp&quality=78";
