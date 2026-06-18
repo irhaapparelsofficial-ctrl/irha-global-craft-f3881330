@@ -17,7 +17,7 @@ export default function CategoryPage() {
   const group = findGroup(slug);
   const subs = group?.subs ?? [];
   const [activeSubSlug, setActiveSubSlug] = useState<string>(subs[0]?.slug ?? "");
-  const [activeProduct, setActiveProduct] = useState<any>(null);
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
   if (!category || !seo) {
     return <Navigate to="/products" replace />;
