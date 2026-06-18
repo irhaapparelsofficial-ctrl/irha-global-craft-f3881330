@@ -16,85 +16,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  dependency-audit:
-    name: Dependency Audit (npm audit)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Setup Node (for npm audit)
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Run npm audit (high & critical)
-        run: |
-          npm audit --audit-level=high --production || AUDIT_EXIT=$?
-          echo "AUDIT_EXIT=${AUDIT_EXIT:-0}" >> $GITHUB_ENV
-          npm audit --json > audit-report.json || true
-
-      - name: Upload audit report
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-audit-report
-          path: audit-report.json
-          retention-days: 30
-
-      - name: Fail on high/critical vulnerabilities
-        if: env.AUDIT_EXIT != '0'
-        run: |
-          echo "::error::High or critical vulnerabilities detected. See audit-report.json artifact."
-          exit 1
-
-  secret-scan:
-    name: Secret Leak Scan (Gitleaks)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  codeql:
-    name: CodeQL Static Analysis
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          queries: security-and-quality
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:javascript-typescript"
-
-  dependency-review:
-    name: Dependency Review (PR only)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-          comment-summary-in-pr: always
-
+  # ─── Stage 1: Quality Gates ─────────────────────────────────────────
   lint-typecheck:
     name: ESLint + TypeScript Typecheck
     runs-on: ubuntu-latest
@@ -164,9 +86,94 @@ jobs:
         run: supabase db start
         continue-on-error: true
 
+  # ─── Stage 2: Security Scans (gated by quality gates) ───────────────
+  dependency-audit:
+    name: Dependency Audit (npm audit)
+    needs: [lint-typecheck, supabase-validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Setup Node (for npm audit)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run npm audit (high & critical)
+        run: |
+          npm audit --audit-level=high --production || AUDIT_EXIT=$?
+          echo "AUDIT_EXIT=${AUDIT_EXIT:-0}" >> $GITHUB_ENV
+          npm audit --json > audit-report.json || true
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: audit-report.json
+          retention-days: 30
+
+      - name: Fail on high/critical vulnerabilities
+        if: env.AUDIT_EXIT != '0'
+        run: |
+          echo "::error::High or critical vulnerabilities detected. See audit-report.json artifact."
+          exit 1
+
+  secret-scan:
+    name: Secret Leak Scan (Gitleaks)
+    needs: [lint-typecheck, supabase-validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: CodeQL Static Analysis
+    needs: not: [lint-typecheck, supabase-validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
+  dependency-review:
+    name: Dependency Review (PR only)
+    if: github.event_name == 'pull_request'
+    needs: [lint-typecheck, supabase-validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: always
+
+  # ─── Stage 3: Summary ───────────────────────────────────────────────
   scan-summary:
     name: Scan Summary
-    needs: [dependency-audit, secret-scan, codeql, lint-typecheck, supabase-validate]
+    needs: [dependency-audit, secret-scan, codeql, dependency-review, lint-typecheck, supabase-validate]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -174,16 +181,22 @@ jobs:
         run: |
           echo "## 🛡️ Security & Quality Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quality Gates" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ESLint + TypeScript | ${{ needs.lint-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Supabase Config Validation | ${{ needs.supabase-validate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security Scans" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Dependency Audit | ${{ needs.dependency-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Secret Scan (Gitleaks) | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CodeQL Static Analysis | ${{ needs.codeql.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ESLint + TypeScript | ${{ needs.lint-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Supabase Config Validation | ${{ needs.supabase-validate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Review | ${{ needs.dependency-review.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Findings appear in the **Security** tab of the repository." >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ needs.dependency-audit.result }}" == "failure" || "${{ needs.secret-scan.result }}" == "failure" || "${{ needs.codeql.result }}" == "failure" || "${{ needs.lint-typecheck.result }}" == "failure" || "${{ needs.supabase-validate.result }}" == "failure" ]]; then
+          if [[ "${{ needs.dependency-audit.result }}" == "failure" || "${{ needs.secret-scan.result }}" == "failure" || "${{ needs.codeql.result }}" == "failure" || "${{ needs.dependency-review.result }}" == "failure" || "${{ needs.lint-typecheck.result }}" == "failure" || "${{ needs.supabase-validate.result }}" == "failure" ]]; then
             echo "::error::One or more checks failed."
             exit 1
           fi
