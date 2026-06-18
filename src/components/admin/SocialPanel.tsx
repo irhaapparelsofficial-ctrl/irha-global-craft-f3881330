@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Send, Facebook, Instagram, ExternalLink, RefreshCw } from "lucide-react";
+import { Send, Facebook, Instagram, ExternalLink, RefreshCw, Upload, X } from "lucide-react";
 
 type Post = {
   id: string;
