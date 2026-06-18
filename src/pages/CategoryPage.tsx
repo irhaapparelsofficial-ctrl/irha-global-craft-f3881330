@@ -1,14 +1,41 @@
 import { useParams, Link, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SEO from "@/components/SEO";
 import { CATEGORIES, type Product } from "@/lib/categories";
 import { findGroup } from "@/lib/catalog";
 import { CATEGORY_SEO } from "@/lib/categorySeo";
 import { forceDownload } from "@/lib/download";
 import ProductDetailModal from "@/components/ProductDetailModal";
-import { ArrowUpRight, Download, Maximize2, ChevronRight } from "lucide-react";
+import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
+import { ArrowUpRight, Download, ChevronRight, Eye } from "lucide-react";
 
 const SITE = "https://www.irhaapparels.com";
+
+type SortKey = "newest" | "price" | "popular";
+
+type FlatProduct = Product & {
+  subSlug: string;
+  subName: string;
+  sku: string;
+  // stable synthetic signals for sort
+  _priceRank: number;
+  _popRank: number;
+  _order: number;
+};
+
+// Stable hash for synthetic sort signals (we don't store price/popularity)
+function hash(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+const INITIAL_VISIBLE = 200;
+const CHUNK = 200;
+const LOAD_MORE_THRESHOLD = 250;
 
 export default function CategoryPage() {
   const { slug = "" } = useParams<{ slug: string }>();
@@ -16,16 +43,92 @@ export default function CategoryPage() {
   const seo = CATEGORY_SEO[slug];
   const group = findGroup(slug);
   const subs = group?.subs ?? [];
-  const [activeSubSlug, setActiveSubSlug] = useState<string>(subs[0]?.slug ?? "");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [sort, setSort] = useState<SortKey>("newest");
+  const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Flatten all sub products into one list with metadata + stable sort signals.
+  const allProducts: FlatProduct[] = useMemo(() => {
+    const out: FlatProduct[] = [];
+    let order = 0;
+    subs.forEach((sub) => {
+      sub.products.forEach((p) => {
+        const sku = `IRH-${slug.slice(0, 3).toUpperCase()}-${String(order + 1).padStart(4, "0")}`;
+        out.push({
+          ...p,
+          subSlug: sub.slug,
+          subName: sub.name,
+          sku,
+          _priceRank: hash(p.name + ":price") % 10000,
+          _popRank: hash(p.name + ":pop") % 10000,
+          _order: order++,
+        });
+      });
+    });
+    return out;
+  }, [subs, slug]);
+
+  // Filter + sort
+  const filteredSorted = useMemo(() => {
+    const filtered =
+      activeFilter === "all"
+        ? allProducts
+        : allProducts.filter((p) => p.subSlug === activeFilter);
+    const sorted = [...filtered];
+    if (sort === "newest") sorted.sort((a, b) => b._order - a._order);
+    else if (sort === "price") sorted.sort((a, b) => a._priceRank - b._priceRank);
+    else if (sort === "popular") sorted.sort((a, b) => b._popRank - a._popRank);
+    return sorted;
+  }, [allProducts, activeFilter, sort]);
+
+  // Reset visible window when filter/sort changes.
+  useEffect(() => {
+    setVisible(INITIAL_VISIBLE);
+  }, [activeFilter, sort]);
+
+  // Auto-extend on scroll until we reach LOAD_MORE_THRESHOLD; beyond that
+  // the user must click "Load More" so the page stays manageable.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    if (visible >= filteredSorted.length) return;
+    if (visible >= LOAD_MORE_THRESHOLD) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisible((v) => Math.min(v + CHUNK, filteredSorted.length));
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [visible, filteredSorted.length]);
 
   if (!category || !seo) {
     return <Navigate to="/products" replace />;
   }
 
-  const currentSub = subs.find((s) => s.slug === activeSubSlug) ?? subs[0];
-  const totalProducts = subs.reduce((n, s) => n + s.products.length, 0);
+  const totalProducts = allProducts.length;
   const url = `${SITE}/products/${category.slug}`;
+
+  // Build slideshow: category banner + first product images per sub
+  const heroSlides: CategoryHeroSlide[] = [
+    {
+      image: category.image,
+      eyebrow: "Irha Apparels · B2B Manufacturing",
+      title: `Wholesale ${category.name} Manufacturer`,
+      subtitle: seo.intro,
+    },
+    ...subs.slice(0, 4).map((sub) => ({
+      image: sub.products[0]?.image ?? category.image,
+      eyebrow: category.name,
+      title: `${sub.name} — Bulk & Private Label`,
+      subtitle: sub.short,
+    })),
+  ].slice(0, 5);
 
   const jsonLd = [
     {
@@ -57,6 +160,11 @@ export default function CategoryPage() {
     },
   ];
 
+  const renderProducts = filteredSorted.slice(0, visible);
+  const hiddenProducts = filteredSorted.slice(visible);
+  const showLoadMoreButton =
+    visible < filteredSorted.length && visible >= LOAD_MORE_THRESHOLD;
+
   return (
     <>
       <SEO
@@ -67,11 +175,14 @@ export default function CategoryPage() {
         jsonLd={jsonLd}
       />
 
-      {/* Hero */}
-      <section className="relative pt-40 pb-16 border-b border-border/60 overflow-hidden">
-        <img src={category.image} alt="" loading="eager" className="absolute inset-0 w-full h-full object-cover opacity-15" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" />
-        <div className="container-luxe relative">
+      {/* Slideshow hero */}
+      <div className="pt-28">
+        <CategoryHero slides={heroSlides} />
+      </div>
+
+      {/* Page intro / breadcrumb strip */}
+      <section className="py-10 border-b border-border/60">
+        <div className="container-luxe">
           <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-foreground/55 mb-6">
             <Link to="/" className="hover:text-foreground">Home</Link>
             <ChevronRight size={12} />
@@ -79,13 +190,8 @@ export default function CategoryPage() {
             <ChevronRight size={12} />
             <span className="text-foreground/80">{category.name}</span>
           </nav>
-          <p className="eyebrow mb-4">{category.short}</p>
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl leading-[0.95] max-w-4xl">
-            {seo.h1}
-          </h1>
-          <p className="mt-8 text-lg text-foreground/75 max-w-3xl leading-relaxed">{seo.intro}</p>
-
-          <div className="mt-10 flex flex-wrap gap-3 items-center">
+          <h1 className="font-display text-3xl md:text-5xl leading-[1.02] max-w-4xl">{seo.h1}</h1>
+          <div className="mt-6 flex flex-wrap gap-3 items-center">
             <Link
               to="/inquiry"
               className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
@@ -99,107 +205,99 @@ export default function CategoryPage() {
             >
               <Download size={14} /> Download Catalog
             </button>
-          </div>
-
-          <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-xs uppercase tracking-[0.25em] text-foreground/60">
-            <span>{subs.length} sub-categories</span>
-            <span className="text-foreground/30">·</span>
-            <span>{totalProducts} styles</span>
-            <span className="text-foreground/30">·</span>
-            <span>MOQ 50</span>
-            <span className="text-foreground/30">·</span>
-            <span>Exports: {seo.exportMarkets.join(", ")}</span>
+            <span className="text-xs uppercase tracking-[0.3em] text-foreground/55 ml-2">
+              {totalProducts} styles · MOQ 50 · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Highlights */}
-      <section className="py-16 border-b border-border/60">
-        <div className="container-luxe grid lg:grid-cols-12 gap-10 items-start">
-          <div className="lg:col-span-5">
-            <p className="eyebrow mb-4">What we make</p>
-            <h2 className="font-display text-3xl md:text-4xl leading-tight">{category.name} programs, built for export</h2>
+      {/* Sticky filter + sort bar */}
+      <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur border-b border-border/60">
+        <div className="container-luxe py-4 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-2 flex-1 min-w-0">
+            <FilterChip
+              label="All"
+              count={allProducts.length}
+              active={activeFilter === "all"}
+              onClick={() => setActiveFilter("all")}
+            />
+            {subs.map((s) => (
+              <FilterChip
+                key={s.slug}
+                label={s.name}
+                count={s.products.length}
+                active={activeFilter === s.slug}
+                onClick={() => setActiveFilter(s.slug)}
+              />
+            ))}
           </div>
-          <div className="lg:col-span-7">
-            <p className="text-foreground/75 leading-relaxed">{category.description}</p>
-            <ul className="mt-8 grid sm:grid-cols-2 gap-x-8 gap-y-3">
-              {category.details.map((d) => (
-                <li key={d} className="flex items-start gap-3 text-sm text-foreground/80">
-                  <span className="text-primary mt-1">✦</span> {d}
-                </li>
-              ))}
-            </ul>
+          <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-foreground/60">
+            Sort
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              className="bg-transparent border border-border/60 px-3 py-2 text-xs uppercase tracking-[0.2em] focus:outline-none focus:border-primary"
+            >
+              <option value="newest">Newest</option>
+              <option value="popular">Popular</option>
+              <option value="price">Price</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      {/* Product grid — all on one page, lazy streamed */}
+      <section className="py-10">
+        <div className="container-luxe">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground/50 mb-6">
+            Showing {Math.min(visible, filteredSorted.length)} of {filteredSorted.length}
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
+            {renderProducts.map((p) => (
+              <ProductCard
+                key={p.sku}
+                product={p}
+                onQuickView={() => setActiveProduct(p)}
+              />
+            ))}
           </div>
+
+          {/* SEO: render the rest in a hidden block so Googlebot still sees every product */}
+          {hiddenProducts.length > 0 && (
+            <div className="sr-only" aria-hidden="true">
+              <ul>
+                {hiddenProducts.map((p) => (
+                  <li key={p.sku}>
+                    <a href={`/products/${slug}#${p.sku}`}>{p.name}</a> — {p.subName} — {p.sku}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Sentinel for IntersectionObserver-based streaming */}
+          <div ref={sentinelRef} className="h-12" />
+
+          {showLoadMoreButton && (
+            <div className="flex justify-center mt-6">
+              <button
+                type="button"
+                onClick={() =>
+                  setVisible((v) => Math.min(v + CHUNK, filteredSorted.length))
+                }
+                className="px-10 py-4 border border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs uppercase tracking-[0.3em] transition-colors"
+              >
+                Load More ({filteredSorted.length - visible} remaining)
+              </button>
+            </div>
+          )}
         </div>
       </section>
-
-      {/* Sub-categories & products */}
-      {currentSub && (
-        <section className="py-20 border-b border-border/60">
-          <div className="container-luxe">
-            <div className="flex items-end justify-between mb-8 border-b border-border/60 pb-6 flex-wrap gap-4">
-              <div>
-                <p className="eyebrow mb-2">Browse {category.name}</p>
-                <h2 className="font-display text-2xl md:text-3xl">Sub-categories</h2>
-              </div>
-              <p className="text-xs uppercase tracking-[0.3em] text-foreground/50">
-                {currentSub.products.length} styles in {currentSub.name}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-10">
-              {subs.map((s) => (
-                <button
-                  key={s.slug}
-                  type="button"
-                  onClick={() => setActiveSubSlug(s.slug)}
-                  className={`px-4 py-2.5 text-[11px] uppercase tracking-[0.22em] border transition-all ${
-                    activeSubSlug === s.slug
-                      ? "border-primary text-primary bg-primary/5"
-                      : "border-border/60 text-foreground/65 hover:text-foreground hover:border-foreground/40"
-                  }`}
-                >
-                  {s.name}
-                  <span className="ml-2 text-foreground/40 normal-case tracking-normal">({s.products.length})</span>
-                </button>
-              ))}
-            </div>
-
-            <p className="text-sm text-foreground/65 mb-8 max-w-2xl">{currentSub.short}</p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 lg:gap-7">
-              {currentSub.products.map((p) => (
-                <button
-                  key={p.name}
-                  type="button"
-                  onClick={() => setActiveProduct(p)}
-                  className="group flex flex-col text-left"
-                  aria-label={`View ${p.name} details`}
-                >
-                  <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
-                      <span className="text-[9px] uppercase tracking-[0.3em] text-gold">Details</span>
-                      <Maximize2 size={12} className="text-gold" />
-                    </div>
-                  </div>
-                  <h3 className="font-display text-base leading-tight group-hover:text-primary transition-colors">{p.name}</h3>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">MOQ 50</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* FAQ */}
-      <section className="py-20 border-b border-border/60">
+      <section className="py-20 border-y border-border/60">
         <div className="container-luxe grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-4">
             <p className="eyebrow mb-4">Buyer FAQs</p>
@@ -247,5 +345,94 @@ export default function CategoryPage() {
 
       <ProductDetailModal product={activeProduct} onClose={() => setActiveProduct(null)} />
     </>
+  );
+}
+
+function FilterChip({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-2 text-[11px] uppercase tracking-[0.22em] border transition-all ${
+        active
+          ? "border-primary text-primary bg-primary/5"
+          : "border-border/60 text-foreground/65 hover:text-foreground hover:border-foreground/40"
+      }`}
+    >
+      {label}
+      <span className="ml-2 text-foreground/40 normal-case tracking-normal">({count})</span>
+    </button>
+  );
+}
+
+function ProductCard({
+  product,
+  onQuickView,
+}: {
+  product: FlatProduct;
+  onQuickView: () => void;
+}) {
+  const primary = product.image;
+  const secondary = product.gallery?.[1] ?? product.image;
+  return (
+    <article
+      id={product.sku}
+      className="group flex flex-col text-left"
+    >
+      <button
+        type="button"
+        onClick={onQuickView}
+        aria-label={`Quick view ${product.name}`}
+        className="relative aspect-square overflow-hidden bg-card mb-3 w-full"
+      >
+        {/* Primary image */}
+        <img
+          src={primary}
+          alt={product.name}
+          loading="lazy"
+          decoding="async"
+          width={750}
+          height={750}
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:opacity-0"
+        />
+        {/* Secondary image revealed on hover (zoomed) */}
+        <img
+          src={secondary}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          width={750}
+          height={750}
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover scale-110 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:scale-100"
+        />
+
+        {/* Hover overlay: SKU + Quick View */}
+        <div className="absolute inset-x-0 bottom-0 p-3 flex items-end justify-between gap-2 bg-gradient-to-t from-background/90 via-background/40 to-transparent opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
+          <span className="text-[9px] uppercase tracking-[0.25em] text-foreground/80">
+            SKU {product.sku}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] bg-primary text-primary-foreground px-3 py-1.5">
+            <Eye size={12} /> Quick View
+          </span>
+        </div>
+      </button>
+      <h3 className="font-display text-sm md:text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+        {product.name}
+      </h3>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-1.5">
+        {product.subName} · MOQ 50
+      </p>
+    </article>
   );
 }
