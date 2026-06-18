@@ -11,6 +11,12 @@ import bav7 from "@/assets/products/bavarian-7.jpg?w=900&format=webp&quality=78"
 import bav8 from "@/assets/products/bavarian-8.jpg?w=900&format=webp&quality=78";
 import bavD1 from "@/assets/products/bavarian-detail-1.jpg?w=900&format=webp&quality=78";
 import bavD2 from "@/assets/products/bavarian-detail-2.jpg?w=900&format=webp&quality=78";
+import bavCU1 from "@/assets/products/bavarian-cu-1.jpg?w=900&format=webp&quality=78";
+import bavCU2 from "@/assets/products/bavarian-cu-2.jpg?w=900&format=webp&quality=78";
+import bavCU3 from "@/assets/products/bavarian-cu-3.jpg?w=900&format=webp&quality=78";
+import bavCU4 from "@/assets/products/bavarian-cu-4.jpg?w=900&format=webp&quality=78";
+import bavCU5 from "@/assets/products/bavarian-cu-5.jpg?w=900&format=webp&quality=78";
+import bavCU6 from "@/assets/products/bavarian-cu-6.jpg?w=900&format=webp&quality=78";
 
 import sp1 from "@/assets/products/sportswear-1.jpg?w=900&format=webp&quality=78";
 import sp2 from "@/assets/products/sportswear-2.jpg?w=900&format=webp&quality=78";
@@ -33,6 +39,12 @@ import lt7 from "@/assets/products/leather-7.jpg?w=900&format=webp&quality=78";
 import lt8 from "@/assets/products/leather-8.jpg?w=900&format=webp&quality=78";
 import ltD1 from "@/assets/products/leather-detail-1.jpg?w=900&format=webp&quality=78";
 import ltD2 from "@/assets/products/leather-detail-2.jpg?w=900&format=webp&quality=78";
+import ltCU1 from "@/assets/products/leather-cu-1.jpg?w=900&format=webp&quality=78";
+import ltCU2 from "@/assets/products/leather-cu-2.jpg?w=900&format=webp&quality=78";
+import ltCU3 from "@/assets/products/leather-cu-3.jpg?w=900&format=webp&quality=78";
+import ltCU4 from "@/assets/products/leather-cu-4.jpg?w=900&format=webp&quality=78";
+import ltCU5 from "@/assets/products/leather-cu-5.jpg?w=900&format=webp&quality=78";
+import ltCU6 from "@/assets/products/leather-cu-6.jpg?w=900&format=webp&quality=78";
 
 import st1 from "@/assets/products/streetwear-1.jpg?w=900&format=webp&quality=78";
 import st2 from "@/assets/products/streetwear-2.jpg?w=900&format=webp&quality=78";
