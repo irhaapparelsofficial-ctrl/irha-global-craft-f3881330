@@ -26,6 +26,14 @@ export default function LiveChat() {
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const sessionIdRef = useRef<string>("");
+  if (!sessionIdRef.current) {
+    try {
+      let s = sessionStorage.getItem("irha:chat-sid");
+      if (!s) { s = crypto.randomUUID(); sessionStorage.setItem("irha:chat-sid", s); }
+      sessionIdRef.current = s;
+    } catch { sessionIdRef.current = crypto.randomUUID(); }
+  }
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -45,6 +53,15 @@ export default function LiveChat() {
     setMessages([...next, { role: "assistant", content: "" }]);
     setInput("");
     setLoading(true);
+
+    // Log user message for the admin dashboard
+    void supabase.from("chat_messages").insert({
+      session_id: sessionIdRef.current,
+      role: "user",
+      message: userMsg.content,
+    });
+
+
 
     try {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -107,7 +124,15 @@ export default function LiveChat() {
           };
           return copy;
         });
+      } else {
+        // Log assistant reply for dashboard
+        void supabase.from("chat_messages").insert({
+          session_id: sessionIdRef.current,
+          role: "assistant",
+          message: acc,
+        });
       }
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Connection error";
       setError(msg);
@@ -251,5 +276,6 @@ export default function LiveChat() {
   );
 }
 
-// Avoid tree-shaking the supabase import (kept for future auth context)
+// Avoid tree-shaking the supabase import
 void supabase;
+
