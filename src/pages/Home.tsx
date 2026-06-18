@@ -30,6 +30,7 @@ import FounderNote from "@/components/sections/FounderNote";
 import FacebookFeed from "@/components/sections/FacebookFeed";
 
 export default function Home() {
+  const [flipOpen, setFlipOpen] = useState(false);
   return (
     <>
       <SEO
