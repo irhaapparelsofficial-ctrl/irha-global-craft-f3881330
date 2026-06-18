@@ -4,6 +4,18 @@
  * and falls back to console in development.
  */
 
+declare global {
+  interface Window {
+    gtag?: (
+      cmd: "event",
+      name: string,
+      params?: Record<string, string | number | boolean>
+    ) => void;
+    dataLayer?: Array<Record<string, unknown>>;
+    plausible?: (event: string, options?: { props?: Record<string, string> }) => void;
+  }
+}
+
 type DownloadEvent = {
   page: string;
   cta_location: string;
@@ -23,25 +35,15 @@ export function trackDownload(params: DownloadEvent): void {
     catalog: params.catalog,
   };
 
-  // Google Analytics 4 (gtag)
-  if (typeof window !== "undefined" && "gtag" in window) {
-    // @ts-expect-error gtag is injected by GA4 script
+  if (typeof window !== "undefined") {
     window.gtag?.("event", "download_catalog", {
       page: event.page,
       cta_location: event.cta_location,
       catalog: event.catalog,
     });
-  }
 
-  // Google Tag Manager (dataLayer)
-  if (typeof window !== "undefined" && "dataLayer" in window) {
-    // @ts-expect-error dataLayer is injected by GTM script
     window.dataLayer?.push(event);
-  }
 
-  // Plausible
-  if (typeof window !== "undefined" && "plausible" in window) {
-    // @ts-expect-error plausible is injected by Plausible script
     window.plausible?.("download_catalog", {
       props: {
         page: event.page,
@@ -49,9 +51,9 @@ export function trackDownload(params: DownloadEvent): void {
         catalog: event.catalog,
       },
     });
-  }
 
-  // Console fallback so devs can verify locally
-  // eslint-disable-next-line no-console
-  console?.log?.("[Analytics] download_catalog", event);
+    // Console fallback so devs can verify locally
+    // eslint-disable-next-line no-console
+    console.log("[Analytics] download_catalog", event);
+  }
 }
