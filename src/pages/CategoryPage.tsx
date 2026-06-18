@@ -205,10 +205,17 @@ export default function CategoryPage() {
             </a>
             <button
               type="button"
+              onClick={() => setFlipOpen(true)}
+              className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+            >
+              <Eye size={14} /> Preview Catalog
+            </button>
+            <button
+              type="button"
               onClick={() => forceDownload(category.catalog, `Irha-${category.slug}-catalog.pdf`)}
               className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
             >
-              <Download size={14} /> Download Catalog
+              <Download size={14} /> Download PDF
             </button>
             <span className="text-xs uppercase tracking-[0.3em] text-foreground/55 ml-2">
               {totalProducts} styles · MOQ 50 · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
