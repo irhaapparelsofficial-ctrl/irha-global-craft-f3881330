@@ -12,7 +12,33 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "predev": "npx tsx scripts/generate-sitemap.ts",
-    "prebuild": "npx tsx scripts/generate-sitemap.ts"
+    "prebuild": "npx tsx scripts/generate-sitemap.ts",
+    "postbuild": "node scripts/prerender.mjs"
+  },
+  "reactSnap": {
+    "source": "dist",
+    "destination": "dist",
+    "include": [
+      "/",
+      "/about",
+      "/products",
+      "/manufacturing",
+      "/sustainability",
+      "/journal",
+      "/blog",
+      "/faq",
+      "/inquiry",
+      "/contact",
+      "/privacy-policy"
+    ],
+    "skipThirdPartyRequests": true,
+    "inlineCss": false,
+    "puppeteerArgs": ["--no-sandbox", "--disable-setuid-sandbox"],
+    "crawl": true,
+    "minifyHtml": {
+      "collapseWhitespace": true,
+      "removeComments": true
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
