@@ -25,6 +25,7 @@ import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import TrustBar from "@/components/sections/TrustBar";
 import BuyerPromise from "@/components/sections/BuyerPromise";
 import FounderNote from "@/components/sections/FounderNote";
+import FacebookFeed from "@/components/sections/FacebookFeed";
 
 export default function Home() {
   return (
@@ -215,6 +216,8 @@ export default function Home() {
 
       {/* TESTIMONIALS */}
       <Testimonials />
+
+      <FacebookFeed />
 
       {/* MANUFACTURING TEASER */}
       <section className="relative py-28 md:py-40 overflow-hidden">
