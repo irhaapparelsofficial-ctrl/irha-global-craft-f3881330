@@ -19,6 +19,29 @@ const journalSlugs = [
   "moq-economics",
 ];
 
+const blogSlugs = [
+  "why-source-sportswear-from-pakistan",
+  "lederhosen-manufacturing-guide",
+  "private-label-streetwear-manufacturing",
+  "why-sialkot-is-global-apparel-hub",
+  "oem-vs-odm-clothing-manufacturing",
+];
+
+const seoLandingSlugs = [
+  "sportswear-manufacturer-pakistan",
+  "sportswear-manufacturer-sialkot",
+  "private-label-sportswear-manufacturer",
+  "leatherwear-manufacturer-pakistan",
+  "leather-jacket-manufacturer",
+  "lederhosen-manufacturer",
+  "trachten-manufacturer",
+  "oktoberfest-clothing-manufacturer",
+  "streetwear-manufacturer-pakistan",
+  "custom-apparel-manufacturer-pakistan",
+];
+
+const categorySlugs = ["bavarian", "sportswear", "leatherwear", "streetwear", "leisurewear", "nightwear"];
+
 const entries: SitemapEntry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/about", changefreq: "monthly", priority: "0.8" },
@@ -26,14 +49,14 @@ const entries: SitemapEntry[] = [
   { path: "/manufacturing", changefreq: "monthly", priority: "0.8" },
   { path: "/sustainability", changefreq: "monthly", priority: "0.7" },
   { path: "/journal", changefreq: "weekly", priority: "0.7" },
+  { path: "/blog", changefreq: "weekly", priority: "0.8" },
   { path: "/faq", changefreq: "monthly", priority: "0.6" },
   { path: "/inquiry", changefreq: "monthly", priority: "0.8" },
   { path: "/contact", changefreq: "monthly", priority: "0.6" },
-  ...journalSlugs.map((slug) => ({
-    path: `/journal/${slug}`,
-    changefreq: "monthly" as const,
-    priority: "0.6",
-  })),
+  ...seoLandingSlugs.map((slug) => ({ path: `/${slug}`, changefreq: "weekly" as const, priority: "0.95" })),
+  ...categorySlugs.map((slug) => ({ path: `/products/${slug}`, changefreq: "weekly" as const, priority: "0.85" })),
+  ...blogSlugs.map((slug) => ({ path: `/blog/${slug}`, changefreq: "monthly" as const, priority: "0.7" })),
+  ...journalSlugs.map((slug) => ({ path: `/journal/${slug}`, changefreq: "monthly" as const, priority: "0.6" })),
 ];
 
 const today = new Date().toISOString().slice(0, 10);

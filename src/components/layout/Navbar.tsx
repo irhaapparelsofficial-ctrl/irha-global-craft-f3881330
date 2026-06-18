@@ -13,6 +13,7 @@ const mainLinks = [
 
 const moreLinks = [
   { to: "/sustainability", label: "Sustainability" },
+  { to: "/blog", label: "Blog" },
   { to: "/journal", label: "Journal" },
   { to: "/faq", label: "FAQ" },
 ];

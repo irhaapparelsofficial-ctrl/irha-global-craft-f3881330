@@ -1,28 +1,48 @@
-import { Link } from "react-router-dom";
-import { MessageCircle } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { MessageCircle, FileText } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 
 export default function FloatingActions() {
+  const { pathname } = useLocation();
+  const onInquiry = pathname === "/inquiry";
+
   return (
     <>
+      {/* Floating WhatsApp — bottom-right, all devices */}
       <a
         href={whatsappLink()}
         target="_blank"
         rel="noreferrer"
         aria-label="Chat on WhatsApp"
-        className="fixed bottom-6 right-6 z-40 group flex items-center gap-3 bg-[#25D366] text-white rounded-full pl-4 pr-5 py-3.5 shadow-elegant hover:scale-105 transition-transform"
+        className="fixed bottom-6 right-4 sm:right-6 z-40 group flex items-center gap-3 bg-[#25D366] text-white rounded-full pl-4 pr-5 py-3.5 shadow-elegant hover:scale-105 transition-transform"
+        data-track="whatsapp-floating"
       >
         <MessageCircle size={20} />
         <span className="text-xs font-medium uppercase tracking-[0.2em] hidden sm:inline">
           WhatsApp
         </span>
       </a>
-      <Link
-        to="/inquiry"
-        className="fixed bottom-6 left-6 z-40 hidden md:inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-3.5 text-[11px] uppercase tracking-[0.25em] font-medium shadow-gold hover:scale-105 transition-transform"
-      >
-        Get Instant Quote
-      </Link>
+
+      {/* Sticky Get Quote — desktop (bottom-left) */}
+      {!onInquiry && (
+        <Link
+          to="/inquiry"
+          className="fixed bottom-6 left-6 z-40 hidden md:inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-3.5 text-[11px] uppercase tracking-[0.25em] font-medium shadow-gold hover:scale-105 transition-transform"
+        >
+          Get Instant Quote
+        </Link>
+      )}
+
+      {/* Sticky Get Quote — mobile bar */}
+      {!onInquiry && (
+        <Link
+          to="/inquiry"
+          className="md:hidden fixed bottom-6 left-4 z-40 inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-4 py-3 text-[10px] uppercase tracking-[0.2em] font-medium shadow-gold"
+          aria-label="Get a quote"
+        >
+          <FileText size={14}/> Quote
+        </Link>
+      )}
     </>
   );
 }
