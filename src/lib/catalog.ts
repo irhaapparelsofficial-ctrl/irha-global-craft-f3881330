@@ -11,6 +11,12 @@ import bav7 from "@/assets/products/bavarian-7.jpg?w=900&format=webp&quality=78"
 import bav8 from "@/assets/products/bavarian-8.jpg?w=900&format=webp&quality=78";
 import bavD1 from "@/assets/products/bavarian-detail-1.jpg?w=900&format=webp&quality=78";
 import bavD2 from "@/assets/products/bavarian-detail-2.jpg?w=900&format=webp&quality=78";
+import bavCU1 from "@/assets/products/bavarian-cu-1.jpg?w=900&format=webp&quality=78";
+import bavCU2 from "@/assets/products/bavarian-cu-2.jpg?w=900&format=webp&quality=78";
+import bavCU3 from "@/assets/products/bavarian-cu-3.jpg?w=900&format=webp&quality=78";
+import bavCU4 from "@/assets/products/bavarian-cu-4.jpg?w=900&format=webp&quality=78";
+import bavCU5 from "@/assets/products/bavarian-cu-5.jpg?w=900&format=webp&quality=78";
+import bavCU6 from "@/assets/products/bavarian-cu-6.jpg?w=900&format=webp&quality=78";
 
 import sp1 from "@/assets/products/sportswear-1.jpg?w=900&format=webp&quality=78";
 import sp2 from "@/assets/products/sportswear-2.jpg?w=900&format=webp&quality=78";
@@ -33,6 +39,12 @@ import lt7 from "@/assets/products/leather-7.jpg?w=900&format=webp&quality=78";
 import lt8 from "@/assets/products/leather-8.jpg?w=900&format=webp&quality=78";
 import ltD1 from "@/assets/products/leather-detail-1.jpg?w=900&format=webp&quality=78";
 import ltD2 from "@/assets/products/leather-detail-2.jpg?w=900&format=webp&quality=78";
+import ltCU1 from "@/assets/products/leather-cu-1.jpg?w=900&format=webp&quality=78";
+import ltCU2 from "@/assets/products/leather-cu-2.jpg?w=900&format=webp&quality=78";
+import ltCU3 from "@/assets/products/leather-cu-3.jpg?w=900&format=webp&quality=78";
+import ltCU4 from "@/assets/products/leather-cu-4.jpg?w=900&format=webp&quality=78";
+import ltCU5 from "@/assets/products/leather-cu-5.jpg?w=900&format=webp&quality=78";
+import ltCU6 from "@/assets/products/leather-cu-6.jpg?w=900&format=webp&quality=78";
 
 import st1 from "@/assets/products/streetwear-1.jpg?w=900&format=webp&quality=78";
 import st2 from "@/assets/products/streetwear-2.jpg?w=900&format=webp&quality=78";
@@ -72,9 +84,9 @@ import type { Product, ProductSpec } from "@/lib/categories";
 type Pool = string[];
 
 const POOLS: Record<string, Pool> = {
-  bavarian:    [bav1, bav2, bav3, bav4, bav5, bav6, bav7, bav8, bavD1, bavD2],
+  bavarian:    [bav1, bav2, bav3, bav4, bav5, bav6, bav7, bav8, bavD1, bavD2, bavCU1, bavCU2, bavCU3, bavCU4, bavCU5, bavCU6],
   sportswear:  [sp1,  sp2,  sp3,  sp4,  sp5,  sp6,  sp7,  sp8,  spD1,  spD2],
-  leatherwear: [lt1,  lt2,  lt3,  lt4,  lt5,  lt6,  lt7,  lt8,  ltD1,  ltD2],
+  leatherwear: [lt1,  lt2,  lt3,  lt4,  lt5,  lt6,  lt7,  lt8,  ltD1,  ltD2, ltCU1, ltCU2, ltCU3, ltCU4, ltCU5, ltCU6],
   streetwear:  [st1,  st2,  st3,  st4,  st5,  st6,  st7,  st8,  stD1,  stD2],
   leisurewear: [ls1,  ls2,  ls3,  ls4,  ls5,  ls6,  ls7,  ls8,  lsD1,  lsD2],
   nightwear:   [nw1,  nw2,  nw3,  nw4,  nw5,  nw6,  nw7,  nw8,  nwD1,  nwD2],
@@ -135,12 +147,13 @@ function buildSub(
   },
   specHighlights: string[],
   description: (name: string) => string,
+  minProducts: number = 42,
 ): SubCategory {
   const pool = POOLS[catSlug];
 
   // Auto-expand catalog: pad each sub-category to MIN_PER_SUB products
   // with rotating themed editions so wholesale buyers see a deeper range.
-  const MIN_PER_SUB = 42;
+  const MIN_PER_SUB = minProducts;
   const padLabels = [
     "Wholesale Pack",
     "Private Label Edition",
@@ -243,6 +256,7 @@ const bavarian: CategoryGroup = {
       ["Genuine deer suede", "Hand embroidery", "Antler buttons", "Sizes 44–60"],
       (n) =>
         `${n} — handcrafted from premium suede with hand-embroidered front panel, antler-style buttons and traditional H-strap suspenders. Built for European trachten retailers and Oktoberfest programs.`,
+      60,
     ),
 
     buildSub(
@@ -275,6 +289,7 @@ const bavarian: CategoryGroup = {
       ["Cotton & linen blend", "Floral embroidery", "Lace trim apron", "Sizes XS–XXL"],
       (n) =>
         `${n} — boutique-grade dirndl with floral embroidered bodice, puff-sleeve blouse and crisp apron. Engineered for premium trachten houses and seasonal Oktoberfest collections.`,
+      60,
     ),
 
     buildSub(
@@ -306,6 +321,7 @@ const bavarian: CategoryGroup = {
       ["Pure cotton", "Embroidered detail", "Slim & regular fit", "Sizes XS–XXXL"],
       (n) =>
         `${n} — clean trachten shirt cut in pure cotton with embroidered alpine detailing and refined construction, ready for trachten boutique retail.`,
+      60,
     ),
 
     buildSub(
@@ -337,6 +353,7 @@ const bavarian: CategoryGroup = {
       ["Loden wool", "Horn buttons", "Tonal embroidery", "Heritage cut"],
       (n) =>
         `${n} — refined formal trachten outerwear in pure loden wool with horn buttons, tonal embroidery and a heritage silhouette for premium menswear.`,
+      60,
     ),
 
     buildSub(
@@ -368,6 +385,7 @@ const bavarian: CategoryGroup = {
       ["Soft kid suede", "Adjustable straps", "Floral embroidery", "Ages 2–14"],
       (n) =>
         `${n} — durable kids trachten built to survive festival season while looking heirloom-grade.`,
+      60,
     ),
 
     buildSub(
@@ -399,6 +417,7 @@ const bavarian: CategoryGroup = {
       ["Heritage materials", "Hand finishing", "Custom branding"],
       (n) =>
         `${n} — authentic trachten accessory to complete the look, finished with traditional materials and custom branding options.`,
+      60,
     ),
   ],
 };
@@ -626,6 +645,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Full-grain cowhide", "YKK metal hardware", "Quilted lining", "Hand-finished"],
       (n) => `${n} — iconic biker silhouette in premium leather with YKK metal hardware, quilted satin lining and hand-finished edges.`,
+      60,
     ),
 
     buildSub(
@@ -656,6 +676,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Cognac cowhide", "Rib-knit cuffs & hem", "Two-way YKK zip", "Quilted lining"],
       (n) => `${n} — heritage bomber silhouette in rich leather with ribbed cuffs and hem, two-way zipper and quilted interior.`,
+      60,
     ),
 
     buildSub(
@@ -686,6 +707,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Supple lambskin", "Bonded lining", "Five-pocket cut", "Custom inseam"],
       (n) => `${n} — tailored leather bottoms in supple lambskin with bonded interior lining and contoured seams that drape like fabric.`,
+      60,
     ),
 
     buildSub(
@@ -715,6 +737,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Premium hide", "Tailored fit", "Custom hardware", "MOQ 50"],
       (n) => `${n} — premium leather layering piece tailored for sharp wardrobe building and statement retail floors.`,
+      60,
     ),
 
     buildSub(
@@ -744,6 +767,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Full-grain leather", "Tailored long cut", "Premium lining", "Statement silhouette"],
       (n) => `${n} — dramatic long leather coat built on a tailored block with premium lining and luxury hardware throughout.`,
+      60,
     ),
 
     buildSub(
@@ -773,6 +797,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Premium leather", "Custom hardware", "Branded packaging"],
       (n) => `${n} — refined leather accessory crafted with custom hardware and gift-ready packaging for premium retail.`,
+      60,
     ),
   ],
 };
