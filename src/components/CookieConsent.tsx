@@ -85,12 +85,23 @@ export default function CookieConsent() {
     (async () => {
       try {
         const res = await fetch("https://ipapi.co/json/", { cache: "no-store" });
-        if (!res.ok) return; // fail closed — don't show outside EU/UK
+        if (!res.ok) {
+          // API failed — safest fallback is to show banner (assume EU)
+          if (!cancelled) setVisible(true);
+          return;
+        }
         const data = await res.json();
         const country = String(data?.country_code || data?.country || "").toUpperCase();
-        if (!cancelled && EU_EEA_UK.has(country)) setVisible(true);
+        if (!cancelled && EU_EEA_UK.has(country)) {
+          setVisible(true);
+        } else if (!cancelled) {
+          // Non-EU visitor — auto-grant analytics, keep ads denied
+          const c = { analytics: true, ads: false };
+          save(c);
+          applyConsent(c);
+        }
       } catch {
-        /* fail closed */
+        if (!cancelled) setVisible(true); // fail-safe: show banner
       }
     })();
     return () => { cancelled = true; };
