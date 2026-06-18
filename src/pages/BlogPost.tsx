@@ -19,7 +19,7 @@ export default function BlogPostPage() {
     "@type": "Article",
     headline: post.title,
     description: post.metaDescription,
-    image: `${SITE_URL}${(post.heroImage as unknown as string).startsWith("/") ? post.heroImage : "/" + post.heroImage}`,
+    image: typeof post.heroImage === "string" && post.heroImage.startsWith("http") ? post.heroImage : `${SITE_URL}${post.heroImage}`,
     datePublished: post.publishedAt,
     dateModified: post.publishedAt,
     author: { "@type": "Organization", name: BRAND.name, url: SITE_URL },
