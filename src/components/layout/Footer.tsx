@@ -135,9 +135,23 @@ export default function Footer() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground uppercase tracking-[0.25em]">
-          OEM · ODM · Private Label · Worldwide Export
-        </p>
+        <div className="flex flex-col md:items-end gap-2">
+          <p className="text-xs text-muted-foreground uppercase tracking-[0.25em]">
+            OEM · ODM · Private Label · Worldwide Export
+          </p>
+          <div className="flex items-center gap-4 text-[11px] uppercase tracking-[0.2em]">
+            <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("irha:open-cookie-settings"))}
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Cookie Settings
+            </button>
+          </div>
+        </div>
       </div>
     </footer>
   );
