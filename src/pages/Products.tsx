@@ -34,7 +34,7 @@ export default function Products() {
           hasPart: CATEGORIES.map((c) => ({
             "@type": "CollectionPage",
             name: c.name,
-            url: `https://www.irhaapparels.com/products#${c.slug}`,
+            url: `https://www.irhaapparels.com/products/${c.slug}`,
           })),
         }}
       />
