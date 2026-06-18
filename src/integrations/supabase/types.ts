@@ -113,6 +113,51 @@ export type Database = {
         }
         Relationships: []
       }
+      social_posts: {
+        Row: {
+          caption: string
+          channels: string[]
+          created_at: string
+          created_by: string | null
+          error: string | null
+          fb_post_id: string | null
+          fb_post_url: string | null
+          id: string
+          ig_post_id: string | null
+          ig_post_url: string | null
+          image_url: string | null
+          status: string
+        }
+        Insert: {
+          caption: string
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          fb_post_id?: string | null
+          fb_post_url?: string | null
+          id?: string
+          ig_post_id?: string | null
+          ig_post_url?: string | null
+          image_url?: string | null
+          status?: string
+        }
+        Update: {
+          caption?: string
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          fb_post_id?: string | null
+          fb_post_url?: string | null
+          id?: string
+          ig_post_id?: string | null
+          ig_post_url?: string | null
+          image_url?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
