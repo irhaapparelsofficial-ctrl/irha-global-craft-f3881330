@@ -1,12 +1,11 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { Product } from "@/lib/categories";
 import { ArrowUpRight, MessageCircle, X } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { whatsappLink } from "@/lib/constants";
 
 interface Props {
-  product: Product | null;
+  product: (Product & { sku?: string; subName?: string }) | null;
   onClose: () => void;
 }
 
