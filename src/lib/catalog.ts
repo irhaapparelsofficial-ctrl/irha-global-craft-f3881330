@@ -84,9 +84,9 @@ import type { Product, ProductSpec } from "@/lib/categories";
 type Pool = string[];
 
 const POOLS: Record<string, Pool> = {
-  bavarian:    [bav1, bav2, bav3, bav4, bav5, bav6, bav7, bav8, bavD1, bavD2],
+  bavarian:    [bav1, bav2, bav3, bav4, bav5, bav6, bav7, bav8, bavD1, bavD2, bavCU1, bavCU2, bavCU3, bavCU4, bavCU5, bavCU6],
   sportswear:  [sp1,  sp2,  sp3,  sp4,  sp5,  sp6,  sp7,  sp8,  spD1,  spD2],
-  leatherwear: [lt1,  lt2,  lt3,  lt4,  lt5,  lt6,  lt7,  lt8,  ltD1,  ltD2],
+  leatherwear: [lt1,  lt2,  lt3,  lt4,  lt5,  lt6,  lt7,  lt8,  ltD1,  ltD2, ltCU1, ltCU2, ltCU3, ltCU4, ltCU5, ltCU6],
   streetwear:  [st1,  st2,  st3,  st4,  st5,  st6,  st7,  st8,  stD1,  stD2],
   leisurewear: [ls1,  ls2,  ls3,  ls4,  ls5,  ls6,  ls7,  ls8,  lsD1,  lsD2],
   nightwear:   [nw1,  nw2,  nw3,  nw4,  nw5,  nw6,  nw7,  nw8,  nwD1,  nwD2],
@@ -147,12 +147,13 @@ function buildSub(
   },
   specHighlights: string[],
   description: (name: string) => string,
+  minProducts: number = 42,
 ): SubCategory {
   const pool = POOLS[catSlug];
 
   // Auto-expand catalog: pad each sub-category to MIN_PER_SUB products
   // with rotating themed editions so wholesale buyers see a deeper range.
-  const MIN_PER_SUB = 42;
+  const MIN_PER_SUB = minProducts;
   const padLabels = [
     "Wholesale Pack",
     "Private Label Edition",
