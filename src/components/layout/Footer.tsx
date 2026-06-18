@@ -122,10 +122,19 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="container-luxe mt-16 pt-8 border-t border-border/60 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="container-luxe mt-16 pt-8 border-t border-border/60 flex flex-col md:flex-row items-center justify-between gap-6">
         <p className="text-xs text-muted-foreground uppercase tracking-[0.25em]">
           © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
         </p>
+        <div className="flex items-center gap-6">
+          {SOCIALS.map((s) => (
+            <div key={s.name} className="group flex flex-col items-center gap-1.5 cursor-default">
+              <s.Icon className="text-foreground/50 group-hover:text-primary transition-colors" size={18} />
+              <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">{s.name}</span>
+              <span className="text-[8px] uppercase tracking-[0.15em] text-gold/80">Coming Soon</span>
+            </div>
+          ))}
+        </div>
         <p className="text-xs text-muted-foreground uppercase tracking-[0.25em]">
           OEM · ODM · Private Label · Worldwide Export
         </p>
