@@ -44,12 +44,13 @@ function TikTokIcon({ className, size = 24 }: { className?: string; size?: numbe
   );
 }
 
+// Placeholder profile URLs — replace handles once the accounts are live.
 const SOCIALS = [
-  { name: "Instagram", Icon: InstagramIcon },
-  { name: "Facebook", Icon: FacebookIcon },
-  { name: "LinkedIn", Icon: LinkedInIcon },
-  { name: "X / Twitter", Icon: XIcon },
-  { name: "TikTok", Icon: TikTokIcon },
+  { name: "Instagram", href: "https://www.instagram.com/irhaapparels", Icon: InstagramIcon },
+  { name: "Facebook", href: "https://www.facebook.com/irhaapparels", Icon: FacebookIcon },
+  { name: "LinkedIn", href: "https://www.linkedin.com/company/irha-apparels", Icon: LinkedInIcon },
+  { name: "X / Twitter", href: "https://x.com/irhaapparels", Icon: XIcon },
+  { name: "TikTok", href: "https://www.tiktok.com/@irhaapparels", Icon: TikTokIcon },
 ];
 
 const COMPANY = [
@@ -128,11 +129,17 @@ export default function Footer() {
         </p>
         <div className="flex items-center gap-6">
           {SOCIALS.map((s) => (
-            <div key={s.name} className="group flex flex-col items-center gap-1.5 cursor-default">
-              <s.Icon className="text-foreground/50 group-hover:text-primary transition-colors" size={18} />
-              <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">{s.name}</span>
-              <span className="text-[8px] uppercase tracking-[0.15em] text-gold/80">Coming Soon</span>
-            </div>
+            <a
+              key={s.name}
+              href={s.href}
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label={`Irha Apparels on ${s.name}`}
+              className="group flex flex-col items-center gap-1.5"
+            >
+              <s.Icon className="text-foreground/50 group-hover:text-gold transition-colors duration-300" size={18} />
+              <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground transition-colors">{s.name}</span>
+            </a>
           ))}
         </div>
         <div className="flex flex-col md:items-end gap-2">
