@@ -406,6 +406,7 @@ function ProductCard({
           decoding="async"
           width={750}
           height={750}
+          sizes="(min-width: 1024px) 23vw, (min-width: 768px) 31vw, 48vw"
           className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:opacity-0"
         />
         {/* Secondary image revealed on hover (zoomed) */}
@@ -414,8 +415,10 @@ function ProductCard({
           alt=""
           loading="lazy"
           decoding="async"
+          fetchPriority="low"
           width={750}
           height={750}
+          sizes="(min-width: 1024px) 23vw, (min-width: 768px) 31vw, 48vw"
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover scale-110 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:scale-100"
         />

@@ -1,51 +1,51 @@
-import bavarian from "@/assets/cat-bavarian.jpg";
-import sportswear from "@/assets/cat-sportswear.jpg";
-import leather from "@/assets/cat-leather.jpg";
-import streetwear from "@/assets/cat-streetwear.jpg";
-import leisure from "@/assets/cat-leisure.jpg";
-import nightwear from "@/assets/cat-nightwear.jpg";
+import bavarian from "@/assets/cat-bavarian.jpg?w=1600&format=webp&quality=80";
+import sportswear from "@/assets/cat-sportswear.jpg?w=1600&format=webp&quality=80";
+import leather from "@/assets/cat-leather.jpg?w=1600&format=webp&quality=80";
+import streetwear from "@/assets/cat-streetwear.jpg?w=1600&format=webp&quality=80";
+import leisure from "@/assets/cat-leisure.jpg?w=1600&format=webp&quality=80";
+import nightwear from "@/assets/cat-nightwear.jpg?w=1600&format=webp&quality=80";
 
-import bav1 from "@/assets/products/bavarian-1.jpg";
-import bav2 from "@/assets/products/bavarian-2.jpg";
-import bav3 from "@/assets/products/bavarian-3.jpg";
-import bav4 from "@/assets/products/bavarian-4.jpg";
-import bavD1 from "@/assets/products/bavarian-detail-1.jpg";
-import bavD2 from "@/assets/products/bavarian-detail-2.jpg";
+import bav1 from "@/assets/products/bavarian-1.jpg?w=900&format=webp&quality=78";
+import bav2 from "@/assets/products/bavarian-2.jpg?w=900&format=webp&quality=78";
+import bav3 from "@/assets/products/bavarian-3.jpg?w=900&format=webp&quality=78";
+import bav4 from "@/assets/products/bavarian-4.jpg?w=900&format=webp&quality=78";
+import bavD1 from "@/assets/products/bavarian-detail-1.jpg?w=900&format=webp&quality=78";
+import bavD2 from "@/assets/products/bavarian-detail-2.jpg?w=900&format=webp&quality=78";
 
-import sp1 from "@/assets/products/sportswear-1.jpg";
-import sp2 from "@/assets/products/sportswear-2.jpg";
-import sp3 from "@/assets/products/sportswear-3.jpg";
-import sp4 from "@/assets/products/sportswear-4.jpg";
-import spD1 from "@/assets/products/sportswear-detail-1.jpg";
-import spD2 from "@/assets/products/sportswear-detail-2.jpg";
+import sp1 from "@/assets/products/sportswear-1.jpg?w=900&format=webp&quality=78";
+import sp2 from "@/assets/products/sportswear-2.jpg?w=900&format=webp&quality=78";
+import sp3 from "@/assets/products/sportswear-3.jpg?w=900&format=webp&quality=78";
+import sp4 from "@/assets/products/sportswear-4.jpg?w=900&format=webp&quality=78";
+import spD1 from "@/assets/products/sportswear-detail-1.jpg?w=900&format=webp&quality=78";
+import spD2 from "@/assets/products/sportswear-detail-2.jpg?w=900&format=webp&quality=78";
 
-import lt1 from "@/assets/products/leather-1.jpg";
-import lt2 from "@/assets/products/leather-2.jpg";
-import lt3 from "@/assets/products/leather-3.jpg";
-import lt4 from "@/assets/products/leather-4.jpg";
-import ltD1 from "@/assets/products/leather-detail-1.jpg";
-import ltD2 from "@/assets/products/leather-detail-2.jpg";
+import lt1 from "@/assets/products/leather-1.jpg?w=900&format=webp&quality=78";
+import lt2 from "@/assets/products/leather-2.jpg?w=900&format=webp&quality=78";
+import lt3 from "@/assets/products/leather-3.jpg?w=900&format=webp&quality=78";
+import lt4 from "@/assets/products/leather-4.jpg?w=900&format=webp&quality=78";
+import ltD1 from "@/assets/products/leather-detail-1.jpg?w=900&format=webp&quality=78";
+import ltD2 from "@/assets/products/leather-detail-2.jpg?w=900&format=webp&quality=78";
 
-import st1 from "@/assets/products/streetwear-1.jpg";
-import st2 from "@/assets/products/streetwear-2.jpg";
-import st3 from "@/assets/products/streetwear-3.jpg";
-import st4 from "@/assets/products/streetwear-4.jpg";
-import stD1 from "@/assets/products/streetwear-detail-1.jpg";
-import stD2 from "@/assets/products/streetwear-detail-2.jpg";
+import st1 from "@/assets/products/streetwear-1.jpg?w=900&format=webp&quality=78";
+import st2 from "@/assets/products/streetwear-2.jpg?w=900&format=webp&quality=78";
+import st3 from "@/assets/products/streetwear-3.jpg?w=900&format=webp&quality=78";
+import st4 from "@/assets/products/streetwear-4.jpg?w=900&format=webp&quality=78";
+import stD1 from "@/assets/products/streetwear-detail-1.jpg?w=900&format=webp&quality=78";
+import stD2 from "@/assets/products/streetwear-detail-2.jpg?w=900&format=webp&quality=78";
 
-import ls1 from "@/assets/products/leisure-1.jpg";
-import ls2 from "@/assets/products/leisure-2.jpg";
-import ls3 from "@/assets/products/leisure-3.jpg";
-import ls4 from "@/assets/products/leisure-4.jpg";
-import lsD1 from "@/assets/products/leisure-detail-1.jpg";
-import lsD2 from "@/assets/products/leisure-detail-2.jpg";
+import ls1 from "@/assets/products/leisure-1.jpg?w=900&format=webp&quality=78";
+import ls2 from "@/assets/products/leisure-2.jpg?w=900&format=webp&quality=78";
+import ls3 from "@/assets/products/leisure-3.jpg?w=900&format=webp&quality=78";
+import ls4 from "@/assets/products/leisure-4.jpg?w=900&format=webp&quality=78";
+import lsD1 from "@/assets/products/leisure-detail-1.jpg?w=900&format=webp&quality=78";
+import lsD2 from "@/assets/products/leisure-detail-2.jpg?w=900&format=webp&quality=78";
 
-import nw1 from "@/assets/products/nightwear-1.jpg";
-import nw2 from "@/assets/products/nightwear-2.jpg";
-import nw3 from "@/assets/products/nightwear-3.jpg";
-import nw4 from "@/assets/products/nightwear-4.jpg";
-import nwD1 from "@/assets/products/nightwear-detail-1.jpg";
-import nwD2 from "@/assets/products/nightwear-detail-2.jpg";
+import nw1 from "@/assets/products/nightwear-1.jpg?w=900&format=webp&quality=78";
+import nw2 from "@/assets/products/nightwear-2.jpg?w=900&format=webp&quality=78";
+import nw3 from "@/assets/products/nightwear-3.jpg?w=900&format=webp&quality=78";
+import nw4 from "@/assets/products/nightwear-4.jpg?w=900&format=webp&quality=78";
+import nwD1 from "@/assets/products/nightwear-detail-1.jpg?w=900&format=webp&quality=78";
+import nwD2 from "@/assets/products/nightwear-detail-2.jpg?w=900&format=webp&quality=78";
 
 export type ProductSpec = { label: string; value: string };
 
