@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, Maximize2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CATALOG_PAGES, catalogPdf, catalogThumb } from "@/lib/catalogPages";
+import { trackDownload } from "@/lib/analytics";
 
 
 type Props = {
