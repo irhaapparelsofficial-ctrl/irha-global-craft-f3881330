@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { ArrowUpRight, Download, Eye, MessageCircle, ShieldCheck, Globe2, Factory, Award } from "lucide-react";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
+import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import leatherJacket from "@/assets/banners/leather-jacket.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import leatherJacketFallback from "@/assets/banners/leather-jacket.jpg?w=1600&format=webp&quality=74";
