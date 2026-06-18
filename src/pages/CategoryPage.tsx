@@ -1,8 +1,8 @@
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useState } from "react";
 import SEO from "@/components/SEO";
-import { CATEGORIES } from "@/lib/categories";
-import { CATALOG, findGroup } from "@/lib/catalog";
+import { CATEGORIES, type Product } from "@/lib/categories";
+import { findGroup } from "@/lib/catalog";
 import { CATEGORY_SEO } from "@/lib/categorySeo";
 import { forceDownload } from "@/lib/download";
 import ProductDetailModal from "@/components/ProductDetailModal";
