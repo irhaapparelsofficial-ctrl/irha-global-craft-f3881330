@@ -34,7 +34,7 @@ export default function Products() {
           hasPart: CATEGORIES.map((c) => ({
             "@type": "CollectionPage",
             name: c.name,
-            url: `https://www.irhaapparels.com/products#${c.slug}`,
+            url: `https://www.irhaapparels.com/products/${c.slug}`,
           })),
         }}
       />
@@ -132,7 +132,11 @@ export default function Products() {
                   <div className={`lg:col-span-5 ${reverse ? "lg:order-1" : ""}`}>
                     <p className="font-display text-7xl text-gold/30">0{i + 1}</p>
                     <p className="eyebrow mt-2 mb-4">{c.short}</p>
-                    <h2 className="font-display text-4xl md:text-5xl leading-[1.05]">{c.name}</h2>
+                    <h2 className="font-display text-4xl md:text-5xl leading-[1.05]">
+                      <Link to={`/products/${c.slug}`} className="hover:text-primary transition-colors">
+                        {c.name}
+                      </Link>
+                    </h2>
                     <p className="text-foreground/75 mt-6 leading-relaxed">{c.description}</p>
                     <ul className="mt-8 space-y-3">
                       {c.details.map((d) => (
@@ -144,12 +148,20 @@ export default function Products() {
                     <p className="mt-8 text-xs uppercase tracking-[0.3em] text-foreground/50">
                       {subs.length} sub-categories · {totalProducts} styles
                     </p>
-                    <Link
-                      to="/inquiry"
-                      className="mt-6 inline-flex items-center gap-3 border border-primary text-primary hover:bg-primary hover:text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
-                    >
-                      Request a Quote <ArrowUpRight size={16} />
-                    </Link>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Link
+                        to={`/products/${c.slug}`}
+                        className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
+                      >
+                        View {c.name} <ArrowUpRight size={16} />
+                      </Link>
+                      <Link
+                        to="/inquiry"
+                        className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
+                      >
+                        Request a Quote
+                      </Link>
+                    </div>
                   </div>
                 </div>
 

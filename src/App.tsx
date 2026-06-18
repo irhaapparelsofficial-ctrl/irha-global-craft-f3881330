@@ -9,6 +9,7 @@ import Layout from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Products from "./pages/Products";
+import CategoryPage from "./pages/CategoryPage";
 import Manufacturing from "./pages/Manufacturing";
 import Inquiry from "./pages/Inquiry";
 import Contact from "./pages/Contact";
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/products" element={<Products />} />
+              <Route path="/products/:slug" element={<CategoryPage />} />
               <Route path="/manufacturing" element={<Manufacturing />} />
               <Route path="/sustainability" element={<Sustainability />} />
               <Route path="/journal" element={<Journal />} />
