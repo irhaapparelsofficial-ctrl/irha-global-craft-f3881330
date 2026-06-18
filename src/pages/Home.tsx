@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { ArrowUpRight, Download, Eye, MessageCircle, ShieldCheck, Globe2, Factory, Award } from "lucide-react";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
+import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import leatherJacket from "@/assets/banners/leather-jacket.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import leatherJacketFallback from "@/assets/banners/leather-jacket.jpg?w=1600&format=webp&quality=74";
@@ -130,6 +131,29 @@ export default function Home() {
               <span className="flex items-center gap-3"><Download size={16}/> Download Catalog</span>
               <ArrowUpRight size={18} />
             </a>
+          </div>
+
+          {/* Catalog preview strip — peek inside before downloading */}
+          <div className="lg:col-span-12 mt-10 pt-8 border-t border-foreground/10">
+            <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+              <div>
+                <p className="eyebrow mb-1">Inside the 2026 catalogue</p>
+                <p className="text-sm text-foreground/65">22-page B2B line sheet · 6 divisions · MOQ 50</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFlipOpen(true)}
+                className="text-[10px] uppercase tracking-[0.3em] text-gold hover:text-primary inline-flex items-center gap-2"
+              >
+                <Eye size={13}/> Open flipbook
+              </button>
+            </div>
+            <CatalogThumbnailStrip
+              slug="master-catalogue-2026"
+              count={7}
+              skip={1}
+              onClick={() => setFlipOpen(true)}
+            />
           </div>
         </div>
       </section>

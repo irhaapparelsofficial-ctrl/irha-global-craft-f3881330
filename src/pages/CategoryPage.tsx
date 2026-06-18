@@ -7,6 +7,7 @@ import { CATEGORY_SEO } from "@/lib/categorySeo";
 import { forceDownload } from "@/lib/download";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
+import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
 import { ArrowUpRight, Download, ChevronRight, Eye, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
@@ -220,6 +221,19 @@ export default function CategoryPage() {
             <span className="text-xs uppercase tracking-[0.3em] text-foreground/55 ml-2">
               {totalProducts} styles · MOQ 50 · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
             </span>
+          </div>
+
+          {/* Catalog page thumbnails — peek inside */}
+          <div className="mt-8 pt-6 border-t border-border/40">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-foreground/55 mb-3">
+              {category.name} catalogue · peek inside
+            </p>
+            <CatalogThumbnailStrip
+              slug={category.slug}
+              count={6}
+              skip={1}
+              onClick={() => setFlipOpen(true)}
+            />
           </div>
         </div>
       </section>
