@@ -9,6 +9,7 @@ import Layout from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Products from "./pages/Products";
+import CategoryPage from "./pages/CategoryPage";
 import Manufacturing from "./pages/Manufacturing";
 import Inquiry from "./pages/Inquiry";
 import Contact from "./pages/Contact";
