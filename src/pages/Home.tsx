@@ -17,6 +17,7 @@ import leatherStackFallback from "@/assets/banners/leather-stack.jpg?w=1600&form
 import HeroSlideshow from "@/components/HeroSlideshow";
 import { CATEGORIES } from "@/lib/categories";
 import { whatsappLink, BRAND } from "@/lib/constants";
+import { trackDownload } from "@/lib/analytics";
 
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
@@ -121,6 +122,13 @@ export default function Home() {
             <a
               href="/Irha-Apparels-Catalog-2026.pdf"
               download="Irha-Apparels-Catalog-2026.pdf"
+              onClick={() =>
+                trackDownload({
+                  page: "/",
+                  cta_location: "home-hero",
+                  catalog: "Irha-Apparels-Catalog-2026.pdf",
+                })
+              }
               className="group inline-flex items-center justify-between border border-foreground/15 hover:border-foreground/40 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-colors text-foreground/70"
             >
               <span className="flex items-center gap-3"><Download size={16}/> Download Catalogue</span>

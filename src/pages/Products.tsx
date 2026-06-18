@@ -9,6 +9,7 @@ import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 
 import { whatsappLink, BRAND } from "@/lib/constants";
+import { trackDownload } from "@/lib/analytics";
 
 
 export default function Products() {
@@ -90,6 +91,13 @@ export default function Products() {
                     <a
                       href={c.catalog}
                       download={`Irha-${c.slug}-catalog.pdf`}
+                      onClick={() =>
+                        trackDownload({
+                          page: "/products",
+                          cta_location: "products-grid",
+                          catalog: c.slug,
+                        })
+                      }
                       className="text-gold hover:text-primary transition-colors"
                       aria-label={`Download ${c.name} catalog`}
                     >
