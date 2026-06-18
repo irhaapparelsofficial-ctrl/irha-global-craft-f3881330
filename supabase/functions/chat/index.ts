@@ -1,8 +1,20 @@
 // Irha Apparels AI assistant — streaming chat via Lovable AI Gateway
+const securityHeaders = {
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+  "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+  "Cross-Origin-Resource-Policy": "same-site",
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
+  ...securityHeaders,
 };
 
 const SYSTEM_PROMPT = `You are "Irha Assistant", the friendly AI sales concierge for Irha Apparels — a premium clothing manufacturer based in Sialkot, Pakistan.
