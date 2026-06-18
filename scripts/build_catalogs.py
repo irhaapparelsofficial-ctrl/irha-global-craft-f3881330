@@ -263,7 +263,7 @@ def products_page(c, cat):
         # image (top 62%)
         ih = ch * 0.62
         if i < len(files):
-            draw_image_fit(c, x, y + ch - ih, cw, ih)
+            draw_image_fit(c, files[i], x, y + ch - ih, cw, ih)
         # text panel
         ty = y + ch - ih - 5
         c.setFillColor(INK); c.setFont("Helvetica-Bold", 11)
