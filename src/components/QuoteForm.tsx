@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MessageCircle, Send } from "lucide-react";
 import { WHATSAPP_NUMBER, BRAND } from "@/lib/constants";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Compact inline quote form. Drop on any landing/blog page.
@@ -27,12 +28,26 @@ export default function QuoteForm({
   const update = (k: keyof typeof data, v: string) =>
     setData((d) => ({ ...d, [k]: v }));
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!data.name.trim() || !data.email.trim() || !data.country.trim()) {
       toast({ title: "Please complete name, country and email", variant: "destructive" });
       return;
     }
+
+    // 1. Save to our dashboard DB (fire-and-forget; failure shouldn't block WhatsApp).
+    void supabase.from("inquiries").insert({
+      name: data.name,
+      email: data.email,
+      company: data.company || null,
+      country: data.country,
+      quantity: data.quantity || null,
+      category: defaultCategory || null,
+      message: data.notes || null,
+      source: pageContext || "website",
+    });
+
+    // 2. Open WhatsApp with the same details.
     const msg = `New B2B Quote Request — ${BRAND.name}
 ━━━━━━━━━━━━━━━━━━
 Page: ${pageContext || "Website"}
@@ -49,6 +64,7 @@ Notes: ${data.notes || "—"}`;
       "_blank",
     );
   };
+
 
   const input =
     "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors";

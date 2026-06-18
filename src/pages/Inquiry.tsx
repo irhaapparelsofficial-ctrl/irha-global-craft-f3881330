@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check, MessageCircle } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name required").max(80),
@@ -57,6 +58,20 @@ export default function Inquiry() {
       toast({ title: "Please complete all fields", variant: "destructive" });
       return;
     }
+
+    // Save to dashboard DB
+    void supabase.from("inquiries").insert({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      company: parsed.data.company,
+      country: parsed.data.country,
+      phone: parsed.data.whatsapp,
+      category: parsed.data.category,
+      quantity: parsed.data.quantity,
+      message: parsed.data.notes || null,
+      source: "inquiry-page",
+    });
+
     const msg = `New B2B Inquiry — Irha Apparels
 ━━━━━━━━━━━━━━━━━━
 Name: ${parsed.data.name}
@@ -72,6 +87,7 @@ Notes: ${parsed.data.notes || "—"}`;
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
     }, 600);
   };
+
 
   const inputCls = "w-full bg-input border border-border focus:border-primary outline-none px-5 py-4 text-foreground placeholder:text-muted-foreground/60 transition-colors";
   const labelCls = "block text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-3";
