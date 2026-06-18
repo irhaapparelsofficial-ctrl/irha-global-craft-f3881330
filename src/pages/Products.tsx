@@ -2,12 +2,13 @@ import SEO from "@/components/SEO";
 import { CATEGORIES, type Category, type Product } from "@/lib/categories";
 import { CATALOG, findGroup } from "@/lib/catalog";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Eye, Maximize2 } from "lucide-react";
+import { ArrowUpRight, Download, Eye, Maximize2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { forceDownload } from "@/lib/download";
+import { whatsappLink, BRAND } from "@/lib/constants";
 
 const previewPages = (slug: string) =>
   [1, 2, 3, 4].map((n) => `/catalogs/thumbs/${slug}-catalog-${n}.jpg`);
