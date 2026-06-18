@@ -21,9 +21,9 @@ type Props = {
  * mobile, with prev/next nav, keyboard arrows, page counter, jump-to-page
  * dots and a download CTA. Pages are pre-rendered JPGs in /public/catalogs/thumbs.
  */
-export default function CatalogFlipbook({ slug, title, open, onClose, action }: Props) {
+export default function CatalogFlipbook({ slug, title, open, onClose, startPage, action }: Props) {
   const total = CATALOG_PAGES[slug] ?? 0;
-  const [spread, setSpread] = useState(0); // index of left page in current spread (0,1,3,5,...)
+  const [spread, setSpread] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
   const [dir, setDir] = useState<1 | -1>(1);
 
@@ -36,9 +36,6 @@ export default function CatalogFlipbook({ slug, title, open, onClose, action }: 
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // Reset on open or slug change
-  useEffect(() => { if (open) setSpread(0); }, [open, slug]);
-
   // Build the spread list. Desktop pairs pages (1) | (2-3) | (4-5) | ...
   const spreads = useMemo(() => {
     if (total === 0) return [] as number[][];
@@ -50,6 +47,17 @@ export default function CatalogFlipbook({ slug, title, open, onClose, action }: 
     }
     return list;
   }, [total, isDesktop]);
+
+  // Reset on open / slug change. Skip the cover so buyers land directly on
+  // a product/mockup spread. Default jump page differs per catalog.
+  useEffect(() => {
+    if (!open || spreads.length === 0) return;
+    const defaultStart = slug === "master-catalogue-2026" ? 4 : 3;
+    const target = startPage ?? defaultStart;
+    const i = spreads.findIndex((s) => s.includes(target));
+    setSpread(i >= 0 ? i : 0);
+    setDir(1);
+  }, [open, slug, startPage, spreads]);
 
   const idx = Math.min(spread, spreads.length - 1);
   const cur = spreads[idx] || [];
