@@ -168,7 +168,7 @@ def footer(c, page_no, total=None):
 def cover(c, title_main, subtitle, cover_img):
     c.setFillColor(BG); c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
     if cover_img and os.path.exists(cover_img):
-        draw_image_fit(c, 0, PAGE_H * 0.42, PAGE_W, PAGE_H * 0.58)
+        draw_image_fit(c, cover_img, 0, PAGE_H * 0.42, PAGE_W, PAGE_H * 0.58)
         # gradient-ish overlay
         c.setFillColorRGB(0.055, 0.055, 0.063, alpha=0.55)
         c.rect(0, PAGE_H * 0.42, PAGE_W, PAGE_H * 0.58, fill=1, stroke=0)
