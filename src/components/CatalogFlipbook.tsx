@@ -9,6 +9,9 @@ type Props = {
   title: string;
   open: boolean;
   onClose: () => void;
+  /** Page number (1-indexed) to open at. Defaults to the first product/mockup
+   * page so buyers see products immediately instead of the cover. */
+  startPage?: number;
   /** optional secondary action (e.g. request quote) */
   action?: React.ReactNode;
 };
