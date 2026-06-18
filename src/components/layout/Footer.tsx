@@ -44,13 +44,9 @@ function TikTokIcon({ className, size = 24 }: { className?: string; size?: numbe
   );
 }
 
-// Placeholder profile URLs — replace handles once the accounts are live.
+// Live social profiles. Add more handles as accounts go live.
 const SOCIALS = [
-  { name: "Instagram", href: "https://www.instagram.com/irhaapparels", Icon: InstagramIcon },
-  { name: "Facebook", href: "https://www.facebook.com/irhaapparels", Icon: FacebookIcon },
-  { name: "LinkedIn", href: "https://www.linkedin.com/company/irha-apparels", Icon: LinkedInIcon },
-  { name: "X / Twitter", href: "https://x.com/irhaapparels", Icon: XIcon },
-  { name: "TikTok", href: "https://www.tiktok.com/@irhaapparels", Icon: TikTokIcon },
+  { name: "Facebook", href: "https://web.facebook.com/profile.php?id=61590950402472", Icon: FacebookIcon },
 ];
 
 const COMPANY = [
