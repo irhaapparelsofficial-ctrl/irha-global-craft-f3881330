@@ -21,6 +21,9 @@ import Certifications from "@/components/sections/Certifications";
 import KpiCounters from "@/components/sections/KpiCounters";
 import Testimonials from "@/components/sections/Testimonials";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
+import TrustBar from "@/components/sections/TrustBar";
+import BuyerPromise from "@/components/sections/BuyerPromise";
+import FounderNote from "@/components/sections/FounderNote";
 
 export default function Home() {
   return (
@@ -79,6 +82,9 @@ export default function Home() {
               OEM · ODM · Private Label export manufacturing — engineered for the world's
               most ambitious fashion houses, retailers and emerging labels.
             </p>
+            <p className="mt-5 text-xs md:text-sm uppercase tracking-[0.28em] text-primary/90 max-w-xl">
+              Trusted by 200+ brands · Shipped to 50+ countries
+            </p>
           </div>
 
           <div className="lg:col-span-4 flex flex-col gap-3 animate-fade-in">
@@ -110,11 +116,15 @@ export default function Home() {
         </div>
       </section>
 
+      {/* TRUST BAR — 6 buyer-reassurance signals */}
+      <TrustBar />
+
       {/* TRUSTED BY MARQUEE */}
       <ClientsMarquee />
 
       {/* INTRO / VALUE */}
       <section className="py-28 md:py-40">
+
         <div className="container-luxe grid lg:grid-cols-12 gap-14">
           <div className="lg:col-span-5">
             <p className="eyebrow mb-6">The House of Irha</p>
@@ -188,14 +198,21 @@ export default function Home() {
       {/* PROCESS TIMELINE */}
       <ProcessTimeline />
 
+      {/* WHOLESALE PROMISE — 6 written commitments */}
+      <BuyerPromise />
+
       {/* CERTIFICATIONS */}
       <Certifications />
+
+      {/* MD's PERSONAL NOTE */}
+      <FounderNote />
 
       {/* TESTIMONIALS */}
       <Testimonials />
 
       {/* MANUFACTURING TEASER */}
       <section className="relative py-28 md:py-40 overflow-hidden">
+
         <img
           src={manufacturingImg}
           alt="Irha Apparels Sialkot manufacturing floor"
