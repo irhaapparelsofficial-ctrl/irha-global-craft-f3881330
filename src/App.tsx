@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { useEffect, lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -77,6 +77,14 @@ const App = () => (
                 <Route path="/seo-indexing" element={<SeoIndexing />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin" element={<Admin />} />
+                {/* Fallback redirects for common admin/auth URL variants */}
+                <Route path="/login" element={<Navigate to="/auth" replace />} />
+                <Route path="/signin" element={<Navigate to="/auth" replace />} />
+                <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
+                <Route path="/log-in" element={<Navigate to="/auth" replace />} />
+                <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+                <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
                 {SEO_LANDING_SLUGS.map((slug) => (
                   <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
                 ))}
