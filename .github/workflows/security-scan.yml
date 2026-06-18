@@ -196,7 +196,87 @@ jobs:
           echo "| Dependency Review | ${{ needs.dependency-review.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Findings appear in the **Security** tab of the repository." >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate machine-readable scan-summary.json
+        id: gen_json
+        run: |
+          cat > scan-summary.json <<EOF
+          {
+            "repository": "${{ github.repository }}",
+            "sha": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "event": "${{ github.event_name }}",
+            "run_id": "${{ github.run_id }}",
+            "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "quality_gates": {
+              "lint_typecheck": "${{ needs.lint-typecheck.result }}",
+              "supabase_validate": "${{ needs.supabase-validate.result }}"
+            },
+            "security_scans": {
+              "dependency_audit": "${{ needs.dependency-audit.result }}",
+              "secret_scan": "${{ needs.secret-scan.result }}",
+              "codeql": "${{ needs.codeql.result }}",
+              "dependency_review": "${{ needs.dependency-review.result }}"
+            }
+          }
+          EOF
+          cat scan-summary.json
+
+      - name: Upload scan-summary.json artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-summary
+          path: scan-summary.json
+          retention-days: 30
+
+      - name: Post / update PR comment with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('scan-summary.json', 'utf8'));
+            const icon = (s) => s === 'success' ? '✅' : s === 'failure' ? '❌' : s === 'skipped' ? '⏭️' : '⚠️';
+            const marker = '<!-- lovable-security-scan-summary -->';
+            const body = [
+              marker,
+              '## 🛡️ Security & Quality Scan Results',
+              '',
+              `**Commit:** \`${data.sha.substring(0,7)}\` · [View run](${data.run_url})`,
+              '',
+              '### Quality Gates',
+              '| Check | Status |',
+              '|-------|--------|',
+              `| ESLint + TypeScript | ${icon(data.quality_gates.lint_typecheck)} ${data.quality_gates.lint_typecheck} |`,
+              `| Supabase Config Validation | ${icon(data.quality_gates.supabase_validate)} ${data.quality_gates.supabase_validate} |`,
+              '',
+              '### Security Scans',
+              '| Check | Status |',
+              '|-------|--------|',
+              `| Dependency Audit | ${icon(data.security_scans.dependency_audit)} ${data.security_scans.dependency_audit} |`,
+              `| Secret Scan (Gitleaks) | ${icon(data.security_scans.secret_scan)} ${data.security_scans.secret_scan} |`,
+              `| CodeQL Static Analysis | ${icon(data.security_scans.codeql)} ${data.security_scans.codeql} |`,
+              `| Dependency Review | ${icon(data.security_scans.dependency_review)} ${data.security_scans.dependency_review} |`,
+              '',
+              '_Machine-readable `scan-summary.json` is attached as a workflow artifact._',
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      - name: Fail if any check failed
+        run: |
           if [[ "${{ needs.dependency-audit.result }}" == "failure" || "${{ needs.secret-scan.result }}" == "failure" || "${{ needs.codeql.result }}" == "failure" || "${{ needs.dependency-review.result }}" == "failure" || "${{ needs.lint-typecheck.result }}" == "failure" || "${{ needs.supabase-validate.result }}" == "failure" ]]; then
             echo "::error::One or more checks failed."
             exit 1
           fi
+
