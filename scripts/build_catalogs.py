@@ -209,7 +209,7 @@ def intro_page(c, cat):
         img_y = 18*mm
         img_h = y - 22*mm
         if img_h > 60*mm:
-            draw_image_fit(c, 20*mm, img_y, PAGE_W - 40*mm, img_h - 6*mm, )
+            draw_image_fit(c, cat["files"][0], 20*mm, img_y, PAGE_W - 40*mm, img_h - 6*mm)
     return
 
 def gallery_page(c, cat, files, page_label):
