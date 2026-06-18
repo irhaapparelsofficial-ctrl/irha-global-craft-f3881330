@@ -47,7 +47,7 @@ export default function CategoryPage() {
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [sort, setSort] = useState<SortKey>("newest");
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
-  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [activeProduct, setActiveProduct] = useState<FlatProduct | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Flatten all sub products into one list with metadata + stable sort signals.
