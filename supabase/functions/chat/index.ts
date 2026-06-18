@@ -19,7 +19,7 @@ ABOUT IRHA APPARELS:
 
 CONTACT:
 - WhatsApp / Phone: +92 320 411 0066
-- Email: info@irhaapparels.com
+- Email: irhaapparelsofficial@gmail.com
 - Website: irhaapparels.com
 
 STYLE:
