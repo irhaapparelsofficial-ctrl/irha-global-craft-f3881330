@@ -2,14 +2,14 @@ import SEO from "@/components/SEO";
 import { CATEGORIES, type Category, type Product } from "@/lib/categories";
 import { CATALOG, findGroup } from "@/lib/catalog";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Eye, Maximize2, MessageCircle } from "lucide-react";
+import { ArrowUpRight, Eye, Maximize2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 
 import { whatsappLink, BRAND } from "@/lib/constants";
-import { trackDownload } from "@/lib/analytics";
+
 
 
 export default function Products() {
