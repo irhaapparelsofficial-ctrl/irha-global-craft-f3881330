@@ -310,18 +310,19 @@ def products_page(c, cat):
             ("PRICE",     price.replace("from ", "")),
         ]
         col_w = tw / 2
-        row_h = 13
+        row_h = 22
         grid_y = ty
         for si, (k, v) in enumerate(specs):
             cc = si % 2; rr = si // 2
             sx = tx + cc * col_w
             sy = grid_y - rr * row_h
-            c.setStrokeColor(LINE); c.setLineWidth(0.25)
-            c.line(sx, sy - row_h + 2, sx + col_w - 4, sy - row_h + 2)
             c.setFillColor(ACCENT); c.setFont("Helvetica-Bold", 7)
             c.drawString(sx, sy, k)
             c.setFillColor(INK); c.setFont("Helvetica", 8.8)
-            c.drawString(sx, sy - 9, v[:42])
+            c.drawString(sx, sy - 10, v[:42])
+            c.setStrokeColor(LINE); c.setLineWidth(0.25)
+            c.line(sx, sy - 14, sx + col_w - 4, sy - 14)
+
 
 
 def capabilities_page(c):
