@@ -267,17 +267,27 @@ export default function Products() {
                   />
                 ))}
               </div>
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/60">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/60">
                 <p className="text-xs text-foreground/60">
                   Full catalog includes complete product specs & MOQs.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => forceDownload(previewCat.catalog, `Irha-${previewCat.slug}-catalog.pdf`)}
-                  className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
-                >
-                  <Download size={14} /> Download PDF
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href={whatsappLink(`Hello Irha Apparels — I'd like a quote for the ${previewCat.name} catalog.`)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 border border-gold/70 text-gold hover:bg-gold hover:text-background px-5 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
+                  >
+                    <MessageCircle size={14} /> Request Quote
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => forceDownload(previewCat.catalog, `Irha-${previewCat.slug}-catalog.pdf`)}
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
+                  >
+                    <Download size={14} /> Download PDF
+                  </button>
+                </div>
               </div>
             </>
           )}
