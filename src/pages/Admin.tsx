@@ -66,12 +66,14 @@ export default function Admin() {
                 <TabButton active={tab === "traffic"} onClick={() => setTab("traffic")} icon={<BarChart3 size={14} />} label="Traffic" />
                 <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={<MessageSquare size={14} />} label="Live Chat" />
                 <TabButton active={tab === "gsc"} onClick={() => setTab("gsc")} icon={<Search size={14} />} label="Google Search" />
+                <TabButton active={tab === "social"} onClick={() => setTab("social")} icon={<Share2 size={14} />} label="Social" />
               </div>
 
               {tab === "inquiries" && <InquiriesPanel />}
               {tab === "traffic" && <TrafficPanel />}
               {tab === "chat" && <ChatPanel />}
               {tab === "gsc" && <GSCPanel />}
+              {tab === "social" && <SocialPanel />}
             </>
           )}
         </div>
