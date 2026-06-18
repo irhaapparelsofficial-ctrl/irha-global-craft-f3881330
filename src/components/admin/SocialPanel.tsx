@@ -21,8 +21,43 @@ export default function SocialPanel() {
   const [toFB, setToFB] = useState(true);
   const [toIG, setToIG] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onPickFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please choose an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast({ title: "Image must be under 8 MB", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("social-uploads").upload(path, file, {
+        contentType: file.type,
+        cacheControl: "3600",
+      });
+      if (up.error) throw up.error;
+      // 7-day signed URL — Meta fetches once at publish time.
+      const signed = await supabase.storage
+        .from("social-uploads")
+        .createSignedUrl(path, 60 * 60 * 24 * 7);
+      if (signed.error) throw signed.error;
+      setImageUrl(signed.data.signedUrl);
+      toast({ title: "Image uploaded" });
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   const load = async () => {
     setLoading(true);
