@@ -41,7 +41,7 @@ export default function ProductDetailModal({ product, onClose }: Props) {
                       active === i ? "border-primary" : "border-background/60 opacity-70 hover:opacity-100"
                     }`}
                   >
-                    <img src={g} alt="" className="w-full h-full object-cover" />
+                    <img src={g} alt="" loading="lazy" decoding="async" width="56" height="56" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
