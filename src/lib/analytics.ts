@@ -4,18 +4,6 @@
  * and falls back to console in development.
  */
 
-declare global {
-  interface Window {
-    gtag?: (
-      cmd: "event",
-      name: string,
-      params?: Record<string, string | number | boolean>
-    ) => void;
-    dataLayer?: Array<Record<string, unknown>>;
-    plausible?: (event: string, options?: { props?: Record<string, string> }) => void;
-  }
-}
-
 type DownloadEvent = {
   page: string;
   cta_location: string;
