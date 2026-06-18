@@ -7,7 +7,7 @@ import { useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
-import { forceDownload } from "@/lib/download";
+
 import { whatsappLink, BRAND } from "@/lib/constants";
 
 

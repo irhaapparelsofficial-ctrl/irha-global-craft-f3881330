@@ -4,7 +4,7 @@ import SEO from "@/components/SEO";
 import { CATEGORIES, type Product } from "@/lib/categories";
 import { findGroup } from "@/lib/catalog";
 import { CATEGORY_SEO } from "@/lib/categorySeo";
-import { forceDownload } from "@/lib/download";
+
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
