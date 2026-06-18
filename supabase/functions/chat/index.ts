@@ -30,6 +30,23 @@ STYLE:
 - Never invent certifications, factory size numbers, or claims you weren't given.
 - If a question is outside apparel manufacturing, politely steer back.`;
 
+// Simple in-memory per-IP rate limit (per isolate). Best-effort abuse mitigation
+// for a public, unauthenticated chat widget.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 20;
+const ipHits = new Map<string, { count: number; reset: number }>();
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = ipHits.get(ip);
+  if (!entry || entry.reset < now) {
+    ipHits.set(ip, { count: 1, reset: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -42,9 +59,41 @@ Deno.serve(async (req) => {
       });
     }
 
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+    if (rateLimited(ip)) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again shortly." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { messages } = await req.json();
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "messages required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sanitize: only allow user/assistant roles, cap content length, cap history depth.
+    const safeMessages = (messages as Array<{ role?: unknown; content?: unknown }>)
+      .filter(
+        (m) =>
+          m &&
+          typeof m.content === "string" &&
+          (m.role === "user" || m.role === "assistant"),
+      )
+      .map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: (m.content as string).slice(0, 2000),
+      }))
+      .slice(-20);
+
+    if (safeMessages.length === 0) {
+      return new Response(JSON.stringify({ error: "Invalid messages" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -61,7 +110,7 @@ Deno.serve(async (req) => {
         stream: true,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          ...messages.slice(-20),
+          ...safeMessages,
         ],
       }),
     });
