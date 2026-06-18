@@ -77,6 +77,14 @@ const App = () => (
                 <Route path="/seo-indexing" element={<SeoIndexing />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin" element={<Admin />} />
+                {/* Fallback redirects for common admin/auth URL variants */}
+                <Route path="/login" element={<Navigate to="/auth" replace />} />
+                <Route path="/signin" element={<Navigate to="/auth" replace />} />
+                <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
+                <Route path="/log-in" element={<Navigate to="/auth" replace />} />
+                <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+                <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
                 {SEO_LANDING_SLUGS.map((slug) => (
                   <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
                 ))}
