@@ -139,7 +139,7 @@ export default function Home() {
         title="Irha Apparels — Wholesale B2B Catalogue 2026"
         open={flipOpen}
         onClose={() => setFlipOpen(false)}
-      >
+      />
 
       {/* TRUST BAR — 6 buyer-reassurance signals */}
       <TrustBar />
