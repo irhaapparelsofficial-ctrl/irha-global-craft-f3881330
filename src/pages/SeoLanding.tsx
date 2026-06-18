@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useLocation, Navigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowRight, Check, MessageCircle, MapPin, Shield, Factory } from "lucide-react";
 import SEO from "@/components/SEO";
@@ -10,7 +10,8 @@ import { whatsappLink, BRAND } from "@/lib/constants";
 const SITE_URL = "https://www.irhaapparels.com";
 
 export default function SeoLanding() {
-  const { slug } = useParams<{ slug: string }>();
+  const { pathname } = useLocation();
+  const slug = pathname.replace(/^\/+/, "").replace(/\/+$/, "");
   const page = slug ? getSeoPage(slug) : undefined;
   if (!page) return <Navigate to="/" replace />;
 
