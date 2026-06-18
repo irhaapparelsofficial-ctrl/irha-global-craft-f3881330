@@ -8,6 +8,36 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor, white, black
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+# Register TrueType fonts. reportlab's built-in Helvetica is a Type-1 font
+# with sparse unicode mapping, which causes letter pairs (ri, ti, li, rn)
+# to render with phantom gaps after rasterization at any DPI. Inter ships
+# a real TTF and renders crisply everywhere.
+_FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
+pdfmetrics.registerFont(TTFont("Inter",        os.path.join(_FONT_DIR, "Inter-Regular.ttf")))
+pdfmetrics.registerFont(TTFont("Inter-Bold",   os.path.join(_FONT_DIR, "Inter-Bold.ttf")))
+pdfmetrics.registerFont(TTFont("Inter-Italic", os.path.join(_FONT_DIR, "Inter-Italic.ttf")))
+pdfmetrics.registerFontFamily("Inter", normal="Inter", bold="Inter-Bold", italic="Inter-Italic")
+
+# Alias so existing Helvetica references swap cleanly.
+_FONT_MAP = {
+    "Helvetica":         "Inter",
+    "Helvetica-Bold":    "Inter-Bold",
+    "Helvetica-Oblique": "Inter-Italic",
+}
+_orig_setFont = canvas.Canvas.setFont
+def _setFont(self, psfontname, size, leading=None):
+    psfontname = _FONT_MAP.get(psfontname, psfontname)
+    return _orig_setFont(self, psfontname, size, leading)
+canvas.Canvas.setFont = _setFont
+
+_orig_stringWidth = canvas.Canvas.stringWidth
+def _stringWidth(self, text, fontName=None, fontSize=None):
+    fontName = _FONT_MAP.get(fontName, fontName) if fontName else fontName
+    return _orig_stringWidth(self, text, fontName, fontSize)
+canvas.Canvas.stringWidth = _stringWidth
 
 ROOT = os.path.abspath(os.path.dirname(__file__) + "/..")
 ASSETS = os.path.join(ROOT, "src/assets/products")
