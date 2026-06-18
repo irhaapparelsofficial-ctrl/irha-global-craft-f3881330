@@ -25,6 +25,7 @@ import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import TrustBar from "@/components/sections/TrustBar";
 import BuyerPromise from "@/components/sections/BuyerPromise";
 import FounderNote from "@/components/sections/FounderNote";
+import FacebookFeed from "@/components/sections/FacebookFeed";
 
 export default function Home() {
   return (
