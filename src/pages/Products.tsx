@@ -57,7 +57,7 @@ export default function Products() {
           <div className="mt-14 border-t border-border/60 pt-10">
             <div className="flex flex-wrap items-end justify-between gap-6 mb-6">
               <div>
-                <p className="eyebrow mb-2">Wholesale Catalogs</p>
+                <p className="eyebrow mb-2">Wholesale Catalogues</p>
                 <h2 className="font-display text-2xl md:text-3xl">Download the line sheets</h2>
               </div>
               <p className="text-xs uppercase tracking-[0.3em] text-foreground/50">
@@ -247,7 +247,7 @@ export default function Products() {
       {previewCat && (
         <CatalogFlipbook
           slug={previewCat.slug}
-          title={`${previewCat.name} — 2026 Catalog`}
+          title={`${previewCat.name} — 2026 Catalogue`}
           open={!!previewCat}
           onClose={() => setPreviewCat(null)}
           action={

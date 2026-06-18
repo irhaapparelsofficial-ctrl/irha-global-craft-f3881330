@@ -89,10 +89,10 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
       className="fixed inset-0 z-[80] bg-background/95 backdrop-blur-md flex flex-col"
     >
       {/* Top bar */}
-      <header className="flex items-center justify-between gap-4 px-5 md:px-8 py-4 border-b border-border/60">
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-gold">Catalog Flipbook</p>
-          <h2 className="font-display text-lg md:text-2xl truncate">{title}</h2>
+      <header className="flex items-start justify-between gap-4 px-5 md:px-8 py-4 border-b border-border/60">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-gold mb-1">Catalogue Flipbook</p>
+          <h2 className="font-display text-base sm:text-lg md:text-2xl leading-tight tracking-tight line-clamp-2 break-words">{title}</h2>
         </div>
         <div className="flex items-center gap-2">
           <button
