@@ -236,7 +236,7 @@ def gallery_page(c, cat, files, page_label):
         # frame
         c.setFillColor(HexColor("#F2EFE9"))
         c.rect(x, y, cw, ch, fill=1, stroke=0)
-        draw_image_fit(c, x, y, cw, ch)
+        draw_image_fit(c, f, x, y, cw, ch)
         c.setStrokeColor(LINE); c.setLineWidth(0.3)
         c.rect(x, y, cw, ch, fill=0, stroke=1)
 
