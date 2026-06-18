@@ -102,20 +102,29 @@ export default function ProductDetailModal({ product, onClose }: Props) {
               </div>
 
               <div className="mt-10 flex flex-col sm:flex-row gap-3">
-                <Link
-                  to="/inquiry"
+                <a
+                  href={whatsappLink(
+                    `Hello Irha Apparels — I'd like a quote for the following product:\n\n` +
+                    `*Product:* ${product.name}\n` +
+                    (product.sku ? `*SKU:* ${product.sku}\n` : "") +
+                    (product.subName ? `*Category:* ${product.subName}\n` : "") +
+                    `*Description:* ${product.description}\n\n` +
+                    `Please share MOQ, pricing, and lead time.`
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
                   onClick={onClose}
                   className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all"
                 >
-                  Request Quote <ArrowUpRight size={14} />
-                </Link>
+                  <MessageCircle size={14} /> Request Quote via WhatsApp
+                </a>
                 <a
                   href={whatsappLink(`Hi Irha Apparels, I'm interested in: ${product.name}. Please share MOQ & pricing.`)}
                   target="_blank"
                   rel="noreferrer"
                   className="flex-1 inline-flex items-center justify-center gap-2 border border-border hover:border-primary text-foreground/80 hover:text-foreground px-6 py-4 text-xs uppercase tracking-[0.3em] transition-all"
                 >
-                  <MessageCircle size={14} /> WhatsApp
+                  <MessageCircle size={14} /> Quick WhatsApp
                 </a>
               </div>
             </div>
