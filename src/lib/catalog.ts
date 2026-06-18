@@ -256,6 +256,7 @@ const bavarian: CategoryGroup = {
       ["Genuine deer suede", "Hand embroidery", "Antler buttons", "Sizes 44–60"],
       (n) =>
         `${n} — handcrafted from premium suede with hand-embroidered front panel, antler-style buttons and traditional H-strap suspenders. Built for European trachten retailers and Oktoberfest programs.`,
+      60,
     ),
 
     buildSub(
@@ -288,6 +289,7 @@ const bavarian: CategoryGroup = {
       ["Cotton & linen blend", "Floral embroidery", "Lace trim apron", "Sizes XS–XXL"],
       (n) =>
         `${n} — boutique-grade dirndl with floral embroidered bodice, puff-sleeve blouse and crisp apron. Engineered for premium trachten houses and seasonal Oktoberfest collections.`,
+      60,
     ),
 
     buildSub(
@@ -319,6 +321,7 @@ const bavarian: CategoryGroup = {
       ["Pure cotton", "Embroidered detail", "Slim & regular fit", "Sizes XS–XXXL"],
       (n) =>
         `${n} — clean trachten shirt cut in pure cotton with embroidered alpine detailing and refined construction, ready for trachten boutique retail.`,
+      60,
     ),
 
     buildSub(
@@ -350,6 +353,7 @@ const bavarian: CategoryGroup = {
       ["Loden wool", "Horn buttons", "Tonal embroidery", "Heritage cut"],
       (n) =>
         `${n} — refined formal trachten outerwear in pure loden wool with horn buttons, tonal embroidery and a heritage silhouette for premium menswear.`,
+      60,
     ),
 
     buildSub(
@@ -381,6 +385,7 @@ const bavarian: CategoryGroup = {
       ["Soft kid suede", "Adjustable straps", "Floral embroidery", "Ages 2–14"],
       (n) =>
         `${n} — durable kids trachten built to survive festival season while looking heirloom-grade.`,
+      60,
     ),
 
     buildSub(
@@ -412,6 +417,7 @@ const bavarian: CategoryGroup = {
       ["Heritage materials", "Hand finishing", "Custom branding"],
       (n) =>
         `${n} — authentic trachten accessory to complete the look, finished with traditional materials and custom branding options.`,
+      60,
     ),
   ],
 };
@@ -639,6 +645,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Full-grain cowhide", "YKK metal hardware", "Quilted lining", "Hand-finished"],
       (n) => `${n} — iconic biker silhouette in premium leather with YKK metal hardware, quilted satin lining and hand-finished edges.`,
+      60,
     ),
 
     buildSub(
@@ -669,6 +676,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Cognac cowhide", "Rib-knit cuffs & hem", "Two-way YKK zip", "Quilted lining"],
       (n) => `${n} — heritage bomber silhouette in rich leather with ribbed cuffs and hem, two-way zipper and quilted interior.`,
+      60,
     ),
 
     buildSub(
@@ -699,6 +707,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Supple lambskin", "Bonded lining", "Five-pocket cut", "Custom inseam"],
       (n) => `${n} — tailored leather bottoms in supple lambskin with bonded interior lining and contoured seams that drape like fabric.`,
+      60,
     ),
 
     buildSub(
@@ -728,6 +737,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Premium hide", "Tailored fit", "Custom hardware", "MOQ 50"],
       (n) => `${n} — premium leather layering piece tailored for sharp wardrobe building and statement retail floors.`,
+      60,
     ),
 
     buildSub(
@@ -757,6 +767,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Full-grain leather", "Tailored long cut", "Premium lining", "Statement silhouette"],
       (n) => `${n} — dramatic long leather coat built on a tailored block with premium lining and luxury hardware throughout.`,
+      60,
     ),
 
     buildSub(
@@ -786,6 +797,7 @@ const leatherwear: CategoryGroup = {
       },
       ["Premium leather", "Custom hardware", "Branded packaging"],
       (n) => `${n} — refined leather accessory crafted with custom hardware and gift-ready packaging for premium retail.`,
+      60,
     ),
   ],
 };
