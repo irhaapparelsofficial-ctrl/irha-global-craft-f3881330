@@ -6,6 +6,7 @@ import { findGroup } from "@/lib/catalog";
 import { CATEGORY_SEO } from "@/lib/categorySeo";
 import { forceDownload } from "@/lib/download";
 import ProductDetailModal from "@/components/ProductDetailModal";
+import CatalogFlipbook from "@/components/CatalogFlipbook";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
 import { ArrowUpRight, Download, ChevronRight, Eye, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
@@ -48,6 +49,7 @@ export default function CategoryPage() {
   const [sort, setSort] = useState<SortKey>("newest");
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [activeProduct, setActiveProduct] = useState<FlatProduct | null>(null);
+  const [flipOpen, setFlipOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Flatten all sub products into one list with metadata + stable sort signals.
@@ -203,10 +205,17 @@ export default function CategoryPage() {
             </a>
             <button
               type="button"
+              onClick={() => setFlipOpen(true)}
+              className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+            >
+              <Eye size={14} /> Preview Catalog
+            </button>
+            <button
+              type="button"
               onClick={() => forceDownload(category.catalog, `Irha-${category.slug}-catalog.pdf`)}
               className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
             >
-              <Download size={14} /> Download Catalog
+              <Download size={14} /> Download PDF
             </button>
             <span className="text-xs uppercase tracking-[0.3em] text-foreground/55 ml-2">
               {totalProducts} styles · MOQ 50 · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
@@ -347,6 +356,12 @@ export default function CategoryPage() {
       </section>
 
       <ProductDetailModal product={activeProduct} onClose={() => setActiveProduct(null)} />
+      <CatalogFlipbook
+        slug={category.slug}
+        title={`${category.name} — 2026 Catalog`}
+        open={flipOpen}
+        onClose={() => setFlipOpen(false)}
+      />
     </>
   );
 }

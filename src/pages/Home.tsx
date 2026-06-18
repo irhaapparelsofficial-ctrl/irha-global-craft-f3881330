@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, MessageCircle, ShieldCheck, Globe2, Factory, Award } from "lucide-react";
+import { useState } from "react";
+import { ArrowUpRight, Download, Eye, MessageCircle, ShieldCheck, Globe2, Factory, Award } from "lucide-react";
+import CatalogFlipbook from "@/components/CatalogFlipbook";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import leatherJacket from "@/assets/banners/leather-jacket.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import leatherJacketFallback from "@/assets/banners/leather-jacket.jpg?w=1600&format=webp&quality=74";
@@ -28,6 +30,7 @@ import FounderNote from "@/components/sections/FounderNote";
 import FacebookFeed from "@/components/sections/FacebookFeed";
 
 export default function Home() {
+  const [flipOpen, setFlipOpen] = useState(false);
   return (
     <>
       <SEO
@@ -106,6 +109,14 @@ export default function Home() {
               <span className="flex items-center gap-3"><MessageCircle size={16}/> WhatsApp Now</span>
               <ArrowUpRight size={18} />
             </a>
+            <button
+              type="button"
+              onClick={() => setFlipOpen(true)}
+              className="group inline-flex items-center justify-between border border-foreground/15 hover:border-foreground/40 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-colors text-foreground/70"
+            >
+              <span className="flex items-center gap-3"><Eye size={16}/> Preview Catalog</span>
+              <ArrowUpRight size={18} />
+            </button>
             <a
               href="/Irha-Apparels-Catalog-2026.pdf"
               download="Irha-Apparels-Catalog-2026.pdf"
@@ -122,6 +133,13 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <CatalogFlipbook
+        slug="master-catalogue-2026"
+        title="Irha Apparels — Wholesale B2B Catalogue 2026"
+        open={flipOpen}
+        onClose={() => setFlipOpen(false)}
+      />
 
       {/* TRUST BAR — 6 buyer-reassurance signals */}
       <TrustBar />
