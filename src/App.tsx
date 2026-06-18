@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import CookieConsent from "@/components/CookieConsent";
+import PageViewTracker from "@/components/PageViewTracker";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 // Route-level code splitting for faster initial paint
