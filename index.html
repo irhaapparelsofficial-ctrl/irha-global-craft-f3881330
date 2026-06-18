@@ -90,15 +90,26 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "ClothingStore"],
         "@id": "https://www.irhaapparels.com/#localbusiness",
         "name": "Irha Apparels",
-        "image": "https://www.irhaapparels.com/favicon.ico",
+        "alternateName": "Irha Apparels Manufacturing",
+        "legalName": "Irha Apparels",
+        "image": [
+          "https://www.irhaapparels.com/og-image.jpg",
+          "https://www.irhaapparels.com/favicon.ico"
+        ],
+        "logo": "https://www.irhaapparels.com/favicon.ico",
         "url": "https://www.irhaapparels.com/",
         "telephone": "+923204110066",
         "email": "irhaapparelsofficial@gmail.com",
         "priceRange": "$$",
-        "description": "Premium apparel manufacturer in Sialkot, Pakistan — OEM, ODM and private-label sportswear, leatherwear, streetwear, Bavarian wear, leisurewear and nightwear. Worldwide export.",
+        "slogan": "Premium apparel manufacturing — OEM, ODM and Private Label, exported worldwide.",
+        "description": "Premium apparel manufacturer in Sialkot, Pakistan — OEM, ODM and private-label sportswear, leatherwear, streetwear, Bavarian wear, leisurewear and nightwear. Worldwide export to Germany, Austria, UK, USA, UAE and the EU.",
+        "foundingDate": "2015",
+        "numberOfEmployees": { "@type": "QuantitativeValue", "minValue": 50, "maxValue": 200 },
+        "paymentAccepted": "Bank Transfer, Wire Transfer, Western Union, PayPal, Letter of Credit",
+        "currenciesAccepted": "USD, EUR, GBP, AED, PKR",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "Sialkot Industrial Area",
@@ -113,7 +124,94 @@
           "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
           "opens": "09:00", "closes": "18:00"
         }],
-        "areaServed": ["US","GB","DE","AT","NL","BE","AE","AU","CA","FR","IT","SA","CH"],
+        "areaServed": [
+          { "@type": "Country", "name": "United States" },
+          { "@type": "Country", "name": "United Kingdom" },
+          { "@type": "Country", "name": "Germany" },
+          { "@type": "Country", "name": "Austria" },
+          { "@type": "Country", "name": "Netherlands" },
+          { "@type": "Country", "name": "Belgium" },
+          { "@type": "Country", "name": "United Arab Emirates" },
+          { "@type": "Country", "name": "Australia" },
+          { "@type": "Country", "name": "Canada" },
+          { "@type": "Country", "name": "France" },
+          { "@type": "Country", "name": "Italy" },
+          { "@type": "Country", "name": "Saudi Arabia" },
+          { "@type": "Country", "name": "Switzerland" }
+        ],
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "telephone": "+923204110066",
+            "contactType": "sales",
+            "email": "irhaapparelsofficial@gmail.com",
+            "areaServed": ["US","GB","DE","AT","NL","BE","AE","AU","CA","FR","IT","SA","CH","PK"],
+            "availableLanguage": ["English","Urdu","German"]
+          },
+          {
+            "@type": "ContactPoint",
+            "telephone": "+923204110066",
+            "contactType": "customer support",
+            "email": "irhaapparelsofficial@gmail.com",
+            "availableLanguage": ["English","Urdu"]
+          }
+        ],
+        "knowsAbout": [
+          "OEM apparel manufacturing",
+          "ODM private label clothing",
+          "Custom sportswear production",
+          "Lederhosen and Dirndl manufacturing",
+          "Bavarian Trachten production",
+          "Leather jacket manufacturing",
+          "Streetwear cut and sew",
+          "Heavyweight hoodies",
+          "Cashmere loungewear",
+          "Mulberry silk pajamas",
+          "Sublimation printing",
+          "Embroidery and tech-pack development"
+        ],
+        "makesOffer": [
+          { "@type": "Offer", "name": "Bavarian Wear", "url": "https://www.irhaapparels.com/products/bavarian-wear" },
+          { "@type": "Offer", "name": "Sportswear", "url": "https://www.irhaapparels.com/products/sportswear" },
+          { "@type": "Offer", "name": "Leatherwear", "url": "https://www.irhaapparels.com/products/leatherwear" },
+          { "@type": "Offer", "name": "Streetwear", "url": "https://www.irhaapparels.com/products/streetwear" },
+          { "@type": "Offer", "name": "Leisurewear", "url": "https://www.irhaapparels.com/products/leisurewear" },
+          { "@type": "Offer", "name": "Nightwear", "url": "https://www.irhaapparels.com/products/nightwear" }
+        ],
+        "hasOfferCatalog": {
+          "@type": "OfferCatalog",
+          "name": "Irha Apparels Product Categories",
+          "itemListElement": [
+            { "@type": "OfferCatalog", "name": "Bavarian Wear", "url": "https://www.irhaapparels.com/products/bavarian-wear", "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Lederhosen" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Dirndl" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Trachten Shirts" } }
+            ]},
+            { "@type": "OfferCatalog", "name": "Sportswear", "url": "https://www.irhaapparels.com/products/sportswear", "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Sublimated Jerseys" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Tracksuits" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Compression Wear" } }
+            ]},
+            { "@type": "OfferCatalog", "name": "Leatherwear", "url": "https://www.irhaapparels.com/products/leatherwear", "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Biker Jackets" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Napa Moto Jackets" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Leather Trousers" } }
+            ]},
+            { "@type": "OfferCatalog", "name": "Streetwear", "url": "https://www.irhaapparels.com/products/streetwear", "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Heavyweight Hoodies" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Boxy Tees" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Cargo Pants" } }
+            ]},
+            { "@type": "OfferCatalog", "name": "Leisurewear", "url": "https://www.irhaapparels.com/products/leisurewear", "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Cashmere Lounge Sets" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Organic Cotton Co-ords" } }
+            ]},
+            { "@type": "OfferCatalog", "name": "Nightwear", "url": "https://www.irhaapparels.com/products/nightwear", "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Mulberry Silk Pajamas" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Satin Robes" } }
+            ]}
+          ]
+        },
         "sameAs": [
           "https://www.instagram.com/irhaapparels",
           "https://www.facebook.com/irhaapparels",
