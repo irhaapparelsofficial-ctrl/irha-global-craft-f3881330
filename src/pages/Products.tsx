@@ -9,6 +9,7 @@ import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 
 import { whatsappLink, BRAND } from "@/lib/constants";
+import { trackDownload } from "@/lib/analytics";
 
 
 export default function Products() {
