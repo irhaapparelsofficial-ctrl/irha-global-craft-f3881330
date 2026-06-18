@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2 } from "lucide-react";
+import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2 } from "lucide-react";
+import SocialPanel from "@/components/admin/SocialPanel";
 
 type Inquiry = {
   id: string; name: string; email: string; company: string | null; country: string | null;
@@ -14,7 +15,7 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "inquiries" | "traffic" | "chat" | "gsc";
+type Tab = "inquiries" | "traffic" | "chat" | "gsc" | "social";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
@@ -65,12 +66,14 @@ export default function Admin() {
                 <TabButton active={tab === "traffic"} onClick={() => setTab("traffic")} icon={<BarChart3 size={14} />} label="Traffic" />
                 <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={<MessageSquare size={14} />} label="Live Chat" />
                 <TabButton active={tab === "gsc"} onClick={() => setTab("gsc")} icon={<Search size={14} />} label="Google Search" />
+                <TabButton active={tab === "social"} onClick={() => setTab("social")} icon={<Share2 size={14} />} label="Social" />
               </div>
 
               {tab === "inquiries" && <InquiriesPanel />}
               {tab === "traffic" && <TrafficPanel />}
               {tab === "chat" && <ChatPanel />}
               {tab === "gsc" && <GSCPanel />}
+              {tab === "social" && <SocialPanel />}
             </>
           )}
         </div>
