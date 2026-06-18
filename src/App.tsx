@@ -34,19 +34,9 @@ function ScrollToTop() {
   return null;
 }
 
-// SEO landing slugs handled by SeoLanding template
-const SEO_LANDING_SLUGS = [
-  "sportswear-manufacturer-pakistan",
-  "sportswear-manufacturer-sialkot",
-  "private-label-sportswear-manufacturer",
-  "leatherwear-manufacturer-pakistan",
-  "leather-jacket-manufacturer",
-  "lederhosen-manufacturer",
-  "trachten-manufacturer",
-  "oktoberfest-clothing-manufacturer",
-  "streetwear-manufacturer-pakistan",
-  "custom-apparel-manufacturer-pakistan",
-];
+// SEO landing slugs handled by SeoLanding template (auto-derived from data)
+import { SEO_PAGE_SLUGS } from "@/lib/seoPages";
+const SEO_LANDING_SLUGS = SEO_PAGE_SLUGS;
 
 const PageFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
