@@ -209,7 +209,7 @@ export default function CategoryPage() {
               onClick={() => setFlipOpen(true)}
               className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
             >
-              <Eye size={14} /> Preview Catalog
+              <Eye size={14} /> Preview Catalogue
             </button>
             <button
               type="button"
@@ -372,7 +372,7 @@ export default function CategoryPage() {
       <ProductDetailModal product={activeProduct} onClose={() => setActiveProduct(null)} />
       <CatalogFlipbook
         slug={category.slug}
-        title={`${category.name} — 2026 Catalog`}
+        title={`${category.name} — 2026 Catalogue`}
         open={flipOpen}
         onClose={() => setFlipOpen(false)}
       />
