@@ -241,41 +241,88 @@ def gallery_page(c, cat, files, page_label):
         c.rect(x, y, cw, ch, fill=0, stroke=1)
 
 def products_page(c, cat):
+    """Premium spec sheet: each product is a card with the close-up mockup
+    on the left and a 4-row spec grid (MATERIAL · MOQ · LEAD TIME · PRICE)
+    on the right. Designed to match the on-site product sheets."""
     c.setFillColor(PAPER); c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
     c.setFillColor(ACCENT); c.setFont("Helvetica-Bold", 8)
-    c.drawString(20*mm, PAGE_H - 18*mm, f"{cat['name'].upper()}  ·  KEY STYLES")
+    c.drawString(20*mm, PAGE_H - 18*mm, f"{cat['name'].upper()}  ·  KEY STYLES & SPECIFICATIONS")
     c.setStrokeColor(LINE); c.line(20*mm, PAGE_H - 21*mm, PAGE_W - 20*mm, PAGE_H - 21*mm)
 
-    files = cat["files"]
-    rows = cat["products"]
-    # 2 columns of product cards
-    cols = 2
-    gx = 20*mm; gy = 20*mm
+    # Prefer close-ups for product cards
+    files = list(cat["files"])
+    files.sort(key=lambda p: (0 if "-cu-" in p else (1 if "-detail-" in p else 2), p))
+
+    rows = cat["products"][:4]
+    gx, gy = 20*mm, 20*mm
     gw = PAGE_W - 40*mm
     gh = PAGE_H - 21*mm - gy - 4*mm
-    gap = 6*mm
-    cw = (gw - gap) / cols
-    ch = (gh - gap) / 2
-    for i, (name, desc, price) in enumerate(rows[:4]):
-        col = i % cols; row = i // cols
-        x = gx + col * (cw + gap)
-        y = gy + gh - (row + 1) * ch - row * gap
-        # image (top 62%)
-        ih = ch * 0.62
+    gap = 5*mm
+    card_h = (gh - gap * (len(rows) - 1)) / len(rows)
+
+    # Default spec fallbacks
+    default_specs = {
+        "MOQ":        "50 sets / design / colorway",
+        "LEAD TIME":  "30 – 45 days production",
+        "PACKAGING":  "Private-label polybag + branded hangtag",
+    }
+
+    for i, (name, desc, price) in enumerate(rows):
+        y = gy + gh - (i + 1) * card_h - i * gap
+        x = gx
+        # Card frame
+        c.setFillColor(white); c.rect(x, y, gw, card_h, fill=1, stroke=0)
+        c.setStrokeColor(LINE); c.setLineWidth(0.4)
+        c.rect(x, y, gw, card_h, fill=0, stroke=1)
+        # Image left (square-ish)
+        img_w = card_h  # square panel
+        c.setFillColor(HexColor("#F2EFE9"))
+        c.rect(x, y, img_w, card_h, fill=1, stroke=0)
         if i < len(files):
-            draw_image_fit(c, files[i], x, y + ch - ih, cw, ih)
-        # text panel
-        ty = y + ch - ih - 5
-        c.setFillColor(INK); c.setFont("Helvetica-Bold", 11)
-        c.drawString(x + 4, ty, name); ty -= 14
-        for ln in wrap(c, desc, "Helvetica", 8.5, cw - 8)[:3]:
-            c.setFillColor(MUTED); c.setFont("Helvetica", 8.5)
-            c.drawString(x + 4, ty, ln); ty -= 11
-        c.setFillColor(ACCENT); c.setFont("Helvetica-Bold", 9)
-        c.drawString(x + 4, ty - 2, price)
-        # frame
+            draw_image_fit(c, files[i], x, y, img_w, card_h)
+        # Vertical divider
         c.setStrokeColor(LINE); c.setLineWidth(0.3)
-        c.rect(x, y, cw, ch, fill=0, stroke=1)
+        c.line(x + img_w, y, x + img_w, y + card_h)
+
+        # Right panel: title, fabric desc, spec grid, price
+        tx = x + img_w + 6*mm
+        tw = gw - img_w - 12*mm
+        ty = y + card_h - 8*mm
+        # Eyebrow
+        c.setFillColor(ACCENT); c.setFont("Helvetica-Bold", 7.5)
+        c.drawString(tx, ty, f"STYLE  ·  {cat['name'].upper()}  ·  0{i+1}")
+        ty -= 11
+        # Title
+        c.setFillColor(INK); c.setFont("Helvetica-Bold", 13)
+        for ln in wrap(c, name, "Helvetica-Bold", 13, tw)[:2]:
+            c.drawString(tx, ty, ln); ty -= 15
+        ty -= 1
+        # Description (material narrative)
+        c.setFillColor(MUTED); c.setFont("Helvetica", 8.8)
+        for ln in wrap(c, desc, "Helvetica", 8.8, tw)[:3]:
+            c.drawString(tx, ty, ln); ty -= 11
+        ty -= 4
+        # Spec grid: 2 columns x 2 rows
+        specs = [
+            ("MATERIAL",  desc.split("·")[0].strip()[:38] or "Premium"),
+            ("MOQ",       default_specs["MOQ"]),
+            ("LEAD TIME", default_specs["LEAD TIME"]),
+            ("PRICE",     price.replace("from ", "")),
+        ]
+        col_w = tw / 2
+        row_h = 13
+        grid_y = ty
+        for si, (k, v) in enumerate(specs):
+            cc = si % 2; rr = si // 2
+            sx = tx + cc * col_w
+            sy = grid_y - rr * row_h
+            c.setStrokeColor(LINE); c.setLineWidth(0.25)
+            c.line(sx, sy - row_h + 2, sx + col_w - 4, sy - row_h + 2)
+            c.setFillColor(ACCENT); c.setFont("Helvetica-Bold", 7)
+            c.drawString(sx, sy, k)
+            c.setFillColor(INK); c.setFont("Helvetica", 8.8)
+            c.drawString(sx, sy - 9, v[:42])
+
 
 def capabilities_page(c):
     c.setFillColor(BG); c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
