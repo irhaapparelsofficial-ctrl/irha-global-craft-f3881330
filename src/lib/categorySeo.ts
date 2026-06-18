@@ -1,6 +1,13 @@
 // Per-category SEO metadata + FAQ blocks targeting export-buyer keywords
 // (USA, EU, UK, UAE, Germany, Australia). Used by /products/:slug pages.
 
+import ogBavarian from "@/assets/og/og-bavarian.jpg";
+import ogSportswear from "@/assets/og/og-sportswear.jpg";
+import ogLeather from "@/assets/og/og-leather.jpg";
+import ogStreetwear from "@/assets/og/og-streetwear.jpg";
+import ogLeisure from "@/assets/og/og-leisure.jpg";
+import ogNightwear from "@/assets/og/og-nightwear.jpg";
+
 export type CategoryFAQ = { q: string; a: string };
 
 export type CategorySEO = {
@@ -10,6 +17,7 @@ export type CategorySEO = {
   h1: string;
   intro: string;          // long-form intro paragraph for the page
   exportMarkets: string[];
+  ogImage: string;        // 1200x630 share card for OG/Twitter
   faqs: CategoryFAQ[];
 };
 
