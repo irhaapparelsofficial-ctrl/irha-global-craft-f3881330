@@ -187,7 +187,7 @@ const bavarian: CategoryGroup = {
       {
         fabric: "Cotton-linen blend bodice, cotton voile blouse",
         gsm: "180–220 GSM",
-        moq: "100 pieces per style",
+        moq: "50 pieces per style",
         leadTime: "40–55 days",
         sizes: "XS–XXL, custom plus sizes available",
         colors: "Burgundy, forest, navy, pastel ranges, custom",
@@ -213,7 +213,7 @@ const bavarian: CategoryGroup = {
       {
         fabric: "100% cotton poplin / voile",
         gsm: "120–140 GSM",
-        moq: "100 pieces per design",
+        moq: "50 pieces per design",
         leadTime: "35–45 days",
         sizes: "XS–XXXL slim & regular",
         colors: "White, ecru, pastel, check, custom",
@@ -239,7 +239,7 @@ const bavarian: CategoryGroup = {
       {
         fabric: "Pure loden wool, linen waistcoat",
         gsm: "320 GSM wool / 240 GSM linen",
-        moq: "75 pieces per design",
+        moq: "50 pieces per design",
         leadTime: "50 days",
         sizes: "S–XXXL slim & regular",
         colors: "Loden green, charcoal, cream, custom",
@@ -291,7 +291,7 @@ const bavarian: CategoryGroup = {
       {
         fabric: "Mixed: leather, wool, cotton",
         gsm: "Varies by item",
-        moq: "100 pieces per item",
+        moq: "50 pieces per item",
         leadTime: "30–40 days",
         sizes: "One-size & graded",
         colors: "Heritage palette + custom",
@@ -326,7 +326,7 @@ const sportswear: CategoryGroup = {
       {
         fabric: "100% polyester micro-mesh / poly-spandex",
         gsm: "140–160 GSM",
-        moq: "100 per color",
+        moq: "50 per color",
         leadTime: "25–35 days",
         sizes: "XS–4XL + youth",
         colors: "Unlimited via sublimation",
@@ -334,7 +334,7 @@ const sportswear: CategoryGroup = {
         certs: "OEKO-TEX 100, WFSGI compliant",
         customization: "Full sublimation, names, numbers, sponsor logos",
       },
-      ["140 GSM micro-mesh", "Moisture wicking", "Full sublimation ready", "MOQ 100"],
+      ["140 GSM micro-mesh", "Moisture wicking", "Full sublimation ready", "MOQ 50"],
       (n) => `${n} — engineered for athletes with breathable knit construction, flat seams and unlimited custom print capability.`,
     ),
 
@@ -351,7 +351,7 @@ const sportswear: CategoryGroup = {
       {
         fabric: "Poly-cotton fleece / tech fleece",
         gsm: "320–380 GSM",
-        moq: "75 per color",
+        moq: "50 per color",
         leadTime: "35–45 days",
         sizes: "XS–3XL",
         colors: "Custom Pantone",
@@ -359,7 +359,7 @@ const sportswear: CategoryGroup = {
         certs: "OEKO-TEX 100",
         customization: "Embroidery, screen, puff, custom drawcords",
       },
-      ["380 GSM fleece", "Brushed-back warmth", "Custom branding", "MOQ 75"],
+      ["380 GSM fleece", "Brushed-back warmth", "Custom branding", "MOQ 50"],
       (n) => `${n} — heavyweight construction with brushed interior, double-needle stitching and full custom branding for team and training programs.`,
     ),
 
@@ -426,7 +426,7 @@ const sportswear: CategoryGroup = {
       {
         fabric: "Poly-spandex / cotton-fleece",
         gsm: "180–280 GSM",
-        moq: "75 per color",
+        moq: "50 per color",
         leadTime: "30–40 days",
         sizes: "XS–3XL",
         colors: "Custom Pantone",
@@ -434,7 +434,7 @@ const sportswear: CategoryGroup = {
         certs: "OEKO-TEX 100",
         customization: "Embroidery, sublimation, custom waistband",
       },
-      ["Performance fabrics", "Flat-lock seams", "Custom waistband", "MOQ 75"],
+      ["Performance fabrics", "Flat-lock seams", "Custom waistband", "MOQ 50"],
       (n) => `${n} — performance bottoms with flat-lock seams, moisture-wicking finish and branded waistband options.`,
     ),
 
@@ -450,7 +450,7 @@ const sportswear: CategoryGroup = {
       {
         fabric: "80% nylon / 20% spandex 4-way stretch",
         gsm: "200 GSM",
-        moq: "75 per color",
+        moq: "50 per color",
         leadTime: "30–40 days",
         sizes: "XS–2XL men & women",
         colors: "Black, navy, charcoal, custom",
@@ -458,7 +458,7 @@ const sportswear: CategoryGroup = {
         certs: "OEKO-TEX 100, bluesign option",
         customization: "Sublimation panels, branded waistband, custom prints",
       },
-      ["4-way stretch", "Anti-microbial finish", "Flatlock stitching", "MOQ 75"],
+      ["4-way stretch", "Anti-microbial finish", "Flatlock stitching", "MOQ 50"],
       (n) => `${n} — second-skin compression piece with targeted muscle support and moisture-wicking anti-microbial finish.`,
     ),
   ],
@@ -484,7 +484,7 @@ const leatherwear: CategoryGroup = {
       {
         fabric: "Full-grain cowhide / napa lambskin",
         gsm: "Leather 1.0–1.2mm",
-        moq: "30 pieces per design",
+        moq: "50 pieces per design",
         leadTime: "55–70 days",
         sizes: "XS–3XL slim & regular",
         colors: "Black, brown, cognac, oxblood, custom",
@@ -509,7 +509,7 @@ const leatherwear: CategoryGroup = {
       {
         fabric: "Cowhide 1.0mm, quilted poly lining, rib-knit trims",
         gsm: "Leather equivalent 360 GSM",
-        moq: "30 pieces",
+        moq: "50 pieces",
         leadTime: "55–70 days",
         sizes: "S–3XL",
         colors: "Cognac, black, navy, olive",
@@ -534,7 +534,7 @@ const leatherwear: CategoryGroup = {
       {
         fabric: "Lambskin 0.6–0.8mm, bonded jersey lining",
         gsm: "Leather equivalent 240 GSM",
-        moq: "30 pieces per design",
+        moq: "50 pieces per design",
         leadTime: "50 days",
         sizes: "Waist 26–40, custom inseam",
         colors: "Black, brown, custom",
@@ -558,7 +558,7 @@ const leatherwear: CategoryGroup = {
       {
         fabric: "Lambskin / cowhide / suede",
         gsm: "Leather 0.7–1.0mm",
-        moq: "30 pieces",
+        moq: "50 pieces",
         leadTime: "45–60 days",
         sizes: "XS–3XL",
         colors: "Black, brown, cognac, custom",
@@ -566,7 +566,7 @@ const leatherwear: CategoryGroup = {
         certs: "LWG leather",
         customization: "Custom embroidery, embossing, branded trims",
       },
-      ["Premium hide", "Tailored fit", "Custom hardware", "MOQ 30"],
+      ["Premium hide", "Tailored fit", "Custom hardware", "MOQ 50"],
       (n) => `${n} — premium leather layering piece tailored for sharp wardrobe building and statement retail floors.`,
     ),
 
@@ -582,7 +582,7 @@ const leatherwear: CategoryGroup = {
       {
         fabric: "Cowhide 1.2mm / lambskin 0.9mm",
         gsm: "Leather equivalent 380 GSM",
-        moq: "30 pieces per design",
+        moq: "50 pieces per design",
         leadTime: "60–75 days",
         sizes: "XS–3XL",
         colors: "Black, cognac, taupe, custom",
@@ -606,7 +606,7 @@ const leatherwear: CategoryGroup = {
       {
         fabric: "Full-grain cowhide / napa",
         gsm: "Leather 1.0–1.4mm",
-        moq: "100 pieces per item",
+        moq: "50 pieces per item",
         leadTime: "35–45 days",
         sizes: "Graded",
         colors: "Black, brown, cognac, oxblood",
@@ -640,7 +640,7 @@ const streetwear: CategoryGroup = {
       {
         fabric: "100% combed ring-spun cotton",
         gsm: "240–300 GSM",
-        moq: "100 per color",
+        moq: "50 per color",
         leadTime: "25–35 days",
         sizes: "XS–3XL unisex",
         colors: "Garment dyed, any Pantone",
@@ -690,7 +690,7 @@ const streetwear: CategoryGroup = {
       {
         fabric: "100% cotton ripstop or poly-cotton blend",
         gsm: "320 GSM",
-        moq: "75 pieces per color",
+        moq: "50 pieces per color",
         leadTime: "35–45 days",
         sizes: "Waist 28–40",
         colors: "Black, olive, sand, custom",
@@ -739,7 +739,7 @@ const streetwear: CategoryGroup = {
       {
         fabric: "100% cotton selvedge denim",
         gsm: "12–14 oz",
-        moq: "75 pieces per design",
+        moq: "50 pieces per design",
         leadTime: "45–55 days",
         sizes: "Waist 28–40",
         colors: "Indigo, washed, black, custom",
@@ -747,7 +747,7 @@ const streetwear: CategoryGroup = {
         certs: "OEKO-TEX 100",
         customization: "Custom washes, hardware, embroidery, labels",
       },
-      ["Selvedge denim", "Custom wash program", "Branded hardware", "MOQ 75"],
+      ["Selvedge denim", "Custom wash program", "Branded hardware", "MOQ 50"],
       (n) => `${n} — denim built on a true selvedge mill program with custom wash development and full branding control.`,
     ),
 
@@ -763,7 +763,7 @@ const streetwear: CategoryGroup = {
       {
         fabric: "Cotton twill, mesh, fleece",
         gsm: "Varies by item",
-        moq: "100 pieces per item",
+        moq: "50 pieces per item",
         leadTime: "30–40 days",
         sizes: "One-size adjustable",
         colors: "Custom Pantone",
@@ -797,7 +797,7 @@ const leisurewear: CategoryGroup = {
       {
         fabric: "100% pima cotton pique / mercerized jersey",
         gsm: "200–220 GSM",
-        moq: "100 pieces per color",
+        moq: "50 pieces per color",
         leadTime: "30–40 days",
         sizes: "XS–3XL",
         colors: "Custom Pantone",
@@ -805,7 +805,7 @@ const leisurewear: CategoryGroup = {
         certs: "OEKO-TEX 100, BCI cotton",
         customization: "Embroidery, tonal buttons, custom collars",
       },
-      ["Pima cotton pique", "Mercerized finish", "Tonal buttons", "MOQ 100"],
+      ["Pima cotton pique", "Mercerized finish", "Tonal buttons", "MOQ 50"],
       (n) => `${n} — refined polo cut in mercerized cotton with tonal hardware and a luxury hand feel.`,
     ),
 
@@ -821,7 +821,7 @@ const leisurewear: CategoryGroup = {
       {
         fabric: "Pima cotton twill / cotton-linen blend",
         gsm: "220–280 GSM",
-        moq: "75 pieces per color",
+        moq: "50 pieces per color",
         leadTime: "35–45 days",
         sizes: "Waist 28–40",
         colors: "Natural, navy, olive, custom",
@@ -869,7 +869,7 @@ const leisurewear: CategoryGroup = {
       {
         fabric: "100% French linen",
         gsm: "120–160 GSM",
-        moq: "100 per color",
+        moq: "50 per color",
         leadTime: "35–45 days",
         sizes: "XS–3XL",
         colors: "Natural, white, sage, custom",
@@ -951,7 +951,7 @@ const nightwear: CategoryGroup = {
       {
         fabric: "Heavy satin / silk satin / modal",
         gsm: "Varies",
-        moq: "100 pieces per color",
+        moq: "50 pieces per color",
         leadTime: "30–40 days",
         sizes: "XS–2XL + plus",
         colors: "11 standard + custom Pantone",
@@ -975,7 +975,7 @@ const nightwear: CategoryGroup = {
       {
         fabric: "Tencel modal / silk charmeuse / cotton voile",
         gsm: "100–140 GSM",
-        moq: "75 pieces per color",
+        moq: "50 pieces per color",
         leadTime: "35–45 days",
         sizes: "XS–2XL",
         colors: "Black, ivory, dusty rose, custom",
@@ -999,7 +999,7 @@ const nightwear: CategoryGroup = {
       {
         fabric: "100% brushed cotton flannel / Tencel modal",
         gsm: "140–200 GSM",
-        moq: "75 sets per color",
+        moq: "50 sets per color",
         leadTime: "35–45 days",
         sizes: "XS–3XL unisex",
         colors: "Check, stripe, solid — any custom",
@@ -1023,7 +1023,7 @@ const nightwear: CategoryGroup = {
       {
         fabric: "Tencel modal / bamboo viscose / cotton jersey",
         gsm: "140–180 GSM",
-        moq: "75 sets per color",
+        moq: "50 sets per color",
         leadTime: "30–40 days",
         sizes: "XS–3XL",
         colors: "Soft neutrals + custom",
@@ -1031,7 +1031,7 @@ const nightwear: CategoryGroup = {
         certs: "OEKO-TEX 100, Tencel certified",
         customization: "Embroidery, monogram, branded trims",
       },
-      ["Soft hand feel", "Breathable knit", "Tonal trims", "MOQ 75"],
+      ["Soft hand feel", "Breathable knit", "Tonal trims", "MOQ 50"],
       (n) => `${n} — soft sleep set in breathable knit with tonal trims and gift-ready packaging.`,
     ),
 
@@ -1047,7 +1047,7 @@ const nightwear: CategoryGroup = {
       {
         fabric: "100% combed cotton / organic cotton",
         gsm: "160–200 GSM",
-        moq: "100 sets per design",
+        moq: "50 sets per design",
         leadTime: "35–45 days",
         sizes: "Ages 2–14",
         colors: "Pastel + custom",
