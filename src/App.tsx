@@ -26,6 +26,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const SeoLanding = lazy(() => import("./pages/SeoLanding"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
                 <Route path="/inquiry" element={<Inquiry />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/seo-indexing" element={<SeoIndexing />} />
                 {SEO_LANDING_SLUGS.map((slug) => (
                   <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
                 ))}

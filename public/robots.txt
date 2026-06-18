@@ -12,5 +12,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /seo-indexing
 
 Sitemap: https://www.irhaapparels.com/sitemap.xml
