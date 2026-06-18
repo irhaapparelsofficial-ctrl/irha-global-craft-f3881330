@@ -4,6 +4,10 @@
  * and falls back to console in development.
  */
 
+interface AnalyticsWindow extends Window {
+  plausible?: (event: string, options?: { props?: Record<string, string> }) => void;
+}
+
 type DownloadEvent = {
   page: string;
   cta_location: string;
@@ -32,7 +36,8 @@ export function trackDownload(params: DownloadEvent): void {
 
     window.dataLayer?.push(event);
 
-    window.plausible?.("download_catalog", {
+    const w = window as unknown as AnalyticsWindow;
+    w.plausible?.("download_catalog", {
       props: {
         page: event.page,
         cta_location: event.cta_location,
