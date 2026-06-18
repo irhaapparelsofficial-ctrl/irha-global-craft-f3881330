@@ -356,6 +356,12 @@ export default function CategoryPage() {
       </section>
 
       <ProductDetailModal product={activeProduct} onClose={() => setActiveProduct(null)} />
+      <CatalogFlipbook
+        slug={category.slug}
+        title={`${category.name} — 2026 Catalog`}
+        open={flipOpen}
+        onClose={() => setFlipOpen(false)}
+      />
     </>
   );
 }
