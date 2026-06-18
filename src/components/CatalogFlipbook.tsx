@@ -95,13 +95,13 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
           <h2 className="font-display text-base sm:text-lg md:text-2xl leading-tight tracking-tight line-clamp-2 break-words">{title}</h2>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => forceDownload(catalogPdf(slug), `Irha-${slug}-catalog.pdf`)}
+          <a
+            href={catalogPdf(slug)}
+            download={`Irha-${slug}-catalog.pdf`}
             className="hidden sm:inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
           >
             <Download size={13} /> Download PDF
-          </button>
+          </a>
           <a
             href={catalogPdf(slug)}
             target="_blank"
@@ -199,13 +199,13 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
         </div>
         <div className="flex items-center gap-3 ml-auto">
           {action}
-          <button
-            type="button"
-            onClick={() => forceDownload(catalogPdf(slug), `Irha-${slug}-catalog.pdf`)}
+          <a
+            href={catalogPdf(slug)}
+            download={`Irha-${slug}-catalog.pdf`}
             className="sm:hidden inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
           >
             <Download size={13} /> Download PDF
-          </button>
+          </a>
         </div>
       </footer>
     </div>

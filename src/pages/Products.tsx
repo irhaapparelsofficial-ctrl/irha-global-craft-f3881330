@@ -87,14 +87,14 @@ export default function Products() {
                   </button>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <span className="font-display text-sm leading-tight">{c.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => forceDownload(c.catalog, `Irha-${c.slug}-catalog.pdf`)}
+                    <a
+                      href={c.catalog}
+                      download={`Irha-${c.slug}-catalog.pdf`}
                       className="text-gold hover:text-primary transition-colors"
                       aria-label={`Download ${c.name} catalog`}
                     >
                       <Download size={14} />
-                    </button>
+                    </a>
                   </div>
                 </div>
               ))}
