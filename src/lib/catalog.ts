@@ -1262,8 +1262,8 @@ const nightwear: CategoryGroup = {
 
 export const CATALOG: CategoryGroup[] = [
   bavarian,
-  sportswear,
   leatherwear,
+  sportswear,
   streetwear,
   leisurewear,
   nightwear,
