@@ -7,7 +7,8 @@ import { CATEGORY_SEO } from "@/lib/categorySeo";
 import { forceDownload } from "@/lib/download";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
-import { ArrowUpRight, Download, ChevronRight, Eye } from "lucide-react";
+import { ArrowUpRight, Download, ChevronRight, Eye, MessageCircle } from "lucide-react";
+import { whatsappLink } from "@/lib/constants";
 
 const SITE = "https://www.irhaapparels.com";
 
@@ -192,12 +193,14 @@ export default function CategoryPage() {
           </nav>
           <h1 className="font-display text-3xl md:text-5xl leading-[1.02] max-w-4xl">{seo.h1}</h1>
           <div className="mt-6 flex flex-wrap gap-3 items-center">
-            <Link
-              to="/inquiry"
+            <a
+              href={whatsappLink(`Hello Irha Apparels — I'd like a quote for ${category.name}.`)}
+              target="_blank"
+              rel="noreferrer"
               className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
             >
-              Request a Quote <ArrowUpRight size={16} />
-            </Link>
+              <MessageCircle size={16} /> Request a Quote
+            </a>
             <button
               type="button"
               onClick={() => forceDownload(category.catalog, `Irha-${category.slug}-catalog.pdf`)}

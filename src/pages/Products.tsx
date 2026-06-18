@@ -2,12 +2,13 @@ import SEO from "@/components/SEO";
 import { CATEGORIES, type Category, type Product } from "@/lib/categories";
 import { CATALOG, findGroup } from "@/lib/catalog";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Eye, Maximize2 } from "lucide-react";
+import { ArrowUpRight, Download, Eye, Maximize2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { forceDownload } from "@/lib/download";
+import { whatsappLink, BRAND } from "@/lib/constants";
 
 const previewPages = (slug: string) =>
   [1, 2, 3, 4].map((n) => `/catalogs/thumbs/${slug}-catalog-${n}.jpg`);
@@ -155,12 +156,14 @@ export default function Products() {
                       >
                         View {c.name} <ArrowUpRight size={16} />
                       </Link>
-                      <Link
-                        to="/inquiry"
-                        className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
+                      <a
+                        href={whatsappLink(`Hello Irha Apparels — I'd like a quote for ${c.name}.`)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-all"
                       >
-                        Request a Quote
-                      </Link>
+                        <MessageCircle size={16} /> Request a Quote
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -266,17 +269,27 @@ export default function Products() {
                   />
                 ))}
               </div>
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/60">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/60">
                 <p className="text-xs text-foreground/60">
                   Full catalog includes complete product specs & MOQs.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => forceDownload(previewCat.catalog, `Irha-${previewCat.slug}-catalog.pdf`)}
-                  className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
-                >
-                  <Download size={14} /> Download PDF
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href={whatsappLink(`Hello Irha Apparels — I'd like a quote for the ${previewCat.name} catalog.`)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 border border-gold/70 text-gold hover:bg-gold hover:text-background px-5 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
+                  >
+                    <MessageCircle size={14} /> Request Quote
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => forceDownload(previewCat.catalog, `Irha-${previewCat.slug}-catalog.pdf`)}
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-3 text-xs uppercase tracking-[0.3em] transition-colors"
+                  >
+                    <Download size={14} /> Download PDF
+                  </button>
+                </div>
               </div>
             </>
           )}
