@@ -998,5 +998,9 @@ SEO_PAGES.push(...COUNTRY_PAGES);
 import { LOCATION_PAGES } from "./seoLocationPages";
 SEO_PAGES.push(...LOCATION_PAGES);
 
+// 30 additional hand-crafted + 90 templated B2B location × product pages
+import { LOCATION_PAGES_V2 } from "./seoLocationPagesV2";
+SEO_PAGES.push(...LOCATION_PAGES_V2);
+
 export const SEO_PAGE_SLUGS = SEO_PAGES.map((p) => p.slug);
 export const getSeoPage = (slug: string) => SEO_PAGES.find((p) => p.slug === slug);
