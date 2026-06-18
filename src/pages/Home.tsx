@@ -82,6 +82,9 @@ export default function Home() {
               OEM · ODM · Private Label export manufacturing — engineered for the world's
               most ambitious fashion houses, retailers and emerging labels.
             </p>
+            <p className="mt-5 text-xs md:text-sm uppercase tracking-[0.28em] text-primary/90 max-w-xl">
+              Trusted by 200+ brands · Shipped to 50+ countries
+            </p>
           </div>
 
           <div className="lg:col-span-4 flex flex-col gap-3 animate-fade-in">
