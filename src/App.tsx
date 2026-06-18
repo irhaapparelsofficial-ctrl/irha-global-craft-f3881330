@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import Index from "./pages/Index";
+import CookieConsent from "@/components/CookieConsent";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 // Route-level code splitting for faster initial paint
 const About = lazy(() => import("./pages/About"));
@@ -76,6 +78,7 @@ const App = () => (
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/inquiry" element={<Inquiry />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 {SEO_LANDING_SLUGS.map((slug) => (
                   <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
                 ))}
@@ -83,6 +86,7 @@ const App = () => (
               </Routes>
             </Suspense>
           </Layout>
+          <CookieConsent />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
