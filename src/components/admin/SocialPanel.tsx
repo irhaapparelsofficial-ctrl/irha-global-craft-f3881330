@@ -26,6 +26,33 @@ export default function SocialPanel() {
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const optimizeImage = (file: File): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        // IG min 320px wide; cap long edge at 1440 for fast Graph fetch.
+        const MAX = 1440;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas unsupported"));
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error("Encode failed"))),
+          "image/jpeg",
+          0.85,
+        );
+      };
+      img.onerror = () => reject(new Error("Could not read image"));
+      img.src = url;
+    });
+
   const onPickFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast({ title: "Please choose an image file", variant: "destructive" });
@@ -37,10 +64,10 @@ export default function SocialPanel() {
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
-      const up = await supabase.storage.from("social-uploads").upload(path, file, {
-        contentType: file.type,
+      const optimized = await optimizeImage(file);
+      const path = `${Date.now()}-${crypto.randomUUID()}-thumb.jpg`;
+      const up = await supabase.storage.from("social-uploads").upload(path, optimized, {
+        contentType: "image/jpeg",
         cacheControl: "3600",
       });
       if (up.error) throw up.error;
@@ -50,7 +77,8 @@ export default function SocialPanel() {
         .createSignedUrl(path, 60 * 60 * 24 * 7);
       if (signed.error) throw signed.error;
       setImageUrl(signed.data.signedUrl);
-      toast({ title: "Image uploaded" });
+      const kb = Math.round(optimized.size / 1024);
+      toast({ title: "Optimized & uploaded", description: `${kb} KB · ready for Graph API` });
     } catch (e: any) {
       toast({ title: "Upload failed", description: e.message, variant: "destructive" });
     } finally {
