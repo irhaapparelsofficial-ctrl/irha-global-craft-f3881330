@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Send, Facebook, Instagram, ExternalLink, RefreshCw } from "lucide-react";
+import { Send, Facebook, Instagram, ExternalLink, RefreshCw, Upload, X } from "lucide-react";
 
 type Post = {
   id: string;
@@ -21,8 +21,43 @@ export default function SocialPanel() {
   const [toFB, setToFB] = useState(true);
   const [toIG, setToIG] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onPickFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please choose an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast({ title: "Image must be under 8 MB", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("social-uploads").upload(path, file, {
+        contentType: file.type,
+        cacheControl: "3600",
+      });
+      if (up.error) throw up.error;
+      // 7-day signed URL — Meta fetches once at publish time.
+      const signed = await supabase.storage
+        .from("social-uploads")
+        .createSignedUrl(path, 60 * 60 * 24 * 7);
+      if (signed.error) throw signed.error;
+      setImageUrl(signed.data.signedUrl);
+      toast({ title: "Image uploaded" });
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -97,20 +132,51 @@ export default function SocialPanel() {
                 onChange={(e) => setCaption(e.target.value)}
               />
             </label>
-            <label className="block">
+            <div className="space-y-2">
               <span className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-                Image URL {toIG && <span className="text-destructive">*</span>}
+                Image {toIG && <span className="text-destructive">*</span>}
               </span>
+
+              {imageUrl ? (
+                <div className="relative border border-border bg-background/40 p-2">
+                  <img src={imageUrl} alt="Preview" className="max-h-48 mx-auto object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("")}
+                    className="absolute top-2 right-2 bg-background/80 border border-border p-1 hover:border-destructive hover:text-destructive transition-colors"
+                    aria-label="Remove image"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center gap-2 border border-dashed border-border bg-background/30 px-4 py-8 cursor-pointer hover:border-primary/60 transition-colors">
+                  <Upload size={20} className="text-muted-foreground" />
+                  <span className="text-xs text-foreground/80">
+                    {uploading ? "Uploading…" : "Click to upload an image"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">PNG / JPG · up to 8 MB</span>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => e.target.files?.[0] && onPickFile(e.target.files[0])}
+                  />
+                </label>
+              )}
+
               <input
-                className={`${input} mt-2`}
-                placeholder="https://www.irhaapparels.com/products/jacket.jpg"
+                className={`${input} text-xs`}
+                placeholder="…or paste a public image URL"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
               />
-              <span className="text-[10px] text-muted-foreground mt-1 block">
-                Must be a public https URL. Required for Instagram.
+              <span className="text-[10px] text-muted-foreground block">
+                Required for Instagram. Uploaded images get a 7-day signed URL.
               </span>
-            </label>
+            </div>
           </div>
 
           <div className="space-y-4">
