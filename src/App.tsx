@@ -53,6 +53,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <PageViewTracker />
           <Layout>
             <Suspense fallback={<PageFallback />}>
               <Routes>
