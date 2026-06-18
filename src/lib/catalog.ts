@@ -137,7 +137,50 @@ function buildSub(
   description: (name: string) => string,
 ): SubCategory {
   const pool = POOLS[catSlug];
-  const products: Product[] = names.map((n, i) => {
+
+  // Auto-expand catalog: pad each sub-category to MIN_PER_SUB products
+  // with rotating themed editions so wholesale buyers see a deeper range.
+  const MIN_PER_SUB = 42;
+  const padLabels = [
+    "Wholesale Pack",
+    "Private Label Edition",
+    "OEM Production Run",
+    "Bulk Order Series",
+    "Export Grade",
+    "Boutique Capsule",
+    "Pro Buyer Edition",
+    "Atelier Reserve",
+    "Heritage Reissue",
+    "Trade Show Sample",
+    "Seasonal Drop",
+    "Limited Workshop Run",
+    "Master Craft Edition",
+    "Showroom Pick",
+    "Catalog Hero",
+    "Distributor Special",
+    "Retailer Favorite",
+    "Concept Store Edition",
+    "Made-to-Order Series",
+    "Signature B2B Drop",
+    "Volume Tier Edition",
+    "Premium Trade Edition",
+    "Curated Buyer Set",
+    "Workshop Numbered",
+    "Stocklot Replenishment",
+  ];
+  const allNames: string[] = [...names];
+  let padIdx = 0;
+  while (allNames.length < MIN_PER_SUB) {
+    const label = padLabels[padIdx % padLabels.length];
+    const cycle = Math.floor(padIdx / padLabels.length) + 1;
+    const n = cycle === 1
+      ? `${label} — ${name}`
+      : `${label} ${cycle} — ${name}`;
+    if (!allNames.includes(n)) allNames.push(n);
+    padIdx++;
+  }
+
+  const products: Product[] = allNames.map((n, i) => {
     const img = pool[i % pool.length];
     const g1 = pool[(i + 1) % pool.length];
     const g2 = pool[(i + 2) % pool.length];
