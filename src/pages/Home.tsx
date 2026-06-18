@@ -217,6 +217,8 @@ export default function Home() {
       {/* TESTIMONIALS */}
       <Testimonials />
 
+      <FacebookFeed />
+
       {/* MANUFACTURING TEASER */}
       <section className="relative py-28 md:py-40 overflow-hidden">
 
