@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.gsc-inspect]
 verify_jwt = false
+
+[functions.admin-chat]
+verify_jwt = true
