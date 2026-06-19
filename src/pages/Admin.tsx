@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2 } from "lucide-react";
+import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink } from "lucide-react";
 import SocialPanel from "@/components/admin/SocialPanel";
 
 type Inquiry = {
@@ -40,6 +40,14 @@ export default function Admin() {
             </div>
             <div className="flex items-center gap-3">
               {!isAdmin && <ClaimAdminButton />}
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] border border-gold/60 text-gold px-4 py-2.5 hover:bg-gold hover:text-background transition-colors"
+              >
+                <ExternalLink size={14} /> Live Website Preview
+              </a>
               <button
                 onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }}
                 className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary transition-colors"
