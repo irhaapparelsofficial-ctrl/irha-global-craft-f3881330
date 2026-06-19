@@ -224,6 +224,44 @@
   </head>
 
   <body>
+    <style>
+      #pwa-splash{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at center, #1a1a1a 0%, #0a0a0a 70%);transition:opacity .6s ease, visibility .6s ease;}
+      #pwa-splash.hide{opacity:0;visibility:hidden;}
+      #pwa-splash .ring{width:120px;height:120px;border-radius:50%;border:1px solid rgba(212,175,55,.25);display:flex;align-items:center;justify-content:center;position:relative;animation:splash-pop .9s cubic-bezier(.2,.8,.2,1) both;}
+      #pwa-splash .ring::before{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid transparent;border-top-color:#d4af37;animation:splash-spin 1.2s linear infinite;}
+      #pwa-splash .mono{font-family:'Playfair Display', Georgia, serif;font-size:42px;font-weight:700;letter-spacing:2px;background:linear-gradient(135deg,#f5d97a 0%, #d4af37 50%, #b8902a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;animation:splash-fade .8s ease .15s both;}
+      #pwa-splash .name{margin-top:28px;font-family:'Inter', system-ui, sans-serif;font-size:13px;letter-spacing:6px;text-transform:uppercase;color:rgba(245,245,245,.7);animation:splash-fade .8s ease .35s both;}
+      #pwa-splash .tag{margin-top:8px;font-family:'Inter', system-ui, sans-serif;font-size:10px;letter-spacing:3px;color:rgba(212,175,55,.6);animation:splash-fade .8s ease .55s both;}
+      @keyframes splash-pop{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+      @keyframes splash-spin{to{transform:rotate(360deg)}}
+      @keyframes splash-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    </style>
+    <div id="pwa-splash" aria-hidden="true">
+      <div class="ring"><span class="mono">IA</span></div>
+      <div class="name">Irha Apparels</div>
+      <div class="tag">Crafted in Sialkot</div>
+    </div>
+    <script>
+      (function(){
+        var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        var splash = document.getElementById('pwa-splash');
+        if(!isStandalone){ splash && splash.parentNode.removeChild(splash); return; }
+        var minShown = new Promise(function(r){ setTimeout(r, 1100); });
+        var mounted = new Promise(function(r){
+          var root = document.getElementById('root');
+          if(root && root.childElementCount > 0) return r();
+          var mo = new MutationObserver(function(){
+            if(root.childElementCount > 0){ mo.disconnect(); r(); }
+          });
+          mo.observe(root, { childList: true });
+          setTimeout(r, 4000);
+        });
+        Promise.all([minShown, mounted]).then(function(){
+          splash.classList.add('hide');
+          setTimeout(function(){ splash && splash.parentNode && splash.parentNode.removeChild(splash); }, 700);
+        });
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
