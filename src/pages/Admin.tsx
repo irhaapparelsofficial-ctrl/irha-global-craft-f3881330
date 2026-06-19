@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink } from "lucide-react";
+import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles } from "lucide-react";
 import SocialPanel from "@/components/admin/SocialPanel";
+import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
 
 type Inquiry = {
   id: string; name: string; email: string; company: string | null; country: string | null;
@@ -15,11 +16,11 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "inquiries" | "traffic" | "chat" | "gsc" | "social";
+type Tab = "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
-  const [tab, setTab] = useState<Tab>("inquiries");
+  const [tab, setTab] = useState<Tab>("ai");
 
   if (loading) return <Center>Loading…</Center>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -70,6 +71,7 @@ export default function Admin() {
             <>
               {/* TABS */}
               <div className="flex flex-wrap gap-2 mb-8">
+                <TabButton active={tab === "ai"} onClick={() => setTab("ai")} icon={<Sparkles size={14} />} label="AI Assistant" />
                 <TabButton active={tab === "inquiries"} onClick={() => setTab("inquiries")} icon={<Inbox size={14} />} label="Inquiries" />
                 <TabButton active={tab === "traffic"} onClick={() => setTab("traffic")} icon={<BarChart3 size={14} />} label="Traffic" />
                 <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={<MessageSquare size={14} />} label="Live Chat" />
@@ -77,6 +79,7 @@ export default function Admin() {
                 <TabButton active={tab === "social"} onClick={() => setTab("social")} icon={<Share2 size={14} />} label="Social" />
               </div>
 
+              {tab === "ai" && <AIAssistantPanel />}
               {tab === "inquiries" && <InquiriesPanel />}
               {tab === "traffic" && <TrafficPanel />}
               {tab === "chat" && <ChatPanel />}
