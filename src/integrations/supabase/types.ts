@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_suits: {
+        Row: {
+          construction: string | null
+          created_at: string
+          fabric_type: string | null
+          gsm_weight: number | null
+          id: string
+          master_carton_count: number
+          pattern: string | null
+          status: string
+          suit_name: string
+        }
+        Insert: {
+          construction?: string | null
+          created_at?: string
+          fabric_type?: string | null
+          gsm_weight?: number | null
+          id?: string
+          master_carton_count?: number
+          pattern?: string | null
+          status?: string
+          suit_name: string
+        }
+        Update: {
+          construction?: string | null
+          created_at?: string
+          fabric_type?: string | null
+          gsm_weight?: number | null
+          id?: string
+          master_carton_count?: number
+          pattern?: string | null
+          status?: string
+          suit_name?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -83,6 +119,41 @@ export type Database = {
         }
         Relationships: []
       }
+      master_cartons: {
+        Row: {
+          carton_number: string | null
+          created_at: string
+          current_status: string
+          id: string
+          product_link: string | null
+          units_per_carton: number
+        }
+        Insert: {
+          carton_number?: string | null
+          created_at?: string
+          current_status?: string
+          id?: string
+          product_link?: string | null
+          units_per_carton?: number
+        }
+        Update: {
+          carton_number?: string | null
+          created_at?: string
+          current_status?: string
+          id?: string
+          product_link?: string | null
+          units_per_carton?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_cartons_product_link_fkey"
+            columns: ["product_link"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_views: {
         Row: {
           country: string | null
@@ -110,6 +181,39 @@ export type Database = {
           referrer?: string | null
           session_id?: string | null
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: Database["public"]["Enums"]["product_category"] | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          material_specifications: string | null
+          name: string
+          wholesale_price: number | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["product_category"] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          material_specifications?: string | null
+          name: string
+          wholesale_price?: number | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["product_category"] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          material_specifications?: string | null
+          name?: string
+          wholesale_price?: number | null
         }
         Relationships: []
       }
@@ -194,6 +298,11 @@ export type Database = {
     }
     Enums: {
       app_role: "admin"
+      product_category:
+        | "Sportswear"
+        | "Streetwear"
+        | "Leisurewear"
+        | "Nightwear"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -322,6 +431,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin"],
+      product_category: [
+        "Sportswear",
+        "Streetwear",
+        "Leisurewear",
+        "Nightwear",
+      ],
     },
   },
 } as const
