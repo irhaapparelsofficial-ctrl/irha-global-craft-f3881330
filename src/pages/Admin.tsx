@@ -71,6 +71,7 @@ export default function Admin() {
             <>
               {/* TABS */}
               <div className="flex flex-wrap gap-2 mb-8">
+                <TabButton active={tab === "ai"} onClick={() => setTab("ai")} icon={<Sparkles size={14} />} label="AI Assistant" />
                 <TabButton active={tab === "inquiries"} onClick={() => setTab("inquiries")} icon={<Inbox size={14} />} label="Inquiries" />
                 <TabButton active={tab === "traffic"} onClick={() => setTab("traffic")} icon={<BarChart3 size={14} />} label="Traffic" />
                 <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={<MessageSquare size={14} />} label="Live Chat" />
@@ -78,6 +79,7 @@ export default function Admin() {
                 <TabButton active={tab === "social"} onClick={() => setTab("social")} icon={<Share2 size={14} />} label="Social" />
               </div>
 
+              {tab === "ai" && <AIAssistantPanel />}
               {tab === "inquiries" && <InquiriesPanel />}
               {tab === "traffic" && <TrafficPanel />}
               {tab === "chat" && <ChatPanel />}
