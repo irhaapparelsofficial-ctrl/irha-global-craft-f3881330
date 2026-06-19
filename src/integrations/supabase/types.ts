@@ -193,7 +193,6 @@ export type Database = {
           image_url: string | null
           material_specifications: string | null
           name: string
-          wholesale_price: number | null
         }
         Insert: {
           category?: Database["public"]["Enums"]["product_category"] | null
@@ -203,7 +202,6 @@ export type Database = {
           image_url?: string | null
           material_specifications?: string | null
           name: string
-          wholesale_price?: number | null
         }
         Update: {
           category?: Database["public"]["Enums"]["product_category"] | null
@@ -213,7 +211,6 @@ export type Database = {
           image_url?: string | null
           material_specifications?: string | null
           name?: string
-          wholesale_price?: number | null
         }
         Relationships: []
       }
