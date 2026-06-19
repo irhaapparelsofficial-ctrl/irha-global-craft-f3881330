@@ -191,7 +191,7 @@ def footer(c, page_no, total=None):
     c.setStrokeColor(LINE); c.setLineWidth(0.4)
     c.line(20*mm, 14*mm, PAGE_W - 20*mm, 14*mm)
     c.setFont("Helvetica", 8); c.setFillColor(MUTED)
-    c.drawString(20*mm, 9*mm, "IRHA APPARELS  ·  Sialkot, Pakistan  ·  hello@irhaapparels.com  ·  irhaapparels.com")
+    c.drawString(20*mm, 9*mm, "IRHA APPARELS  ·  Sialkot, Pakistan  ·  irhaapparelsofficial@gmail.com  ·  irhaapparels.com")
     label = f"{page_no}" + (f" / {total}" if total else "")
     c.drawRightString(PAGE_W - 20*mm, 9*mm, label)
 
@@ -395,8 +395,8 @@ def contact_page(c):
         c.drawString(20*mm, y, ln); y -= 16
     y -= 6
     fields = [
-        ("EMAIL", "hello@irhaapparels.com"),
-        ("WHATSAPP", "+92 300 000 0000"),
+        ("EMAIL", "irhaapparelsofficial@gmail.com"),
+        ("WHATSAPP", "+92 320 411 0066"),
         ("WEB", "www.irhaapparels.com"),
         ("ATELIER", "Sialkot Industrial Estate, Punjab, Pakistan"),
         ("INCOTERMS", "FOB Karachi · CIF · DDP on request"),
