@@ -20,7 +20,7 @@ type Tab = "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
-  const [tab, setTab] = useState<Tab>("inquiries");
+  const [tab, setTab] = useState<Tab>("ai");
 
   if (loading) return <Center>Loading…</Center>;
   if (!user) return <Navigate to="/auth" replace />;
