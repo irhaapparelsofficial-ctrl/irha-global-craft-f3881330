@@ -337,7 +337,7 @@ def products_page(c, cat):
             ("MATERIAL",  desc.split("·")[0].strip()[:38] or "Premium"),
             ("MOQ",       default_specs["MOQ"]),
             ("LEAD TIME", default_specs["LEAD TIME"]),
-            ("PRICE",     price.replace("from ", "")),
+            ("PRICING",   "Contact for Quote"),
         ]
         col_w = tw / 2
         row_h = 22
