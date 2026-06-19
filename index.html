@@ -12,8 +12,18 @@
     <meta name="geo.region" content="PK-PB" />
     <meta name="geo.placename" content="Sialkot" />
     <meta name="theme-color" content="#0a0a0a" />
-    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icon-512x512.png" />
+    <script>
+      // Only expose PWA manifest on admin routes — keeps install option private
+      (function(){
+        if (location.pathname.toLowerCase().startsWith('/admin')) {
+          var l = document.createElement('link');
+          l.rel = 'manifest';
+          l.href = '/manifest.webmanifest';
+          document.head.appendChild(l);
+        }
+      })();
+    </script>
     <link rel="canonical" href="https://www.irhaapparels.com/" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -244,8 +254,9 @@
     <script>
       (function(){
         var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        var isAdmin = location.pathname.toLowerCase().startsWith('/admin');
         var splash = document.getElementById('pwa-splash');
-        if(!isStandalone){ splash && splash.parentNode.removeChild(splash); return; }
+        if(!isStandalone || !isAdmin){ splash && splash.parentNode.removeChild(splash); return; }
         var minShown = new Promise(function(r){ setTimeout(r, 1100); });
         var mounted = new Promise(function(r){
           var root = document.getElementById('root');
