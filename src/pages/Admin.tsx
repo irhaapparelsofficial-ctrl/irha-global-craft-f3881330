@@ -4,9 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles } from "lucide-react";
+import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store } from "lucide-react";
 import SocialPanel from "@/components/admin/SocialPanel";
 import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
+import HomePanel from "@/components/admin/HomePanel";
+import LeadsPanel from "@/components/admin/LeadsPanel";
+import PIGeneratorPanel from "@/components/admin/PIGeneratorPanel";
+import MailingPanel from "@/components/admin/MailingPanel";
+import ListingsPanel from "@/components/admin/ListingsPanel";
 
 type Inquiry = {
   id: string; name: string; email: string; company: string | null; country: string | null;
