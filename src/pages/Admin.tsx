@@ -21,11 +21,11 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
+type Tab = "home" | "leads" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
-  const [tab, setTab] = useState<Tab>("ai");
+  const [tab, setTab] = useState<Tab>("home");
 
   if (loading) return <Center>Loading…</Center>;
   if (!user) return <Navigate to="/auth" replace />;
