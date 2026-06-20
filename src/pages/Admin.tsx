@@ -4,9 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles } from "lucide-react";
+import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store } from "lucide-react";
 import SocialPanel from "@/components/admin/SocialPanel";
 import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
+import HomePanel from "@/components/admin/HomePanel";
+import LeadsPanel from "@/components/admin/LeadsPanel";
+import PIGeneratorPanel from "@/components/admin/PIGeneratorPanel";
+import MailingPanel from "@/components/admin/MailingPanel";
+import ListingsPanel from "@/components/admin/ListingsPanel";
 
 type Inquiry = {
   id: string; name: string; email: string; company: string | null; country: string | null;
@@ -16,11 +21,11 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
+type Tab = "home" | "leads" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
-  const [tab, setTab] = useState<Tab>("ai");
+  const [tab, setTab] = useState<Tab>("home");
 
   if (loading) return <Center>Loading…</Center>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -71,6 +76,11 @@ export default function Admin() {
             <>
               {/* TABS */}
               <div className="flex flex-wrap gap-2 mb-8">
+                <TabButton active={tab === "home"} onClick={() => setTab("home")} icon={<Home size={14} />} label="Home" />
+                <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={<Users size={14} />} label="Leads" />
+                <TabButton active={tab === "pi"} onClick={() => setTab("pi")} icon={<FileText size={14} />} label="PI Generator" />
+                <TabButton active={tab === "mailing"} onClick={() => setTab("mailing")} icon={<Send size={14} />} label="Mailing" />
+                <TabButton active={tab === "listings"} onClick={() => setTab("listings")} icon={<Store size={14} />} label="Listings" />
                 <TabButton active={tab === "ai"} onClick={() => setTab("ai")} icon={<Sparkles size={14} />} label="AI Assistant" />
                 <TabButton active={tab === "inquiries"} onClick={() => setTab("inquiries")} icon={<Inbox size={14} />} label="Inquiries" />
                 <TabButton active={tab === "traffic"} onClick={() => setTab("traffic")} icon={<BarChart3 size={14} />} label="Traffic" />
@@ -79,6 +89,11 @@ export default function Admin() {
                 <TabButton active={tab === "social"} onClick={() => setTab("social")} icon={<Share2 size={14} />} label="Social" />
               </div>
 
+              {tab === "home" && <HomePanel />}
+              {tab === "leads" && <LeadsPanel />}
+              {tab === "pi" && <PIGeneratorPanel />}
+              {tab === "mailing" && <MailingPanel />}
+              {tab === "listings" && <ListingsPanel />}
               {tab === "ai" && <AIAssistantPanel />}
               {tab === "inquiries" && <InquiriesPanel />}
               {tab === "traffic" && <TrafficPanel />}
