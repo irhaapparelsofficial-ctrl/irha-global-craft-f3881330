@@ -6,6 +6,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
+import LederhosenHome from "./pages/LederhosenHome";
 import Index from "./pages/Index";
 import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
