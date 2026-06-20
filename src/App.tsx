@@ -58,41 +58,50 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <PageViewTracker />
-          <Layout>
-            <Suspense fallback={<PageFallback />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/products/:slug" element={<CategoryPage />} />
-                <Route path="/manufacturing" element={<Manufacturing />} />
-                <Route path="/sustainability" element={<Sustainability />} />
-                <Route path="/journal" element={<Journal />} />
-                <Route path="/journal/:slug" element={<JournalArticle />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/faq" element={<FAQ />} />
-                <Route path="/inquiry" element={<Inquiry />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/seo-indexing" element={<SeoIndexing />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/admin" element={<Admin />} />
-                {/* Fallback redirects for common admin/auth URL variants */}
-                <Route path="/login" element={<Navigate to="/auth" replace />} />
-                <Route path="/signin" element={<Navigate to="/auth" replace />} />
-                <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
-                <Route path="/log-in" element={<Navigate to="/auth" replace />} />
-                <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
-                <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
-                <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
-                {SEO_LANDING_SLUGS.map((slug) => (
-                  <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
-                ))}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </Layout>
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              {/* New Lederhosen-focused homepage — no shared Layout, owns its own chrome */}
+              <Route path="/" element={<LederhosenHome />} />
+              <Route path="/de" element={<LederhosenHome />} />
+              <Route path="/de/" element={<LederhosenHome />} />
+              <Route path="/legacy-home" element={<Layout><Index /></Layout>} />
+
+              {/* All other routes keep the legacy Layout (Navbar/Footer/FloatingActions/etc) */}
+              <Route path="*" element={
+                <Layout>
+                  <Routes>
+                    <Route path="/about" element={<About />} />
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/products/:slug" element={<CategoryPage />} />
+                    <Route path="/manufacturing" element={<Manufacturing />} />
+                    <Route path="/sustainability" element={<Sustainability />} />
+                    <Route path="/journal" element={<Journal />} />
+                    <Route path="/journal/:slug" element={<JournalArticle />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route path="/inquiry" element={<Inquiry />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/seo-indexing" element={<SeoIndexing />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/login" element={<Navigate to="/auth" replace />} />
+                    <Route path="/signin" element={<Navigate to="/auth" replace />} />
+                    <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
+                    <Route path="/log-in" element={<Navigate to="/auth" replace />} />
+                    <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                    <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+                    <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
+                    {SEO_LANDING_SLUGS.map((slug) => (
+                      <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
+                    ))}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              } />
+            </Routes>
+          </Suspense>
           <CookieConsent />
         </BrowserRouter>
       </TooltipProvider>
