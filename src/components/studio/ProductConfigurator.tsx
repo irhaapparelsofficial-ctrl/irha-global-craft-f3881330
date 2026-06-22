@@ -1,9 +1,8 @@
-import { useMemo, useState, useRef, useCallback, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -17,12 +16,11 @@ import {
   Palette,
   Wand2,
   Ruler,
-  Upload,
+  Brush,
   ChevronLeft,
   ChevronRight,
   Check,
   ShoppingCart,
-  X,
   Shapes,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,11 +32,10 @@ import {
   resolveStyles,
   resolveFabrics,
   resolveSizing,
-  resolvePlacements,
   type Category,
   type ProductBase,
 } from "./catalogSchema";
-import { Silhouette, getPlacementCoord } from "./silhouettes";
+import InteractiveMockupCanvas, { type DesignState } from "./InteractiveMockupCanvas";
 
 const STEP_META = [
   { id: 1, label: "Category", icon: Shapes },
@@ -47,22 +44,19 @@ const STEP_META = [
   { id: 4, label: "Color", icon: Palette },
   { id: 5, label: "Fabric", icon: Wand2 },
   { id: 6, label: "Sizing", icon: Ruler },
-  { id: 7, label: "Branding", icon: Upload },
+  { id: 7, label: "Design Canvas", icon: Brush },
 ];
+
 
 export default function ProductConfigurator() {
   const [step, setStep] = useState(1);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [baseId, setBaseId] = useState<string | null>(null);
-  // styles keyed by group: { sleeve: "short", hardware: "horn" }
   const [styleSelections, setStyleSelections] = useState<Record<string, string>>({});
   const [colorId, setColorId] = useState<string | null>(null);
   const [fabricId, setFabricId] = useState<string | null>(null);
   const [sizeQty, setSizeQty] = useState<Record<string, number>>({});
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [placement, setPlacement] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [designState, setDesignState] = useState<DesignState | null>(null);
 
   // ----- Resolve active schema -----
   const category: Category | null = getCategory(categoryId);
@@ -70,33 +64,36 @@ export default function ProductConfigurator() {
   const styleGroups = category && base ? resolveStyles(category, base) : [];
   const fabrics = category && base ? resolveFabrics(category, base) : [];
   const sizing = category && base ? resolveSizing(category, base) : null;
-  const placements = category && base ? resolvePlacements(category, base) : [];
   const colors = category?.colors || [];
 
   const color = colors.find((c) => c.id === colorId) || colors[0] || { id: "", label: "—", hex: "#888" };
   const fabric = fabrics.find((f) => f.id === fabricId) || null;
   const totalQty = Object.values(sizeQty).reduce((s, n) => s + (n || 0), 0);
-  const unitPrice = (base?.basePrice || 0) + (fabric?.price || 0) + (logoFile ? 0.8 : 0);
+  const artworkSurcharge = (designState?.layers?.length || 0) * 0.6;
+  const unitPrice = (base?.basePrice || 0) + (fabric?.price || 0) + artworkSurcharge;
   const totalPrice = unitPrice * totalQty;
 
-  // Reset downstream selections when category/base changes
+  // Reset downstream selections when category changes
   useEffect(() => {
     setBaseId(null);
     setStyleSelections({});
     setColorId(null);
     setFabricId(null);
     setSizeQty({});
-    setPlacement(null);
+    setDesignState(null);
   }, [categoryId]);
 
   useEffect(() => {
     setStyleSelections({});
     setFabricId(null);
     setSizeQty({});
-    if (placements.length > 0) setPlacement(placements[0]);
+    setDesignState(null);
     if (colors.length > 0 && !colorId) setColorId(colors[0].id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseId]);
+
+  const handleDesignChange = useCallback((s: DesignState) => setDesignState(s), []);
+
 
   const next = () => setStep((s) => Math.min(7, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
@@ -116,66 +113,83 @@ export default function ProductConfigurator() {
   const updateSize = (size: string, delta: number) =>
     setSizeQty((prev) => ({ ...prev, [size]: Math.max(0, (prev[size] || 0) + delta) }));
 
-  const onFile = useCallback((file: File) => {
-    setLogoFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => setLogoUrl(e.target?.result as string);
-    reader.readAsDataURL(file);
-  }, []);
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file) onFile(file);
-  };
-
   const handleAddToCart = () => {
     if (totalQty < 50) {
       toast.error("Minimum order quantity is 50 units (B2B factory direct).");
       return;
     }
-    toast.success(`Configuration submitted! ${totalQty} units · $${totalPrice.toFixed(2)} FOB`);
+    // Build full configuration payload — clean export of every design choice.
+    const payload = {
+      category: category && { id: category.id, label: category.label },
+      product: base && { id: base.id, label: base.label, silhouette: base.silhouette },
+      styles: Object.fromEntries(
+        styleGroups.map((g) => {
+          const opt = g.options.find((o) => o.id === styleSelections[g.id]);
+          return [g.id, opt ? { id: opt.id, label: opt.label } : null];
+        })
+      ),
+      baseColor: color,
+      fabric: fabric && { id: fabric.id, label: fabric.label, spec: fabric.spec },
+      quantities: sizeQty,
+      totalQty,
+      pricing: { unit: unitPrice, total: totalPrice, currency: "USD" },
+      design: designState && {
+        silhouette: designState.silhouette,
+        zones: designState.zones,
+        toggles: designState.toggles,
+        artwork: designState.layers.map((l) => ({
+          id: l.id,
+          type: l.type,
+          x: Math.round(l.x * 100) / 100,
+          y: Math.round(l.y * 100) / 100,
+          width: Math.round(l.w * 100) / 100,
+          height: Math.round(l.h * 100) / 100,
+          rotation: Math.round(l.rotation * 10) / 10,
+          ...(l.type === "logo"
+            ? { name: (l as { name: string }).name }
+            : {
+                text: (l as { text: string }).text,
+                font: (l as { font: string }).font,
+                color: (l as { color: string }).color,
+                size: (l as { size: number }).size,
+                weight: (l as { weight: number }).weight,
+              }),
+        })),
+      },
+    };
+    // eslint-disable-next-line no-console
+    console.log("[Configurator] Export payload:", payload);
+    toast.success(`Submitted · ${totalQty} units · $${totalPrice.toFixed(2)} FOB`, {
+      description: `${(designState?.layers.length || 0)} artwork layer(s) bundled.`,
+    });
   };
 
   // ---------- Mockup ----------
   const MockupPreview = () => {
-    const coord = base && placement
-      ? getPlacementCoord(base.silhouette, placement)
-      : { x: 75, y: 65, w: 20, h: 20 };
-    const isLight = color.hex.toUpperCase() === "#F8F8F8" || color.hex.toUpperCase() === "#FFFFFF";
-
-    return (
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-border bg-gradient-to-br from-muted/50 to-muted/20">
-        <div className="absolute inset-0 flex items-center justify-center p-8">
-          {base ? (
-            <svg viewBox="0 0 200 230" className="h-full w-full" style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.25))" }}>
-              <Silhouette variant={base.silhouette} fill={color.hex} />
-              {logoUrl ? (
-                <image href={logoUrl} x={coord.x} y={coord.y} width={coord.w} height={coord.h} preserveAspectRatio="xMidYMid meet" />
-              ) : placement ? (
-                <rect
-                  x={coord.x} y={coord.y} width={coord.w} height={coord.h}
-                  fill="none"
-                  stroke={isLight ? "#333" : "rgba(255,255,255,0.7)"}
-                  strokeDasharray="2 2" strokeWidth="0.8"
-                />
-              ) : null}
-            </svg>
-          ) : (
-            <div className="text-center text-muted-foreground">
-              <Shapes className="mx-auto mb-3 h-12 w-12 opacity-40" />
-              <p className="text-sm">Select a category to begin</p>
-            </div>
-          )}
+    if (!base) {
+      return (
+        <div className="flex aspect-square w-full items-center justify-center rounded-xl border border-border bg-gradient-to-br from-muted/40 to-muted/10">
+          <div className="text-center text-muted-foreground">
+            <Shapes className="mx-auto mb-3 h-12 w-12 opacity-40" />
+            <p className="text-sm">Select a category & product to begin</p>
+          </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between bg-gradient-to-t from-background/95 to-transparent p-4">
+      );
+    }
+    return (
+      <div className="space-y-3">
+        <InteractiveMockupCanvas
+          silhouette={base.silhouette}
+          palette={colors}
+          initialColor={color.hex}
+          onChange={handleDesignChange}
+        />
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card/50 px-3 py-2">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Live Preview</p>
-            <p className="font-serif text-lg leading-tight">
-              {base?.label || category?.label || "Configure your product"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {color.label}{fabric ? ` · ${fabric.spec}` : ""}
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Live Mockup</p>
+            <p className="text-sm font-medium leading-tight">{base.label}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {fabric?.spec || "Choose fabric"}{designState?.layers.length ? ` · ${designState.layers.length} layer(s)` : ""}
             </p>
           </div>
           {totalQty > 0 && <Badge variant="secondary" className="text-xs">{totalQty} units</Badge>}
@@ -183,6 +197,7 @@ export default function ProductConfigurator() {
       </div>
     );
   };
+
 
   // ---------- Steps ----------
   const renderStep = () => {
@@ -384,43 +399,27 @@ export default function ProductConfigurator() {
       case 7:
         return (
           <div className="space-y-4 animate-fade-in">
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-card p-8 text-center transition-colors hover:border-primary/60 hover:bg-primary/5"
-            >
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm font-medium">
-                {logoFile ? logoFile.name : "Drop your logo here or click to upload"}
-              </p>
-              <p className="text-xs text-muted-foreground">PNG, SVG, JPG · max 5MB</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/svg+xml,image/jpeg"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
-              />
-              {logoUrl && (
-                <Button variant="ghost" size="sm" className="mt-2"
-                  onClick={(e) => { e.stopPropagation(); setLogoFile(null); setLogoUrl(null); }}>
-                  <X className="mr-1 h-3 w-3" /> Remove
-                </Button>
-              )}
-            </div>
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Placement</Label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {placements.map((p) => (
-                  <button key={p} onClick={() => setPlacement(p)}
-                    className={cn(
-                      "rounded-lg border p-3 text-sm transition-all",
-                      placement === p ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                    )}>
-                    {p}
-                  </button>
-                ))}
+            <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-5 text-sm">
+              <div className="flex items-start gap-3">
+                <Brush className="mt-0.5 h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Design directly on the mockup →</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Click any zone (body, sleeves, collar, cuffs) to recolor or apply a texture.
+                    Use the <em>Artwork</em> tab to upload logos and add text — drag, scale and rotate
+                    them anywhere on the printable area. Component toggles let you switch hood,
+                    pockets and other elements on or off.
+                  </p>
+                  {designState && (
+                    <p className="mt-3 text-[11px] text-muted-foreground">
+                      <strong className="text-foreground">{designState.layers.length}</strong> artwork layer(s) ·{" "}
+                      <strong className="text-foreground">
+                        {Object.values(designState.zones).filter((z) => z.texture !== "none").length}
+                      </strong>{" "}
+                      textured zone(s)
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -433,10 +432,13 @@ export default function ProductConfigurator() {
                   const opt = g.options.find((o) => o.id === styleSelections[g.id]);
                   return <SummaryRow key={g.id} label={g.label} value={opt?.label || "—"} />;
                 })}
-                <SummaryRow label="Color" value={color.label} />
+                <SummaryRow label="Base Color" value={color.label} />
                 <SummaryRow label="Fabric" value={fabric ? `${fabric.label} · ${fabric.spec}` : "—"} />
                 <SummaryRow label="Quantity" value={`${totalQty} units`} />
-                <SummaryRow label="Branding" value={logoFile ? `${logoFile.name} · ${placement}` : "—"} />
+                <SummaryRow
+                  label="Artwork"
+                  value={designState?.layers.length ? `${designState.layers.length} layer(s)` : "—"}
+                />
               </div>
               <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
                 <div>
@@ -453,6 +455,7 @@ export default function ProductConfigurator() {
         );
     }
   };
+
 
   const currentStep = STEP_META.find((s) => s.id === step)!;
 
