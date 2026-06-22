@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { BRAND } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import MockupRequestButton from "@/components/MockupRequestButton";
 
 const mainLinks = [
   { to: "/", label: "Home" },
