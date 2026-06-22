@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowUpRight, MessageCircle, ShieldCheck, Globe2, Factory, Award, Zap, Scissors, Activity } from "lucide-react";
 import SEO from "@/components/SEO";
-import FactoryHero from "@/components/sections/FactoryHero";
+import HeroCarousel from "@/components/HeroCarousel";
 import CategoryGrid from "@/components/sections/CategoryGrid";
 import AtmosphericGrid from "@/components/sections/AtmosphericGrid";
 import TrustBar from "@/components/sections/TrustBar";
