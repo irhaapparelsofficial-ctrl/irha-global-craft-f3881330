@@ -149,10 +149,11 @@ export default function Home() {
         }}
       />
 
-      {/* HERO + INTRO STACK */}
-      <FactoryHero />
+      {/* HERO + CATEGORY SHOWCASE + ATMOSPHERIC GRID */}
+      <HeroCarousel />
       <CategoryGrid />
       <AtmosphericGrid />
+
 
 
 
