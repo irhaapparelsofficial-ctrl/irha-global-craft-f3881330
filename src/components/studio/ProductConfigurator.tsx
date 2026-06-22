@@ -399,43 +399,27 @@ export default function ProductConfigurator() {
       case 7:
         return (
           <div className="space-y-4 animate-fade-in">
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-card p-8 text-center transition-colors hover:border-primary/60 hover:bg-primary/5"
-            >
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm font-medium">
-                {logoFile ? logoFile.name : "Drop your logo here or click to upload"}
-              </p>
-              <p className="text-xs text-muted-foreground">PNG, SVG, JPG · max 5MB</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/svg+xml,image/jpeg"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
-              />
-              {logoUrl && (
-                <Button variant="ghost" size="sm" className="mt-2"
-                  onClick={(e) => { e.stopPropagation(); setLogoFile(null); setLogoUrl(null); }}>
-                  <X className="mr-1 h-3 w-3" /> Remove
-                </Button>
-              )}
-            </div>
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Placement</Label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {placements.map((p) => (
-                  <button key={p} onClick={() => setPlacement(p)}
-                    className={cn(
-                      "rounded-lg border p-3 text-sm transition-all",
-                      placement === p ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                    )}>
-                    {p}
-                  </button>
-                ))}
+            <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-5 text-sm">
+              <div className="flex items-start gap-3">
+                <Brush className="mt-0.5 h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Design directly on the mockup →</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Click any zone (body, sleeves, collar, cuffs) to recolor or apply a texture.
+                    Use the <em>Artwork</em> tab to upload logos and add text — drag, scale and rotate
+                    them anywhere on the printable area. Component toggles let you switch hood,
+                    pockets and other elements on or off.
+                  </p>
+                  {designState && (
+                    <p className="mt-3 text-[11px] text-muted-foreground">
+                      <strong className="text-foreground">{designState.layers.length}</strong> artwork layer(s) ·{" "}
+                      <strong className="text-foreground">
+                        {Object.values(designState.zones).filter((z) => z.texture !== "none").length}
+                      </strong>{" "}
+                      textured zone(s)
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -448,10 +432,13 @@ export default function ProductConfigurator() {
                   const opt = g.options.find((o) => o.id === styleSelections[g.id]);
                   return <SummaryRow key={g.id} label={g.label} value={opt?.label || "—"} />;
                 })}
-                <SummaryRow label="Color" value={color.label} />
+                <SummaryRow label="Base Color" value={color.label} />
                 <SummaryRow label="Fabric" value={fabric ? `${fabric.label} · ${fabric.spec}` : "—"} />
                 <SummaryRow label="Quantity" value={`${totalQty} units`} />
-                <SummaryRow label="Branding" value={logoFile ? `${logoFile.name} · ${placement}` : "—"} />
+                <SummaryRow
+                  label="Artwork"
+                  value={designState?.layers.length ? `${designState.layers.length} layer(s)` : "—"}
+                />
               </div>
               <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
                 <div>
@@ -468,6 +455,7 @@ export default function ProductConfigurator() {
         );
     }
   };
+
 
   const currentStep = STEP_META.find((s) => s.id === step)!;
 
