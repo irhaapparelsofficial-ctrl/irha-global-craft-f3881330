@@ -248,11 +248,11 @@ export default function ProductConfigurator() {
     const zoneMats = Object.entries(chosenZoneMaterials).filter(([, m]) => !!m);
     if (zoneMats.length) {
       lines.push(`Zone Materials:`);
-      zoneMats.forEach(([z, m]) => lines.push(`  • ${z}: ${m!.label} (+$${m!.price.toFixed(2)})`));
+      zoneMats.forEach(([z, m]) => lines.push(`  • ${z}: ${m!.label}`));
     }
     if (selectedAddOns.length) {
       lines.push(`Add-ons:`);
-      selectedAddOns.forEach((a) => lines.push(`  • ${a.label} (+$${a.cost.toFixed(2)})`));
+      selectedAddOns.forEach((a) => lines.push(`  • ${a.label}`));
     }
     if (designState?.layers.length) {
       lines.push(`Artwork:`);
@@ -265,11 +265,11 @@ export default function ProductConfigurator() {
     Object.entries(sizeQty)
       .filter(([, n]) => n > 0)
       .forEach(([s, n]) => lines.push(`  • ${s}: ${n}`));
-    lines.push(`Total Qty: ${totalQty} units (${quote.tierLabel})`);
-    lines.push(`Unit FOB: $${quote.finalUnit.toFixed(2)}`);
-    lines.push(`Order Total: $${quote.total.toFixed(2)} USD`);
+    lines.push(`Total Qty: ${totalQty} units`);
+    lines.push(`Pricing: On Quote — please confirm FOB Karachi rate.`);
     return lines.join("\n");
   };
+
 
   const handleGetQuote = () => {
     if (totalQty < 50) {
