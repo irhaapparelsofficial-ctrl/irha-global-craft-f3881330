@@ -514,9 +514,10 @@ export default function InteractiveMockupCanvas({
                                 <span className="font-medium">{m.label}</span>
                                 <span className="text-[10px] text-muted-foreground">{m.spec}</span>
                               </span>
-                              <span className="font-mono text-[11px] text-primary">
-                                {m.price > 0 ? `+$${m.price.toFixed(2)}` : "Incl."}
+                              <span className="font-mono text-[10px] uppercase tracking-wider text-primary">
+                                On Quote
                               </span>
+
                             </button>
                           );
                         })}
