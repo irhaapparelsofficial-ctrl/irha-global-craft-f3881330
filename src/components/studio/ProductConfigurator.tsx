@@ -592,9 +592,10 @@ export default function ProductConfigurator() {
             </div>
 
             <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3 text-sm">
-              <span className="text-muted-foreground">Total · {quote.tierLabel}</span>
-              <span className="font-mono font-semibold">{totalQty} units · ${quote.total.toFixed(2)}</span>
+              <span className="text-muted-foreground">Total Units</span>
+              <span className="font-mono font-semibold">{totalQty} units · On Quote</span>
             </div>
+
           </div>
         );
 
