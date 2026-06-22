@@ -32,10 +32,16 @@ import {
   resolveStyles,
   resolveFabrics,
   resolveSizing,
+  resolveAddOns,
+  resolveZoneMaterials,
   type Category,
   type ProductBase,
+  type ZoneMaterial,
 } from "./catalogSchema";
 import InteractiveMockupCanvas, { type DesignState } from "./InteractiveMockupCanvas";
+import { computeQuote, tierFor } from "./pricingEngine";
+import { Slider } from "@/components/ui/slider";
+
 
 const STEP_META = [
   { id: 1, label: "Category", icon: Shapes },
@@ -64,14 +70,54 @@ export default function ProductConfigurator() {
   const styleGroups = category && base ? resolveStyles(category, base) : [];
   const fabrics = category && base ? resolveFabrics(category, base) : [];
   const sizing = category && base ? resolveSizing(category, base) : null;
+  const addOns = category && base ? resolveAddOns(category, base) : [];
   const colors = category?.colors || [];
 
   const color = colors.find((c) => c.id === colorId) || colors[0] || { id: "", label: "—", hex: "#888" };
   const fabric = fabrics.find((f) => f.id === fabricId) || null;
   const totalQty = Object.values(sizeQty).reduce((s, n) => s + (n || 0), 0);
-  const artworkSurcharge = (designState?.layers?.length || 0) * 0.6;
-  const unitPrice = (base?.basePrice || 0) + (fabric?.price || 0) + artworkSurcharge;
-  const totalPrice = unitPrice * totalQty;
+
+  // ---------- BOM Pricing ----------
+  const getZoneMaterials = useCallback(
+    (zoneId: string): ZoneMaterial[] => {
+      if (!category || !base) return [];
+      return resolveZoneMaterials(category, base, zoneId);
+    },
+    [category, base]
+  );
+
+  // Materialise the zone material selections from DesignState into full objects.
+  const chosenZoneMaterials = useMemo(() => {
+    const out: Record<string, ZoneMaterial | undefined> = {};
+    if (!designState || !category || !base) return out;
+    for (const [zoneId, zone] of Object.entries(designState.zones)) {
+      if (!zone.materialId) continue;
+      const opts = resolveZoneMaterials(category, base, zoneId);
+      out[zoneId] = opts.find((m) => m.id === zone.materialId);
+    }
+    return out;
+  }, [designState, category, base]);
+
+  const selectedAddOns = useMemo(
+    () => addOns.filter((a) => designState?.addOnIds?.includes(a.id)),
+    [addOns, designState]
+  );
+
+  const quote = useMemo(
+    () =>
+      computeQuote({
+        base,
+        zoneMaterials: chosenZoneMaterials,
+        addOns: selectedAddOns,
+        artworkLayers: designState?.layers?.length || 0,
+        fallbackFabric: fabric,
+        qty: totalQty,
+      }),
+    [base, chosenZoneMaterials, selectedAddOns, designState, fabric, totalQty]
+  );
+
+  // Tier hint for the canvas badge — works even before sizes are entered.
+  const previewTier = tierFor(Math.max(totalQty, 100));
 
   // Reset downstream selections when category changes
   useEffect(() => {
@@ -82,6 +128,7 @@ export default function ProductConfigurator() {
     setSizeQty({});
     setDesignState(null);
   }, [categoryId]);
+
 
   useEffect(() => {
     setStyleSelections({});
