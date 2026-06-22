@@ -149,8 +149,11 @@ export default function Home() {
         }}
       />
 
-      {/* HERO */}
-      <HeroCarousel />
+      {/* HERO + INTRO STACK */}
+      <FactoryHero />
+      <CategoryGrid />
+      <AtmosphericGrid />
+
 
 
       <TrustBar />
