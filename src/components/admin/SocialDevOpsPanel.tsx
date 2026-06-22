@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, CheckCircle2, Send, Linkedin, Facebook, Music2 } from "lucide-react";
+import { Activity, CheckCircle2, Clock, Send, Linkedin, Facebook, Music2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type Product = { id: string; name: string; slug: string };
+type ChannelKey = "facebook" | "instagram" | "linkedin" | "tiktok";
+
+const SYNC_INTERVAL_HOURS = 6;
 
 const STACK = [
   { service: "Lovable Cloud DB", status: "operational" },
@@ -11,6 +14,30 @@ const STACK = [
   { service: "Connector Gateway (LinkedIn/TikTok)", status: "operational" },
   { service: "Email Queue (notify.www.irhaapparels.com)", status: "operational" },
 ];
+
+function formatRelative(iso: string | null): string {
+  if (!iso) return "Awaiting first sync";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const m = Math.round(diffMs / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  return `${d}d ago`;
+}
+
+function formatNextSync(lastIso: string | null): string {
+  const base = lastIso ? new Date(lastIso).getTime() : Date.now();
+  let next = base + SYNC_INTERVAL_HOURS * 3600_000;
+  while (next < Date.now()) next += SYNC_INTERVAL_HOURS * 3600_000;
+  return new Date(next).toLocaleString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function SocialDevOpsPanel() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,6 +50,33 @@ export default function SocialDevOpsPanel() {
   });
   const [busy, setBusy] = useState(false);
   const [lastResult, setLastResult] = useState<Record<string, unknown> | null>(null);
+  const [lastSync, setLastSync] = useState<Record<ChannelKey, string | null>>({
+    facebook: null,
+    instagram: null,
+    linkedin: null,
+    tiktok: null,
+  });
+
+  const loadLastSync = async () => {
+    const { data } = await supabase
+      .from("social_posts")
+      .select("channels, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const map: Record<ChannelKey, string | null> = {
+      facebook: null,
+      instagram: null,
+      linkedin: null,
+      tiktok: null,
+    };
+    (data ?? []).forEach((row: { channels: string[] | null; created_at: string }) => {
+      (row.channels ?? []).forEach((ch) => {
+        const k = ch as ChannelKey;
+        if (k in map && !map[k]) map[k] = row.created_at;
+      });
+    });
+    setLastSync(map);
+  };
 
   useEffect(() => {
     void (async () => {
@@ -35,8 +89,14 @@ export default function SocialDevOpsPanel() {
       const list = (data ?? []) as Product[];
       setProducts(list);
       if (list[0]) setSelected(list[0].id);
+      await loadLastSync();
     })();
   }, []);
+
+  const metaLast = useMemo(
+    () => [lastSync.facebook, lastSync.instagram].filter(Boolean).sort().reverse()[0] ?? null,
+    [lastSync]
+  );
 
   const trigger = async () => {
     if (!selected) {
