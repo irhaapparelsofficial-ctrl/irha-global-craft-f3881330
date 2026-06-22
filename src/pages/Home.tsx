@@ -264,84 +264,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LIVE FEATURED PRODUCTS (Supabase) */}
-      {featured.length > 0 && (
-        <section id="live-catalogue" className="py-20 bg-secondary/40 scroll-mt-24">
-          <div className="container-luxe">
-            <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
-              <div>
-                <p className="eyebrow mb-3">Live Catalogue</p>
-                <h2 className="font-display text-3xl md:text-4xl">
-                  {activeMacro
-                    ? MACRO_HUBS.find((h) => h.key === activeMacro)!.title
-                    : "Current Production Runs"}
-                </h2>
-              </div>
-              <div className="flex items-center gap-3">
-                {activeMacro && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveMacro(null)}
-                    className="text-xs uppercase tracking-[0.3em] text-foreground/60 hover:text-foreground transition-colors"
-                  >
-                    Clear Filter ×
-                  </button>
-                )}
-                <Link to="/products" className="text-xs uppercase tracking-[0.3em] hover-gold-underline">
-                  Browse All →
-                </Link>
-              </div>
-            </div>
 
-            {filteredFeatured.length === 0 ? (
-              <div className="border border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
-                No live products in this hub yet — check back soon or browse the full catalogue.
-              </div>
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {filteredFeatured.map((p) => {
-                  const cat = categoryById.get(p.category_id);
-                  if (!cat) return null;
-                  const img = p.image_url ? resolveAsset(p.image_url) : null;
-                  return (
-                    <Link
-                      key={p.id}
-                      to={`/products/${cat.slug}/${p.slug}`}
-                      className="group bg-card border border-border/60 hover:border-industrial transition-colors flex flex-col"
-                    >
-                      <div className="aspect-square bg-background overflow-hidden">
-                        {img ? (
-                          <img
-                            src={img}
-                            alt={p.name}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1200ms]"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground font-mono uppercase tracking-widest">
-                            No image
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-industrial">
-                          {cat.name}
-                        </span>
-                        <h3 className="font-display text-lg mt-1">{p.name}</h3>
-                        {p.description && (
-                          <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
-                            {p.description}
-                          </p>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+
 
 
       <KpiCounters />
