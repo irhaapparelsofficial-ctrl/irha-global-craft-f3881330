@@ -11,6 +11,21 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Layers,
   Scissors,
   Palette,
@@ -20,7 +35,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  ShoppingCart,
+  FileText,
+  MessageCircle,
+  Copy,
   Shapes,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +58,7 @@ import {
 import InteractiveMockupCanvas, { type DesignState } from "./InteractiveMockupCanvas";
 import { computeQuote, tierFor } from "./pricingEngine";
 import { Slider } from "@/components/ui/slider";
+import { WHATSAPP_NUMBER, BRAND } from "@/lib/constants";
 
 
 const STEP_META = [
