@@ -174,10 +174,10 @@ Deno.serve(async (req) => {
           socialResults
             .filter((r) => typeof r.network === "string")
             .map((r) => ({
-              platform: r.network as string,
-              content: message,
+              caption: message,
+              channels: [r.network as string],
               status: r.ok ? "published" : "failed",
-              metadata: { productId, pricing, response: r },
+              error: r.ok ? null : String((r as { error?: string; body?: string }).error ?? (r as { body?: string }).body ?? "unknown"),
             })),
         )
         .then(() => {}, () => {});
