@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowUpRight, MessageCircle, ShieldCheck, Globe2, Factory, Award, Zap } from "lucide-react";
+import { ArrowUpRight, MessageCircle, ShieldCheck, Globe2, Factory, Award, Zap, Scissors, Activity } from "lucide-react";
 import SEO from "@/components/SEO";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import TrustBar from "@/components/sections/TrustBar";
