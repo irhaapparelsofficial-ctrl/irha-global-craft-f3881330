@@ -110,6 +110,13 @@ type Props = {
   silhouette: SilhouetteKey;
   palette: ColorSwatch[];
   initialColor: string;
+  /** Resolver returning the material options available for a given zone. */
+  getZoneMaterials?: (zoneId: string) => ZoneMaterial[];
+  /** Add-ons available for this product. */
+  addOns?: AddOn[];
+  /** Live unit price (parent-computed) — rendered as floating badge. */
+  livePriceUnit?: number;
+  tierLabel?: string;
   onChange?: (state: DesignState) => void;
 };
 
@@ -117,6 +124,10 @@ export default function InteractiveMockupCanvas({
   silhouette,
   palette,
   initialColor,
+  getZoneMaterials,
+  addOns = [],
+  livePriceUnit,
+  tierLabel,
   onChange,
 }: Props) {
   const product: ZonedProduct = ZONED[silhouette];
@@ -126,6 +137,7 @@ export default function InteractiveMockupCanvas({
   const [zones, setZones] = useState<Record<string, ZoneState>>({});
   const [toggles, setToggles] = useState<Record<string, boolean>>({});
   const [layers, setLayers] = useState<Layer[]>([]);
+  const [addOnIds, setAddOnIds] = useState<string[]>([]);
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,14 +157,16 @@ export default function InteractiveMockupCanvas({
     const t: Record<string, boolean> = {};
     product.toggles?.forEach((tog) => (t[tog.id] = tog.default));
     setToggles(t);
+    setAddOnIds([]);
     setSelectedZone(null);
     setSelectedLayer(null);
   }, [silhouette, initialColor, product]);
 
   // Expose state
   useEffect(() => {
-    onChange?.({ silhouette, zones, toggles, layers });
-  }, [silhouette, zones, toggles, layers, onChange]);
+    onChange?.({ silhouette, zones, toggles, layers, addOnIds });
+  }, [silhouette, zones, toggles, layers, addOnIds, onChange]);
+
 
   // ---------- Helpers ----------
   const clientToSvg = (cx: number, cy: number) => {
