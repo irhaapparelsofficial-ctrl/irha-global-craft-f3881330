@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store, Package, Layers, Cpu, Activity } from "lucide-react";
+import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store, Package, Layers, Cpu, Activity, MapPin } from "lucide-react";
 import SocialPanel from "@/components/admin/SocialPanel";
 import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
 import HomePanel from "@/components/admin/HomePanel";
@@ -16,6 +16,7 @@ import CatalogPanel from "@/components/admin/CatalogPanel";
 import MacroGatewayPanel from "@/components/admin/MacroGatewayPanel";
 import StudioPricingPanel from "@/components/admin/StudioPricingPanel";
 import SocialDevOpsPanel from "@/components/admin/SocialDevOpsPanel";
+import ExportDirectoryPanel from "@/components/admin/ExportDirectoryPanel";
 
 type Inquiry = {
   id: string; name: string; email: string; company: string | null; country: string | null;
@@ -25,7 +26,7 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "home" | "macro" | "catalog" | "leads" | "studio" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social" | "devops";
+type Tab = "home" | "macro" | "catalog" | "leads" | "directory" | "studio" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social" | "devops";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
@@ -85,6 +86,7 @@ export default function Admin() {
                 <TabButton active={tab === "catalog"} onClick={() => setTab("catalog")} icon={<Package size={14} />} label="Catalog" />
                 <TabButton active={tab === "studio"} onClick={() => setTab("studio")} icon={<Cpu size={14} />} label="AI Studio & FOB" />
                 <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={<Users size={14} />} label="Leads" />
+                <TabButton active={tab === "directory"} onClick={() => setTab("directory")} icon={<MapPin size={14} />} label="Export Directory" />
                 <TabButton active={tab === "pi"} onClick={() => setTab("pi")} icon={<FileText size={14} />} label="PI Generator" />
                 <TabButton active={tab === "mailing"} onClick={() => setTab("mailing")} icon={<Send size={14} />} label="Mailing" />
                 <TabButton active={tab === "listings"} onClick={() => setTab("listings")} icon={<Store size={14} />} label="Listings" />
@@ -102,6 +104,7 @@ export default function Admin() {
               {tab === "catalog" && <CatalogPanel />}
               {tab === "studio" && <StudioPricingPanel />}
               {tab === "leads" && <LeadsPanel />}
+              {tab === "directory" && <ExportDirectoryPanel />}
               {tab === "pi" && <PIGeneratorPanel />}
               {tab === "mailing" && <MailingPanel />}
               {tab === "listings" && <ListingsPanel />}
