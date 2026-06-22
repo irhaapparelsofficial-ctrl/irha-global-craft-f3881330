@@ -5,6 +5,7 @@ import { useProductBySlug } from "@/hooks/useCatalog";
 import { resolveAsset, resolveGallery } from "@/lib/assetResolver";
 import { ChevronRight, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
+import { findFeaturedProduct } from "@/lib/featuredProducts";
 
 const SITE = "https://www.irhaapparels.com";
 
@@ -15,13 +16,49 @@ export default function ProductDetail() {
 
   useEffect(() => setActiveImg(0), [productSlug]);
 
-  if (isLoading) {
+  // Static fallback for featured / hand-curated B2B items not yet in the DB
+  const featured = findFeaturedProduct(categorySlug, productSlug);
+
+  if (isLoading && !featured) {
     return <div className="pt-40 pb-20 container-luxe text-sm text-muted-foreground">Loading product…</div>;
   }
-  if (error || !data) return <Navigate to={`/products/${categorySlug ?? ""}`} replace />;
 
-  const { category, product } = data;
-  const gallery = resolveGallery(product.gallery.length ? product.gallery : [product.image_url ?? ""]);
+  if ((error || !data) && !featured) {
+    return <Navigate to={`/products/${categorySlug ?? ""}`} replace />;
+  }
+
+  // Use featured static when DB has no match
+  const useFeatured = !data && !!featured;
+  const category = useFeatured
+    ? { slug: featured!.categorySlug, name: featured!.categoryName }
+    : data!.category;
+  const product = useFeatured
+    ? {
+        name: featured!.title,
+        slug: featured!.productSlug,
+        description: featured!.longDescription,
+        image_url: featured!.image,
+        gallery: [featured!.image],
+        specs: [
+          featured!.material,
+          `Lead time: ${featured!.leadTime}`,
+          `SKU: ${featured!.sku}`,
+        ],
+        details: [
+          { label: "SKU", value: featured!.sku },
+          { label: "MOQ", value: featured!.moq.replace(/^MOQ:\s*/, "") },
+          { label: "Lead Time", value: featured!.leadTime },
+          { label: "Material", value: featured!.material },
+          { label: "Programs", value: "OEM · ODM · Private Label" },
+        ],
+        seo_title: `${featured!.title} | ${featured!.categoryName} | IRHA Apparels`,
+        seo_description: featured!.description,
+      }
+    : data!.product;
+
+  const gallery = resolveGallery(
+    product.gallery.length ? product.gallery : [product.image_url ?? ""],
+  );
   const url = `${SITE}/products/${category.slug}/${product.slug}`;
 
   const jsonLd = [
