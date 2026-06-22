@@ -29,14 +29,6 @@ import leatherShowroom from "@/assets/banners/leather-showroom.jpg?w=1920;1280;8
 import leatherShowroomFallback from "@/assets/banners/leather-showroom.jpg?w=1600&format=webp&quality=74";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 
-type FeaturedProduct = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  image_url: string | null;
-  category_id: string;
-};
 
 type FeaturedProduct = {
   id: string;
