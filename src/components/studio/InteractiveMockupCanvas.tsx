@@ -467,62 +467,107 @@ export default function InteractiveMockupCanvas({
         <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-[10px] uppercase tracking-widest text-muted-foreground backdrop-blur">
           <Move className="h-3 w-3" /> Click any part to recolor
         </div>
-        {selectedZoneObj && (
-          <div className="absolute right-3 top-3">
-            <Popover open onOpenChange={(o) => !o && setSelectedZone(null)}>
-              <PopoverTrigger asChild>
-                <button className="rounded-full bg-primary px-3 py-1 text-[10px] uppercase tracking-widest text-primary-foreground shadow-lg">
-                  Editing: {selectedZoneObj.label}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-72">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider">{selectedZoneObj.label}</p>
-                <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Color</Label>
-                <div className="mb-3 grid grid-cols-6 gap-1.5">
-                  {palette.map((c) => (
-                    <button
-                      key={c.id}
-                      title={c.label}
-                      onClick={() => updateZone(selectedZoneObj.id, { colorHex: c.hex })}
-                      className={cn(
-                        "h-7 w-7 rounded-full border-2",
-                        zones[selectedZoneObj.id]?.colorHex === c.hex
-                          ? "border-primary"
-                          : "border-border"
-                      )}
-                      style={{ backgroundColor: c.hex }}
-                    />
-                  ))}
-                </div>
-                <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Custom Hex</Label>
-                <Input
-                  type="color"
-                  value={zones[selectedZoneObj.id]?.colorHex || "#000"}
-                  onChange={(e) => updateZone(selectedZoneObj.id, { colorHex: e.target.value })}
-                  className="mb-3 h-8 w-full cursor-pointer"
-                />
-                <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Texture</Label>
-                <div className="grid grid-cols-5 gap-1">
-                  {TEXTURES.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => updateZone(selectedZoneObj.id, { texture: t.id })}
-                      className={cn(
-                        "rounded-md border px-1 py-1.5 text-[9px] uppercase",
-                        zones[selectedZoneObj.id]?.texture === t.id
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/40"
-                      )}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+
+        {/* Live FOB Badge */}
+        {typeof livePriceUnit === "number" && (
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-background/90 px-3 py-2 shadow-lg backdrop-blur">
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Estimated FOB</p>
+            <p className="font-mono text-lg font-bold leading-none text-primary">
+              ${livePriceUnit.toFixed(2)} <span className="text-[10px] font-normal text-muted-foreground">/ Pc</span>
+            </p>
+            {tierLabel && <p className="mt-0.5 text-[9px] text-muted-foreground">{tierLabel}</p>}
           </div>
         )}
+
+        {selectedZoneObj && (() => {
+          const zoneMats = getZoneMaterials?.(selectedZoneObj.id) || [];
+          const currentMatId = zones[selectedZoneObj.id]?.materialId;
+          return (
+            <div className="absolute right-3 top-3">
+              <Popover open onOpenChange={(o) => !o && setSelectedZone(null)}>
+                <PopoverTrigger asChild>
+                  <button className="rounded-full bg-primary px-3 py-1 text-[10px] uppercase tracking-widest text-primary-foreground shadow-lg">
+                    Editing: {selectedZoneObj.label}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider">{selectedZoneObj.label}</p>
+
+                  {zoneMats.length > 0 && (
+                    <>
+                      <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Material / Fabric</Label>
+                      <div className="mb-3 max-h-40 space-y-1 overflow-y-auto pr-1">
+                        {zoneMats.map((m) => {
+                          const active = currentMatId === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              onClick={() => updateZone(selectedZoneObj.id, { materialId: m.id })}
+                              className={cn(
+                                "flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-left text-xs",
+                                active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                              )}
+                            >
+                              <span className="flex flex-col">
+                                <span className="font-medium">{m.label}</span>
+                                <span className="text-[10px] text-muted-foreground">{m.spec}</span>
+                              </span>
+                              <span className="font-mono text-[11px] text-primary">
+                                {m.price > 0 ? `+$${m.price.toFixed(2)}` : "Incl."}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Color</Label>
+                  <div className="mb-3 grid grid-cols-6 gap-1.5">
+                    {palette.map((c) => (
+                      <button
+                        key={c.id}
+                        title={c.label}
+                        onClick={() => updateZone(selectedZoneObj.id, { colorHex: c.hex })}
+                        className={cn(
+                          "h-7 w-7 rounded-full border-2",
+                          zones[selectedZoneObj.id]?.colorHex === c.hex ? "border-primary" : "border-border"
+                        )}
+                        style={{ backgroundColor: c.hex }}
+                      />
+                    ))}
+                  </div>
+                  <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Custom Hex</Label>
+                  <Input
+                    type="color"
+                    value={zones[selectedZoneObj.id]?.colorHex || "#000"}
+                    onChange={(e) => updateZone(selectedZoneObj.id, { colorHex: e.target.value })}
+                    className="mb-3 h-8 w-full cursor-pointer"
+                  />
+                  <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Surface Texture</Label>
+                  <div className="grid grid-cols-5 gap-1">
+                    {TEXTURES.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => updateZone(selectedZoneObj.id, { texture: t.id })}
+                        className={cn(
+                          "rounded-md border px-1 py-1.5 text-[9px] uppercase",
+                          zones[selectedZoneObj.id]?.texture === t.id
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/40"
+                        )}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          );
+        })()}
       </div>
+
 
       {/* Tools panel */}
       <Tabs defaultValue="layers" className="w-full">
