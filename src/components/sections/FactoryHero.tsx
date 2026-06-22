@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+import MockupRequestButton from "@/components/MockupRequestButton";
 import manufacturing from "@/assets/manufacturing.jpg?w=1920;1280;800&format=webp&quality=75&as=srcset";
 import manufacturingFallback from "@/assets/manufacturing.jpg?w=1600&format=webp&quality=78";
 
