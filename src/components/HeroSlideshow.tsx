@@ -62,7 +62,7 @@ export default function HeroSlideshow({
                 return copy;
               })
             }
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1500ms] ease-in-out animate-[kenburns_22s_ease-in-out_infinite_alternate] ${
+            className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[1500ms] ease-in-out animate-[kenburns_22s_ease-in-out_infinite_alternate] ${
               i === index ? "opacity-100" : "opacity-0"
             }`}
           />

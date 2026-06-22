@@ -160,7 +160,7 @@ export default function Home() {
           interval={5500}
         />
         <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="absolute inset-0 bg-background/40" />
+        <div className="absolute inset-0 bg-black/45 md:bg-black/40" />
 
         <div className="container-luxe relative pb-24 pt-40 grid lg:grid-cols-12 gap-10 items-end">
           <div className="lg:col-span-8 animate-fade-in">
