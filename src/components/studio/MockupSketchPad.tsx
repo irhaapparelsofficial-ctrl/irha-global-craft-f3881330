@@ -1,29 +1,72 @@
 import { useEffect, useRef, useState } from "react";
-import { Brush, Eraser, Upload, X, Send, Tag, Palette, Trash2 } from "lucide-react";
+import {
+  Brush,
+  Upload,
+  X,
+  Send,
+  Tag,
+  Palette,
+  Trash2,
+  Mic,
+  MicOff,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 
-type Silhouette = "jacket" | "hoodie" | "lederhosen";
+type SilhouetteKey = "jacket" | "hoodie" | "lederhosen" | "sportskit";
 
-const SILHOUETTES: { key: Silhouette; label: string }[] = [
-  { key: "jacket", label: "Leather Jacket" },
-  { key: "hoodie", label: "Boxy Hoodie" },
-  { key: "lederhosen", label: "Lederhosen" },
+type CatalogItem = {
+  sku: string;
+  name: string;
+  silhouette: SilhouetteKey;
+  blurb: string;
+};
+
+const CATALOG: CatalogItem[] = [
+  {
+    sku: "IRHA-BAV-01",
+    name: "Premium Cowhide Lederhosen",
+    silhouette: "lederhosen",
+    blurb: "Heritage Bavarian · hand-tooled cowhide",
+  },
+  {
+    sku: "IRHA-LTH-09",
+    name: "Custom Leather Motorcycle Jacket",
+    silhouette: "jacket",
+    blurb: "Full-grain cowhide · YKK hardware",
+  },
+  {
+    sku: "IRHA-STW-04",
+    name: "Heavyweight Boxy Hoodie",
+    silhouette: "hoodie",
+    blurb: "400 GSM · brushed loopback",
+  },
+  {
+    sku: "IRHA-SPT-12",
+    name: "Dry-Fit Pro Training Kit",
+    silhouette: "sportskit",
+    blurb: "Sublimation-ready · 4-way stretch",
+  },
 ];
 
 const COLORS = [
-  "#0a0a0a",
-  "#8B4513",
-  "#C7A56B",
-  "#1E3A8A",
-  "#9F1239",
-  "#065F46",
-  "#E11D48",
-  "#F59E0B",
+  { hex: "#0a0a0a", name: "black" },
+  { hex: "#8B4513", name: "brown" },
+  { hex: "#C7A56B", name: "tan" },
+  { hex: "#1E3A8A", name: "navy" },
+  { hex: "#9F1239", name: "burgundy" },
+  { hex: "#065F46", name: "green" },
+  { hex: "#E11D48", name: "red" },
+  { hex: "#F59E0B", name: "gold" },
+  { hex: "#C0C0C0", name: "silver" },
+  { hex: "#FFFFFF", name: "white" },
 ];
 
 type Marker = { id: string; x: number; y: number; label: string };
+type Adjustment = { id: string; text: string; source: "voice" | "text" };
 
-function SilhouetteSVG({ kind }: { kind: Silhouette }) {
+function SilhouetteSVG({ kind }: { kind: SilhouetteKey }) {
   const common = {
     fill: "none",
     stroke: "currentColor",
@@ -54,42 +97,80 @@ function SilhouetteSVG({ kind }: { kind: Silhouette }) {
       </svg>
     );
   }
-  // lederhosen
+  if (kind === "lederhosen") {
+    return (
+      <svg viewBox="0 0 400 500" className="w-full h-full text-foreground/40">
+        <path {...common} d="M120 90 L140 60 L260 60 L280 90 L290 280 L260 380 L220 380 L210 250 L200 380 L190 380 L180 250 L170 380 L140 380 L110 280 Z" />
+        <path {...common} d="M150 130 L250 130 Q260 200 200 220 Q140 200 150 130 Z" />
+        <path {...common} d="M180 175 Q200 195 220 175" />
+        <circle {...common} cx="170" cy="100" r="5" />
+        <circle {...common} cx="230" cy="100" r="5" />
+      </svg>
+    );
+  }
+  // sportskit: short-sleeve jersey + shorts
   return (
     <svg viewBox="0 0 400 500" className="w-full h-full text-foreground/40">
-      <path {...common} d="M120 90 L140 60 L260 60 L280 90 L290 280 L260 380 L220 380 L210 250 L200 380 L190 380 L180 250 L170 380 L140 380 L110 280 Z" />
-      <path {...common} d="M150 130 L250 130 Q260 200 200 220 Q140 200 150 130 Z" />
-      <path {...common} d="M180 175 Q200 195 220 175" />
-      <circle {...common} cx="170" cy="100" r="5" />
-      <circle {...common} cx="230" cy="100" r="5" />
+      {/* Jersey */}
+      <path {...common} d="M150 60 L120 80 L70 130 L100 170 L130 150 L130 280 L270 280 L270 150 L300 170 L330 130 L280 80 L250 60 Q200 95 150 60 Z" />
+      <path {...common} d="M170 70 Q200 100 230 70" />
+      {/* Shorts */}
+      <path {...common} d="M130 290 L270 290 L280 420 L215 420 L205 320 L195 320 L185 420 L120 420 Z" />
+      <path {...common} d="M200 320 L200 420" />
     </svg>
   );
 }
 
+// Minimal SpeechRecognition typing
+type SpeechRecCtor = new () => {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: ((e: unknown) => void) | null;
+  onend: (() => void) | null;
+};
+
+function getSpeechRecognition(): SpeechRecCtor | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecCtor;
+    webkitSpeechRecognition?: SpeechRecCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
 export default function MockupSketchPad() {
-  const [silhouette, setSilhouette] = useState<Silhouette>("jacket");
-  const [color, setColor] = useState(COLORS[2]);
+  const [product, setProduct] = useState<CatalogItem>(CATALOG[1]);
+  const [color, setColor] = useState(COLORS[2].hex);
   const [brushSize, setBrushSize] = useState(4);
   const [tool, setTool] = useState<"brush" | "marker">("brush");
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [files, setFiles] = useState<File[]>([]);
-  const [material, setMaterial] = useState("Premium full-grain cowhide");
   const [quantity, setQuantity] = useState(300);
   const [notes, setNotes] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+
+  // AI suite
+  const [prompt, setPrompt] = useState("");
+  const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [aiStatus, setAiStatus] = useState<string>("Awaiting design directive");
+  const recognitionRef = useRef<ReturnType<SpeechRecCtor> | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
 
-  // Resize canvas to match its display size
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const resize = () => {
       const { width, height } = canvas.getBoundingClientRect();
       if (canvas.width !== width || canvas.height !== height) {
-        // preserve drawing
         const tmp = document.createElement("canvas");
         tmp.width = canvas.width;
         tmp.height = canvas.height;
@@ -104,6 +185,13 @@ export default function MockupSketchPad() {
     ro.observe(canvas);
     return () => ro.disconnect();
   }, []);
+
+  // Reset canvas when product changes silhouette
+  useEffect(() => {
+    const c = canvasRef.current;
+    c?.getContext("2d")?.clearRect(0, 0, c.width, c.height);
+    setMarkers([]);
+  }, [product.sku]);
 
   const clearCanvas = () => {
     const c = canvasRef.current;
@@ -172,17 +260,86 @@ export default function MockupSketchPad() {
     setFiles((f) => [...f, ...picked].slice(0, 5));
   };
 
+  // ============ AI dictation engine ============
+  const processPrompt = (raw: string, source: "voice" | "text") => {
+    const text = raw.trim();
+    if (!text) return;
+    setIsProcessing(true);
+    setAiStatus("Parsing directive…");
+
+    // Detect color keywords and shift active accent
+    const lower = text.toLowerCase();
+    const matched = COLORS.find((c) => lower.includes(c.name));
+    setTimeout(() => {
+      if (matched) {
+        setColor(matched.hex);
+        setAiStatus(`Accent shifted to ${matched.name.toUpperCase()} — applying to ${product.name}`);
+      } else {
+        setAiStatus(`Adjustment logged for ${product.sku}`);
+      }
+      setAdjustments((arr) => [
+        ...arr,
+        { id: crypto.randomUUID(), text, source },
+      ]);
+      setIsProcessing(false);
+      setTimeout(() => setAiStatus("Awaiting design directive"), 2200);
+    }, 900);
+  };
+
+  const submitPrompt = () => {
+    if (!prompt.trim()) return;
+    processPrompt(prompt, "text");
+    setPrompt("");
+  };
+
+  const toggleListening = () => {
+    const Ctor = getSpeechRecognition();
+    if (!Ctor) {
+      window.alert(
+        "Voice recognition isn't supported in this browser. Use Chrome/Edge, or type your directive instead.",
+      );
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const rec = new Ctor();
+    rec.lang = "en-US";
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const transcript = e.results?.[0]?.[0]?.transcript ?? "";
+      if (transcript) processPrompt(transcript, "voice");
+    };
+    rec.onerror = () => {
+      setIsListening(false);
+      setAiStatus("Voice capture failed — try again or type the directive");
+    };
+    rec.onend = () => setIsListening(false);
+    recognitionRef.current = rec;
+    setIsListening(true);
+    setAiStatus("Listening…");
+    rec.start();
+  };
+
+  // ============ Quote payload ============
   const sendQuotation = () => {
     const lines = [
-      "Hello IRHA Apparels — Factory Quotation Request from the Studio Sketch Pad.",
+      "Hello IRHA Apparels — Factory Quotation Request from the Hybrid AI Design Suite.",
       "",
-      `• Silhouette: ${SILHOUETTES.find((s) => s.key === silhouette)?.label}`,
-      `• Material: ${material}`,
+      `• Base product: ${product.name} (${product.sku})`,
       `• Quantity: ${quantity} pcs`,
       `• Active color accent: ${color}`,
+      adjustments.length
+        ? `• AI / dictation adjustments (${adjustments.length}):\n   - ${adjustments
+            .map((a) => `[${a.source}] ${a.text}`)
+            .join("\n   - ")}`
+        : "• AI adjustments: none",
       markers.length
-        ? `• Placement notes (${markers.length}): ${markers.map((m) => m.label).join(" · ")}`
-        : "• Placement notes: none",
+        ? `• Placement markers (${markers.length}): ${markers.map((m) => m.label).join(" · ")}`
+        : "• Placement markers: none",
       files.length
         ? `• Files attached on form: ${files.map((f) => f.name).join(", ")}`
         : "• Tech-pack: will send via this WhatsApp thread",
@@ -195,240 +352,358 @@ export default function MockupSketchPad() {
   };
 
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
-      {/* Canvas surface */}
-      <div className="lg:col-span-2 border border-border/60 bg-card/40 p-5 flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-6">
+      {/* Universal Product Catalog Selector */}
+      <div className="border border-border/60 bg-card/40 p-5">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Brush size={14} className="text-primary" />
+            <Sparkles size={14} className="text-primary" />
             <span className="text-[10px] uppercase tracking-[0.25em] text-primary">
-              Mockup Sketch Pad
+              Base Product Model Matrix
             </span>
           </div>
-          <div className="inline-flex border border-border/60">
-            {SILHOUETTES.map((s) => (
+          <span className="text-[10px] font-mono text-muted-foreground">
+            Active: {product.sku}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {CATALOG.map((item) => {
+            const active = item.sku === product.sku;
+            return (
               <button
-                key={s.key}
+                key={item.sku}
                 type="button"
-                onClick={() => setSilhouette(s.key)}
-                className={`text-[10px] uppercase tracking-[0.2em] px-3 py-1.5 transition-colors ${
-                  silhouette === s.key
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                onClick={() => setProduct(item)}
+                className={`text-left p-3 border transition-colors ${
+                  active
+                    ? "border-primary bg-primary/5"
+                    : "border-border/60 bg-background hover:border-primary/50"
                 }`}
               >
-                {s.label}
+                <div className="aspect-square bg-background border border-border/40 p-2 mb-2">
+                  <SilhouetteSVG kind={item.silhouette} />
+                </div>
+                <div className="text-[10px] font-mono text-primary">{item.sku}</div>
+                <div className="text-xs font-semibold text-foreground leading-tight mt-0.5">
+                  {item.name}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-1">{item.blurb}</div>
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Stage */}
-        <div className="relative aspect-[4/3] bg-background border border-border/60 overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
-            <SilhouetteSVG kind={silhouette} />
-          </div>
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full touch-none"
-            style={{ cursor: tool === "brush" ? "crosshair" : "copy" }}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerLeave={onPointerUp}
-          />
-          {markers.map((m) => (
-            <div
-              key={m.id}
-              className="absolute -translate-x-1/2 -translate-y-full flex flex-col items-center pointer-events-auto"
-              style={{ left: `${m.x}%`, top: `${m.y}%` }}
-            >
-              <div className="px-2 py-1 text-[10px] font-mono bg-primary text-primary-foreground whitespace-nowrap max-w-[180px] truncate flex items-center gap-1">
-                <Tag size={9} />
-                {m.label}
-                <button
-                  type="button"
-                  onClick={() => setMarkers((ms) => ms.filter((x) => x.id !== m.id))}
-                  className="ml-1 hover:opacity-70"
-                  aria-label="Remove marker"
-                >
-                  <X size={9} />
-                </button>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-primary ring-2 ring-background" />
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={clearCanvas}
-            className="absolute bottom-3 right-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] bg-background/90 border border-border/60 px-2.5 py-1.5 hover:bg-card"
-          >
-            <Trash2 size={11} /> Clear
-          </button>
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="inline-flex border border-border/60">
-            <button
-              type="button"
-              onClick={() => setTool("brush")}
-              className={`text-[10px] uppercase tracking-[0.2em] px-3 py-1.5 inline-flex items-center gap-1.5 ${
-                tool === "brush" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Brush size={11} /> Brush
-            </button>
-            <button
-              type="button"
-              onClick={() => setTool("marker")}
-              className={`text-[10px] uppercase tracking-[0.2em] px-3 py-1.5 inline-flex items-center gap-1.5 ${
-                tool === "marker" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Tag size={11} /> Marker
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Palette size={12} className="text-muted-foreground" />
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                aria-label={`Color ${c}`}
-                className={`w-5 h-5 rounded-full border transition-all ${
-                  color === c ? "ring-2 ring-primary ring-offset-1 ring-offset-background border-transparent" : "border-border/60"
-                }`}
-                style={{ background: c }}
-              />
-            ))}
-          </div>
-
-          <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Brush
-            <input
-              type="range"
-              min={1}
-              max={20}
-              value={brushSize}
-              onChange={(e) => setBrushSize(parseInt(e.target.value))}
-              className="accent-primary w-24"
-            />
-          </label>
+            );
+          })}
         </div>
       </div>
 
-      {/* Right column: dropzone, basics, CTA */}
-      <div className="flex flex-col gap-6">
-        {/* Dropzone */}
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={onDrop}
-          className={`border-2 border-dashed p-5 text-center transition-colors ${
-            isDragging ? "border-primary bg-primary/5" : "border-border/70 bg-card/40"
-          }`}
-        >
-          <Upload size={20} className="mx-auto text-primary mb-2" />
-          <p className="text-xs font-semibold text-foreground">
-            Drop your tech-pack or rough sketch here
-          </p>
-          <p className="text-[10px] text-muted-foreground mt-1">
-            to auto-analyze production specs
-          </p>
-          <label className="inline-block mt-3 text-[10px] uppercase tracking-[0.25em] text-primary cursor-pointer hover:underline">
-            or browse files
-            <input
-              type="file"
-              multiple
-              accept="image/*,.pdf,.ai,.psd,.svg,.zip"
-              onChange={onFilePick}
-              className="hidden"
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Canvas surface */}
+        <div className="lg:col-span-2 border border-border/60 bg-card/40 p-5 flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Brush size={14} className="text-primary" />
+              <span className="text-[10px] uppercase tracking-[0.25em] text-primary">
+                Live Mockup Workspace
+              </span>
+            </div>
+            <span className="text-[10px] text-muted-foreground">
+              {product.name}
+            </span>
+          </div>
+
+          {/* Stage */}
+          <div className="relative aspect-[4/3] bg-background border border-border/60 overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
+              <SilhouetteSVG kind={product.silhouette} />
+            </div>
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 w-full h-full touch-none"
+              style={{ cursor: tool === "brush" ? "crosshair" : "copy" }}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerLeave={onPointerUp}
             />
-          </label>
-          {files.length > 0 && (
-            <ul className="mt-3 space-y-1 text-left">
-              {files.map((f, i) => (
-                <li key={i} className="text-[10px] font-mono text-foreground/80 flex items-center justify-between gap-2 bg-background border border-border/60 px-2 py-1">
-                  <span className="truncate">{f.name}</span>
+            {markers.map((m) => (
+              <div
+                key={m.id}
+                className="absolute -translate-x-1/2 -translate-y-full flex flex-col items-center pointer-events-auto"
+                style={{ left: `${m.x}%`, top: `${m.y}%` }}
+              >
+                <div className="px-2 py-1 text-[10px] font-mono bg-primary text-primary-foreground whitespace-nowrap max-w-[180px] truncate flex items-center gap-1">
+                  <Tag size={9} />
+                  {m.label}
                   <button
                     type="button"
-                    onClick={() => setFiles((arr) => arr.filter((_, idx) => idx !== i))}
-                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => setMarkers((ms) => ms.filter((x) => x.id !== m.id))}
+                    className="ml-1 hover:opacity-70"
+                    aria-label="Remove marker"
                   >
-                    <X size={10} />
+                    <X size={9} />
                   </button>
-                </li>
+                </div>
+                <span className="w-2 h-2 rounded-full bg-primary ring-2 ring-background" />
+              </div>
+            ))}
+
+            {isProcessing && (
+              <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-[10px] uppercase tracking-[0.25em] text-primary">
+                  AI updating mockup blueprint
+                </p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={clearCanvas}
+              className="absolute bottom-3 right-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] bg-background/90 border border-border/60 px-2.5 py-1.5 hover:bg-card"
+            >
+              <Trash2 size={11} /> Clear
+            </button>
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="inline-flex border border-border/60">
+              <button
+                type="button"
+                onClick={() => setTool("brush")}
+                className={`text-[10px] uppercase tracking-[0.2em] px-3 py-1.5 inline-flex items-center gap-1.5 ${
+                  tool === "brush" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Brush size={11} /> Brush
+              </button>
+              <button
+                type="button"
+                onClick={() => setTool("marker")}
+                className={`text-[10px] uppercase tracking-[0.2em] px-3 py-1.5 inline-flex items-center gap-1.5 ${
+                  tool === "marker" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Tag size={11} /> Marker
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Palette size={12} className="text-muted-foreground" />
+              {COLORS.map((c) => (
+                <button
+                  key={c.hex}
+                  type="button"
+                  onClick={() => setColor(c.hex)}
+                  aria-label={`Color ${c.name}`}
+                  className={`w-5 h-5 rounded-full border transition-all ${
+                    color === c.hex
+                      ? "ring-2 ring-primary ring-offset-1 ring-offset-background border-transparent"
+                      : "border-border/60"
+                  }`}
+                  style={{ background: c.hex }}
+                />
               ))}
-            </ul>
-          )}
+            </div>
+
+            <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              Brush
+              <input
+                type="range"
+                min={1}
+                max={20}
+                value={brushSize}
+                onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                className="accent-primary w-24"
+              />
+            </label>
+          </div>
+
+          {/* AI prompt / voice */}
+          <div className="border border-border/60 bg-background/60 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wand2 size={13} className="text-primary" />
+                <span className="text-[10px] uppercase tracking-[0.25em] text-primary">
+                  AI Voice & Text Directive
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">{aiStatus}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={toggleListening}
+                disabled={isProcessing}
+                className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[10px] uppercase tracking-[0.25em] font-bold border transition-colors ${
+                  isListening
+                    ? "bg-destructive text-destructive-foreground border-destructive animate-pulse"
+                    : "bg-primary text-primary-foreground border-primary hover:opacity-90"
+                }`}
+                title="Click to dictate design"
+              >
+                {isListening ? <MicOff size={13} /> : <Mic size={13} />}
+                {isListening ? "Listening…" : "Dictate Design"}
+              </button>
+              <div className="flex-1 flex gap-2">
+                <input
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submitPrompt()}
+                  placeholder="e.g. Change zippers to gold, add red inner lining"
+                  className="flex-1 bg-background border border-border/60 px-3 py-2.5 text-xs focus:border-primary outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={submitPrompt}
+                  disabled={!prompt.trim() || isProcessing}
+                  className="px-3 py-2.5 text-[10px] uppercase tracking-[0.25em] font-bold bg-foreground text-background hover:opacity-90 disabled:opacity-40"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Click the mic and speak: <em>"Make a black leather jacket with silver zippers and red lining"</em>.
+              Each directive logs into the production payload and color keywords auto-shift the active accent.
+            </p>
+
+            {adjustments.length > 0 && (
+              <div className="pt-2 border-t border-border/60">
+                <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
+                  AI Adjustments queue
+                </div>
+                <ul className="space-y-1.5">
+                  {adjustments.map((a) => (
+                    <li
+                      key={a.id}
+                      className="flex items-start justify-between gap-2 bg-background border border-border/60 px-2.5 py-1.5"
+                    >
+                      <span className="flex items-start gap-2 text-xs text-foreground/90">
+                        <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-primary mt-0.5">
+                          {a.source}
+                        </span>
+                        {a.text}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAdjustments((arr) => arr.filter((x) => x.id !== a.id))}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X size={11} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Production basics that flow into the payload */}
-        <div className="border border-border/60 bg-card/40 p-5 space-y-4">
-          <h3 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground border-b border-border/60 pb-3">
-            Production Basics
-          </h3>
-          <div>
-            <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1.5">
-              Material
+        {/* Right column: dropzone, basics, CTA */}
+        <div className="flex flex-col gap-6">
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={onDrop}
+            className={`border-2 border-dashed p-5 text-center transition-colors ${
+              isDragging ? "border-primary bg-primary/5" : "border-border/70 bg-card/40"
+            }`}
+          >
+            <Upload size={20} className="mx-auto text-primary mb-2" />
+            <p className="text-xs font-semibold text-foreground">
+              Drop tech-pack, sketch or embroidery emblem
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              auto-analyze production specs
+            </p>
+            <label className="inline-block mt-3 text-[10px] uppercase tracking-[0.25em] text-primary cursor-pointer hover:underline">
+              or browse files
+              <input
+                type="file"
+                multiple
+                accept="image/*,.pdf,.ai,.psd,.svg,.zip"
+                onChange={onFilePick}
+                className="hidden"
+              />
             </label>
-            <input
-              value={material}
-              onChange={(e) => setMaterial(e.target.value)}
-              className="w-full bg-background border border-border/60 p-2.5 text-xs focus:border-primary outline-none"
-            />
+            {files.length > 0 && (
+              <ul className="mt-3 space-y-1 text-left">
+                {files.map((f, i) => (
+                  <li
+                    key={i}
+                    className="text-[10px] font-mono text-foreground/80 flex items-center justify-between gap-2 bg-background border border-border/60 px-2 py-1"
+                  >
+                    <span className="truncate">{f.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFiles((arr) => arr.filter((_, idx) => idx !== i))}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={10} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          <div>
-            <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1.5">
-              Order Volume
-            </label>
-            <input
-              type="range"
-              min={50}
-              max={5000}
-              step={50}
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value))}
-              className="w-full accent-primary"
-            />
-            <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-              <span>50</span>
-              <span className="text-primary font-bold text-xs">{quantity} pcs</span>
-              <span>5,000+</span>
+
+          <div className="border border-border/60 bg-card/40 p-5 space-y-4">
+            <h3 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground border-b border-border/60 pb-3">
+              Production Basics
+            </h3>
+            <div className="text-xs text-foreground/80 space-y-1">
+              <div>
+                <span className="text-muted-foreground">Base:</span> {product.name}
+              </div>
+              <div className="font-mono text-[11px] text-primary">{product.sku}</div>
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1.5">
+                Order Volume
+              </label>
+              <input
+                type="range"
+                min={50}
+                max={5000}
+                step={50}
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value))}
+                className="w-full accent-primary"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
+                <span>50</span>
+                <span className="text-primary font-bold text-xs">{quantity} pcs</span>
+                <span>5,000+</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1.5">
+                Notes
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                placeholder="Branding, sizing curve, label position…"
+                className="w-full bg-background border border-border/60 p-2.5 text-xs focus:border-primary outline-none resize-none"
+              />
             </div>
           </div>
-          <div>
-            <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1.5">
-              Notes
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              placeholder="Branding, sizing curve, label position…"
-              className="w-full bg-background border border-border/60 p-2.5 text-xs focus:border-primary outline-none resize-none"
-            />
-          </div>
-        </div>
 
-        <button
-          type="button"
-          onClick={sendQuotation}
-          className="w-full bg-primary text-primary-foreground text-[10px] uppercase tracking-[0.3em] font-bold py-4 hover:opacity-90 inline-flex items-center justify-center gap-2"
-        >
-          <Send size={12} /> Request Factory Quotation
-        </button>
-        <p className="text-[10px] text-muted-foreground -mt-3 leading-relaxed">
-          Bundles silhouette, material, volume, color accents, placement markers and any
-          dropped tech-pack files into a single WhatsApp brief sent to our Sialkot atelier.
-        </p>
+          <button
+            type="button"
+            onClick={sendQuotation}
+            className="w-full bg-primary text-primary-foreground text-[10px] uppercase tracking-[0.3em] font-bold py-4 hover:opacity-90 inline-flex items-center justify-center gap-2"
+          >
+            <Send size={12} /> Request Factory Quotation
+          </button>
+          <p className="text-[10px] text-muted-foreground -mt-3 leading-relaxed">
+            Bundles base product SKU, AI dictation adjustments, manual color accents, placement
+            markers and any uploaded tech-pack into one WhatsApp brief sent to Sialkot.
+          </p>
+        </div>
       </div>
     </div>
   );
