@@ -511,9 +511,10 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Back Yoke", "Pocket"],
     bases: [
-      { id: "pj-set", label: "Pajama Set", desc: "Button shirt + pants", basePrice: 14, silhouette: "tee" },
-      { id: "robe", label: "Satin Robe", desc: "Wrap-front with belt", basePrice: 18, silhouette: "robe" },
-      { id: "nightshirt", label: "Nightshirt", desc: "Long-line sleep shirt", basePrice: 11, silhouette: "robe" },
+      { id: "pj-set", label: "Pajama Set", desc: "Button-up sleep shirt + matching pants in cotton poplin", basePrice: 14, silhouette: "tee" },
+      { id: "robe", label: "Satin Robe", desc: "Wrap-front robe with self-belt, satin-bound edges", basePrice: 18, silhouette: "robe" },
+      { id: "nightshirt", label: "Nightshirt", desc: "Long-line sleep shirt, button placket and chest pocket", basePrice: 11, silhouette: "robe" },
+
     ],
     styles: [
       {
