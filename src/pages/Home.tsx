@@ -1,10 +1,7 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { ArrowUpRight, MessageCircle, ShieldCheck, Globe2, Factory, Award, Zap, Scissors, Activity } from "lucide-react";
+import { ArrowUpRight, ShieldCheck, Globe2, Factory, Award, Scissors, Activity } from "lucide-react";
 import SEO from "@/components/SEO";
-import FactoryHero from "@/components/sections/FactoryHero";
+import HeroCarousel from "@/components/HeroCarousel";
 import CategoryGrid from "@/components/sections/CategoryGrid";
 import AtmosphericGrid from "@/components/sections/AtmosphericGrid";
 import TrustBar from "@/components/sections/TrustBar";
@@ -21,27 +18,11 @@ import { useCategories } from "@/hooks/useCatalog";
 import { whatsappLink, BRAND } from "@/lib/constants";
 import { resolveAsset } from "@/lib/assetResolver";
 
-import leatherJacket from "@/assets/banners/leather-jacket.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
-import leatherJacketFallback from "@/assets/banners/leather-jacket.jpg?w=1600&format=webp&quality=74";
-import leatherFlatlay from "@/assets/banners/leather-flatlay.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import leatherFlatlayFallback from "@/assets/banners/leather-flatlay.jpg?w=1600&format=webp&quality=74";
-import leatherStitch from "@/assets/banners/leather-stitch.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
-import leatherStitchFallback from "@/assets/banners/leather-stitch.jpg?w=1600&format=webp&quality=74";
-import leatherShowroom from "@/assets/banners/leather-showroom.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
-import leatherShowroomFallback from "@/assets/banners/leather-showroom.jpg?w=1600&format=webp&quality=74";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 
-
-type FeaturedProduct = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  image_url: string | null;
-  category_id: string;
-};
-
 type MacroKey = "leather-bavarian" | "textile-active-leisure";
+
 
 const MACRO_HUBS = [
   {
@@ -94,35 +75,8 @@ const MACRO_HUBS = [
 
 export default function Home() {
   const { data: categories = [] } = useCategories();
-  const [activeMacro, setActiveMacro] = useState<MacroKey | null>(null);
 
-  const { data: featured = [] } = useQuery({
-    queryKey: ["home-featured-products"],
-    queryFn: async (): Promise<FeaturedProduct[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id,name,slug,description,image_url,category_id")
-        .eq("is_published", true)
-        .order("sort_order")
-        .limit(24);
-      if (error) throw error;
-      return (data ?? []) as FeaturedProduct[];
-    },
-  });
 
-  const categoryById = new Map(categories.map((c) => [c.id, c]));
-
-  const filteredFeatured = useMemo(() => {
-    if (!activeMacro) return featured.slice(0, 8);
-    const hub = MACRO_HUBS.find((h) => h.key === activeMacro)!;
-    const allowedSlugs = new Set(hub.childSlugs as readonly string[]);
-    return featured
-      .filter((p) => {
-        const cat = categoryById.get(p.category_id);
-        return cat && allowedSlugs.has(cat.slug);
-      })
-      .slice(0, 8);
-  }, [featured, activeMacro, categoryById]);
 
 
   return (
@@ -149,10 +103,11 @@ export default function Home() {
         }}
       />
 
-      {/* HERO + INTRO STACK */}
-      <FactoryHero />
+      {/* HERO + CATEGORY SHOWCASE + ATMOSPHERIC GRID */}
+      <HeroCarousel />
       <CategoryGrid />
       <AtmosphericGrid />
+
 
 
 
@@ -184,15 +139,12 @@ export default function Home() {
                 (hub.childSlugs as readonly string[]).includes(c.slug),
               );
               const cover = children.find((c) => c.image_url)?.image_url;
-              const isActive = activeMacro === hub.key;
               const firstChild = children[0];
               const Icon = hub.Icon;
               return (
                 <article
                   key={hub.key}
-                  className={`group relative border-2 ${
-                    isActive ? "border-industrial shadow-2xl" : "border-border/60"
-                  } ${hub.ringClass} ${hub.surfaceClass} transition-all duration-500 flex flex-col min-h-[560px] overflow-hidden`}
+                  className={`group relative border-2 border-border/60 ${hub.ringClass} ${hub.surfaceClass} transition-all duration-500 flex flex-col min-h-[560px] overflow-hidden`}
                 >
                   {cover && (
                     <img
@@ -231,27 +183,13 @@ export default function Home() {
                     </ul>
 
                     <div className="mt-auto pt-10 flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveMacro(isActive ? null : hub.key);
-                          requestAnimationFrame(() => {
-                            document
-                              .getElementById("live-catalogue")
-                              ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                          });
-                        }}
-                        className={`inline-flex items-center gap-3 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-all ${hub.ctaClass}`}
-                      >
-                        {isActive ? "Filter Active" : "Explore Catalog"}
-                        <ArrowUpRight size={16} />
-                      </button>
                       {firstChild && (
                         <Link
                           to={`/products/${firstChild.slug}`}
-                          className={`inline-flex items-center gap-2 px-5 py-4 text-xs uppercase tracking-[0.3em] border ${hub.chipClass} hover:bg-foreground/5 transition-colors`}
+                          className={`inline-flex items-center gap-3 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-all ${hub.ctaClass}`}
                         >
-                          Browse Hub
+                          Explore Hub
+                          <ArrowUpRight size={16} />
                         </Link>
                       )}
                     </div>
@@ -260,87 +198,12 @@ export default function Home() {
               );
             })}
           </div>
+
         </div>
       </section>
 
-      {/* LIVE FEATURED PRODUCTS (Supabase) */}
-      {featured.length > 0 && (
-        <section id="live-catalogue" className="py-20 bg-secondary/40 scroll-mt-24">
-          <div className="container-luxe">
-            <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
-              <div>
-                <p className="eyebrow mb-3">Live Catalogue</p>
-                <h2 className="font-display text-3xl md:text-4xl">
-                  {activeMacro
-                    ? MACRO_HUBS.find((h) => h.key === activeMacro)!.title
-                    : "Current Production Runs"}
-                </h2>
-              </div>
-              <div className="flex items-center gap-3">
-                {activeMacro && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveMacro(null)}
-                    className="text-xs uppercase tracking-[0.3em] text-foreground/60 hover:text-foreground transition-colors"
-                  >
-                    Clear Filter ×
-                  </button>
-                )}
-                <Link to="/products" className="text-xs uppercase tracking-[0.3em] hover-gold-underline">
-                  Browse All →
-                </Link>
-              </div>
-            </div>
 
-            {filteredFeatured.length === 0 ? (
-              <div className="border border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
-                No live products in this hub yet — check back soon or browse the full catalogue.
-              </div>
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {filteredFeatured.map((p) => {
-                  const cat = categoryById.get(p.category_id);
-                  if (!cat) return null;
-                  const img = p.image_url ? resolveAsset(p.image_url) : null;
-                  return (
-                    <Link
-                      key={p.id}
-                      to={`/products/${cat.slug}/${p.slug}`}
-                      className="group bg-card border border-border/60 hover:border-industrial transition-colors flex flex-col"
-                    >
-                      <div className="aspect-square bg-background overflow-hidden">
-                        {img ? (
-                          <img
-                            src={img}
-                            alt={p.name}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1200ms]"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground font-mono uppercase tracking-widest">
-                            No image
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-industrial">
-                          {cat.name}
-                        </span>
-                        <h3 className="font-display text-lg mt-1">{p.name}</h3>
-                        {p.description && (
-                          <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
-                            {p.description}
-                          </p>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+
 
 
       <KpiCounters />
