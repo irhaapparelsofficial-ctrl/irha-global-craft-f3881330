@@ -676,7 +676,57 @@ export default function InteractiveMockupCanvas({
           )}
         </TabsContent>
 
-        <TabsContent value="text" className="mt-3 space-y-2">
+        <TabsContent value="addons" className="mt-3 space-y-2">
+          {addOns.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+              No add-ons configured for this product.
+            </p>
+          ) : (
+            ["branding", "hardware", "finish"].map((grp) => {
+              const items = addOns.filter((a) => a.group === grp);
+              if (items.length === 0) return null;
+              return (
+                <div key={grp}>
+                  <p className="mb-1 text-[10px] uppercase tracking-widest text-muted-foreground">{grp}</p>
+                  <div className="space-y-1.5">
+                    {items.map((a) => {
+                      const active = addOnIds.includes(a.id);
+                      return (
+                        <button
+                          key={a.id}
+                          onClick={() =>
+                            setAddOnIds((prev) =>
+                              active ? prev.filter((x) => x !== a.id) : [...prev, a.id]
+                            )
+                          }
+                          className={cn(
+                            "flex w-full items-center justify-between rounded-lg border p-2.5 text-left text-sm transition-colors",
+                            active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "flex h-4 w-4 items-center justify-center rounded border",
+                                active ? "border-primary bg-primary text-primary-foreground" : "border-border"
+                              )}
+                            >
+                              {active && <Check className="h-3 w-3" />}
+                            </span>
+                            <span className="text-xs">{a.label}</span>
+                          </span>
+                          <span className="font-mono text-[11px] text-primary">+${a.cost.toFixed(2)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </TabsContent>
+
+
           {selectedLayerObj?.type === "text" && (
             <div className="space-y-3">
               <div>
