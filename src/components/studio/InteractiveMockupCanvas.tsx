@@ -727,8 +727,9 @@ export default function InteractiveMockupCanvas({
         </TabsContent>
 
         <TabsContent value="text" className="mt-3 space-y-2">
-
+          {selectedLayerObj?.type === "text" && (
             <div className="space-y-3">
+
               <div>
                 <Label className="text-[10px] uppercase text-muted-foreground">Text</Label>
                 <Input
