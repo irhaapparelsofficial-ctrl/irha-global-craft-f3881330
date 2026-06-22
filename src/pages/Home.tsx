@@ -94,35 +94,8 @@ const MACRO_HUBS = [
 
 export default function Home() {
   const { data: categories = [] } = useCategories();
-  const [activeMacro, setActiveMacro] = useState<MacroKey | null>(null);
 
-  const { data: featured = [] } = useQuery({
-    queryKey: ["home-featured-products"],
-    queryFn: async (): Promise<FeaturedProduct[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id,name,slug,description,image_url,category_id")
-        .eq("is_published", true)
-        .order("sort_order")
-        .limit(24);
-      if (error) throw error;
-      return (data ?? []) as FeaturedProduct[];
-    },
-  });
 
-  const categoryById = new Map(categories.map((c) => [c.id, c]));
-
-  const filteredFeatured = useMemo(() => {
-    if (!activeMacro) return featured.slice(0, 8);
-    const hub = MACRO_HUBS.find((h) => h.key === activeMacro)!;
-    const allowedSlugs = new Set(hub.childSlugs as readonly string[]);
-    return featured
-      .filter((p) => {
-        const cat = categoryById.get(p.category_id);
-        return cat && allowedSlugs.has(cat.slug);
-      })
-      .slice(0, 8);
-  }, [featured, activeMacro, categoryById]);
 
 
   return (
