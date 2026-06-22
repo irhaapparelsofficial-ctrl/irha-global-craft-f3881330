@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import FloatingActions from "./FloatingActions";
+import FloatingSocialRail from "./FloatingSocialRail";
 import LiveChat from "@/components/LiveChat";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import OccasionBanner from "@/components/OccasionBanner";
