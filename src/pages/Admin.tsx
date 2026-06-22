@@ -260,7 +260,14 @@ function TrafficPanel() {
 
   const topRefs = useMemo(() => {
     const tally: Record<string, number> = {};
-    rows.forEach((r) => { const k = r.referrer ? new URL(r.referrer).hostname : "(direct)"; tally[k] = (tally[k] ?? 0) + 1; });
+    rows.forEach((r) => {
+      let k = "(direct)";
+      if (r.referrer) {
+        try { k = new URL(r.referrer).hostname || "(invalid)"; }
+        catch { k = "(invalid)"; }
+      }
+      tally[k] = (tally[k] ?? 0) + 1;
+    });
     return Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, 10);
   }, [rows]);
 
