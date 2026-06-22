@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowUpRight, MessageCircle, ShieldCheck, Globe2, Factory, Award, Zap, Scissors, Activity } from "lucide-react";
 import SEO from "@/components/SEO";
-import HeroCarousel from "@/components/HeroCarousel";
+import FactoryHero from "@/components/sections/FactoryHero";
+import CategoryGrid from "@/components/sections/CategoryGrid";
+import AtmosphericGrid from "@/components/sections/AtmosphericGrid";
 import TrustBar from "@/components/sections/TrustBar";
 import ClientsMarquee from "@/components/sections/ClientsMarquee";
 import KpiCounters from "@/components/sections/KpiCounters";
@@ -147,8 +149,11 @@ export default function Home() {
         }}
       />
 
-      {/* HERO */}
-      <HeroCarousel />
+      {/* HERO + INTRO STACK */}
+      <FactoryHero />
+      <CategoryGrid />
+      <AtmosphericGrid />
+
 
 
       <TrustBar />
