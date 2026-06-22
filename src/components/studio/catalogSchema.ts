@@ -303,7 +303,13 @@ export const CATALOG: Category[] = [
       { id: "deer", label: "Deer Suede", spec: "1.0 mm", feel: "Traditional Bavarian feel", price: 8 },
       { id: "suede", label: "Goat Suede", spec: "0.9 mm", feel: "Velvety matte finish", price: 2.5 },
     ],
+    trims: [
+      { id: "wool-felt", label: "Wool Felt Trim", spec: "Loden", feel: "Traditional accent", price: 1.5 },
+      { id: "linen", label: "Linen Trim", spec: "natural", feel: "Light contrast", price: 0.8 },
+      { id: "suede-trim", label: "Suede Trim", spec: "0.6 mm", feel: "Soft accent", price: 2.0 },
+    ],
   },
+
 
   // ============== SPORTSWEAR ==============
   {
@@ -406,7 +412,14 @@ export const CATALOG: Category[] = [
       { id: "buff", label: "Buffalo Leather", spec: "1.4–1.6 mm", feel: "Rugged textured grain", price: 6 },
       { id: "suede-cow", label: "Cow Suede", spec: "1.1 mm", feel: "Matte velvety hand", price: 3 },
     ],
+    trims: [
+      { id: "satin-lining", label: "Satin Lining", spec: "polyester", feel: "Smooth slide-on lining", price: 1.2 },
+      { id: "quilt-lining", label: "Quilted Thermal Lining", spec: "200 GSM", feel: "Warm winter lining", price: 2.5 },
+      { id: "rib-knit", label: "Rib Knit Trim", spec: "cuffs & hem", feel: "Stretch ribbed accent", price: 0.8 },
+      { id: "suede-accent", label: "Suede Accent", spec: "0.9 mm", feel: "Contrast suede panels", price: 2.2 },
+    ],
   },
+
 
   // ============== LEISURE WEAR ==============
   {
