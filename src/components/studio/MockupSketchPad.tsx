@@ -159,7 +159,7 @@ export default function MockupSketchPad() {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiStatus, setAiStatus] = useState<string>("Awaiting design directive");
-  const recognitionRef = useRef<ReturnType<SpeechRecCtor> | null>(null);
+  const recognitionRef = useRef<InstanceType<SpeechRecCtor> | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
