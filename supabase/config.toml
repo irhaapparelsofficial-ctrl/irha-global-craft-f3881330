@@ -4,7 +4,10 @@ project_id = "mlefxgyaqoisvdmoiapq"
 verify_jwt = false
 
 [functions.gsc-inspect]
-verify_jwt = false
+verify_jwt = true
+
+[functions.sitemap-ping]
+verify_jwt = true
 
 [functions.admin-chat]
 verify_jwt = true
