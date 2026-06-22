@@ -16,7 +16,7 @@ import FacebookFeed from "@/components/sections/FacebookFeed";
 import { useCategories } from "@/hooks/useCatalog";
 import { MACRO_CATEGORIES } from "@/lib/fobCalculator";
 import { whatsappLink, BRAND } from "@/lib/constants";
-import { resolveAssetUrl } from "@/lib/assetResolver";
+import { resolveAsset } from "@/lib/assetResolver";
 
 import leatherJacket from "@/assets/banners/leather-jacket.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import leatherJacketFallback from "@/assets/banners/leather-jacket.jpg?w=1600&format=webp&quality=74";
@@ -173,7 +173,7 @@ export default function Home() {
                 >
                   {cover && (
                     <img
-                      src={resolveAssetUrl(cover) ?? cover}
+                      src={resolveAsset(cover)}
                       alt={macro.title}
                       loading="lazy"
                       className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 group-hover:scale-105 transition-all duration-[1200ms]"
@@ -230,7 +230,7 @@ export default function Home() {
               {featured.map((p) => {
                 const cat = categoryById.get(p.category_id);
                 if (!cat) return null;
-                const img = p.image_url ? resolveAssetUrl(p.image_url) ?? p.image_url : null;
+                const img = p.image_url ? resolveAsset(p.image_url) : null;
                 return (
                   <Link
                     key={p.id}
