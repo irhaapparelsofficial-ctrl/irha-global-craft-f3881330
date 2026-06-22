@@ -411,9 +411,10 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Back Panel", "Sleeve", "Collar Tab"],
     bases: [
-      { id: "moto", label: "Motorcycle Jacket", desc: "Asymmetric zip, armor pockets", basePrice: 95, silhouette: "leatherJacket" },
-      { id: "biker-slim", label: "Slim Biker", desc: "Tailored fashion biker", basePrice: 82, silhouette: "leatherJacket" },
-      { id: "bomber", label: "Leather Bomber", desc: "Ribbed cuffs & hem", basePrice: 88, silhouette: "leatherJacket" },
+      { id: "moto", label: "Motorcycle Jacket", desc: "Asymmetric YKK zip, CE armor pockets at shoulder/elbow/back", basePrice: 95, silhouette: "leatherJacket" },
+      { id: "biker-slim", label: "Slim Biker", desc: "Tailored fashion biker, lightweight goat nappa", basePrice: 82, silhouette: "leatherJacket" },
+      { id: "bomber", label: "Leather Bomber", desc: "Ribbed cuffs & hem, satin lining, twin welt pockets", basePrice: 88, silhouette: "leatherJacket" },
+
     ],
     styles: [
       {
