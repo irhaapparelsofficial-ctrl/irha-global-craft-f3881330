@@ -60,7 +60,7 @@ export default function ProductDetail() {
         description={product.seo_description ?? (product.description ?? "").slice(0, 158)}
         path={`/products/${category.slug}/${product.slug}`}
         image={gallery[0]}
-        type="product"
+        type="article"
         jsonLd={jsonLd}
       />
 
