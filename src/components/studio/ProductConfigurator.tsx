@@ -394,7 +394,7 @@ export default function ProductConfigurator() {
                     <p className="text-xs text-muted-foreground">{b.desc}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm">${b.basePrice.toFixed(2)}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">On Quote</span>
                     {active && <Check className="h-4 w-4 text-primary" />}
                   </div>
                 </button>
