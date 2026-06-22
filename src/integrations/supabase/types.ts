@@ -50,6 +50,68 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          catalog_url: string | null
+          created_at: string
+          description: string | null
+          details: string[]
+          id: string
+          image_url: string | null
+          is_published: boolean
+          name: string
+          parent_id: string | null
+          seo_description: string | null
+          seo_title: string | null
+          short: string | null
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          catalog_url?: string | null
+          created_at?: string
+          description?: string | null
+          details?: string[]
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          name: string
+          parent_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short?: string | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          catalog_url?: string | null
+          created_at?: string
+          description?: string | null
+          details?: string[]
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          name?: string
+          parent_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short?: string | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -144,15 +206,7 @@ export type Database = {
           product_link?: string | null
           units_per_carton?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "master_cartons_product_link_fkey"
-            columns: ["product_link"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       page_views: {
         Row: {
@@ -186,33 +240,68 @@ export type Database = {
       }
       products: {
         Row: {
-          category: Database["public"]["Enums"]["product_category"] | null
+          category_id: string
           created_at: string
           description: string | null
+          details: Json
+          gallery: string[]
           id: string
           image_url: string | null
+          is_published: boolean
           material_specifications: string | null
           name: string
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          sort_order: number
+          specs: string[]
+          updated_at: string
         }
         Insert: {
-          category?: Database["public"]["Enums"]["product_category"] | null
+          category_id: string
           created_at?: string
           description?: string | null
+          details?: Json
+          gallery?: string[]
           id?: string
           image_url?: string | null
+          is_published?: boolean
           material_specifications?: string | null
           name: string
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          sort_order?: number
+          specs?: string[]
+          updated_at?: string
         }
         Update: {
-          category?: Database["public"]["Enums"]["product_category"] | null
+          category_id?: string
           created_at?: string
           description?: string | null
+          details?: Json
+          gallery?: string[]
           id?: string
           image_url?: string | null
+          is_published?: boolean
           material_specifications?: string | null
           name?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          sort_order?: number
+          specs?: string[]
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_posts: {
         Row: {
@@ -295,11 +384,6 @@ export type Database = {
     }
     Enums: {
       app_role: "admin"
-      product_category:
-        | "Sportswear"
-        | "Streetwear"
-        | "Leisurewear"
-        | "Nightwear"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -428,12 +512,6 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin"],
-      product_category: [
-        "Sportswear",
-        "Streetwear",
-        "Leisurewear",
-        "Nightwear",
-      ],
     },
   },
 } as const
