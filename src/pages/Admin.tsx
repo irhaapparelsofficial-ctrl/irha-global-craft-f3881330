@@ -26,7 +26,7 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "home" | "macro" | "catalog" | "leads" | "studio" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social" | "devops";
+type Tab = "home" | "macro" | "catalog" | "leads" | "directory" | "studio" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social" | "devops";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
