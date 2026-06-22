@@ -91,20 +91,14 @@ async function inspect(url: string): Promise<InspectResult> {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  if (req.method !== "POST") return jsonResp({ error: "Method not allowed" }, 405);
+
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
   try {
     const { urls } = await req.json();
-    if (!Array.isArray(urls) || urls.length === 0) {
-      return new Response(JSON.stringify({ error: "urls[] required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!Array.isArray(urls) || urls.length === 0) return jsonResp({ error: "urls[] required" }, 400);
     const safe = urls
       .filter((u: unknown): u is string => typeof u === "string" && u.startsWith("https://"))
       .slice(0, 25);
