@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowUpRight, MessageCircle, ShieldCheck, Globe2, Factory, Award, Zap } from "lucide-react";
+import { ArrowUpRight, MessageCircle, ShieldCheck, Globe2, Factory, Award, Zap, Scissors, Activity } from "lucide-react";
 import SEO from "@/components/SEO";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import TrustBar from "@/components/sections/TrustBar";
@@ -14,7 +15,7 @@ import Testimonials from "@/components/sections/Testimonials";
 import FounderNote from "@/components/sections/FounderNote";
 import FacebookFeed from "@/components/sections/FacebookFeed";
 import { useCategories } from "@/hooks/useCatalog";
-import { MACRO_CATEGORIES } from "@/lib/fobCalculator";
+
 import { whatsappLink, BRAND } from "@/lib/constants";
 import { resolveAsset } from "@/lib/assetResolver";
 
@@ -28,6 +29,7 @@ import leatherShowroom from "@/assets/banners/leather-showroom.jpg?w=1920;1280;8
 import leatherShowroomFallback from "@/assets/banners/leather-showroom.jpg?w=1600&format=webp&quality=74";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 
+
 type FeaturedProduct = {
   id: string;
   name: string;
@@ -37,8 +39,60 @@ type FeaturedProduct = {
   category_id: string;
 };
 
+type MacroKey = "leather-bavarian" | "textile-active-leisure";
+
+const MACRO_HUBS = [
+  {
+    key: "leather-bavarian" as MacroKey,
+    eyebrow: "Hub 01 · Heritage Atelier",
+    title: "Bavarian & Leather Garments",
+    tagline: "Authentic Trachten craft & full-grain leather construction.",
+    items: [
+      "Authentic Lederhosen",
+      "Trachten Wear",
+      "Dirndls",
+      "Premium Leather Apparel",
+    ],
+    childSlugs: ["bavarian", "leatherwear"] as const,
+    Icon: Scissors,
+    // deep industrial dark accent
+    accentClass: "text-foreground",
+    ringClass: "hover:border-foreground/70",
+    chipClass: "border-foreground/30 text-foreground/85",
+    ctaClass:
+      "bg-foreground text-background hover:bg-foreground/90",
+    surfaceClass:
+      "bg-[hsl(var(--background))] [background-image:radial-gradient(circle_at_top_right,hsl(var(--foreground)/0.10),transparent_55%)]",
+    badgeClass: "bg-foreground/10 text-foreground border-foreground/20",
+  },
+  {
+    key: "textile-active-leisure" as MacroKey,
+    eyebrow: "Hub 02 · Performance Atelier",
+    title: "Modern Textile & Performance Wear",
+    tagline: "Engineered knits, heavyweight cotton & technical comfort.",
+    items: [
+      "Premium Sportswear",
+      "Heavyweight Streetwear",
+      "Comfortable Nightwear",
+      "Leisure Wear",
+    ],
+    childSlugs: ["sportswear", "streetwear", "nightwear", "leisurewear"] as const,
+    Icon: Activity,
+    // industrial emerald token accent
+    accentClass: "text-industrial",
+    ringClass: "hover:border-industrial",
+    chipClass: "border-industrial/40 text-industrial",
+    ctaClass:
+      "bg-industrial text-industrial-foreground hover:bg-industrial/90",
+    surfaceClass:
+      "bg-[hsl(var(--background))] [background-image:radial-gradient(circle_at_top_left,hsl(var(--industrial)/0.12),transparent_55%)]",
+    badgeClass: "bg-industrial/10 text-industrial border-industrial/30",
+  },
+] as const;
+
 export default function Home() {
   const { data: categories = [] } = useCategories();
+  const [activeMacro, setActiveMacro] = useState<MacroKey | null>(null);
 
   const { data: featured = [] } = useQuery({
     queryKey: ["home-featured-products"],
@@ -48,13 +102,26 @@ export default function Home() {
         .select("id,name,slug,description,image_url,category_id")
         .eq("is_published", true)
         .order("sort_order")
-        .limit(8);
+        .limit(24);
       if (error) throw error;
       return (data ?? []) as FeaturedProduct[];
     },
   });
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
+
+  const filteredFeatured = useMemo(() => {
+    if (!activeMacro) return featured.slice(0, 8);
+    const hub = MACRO_HUBS.find((h) => h.key === activeMacro)!;
+    const allowedSlugs = new Set(hub.childSlugs as readonly string[]);
+    return featured
+      .filter((p) => {
+        const cat = categoryById.get(p.category_id);
+        return cat && allowedSlugs.has(cat.slug);
+      })
+      .slice(0, 8);
+  }, [featured, activeMacro, categoryById]);
+
 
   return (
     <>
@@ -146,67 +213,104 @@ export default function Home() {
       {/* 2-MACRO GATEWAYS */}
       <section className="py-24 md:py-32">
         <div className="container-luxe">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-            <div>
-              <p className="eyebrow mb-4">Production Hubs</p>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-14">
+            <div className="max-w-2xl">
+              <p className="eyebrow mb-4">Two Production Hubs</p>
               <h2 className="font-display text-4xl md:text-6xl leading-[1.02]">
-                Two macro segments. <br />
-                <span className="text-gold italic">Six core categories.</span>
+                One atelier. <br />
+                <span className="text-gold italic">Two macro worlds.</span>
               </h2>
+              <p className="mt-5 text-sm md:text-base text-foreground/70 max-w-lg leading-relaxed">
+                Choose a hub to filter the live production catalogue below — every SKU is built inside one of these two pipelines.
+              </p>
             </div>
             <Link to="/products" className="text-xs uppercase tracking-[0.3em] hover-gold-underline">
-              View All Collections →
+              View Full Catalogue →
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {MACRO_CATEGORIES.map((macro) => {
+          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+            {MACRO_HUBS.map((hub) => {
               const children = categories.filter((c) =>
-                (macro.childSlugs as readonly string[]).includes(c.slug),
+                (hub.childSlugs as readonly string[]).includes(c.slug),
               );
               const cover = children.find((c) => c.image_url)?.image_url;
+              const isActive = activeMacro === hub.key;
+              const firstChild = children[0];
+              const Icon = hub.Icon;
               return (
-                <Link
-                  key={macro.id}
-                  to={children[0] ? `/products/${children[0].slug}` : "/products"}
-                  className="group relative bg-card border-2 border-border/60 hover:border-industrial p-8 transition-all flex flex-col justify-between min-h-[420px] overflow-hidden"
+                <article
+                  key={hub.key}
+                  className={`group relative border-2 ${
+                    isActive ? "border-industrial shadow-2xl" : "border-border/60"
+                  } ${hub.ringClass} ${hub.surfaceClass} transition-all duration-500 flex flex-col min-h-[560px] overflow-hidden`}
                 >
                   {cover && (
                     <img
                       src={resolveAsset(cover)}
-                      alt={macro.title}
+                      alt={hub.title}
                       loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 group-hover:scale-105 transition-all duration-[1200ms]"
+                      className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 group-hover:scale-[1.04] transition-all duration-[1400ms]"
                     />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/30" />
 
-                  <div className="relative">
-                    <span className="text-[10px] text-industrial font-mono tracking-[0.3em] uppercase block mb-3">
-                      Macro Gateway
-                    </span>
-                    <h3 className="font-display text-3xl md:text-4xl">{macro.title}</h3>
-                    <p className="text-sm text-foreground/75 mt-3 max-w-md leading-relaxed">
-                      {macro.description}
-                    </p>
-                  </div>
-
-                  <div className="relative mt-8 pt-5 border-t border-border/40">
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {children.map((c) => (
-                        <span
-                          key={c.id}
-                          className="text-[10px] uppercase tracking-[0.2em] border border-border/60 px-2 py-0.5 text-foreground/70"
-                        >
-                          {c.name}
-                        </span>
-                      ))}
+                  <div className="relative p-8 md:p-10 flex flex-col flex-1">
+                    <div className="flex items-start justify-between mb-8">
+                      <span className={`text-[10px] font-mono tracking-[0.3em] uppercase ${hub.accentClass}`}>
+                        {hub.eyebrow}
+                      </span>
+                      <span className={`inline-flex items-center justify-center w-12 h-12 border ${hub.badgeClass}`}>
+                        <Icon size={20} />
+                      </span>
                     </div>
-                    <span className="text-xs uppercase tracking-[0.3em] text-industrial inline-flex items-center gap-2 group-hover:gap-3 transition-all">
-                      Initialize Sourcing <ArrowUpRight size={14} />
-                    </span>
+
+                    <h3 className="font-display text-3xl md:text-4xl lg:text-5xl leading-[1.05] max-w-md">
+                      {hub.title}
+                    </h3>
+                    <p className="mt-4 text-sm md:text-base text-foreground/75 max-w-md leading-relaxed">
+                      {hub.tagline}
+                    </p>
+
+                    <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-2.5 max-w-md">
+                      {hub.items.map((item) => (
+                        <li
+                          key={item}
+                          className="flex items-center gap-2 text-sm text-foreground/85"
+                        >
+                          <span className={`h-px w-4 ${hub.accentClass} bg-current opacity-60`} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="mt-auto pt-10 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveMacro(isActive ? null : hub.key);
+                          requestAnimationFrame(() => {
+                            document
+                              .getElementById("live-catalogue")
+                              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          });
+                        }}
+                        className={`inline-flex items-center gap-3 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-all ${hub.ctaClass}`}
+                      >
+                        {isActive ? "Filter Active" : "Explore Catalog"}
+                        <ArrowUpRight size={16} />
+                      </button>
+                      {firstChild && (
+                        <Link
+                          to={`/products/${firstChild.slug}`}
+                          className={`inline-flex items-center gap-2 px-5 py-4 text-xs uppercase tracking-[0.3em] border ${hub.chipClass} hover:bg-foreground/5 transition-colors`}
+                        >
+                          Browse Hub
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                </Link>
+                </article>
               );
             })}
           </div>
@@ -215,60 +319,83 @@ export default function Home() {
 
       {/* LIVE FEATURED PRODUCTS (Supabase) */}
       {featured.length > 0 && (
-        <section className="py-20 bg-secondary/40">
+        <section id="live-catalogue" className="py-20 bg-secondary/40 scroll-mt-24">
           <div className="container-luxe">
             <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
               <div>
                 <p className="eyebrow mb-3">Live Catalogue</p>
-                <h2 className="font-display text-3xl md:text-4xl">Current Production Runs</h2>
+                <h2 className="font-display text-3xl md:text-4xl">
+                  {activeMacro
+                    ? MACRO_HUBS.find((h) => h.key === activeMacro)!.title
+                    : "Current Production Runs"}
+                </h2>
               </div>
-              <Link to="/products" className="text-xs uppercase tracking-[0.3em] hover-gold-underline">
-                Browse All →
-              </Link>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {featured.map((p) => {
-                const cat = categoryById.get(p.category_id);
-                if (!cat) return null;
-                const img = p.image_url ? resolveAsset(p.image_url) : null;
-                return (
-                  <Link
-                    key={p.id}
-                    to={`/products/${cat.slug}/${p.slug}`}
-                    className="group bg-card border border-border/60 hover:border-industrial transition-colors flex flex-col"
+              <div className="flex items-center gap-3">
+                {activeMacro && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveMacro(null)}
+                    className="text-xs uppercase tracking-[0.3em] text-foreground/60 hover:text-foreground transition-colors"
                   >
-                    <div className="aspect-square bg-background overflow-hidden">
-                      {img ? (
-                        <img
-                          src={img}
-                          alt={p.name}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1200ms]"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground font-mono uppercase tracking-widest">
-                          No image
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 flex-1 flex flex-col">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-industrial">
-                        {cat.name}
-                      </span>
-                      <h3 className="font-display text-lg mt-1">{p.name}</h3>
-                      {p.description && (
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
-                          {p.description}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
+                    Clear Filter ×
+                  </button>
+                )}
+                <Link to="/products" className="text-xs uppercase tracking-[0.3em] hover-gold-underline">
+                  Browse All →
+                </Link>
+              </div>
             </div>
+
+            {filteredFeatured.length === 0 ? (
+              <div className="border border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
+                No live products in this hub yet — check back soon or browse the full catalogue.
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {filteredFeatured.map((p) => {
+                  const cat = categoryById.get(p.category_id);
+                  if (!cat) return null;
+                  const img = p.image_url ? resolveAsset(p.image_url) : null;
+                  return (
+                    <Link
+                      key={p.id}
+                      to={`/products/${cat.slug}/${p.slug}`}
+                      className="group bg-card border border-border/60 hover:border-industrial transition-colors flex flex-col"
+                    >
+                      <div className="aspect-square bg-background overflow-hidden">
+                        {img ? (
+                          <img
+                            src={img}
+                            alt={p.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1200ms]"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground font-mono uppercase tracking-widest">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4 flex-1 flex flex-col">
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-industrial">
+                          {cat.name}
+                        </span>
+                        <h3 className="font-display text-lg mt-1">{p.name}</h3>
+                        {p.description && (
+                          <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                            {p.description}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       )}
+
 
       <KpiCounters />
       <ProcessTimeline />
