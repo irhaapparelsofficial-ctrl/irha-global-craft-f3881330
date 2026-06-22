@@ -179,71 +179,129 @@ export default function ProductConfigurator() {
   const updateSize = (size: string, delta: number) =>
     setSizeQty((prev) => ({ ...prev, [size]: Math.max(0, (prev[size] || 0) + delta) }));
 
-  const handleAddToCart = () => {
+  // Build a structured configuration payload for any submission channel.
+  const buildPayload = () => ({
+    category: category && { id: category.id, label: category.label },
+    product: base && { id: base.id, label: base.label, silhouette: base.silhouette },
+    styles: Object.fromEntries(
+      styleGroups.map((g) => {
+        const opt = g.options.find((o) => o.id === styleSelections[g.id]);
+        return [g.id, opt ? { id: opt.id, label: opt.label } : null];
+      })
+    ),
+    baseColor: color,
+    fabric: fabric && { id: fabric.id, label: fabric.label, spec: fabric.spec },
+    quantities: sizeQty,
+    totalQty,
+    pricing: {
+      unit: quote.finalUnit,
+      subtotalUnit: quote.subtotalUnit,
+      discountPct: quote.discountPct,
+      total: quote.total,
+      tier: quote.tierLabel,
+      breakdown: quote.lineItems,
+      currency: "USD",
+    },
+    addOns: selectedAddOns.map((a) => ({ id: a.id, label: a.label, cost: a.cost, group: a.group })),
+    zoneMaterials: Object.fromEntries(
+      Object.entries(chosenZoneMaterials)
+        .filter(([, m]) => !!m)
+        .map(([zoneId, m]) => [zoneId, { id: m!.id, label: m!.label, cost: m!.price }])
+    ),
+    design: designState && {
+      silhouette: designState.silhouette,
+      zones: designState.zones,
+      toggles: designState.toggles,
+      artwork: designState.layers.map((l) => ({
+        id: l.id,
+        type: l.type,
+        x: Math.round(l.x * 100) / 100,
+        y: Math.round(l.y * 100) / 100,
+        width: Math.round(l.w * 100) / 100,
+        height: Math.round(l.h * 100) / 100,
+        rotation: Math.round(l.rotation * 10) / 10,
+        ...(l.type === "logo"
+          ? { name: (l as { name: string }).name }
+          : {
+              text: (l as { text: string }).text,
+              font: (l as { font: string }).font,
+              color: (l as { color: string }).color,
+              size: (l as { size: number }).size,
+              weight: (l as { weight: number }).weight,
+            }),
+      })),
+    },
+  });
+
+  // Human-readable summary for WhatsApp / clipboard.
+  const buildSummaryText = () => {
+    const lines: string[] = [];
+    lines.push(`*IRHA Apparels — Mockup Quote Request*`);
+    lines.push(`Category: ${category?.label || "—"}`);
+    lines.push(`Product: ${base?.label || "—"}`);
+    styleGroups.forEach((g) => {
+      const opt = g.options.find((o) => o.id === styleSelections[g.id]);
+      if (opt) lines.push(`${g.label}: ${opt.label}`);
+    });
+    lines.push(`Base Color: ${color.label}`);
+    if (fabric) lines.push(`Fabric: ${fabric.label} (${fabric.spec})`);
+    const zoneMats = Object.entries(chosenZoneMaterials).filter(([, m]) => !!m);
+    if (zoneMats.length) {
+      lines.push(`Zone Materials:`);
+      zoneMats.forEach(([z, m]) => lines.push(`  • ${z}: ${m!.label} (+$${m!.price.toFixed(2)})`));
+    }
+    if (selectedAddOns.length) {
+      lines.push(`Add-ons:`);
+      selectedAddOns.forEach((a) => lines.push(`  • ${a.label} (+$${a.cost.toFixed(2)})`));
+    }
+    if (designState?.layers.length) {
+      lines.push(`Artwork:`);
+      designState.layers.forEach((l) => {
+        if (l.type === "logo") lines.push(`  • Logo: ${(l as { name: string }).name}`);
+        else lines.push(`  • Text: "${(l as { text: string }).text}"`);
+      });
+    }
+    lines.push(`Sizes:`);
+    Object.entries(sizeQty)
+      .filter(([, n]) => n > 0)
+      .forEach(([s, n]) => lines.push(`  • ${s}: ${n}`));
+    lines.push(`Total Qty: ${totalQty} units (${quote.tierLabel})`);
+    lines.push(`Unit FOB: $${quote.finalUnit.toFixed(2)}`);
+    lines.push(`Order Total: $${quote.total.toFixed(2)} USD`);
+    return lines.join("\n");
+  };
+
+  const handleGetQuote = () => {
     if (totalQty < 50) {
       toast.error("Minimum order quantity is 50 units (B2B factory direct).");
       return;
     }
-    // Build full configuration payload — clean export of every design choice.
-    const payload = {
-      category: category && { id: category.id, label: category.label },
-      product: base && { id: base.id, label: base.label, silhouette: base.silhouette },
-      styles: Object.fromEntries(
-        styleGroups.map((g) => {
-          const opt = g.options.find((o) => o.id === styleSelections[g.id]);
-          return [g.id, opt ? { id: opt.id, label: opt.label } : null];
-        })
-      ),
-      baseColor: color,
-      fabric: fabric && { id: fabric.id, label: fabric.label, spec: fabric.spec },
-      quantities: sizeQty,
-      totalQty,
-      pricing: {
-        unit: quote.finalUnit,
-        subtotalUnit: quote.subtotalUnit,
-        discountPct: quote.discountPct,
-        total: quote.total,
-        tier: quote.tierLabel,
-        breakdown: quote.lineItems,
-        currency: "USD",
-      },
-      addOns: selectedAddOns.map((a) => ({ id: a.id, label: a.label, cost: a.cost, group: a.group })),
-      zoneMaterials: Object.fromEntries(
-        Object.entries(chosenZoneMaterials)
-          .filter(([, m]) => !!m)
-          .map(([zoneId, m]) => [zoneId, { id: m!.id, label: m!.label, cost: m!.price }])
-      ),
-
-      design: designState && {
-        silhouette: designState.silhouette,
-        zones: designState.zones,
-        toggles: designState.toggles,
-        artwork: designState.layers.map((l) => ({
-          id: l.id,
-          type: l.type,
-          x: Math.round(l.x * 100) / 100,
-          y: Math.round(l.y * 100) / 100,
-          width: Math.round(l.w * 100) / 100,
-          height: Math.round(l.h * 100) / 100,
-          rotation: Math.round(l.rotation * 10) / 10,
-          ...(l.type === "logo"
-            ? { name: (l as { name: string }).name }
-            : {
-                text: (l as { text: string }).text,
-                font: (l as { font: string }).font,
-                color: (l as { color: string }).color,
-                size: (l as { size: number }).size,
-                weight: (l as { weight: number }).weight,
-              }),
-        })),
-      },
-    };
     // eslint-disable-next-line no-console
-    console.log("[Configurator] Export payload:", payload);
-    toast.success(`Submitted · ${totalQty} units · $${quote.total.toFixed(2)} FOB`, {
-      description: `${(designState?.layers.length || 0)} artwork layer(s) bundled.`,
-    });
+    console.log("[Configurator] Quote payload:", buildPayload());
+    setQuoteOpen(true);
   };
+
+  const handleWhatsApp = () => {
+    if (!category || !base) {
+      toast.error("Pick a category and product first.");
+      return;
+    }
+    const text = buildSummaryText();
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`,
+      "_blank"
+    );
+  };
+
+  const handleCopySummary = async () => {
+    try {
+      await navigator.clipboard.writeText(buildSummaryText());
+      toast.success("Summary copied to clipboard");
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+
 
   // ---------- Mockup ----------
   const MockupPreview = () => {
