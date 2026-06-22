@@ -1,8 +1,5 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { ArrowUpRight, MessageCircle, ShieldCheck, Globe2, Factory, Award, Zap, Scissors, Activity } from "lucide-react";
+import { ArrowUpRight, ShieldCheck, Globe2, Factory, Award, Scissors, Activity } from "lucide-react";
 import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
 import CategoryGrid from "@/components/sections/CategoryGrid";
@@ -21,27 +18,11 @@ import { useCategories } from "@/hooks/useCatalog";
 import { whatsappLink, BRAND } from "@/lib/constants";
 import { resolveAsset } from "@/lib/assetResolver";
 
-import leatherJacket from "@/assets/banners/leather-jacket.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
-import leatherJacketFallback from "@/assets/banners/leather-jacket.jpg?w=1600&format=webp&quality=74";
-import leatherFlatlay from "@/assets/banners/leather-flatlay.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import leatherFlatlayFallback from "@/assets/banners/leather-flatlay.jpg?w=1600&format=webp&quality=74";
-import leatherStitch from "@/assets/banners/leather-stitch.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
-import leatherStitchFallback from "@/assets/banners/leather-stitch.jpg?w=1600&format=webp&quality=74";
-import leatherShowroom from "@/assets/banners/leather-showroom.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
-import leatherShowroomFallback from "@/assets/banners/leather-showroom.jpg?w=1600&format=webp&quality=74";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 
-
-type FeaturedProduct = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  image_url: string | null;
-  category_id: string;
-};
-
 type MacroKey = "leather-bavarian" | "textile-active-leisure";
+
 
 const MACRO_HUBS = [
   {
