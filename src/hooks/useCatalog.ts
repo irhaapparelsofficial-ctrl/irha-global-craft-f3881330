@@ -68,7 +68,7 @@ export function useCategoryBySlug(slug?: string) {
         .eq("category_id", cat.id)
         .order("sort_order", { ascending: true });
       if (pErr) throw pErr;
-      return { category: cat as DbCategory, products: (prods ?? []) as DbProduct[] };
+      return { category: cat as DbCategory, products: (prods ?? []) as unknown as DbProduct[] };
     },
   });
 }
@@ -93,7 +93,7 @@ export function useProductBySlug(categorySlug?: string, productSlug?: string) {
         .maybeSingle();
       if (pErr) throw pErr;
       if (!prod) return null;
-      return { category: cat as DbCategory, product: prod as DbProduct };
+      return { category: cat as DbCategory, product: prod as unknown as DbProduct };
     },
   });
 }
