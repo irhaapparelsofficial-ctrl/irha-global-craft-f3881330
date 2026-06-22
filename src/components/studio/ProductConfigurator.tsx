@@ -456,12 +456,70 @@ export default function ProductConfigurator() {
                 </div>
               ))}
             </div>
+            {/* MOQ Slider — quickly distribute target qty evenly across selected sizes */}
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider">Quick MOQ</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Drag to set target order quantity — distributes evenly across sizes
+                  </p>
+                </div>
+                <span className="font-mono text-sm font-semibold">{totalQty || 100} pcs</span>
+              </div>
+              <Slider
+                min={50}
+                max={1000}
+                step={50}
+                value={[Math.max(totalQty, 100)]}
+                onValueChange={([v]) => {
+                  const sizes = sizing?.sizes || [];
+                  if (sizes.length === 0) return;
+                  const per = Math.floor(v / sizes.length);
+                  const remainder = v - per * sizes.length;
+                  const next: Record<string, number> = {};
+                  sizes.forEach((s, i) => (next[s] = per + (i < remainder ? 1 : 0)));
+                  setSizeQty(next);
+                }}
+              />
+              <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+                <span>50</span><span>200</span><span>500</span><span>1000</span>
+              </div>
+            </div>
+
+            {/* Tier indicator */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { range: "100–200", label: "Standard", min: 100 },
+                { range: "201–500", label: "5% Off", min: 201 },
+                { range: "500+", label: "10% Off", min: 501 },
+              ].map((t) => {
+                const active =
+                  (t.min === 100 && totalQty >= 100 && totalQty <= 200) ||
+                  (t.min === 201 && totalQty >= 201 && totalQty <= 500) ||
+                  (t.min === 501 && totalQty >= 501);
+                return (
+                  <div
+                    key={t.range}
+                    className={cn(
+                      "rounded-lg border p-2 text-center transition-colors",
+                      active ? "border-primary bg-primary/10" : "border-border bg-card"
+                    )}
+                  >
+                    <p className="font-mono text-[10px] text-muted-foreground">{t.range} pcs</p>
+                    <p className={cn("text-xs font-semibold", active && "text-primary")}>{t.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3 text-sm">
-              <span className="text-muted-foreground">Total quantity</span>
-              <span className="font-mono font-semibold">{totalQty} units</span>
+              <span className="text-muted-foreground">Total · {quote.tierLabel}</span>
+              <span className="font-mono font-semibold">{totalQty} units · ${quote.total.toFixed(2)}</span>
             </div>
           </div>
         );
+
 
       case 7:
         return (
