@@ -81,6 +81,7 @@ export default function ProductConfigurator() {
   const [fabricId, setFabricId] = useState<string | null>(null);
   const [sizeQty, setSizeQty] = useState<Record<string, number>>({});
   const [designState, setDesignState] = useState<DesignState | null>(null);
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   // ----- Resolve active schema -----
   const category: Category | null = getCategory(categoryId);
