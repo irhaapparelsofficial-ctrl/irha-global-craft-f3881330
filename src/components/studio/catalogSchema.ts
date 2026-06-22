@@ -358,10 +358,11 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Center Chest", "Full Back", "Sleeve", "Shorts Leg"],
     bases: [
-      { id: "jersey", label: "Match Jersey", desc: "Sublimation-ready performance jersey", basePrice: 11, silhouette: "jersey" },
-      { id: "training-tee", label: "Training Tee", desc: "Lightweight mesh insert tee", basePrice: 8.5, silhouette: "tee" },
-      { id: "track-pant", label: "Track Pant", desc: "Tapered fit, zip pockets", basePrice: 13, silhouette: "trackPant" },
-      { id: "polo-perf", label: "Performance Polo", desc: "Moisture-wicking polo", basePrice: 10.5, silhouette: "polo" },
+      { id: "jersey", label: "Match Jersey", desc: "Sublimation-ready team jersey, engineered ventilation panels", basePrice: 11, silhouette: "jersey" },
+      { id: "training-tee", label: "Training Tee", desc: "Lightweight tee with side mesh inserts for airflow", basePrice: 8.5, silhouette: "tee" },
+      { id: "track-pant", label: "Track Pant", desc: "Tapered training pant with YKK zip side pockets", basePrice: 13, silhouette: "trackPant" },
+      { id: "polo-perf", label: "Performance Polo", desc: "Moisture-wicking pique polo with anti-roll collar", basePrice: 10.5, silhouette: "polo" },
+
     ],
     styles: [
       {
