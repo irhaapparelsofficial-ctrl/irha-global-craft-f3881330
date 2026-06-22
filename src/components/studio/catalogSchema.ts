@@ -247,25 +247,62 @@ export const CATALOG: Category[] = [
       {
         id: "leder-knee",
         label: "Knee-Length Lederhosen",
-        desc: "Traditional Bundhosen with full embroidery panels",
+        desc: "Traditional Bundhosen with full-front embroidery panel and side lacing",
         basePrice: 52,
         silhouette: "lederhosen",
         sizing: WAIST_SIZING,
+        // Leather-only fabrics for Lederhosen
+        fabrics: [
+          { id: "goat-nappa", label: "Goat Nappa Leather", spec: "0.9–1.1 mm", feel: "Soft, supple, smooth grain", price: 0 },
+          { id: "cowhide", label: "Cowhide", spec: "1.2–1.4 mm", feel: "Heavy-duty, ages beautifully", price: 4 },
+          { id: "deer-suede", label: "Deer Suede", spec: "1.0 mm", feel: "Traditional Bavarian hand", price: 8 },
+          { id: "goat-suede", label: "Goat Suede", spec: "0.9 mm", feel: "Velvety matte finish", price: 2.5 },
+        ],
       },
       {
         id: "leder-short",
-        label: "Short Lederhosen",
-        desc: "Above-the-knee Kurze Lederhose",
+        label: "Short Lederhosen (Kurze)",
+        desc: "Above-the-knee Kurze Lederhose with bib front and stag-horn buttons",
         basePrice: 44,
         silhouette: "lederhosen",
         sizing: WAIST_SIZING,
+        fabrics: [
+          { id: "goat-nappa", label: "Goat Nappa Leather", spec: "0.9–1.1 mm", feel: "Soft, supple, smooth grain", price: 0 },
+          { id: "cowhide", label: "Cowhide", spec: "1.2–1.4 mm", feel: "Heavy-duty, ages beautifully", price: 4 },
+          { id: "deer-suede", label: "Deer Suede", spec: "1.0 mm", feel: "Traditional Bavarian hand", price: 8 },
+          { id: "goat-suede", label: "Goat Suede", spec: "0.9 mm", feel: "Velvety matte finish", price: 2.5 },
+        ],
       },
       {
         id: "dirndl",
-        label: "Dirndl Dress",
-        desc: "3-piece bodice, blouse & apron set",
+        label: "Dirndl Dress (3-Piece)",
+        desc: "Fitted bodice, blouse and apron set — woven dress textiles, not leather",
         basePrice: 68,
         silhouette: "dirndl",
+        // Dress fabrics — Dirndls are never leather
+        fabrics: [
+          { id: "cot-poplin", label: "Cotton Poplin", spec: "140 GSM", feel: "Crisp, breathable everyday Dirndl", price: 0 },
+          { id: "linen-blend", label: "Linen / Cotton Blend", spec: "180 GSM", feel: "Natural slub texture", price: 1.2 },
+          { id: "jacquard", label: "Floral Jacquard", spec: "220 GSM", feel: "Woven traditional motif", price: 2.4 },
+          { id: "taffeta", label: "Silk-Look Taffeta", spec: "Festive", feel: "Lustrous structured drape", price: 3.0 },
+          { id: "velvet", label: "Cotton Velvet (Bodice)", spec: "260 GSM", feel: "Plush Trachten bodice", price: 2.8 },
+        ],
+        // Dirndl trims — apron lace, satin ribbon, blouse cotton
+        zoneMaterials: {
+          apron: [
+            { id: "satin-apron", label: "Satin Apron", spec: "polyester satin", feel: "Glossy festive apron", price: 0 },
+            { id: "cotton-apron", label: "Cotton Apron", spec: "120 GSM", feel: "Matte traditional apron", price: 0 },
+            { id: "lace-apron", label: "Lace-Trim Apron", spec: "cotton + lace", feel: "Hand-trimmed lace edge", price: 1.5 },
+          ],
+          "blouse-sleeve-l": [
+            { id: "white-cotton", label: "White Cotton Blouse", spec: "100 GSM", feel: "Classic puff sleeve", price: 0 },
+            { id: "white-lace", label: "Cotton + Lace", spec: "100 GSM", feel: "Lace cuff & neckline", price: 1.0 },
+          ],
+          "blouse-sleeve-r": [
+            { id: "white-cotton", label: "White Cotton Blouse", spec: "100 GSM", feel: "Classic puff sleeve", price: 0 },
+            { id: "white-lace", label: "Cotton + Lace", spec: "100 GSM", feel: "Lace cuff & neckline", price: 1.0 },
+          ],
+        },
       },
     ],
     styles: [
@@ -297,18 +334,17 @@ export const CATALOG: Category[] = [
         ],
       },
     ],
+    // Category-level fabrics act as a fallback only; each base overrides above.
     fabrics: [
-      { id: "goat", label: "Goat Leather (Nappa)", spec: "0.9–1.1 mm", feel: "Soft, supple, smooth grain", price: 0 },
-      { id: "cow", label: "Cowhide", spec: "1.2–1.4 mm", feel: "Heavy-duty, ages beautifully", price: 4 },
-      { id: "deer", label: "Deer Suede", spec: "1.0 mm", feel: "Traditional Bavarian feel", price: 8 },
-      { id: "suede", label: "Goat Suede", spec: "0.9 mm", feel: "Velvety matte finish", price: 2.5 },
+      { id: "goat-nappa", label: "Goat Nappa Leather", spec: "0.9–1.1 mm", feel: "Soft, supple grain leather", price: 0 },
     ],
     trims: [
-      { id: "wool-felt", label: "Wool Felt Trim", spec: "Loden", feel: "Traditional accent", price: 1.5 },
-      { id: "linen", label: "Linen Trim", spec: "natural", feel: "Light contrast", price: 0.8 },
-      { id: "suede-trim", label: "Suede Trim", spec: "0.6 mm", feel: "Soft accent", price: 2.0 },
+      { id: "wool-felt", label: "Wool Felt (Loden)", spec: "Loden green", feel: "Traditional Bavarian accent", price: 1.5 },
+      { id: "linen-trim", label: "Linen Trim", spec: "natural", feel: "Light contrast edging", price: 0.8 },
+      { id: "suede-trim", label: "Suede Trim", spec: "0.6 mm", feel: "Soft accent panels", price: 2.0 },
     ],
   },
+
 
 
   // ============== SPORTSWEAR ==============
