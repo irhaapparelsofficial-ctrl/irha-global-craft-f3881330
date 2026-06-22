@@ -192,12 +192,13 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Center Chest", "Full Back", "Sleeve"],
     bases: [
-      { id: "crew", label: "Crewneck Tee", desc: "Classic round neck", basePrice: 6.5, silhouette: "tee" },
-      { id: "vneck", label: "V-Neck Tee", desc: "Tailored V-cut collar", basePrice: 6.9, silhouette: "tee" },
-      { id: "oversized", label: "Oversized Tee", desc: "Drop shoulder boxy fit", basePrice: 7.8, silhouette: "tee" },
-      { id: "hoodie", label: "Pullover Hoodie", desc: "Heavyweight kangaroo pocket", basePrice: 14.5, silhouette: "hoodie" },
-      { id: "zip-hoodie", label: "Full-Zip Hoodie", desc: "YKK zipper, dual pockets", basePrice: 16.2, silhouette: "hoodie" },
+      { id: "crew", label: "Crewneck Tee", desc: "Classic round-neck tee, side-seamed body", basePrice: 6.5, silhouette: "tee" },
+      { id: "vneck", label: "V-Neck Tee", desc: "Tailored V-cut neckline, ribbed collar", basePrice: 6.9, silhouette: "tee" },
+      { id: "oversized", label: "Oversized Tee", desc: "Drop-shoulder, boxy heavyweight fit", basePrice: 7.8, silhouette: "tee" },
+      { id: "hoodie", label: "Pullover Hoodie", desc: "Heavyweight fleece with kangaroo pocket and drawcord hood", basePrice: 14.5, silhouette: "hoodie" },
+      { id: "zip-hoodie", label: "Full-Zip Hoodie", desc: "YKK metal zip, twin slash pockets, ribbed cuffs", basePrice: 16.2, silhouette: "hoodie" },
     ],
+
     styles: [
       {
         id: "sleeve",
