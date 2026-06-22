@@ -148,30 +148,27 @@ export default function StudioPricingPanel() {
         <div className="mt-6 pt-4 border-t border-border/60 space-y-3">
           <div className="bg-background border border-border/60 p-4 flex justify-between items-center">
             <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground inline-flex items-center gap-1">
-              <DollarSign size={11} /> FOB Estimate
+              <DollarSign size={11} /> FOB
             </span>
-            <span className="text-2xl font-mono text-industrial font-black tracking-tight">
-              {fob.symbol}
-              {fob.fob.toFixed(2)}
-              <span className="text-[10px] text-muted-foreground ml-1 font-normal">{fob.currency}</span>
+            <span className="text-lg font-mono text-industrial font-black tracking-tight">
+              On Quote
             </span>
           </div>
           <p className="text-[10px] text-muted-foreground leading-relaxed">
-            Unit cost {fob.symbol}
-            {fob.fob.toFixed(2)} · margin ×{fob.marginMultiplier.toFixed(2)} · bulk ×
-            {fob.bulkDiscount.toFixed(2)} · port +{((fob.exportFactor - 1) * 100).toFixed(0)}%
+            Final FOB Karachi rate confirmed directly via formal quote — share specs with our team to receive pricing.
           </p>
           <button
             className="w-full bg-industrial text-industrial-foreground text-[10px] uppercase tracking-[0.3em] font-bold py-3 hover:opacity-90 inline-flex items-center justify-center gap-2"
             onClick={() =>
               alert(
-                `Estimate locked: ${fob.symbol}${fob.fob.toFixed(2)} ${fob.currency} per unit · ${quantity} pcs`,
+                `Spec locked · ${quantity} pcs · Pricing on quote — our team will reply within 12 hours.`,
               )
             }
           >
-            <Lock size={12} /> Lock Estimate & Request Sample
+            <Lock size={12} /> Lock Spec & Request Quote
           </button>
         </div>
+
       </div>
     </div>
   );

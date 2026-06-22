@@ -471,16 +471,15 @@ export default function InteractiveMockupCanvas({
           <Move className="h-3 w-3" /> Click any part to recolor
         </div>
 
-        {/* Live FOB Badge */}
+        {/* Live FOB Badge — price hidden, quote-only policy */}
         {typeof livePriceUnit === "number" && (
           <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-background/90 px-3 py-2 shadow-lg backdrop-blur">
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Estimated FOB</p>
-            <p className="font-mono text-lg font-bold leading-none text-primary">
-              ${livePriceUnit.toFixed(2)} <span className="text-[10px] font-normal text-muted-foreground">/ Pc</span>
-            </p>
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground">FOB</p>
+            <p className="font-mono text-sm font-bold leading-none text-primary">On Quote</p>
             {tierLabel && <p className="mt-0.5 text-[9px] text-muted-foreground">{tierLabel}</p>}
           </div>
         )}
+
 
         {selectedZoneObj && (() => {
           const zoneMats = getZoneMaterials?.(selectedZoneObj.id) || [];
@@ -515,9 +514,10 @@ export default function InteractiveMockupCanvas({
                                 <span className="font-medium">{m.label}</span>
                                 <span className="text-[10px] text-muted-foreground">{m.spec}</span>
                               </span>
-                              <span className="font-mono text-[11px] text-primary">
-                                {m.price > 0 ? `+$${m.price.toFixed(2)}` : "Incl."}
+                              <span className="font-mono text-[10px] uppercase tracking-wider text-primary">
+                                On Quote
                               </span>
+
                             </button>
                           );
                         })}
@@ -716,7 +716,7 @@ export default function InteractiveMockupCanvas({
                             </span>
                             <span className="text-xs">{a.label}</span>
                           </span>
-                          <span className="font-mono text-[11px] text-primary">+${a.cost.toFixed(2)}</span>
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-primary">On Quote</span>
                         </button>
                       );
                     })}

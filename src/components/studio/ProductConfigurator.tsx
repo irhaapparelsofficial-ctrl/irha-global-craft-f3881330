@@ -248,11 +248,11 @@ export default function ProductConfigurator() {
     const zoneMats = Object.entries(chosenZoneMaterials).filter(([, m]) => !!m);
     if (zoneMats.length) {
       lines.push(`Zone Materials:`);
-      zoneMats.forEach(([z, m]) => lines.push(`  • ${z}: ${m!.label} (+$${m!.price.toFixed(2)})`));
+      zoneMats.forEach(([z, m]) => lines.push(`  • ${z}: ${m!.label}`));
     }
     if (selectedAddOns.length) {
       lines.push(`Add-ons:`);
-      selectedAddOns.forEach((a) => lines.push(`  • ${a.label} (+$${a.cost.toFixed(2)})`));
+      selectedAddOns.forEach((a) => lines.push(`  • ${a.label}`));
     }
     if (designState?.layers.length) {
       lines.push(`Artwork:`);
@@ -265,11 +265,11 @@ export default function ProductConfigurator() {
     Object.entries(sizeQty)
       .filter(([, n]) => n > 0)
       .forEach(([s, n]) => lines.push(`  • ${s}: ${n}`));
-    lines.push(`Total Qty: ${totalQty} units (${quote.tierLabel})`);
-    lines.push(`Unit FOB: $${quote.finalUnit.toFixed(2)}`);
-    lines.push(`Order Total: $${quote.total.toFixed(2)} USD`);
+    lines.push(`Total Qty: ${totalQty} units`);
+    lines.push(`Pricing: On Quote — please confirm FOB Karachi rate.`);
     return lines.join("\n");
   };
+
 
   const handleGetQuote = () => {
     if (totalQty < 50) {
@@ -394,7 +394,7 @@ export default function ProductConfigurator() {
                     <p className="text-xs text-muted-foreground">{b.desc}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm">${b.basePrice.toFixed(2)}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">On Quote</span>
                     {active && <Check className="h-4 w-4 text-primary" />}
                   </div>
                 </button>
@@ -479,9 +479,10 @@ export default function ProductConfigurator() {
                     <p className="mt-1 text-xs text-muted-foreground">{f.feel}</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs text-muted-foreground">
-                      {f.price > 0 ? `+$${f.price.toFixed(2)}` : "Included"}
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      On Quote
                     </span>
+
                     {active && <Check className="ml-auto mt-1 h-4 w-4 text-primary" />}
                   </div>
                 </button>
@@ -591,9 +592,10 @@ export default function ProductConfigurator() {
             </div>
 
             <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3 text-sm">
-              <span className="text-muted-foreground">Total · {quote.tierLabel}</span>
-              <span className="font-mono font-semibold">{totalQty} units · ${quote.total.toFixed(2)}</span>
+              <span className="text-muted-foreground">Total Units</span>
+              <span className="font-mono font-semibold">{totalQty} units · On Quote</span>
             </div>
+
           </div>
         );
 
@@ -635,54 +637,49 @@ export default function ProductConfigurator() {
                   return <SummaryRow key={g.id} label={g.label} value={opt?.label || "—"} />;
                 })}
                 <SummaryRow label="Base Color" value={color.label} />
-                <SummaryRow label="Quantity" value={`${totalQty} units · ${quote.tierLabel}`} />
+                <SummaryRow label="Quantity" value={`${totalQty} units`} />
                 <SummaryRow
                   label="Artwork"
                   value={designState?.layers.length ? `${designState.layers.length} layer(s)` : "—"}
                 />
               </div>
 
-              {/* BOM breakdown */}
+              {/* Spec breakdown — price hidden, quote-only policy */}
               <div className="mt-5 rounded-lg bg-muted/40 p-3">
                 <p className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                  FOB Breakdown (per unit)
+                  Specification Breakdown
                 </p>
                 <ul className="space-y-1 text-xs">
-                  {quote.lineItems.map((li, i) => (
-                    <li key={i} className="flex justify-between gap-3 font-mono">
-                      <span
-                        className={cn(
-                          "truncate",
-                          li.kind === "base" && "font-semibold",
-                          li.kind === "discount" && "text-emerald-600"
-                        )}
-                      >
-                        {li.label}
-                      </span>
-                      <span
-                        className={cn(
-                          li.amount < 0 ? "text-emerald-600" : "text-foreground"
-                        )}
-                      >
-                        {li.amount < 0 ? "-" : ""}${Math.abs(li.amount).toFixed(2)}
-                      </span>
-                    </li>
-                  ))}
+                  {quote.lineItems
+                    .filter((li) => li.kind !== "discount")
+                    .map((li, i) => (
+                      <li key={i} className="flex justify-between gap-3 font-mono">
+                        <span
+                          className={cn(
+                            "truncate",
+                            li.kind === "base" && "font-semibold"
+                          )}
+                        >
+                          {li.label}
+                        </span>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Incl.
+                        </span>
+                      </li>
+                    ))}
                   <li className="mt-2 flex justify-between border-t border-border pt-2 font-mono text-sm font-bold">
-                    <span>Final FOB / Pc</span>
-                    <span className="text-primary">${quote.finalUnit.toFixed(2)}</span>
+                    <span>FOB / Pc</span>
+                    <span className="text-primary">On Quote</span>
                   </li>
                 </ul>
               </div>
 
               <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Order Total ({totalQty} pcs)</p>
-                  <p className="font-serif text-2xl">${quote.total.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">Order ({totalQty} pcs)</p>
+                  <p className="font-serif text-2xl">Price on Quote</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {quote.discountPct > 0
-                      ? `${Math.round(quote.discountPct * 100)}% volume discount applied`
-                      : "Standard FOB pricing"}
+                    Final FOB Karachi rate confirmed via direct quote.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -705,6 +702,7 @@ export default function ProductConfigurator() {
         );
     }
   };
+
 
   // ---------- Quote Dialog ----------
   const QuoteDialog = () => (
