@@ -92,6 +92,93 @@ export default function SocialDevOpsPanel() {
         </div>
       </section>
 
+      {/* Connected Platform Status — One-Click Token Engine */}
+      <section className="border border-border/60 bg-card/40 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <CheckCircle2 size={14} className="text-industrial" />
+          <h3 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            One-Click Token Engine — Connected Channels
+          </h3>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Meta Hub */}
+          <div className="relative overflow-hidden border border-border/60 bg-gradient-to-br from-[#1877F2]/10 via-background to-[#E1306C]/10 p-5">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
+              Meta Hub
+            </p>
+            <div className="flex items-center gap-3 mb-4">
+              {/* Facebook brand */}
+              <span className="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center shadow-md">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#fff" aria-label="Facebook">
+                  <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.77l-.44 2.89h-2.33v6.99A10 10 0 0 0 22 12Z" />
+                </svg>
+              </span>
+              {/* Instagram brand */}
+              <span className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style={{ background: "radial-gradient(circle at 30% 110%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" }}>
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="#fff" strokeWidth="2" aria-label="Instagram">
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none" />
+                </svg>
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-foreground">Facebook Page & Instagram Business</p>
+            <div className="flex items-center gap-1.5 mt-3">
+              <span className="w-2 h-2 rounded-full bg-industrial animate-pulse" />
+              <span className="text-[10px] uppercase tracking-[0.2em] text-industrial font-bold">
+                Synced & Operational
+              </span>
+            </div>
+          </div>
+
+          {/* LinkedIn */}
+          <div className="relative overflow-hidden border border-border/60 bg-gradient-to-br from-[#0A66C2]/15 via-background to-[#0A66C2]/5 p-5">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
+              LinkedIn B2B V2 API
+            </p>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-10 h-10 rounded-md bg-[#0A66C2] flex items-center justify-center shadow-md">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#fff" aria-label="LinkedIn">
+                  <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45Z" />
+                </svg>
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-foreground">Corporate Post Engine</p>
+            <div className="flex items-center gap-1.5 mt-3">
+              <span className="w-2 h-2 rounded-full bg-industrial animate-pulse" />
+              <span className="text-[10px] uppercase tracking-[0.2em] text-industrial font-bold">
+                Connected · Admin Context
+              </span>
+            </div>
+          </div>
+
+          {/* TikTok */}
+          <div className="relative overflow-hidden border border-border/60 bg-gradient-to-br from-[#FF0050]/15 via-background to-[#000]/40 p-5">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
+              TikTok Share Kit V2
+            </p>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-md relative">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" aria-label="TikTok">
+                  <path fill="#25F4EE" d="M19.6 6.8a5.7 5.7 0 0 1-3.3-1.06V15.4a5.8 5.8 0 1 1-5.8-5.8c.2 0 .4 0 .6.03v2.95a2.85 2.85 0 1 0 2.25 2.79V2h2.85a5.7 5.7 0 0 0 3.4 4.8V6.8Z" />
+                  <path fill="#FE2C55" d="M20.6 7.8a5.7 5.7 0 0 1-3.3-1.06V16.4a5.8 5.8 0 1 1-5.8-5.8c.2 0 .4 0 .6.03v2.95a2.85 2.85 0 1 0 2.25 2.79V3h2.85a5.7 5.7 0 0 0 3.4 4.8V7.8Z" />
+                  <path fill="#fff" d="M20.1 7.3a5.7 5.7 0 0 1-3.3-1.06V15.9a5.8 5.8 0 1 1-5.8-5.8c.2 0 .4 0 .6.03v2.95a2.85 2.85 0 1 0 2.25 2.79V2.5h2.85a5.7 5.7 0 0 0 3.4 4.8V7.3Z" />
+                </svg>
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-foreground">Short-Form Factory Logs</p>
+            <div className="flex items-center gap-1.5 mt-3">
+              <span className="w-2 h-2 rounded-full bg-industrial animate-pulse" />
+              <span className="text-[10px] uppercase tracking-[0.2em] text-industrial font-bold">
+                Live Sync Enabled
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
       {/* Multi-channel sync */}
       <section className="border border-border/60 bg-card/40 p-6">
         <div className="flex items-end justify-between flex-wrap gap-4 mb-5">
