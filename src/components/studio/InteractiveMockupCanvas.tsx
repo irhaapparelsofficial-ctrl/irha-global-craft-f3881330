@@ -17,7 +17,9 @@ import {
   Move,
   X,
   ToggleLeft,
+  Sparkles,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { ZONED, type ZonedProduct } from "./zonedSilhouettes";
 import type { ColorSwatch, SilhouetteKey, ZoneMaterial, AddOn } from "./catalogSchema";
@@ -571,17 +573,21 @@ export default function InteractiveMockupCanvas({
 
       {/* Tools panel */}
       <Tabs defaultValue="layers" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="layers" className="gap-1.5">
             <LayersIcon className="h-3.5 w-3.5" /> Artwork
           </TabsTrigger>
           <TabsTrigger value="toggles" className="gap-1.5">
             <ToggleLeft className="h-3.5 w-3.5" /> Components
           </TabsTrigger>
+          <TabsTrigger value="addons" className="gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" /> Add-Ons
+          </TabsTrigger>
           <TabsTrigger value="text" className="gap-1.5" disabled={selectedLayerObj?.type !== "text"}>
             <TypeIcon className="h-3.5 w-3.5" /> Text Edit
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="layers" className="mt-3 space-y-3">
           <div className="flex gap-2">
