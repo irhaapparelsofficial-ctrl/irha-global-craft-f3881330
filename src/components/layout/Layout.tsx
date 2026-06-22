@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import FloatingActions from "./FloatingActions";
+import FloatingSocialRail from "./FloatingSocialRail";
 import LiveChat from "@/components/LiveChat";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import OccasionBanner from "@/components/OccasionBanner";
@@ -14,6 +15,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <main className="flex-1 pb-14 md:pb-0">{children}</main>
       <Footer />
       <FloatingActions />
+      <FloatingSocialRail />
       <LiveChat />
       <StickyMobileCTA />
     </div>
