@@ -31,6 +31,7 @@ const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Studio = lazy(() => import("./pages/Studio"));
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const App = () => (
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/seo-indexing" element={<SeoIndexing />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/studio" element={<Studio />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/login" element={<Navigate to="/auth" replace />} />
                     <Route path="/signin" element={<Navigate to="/auth" replace />} />
