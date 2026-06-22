@@ -11,6 +11,21 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Layers,
   Scissors,
   Palette,
@@ -20,7 +35,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  ShoppingCart,
+  FileText,
+  MessageCircle,
+  Copy,
   Shapes,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +58,7 @@ import {
 import InteractiveMockupCanvas, { type DesignState } from "./InteractiveMockupCanvas";
 import { computeQuote, tierFor } from "./pricingEngine";
 import { Slider } from "@/components/ui/slider";
+import { WHATSAPP_NUMBER, BRAND } from "@/lib/constants";
 
 
 const STEP_META = [
@@ -63,6 +81,7 @@ export default function ProductConfigurator() {
   const [fabricId, setFabricId] = useState<string | null>(null);
   const [sizeQty, setSizeQty] = useState<Record<string, number>>({});
   const [designState, setDesignState] = useState<DesignState | null>(null);
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   // ----- Resolve active schema -----
   const category: Category | null = getCategory(categoryId);
@@ -160,71 +179,129 @@ export default function ProductConfigurator() {
   const updateSize = (size: string, delta: number) =>
     setSizeQty((prev) => ({ ...prev, [size]: Math.max(0, (prev[size] || 0) + delta) }));
 
-  const handleAddToCart = () => {
+  // Build a structured configuration payload for any submission channel.
+  const buildPayload = () => ({
+    category: category && { id: category.id, label: category.label },
+    product: base && { id: base.id, label: base.label, silhouette: base.silhouette },
+    styles: Object.fromEntries(
+      styleGroups.map((g) => {
+        const opt = g.options.find((o) => o.id === styleSelections[g.id]);
+        return [g.id, opt ? { id: opt.id, label: opt.label } : null];
+      })
+    ),
+    baseColor: color,
+    fabric: fabric && { id: fabric.id, label: fabric.label, spec: fabric.spec },
+    quantities: sizeQty,
+    totalQty,
+    pricing: {
+      unit: quote.finalUnit,
+      subtotalUnit: quote.subtotalUnit,
+      discountPct: quote.discountPct,
+      total: quote.total,
+      tier: quote.tierLabel,
+      breakdown: quote.lineItems,
+      currency: "USD",
+    },
+    addOns: selectedAddOns.map((a) => ({ id: a.id, label: a.label, cost: a.cost, group: a.group })),
+    zoneMaterials: Object.fromEntries(
+      Object.entries(chosenZoneMaterials)
+        .filter(([, m]) => !!m)
+        .map(([zoneId, m]) => [zoneId, { id: m!.id, label: m!.label, cost: m!.price }])
+    ),
+    design: designState && {
+      silhouette: designState.silhouette,
+      zones: designState.zones,
+      toggles: designState.toggles,
+      artwork: designState.layers.map((l) => ({
+        id: l.id,
+        type: l.type,
+        x: Math.round(l.x * 100) / 100,
+        y: Math.round(l.y * 100) / 100,
+        width: Math.round(l.w * 100) / 100,
+        height: Math.round(l.h * 100) / 100,
+        rotation: Math.round(l.rotation * 10) / 10,
+        ...(l.type === "logo"
+          ? { name: (l as { name: string }).name }
+          : {
+              text: (l as { text: string }).text,
+              font: (l as { font: string }).font,
+              color: (l as { color: string }).color,
+              size: (l as { size: number }).size,
+              weight: (l as { weight: number }).weight,
+            }),
+      })),
+    },
+  });
+
+  // Human-readable summary for WhatsApp / clipboard.
+  const buildSummaryText = () => {
+    const lines: string[] = [];
+    lines.push(`*IRHA Apparels — Mockup Quote Request*`);
+    lines.push(`Category: ${category?.label || "—"}`);
+    lines.push(`Product: ${base?.label || "—"}`);
+    styleGroups.forEach((g) => {
+      const opt = g.options.find((o) => o.id === styleSelections[g.id]);
+      if (opt) lines.push(`${g.label}: ${opt.label}`);
+    });
+    lines.push(`Base Color: ${color.label}`);
+    if (fabric) lines.push(`Fabric: ${fabric.label} (${fabric.spec})`);
+    const zoneMats = Object.entries(chosenZoneMaterials).filter(([, m]) => !!m);
+    if (zoneMats.length) {
+      lines.push(`Zone Materials:`);
+      zoneMats.forEach(([z, m]) => lines.push(`  • ${z}: ${m!.label} (+$${m!.price.toFixed(2)})`));
+    }
+    if (selectedAddOns.length) {
+      lines.push(`Add-ons:`);
+      selectedAddOns.forEach((a) => lines.push(`  • ${a.label} (+$${a.cost.toFixed(2)})`));
+    }
+    if (designState?.layers.length) {
+      lines.push(`Artwork:`);
+      designState.layers.forEach((l) => {
+        if (l.type === "logo") lines.push(`  • Logo: ${(l as { name: string }).name}`);
+        else lines.push(`  • Text: "${(l as { text: string }).text}"`);
+      });
+    }
+    lines.push(`Sizes:`);
+    Object.entries(sizeQty)
+      .filter(([, n]) => n > 0)
+      .forEach(([s, n]) => lines.push(`  • ${s}: ${n}`));
+    lines.push(`Total Qty: ${totalQty} units (${quote.tierLabel})`);
+    lines.push(`Unit FOB: $${quote.finalUnit.toFixed(2)}`);
+    lines.push(`Order Total: $${quote.total.toFixed(2)} USD`);
+    return lines.join("\n");
+  };
+
+  const handleGetQuote = () => {
     if (totalQty < 50) {
       toast.error("Minimum order quantity is 50 units (B2B factory direct).");
       return;
     }
-    // Build full configuration payload — clean export of every design choice.
-    const payload = {
-      category: category && { id: category.id, label: category.label },
-      product: base && { id: base.id, label: base.label, silhouette: base.silhouette },
-      styles: Object.fromEntries(
-        styleGroups.map((g) => {
-          const opt = g.options.find((o) => o.id === styleSelections[g.id]);
-          return [g.id, opt ? { id: opt.id, label: opt.label } : null];
-        })
-      ),
-      baseColor: color,
-      fabric: fabric && { id: fabric.id, label: fabric.label, spec: fabric.spec },
-      quantities: sizeQty,
-      totalQty,
-      pricing: {
-        unit: quote.finalUnit,
-        subtotalUnit: quote.subtotalUnit,
-        discountPct: quote.discountPct,
-        total: quote.total,
-        tier: quote.tierLabel,
-        breakdown: quote.lineItems,
-        currency: "USD",
-      },
-      addOns: selectedAddOns.map((a) => ({ id: a.id, label: a.label, cost: a.cost, group: a.group })),
-      zoneMaterials: Object.fromEntries(
-        Object.entries(chosenZoneMaterials)
-          .filter(([, m]) => !!m)
-          .map(([zoneId, m]) => [zoneId, { id: m!.id, label: m!.label, cost: m!.price }])
-      ),
-
-      design: designState && {
-        silhouette: designState.silhouette,
-        zones: designState.zones,
-        toggles: designState.toggles,
-        artwork: designState.layers.map((l) => ({
-          id: l.id,
-          type: l.type,
-          x: Math.round(l.x * 100) / 100,
-          y: Math.round(l.y * 100) / 100,
-          width: Math.round(l.w * 100) / 100,
-          height: Math.round(l.h * 100) / 100,
-          rotation: Math.round(l.rotation * 10) / 10,
-          ...(l.type === "logo"
-            ? { name: (l as { name: string }).name }
-            : {
-                text: (l as { text: string }).text,
-                font: (l as { font: string }).font,
-                color: (l as { color: string }).color,
-                size: (l as { size: number }).size,
-                weight: (l as { weight: number }).weight,
-              }),
-        })),
-      },
-    };
     // eslint-disable-next-line no-console
-    console.log("[Configurator] Export payload:", payload);
-    toast.success(`Submitted · ${totalQty} units · $${quote.total.toFixed(2)} FOB`, {
-      description: `${(designState?.layers.length || 0)} artwork layer(s) bundled.`,
-    });
+    console.log("[Configurator] Quote payload:", buildPayload());
+    setQuoteOpen(true);
   };
+
+  const handleWhatsApp = () => {
+    if (!category || !base) {
+      toast.error("Pick a category and product first.");
+      return;
+    }
+    const text = buildSummaryText();
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`,
+      "_blank"
+    );
+  };
+
+  const handleCopySummary = async () => {
+    try {
+      await navigator.clipboard.writeText(buildSummaryText());
+      toast.success("Summary copied to clipboard");
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+
 
   // ---------- Mockup ----------
   const MockupPreview = () => {
@@ -598,7 +675,7 @@ export default function ProductConfigurator() {
                 </ul>
               </div>
 
-              <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
+              <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">Order Total ({totalQty} pcs)</p>
                   <p className="font-serif text-2xl">${quote.total.toFixed(2)}</p>
@@ -608,9 +685,19 @@ export default function ProductConfigurator() {
                       : "Standard FOB pricing"}
                   </p>
                 </div>
-                <Button size="lg" onClick={handleAddToCart} className="gap-2">
-                  <ShoppingCart className="h-4 w-4" /> Add to Cart
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="lg" onClick={handleGetQuote} className="gap-2">
+                    <FileText className="h-4 w-4" /> Get Quote
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleWhatsApp}
+                    className="gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4" /> WhatsApp
+                  </Button>
+                </div>
               </div>
             </Card>
 
@@ -619,11 +706,67 @@ export default function ProductConfigurator() {
     }
   };
 
+  // ---------- Quote Dialog ----------
+  const QuoteDialog = () => (
+    <Dialog open={quoteOpen} onOpenChange={setQuoteOpen}>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-2xl">Quote Configuration Summary</DialogTitle>
+          <DialogDescription>
+            Review the full specification below — share via WhatsApp or copy to email.
+          </DialogDescription>
+        </DialogHeader>
+        <pre className="whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-4 font-mono text-xs leading-relaxed">
+{buildSummaryText()}
+        </pre>
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <Button variant="outline" onClick={handleCopySummary} className="gap-2">
+            <Copy className="h-4 w-4" /> Copy
+          </Button>
+          <Button onClick={handleWhatsApp} className="gap-2">
+            <MessageCircle className="h-4 w-4" /> Send via WhatsApp {BRAND.phone}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+
 
   const currentStep = STEP_META.find((s) => s.id === step)!;
 
   return (
     <div className="rounded-2xl border border-border bg-card/50 p-4 md:p-6">
+      <QuoteDialog />
+
+      {/* Category dropdown — switch product family at any time */}
+      <div className="mb-5 flex flex-col gap-2 rounded-xl border border-border bg-background/60 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-primary">Category</p>
+          <p className="text-xs text-muted-foreground">
+            Switch product family — loads its templates, fabrics & add-ons.
+          </p>
+        </div>
+        <Select
+          value={categoryId ?? undefined}
+          onValueChange={(v) => {
+            setCategoryId(v);
+            setStep(2);
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-[260px]">
+            <SelectValue placeholder="Choose a category…" />
+          </SelectTrigger>
+          <SelectContent>
+            {CATALOG.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Progress */}
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between">
@@ -643,6 +786,7 @@ export default function ProductConfigurator() {
         </div>
         <Progress value={(step / 7) * 100} className="h-1" />
       </div>
+
 
       <div className="grid gap-6 md:grid-cols-[1fr_1.1fr]">
         <div className="md:sticky md:top-4 md:self-start">
