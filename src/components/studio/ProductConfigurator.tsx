@@ -637,54 +637,49 @@ export default function ProductConfigurator() {
                   return <SummaryRow key={g.id} label={g.label} value={opt?.label || "—"} />;
                 })}
                 <SummaryRow label="Base Color" value={color.label} />
-                <SummaryRow label="Quantity" value={`${totalQty} units · ${quote.tierLabel}`} />
+                <SummaryRow label="Quantity" value={`${totalQty} units`} />
                 <SummaryRow
                   label="Artwork"
                   value={designState?.layers.length ? `${designState.layers.length} layer(s)` : "—"}
                 />
               </div>
 
-              {/* BOM breakdown */}
+              {/* Spec breakdown — price hidden, quote-only policy */}
               <div className="mt-5 rounded-lg bg-muted/40 p-3">
                 <p className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                  FOB Breakdown (per unit)
+                  Specification Breakdown
                 </p>
                 <ul className="space-y-1 text-xs">
-                  {quote.lineItems.map((li, i) => (
-                    <li key={i} className="flex justify-between gap-3 font-mono">
-                      <span
-                        className={cn(
-                          "truncate",
-                          li.kind === "base" && "font-semibold",
-                          li.kind === "discount" && "text-emerald-600"
-                        )}
-                      >
-                        {li.label}
-                      </span>
-                      <span
-                        className={cn(
-                          li.amount < 0 ? "text-emerald-600" : "text-foreground"
-                        )}
-                      >
-                        {li.amount < 0 ? "-" : ""}${Math.abs(li.amount).toFixed(2)}
-                      </span>
-                    </li>
-                  ))}
+                  {quote.lineItems
+                    .filter((li) => li.kind !== "discount")
+                    .map((li, i) => (
+                      <li key={i} className="flex justify-between gap-3 font-mono">
+                        <span
+                          className={cn(
+                            "truncate",
+                            li.kind === "base" && "font-semibold"
+                          )}
+                        >
+                          {li.label}
+                        </span>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Incl.
+                        </span>
+                      </li>
+                    ))}
                   <li className="mt-2 flex justify-between border-t border-border pt-2 font-mono text-sm font-bold">
-                    <span>Final FOB / Pc</span>
-                    <span className="text-primary">${quote.finalUnit.toFixed(2)}</span>
+                    <span>FOB / Pc</span>
+                    <span className="text-primary">On Quote</span>
                   </li>
                 </ul>
               </div>
 
               <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Order Total ({totalQty} pcs)</p>
-                  <p className="font-serif text-2xl">${quote.total.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">Order ({totalQty} pcs)</p>
+                  <p className="font-serif text-2xl">Price on Quote</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {quote.discountPct > 0
-                      ? `${Math.round(quote.discountPct * 100)}% volume discount applied`
-                      : "Standard FOB pricing"}
+                    Final FOB Karachi rate confirmed via direct quote.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -707,6 +702,7 @@ export default function ProductConfigurator() {
         );
     }
   };
+
 
   // ---------- Quote Dialog ----------
   const QuoteDialog = () => (
