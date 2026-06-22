@@ -730,12 +730,7 @@ export default function ProductConfigurator() {
       </DialogContent>
     </Dialog>
   );
-            </Card>
 
-          </div>
-        );
-    }
-  };
 
 
   const currentStep = STEP_META.find((s) => s.id === step)!;
