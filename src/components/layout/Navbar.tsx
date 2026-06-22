@@ -123,7 +123,8 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:flex items-center gap-3">
+          <MockupRequestButton variant="nav">Mockup Design</MockupRequestButton>
           <Link
             to="/inquiry"
             className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-medium hover:shadow-gold transition-all"
