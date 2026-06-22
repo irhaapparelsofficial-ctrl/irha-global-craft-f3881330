@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,10 +36,14 @@ function verdictBadge(v?: string) {
 }
 
 export default function SeoIndexing() {
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [sitemapUrls, setSitemapUrls] = useState<string[]>([]);
   const [results, setResults] = useState<Record<string, InspectResult>>({});
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("");
+
+  if (authLoading) return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (!user || !isAdmin) return <Navigate to="/auth" replace />;
 
   useEffect(() => {
     fetch("/sitemap.xml")

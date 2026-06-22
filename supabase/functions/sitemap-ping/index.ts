@@ -11,8 +11,28 @@ const SITE_URL = "https://www.irhaapparels.com/";
 const SITEMAP_URL = "https://www.irhaapparels.com/sitemap.xml";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
 
+function parseJwtRole(token: string): string | null {
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+    const decoded = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof decoded.role === "string" ? decoded.role : null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Service-role only (called by pg_cron / admin tooling). Blocks anon abuse.
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (parseJwtRole(token) !== "service_role") {
+    return new Response(JSON.stringify({ error: "Forbidden — service role required" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const gscKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");

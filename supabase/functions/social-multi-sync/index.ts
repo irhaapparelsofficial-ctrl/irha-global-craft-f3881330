@@ -24,6 +24,20 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Method not allowed" }, 405);
   }
 
+  // ── Admin gate ──────────────────────────────────────────
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!token) return json({ error: "Unauthorized" }, 401);
+  const authClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } },
+  );
+  const { data: ud } = await authClient.auth.getUser();
+  if (!ud?.user) return json({ error: "Unauthorized" }, 401);
+  const { data: roleRow } = await authClient.from("user_roles")
+    .select("role").eq("user_id", ud.user.id).eq("role", "admin").maybeSingle();
+  if (!roleRow) return json({ error: "Forbidden — admin only" }, 403);
+
   let body: Body;
   try {
     body = await req.json();
