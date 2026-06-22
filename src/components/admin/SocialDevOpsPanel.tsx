@@ -254,6 +254,16 @@ export default function SocialDevOpsPanel() {
                 Live Sync Enabled
               </span>
             </div>
+            <div className="mt-3 pt-3 border-t border-border/40 grid grid-cols-2 gap-2 text-[10px] font-mono">
+              <div>
+                <p className="text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Last sync</p>
+                <p className="text-foreground/90 inline-flex items-center gap-1"><Clock size={10} />{formatRelative(lastSync.tiktok)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Next scheduled</p>
+                <p className="text-foreground/90">{formatNextSync(lastSync.tiktok)}</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
