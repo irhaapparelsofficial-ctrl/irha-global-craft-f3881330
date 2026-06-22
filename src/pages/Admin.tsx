@@ -86,6 +86,7 @@ export default function Admin() {
                 <TabButton active={tab === "catalog"} onClick={() => setTab("catalog")} icon={<Package size={14} />} label="Catalog" />
                 <TabButton active={tab === "studio"} onClick={() => setTab("studio")} icon={<Cpu size={14} />} label="AI Studio & FOB" />
                 <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={<Users size={14} />} label="Leads" />
+                <TabButton active={tab === "directory"} onClick={() => setTab("directory")} icon={<MapPin size={14} />} label="Export Directory" />
                 <TabButton active={tab === "pi"} onClick={() => setTab("pi")} icon={<FileText size={14} />} label="PI Generator" />
                 <TabButton active={tab === "mailing"} onClick={() => setTab("mailing")} icon={<Send size={14} />} label="Mailing" />
                 <TabButton active={tab === "listings"} onClick={() => setTab("listings")} icon={<Store size={14} />} label="Listings" />
