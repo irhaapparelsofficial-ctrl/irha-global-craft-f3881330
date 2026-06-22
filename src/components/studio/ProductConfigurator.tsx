@@ -675,7 +675,7 @@ export default function ProductConfigurator() {
                 </ul>
               </div>
 
-              <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
+              <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">Order Total ({totalQty} pcs)</p>
                   <p className="font-serif text-2xl">${quote.total.toFixed(2)}</p>
@@ -685,10 +685,51 @@ export default function ProductConfigurator() {
                       : "Standard FOB pricing"}
                   </p>
                 </div>
-                <Button size="lg" onClick={handleAddToCart} className="gap-2">
-                  <ShoppingCart className="h-4 w-4" /> Add to Cart
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="lg" onClick={handleGetQuote} className="gap-2">
+                    <FileText className="h-4 w-4" /> Get Quote
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleWhatsApp}
+                    className="gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4" /> WhatsApp
+                  </Button>
+                </div>
               </div>
+            </Card>
+
+          </div>
+        );
+    }
+  };
+
+  // ---------- Quote Dialog ----------
+  const QuoteDialog = () => (
+    <Dialog open={quoteOpen} onOpenChange={setQuoteOpen}>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-2xl">Quote Configuration Summary</DialogTitle>
+          <DialogDescription>
+            Review the full specification below — share via WhatsApp or copy to email.
+          </DialogDescription>
+        </DialogHeader>
+        <pre className="whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-4 font-mono text-xs leading-relaxed">
+{buildSummaryText()}
+        </pre>
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <Button variant="outline" onClick={handleCopySummary} className="gap-2">
+            <Copy className="h-4 w-4" /> Copy
+          </Button>
+          <Button onClick={handleWhatsApp} className="gap-2">
+            <MessageCircle className="h-4 w-4" /> Send via WhatsApp {BRAND.phone}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
             </Card>
 
           </div>
