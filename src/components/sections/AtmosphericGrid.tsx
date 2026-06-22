@@ -1,7 +1,7 @@
-import flatlay from "@/assets/banners/products-flatlay.jpg?w=1200&format=webp&quality=75";
-import leatherFlatlay from "@/assets/banners/leather-flatlay.jpg?w=1200&format=webp&quality=75";
-import leatherStack from "@/assets/banners/leather-stack.jpg?w=1200&format=webp&quality=75";
-import leatherStitch from "@/assets/banners/leather-stitch.jpg?w=1200&format=webp&quality=75";
+import flatlay from "@/assets/banners/products-flatlay.jpg?w=1600&format=webp&quality=74";
+import leatherFlatlay from "@/assets/banners/leather-flatlay.jpg?w=1600&format=webp&quality=74";
+import leatherStack from "@/assets/banners/leather-stack.jpg?w=1600&format=webp&quality=74";
+import leatherStitch from "@/assets/banners/leather-stitch.jpg?w=1600&format=webp&quality=74";
 
 const IMAGES = [
   { src: flatlay, alt: "Premium apparel flat-lay" },
