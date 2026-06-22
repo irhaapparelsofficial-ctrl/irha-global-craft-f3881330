@@ -144,9 +144,6 @@ export default function LederhosenHome() {
                     ))}
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-                  <span className="absolute top-5 left-5 rounded-full bg-background/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-primary">
-                    {m.eyebrow}
-                  </span>
                 </div>
 
                 {/* Content */}
