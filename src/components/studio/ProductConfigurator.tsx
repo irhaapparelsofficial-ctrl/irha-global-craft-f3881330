@@ -244,8 +244,13 @@ export default function ProductConfigurator() {
           silhouette={base.silhouette}
           palette={colors}
           initialColor={color.hex}
+          getZoneMaterials={getZoneMaterials}
+          addOns={addOns}
+          livePriceUnit={quote.finalUnit}
+          tierLabel={previewTier.label}
           onChange={handleDesignChange}
         />
+
         <div className="flex items-center justify-between rounded-lg border border-border bg-card/50 px-3 py-2">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Live Mockup</p>
