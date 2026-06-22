@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import StudioPricingPanel from "@/components/admin/StudioPricingPanel";
 import MockupSketchPad from "@/components/studio/MockupSketchPad";
+import ProductConfigurator from "@/components/studio/ProductConfigurator";
 
 export default function Studio() {
   return (
@@ -35,6 +36,22 @@ export default function Studio() {
             and GBP with volume-tier discounts already applied.
           </p>
         </div>
+      </section>
+
+      <section id="configurator" className="mx-auto max-w-7xl px-6 py-12 md:py-16">
+        <div className="mb-8">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-2">
+            Step-by-Step Customizer
+          </p>
+          <h2 className="font-serif text-2xl md:text-4xl leading-tight">
+            Product Configurator Studio
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Walk through category, base, styles, color, fabric, sizing and branding — your live
+            mockup and FOB estimate update at every step.
+          </p>
+        </div>
+        <ProductConfigurator />
       </section>
 
       <section id="studio-engine" className="mx-auto max-w-7xl px-6 py-12 md:py-16">
