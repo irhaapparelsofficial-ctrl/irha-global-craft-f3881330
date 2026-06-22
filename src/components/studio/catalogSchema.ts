@@ -21,7 +21,17 @@ export type Fabric = {
   label: string;
   spec: string; // GSM, oz, weave, leather grade etc.
   feel: string;
-  price: number; // surcharge per unit
+  price: number; // surcharge per unit (USD)
+};
+
+// ZoneMaterial shares Fabric's shape and is used per-component.
+export type ZoneMaterial = Fabric;
+
+export type AddOn = {
+  id: string;
+  label: string;
+  cost: number; // USD surcharge per unit
+  group: "branding" | "hardware" | "finish";
 };
 
 export type ColorSwatch = { id: string; label: string; hex: string };
@@ -45,6 +55,8 @@ export type ProductBase = {
   fabrics?: Fabric[]; // override category fabrics
   sizing?: SizingScheme; // override category sizing
   placements?: LogoPlacement[];
+  zoneMaterials?: Record<string, ZoneMaterial[]>; // per-zone material overrides
+  addOns?: AddOn[]; // override category add-ons
 };
 
 export type Category = {
@@ -54,11 +66,15 @@ export type Category = {
   icon: LucideIcon;
   bases: ProductBase[];
   styles: StyleGroup[]; // default for category
-  fabrics: Fabric[];
+  fabrics: Fabric[]; // primary body materials
+  trims?: ZoneMaterial[]; // accent materials for collar/cuff/pocket/etc.
   colors: ColorSwatch[];
   sizing: SizingScheme;
   placements: LogoPlacement[];
+  addOns?: AddOn[];
 };
+
+
 
 export type SilhouetteKey =
   | "tee"
@@ -287,7 +303,13 @@ export const CATALOG: Category[] = [
       { id: "deer", label: "Deer Suede", spec: "1.0 mm", feel: "Traditional Bavarian feel", price: 8 },
       { id: "suede", label: "Goat Suede", spec: "0.9 mm", feel: "Velvety matte finish", price: 2.5 },
     ],
+    trims: [
+      { id: "wool-felt", label: "Wool Felt Trim", spec: "Loden", feel: "Traditional accent", price: 1.5 },
+      { id: "linen", label: "Linen Trim", spec: "natural", feel: "Light contrast", price: 0.8 },
+      { id: "suede-trim", label: "Suede Trim", spec: "0.6 mm", feel: "Soft accent", price: 2.0 },
+    ],
   },
+
 
   // ============== SPORTSWEAR ==============
   {
@@ -390,7 +412,14 @@ export const CATALOG: Category[] = [
       { id: "buff", label: "Buffalo Leather", spec: "1.4–1.6 mm", feel: "Rugged textured grain", price: 6 },
       { id: "suede-cow", label: "Cow Suede", spec: "1.1 mm", feel: "Matte velvety hand", price: 3 },
     ],
+    trims: [
+      { id: "satin-lining", label: "Satin Lining", spec: "polyester", feel: "Smooth slide-on lining", price: 1.2 },
+      { id: "quilt-lining", label: "Quilted Thermal Lining", spec: "200 GSM", feel: "Warm winter lining", price: 2.5 },
+      { id: "rib-knit", label: "Rib Knit Trim", spec: "cuffs & hem", feel: "Stretch ribbed accent", price: 0.8 },
+      { id: "suede-accent", label: "Suede Accent", spec: "0.9 mm", feel: "Contrast suede panels", price: 2.2 },
+    ],
   },
+
 
   // ============== LEISURE WEAR ==============
   {
@@ -475,6 +504,42 @@ export const CATALOG: Category[] = [
   },
 ];
 
+// ---------- Add-On defaults ----------
+const DEFAULT_ADDONS: AddOn[] = [
+  { id: "embroid-chest", label: "Chest Embroidery", cost: 2.5, group: "branding" },
+  { id: "embroid-back", label: "Full-Back Embroidery", cost: 6.0, group: "branding" },
+  { id: "heavy-print", label: "Heavy Plastisol Print", cost: 1.8, group: "branding" },
+  { id: "woven-label", label: "Custom Woven Label", cost: 0.4, group: "branding" },
+  { id: "extra-zip", label: "Extra Zipper Pocket", cost: 1.2, group: "hardware" },
+  { id: "metal-buckle", label: "Metal Buckle Hardware", cost: 0.9, group: "hardware" },
+  { id: "enzyme-wash", label: "Enzyme Wash Finish", cost: 1.0, group: "finish" },
+  { id: "garment-dye", label: "Garment Dye Finish", cost: 1.4, group: "finish" },
+];
+
+const LEATHER_ADDONS: AddOn[] = [
+  { id: "embroid-chest", label: "Chest Embroidery", cost: 4.5, group: "branding" },
+  { id: "laser-etch", label: "Laser-Etched Logo", cost: 3.0, group: "branding" },
+  { id: "metal-buckle", label: "Solid Brass Buckles", cost: 3.5, group: "hardware" },
+  { id: "ykk-zips", label: "Premium YKK Zips ×3", cost: 4.0, group: "hardware" },
+  { id: "armor-pockets", label: "CE Armor Pockets", cost: 6.0, group: "hardware" },
+  { id: "wax-finish", label: "Hand-Waxed Finish", cost: 3.5, group: "finish" },
+];
+
+const BAVARIAN_ADDONS: AddOn[] = [
+  { id: "hand-embroid", label: "Hand-Stitched Embroidery", cost: 18, group: "branding" },
+  { id: "edelweiss", label: "Edelweiss Motif", cost: 8, group: "branding" },
+  { id: "stag-horn", label: "Stag Horn Buttons", cost: 5, group: "hardware" },
+  { id: "antler-charm", label: "Antler Charm", cost: 4, group: "hardware" },
+];
+
+// Set sensible add-on defaults per category
+CATALOG.forEach((c) => {
+  if (c.addOns) return;
+  if (c.id === "leather") c.addOns = LEATHER_ADDONS;
+  else if (c.id === "bavarian") c.addOns = BAVARIAN_ADDONS;
+  else c.addOns = DEFAULT_ADDONS;
+});
+
 // ---------- Helpers ----------
 export const getCategory = (id?: string | null) => CATALOG.find((c) => c.id === id) || null;
 export const getBase = (cat: Category | null, id?: string | null) =>
@@ -484,3 +549,23 @@ export const resolveFabrics = (cat: Category, base: ProductBase) => base.fabrics
 export const resolveSizing = (cat: Category, base: ProductBase) => base.sizing || cat.sizing;
 export const resolvePlacements = (cat: Category, base: ProductBase) =>
   base.placements || cat.placements;
+export const resolveAddOns = (cat: Category, base: ProductBase) => base.addOns || cat.addOns || DEFAULT_ADDONS;
+
+// Zones that are typically trim/accent — get the trim material list if available.
+const TRIM_ZONES = new Set([
+  "collar", "left-cuff", "right-cuff", "hood", "pocket", "left-pocket", "right-pocket",
+  "placket", "belt", "side-panels", "cross-strap", "chest-pocket", "side-stripes",
+  "hem", "blouse-sleeve-l", "blouse-sleeve-r", "waistband", "apron",
+]);
+
+export function resolveZoneMaterials(
+  cat: Category,
+  base: ProductBase,
+  zoneId: string
+): ZoneMaterial[] {
+  const override = base.zoneMaterials?.[zoneId];
+  if (override) return override;
+  if (TRIM_ZONES.has(zoneId) && cat.trims && cat.trims.length > 0) return cat.trims;
+  return resolveFabrics(cat, base);
+}
+

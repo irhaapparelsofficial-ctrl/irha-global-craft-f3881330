@@ -32,10 +32,16 @@ import {
   resolveStyles,
   resolveFabrics,
   resolveSizing,
+  resolveAddOns,
+  resolveZoneMaterials,
   type Category,
   type ProductBase,
+  type ZoneMaterial,
 } from "./catalogSchema";
 import InteractiveMockupCanvas, { type DesignState } from "./InteractiveMockupCanvas";
+import { computeQuote, tierFor } from "./pricingEngine";
+import { Slider } from "@/components/ui/slider";
+
 
 const STEP_META = [
   { id: 1, label: "Category", icon: Shapes },
@@ -64,14 +70,54 @@ export default function ProductConfigurator() {
   const styleGroups = category && base ? resolveStyles(category, base) : [];
   const fabrics = category && base ? resolveFabrics(category, base) : [];
   const sizing = category && base ? resolveSizing(category, base) : null;
+  const addOns = category && base ? resolveAddOns(category, base) : [];
   const colors = category?.colors || [];
 
   const color = colors.find((c) => c.id === colorId) || colors[0] || { id: "", label: "—", hex: "#888" };
   const fabric = fabrics.find((f) => f.id === fabricId) || null;
   const totalQty = Object.values(sizeQty).reduce((s, n) => s + (n || 0), 0);
-  const artworkSurcharge = (designState?.layers?.length || 0) * 0.6;
-  const unitPrice = (base?.basePrice || 0) + (fabric?.price || 0) + artworkSurcharge;
-  const totalPrice = unitPrice * totalQty;
+
+  // ---------- BOM Pricing ----------
+  const getZoneMaterials = useCallback(
+    (zoneId: string): ZoneMaterial[] => {
+      if (!category || !base) return [];
+      return resolveZoneMaterials(category, base, zoneId);
+    },
+    [category, base]
+  );
+
+  // Materialise the zone material selections from DesignState into full objects.
+  const chosenZoneMaterials = useMemo(() => {
+    const out: Record<string, ZoneMaterial | undefined> = {};
+    if (!designState || !category || !base) return out;
+    for (const [zoneId, zone] of Object.entries(designState.zones)) {
+      if (!zone.materialId) continue;
+      const opts = resolveZoneMaterials(category, base, zoneId);
+      out[zoneId] = opts.find((m) => m.id === zone.materialId);
+    }
+    return out;
+  }, [designState, category, base]);
+
+  const selectedAddOns = useMemo(
+    () => addOns.filter((a) => designState?.addOnIds?.includes(a.id)),
+    [addOns, designState]
+  );
+
+  const quote = useMemo(
+    () =>
+      computeQuote({
+        base,
+        zoneMaterials: chosenZoneMaterials,
+        addOns: selectedAddOns,
+        artworkLayers: designState?.layers?.length || 0,
+        fallbackFabric: fabric,
+        qty: totalQty,
+      }),
+    [base, chosenZoneMaterials, selectedAddOns, designState, fabric, totalQty]
+  );
+
+  // Tier hint for the canvas badge — works even before sizes are entered.
+  const previewTier = tierFor(Math.max(totalQty, 100));
 
   // Reset downstream selections when category changes
   useEffect(() => {
@@ -82,6 +128,7 @@ export default function ProductConfigurator() {
     setSizeQty({});
     setDesignState(null);
   }, [categoryId]);
+
 
   useEffect(() => {
     setStyleSelections({});
@@ -132,7 +179,22 @@ export default function ProductConfigurator() {
       fabric: fabric && { id: fabric.id, label: fabric.label, spec: fabric.spec },
       quantities: sizeQty,
       totalQty,
-      pricing: { unit: unitPrice, total: totalPrice, currency: "USD" },
+      pricing: {
+        unit: quote.finalUnit,
+        subtotalUnit: quote.subtotalUnit,
+        discountPct: quote.discountPct,
+        total: quote.total,
+        tier: quote.tierLabel,
+        breakdown: quote.lineItems,
+        currency: "USD",
+      },
+      addOns: selectedAddOns.map((a) => ({ id: a.id, label: a.label, cost: a.cost, group: a.group })),
+      zoneMaterials: Object.fromEntries(
+        Object.entries(chosenZoneMaterials)
+          .filter(([, m]) => !!m)
+          .map(([zoneId, m]) => [zoneId, { id: m!.id, label: m!.label, cost: m!.price }])
+      ),
+
       design: designState && {
         silhouette: designState.silhouette,
         zones: designState.zones,
@@ -159,7 +221,7 @@ export default function ProductConfigurator() {
     };
     // eslint-disable-next-line no-console
     console.log("[Configurator] Export payload:", payload);
-    toast.success(`Submitted · ${totalQty} units · $${totalPrice.toFixed(2)} FOB`, {
+    toast.success(`Submitted · ${totalQty} units · $${quote.total.toFixed(2)} FOB`, {
       description: `${(designState?.layers.length || 0)} artwork layer(s) bundled.`,
     });
   };
@@ -182,8 +244,13 @@ export default function ProductConfigurator() {
           silhouette={base.silhouette}
           palette={colors}
           initialColor={color.hex}
+          getZoneMaterials={getZoneMaterials}
+          addOns={addOns}
+          livePriceUnit={quote.finalUnit}
+          tierLabel={previewTier.label}
           onChange={handleDesignChange}
         />
+
         <div className="flex items-center justify-between rounded-lg border border-border bg-card/50 px-3 py-2">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Live Mockup</p>
@@ -389,12 +456,70 @@ export default function ProductConfigurator() {
                 </div>
               ))}
             </div>
+            {/* MOQ Slider — quickly distribute target qty evenly across selected sizes */}
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider">Quick MOQ</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Drag to set target order quantity — distributes evenly across sizes
+                  </p>
+                </div>
+                <span className="font-mono text-sm font-semibold">{totalQty || 100} pcs</span>
+              </div>
+              <Slider
+                min={50}
+                max={1000}
+                step={50}
+                value={[Math.max(totalQty, 100)]}
+                onValueChange={([v]) => {
+                  const sizes = sizing?.sizes || [];
+                  if (sizes.length === 0) return;
+                  const per = Math.floor(v / sizes.length);
+                  const remainder = v - per * sizes.length;
+                  const next: Record<string, number> = {};
+                  sizes.forEach((s, i) => (next[s] = per + (i < remainder ? 1 : 0)));
+                  setSizeQty(next);
+                }}
+              />
+              <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+                <span>50</span><span>200</span><span>500</span><span>1000</span>
+              </div>
+            </div>
+
+            {/* Tier indicator */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { range: "100–200", label: "Standard", min: 100 },
+                { range: "201–500", label: "5% Off", min: 201 },
+                { range: "500+", label: "10% Off", min: 501 },
+              ].map((t) => {
+                const active =
+                  (t.min === 100 && totalQty >= 100 && totalQty <= 200) ||
+                  (t.min === 201 && totalQty >= 201 && totalQty <= 500) ||
+                  (t.min === 501 && totalQty >= 501);
+                return (
+                  <div
+                    key={t.range}
+                    className={cn(
+                      "rounded-lg border p-2 text-center transition-colors",
+                      active ? "border-primary bg-primary/10" : "border-border bg-card"
+                    )}
+                  >
+                    <p className="font-mono text-[10px] text-muted-foreground">{t.range} pcs</p>
+                    <p className={cn("text-xs font-semibold", active && "text-primary")}>{t.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3 text-sm">
-              <span className="text-muted-foreground">Total quantity</span>
-              <span className="font-mono font-semibold">{totalQty} units</span>
+              <span className="text-muted-foreground">Total · {quote.tierLabel}</span>
+              <span className="font-mono font-semibold">{totalQty} units · ${quote.total.toFixed(2)}</span>
             </div>
           </div>
         );
+
 
       case 7:
         return (
@@ -433,24 +558,62 @@ export default function ProductConfigurator() {
                   return <SummaryRow key={g.id} label={g.label} value={opt?.label || "—"} />;
                 })}
                 <SummaryRow label="Base Color" value={color.label} />
-                <SummaryRow label="Fabric" value={fabric ? `${fabric.label} · ${fabric.spec}` : "—"} />
-                <SummaryRow label="Quantity" value={`${totalQty} units`} />
+                <SummaryRow label="Quantity" value={`${totalQty} units · ${quote.tierLabel}`} />
                 <SummaryRow
                   label="Artwork"
                   value={designState?.layers.length ? `${designState.layers.length} layer(s)` : "—"}
                 />
               </div>
+
+              {/* BOM breakdown */}
+              <div className="mt-5 rounded-lg bg-muted/40 p-3">
+                <p className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  FOB Breakdown (per unit)
+                </p>
+                <ul className="space-y-1 text-xs">
+                  {quote.lineItems.map((li, i) => (
+                    <li key={i} className="flex justify-between gap-3 font-mono">
+                      <span
+                        className={cn(
+                          "truncate",
+                          li.kind === "base" && "font-semibold",
+                          li.kind === "discount" && "text-emerald-600"
+                        )}
+                      >
+                        {li.label}
+                      </span>
+                      <span
+                        className={cn(
+                          li.amount < 0 ? "text-emerald-600" : "text-foreground"
+                        )}
+                      >
+                        {li.amount < 0 ? "-" : ""}${Math.abs(li.amount).toFixed(2)}
+                      </span>
+                    </li>
+                  ))}
+                  <li className="mt-2 flex justify-between border-t border-border pt-2 font-mono text-sm font-bold">
+                    <span>Final FOB / Pc</span>
+                    <span className="text-primary">${quote.finalUnit.toFixed(2)}</span>
+                  </li>
+                </ul>
+              </div>
+
               <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
                 <div>
-                  <p className="text-xs text-muted-foreground">Estimated FOB</p>
-                  <p className="font-serif text-2xl">${totalPrice.toFixed(2)}</p>
-                  <p className="text-[10px] text-muted-foreground">${unitPrice.toFixed(2)} per unit</p>
+                  <p className="text-xs text-muted-foreground">Order Total ({totalQty} pcs)</p>
+                  <p className="font-serif text-2xl">${quote.total.toFixed(2)}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {quote.discountPct > 0
+                      ? `${Math.round(quote.discountPct * 100)}% volume discount applied`
+                      : "Standard FOB pricing"}
+                  </p>
                 </div>
                 <Button size="lg" onClick={handleAddToCart} className="gap-2">
                   <ShoppingCart className="h-4 w-4" /> Add to Cart
                 </Button>
               </div>
             </Card>
+
           </div>
         );
     }

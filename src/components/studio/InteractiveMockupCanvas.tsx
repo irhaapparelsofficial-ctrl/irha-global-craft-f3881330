@@ -17,15 +17,18 @@ import {
   Move,
   X,
   ToggleLeft,
+  Sparkles,
+  Check,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { ZONED, type ZonedProduct } from "./zonedSilhouettes";
-import type { ColorSwatch, SilhouetteKey } from "./catalogSchema";
+import type { ColorSwatch, SilhouetteKey, ZoneMaterial, AddOn } from "./catalogSchema";
 
 // ---------- Types ----------
 export type TextureKey = "none" | "leather" | "mesh" | "fleece" | "denim";
 
-export type ZoneState = { colorHex: string; texture: TextureKey };
+export type ZoneState = { colorHex: string; texture: TextureKey; materialId?: string };
 
 type LayerBase = {
   id: string;
@@ -53,7 +56,9 @@ export type DesignState = {
   zones: Record<string, ZoneState>;
   toggles: Record<string, boolean>;
   layers: Layer[];
+  addOnIds: string[];
 };
+
 
 // ---------- Textures ----------
 const TEXTURES: { id: TextureKey; label: string }[] = [
@@ -108,6 +113,13 @@ type Props = {
   silhouette: SilhouetteKey;
   palette: ColorSwatch[];
   initialColor: string;
+  /** Resolver returning the material options available for a given zone. */
+  getZoneMaterials?: (zoneId: string) => ZoneMaterial[];
+  /** Add-ons available for this product. */
+  addOns?: AddOn[];
+  /** Live unit price (parent-computed) — rendered as floating badge. */
+  livePriceUnit?: number;
+  tierLabel?: string;
   onChange?: (state: DesignState) => void;
 };
 
@@ -115,6 +127,10 @@ export default function InteractiveMockupCanvas({
   silhouette,
   palette,
   initialColor,
+  getZoneMaterials,
+  addOns = [],
+  livePriceUnit,
+  tierLabel,
   onChange,
 }: Props) {
   const product: ZonedProduct = ZONED[silhouette];
@@ -124,6 +140,7 @@ export default function InteractiveMockupCanvas({
   const [zones, setZones] = useState<Record<string, ZoneState>>({});
   const [toggles, setToggles] = useState<Record<string, boolean>>({});
   const [layers, setLayers] = useState<Layer[]>([]);
+  const [addOnIds, setAddOnIds] = useState<string[]>([]);
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -143,14 +160,16 @@ export default function InteractiveMockupCanvas({
     const t: Record<string, boolean> = {};
     product.toggles?.forEach((tog) => (t[tog.id] = tog.default));
     setToggles(t);
+    setAddOnIds([]);
     setSelectedZone(null);
     setSelectedLayer(null);
   }, [silhouette, initialColor, product]);
 
   // Expose state
   useEffect(() => {
-    onChange?.({ silhouette, zones, toggles, layers });
-  }, [silhouette, zones, toggles, layers, onChange]);
+    onChange?.({ silhouette, zones, toggles, layers, addOnIds });
+  }, [silhouette, zones, toggles, layers, addOnIds, onChange]);
+
 
   // ---------- Helpers ----------
   const clientToSvg = (cx: number, cy: number) => {
@@ -451,76 +470,125 @@ export default function InteractiveMockupCanvas({
         <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-[10px] uppercase tracking-widest text-muted-foreground backdrop-blur">
           <Move className="h-3 w-3" /> Click any part to recolor
         </div>
-        {selectedZoneObj && (
-          <div className="absolute right-3 top-3">
-            <Popover open onOpenChange={(o) => !o && setSelectedZone(null)}>
-              <PopoverTrigger asChild>
-                <button className="rounded-full bg-primary px-3 py-1 text-[10px] uppercase tracking-widest text-primary-foreground shadow-lg">
-                  Editing: {selectedZoneObj.label}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-72">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider">{selectedZoneObj.label}</p>
-                <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Color</Label>
-                <div className="mb-3 grid grid-cols-6 gap-1.5">
-                  {palette.map((c) => (
-                    <button
-                      key={c.id}
-                      title={c.label}
-                      onClick={() => updateZone(selectedZoneObj.id, { colorHex: c.hex })}
-                      className={cn(
-                        "h-7 w-7 rounded-full border-2",
-                        zones[selectedZoneObj.id]?.colorHex === c.hex
-                          ? "border-primary"
-                          : "border-border"
-                      )}
-                      style={{ backgroundColor: c.hex }}
-                    />
-                  ))}
-                </div>
-                <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Custom Hex</Label>
-                <Input
-                  type="color"
-                  value={zones[selectedZoneObj.id]?.colorHex || "#000"}
-                  onChange={(e) => updateZone(selectedZoneObj.id, { colorHex: e.target.value })}
-                  className="mb-3 h-8 w-full cursor-pointer"
-                />
-                <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Texture</Label>
-                <div className="grid grid-cols-5 gap-1">
-                  {TEXTURES.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => updateZone(selectedZoneObj.id, { texture: t.id })}
-                      className={cn(
-                        "rounded-md border px-1 py-1.5 text-[9px] uppercase",
-                        zones[selectedZoneObj.id]?.texture === t.id
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/40"
-                      )}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+
+        {/* Live FOB Badge */}
+        {typeof livePriceUnit === "number" && (
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-background/90 px-3 py-2 shadow-lg backdrop-blur">
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Estimated FOB</p>
+            <p className="font-mono text-lg font-bold leading-none text-primary">
+              ${livePriceUnit.toFixed(2)} <span className="text-[10px] font-normal text-muted-foreground">/ Pc</span>
+            </p>
+            {tierLabel && <p className="mt-0.5 text-[9px] text-muted-foreground">{tierLabel}</p>}
           </div>
         )}
+
+        {selectedZoneObj && (() => {
+          const zoneMats = getZoneMaterials?.(selectedZoneObj.id) || [];
+          const currentMatId = zones[selectedZoneObj.id]?.materialId;
+          return (
+            <div className="absolute right-3 top-3">
+              <Popover open onOpenChange={(o) => !o && setSelectedZone(null)}>
+                <PopoverTrigger asChild>
+                  <button className="rounded-full bg-primary px-3 py-1 text-[10px] uppercase tracking-widest text-primary-foreground shadow-lg">
+                    Editing: {selectedZoneObj.label}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider">{selectedZoneObj.label}</p>
+
+                  {zoneMats.length > 0 && (
+                    <>
+                      <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Material / Fabric</Label>
+                      <div className="mb-3 max-h-40 space-y-1 overflow-y-auto pr-1">
+                        {zoneMats.map((m) => {
+                          const active = currentMatId === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              onClick={() => updateZone(selectedZoneObj.id, { materialId: m.id })}
+                              className={cn(
+                                "flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-left text-xs",
+                                active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                              )}
+                            >
+                              <span className="flex flex-col">
+                                <span className="font-medium">{m.label}</span>
+                                <span className="text-[10px] text-muted-foreground">{m.spec}</span>
+                              </span>
+                              <span className="font-mono text-[11px] text-primary">
+                                {m.price > 0 ? `+$${m.price.toFixed(2)}` : "Incl."}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Color</Label>
+                  <div className="mb-3 grid grid-cols-6 gap-1.5">
+                    {palette.map((c) => (
+                      <button
+                        key={c.id}
+                        title={c.label}
+                        onClick={() => updateZone(selectedZoneObj.id, { colorHex: c.hex })}
+                        className={cn(
+                          "h-7 w-7 rounded-full border-2",
+                          zones[selectedZoneObj.id]?.colorHex === c.hex ? "border-primary" : "border-border"
+                        )}
+                        style={{ backgroundColor: c.hex }}
+                      />
+                    ))}
+                  </div>
+                  <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Custom Hex</Label>
+                  <Input
+                    type="color"
+                    value={zones[selectedZoneObj.id]?.colorHex || "#000"}
+                    onChange={(e) => updateZone(selectedZoneObj.id, { colorHex: e.target.value })}
+                    className="mb-3 h-8 w-full cursor-pointer"
+                  />
+                  <Label className="mb-1 block text-[10px] uppercase text-muted-foreground">Surface Texture</Label>
+                  <div className="grid grid-cols-5 gap-1">
+                    {TEXTURES.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => updateZone(selectedZoneObj.id, { texture: t.id })}
+                        className={cn(
+                          "rounded-md border px-1 py-1.5 text-[9px] uppercase",
+                          zones[selectedZoneObj.id]?.texture === t.id
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/40"
+                        )}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          );
+        })()}
       </div>
+
 
       {/* Tools panel */}
       <Tabs defaultValue="layers" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="layers" className="gap-1.5">
             <LayersIcon className="h-3.5 w-3.5" /> Artwork
           </TabsTrigger>
           <TabsTrigger value="toggles" className="gap-1.5">
             <ToggleLeft className="h-3.5 w-3.5" /> Components
           </TabsTrigger>
+          <TabsTrigger value="addons" className="gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" /> Add-Ons
+          </TabsTrigger>
           <TabsTrigger value="text" className="gap-1.5" disabled={selectedLayerObj?.type !== "text"}>
             <TypeIcon className="h-3.5 w-3.5" /> Text Edit
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="layers" className="mt-3 space-y-3">
           <div className="flex gap-2">
@@ -609,9 +677,60 @@ export default function InteractiveMockupCanvas({
           )}
         </TabsContent>
 
+        <TabsContent value="addons" className="mt-3 space-y-2">
+          {addOns.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+              No add-ons configured for this product.
+            </p>
+          ) : (
+            ["branding", "hardware", "finish"].map((grp) => {
+              const items = addOns.filter((a) => a.group === grp);
+              if (items.length === 0) return null;
+              return (
+                <div key={grp}>
+                  <p className="mb-1 text-[10px] uppercase tracking-widest text-muted-foreground">{grp}</p>
+                  <div className="space-y-1.5">
+                    {items.map((a) => {
+                      const active = addOnIds.includes(a.id);
+                      return (
+                        <button
+                          key={a.id}
+                          onClick={() =>
+                            setAddOnIds((prev) =>
+                              active ? prev.filter((x) => x !== a.id) : [...prev, a.id]
+                            )
+                          }
+                          className={cn(
+                            "flex w-full items-center justify-between rounded-lg border p-2.5 text-left text-sm transition-colors",
+                            active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "flex h-4 w-4 items-center justify-center rounded border",
+                                active ? "border-primary bg-primary text-primary-foreground" : "border-border"
+                              )}
+                            >
+                              {active && <Check className="h-3 w-3" />}
+                            </span>
+                            <span className="text-xs">{a.label}</span>
+                          </span>
+                          <span className="font-mono text-[11px] text-primary">+${a.cost.toFixed(2)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </TabsContent>
+
         <TabsContent value="text" className="mt-3 space-y-2">
           {selectedLayerObj?.type === "text" && (
             <div className="space-y-3">
+
               <div>
                 <Label className="text-[10px] uppercase text-muted-foreground">Text</Label>
                 <Input
