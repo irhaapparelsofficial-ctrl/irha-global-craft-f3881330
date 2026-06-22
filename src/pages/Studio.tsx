@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import StudioPricingPanel from "@/components/admin/StudioPricingPanel";
+import MockupSketchPad from "@/components/studio/MockupSketchPad";
 
 export default function Studio() {
   return (
@@ -38,6 +39,22 @@ export default function Studio() {
 
       <section id="studio-engine" className="mx-auto max-w-7xl px-6 py-12 md:py-16">
         <StudioPricingPanel />
+      </section>
+
+      <section id="sketch-pad" className="mx-auto max-w-7xl px-6 pb-16 md:pb-24">
+        <div className="mb-8">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-2">
+            Visual Design Board
+          </p>
+          <h2 className="font-serif text-2xl md:text-4xl leading-tight">
+            Interactive Mockup Sketch Pad
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Pick a silhouette, sketch color accents, drop reference placement markers, and
+            attach your tech-pack. Everything is bundled into one Factory Quotation request.
+          </p>
+        </div>
+        <MockupSketchPad />
       </section>
     </div>
   );
