@@ -20,12 +20,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ZONED, type ZonedProduct } from "./zonedSilhouettes";
-import type { ColorSwatch, SilhouetteKey } from "./catalogSchema";
+import type { ColorSwatch, SilhouetteKey, ZoneMaterial, AddOn } from "./catalogSchema";
 
 // ---------- Types ----------
 export type TextureKey = "none" | "leather" | "mesh" | "fleece" | "denim";
 
-export type ZoneState = { colorHex: string; texture: TextureKey };
+export type ZoneState = { colorHex: string; texture: TextureKey; materialId?: string };
 
 type LayerBase = {
   id: string;
@@ -53,7 +53,9 @@ export type DesignState = {
   zones: Record<string, ZoneState>;
   toggles: Record<string, boolean>;
   layers: Layer[];
+  addOnIds: string[];
 };
+
 
 // ---------- Textures ----------
 const TEXTURES: { id: TextureKey; label: string }[] = [
