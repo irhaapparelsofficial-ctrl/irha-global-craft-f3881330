@@ -470,9 +470,10 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Thigh", "Back Yoke"],
     bases: [
-      { id: "jogger", label: "Tapered Jogger", desc: "Cuffed leisure jogger", basePrice: 12, silhouette: "trackPant" },
-      { id: "lounge-hoodie", label: "Lounge Hoodie", desc: "Brushed-back fleece", basePrice: 15, silhouette: "hoodie" },
-      { id: "lounge-tee", label: "Lounge Tee", desc: "Modal-blend everyday tee", basePrice: 7.5, silhouette: "tee" },
+      { id: "jogger", label: "Tapered Jogger", desc: "Cuffed leisure jogger with elastic drawcord waist", basePrice: 12, silhouette: "trackPant" },
+      { id: "lounge-hoodie", label: "Lounge Hoodie", desc: "Brushed-back fleece, relaxed loungewear cut", basePrice: 15, silhouette: "hoodie" },
+      { id: "lounge-tee", label: "Lounge Tee", desc: "Modal-blend everyday tee with soft drape", basePrice: 7.5, silhouette: "tee" },
+
     ],
     styles: [
       {
