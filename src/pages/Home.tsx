@@ -255,11 +255,8 @@ export default function Home() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/30" />
 
-                  <div className="relative p-8 md:p-10 flex flex-col flex-1">
-                    <div className="flex items-start justify-between mb-8">
-                      <span className={`text-[10px] font-mono tracking-[0.3em] uppercase ${hub.accentClass}`}>
-                        {hub.eyebrow}
-                      </span>
+                  <div className="relative p-8 md:p-10 pt-12 md:pt-16 flex flex-col flex-1">
+                    <div className="flex items-start justify-end mb-8">
                       <span className={`inline-flex items-center justify-center w-12 h-12 border ${hub.badgeClass}`}>
                         <Icon size={20} />
                       </span>
