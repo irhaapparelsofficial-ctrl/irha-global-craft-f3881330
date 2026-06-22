@@ -1,5 +1,6 @@
 // Inspects Google Search Console indexing status for a batch of URLs.
-// Uses the Lovable connector gateway -> Google Search Console URL Inspection API.
+// Admin-only: validates JWT and `user_roles.role = 'admin'`.
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +10,26 @@ const corsHeaders = {
 
 const SITE_URL = "https://www.irhaapparels.com/";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
+
+function jsonResp(payload: unknown, status: number) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function requireAdmin(req: Request): Promise<Response | null> {
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!token) return jsonResp({ error: "Unauthorized" }, 401);
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: ud } = await sb.auth.getUser();
+  if (!ud?.user) return jsonResp({ error: "Unauthorized" }, 401);
+  const { data: roleRow } = await sb.from("user_roles").select("role").eq("user_id", ud.user.id).eq("role", "admin").maybeSingle();
+  if (!roleRow) return jsonResp({ error: "Forbidden — admin only" }, 403);
+  return null;
+}
 
 interface InspectResult {
   url: string;
