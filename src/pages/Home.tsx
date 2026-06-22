@@ -38,8 +38,69 @@ type FeaturedProduct = {
   category_id: string;
 };
 
+type FeaturedProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  category_id: string;
+};
+
+type MacroKey = "leather-bavarian" | "textile-active-leisure";
+
+const MACRO_HUBS = [
+  {
+    key: "leather-bavarian" as MacroKey,
+    eyebrow: "Hub 01 · Heritage Atelier",
+    title: "Bavarian & Leather Garments",
+    tagline: "Authentic Trachten craft & full-grain leather construction.",
+    items: [
+      "Authentic Lederhosen",
+      "Trachten Wear",
+      "Dirndls",
+      "Premium Leather Apparel",
+    ],
+    childSlugs: ["bavarian", "leatherwear"] as const,
+    Icon: Scissors,
+    // deep industrial dark accent
+    accentClass: "text-foreground",
+    ringClass: "hover:border-foreground/70",
+    chipClass: "border-foreground/30 text-foreground/85",
+    ctaClass:
+      "bg-foreground text-background hover:bg-foreground/90",
+    surfaceClass:
+      "bg-[hsl(var(--background))] [background-image:radial-gradient(circle_at_top_right,hsl(var(--foreground)/0.10),transparent_55%)]",
+    badgeClass: "bg-foreground/10 text-foreground border-foreground/20",
+  },
+  {
+    key: "textile-active-leisure" as MacroKey,
+    eyebrow: "Hub 02 · Performance Atelier",
+    title: "Modern Textile & Performance Wear",
+    tagline: "Engineered knits, heavyweight cotton & technical comfort.",
+    items: [
+      "Premium Sportswear",
+      "Heavyweight Streetwear",
+      "Comfortable Nightwear",
+      "Leisure Wear",
+    ],
+    childSlugs: ["sportswear", "streetwear", "nightwear", "leisurewear"] as const,
+    Icon: Activity,
+    // industrial emerald token accent
+    accentClass: "text-industrial",
+    ringClass: "hover:border-industrial",
+    chipClass: "border-industrial/40 text-industrial",
+    ctaClass:
+      "bg-industrial text-industrial-foreground hover:bg-industrial/90",
+    surfaceClass:
+      "bg-[hsl(var(--background))] [background-image:radial-gradient(circle_at_top_left,hsl(var(--industrial)/0.12),transparent_55%)]",
+    badgeClass: "bg-industrial/10 text-industrial border-industrial/30",
+  },
+] as const;
+
 export default function Home() {
   const { data: categories = [] } = useCategories();
+  const [activeMacro, setActiveMacro] = useState<MacroKey | null>(null);
 
   const { data: featured = [] } = useQuery({
     queryKey: ["home-featured-products"],
@@ -49,13 +110,26 @@ export default function Home() {
         .select("id,name,slug,description,image_url,category_id")
         .eq("is_published", true)
         .order("sort_order")
-        .limit(8);
+        .limit(24);
       if (error) throw error;
       return (data ?? []) as FeaturedProduct[];
     },
   });
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
+
+  const filteredFeatured = useMemo(() => {
+    if (!activeMacro) return featured.slice(0, 8);
+    const hub = MACRO_HUBS.find((h) => h.key === activeMacro)!;
+    const allowedSlugs = new Set(hub.childSlugs as readonly string[]);
+    return featured
+      .filter((p) => {
+        const cat = categoryById.get(p.category_id);
+        return cat && allowedSlugs.has(cat.slug);
+      })
+      .slice(0, 8);
+  }, [featured, activeMacro, categoryById]);
+
 
   return (
     <>
