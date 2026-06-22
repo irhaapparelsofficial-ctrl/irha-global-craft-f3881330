@@ -716,7 +716,7 @@ export default function InteractiveMockupCanvas({
                             </span>
                             <span className="text-xs">{a.label}</span>
                           </span>
-                          <span className="font-mono text-[11px] text-primary">+${a.cost.toFixed(2)}</span>
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-primary">On Quote</span>
                         </button>
                       );
                     })}
