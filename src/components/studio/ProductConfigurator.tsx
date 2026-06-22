@@ -179,7 +179,22 @@ export default function ProductConfigurator() {
       fabric: fabric && { id: fabric.id, label: fabric.label, spec: fabric.spec },
       quantities: sizeQty,
       totalQty,
-      pricing: { unit: unitPrice, total: totalPrice, currency: "USD" },
+      pricing: {
+        unit: quote.finalUnit,
+        subtotalUnit: quote.subtotalUnit,
+        discountPct: quote.discountPct,
+        total: quote.total,
+        tier: quote.tierLabel,
+        breakdown: quote.lineItems,
+        currency: "USD",
+      },
+      addOns: selectedAddOns.map((a) => ({ id: a.id, label: a.label, cost: a.cost, group: a.group })),
+      zoneMaterials: Object.fromEntries(
+        Object.entries(chosenZoneMaterials)
+          .filter(([, m]) => !!m)
+          .map(([zoneId, m]) => [zoneId, { id: m!.id, label: m!.label, cost: m!.price }])
+      ),
+
       design: designState && {
         silhouette: designState.silhouette,
         zones: designState.zones,
@@ -206,7 +221,7 @@ export default function ProductConfigurator() {
     };
     // eslint-disable-next-line no-console
     console.log("[Configurator] Export payload:", payload);
-    toast.success(`Submitted · ${totalQty} units · $${totalPrice.toFixed(2)} FOB`, {
+    toast.success(`Submitted · ${totalQty} units · $${quote.total.toFixed(2)} FOB`, {
       description: `${(designState?.layers.length || 0)} artwork layer(s) bundled.`,
     });
   };
