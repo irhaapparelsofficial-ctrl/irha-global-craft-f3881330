@@ -737,6 +737,36 @@ export default function ProductConfigurator() {
 
   return (
     <div className="rounded-2xl border border-border bg-card/50 p-4 md:p-6">
+      <QuoteDialog />
+
+      {/* Category dropdown — switch product family at any time */}
+      <div className="mb-5 flex flex-col gap-2 rounded-xl border border-border bg-background/60 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-primary">Category</p>
+          <p className="text-xs text-muted-foreground">
+            Switch product family — loads its templates, fabrics & add-ons.
+          </p>
+        </div>
+        <Select
+          value={categoryId ?? undefined}
+          onValueChange={(v) => {
+            setCategoryId(v);
+            setStep(2);
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-[260px]">
+            <SelectValue placeholder="Choose a category…" />
+          </SelectTrigger>
+          <SelectContent>
+            {CATALOG.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Progress */}
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between">
@@ -756,6 +786,7 @@ export default function ProductConfigurator() {
         </div>
         <Progress value={(step / 7) * 100} className="h-1" />
       </div>
+
 
       <div className="grid gap-6 md:grid-cols-[1fr_1.1fr]">
         <div className="md:sticky md:top-4 md:self-start">
