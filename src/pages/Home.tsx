@@ -15,7 +15,7 @@ import Testimonials from "@/components/sections/Testimonials";
 import FounderNote from "@/components/sections/FounderNote";
 import FacebookFeed from "@/components/sections/FacebookFeed";
 import { useCategories } from "@/hooks/useCatalog";
-import { MACRO_CATEGORIES } from "@/lib/fobCalculator";
+
 import { whatsappLink, BRAND } from "@/lib/constants";
 import { resolveAsset } from "@/lib/assetResolver";
 
