@@ -148,64 +148,8 @@ export default function Home() {
       />
 
       {/* HERO */}
-      <section className="relative min-h-[92vh] flex items-end overflow-hidden">
-        <HeroSlideshow
-          slides={[
-            { src: leatherJacketFallback, srcSet: leatherJacket, alt: "Premium leather jacket — Irha Apparels" },
-            { src: leatherShowroomFallback, srcSet: leatherShowroom, alt: "Leather showroom — premium manufacturing" },
-            { src: leatherFlatlayFallback, srcSet: leatherFlatlay, alt: "Luxury leather goods flatlay" },
-            { src: leatherStitchFallback, srcSet: leatherStitch, alt: "Hand-stitched leather detail" },
-          ]}
-          sizes="100vw"
-          interval={5500}
-        />
-        <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="absolute inset-0 bg-black/45 md:bg-black/40" />
+      <HeroCarousel />
 
-        <div className="container-luxe relative pb-24 pt-40 grid lg:grid-cols-12 gap-10 items-end">
-          <div className="lg:col-span-8 animate-fade-in">
-            <p className="eyebrow mb-6">Sialkot · Worldwide Export</p>
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight max-w-4xl">
-              Global Premium <br />
-              <span className="text-gold italic font-normal">Apparel Manufacturer</span> <br />
-              from Sialkot.
-            </h1>
-            <p className="mt-8 text-base md:text-lg text-foreground/80 max-w-xl leading-relaxed">
-              OEM · ODM · Private Label. Two macro production hubs — Leather/Bavarian and
-              Textile/Active/Leisure — engineered for DACH, UK, USA, Canada & Australia.
-            </p>
-            <p className="mt-5 text-xs uppercase tracking-[0.28em] text-industrial/90">
-              Trusted by 200+ brands · Shipped to 50+ countries
-            </p>
-          </div>
-
-          <div className="lg:col-span-4 flex flex-col gap-3 animate-fade-in">
-            <Link
-              to="/inquiry"
-              className="group inline-flex items-center justify-between bg-gradient-gold text-primary-foreground px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
-            >
-              Get Instant Quote
-              <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-            </Link>
-            <a
-              href={whatsappLink()}
-              target="_blank"
-              rel="noreferrer"
-              className="group inline-flex items-center justify-between border border-foreground/30 hover:border-industrial hover:text-industrial px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-colors"
-            >
-              <span className="flex items-center gap-3"><MessageCircle size={16} /> WhatsApp the Atelier</span>
-              <ArrowUpRight size={18} />
-            </a>
-            <Link
-              to="/admin"
-              className="group inline-flex items-center justify-between border border-foreground/15 hover:border-foreground/40 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-colors text-foreground/70"
-            >
-              <span className="flex items-center gap-3"><Zap size={16} /> AI Studio & FOB Calculator</span>
-              <ArrowUpRight size={18} />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       <TrustBar />
       <ClientsMarquee />
