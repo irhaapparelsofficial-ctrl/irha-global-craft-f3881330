@@ -104,6 +104,7 @@ export default function Admin() {
               {tab === "catalog" && <CatalogPanel />}
               {tab === "studio" && <StudioPricingPanel />}
               {tab === "leads" && <LeadsPanel />}
+              {tab === "directory" && <ExportDirectoryPanel />}
               {tab === "pi" && <PIGeneratorPanel />}
               {tab === "mailing" && <MailingPanel />}
               {tab === "listings" && <ListingsPanel />}
