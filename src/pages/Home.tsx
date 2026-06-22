@@ -185,15 +185,12 @@ export default function Home() {
                 (hub.childSlugs as readonly string[]).includes(c.slug),
               );
               const cover = children.find((c) => c.image_url)?.image_url;
-              const isActive = activeMacro === hub.key;
               const firstChild = children[0];
               const Icon = hub.Icon;
               return (
                 <article
                   key={hub.key}
-                  className={`group relative border-2 ${
-                    isActive ? "border-industrial shadow-2xl" : "border-border/60"
-                  } ${hub.ringClass} ${hub.surfaceClass} transition-all duration-500 flex flex-col min-h-[560px] overflow-hidden`}
+                  className={`group relative border-2 border-border/60 ${hub.ringClass} ${hub.surfaceClass} transition-all duration-500 flex flex-col min-h-[560px] overflow-hidden`}
                 >
                   {cover && (
                     <img
@@ -232,27 +229,13 @@ export default function Home() {
                     </ul>
 
                     <div className="mt-auto pt-10 flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveMacro(isActive ? null : hub.key);
-                          requestAnimationFrame(() => {
-                            document
-                              .getElementById("live-catalogue")
-                              ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                          });
-                        }}
-                        className={`inline-flex items-center gap-3 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-all ${hub.ctaClass}`}
-                      >
-                        {isActive ? "Filter Active" : "Explore Catalog"}
-                        <ArrowUpRight size={16} />
-                      </button>
                       {firstChild && (
                         <Link
                           to={`/products/${firstChild.slug}`}
-                          className={`inline-flex items-center gap-2 px-5 py-4 text-xs uppercase tracking-[0.3em] border ${hub.chipClass} hover:bg-foreground/5 transition-colors`}
+                          className={`inline-flex items-center gap-3 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-all ${hub.ctaClass}`}
                         >
-                          Browse Hub
+                          Explore Hub
+                          <ArrowUpRight size={16} />
                         </Link>
                       )}
                     </div>
@@ -261,6 +244,7 @@ export default function Home() {
               );
             })}
           </div>
+
         </div>
       </section>
 
