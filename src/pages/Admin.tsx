@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store, Package } from "lucide-react";
+import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store, Package, Layers, Cpu, Activity } from "lucide-react";
 import SocialPanel from "@/components/admin/SocialPanel";
 import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
 import HomePanel from "@/components/admin/HomePanel";
@@ -13,6 +13,9 @@ import PIGeneratorPanel from "@/components/admin/PIGeneratorPanel";
 import MailingPanel from "@/components/admin/MailingPanel";
 import ListingsPanel from "@/components/admin/ListingsPanel";
 import CatalogPanel from "@/components/admin/CatalogPanel";
+import MacroGatewayPanel from "@/components/admin/MacroGatewayPanel";
+import StudioPricingPanel from "@/components/admin/StudioPricingPanel";
+import SocialDevOpsPanel from "@/components/admin/SocialDevOpsPanel";
 
 type Inquiry = {
   id: string; name: string; email: string; company: string | null; country: string | null;
@@ -22,7 +25,7 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "home" | "catalog" | "leads" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
+type Tab = "home" | "macro" | "catalog" | "leads" | "studio" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social" | "devops";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
@@ -78,7 +81,9 @@ export default function Admin() {
               {/* TABS */}
               <div className="flex flex-wrap gap-2 mb-8">
                 <TabButton active={tab === "home"} onClick={() => setTab("home")} icon={<Home size={14} />} label="Home" />
+                <TabButton active={tab === "macro"} onClick={() => setTab("macro")} icon={<Layers size={14} />} label="2-Macro Gateway" />
                 <TabButton active={tab === "catalog"} onClick={() => setTab("catalog")} icon={<Package size={14} />} label="Catalog" />
+                <TabButton active={tab === "studio"} onClick={() => setTab("studio")} icon={<Cpu size={14} />} label="AI Studio & FOB" />
                 <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={<Users size={14} />} label="Leads" />
                 <TabButton active={tab === "pi"} onClick={() => setTab("pi")} icon={<FileText size={14} />} label="PI Generator" />
                 <TabButton active={tab === "mailing"} onClick={() => setTab("mailing")} icon={<Send size={14} />} label="Mailing" />
@@ -89,10 +94,13 @@ export default function Admin() {
                 <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={<MessageSquare size={14} />} label="Live Chat" />
                 <TabButton active={tab === "gsc"} onClick={() => setTab("gsc")} icon={<Search size={14} />} label="Google Search" />
                 <TabButton active={tab === "social"} onClick={() => setTab("social")} icon={<Share2 size={14} />} label="Social" />
+                <TabButton active={tab === "devops"} onClick={() => setTab("devops")} icon={<Activity size={14} />} label="Social Sync & DevOps" />
               </div>
 
               {tab === "home" && <HomePanel />}
+              {tab === "macro" && <MacroGatewayPanel />}
               {tab === "catalog" && <CatalogPanel />}
+              {tab === "studio" && <StudioPricingPanel />}
               {tab === "leads" && <LeadsPanel />}
               {tab === "pi" && <PIGeneratorPanel />}
               {tab === "mailing" && <MailingPanel />}
@@ -103,6 +111,7 @@ export default function Admin() {
               {tab === "chat" && <ChatPanel />}
               {tab === "gsc" && <GSCPanel />}
               {tab === "social" && <SocialPanel />}
+              {tab === "devops" && <SocialDevOpsPanel />}
             </>
           )}
         </div>
