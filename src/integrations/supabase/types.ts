@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      b2b_leads: {
+        Row: {
+          apparel_segment: string | null
+          company_name: string
+          country: string
+          created_at: string
+          email: string | null
+          id: string
+          lead_status: Database["public"]["Enums"]["lead_status"]
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          apparel_segment?: string | null
+          company_name: string
+          country: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_status?: Database["public"]["Enums"]["lead_status"]
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          apparel_segment?: string | null
+          company_name?: string
+          country?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_status?: Database["public"]["Enums"]["lead_status"]
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       business_suits: {
         Row: {
           construction: string | null
@@ -384,6 +426,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin"
+      lead_status: "New" | "Pitched" | "Warm" | "Replied" | "Rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -512,6 +555,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin"],
+      lead_status: ["New", "Pitched", "Warm", "Replied", "Rejected"],
     },
   },
 } as const
