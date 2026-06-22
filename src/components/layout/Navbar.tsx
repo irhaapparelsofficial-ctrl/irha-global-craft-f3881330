@@ -159,9 +159,10 @@ export default function Navbar() {
               {l.label}
             </NavLink>
           ))}
+          <MockupRequestButton variant="navMobile">Mockup Design</MockupRequestButton>
           <Link
             to="/inquiry"
-            className="mt-2 inline-flex w-fit items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em]"
+            className="mt-1 inline-flex w-fit items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em]"
           >
             Get Quote
           </Link>
