@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store } from "lucide-react";
+import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store, Package } from "lucide-react";
 import SocialPanel from "@/components/admin/SocialPanel";
 import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
 import HomePanel from "@/components/admin/HomePanel";
@@ -12,6 +12,7 @@ import LeadsPanel from "@/components/admin/LeadsPanel";
 import PIGeneratorPanel from "@/components/admin/PIGeneratorPanel";
 import MailingPanel from "@/components/admin/MailingPanel";
 import ListingsPanel from "@/components/admin/ListingsPanel";
+import CatalogPanel from "@/components/admin/CatalogPanel";
 
 type Inquiry = {
   id: string; name: string; email: string; company: string | null; country: string | null;
@@ -21,7 +22,7 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "home" | "leads" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
+type Tab = "home" | "catalog" | "leads" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social";
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
@@ -77,6 +78,7 @@ export default function Admin() {
               {/* TABS */}
               <div className="flex flex-wrap gap-2 mb-8">
                 <TabButton active={tab === "home"} onClick={() => setTab("home")} icon={<Home size={14} />} label="Home" />
+                <TabButton active={tab === "catalog"} onClick={() => setTab("catalog")} icon={<Package size={14} />} label="Catalog" />
                 <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={<Users size={14} />} label="Leads" />
                 <TabButton active={tab === "pi"} onClick={() => setTab("pi")} icon={<FileText size={14} />} label="PI Generator" />
                 <TabButton active={tab === "mailing"} onClick={() => setTab("mailing")} icon={<Send size={14} />} label="Mailing" />
@@ -90,6 +92,7 @@ export default function Admin() {
               </div>
 
               {tab === "home" && <HomePanel />}
+              {tab === "catalog" && <CatalogPanel />}
               {tab === "leads" && <LeadsPanel />}
               {tab === "pi" && <PIGeneratorPanel />}
               {tab === "mailing" && <MailingPanel />}
