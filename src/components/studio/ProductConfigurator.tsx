@@ -479,9 +479,10 @@ export default function ProductConfigurator() {
                     <p className="mt-1 text-xs text-muted-foreground">{f.feel}</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs text-muted-foreground">
-                      {f.price > 0 ? `+$${f.price.toFixed(2)}` : "Included"}
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      On Quote
                     </span>
+
                     {active && <Check className="ml-auto mt-1 h-4 w-4 text-primary" />}
                   </div>
                 </button>
