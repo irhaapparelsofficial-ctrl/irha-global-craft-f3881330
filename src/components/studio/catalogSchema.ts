@@ -21,7 +21,17 @@ export type Fabric = {
   label: string;
   spec: string; // GSM, oz, weave, leather grade etc.
   feel: string;
-  price: number; // surcharge per unit
+  price: number; // surcharge per unit (USD)
+};
+
+// ZoneMaterial shares Fabric's shape and is used per-component.
+export type ZoneMaterial = Fabric;
+
+export type AddOn = {
+  id: string;
+  label: string;
+  cost: number; // USD surcharge per unit
+  group: "branding" | "hardware" | "finish";
 };
 
 export type ColorSwatch = { id: string; label: string; hex: string };
@@ -45,6 +55,8 @@ export type ProductBase = {
   fabrics?: Fabric[]; // override category fabrics
   sizing?: SizingScheme; // override category sizing
   placements?: LogoPlacement[];
+  zoneMaterials?: Record<string, ZoneMaterial[]>; // per-zone material overrides
+  addOns?: AddOn[]; // override category add-ons
 };
 
 export type Category = {
@@ -54,11 +66,14 @@ export type Category = {
   icon: LucideIcon;
   bases: ProductBase[];
   styles: StyleGroup[]; // default for category
-  fabrics: Fabric[];
+  fabrics: Fabric[]; // primary body materials
+  trims?: ZoneMaterial[]; // accent materials for collar/cuff/pocket/etc.
   colors: ColorSwatch[];
   sizing: SizingScheme;
   placements: LogoPlacement[];
+  addOns: AddOn[];
 };
+
 
 export type SilhouetteKey =
   | "tee"
