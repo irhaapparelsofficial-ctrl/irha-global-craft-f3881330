@@ -192,12 +192,13 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Center Chest", "Full Back", "Sleeve"],
     bases: [
-      { id: "crew", label: "Crewneck Tee", desc: "Classic round neck", basePrice: 6.5, silhouette: "tee" },
-      { id: "vneck", label: "V-Neck Tee", desc: "Tailored V-cut collar", basePrice: 6.9, silhouette: "tee" },
-      { id: "oversized", label: "Oversized Tee", desc: "Drop shoulder boxy fit", basePrice: 7.8, silhouette: "tee" },
-      { id: "hoodie", label: "Pullover Hoodie", desc: "Heavyweight kangaroo pocket", basePrice: 14.5, silhouette: "hoodie" },
-      { id: "zip-hoodie", label: "Full-Zip Hoodie", desc: "YKK zipper, dual pockets", basePrice: 16.2, silhouette: "hoodie" },
+      { id: "crew", label: "Crewneck Tee", desc: "Classic round-neck tee, side-seamed body", basePrice: 6.5, silhouette: "tee" },
+      { id: "vneck", label: "V-Neck Tee", desc: "Tailored V-cut neckline, ribbed collar", basePrice: 6.9, silhouette: "tee" },
+      { id: "oversized", label: "Oversized Tee", desc: "Drop-shoulder, boxy heavyweight fit", basePrice: 7.8, silhouette: "tee" },
+      { id: "hoodie", label: "Pullover Hoodie", desc: "Heavyweight fleece with kangaroo pocket and drawcord hood", basePrice: 14.5, silhouette: "hoodie" },
+      { id: "zip-hoodie", label: "Full-Zip Hoodie", desc: "YKK metal zip, twin slash pockets, ribbed cuffs", basePrice: 16.2, silhouette: "hoodie" },
     ],
+
     styles: [
       {
         id: "sleeve",
@@ -247,25 +248,62 @@ export const CATALOG: Category[] = [
       {
         id: "leder-knee",
         label: "Knee-Length Lederhosen",
-        desc: "Traditional Bundhosen with full embroidery panels",
+        desc: "Traditional Bundhosen with full-front embroidery panel and side lacing",
         basePrice: 52,
         silhouette: "lederhosen",
         sizing: WAIST_SIZING,
+        // Leather-only fabrics for Lederhosen
+        fabrics: [
+          { id: "goat-nappa", label: "Goat Nappa Leather", spec: "0.9–1.1 mm", feel: "Soft, supple, smooth grain", price: 0 },
+          { id: "cowhide", label: "Cowhide", spec: "1.2–1.4 mm", feel: "Heavy-duty, ages beautifully", price: 4 },
+          { id: "deer-suede", label: "Deer Suede", spec: "1.0 mm", feel: "Traditional Bavarian hand", price: 8 },
+          { id: "goat-suede", label: "Goat Suede", spec: "0.9 mm", feel: "Velvety matte finish", price: 2.5 },
+        ],
       },
       {
         id: "leder-short",
-        label: "Short Lederhosen",
-        desc: "Above-the-knee Kurze Lederhose",
+        label: "Short Lederhosen (Kurze)",
+        desc: "Above-the-knee Kurze Lederhose with bib front and stag-horn buttons",
         basePrice: 44,
         silhouette: "lederhosen",
         sizing: WAIST_SIZING,
+        fabrics: [
+          { id: "goat-nappa", label: "Goat Nappa Leather", spec: "0.9–1.1 mm", feel: "Soft, supple, smooth grain", price: 0 },
+          { id: "cowhide", label: "Cowhide", spec: "1.2–1.4 mm", feel: "Heavy-duty, ages beautifully", price: 4 },
+          { id: "deer-suede", label: "Deer Suede", spec: "1.0 mm", feel: "Traditional Bavarian hand", price: 8 },
+          { id: "goat-suede", label: "Goat Suede", spec: "0.9 mm", feel: "Velvety matte finish", price: 2.5 },
+        ],
       },
       {
         id: "dirndl",
-        label: "Dirndl Dress",
-        desc: "3-piece bodice, blouse & apron set",
+        label: "Dirndl Dress (3-Piece)",
+        desc: "Fitted bodice, blouse and apron set — woven dress textiles, not leather",
         basePrice: 68,
         silhouette: "dirndl",
+        // Dress fabrics — Dirndls are never leather
+        fabrics: [
+          { id: "cot-poplin", label: "Cotton Poplin", spec: "140 GSM", feel: "Crisp, breathable everyday Dirndl", price: 0 },
+          { id: "linen-blend", label: "Linen / Cotton Blend", spec: "180 GSM", feel: "Natural slub texture", price: 1.2 },
+          { id: "jacquard", label: "Floral Jacquard", spec: "220 GSM", feel: "Woven traditional motif", price: 2.4 },
+          { id: "taffeta", label: "Silk-Look Taffeta", spec: "Festive", feel: "Lustrous structured drape", price: 3.0 },
+          { id: "velvet", label: "Cotton Velvet (Bodice)", spec: "260 GSM", feel: "Plush Trachten bodice", price: 2.8 },
+        ],
+        // Dirndl trims — apron lace, satin ribbon, blouse cotton
+        zoneMaterials: {
+          apron: [
+            { id: "satin-apron", label: "Satin Apron", spec: "polyester satin", feel: "Glossy festive apron", price: 0 },
+            { id: "cotton-apron", label: "Cotton Apron", spec: "120 GSM", feel: "Matte traditional apron", price: 0 },
+            { id: "lace-apron", label: "Lace-Trim Apron", spec: "cotton + lace", feel: "Hand-trimmed lace edge", price: 1.5 },
+          ],
+          "blouse-sleeve-l": [
+            { id: "white-cotton", label: "White Cotton Blouse", spec: "100 GSM", feel: "Classic puff sleeve", price: 0 },
+            { id: "white-lace", label: "Cotton + Lace", spec: "100 GSM", feel: "Lace cuff & neckline", price: 1.0 },
+          ],
+          "blouse-sleeve-r": [
+            { id: "white-cotton", label: "White Cotton Blouse", spec: "100 GSM", feel: "Classic puff sleeve", price: 0 },
+            { id: "white-lace", label: "Cotton + Lace", spec: "100 GSM", feel: "Lace cuff & neckline", price: 1.0 },
+          ],
+        },
       },
     ],
     styles: [
@@ -297,18 +335,17 @@ export const CATALOG: Category[] = [
         ],
       },
     ],
+    // Category-level fabrics act as a fallback only; each base overrides above.
     fabrics: [
-      { id: "goat", label: "Goat Leather (Nappa)", spec: "0.9–1.1 mm", feel: "Soft, supple, smooth grain", price: 0 },
-      { id: "cow", label: "Cowhide", spec: "1.2–1.4 mm", feel: "Heavy-duty, ages beautifully", price: 4 },
-      { id: "deer", label: "Deer Suede", spec: "1.0 mm", feel: "Traditional Bavarian feel", price: 8 },
-      { id: "suede", label: "Goat Suede", spec: "0.9 mm", feel: "Velvety matte finish", price: 2.5 },
+      { id: "goat-nappa", label: "Goat Nappa Leather", spec: "0.9–1.1 mm", feel: "Soft, supple grain leather", price: 0 },
     ],
     trims: [
-      { id: "wool-felt", label: "Wool Felt Trim", spec: "Loden", feel: "Traditional accent", price: 1.5 },
-      { id: "linen", label: "Linen Trim", spec: "natural", feel: "Light contrast", price: 0.8 },
-      { id: "suede-trim", label: "Suede Trim", spec: "0.6 mm", feel: "Soft accent", price: 2.0 },
+      { id: "wool-felt", label: "Wool Felt (Loden)", spec: "Loden green", feel: "Traditional Bavarian accent", price: 1.5 },
+      { id: "linen-trim", label: "Linen Trim", spec: "natural", feel: "Light contrast edging", price: 0.8 },
+      { id: "suede-trim", label: "Suede Trim", spec: "0.6 mm", feel: "Soft accent panels", price: 2.0 },
     ],
   },
+
 
 
   // ============== SPORTSWEAR ==============
@@ -321,10 +358,11 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Center Chest", "Full Back", "Sleeve", "Shorts Leg"],
     bases: [
-      { id: "jersey", label: "Match Jersey", desc: "Sublimation-ready performance jersey", basePrice: 11, silhouette: "jersey" },
-      { id: "training-tee", label: "Training Tee", desc: "Lightweight mesh insert tee", basePrice: 8.5, silhouette: "tee" },
-      { id: "track-pant", label: "Track Pant", desc: "Tapered fit, zip pockets", basePrice: 13, silhouette: "trackPant" },
-      { id: "polo-perf", label: "Performance Polo", desc: "Moisture-wicking polo", basePrice: 10.5, silhouette: "polo" },
+      { id: "jersey", label: "Match Jersey", desc: "Sublimation-ready team jersey, engineered ventilation panels", basePrice: 11, silhouette: "jersey" },
+      { id: "training-tee", label: "Training Tee", desc: "Lightweight tee with side mesh inserts for airflow", basePrice: 8.5, silhouette: "tee" },
+      { id: "track-pant", label: "Track Pant", desc: "Tapered training pant with YKK zip side pockets", basePrice: 13, silhouette: "trackPant" },
+      { id: "polo-perf", label: "Performance Polo", desc: "Moisture-wicking pique polo with anti-roll collar", basePrice: 10.5, silhouette: "polo" },
+
     ],
     styles: [
       {
@@ -373,9 +411,10 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Back Panel", "Sleeve", "Collar Tab"],
     bases: [
-      { id: "moto", label: "Motorcycle Jacket", desc: "Asymmetric zip, armor pockets", basePrice: 95, silhouette: "leatherJacket" },
-      { id: "biker-slim", label: "Slim Biker", desc: "Tailored fashion biker", basePrice: 82, silhouette: "leatherJacket" },
-      { id: "bomber", label: "Leather Bomber", desc: "Ribbed cuffs & hem", basePrice: 88, silhouette: "leatherJacket" },
+      { id: "moto", label: "Motorcycle Jacket", desc: "Asymmetric YKK zip, CE armor pockets at shoulder/elbow/back", basePrice: 95, silhouette: "leatherJacket" },
+      { id: "biker-slim", label: "Slim Biker", desc: "Tailored fashion biker, lightweight goat nappa", basePrice: 82, silhouette: "leatherJacket" },
+      { id: "bomber", label: "Leather Bomber", desc: "Ribbed cuffs & hem, satin lining, twin welt pockets", basePrice: 88, silhouette: "leatherJacket" },
+
     ],
     styles: [
       {
@@ -431,9 +470,10 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Thigh", "Back Yoke"],
     bases: [
-      { id: "jogger", label: "Tapered Jogger", desc: "Cuffed leisure jogger", basePrice: 12, silhouette: "trackPant" },
-      { id: "lounge-hoodie", label: "Lounge Hoodie", desc: "Brushed-back fleece", basePrice: 15, silhouette: "hoodie" },
-      { id: "lounge-tee", label: "Lounge Tee", desc: "Modal-blend everyday tee", basePrice: 7.5, silhouette: "tee" },
+      { id: "jogger", label: "Tapered Jogger", desc: "Cuffed leisure jogger with elastic drawcord waist", basePrice: 12, silhouette: "trackPant" },
+      { id: "lounge-hoodie", label: "Lounge Hoodie", desc: "Brushed-back fleece, relaxed loungewear cut", basePrice: 15, silhouette: "hoodie" },
+      { id: "lounge-tee", label: "Lounge Tee", desc: "Modal-blend everyday tee with soft drape", basePrice: 7.5, silhouette: "tee" },
+
     ],
     styles: [
       {
@@ -471,9 +511,10 @@ export const CATALOG: Category[] = [
     sizing: LETTER_SIZING,
     placements: ["Left Chest", "Back Yoke", "Pocket"],
     bases: [
-      { id: "pj-set", label: "Pajama Set", desc: "Button shirt + pants", basePrice: 14, silhouette: "tee" },
-      { id: "robe", label: "Satin Robe", desc: "Wrap-front with belt", basePrice: 18, silhouette: "robe" },
-      { id: "nightshirt", label: "Nightshirt", desc: "Long-line sleep shirt", basePrice: 11, silhouette: "robe" },
+      { id: "pj-set", label: "Pajama Set", desc: "Button-up sleep shirt + matching pants in cotton poplin", basePrice: 14, silhouette: "tee" },
+      { id: "robe", label: "Satin Robe", desc: "Wrap-front robe with self-belt, satin-bound edges", basePrice: 18, silhouette: "robe" },
+      { id: "nightshirt", label: "Nightshirt", desc: "Long-line sleep shirt, button placket and chest pocket", basePrice: 11, silhouette: "robe" },
+
     ],
     styles: [
       {
