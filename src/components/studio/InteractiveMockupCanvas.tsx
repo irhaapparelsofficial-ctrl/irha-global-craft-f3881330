@@ -471,16 +471,15 @@ export default function InteractiveMockupCanvas({
           <Move className="h-3 w-3" /> Click any part to recolor
         </div>
 
-        {/* Live FOB Badge */}
+        {/* Live FOB Badge — price hidden, quote-only policy */}
         {typeof livePriceUnit === "number" && (
           <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-background/90 px-3 py-2 shadow-lg backdrop-blur">
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Estimated FOB</p>
-            <p className="font-mono text-lg font-bold leading-none text-primary">
-              ${livePriceUnit.toFixed(2)} <span className="text-[10px] font-normal text-muted-foreground">/ Pc</span>
-            </p>
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground">FOB</p>
+            <p className="font-mono text-sm font-bold leading-none text-primary">On Quote</p>
             {tierLabel && <p className="mt-0.5 text-[9px] text-muted-foreground">{tierLabel}</p>}
           </div>
         )}
+
 
         {selectedZoneObj && (() => {
           const zoneMats = getZoneMaterials?.(selectedZoneObj.id) || [];
