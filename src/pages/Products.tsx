@@ -7,8 +7,10 @@ import { useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
+import { FEATURED_PRODUCTS } from "@/lib/featuredProducts";
 
 import { whatsappLink, BRAND } from "@/lib/constants";
+
 
 
 
@@ -56,6 +58,71 @@ export default function Products() {
 
         </div>
       </section>
+
+      {/* Featured B2B Items — direct, click-through SKUs with explicit MOQ */}
+      <section className="py-20 border-b border-border/60 bg-card/20">
+        <div className="container-luxe">
+          <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
+            <div>
+              <p className="eyebrow mb-3">Featured B2B Items</p>
+              <h2 className="font-display text-3xl md:text-4xl leading-tight">
+                Direct from factory — clickable SKUs
+              </h2>
+            </div>
+            <p className="text-xs uppercase tracking-[0.3em] text-foreground/50 max-w-sm">
+              Each card links to its full spec sheet. MOQ, lead time and material visible up-front.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7">
+            {FEATURED_PRODUCTS.map((p) => (
+              <Link
+                key={p.sku}
+                to={`/products/${p.categorySlug}/${p.productSlug}`}
+                className="group flex flex-col text-left border border-border/60 bg-background hover:border-primary/60 transition-colors"
+                aria-label={`View ${p.title} (${p.sku})`}
+              >
+                <div className="relative aspect-[3/4] overflow-hidden bg-card">
+                  <img
+                    src={p.image}
+                    alt={p.title}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                  />
+                  <span className="absolute top-3 left-3 bg-background/90 backdrop-blur px-2.5 py-1 text-[9px] font-mono uppercase tracking-[0.2em] text-foreground/80 border border-border/60">
+                    {p.sku}
+                  </span>
+                  <span className="absolute top-3 right-3 bg-primary text-primary-foreground px-2.5 py-1 text-[9px] uppercase tracking-[0.2em] font-bold">
+                    {p.badge}
+                  </span>
+                </div>
+                <div className="p-4 flex flex-col gap-3 flex-1">
+                  <h3 className="font-display text-base leading-tight group-hover:text-primary transition-colors">
+                    {p.title}
+                  </h3>
+                  <p className="text-xs text-foreground/65 leading-relaxed line-clamp-3">
+                    {p.description}
+                  </p>
+                  <div className="mt-auto pt-3 border-t border-border/40 grid grid-cols-2 gap-2 text-[10px] font-mono uppercase tracking-[0.15em]">
+                    <div>
+                      <p className="text-foreground/45">MOQ</p>
+                      <p className="text-foreground/90">{p.moq.replace(/^MOQ:\s*/, "")}</p>
+                    </div>
+                    <div>
+                      <p className="text-foreground/45">Lead Time</p>
+                      <p className="text-foreground/90">{p.leadTime}</p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-primary font-bold pt-1">
+                    View spec sheet <ArrowUpRight size={12} />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       <section className="py-20">
         <div className="container-luxe space-y-32">
