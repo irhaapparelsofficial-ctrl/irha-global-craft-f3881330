@@ -118,6 +118,7 @@ export default function SocialDevOpsPanel() {
       });
       if (error) throw error;
       setLastResult(data as Record<string, unknown>);
+      await loadLastSync();
       toast({ title: "Sync dispatched", description: "Check the breakdown below." });
     } catch (e) {
       const message = e instanceof Error ? e.message : "Unknown failure";
