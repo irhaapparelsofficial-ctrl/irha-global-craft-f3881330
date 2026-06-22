@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { BRAND } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import MockupRequestButton from "@/components/MockupRequestButton";
 
 const mainLinks = [
   { to: "/", label: "Home" },
@@ -122,7 +123,8 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:flex items-center gap-3">
+          <MockupRequestButton variant="nav">Mockup Design</MockupRequestButton>
           <Link
             to="/inquiry"
             className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-medium hover:shadow-gold transition-all"
@@ -157,9 +159,10 @@ export default function Navbar() {
               {l.label}
             </NavLink>
           ))}
+          <MockupRequestButton variant="navMobile">Mockup Design</MockupRequestButton>
           <Link
             to="/inquiry"
-            className="mt-2 inline-flex w-fit items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em]"
+            className="mt-1 inline-flex w-fit items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em]"
           >
             Get Quote
           </Link>

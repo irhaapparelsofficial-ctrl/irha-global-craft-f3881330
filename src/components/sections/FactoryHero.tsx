@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+import MockupRequestButton from "@/components/MockupRequestButton";
 import manufacturing from "@/assets/manufacturing.jpg?w=1920;1280;800&format=webp&quality=75&as=srcset";
 import manufacturingFallback from "@/assets/manufacturing.jpg?w=1600&format=webp&quality=78";
 
@@ -31,13 +32,16 @@ export default function FactoryHero() {
         <p className="mt-6 max-w-xl text-sm md:text-base text-white/80 leading-relaxed">
           OEM · ODM · Private Label apparel for retailers and labels across DACH, UK, USA, Canada & Australia.
         </p>
-        <Link
-          to="/products"
-          className="group mt-9 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
-        >
-          View Collections
-          <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-        </Link>
+        <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            to="/products"
+            className="group inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
+          >
+            View Collections
+            <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+          </Link>
+          <MockupRequestButton variant="primary">Request Custom Mockup</MockupRequestButton>
+        </div>
       </div>
     </section>
   );
