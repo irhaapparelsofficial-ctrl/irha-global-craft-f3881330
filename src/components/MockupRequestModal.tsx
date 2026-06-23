@@ -41,8 +41,8 @@ export default function MockupRequestModal({ open, onOpenChange }: Props) {
 
     try {
       if (file) {
-        const ext = file.name.split(".").pop() || "bin";
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const path = `requests/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("mockup-uploads")
           .upload(path, file, { contentType: file.type, upsert: false });
