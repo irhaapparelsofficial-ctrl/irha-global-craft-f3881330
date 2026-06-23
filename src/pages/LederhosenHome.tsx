@@ -20,12 +20,12 @@ const macros = [
       "Hand-crafted Trachten and full-grain leather garments — built by Sialkot artisans for German, Austrian and Swiss wholesalers.",
     images: [catBavarian, catLeather],
     subCategories: [
-      { name: "Lederhosen", href: "/products/lederhosen" },
-      { name: "Trachten Wear", href: "/products/trachten" },
-      { name: "Dirndls", href: "/products/dirndls" },
-      { name: "Premium Leather Apparel", href: "/products/leather" },
+      { name: "Lederhosen", href: "/products/bavarian" },
+      { name: "Trachten Wear", href: "/products/bavarian" },
+      { name: "Dirndls", href: "/products/bavarian" },
+      { name: "Premium Leather Apparel", href: "/products/leatherwear" },
     ],
-    href: "/products/bavarian-leather",
+    href: "/products/bavarian",
   },
   {
     id: "textile-streetwear-active",
@@ -38,9 +38,9 @@ const macros = [
       { name: "Premium Sportswear", href: "/products/sportswear" },
       { name: "Heavyweight Streetwear", href: "/products/streetwear" },
       { name: "Nightwear", href: "/products/nightwear" },
-      { name: "Leisure Wear", href: "/products/leisure" },
+      { name: "Leisure Wear", href: "/products/leisurewear" },
     ],
-    href: "/products/textile-streetwear-active",
+    href: "/products/sportswear",
   },
 ];
 
