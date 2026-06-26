@@ -146,13 +146,6 @@ export default function Home() {
         </div>
       </section>
 
-      <CategoryGrid />
-      <AtmosphericGrid />
-
-      <TrustBar />
-      <ClientsMarquee />
-
-
       {/* 2-MACRO GATEWAYS */}
       <section className="py-24 md:py-32">
         <div className="container-luxe">
@@ -241,6 +234,15 @@ export default function Home() {
 
         </div>
       </section>
+
+
+      <CategoryGrid />
+      <AtmosphericGrid />
+
+      <TrustBar />
+      <ClientsMarquee />
+
+
 
 
 
