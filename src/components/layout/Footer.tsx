@@ -61,7 +61,7 @@ export default function Footer() {
         {/* Col 1 — Brand */}
         <div>
           <Link to="/" className="inline-flex items-center" aria-label="Irha Apparels home">
-            <img src={irhaLogo.src} alt="Irha Apparels" className="h-10 w-auto" />
+            <img src={irhaLogo.url} alt="Irha Apparels" className="h-10 w-auto" />
           </Link>
           <p className="mt-5 text-sm font-medium text-foreground/90">
             B2B Apparel Manufacturer
