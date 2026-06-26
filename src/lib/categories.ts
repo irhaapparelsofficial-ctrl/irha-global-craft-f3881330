@@ -51,7 +51,7 @@ export const CATEGORIES: Category[] = [
         gallery: ["/__l5e/assets-v1/1afd0194-b039-43b6-b816-f11ad2738b6a/irha-fix-0004.jpg", "/__l5e/assets-v1/f2789635-41de-4cc5-972c-54cd92f0fedc/irha-fix-0005.jpg", "/__l5e/assets-v1/c7479406-8b89-411a-b730-c80fbf87e74a/irha-fix-0006.jpg", "/__l5e/assets-v1/5cd2526d-175e-460b-b1e8-1cc97017c4f7/irha-fix-0008.jpg"],
         description: "Handcrafted alpine trachten hat in authentic Alpine tradition — premium fabrics, ornate detailing and heritage construction for Oktoberfest retailers and trachten boutiques across Germany & Austria.",
         specs: ["Genuine suede / cotton", "Hand embroidery", "Heritage hardware", "OEKO-TEX 100"],
-        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Karachi", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
+        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Sialkot", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
       },
       {
         name: "Bavarian Checkered Shirt",
@@ -59,7 +59,7 @@ export const CATEGORIES: Category[] = [
         gallery: ["/__l5e/assets-v1/b6f88de3-21be-429b-9c3b-468d2177b770/irha-0465.jpg", "/__l5e/assets-v1/77433f03-0c84-4a98-83b2-fa14e3182e53/irha-0463.jpg", "/__l5e/assets-v1/a155fc06-35d2-42db-a0b1-6b49909a3e50/irha-0464.jpg"],
         description: "Handcrafted bavarian checkered shirt in authentic Alpine tradition — premium fabrics, ornate detailing and heritage construction for Oktoberfest retailers and trachten boutiques across Germany & Austria.",
         specs: ["Genuine suede / cotton", "Hand embroidery", "Heritage hardware", "OEKO-TEX 100"],
-        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Karachi", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
+        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Sialkot", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
       },
       {
         name: "Bavarian Embroidered Vest",
@@ -67,7 +67,7 @@ export const CATEGORIES: Category[] = [
         gallery: ["/__l5e/assets-v1/13fccae5-9e9d-46c5-a4d6-c9dbe76bb519/irha-0054.jpg", "/__l5e/assets-v1/1d05f236-82ac-4d97-b314-ab8a41ab65be/irha-fix-0016.jpg", "/__l5e/assets-v1/aa039376-f3c3-4aeb-b384-509b8c765fa4/irha-fix-0017.jpg", "/__l5e/assets-v1/c3c828bf-bbad-44b9-923b-49d6cb47c4ec/irha-fix-0019.jpg"],
         description: "Handcrafted bavarian embroidered vest in authentic Alpine tradition — premium fabrics, ornate detailing and heritage construction for Oktoberfest retailers and trachten boutiques across Germany & Austria.",
         specs: ["Genuine suede / cotton", "Hand embroidery", "Heritage hardware", "OEKO-TEX 100"],
-        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Karachi", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
+        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Sialkot", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
       },
       {
         name: "Bavarian Leather Belt",
@@ -75,7 +75,7 @@ export const CATEGORIES: Category[] = [
         gallery: ["/__l5e/assets-v1/fb4b4db8-9592-4768-83a2-7857a016cfd7/irha-0457.jpg", "/__l5e/assets-v1/7805af78-7df1-410a-9b67-da900cf442d2/irha-0456.jpg"],
         description: "Handcrafted bavarian leather belt in authentic Alpine tradition — premium fabrics, ornate detailing and heritage construction for Oktoberfest retailers and trachten boutiques across Germany & Austria.",
         specs: ["Genuine suede / cotton", "Hand embroidery", "Heritage hardware", "OEKO-TEX 100"],
-        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Karachi", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
+        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Sialkot", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
       },
     ],
   },

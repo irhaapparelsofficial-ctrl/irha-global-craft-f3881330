@@ -14,7 +14,7 @@ export const FEATURED_PRODUCTS: FeaturedProduct[] = [
     categorySlug: "bavarian",
     productSlug: "lederhosen",
     moq: "MOQ: 50 sets per design / color",
-    leadTime: "45–60 days FOB Karachi",
+    leadTime: "45–60 days FOB Sialkot",
     badge: "B2B",
   },
   {

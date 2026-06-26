@@ -129,7 +129,7 @@ export const BLOG_POSTS: BlogPost[] = [
         "January–March: sampling and tech-pack approval for the upcoming Oktoberfest season",
         "April: PO confirmation, deposit, fabric and trim procurement",
         "May–July: bulk production",
-        "July–August: pre-shipment QC, packing, FOB Karachi",
+        "July–August: pre-shipment QC, packing, FOB Sialkot",
         "August–September: sea freight arrival in Hamburg/Rotterdam, customs clearance, retail-floor delivery",
         "September–October: Oktoberfest season retail sales",
       ]},
@@ -185,7 +185,7 @@ export const BLOG_POSTS: BlogPost[] = [
       { type: "h2", text: "DTC-ready packaging" },
       { type: "p", text: "If you are selling on Shopify or your own e-commerce site, ship to your 3PL or warehouse in DTC-ready format: folded with cardboard insert, branded tissue wrap, custom polybag, hangtag tied through neck label, EAN/UPC barcode. This eliminates re-packing at the warehouse and turns the unboxing into a brand moment." },
       { type: "h2", text: "Production lead times" },
-      { type: "p", text: "Counter-sample 14–21 days from tech pack. Bulk production 30–40 days for hoodies, 25–35 days for tees, from approved sample and PO. Sea freight Karachi → Felixstowe 24 days; Karachi → Los Angeles 35 days. Total tech-pack-to-warehouse: 60–90 days." },
+      { type: "p", text: "Counter-sample 14–21 days from tech pack. Bulk production 30–40 days for hoodies, 25–35 days for tees, from approved sample and PO. Sea freight Sialkot → Felixstowe 24 days; Sialkot → Los Angeles 35 days. Total tech-pack-to-warehouse: 60–90 days." },
       { type: "h2", text: "What to ask before signing the PI" },
       { type: "ul", items: [
         "Is the heavyweight fabric brushed-back and ring-spun?",
@@ -231,7 +231,7 @@ export const BLOG_POSTS: BlogPost[] = [
       { type: "h2", text: "Modern infrastructure layered onto heritage" },
       { type: "ul", items: [
         "Sialkot International Airport — Pakistan's first privately-owned international airport, with direct cargo flights to UAE and beyond",
-        "Dedicated trucking corridor to Karachi port (~1,400 km, 36 hours)",
+        "Dedicated trucking corridor to Sialkot port (~1,400 km, 36 hours)",
         "WRAP, Sedex SMETA, BSCI and OEKO-TEX certified factories at scale",
         "LWG (Leather Working Group) tannery infrastructure",
         "In-house dye sublimation, Tajima embroidery, Gerber/Lectra CAD on a city-wide basis",

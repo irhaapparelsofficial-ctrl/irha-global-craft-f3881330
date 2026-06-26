@@ -38,11 +38,11 @@ export type SeoLandingPage = {
 // Shared content blocks reused across pages (kept concise but unique per page via wrapping copy)
 const PROCESS_STEPS = [
   { step: "01", title: "Tech Pack & Sampling", body: "We translate your sketches, reference garments or mood-board into a production-ready tech pack — graded patterns, BoM, stitch call-outs, label and packaging spec. A photo-realistic counter-sample is dispatched within 14–21 days for fit and finish approval before bulk." },
-  { step: "02", title: "Fabric & Trim Sourcing", body: "Our in-house sourcing team works directly with LWG-rated tanneries, BCI-cotton spinners, GRS-certified knitters and OEKO-TEX dye houses across Sialkot, Faisalabad and Karachi — guaranteeing audited supply chains and tier-2 traceability on every shipment." },
+  { step: "02", title: "Fabric & Trim Sourcing", body: "Our in-house sourcing team works directly with LWG-rated tanneries, BCI-cotton spinners, GRS-certified knitters and OEKO-TEX dye houses across Sialkot, Faisalabad and Sialkot — guaranteeing audited supply chains and tier-2 traceability on every shipment." },
   { step: "03", title: "Cutting & Pattern", body: "Computerized CAD marker-making, Bullmer auto-spreaders and Gerber straight-knife cutting deliver ±1 mm cut accuracy across runs from 50 to 50,000 pieces — eliminating fabric waste and grading errors before sewing begins." },
   { step: "04", title: "Stitching & Assembly", body: "Single-needle, double-needle, overlock, flatlock, bartack, bonded-seam, button-hole, snap and rivet operations across 320+ machines. Skilled operators are trained for heavyweight fleece, technical sportswear, leather and embroidered trachten lines in parallel." },
   { step: "05", title: "Finishing & Embellishment", body: "In-house screen, sublimation, DTG, puff and high-density print; 24-head Tajima embroidery; chenille, applique, twill and laser-engraved patches; garment dye, enzyme wash, acid wash, stone wash and pigment-dye finishing." },
-  { step: "06", title: "QC, Packing & Export", body: "Four-point fabric inspection, in-line and end-line AQL 2.5 audits, metal detection, barcoding and brand-spec polybagging — followed by FOB Karachi, CIF or DDP shipping with full customs documentation for every destination market." },
+  { step: "06", title: "QC, Packing & Export", body: "Four-point fabric inspection, in-line and end-line AQL 2.5 audits, metal detection, barcoding and brand-spec polybagging — followed by FOB Sialkot, CIF or DDP shipping with full customs documentation for every destination market." },
 ];
 
 const QC_BULLETS = [
@@ -100,7 +100,7 @@ export const SEO_PAGES: SeoLandingPage[] = [
       privateLabel: "Private label means every visible element — woven main label, neck label, hangtag, polybag sticker, care label, packaging and even gift box — carries your brand only. We never co-brand, never include Irha Apparels labels on private-label shipments, and never resell branded samples. Confidentiality is contractually guaranteed.",
     },
     exportMarkets: ["United States", "United Kingdom", "Germany", "Netherlands", "Belgium", "UAE", "Australia", "Canada", "France", "Saudi Arabia"],
-    marketsCopy: "Our sportswear is shipped weekly to teamwear distributors, gym wear brands and sports retailers across the United States, United Kingdom, Germany, the Netherlands, Belgium, the UAE, Saudi Arabia and Australia. We handle FOB Karachi, CIF and DDP delivered-duty-paid shipments with complete export documentation — commercial invoice, packing list, certificate of origin, GSP Form A where applicable, OEKO-TEX certificates and GRS scope certificates on request. Most EU-bound shipments clear customs within 5 working days; US East Coast averages 28–32 days sea freight from Karachi.",
+    marketsCopy: "Our sportswear is shipped weekly to teamwear distributors, gym wear brands and sports retailers across the United States, United Kingdom, Germany, the Netherlands, Belgium, the UAE, Saudi Arabia and Australia. We handle FOB Sialkot, CIF and DDP delivered-duty-paid shipments with complete export documentation — commercial invoice, packing list, certificate of origin, GSP Form A where applicable, OEKO-TEX certificates and GRS scope certificates on request. Most EU-bound shipments clear customs within 5 working days; US East Coast averages 28–32 days sea freight from Sialkot.",
     faqs: [
       { q: "What is the MOQ for sportswear orders at Irha Apparels?", a: "Our standard MOQ is 50 sets per design and colorway, with free size splits XS–4XL inside the MOQ. Multi-color splits within one design accepted from 25 sets per colorway." },
       { q: "Do you offer fully sublimated custom team jerseys?", a: "Yes. Full dye-sublimation is in-house on 140–180 GSM micro-mesh and interlock polyester — unlimited print colors, custom crests, numbers, names and sponsor logos at no extra setup beyond a one-time digitizing fee." },
@@ -140,12 +140,12 @@ export const SEO_PAGES: SeoLandingPage[] = [
       "Our facility runs 320+ industrial sewing machines, in-house dye sublimation, 24-head Tajima embroidery and computerized fabric cutting — all under one roof. We produce for established sports brands in Germany, the United Kingdom and the United States, and for emerging gym wear and athleisure labels across the UAE, Saudi Arabia and Australia.",
     ],
     whyChoose: [
-      { title: "Sialkot supply-chain density", body: "Every component — fabric, dye, trim, embroidery thread, label, tag, polybag, carton — is sourced within a 15 km radius of the factory. Re-orders ship 30% faster than competitors who source from Karachi or Lahore." },
+      { title: "Sialkot supply-chain density", body: "Every component — fabric, dye, trim, embroidery thread, label, tag, polybag, carton — is sourced within a 15 km radius of the factory. Re-orders ship 30% faster than competitors who source from Sialkot or Lahore." },
       { title: "Sporting-goods DNA", body: "Three generations of family experience in football, leather sports gear and team apparel — applied to modern technical sportswear with the same obsession over stitch density, panel alignment and finish." },
       { title: "Audited social compliance", body: "WRAP, Sedex SMETA 4-Pillar and BSCI audits conducted on a rolling basis. Documentation shared with buyers on request — no surprises for brands with strict compliance frameworks." },
       { title: "Bilingual production team", body: "English-speaking merchandisers and production managers handle EU and US accounts directly — clear written communication, no broken-telephone losses between sales and floor." },
-      { title: "Established export logistics", body: "Daily freight connections to Karachi port via dedicated trucking — your shipment leaves the Sialkot factory and clears Karachi customs within 6 working days of FOB confirmation." },
-      { title: "Lower trader margins", body: "You are buying direct from the factory, not through a Karachi trading house, Hong Kong agent or Dubai re-exporter. Factory-direct pricing typically saves 12–18% on landed cost." },
+      { title: "Established export logistics", body: "Daily freight connections to Sialkot port via dedicated trucking — your shipment leaves the Sialkot factory and clears Sialkot customs within 6 working days of FOB confirmation." },
+      { title: "Lower trader margins", body: "You are buying direct from the factory, not through a Sialkot trading house, Hong Kong agent or Dubai re-exporter. Factory-direct pricing typically saves 12–18% on landed cost." },
     ],
     capabilities: [
       { title: "Team kits & uniforms", body: "Soccer, cricket, rugby, basketball, hockey, athletics and esports — full uniform packages with jersey, shorts, socks, warm-up and bench layer." },
@@ -163,14 +163,14 @@ export const SEO_PAGES: SeoLandingPage[] = [
       privateLabel: "Private-label production means your brand alone appears on the garment, packaging and shipping cartons. We strip Irha Apparels branding from every visible touchpoint, and our confidentiality agreements protect your designs from being sampled to other buyers.",
     },
     exportMarkets: ["United States", "United Kingdom", "Germany", "Netherlands", "UAE", "Saudi Arabia", "Australia", "France", "Italy", "Canada"],
-    marketsCopy: "Our Sialkot sportswear factory ships to teamwear distributors and gym brands across the United States, United Kingdom, Germany, Netherlands, Belgium, France, Italy, UAE, Saudi Arabia, Qatar and Australia. We handle export documentation for every shipment — commercial invoice, packing list, COO, GSP Form A, OEKO-TEX, GRS — and offer DDP delivery on request. Sea freight Karachi → Hamburg averages 22 days; Karachi → Felixstowe 24 days; Karachi → Jebel Ali 6 days; Karachi → New York 30 days.",
+    marketsCopy: "Our Sialkot sportswear factory ships to teamwear distributors and gym brands across the United States, United Kingdom, Germany, Netherlands, Belgium, France, Italy, UAE, Saudi Arabia, Qatar and Australia. We handle export documentation for every shipment — commercial invoice, packing list, COO, GSP Form A, OEKO-TEX, GRS — and offer DDP delivery on request. Sea freight Sialkot → Hamburg averages 22 days; Sialkot → Felixstowe 24 days; Sialkot → Jebel Ali 6 days; Sialkot → New York 30 days.",
     faqs: [
-      { q: "Why source sportswear from Sialkot rather than other Pakistani cities?", a: "Sialkot is the world's sporting-goods capital — every component supplier is within 15 km of our factory, which makes lead times faster and quality control tighter than sourcing from Karachi or Lahore for sports apparel specifically." },
+      { q: "Why source sportswear from Sialkot rather than other Pakistani cities?", a: "Sialkot is the world's sporting-goods capital — every component supplier is within 15 km of our factory, which makes lead times faster and quality control tighter than sourcing from Sialkot or Lahore for sports apparel specifically." },
       { q: "Are you audited for social compliance?", a: "Yes. We maintain rolling WRAP, Sedex SMETA 4-Pillar and BSCI audits. Audit reports are shared with buyers on request and we welcome buyer-funded third-party audits at any time." },
       { q: "Can you ship under DDP to Europe?", a: "Yes, DDP shipping is available to most EU countries via our nominated freight forwarder. Final price includes ocean freight, duty, VAT and delivery to your warehouse — quoted on a per-shipment basis." },
       { q: "Do you supply official match-grade sportswear?", a: "Yes. We produce match-grade kits for clubs and federations on request, using FIFA Quality-approved knits and reinforced stitching — separate from our retail and gym wear lines." },
       { q: "What is the typical sample lead time from Sialkot?", a: "Counter-samples ship within 14–21 days of approved tech pack. Photo and video proofs are shared at every milestone — fit, fabric, color, print — for sign-off before bulk." },
-      { q: "Do you accept buyer-nominated freight forwarders?", a: "Yes. We work with buyer-nominated forwarders for FOB Karachi shipments and provide all required customs documentation on time. We can also recommend reliable forwarders for first-time importers." },
+      { q: "Do you accept buyer-nominated freight forwarders?", a: "Yes. We work with buyer-nominated forwarders for FOB Sialkot shipments and provide all required customs documentation on time. We can also recommend reliable forwarders for first-time importers." },
     ],
     ctaTitle: "Source your sportswear directly from Sialkot",
     ctaBody: "Skip the middlemen. WhatsApp our factory team for direct-from-source pricing and lead times.",
@@ -233,7 +233,7 @@ export const SEO_PAGES: SeoLandingPage[] = [
       { q: "Can you produce custom hangtags, polybags and mailer boxes?", a: "Yes. We source custom-printed hangtags (paper, kraft, recycled), polybags (clear or branded), kraft mailer boxes, tissue wrap with brand prints, thank-you cards and branded carton-seal tape — all in-house." },
       { q: "Do you sign NDAs and brand-protection agreements?", a: "Yes. We sign mutual NDAs and our standard Brand Protection Addendum guarantees your designs are not sampled to other buyers, your patterns remain your IP, and shipments go only to your nominated forwarder." },
       { q: "Can you ship retail-ready folded packs with barcodes?", a: "Yes. We pack to your retail spec — folded with cardboard insert, polybag, hangtag and EAN/UPC barcode — so the shipment is shelf-ready or e-commerce-ready on arrival." },
-      { q: "How fast can you launch a first private-label collection?", a: "Tech pack → counter-sample in 14–21 days; bulk production in 25–35 days; FOB Karachi to USA/EU in 22–32 days sea freight. Total: 60–90 days from approved tech pack to warehouse." },
+      { q: "How fast can you launch a first private-label collection?", a: "Tech pack → counter-sample in 14–21 days; bulk production in 25–35 days; FOB Sialkot to USA/EU in 22–32 days sea freight. Total: 60–90 days from approved tech pack to warehouse." },
     ],
     ctaTitle: "Launch your private label sportswear brand",
     ctaBody: "WhatsApp our team with your brand concept. We share fabric swatches, factory photos and a transparent quote within 24 hours.",
@@ -297,13 +297,13 @@ export const SEO_PAGES: SeoLandingPage[] = [
       privateLabel: "Leather private-label production means your brand alone appears on the jacket, lining, hangtag, polybag and shipping carton. We strip Irha Apparels branding from every touchpoint and ship under your brand exclusively.",
     },
     exportMarkets: ["United States", "United Kingdom", "Germany", "Italy", "France", "Netherlands", "UAE", "Canada", "Saudi Arabia", "Belgium"],
-    marketsCopy: "Our leather garments ship weekly to fashion houses, motorcycle apparel brands and private-label boutiques in the United States, United Kingdom, Germany, Italy, France, the Netherlands, Spain, the UAE and Canada. FOB Karachi, CIF and DDP shipping all supported, with full REACH, CITES and LWG documentation per shipment. Sea freight Karachi → Hamburg averages 22 days; Karachi → Felixstowe 24 days; Karachi → Los Angeles 35 days.",
+    marketsCopy: "Our leather garments ship weekly to fashion houses, motorcycle apparel brands and private-label boutiques in the United States, United Kingdom, Germany, Italy, France, the Netherlands, Spain, the UAE and Canada. FOB Sialkot, CIF and DDP shipping all supported, with full REACH, CITES and LWG documentation per shipment. Sea freight Sialkot → Hamburg averages 22 days; Sialkot → Felixstowe 24 days; Sialkot → Los Angeles 35 days.",
     faqs: [
       { q: "What leather grades and types do you stock?", a: "We work with 0.7–1.2 mm lambskin nappa, cowhide aniline 1.0–1.2 mm, sheep suede, goatskin and waxed buffalo. All hides come from LWG Gold and Silver-rated tanneries with REACH and CITES documentation." },
       { q: "What is the MOQ for leather jackets?", a: "MOQ is 50 pieces per design and colorway. Pattern, sample and tech-pack support is included for confirmed POs. Bespoke single-design runs under MOQ are quoted separately as a sampling program." },
-      { q: "Do you export leatherwear to the USA and Europe?", a: "Yes. Leather is our second-largest export program. We ship to brands and retailers across the USA, UK, Germany, Italy, France, the Netherlands, the UAE and Canada — DDP and FOB Karachi both available." },
+      { q: "Do you export leatherwear to the USA and Europe?", a: "Yes. Leather is our second-largest export program. We ship to brands and retailers across the USA, UK, Germany, Italy, France, the Netherlands, the UAE and Canada — DDP and FOB Sialkot both available." },
       { q: "Can you replicate a sample jacket I already own?", a: "Yes. Send us your reference sample by courier and we pattern, grade and tech-pack it from scratch, then produce a counter-sample for approval before bulk production. Sampling lead time is 18–25 days." },
-      { q: "What is the production lead time for leather garments?", a: "55–70 days FOB Karachi from approved counter-sample and 30% advance. Air-freight upgrades are available for time-critical orders." },
+      { q: "What is the production lead time for leather garments?", a: "55–70 days FOB Sialkot from approved counter-sample and 30% advance. Air-freight upgrades are available for time-critical orders." },
       { q: "Do you offer vegetable-tanned or chrome-free leather options?", a: "Yes. Vegetable-tanned and chrome-free leather options are available on request from selected LWG-certified tanneries — with full documentation. Lead times may extend by 10–15 days." },
     ],
     ctaTitle: "Source premium leatherwear directly from Pakistan",
@@ -368,12 +368,12 @@ export const SEO_PAGES: SeoLandingPage[] = [
       privateLabel: "Private-label leather jackets carry your brand only — woven label, neck label, hangtag, polybag, garment bag and shipping carton. Zero Irha Apparels branding on any touchpoint, contractually protected by our Brand Protection Addendum.",
     },
     exportMarkets: ["United States", "United Kingdom", "Germany", "Italy", "France", "Netherlands", "UAE", "Canada", "Australia", "Belgium"],
-    marketsCopy: "Our leather jackets ship weekly to motorcycle apparel brands, fashion boutiques and private-label retailers in the United States, United Kingdom, Germany, Italy, France, the Netherlands, the UAE, Canada and Australia. FOB Karachi, CIF and DDP shipping all supported, with full REACH, LWG and CITES documentation per shipment.",
+    marketsCopy: "Our leather jackets ship weekly to motorcycle apparel brands, fashion boutiques and private-label retailers in the United States, United Kingdom, Germany, Italy, France, the Netherlands, the UAE, Canada and Australia. FOB Sialkot, CIF and DDP shipping all supported, with full REACH, LWG and CITES documentation per shipment.",
     faqs: [
       { q: "What is the MOQ for custom leather jackets?", a: "MOQ is 50 pieces per design and colorway. Pattern, sample and tech-pack support is included for confirmed POs. Bespoke single-design sampling runs are quoted separately." },
       { q: "Can you copy a leather jacket I already own?", a: "We don't copy trademarked designs, but we can pattern, grade and tech-pack any reference jacket from scratch — then produce a counter-sample under your own brand and labelling." },
       { q: "What hides do you stock?", a: "Lambskin nappa (0.7–0.9 mm), full-grain cowhide (1.0–1.2 mm), sheep suede, goatskin and waxed buffalo — in 12+ standard colors plus custom dye to Pantone." },
-      { q: "What is the production lead time for leather jackets?", a: "55–70 days FOB Karachi from approved counter-sample and 30% advance. Air freight upgrades available for time-critical orders." },
+      { q: "What is the production lead time for leather jackets?", a: "55–70 days FOB Sialkot from approved counter-sample and 30% advance. Air freight upgrades available for time-critical orders." },
       { q: "Do you use real YKK or RiRi zippers?", a: "Yes. Standard hardware is YKK Excella or RiRi M6 — sourced direct, verified authentic. We can also source IDEAL Prestige and custom-engraved metal hardware on request." },
       { q: "Do you offer chrome-free or vegetable-tanned leather?", a: "Yes. Vegetable-tanned and chrome-free options available from selected LWG-certified tanneries with full documentation. Lead times extend by 10–15 days." },
     ],
@@ -413,7 +413,7 @@ export const SEO_PAGES: SeoLandingPage[] = [
       { title: "Authentic Bavarian hardware", body: "Antler-style buttons, antique-brass Charivari, suede-bound buckles, horn buttons and stag-embossed metalware — sourced specifically for the Bavarian wear program." },
       { title: "Full size run", body: "Men EU 44–60, women EU 32–48, kids EU 92–164 (ages 2–14). Custom plus sizes and made-to-measure available on request." },
       { title: "EU-compliant documentation", body: "Every shipment includes REACH Annex XVII azo-dye certificates, OEKO-TEX Standard 100, LWG tannery references and EU customs paperwork — clean import to Germany, Austria, Switzerland." },
-      { title: "Oktoberfest delivery discipline", body: "Pre-Oktoberfest peak (Jan–May) we recommend confirming POs at least 90 days before shipping. Standard lead time 45–60 days FOB Karachi; sea freight to Hamburg 22 days." },
+      { title: "Oktoberfest delivery discipline", body: "Pre-Oktoberfest peak (Jan–May) we recommend confirming POs at least 90 days before shipping. Standard lead time 45–60 days FOB Sialkot; sea freight to Hamburg 22 days." },
     ],
     capabilities: [
       { title: "Heritage lederhosen sets", body: "Men's traditional lederhosen in deer suede with hand-embroidered front panel, antler buttons, suede suspenders and matching check shirt — complete Oktoberfest set." },
@@ -437,7 +437,7 @@ export const SEO_PAGES: SeoLandingPage[] = [
       { q: "What is the MOQ for wholesale lederhosen?", a: "Standard MOQ is 50 sets per design and colorway. Inside the MOQ you may split sizes EU 44–60 (men), women's and kids' sizing freely — so you can stock a full size run for a single shop or test launch." },
       { q: "Is the lederhosen suede genuine deer leather?", a: "Heritage sets are cut from 1.2–1.4 mm genuine deer suede. Entry-tier programs use top-grain cowhide split suede. Both are vegetable-tanned at LWG-audited tanneries with REACH Annex XVII compliance." },
       { q: "Do you produce kids lederhosen?", a: "Yes. Kids lederhosen (ages 2–14 / EU 92–164) in soft kid suede with adjustable suspenders, embroidered front panels and matching check shirts. CPSIA and EN 14682 compliant for child safety." },
-      { q: "What is the lead time for an Oktoberfest order?", a: "Standard lead time is 45–60 days FOB Karachi. For Oktoberfest delivery (September), confirm POs by May at the latest — Jan–May is our peak Bavarian production window." },
+      { q: "What is the lead time for an Oktoberfest order?", a: "Standard lead time is 45–60 days FOB Sialkot. For Oktoberfest delivery (September), confirm POs by May at the latest — Jan–May is our peak Bavarian production window." },
       { q: "Do you offer custom embroidery on lederhosen?", a: "Yes. Custom embroidery (your brand, family crest, regional motif, retailer logo) is available from 25 sets per pattern. Hand-embroidery is standard on heritage sets; machine-embroidery on entry-tier." },
     ],
     ctaTitle: "Source authentic Bavarian lederhosen direct from the factory",
@@ -499,9 +499,9 @@ export const SEO_PAGES: SeoLandingPage[] = [
       { q: "What trachten products do you manufacture?", a: "Full alpine wardrobe: dirndl dresses, dirndl blouses, lederhosen (kurze, kniebund, heritage), trachten shirts, embroidered vests, gilets, kids trachten and complete accessories (Charivari, hats, socks, belts, brooches)." },
       { q: "Do you produce region-specific trachten variants?", a: "Yes. Our pattern-makers and embroidery atelier produce authentic Bavarian, Tyrolean, Salzburg, Styrian and Allgäu variants — faithful to original folk-wear codes, and customizable for contemporary retail." },
       { q: "What is the MOQ for trachten?", a: "Standard MOQ is 50 pieces per design and colorway. Free size splits XS–XXL inside the MOQ; kids size splits ages 2–14 inside the MOQ." },
-      { q: "Do you ship to Germany, Austria and Switzerland?", a: "Yes — these are our largest trachten markets. We handle EU customs paperwork, REACH and OEKO-TEX certificates and DDP shipping on request. Sea freight Karachi → Hamburg averages 22 days." },
+      { q: "Do you ship to Germany, Austria and Switzerland?", a: "Yes — these are our largest trachten markets. We handle EU customs paperwork, REACH and OEKO-TEX certificates and DDP shipping on request. Sea freight Sialkot → Hamburg averages 22 days." },
       { q: "Can you produce custom dirndl prints?", a: "Yes. Custom-printed apron and bodice fabrics from 25 yards per print colorway. Submit artwork or mood-board; we sample on cotton voile, cotton-linen or printed satin." },
-      { q: "What is the production lead time for Oktoberfest orders?", a: "Standard lead time 45–60 days FOB Karachi. For Oktoberfest delivery in August/September, confirm POs by May at the latest." },
+      { q: "What is the production lead time for Oktoberfest orders?", a: "Standard lead time 45–60 days FOB Sialkot. For Oktoberfest delivery in August/September, confirm POs by May at the latest." },
     ],
     ctaTitle: "Source authentic trachten direct from a heritage manufacturer",
     ctaBody: "WhatsApp our Bavarian wear team for fabric swatches, embroidery samples and Oktoberfest production calendar.",
@@ -557,7 +557,7 @@ export const SEO_PAGES: SeoLandingPage[] = [
       privateLabel: "Private-label Oktoberfest costumes carry your brand only — woven label, neck tag, hangtag, polybag, gift box, carton seal. Zero Irha Apparels branding, contractually protected.",
     },
     exportMarkets: ["Germany", "Austria", "Switzerland", "USA", "Canada", "Australia", "UK", "Netherlands", "Belgium", "Italy"],
-    marketsCopy: "Oktoberfest costumes ship weekly to retailers and festival chains across Germany, Austria, Switzerland, the United States (Cincinnati, Milwaukee, La Crosse, Frankenmuth), Canada (Kitchener-Waterloo), Australia (Brisbane Oktoberfest), the United Kingdom (Oktoberfest London) and beyond. Sea freight Karachi → Hamburg 22 days; Karachi → Felixstowe 24 days; Karachi → New York 30 days. DDP shipping available to most major markets on request.",
+    marketsCopy: "Oktoberfest costumes ship weekly to retailers and festival chains across Germany, Austria, Switzerland, the United States (Cincinnati, Milwaukee, La Crosse, Frankenmuth), Canada (Kitchener-Waterloo), Australia (Brisbane Oktoberfest), the United Kingdom (Oktoberfest London) and beyond. Sea freight Sialkot → Hamburg 22 days; Sialkot → Felixstowe 24 days; Sialkot → New York 30 days. DDP shipping available to most major markets on request.",
     faqs: [
       { q: "When should I place my Oktoberfest order?", a: "Confirm POs by May at the latest for August/September retail-floor delivery. Sampling Jan–March, bulk April–July, shipping July–August is our standard Oktoberfest production calendar." },
       { q: "Do you make costume-tier Oktoberfest outfits as well as heritage?", a: "Yes. We produce three parallel tiers — heritage (deer suede, hand embroidery), mid (cowhide split-suede, machine embroidery) and costume (suede-effect polyester, screen-print) — to fit different retail price points." },
@@ -620,7 +620,7 @@ export const SEO_PAGES: SeoLandingPage[] = [
       privateLabel: "Private-label streetwear carries your brand only — woven label, neck label, hangtag, polybag, mailer box and shipping carton. Zero Irha Apparels branding, contractually protected by our Brand Protection Addendum.",
     },
     exportMarkets: ["United States", "United Kingdom", "Germany", "Canada", "Australia", "France", "Netherlands", "UAE", "Belgium", "Saudi Arabia"],
-    marketsCopy: "Streetwear ships weekly to fashion labels, DTC brands and retailers in Los Angeles, New York, London, Manchester, Toronto, Berlin, Sydney, Melbourne and Paris. DDP delivered-duty-paid available to most EU and US markets on request. Sea freight Karachi → Felixstowe averages 24 days; Karachi → Los Angeles 35 days; Karachi → New York 30 days.",
+    marketsCopy: "Streetwear ships weekly to fashion labels, DTC brands and retailers in Los Angeles, New York, London, Manchester, Toronto, Berlin, Sydney, Melbourne and Paris. DDP delivered-duty-paid available to most EU and US markets on request. Sea freight Sialkot → Felixstowe averages 24 days; Sialkot → Los Angeles 35 days; Sialkot → New York 30 days.",
     faqs: [
       { q: "What GSM weights do you produce for hoodies?", a: "Standard weights are 320, 380, 420 and 500 GSM brushed-back fleece in cotton and cotton-poly blends. Above 500 GSM (winter sherpa-lined hoodies) is available on request." },
       { q: "Is there a low-MOQ program for emerging streetwear brands?", a: "Yes. Our Start-Up Program allows MOQ 50 pieces per color across hoodies, tees and sweatpants — with the same heavyweight fabric, finishing and trims used for larger brands. Free tech-pack support for confirmed POs." },
@@ -682,7 +682,7 @@ export const SEO_PAGES: SeoLandingPage[] = [
       privateLabel: "Private-label custom apparel carries your brand only — woven label, neck label, hangtag, polybag, mailer box, gift box and shipping carton. Zero Irha Apparels branding, contractually protected by our Brand Protection Addendum.",
     },
     exportMarkets: ["United States", "United Kingdom", "Germany", "Austria", "Netherlands", "Belgium", "France", "Italy", "UAE", "Saudi Arabia", "Canada", "Australia"],
-    marketsCopy: "Our custom apparel ships weekly to over 200 active B2B accounts across North America, Europe, the Middle East and Oceania — including the United States, United Kingdom, Germany, Austria, the Netherlands, Belgium, France, Italy, the UAE, Saudi Arabia, Canada and Australia. FOB Karachi, CIF and DDP shipping all supported, with complete export documentation per shipment.",
+    marketsCopy: "Our custom apparel ships weekly to over 200 active B2B accounts across North America, Europe, the Middle East and Oceania — including the United States, United Kingdom, Germany, Austria, the Netherlands, Belgium, France, Italy, the UAE, Saudi Arabia, Canada and Australia. FOB Sialkot, CIF and DDP shipping all supported, with complete export documentation per shipment.",
     faqs: [
       { q: "What apparel categories do you manufacture?", a: "Sportswear, leatherwear, streetwear, Bavarian/trachten, leisurewear and nightwear — all in-house, in dedicated ateliers, with no outsourcing to unverified sub-contractors." },
       { q: "What is your MOQ?", a: "50 pieces per design and colorway across most programs. Multi-color splits accepted from 25 pieces per colorway. Volume pricing tiers for 500+, 1,000+ and 5,000+ pieces." },
@@ -720,7 +720,7 @@ type CountryPageInput = {
   category: string;        // "apparel", "lederhosen", "sportswear", "private label clothing", "custom apparel"
   intro: string[];
   capabilities: { title: string; body: string }[];
-  shippingLane: string;    // "Karachi → Hamburg" etc.
+  shippingLane: string;    // "Sialkot → Hamburg" etc.
   transitDays: string;     // "18–24 days FOB · 7 days air"
   duties: string;
   faqs: FAQ[];
@@ -758,7 +758,7 @@ const buildCountryPage = (i: CountryPageInput): SeoLandingPage => ({
     privateLabel: `Private-label production for ${i.countryAdj} brands carries your branding only — woven label, neck label, hangtag, polybag, mailer box, gift box and shipping carton. Zero Irha Apparels branding on retail-ready product.`,
   },
   exportMarkets: [i.country, "Germany", "Austria", "Netherlands", "Belgium", "United Kingdom", "United States", "UAE", "France", "Italy", "Saudi Arabia", "Canada", "Australia"],
-  marketsCopy: `We currently ship weekly to over 200 active B2B accounts globally, with regular consolidations into ${i.country}. Our primary lane is ${i.shippingLane} (${i.transitDays}), with FOB Karachi, CIF and DDP shipping all supported. ${i.duties} Complete export documentation — commercial invoice, packing list, certificate of origin, Form A / EUR.1 / GSP+ where applicable — issued per shipment.`,
+  marketsCopy: `We currently ship weekly to over 200 active B2B accounts globally, with regular consolidations into ${i.country}. Our primary lane is ${i.shippingLane} (${i.transitDays}), with FOB Sialkot, CIF and DDP shipping all supported. ${i.duties} Complete export documentation — commercial invoice, packing list, certificate of origin, Form A / EUR.1 / GSP+ where applicable — issued per shipment.`,
   faqs: i.faqs,
   ctaTitle: `Start your ${i.category} production with a verified Pakistan factory`,
   ctaBody: `WhatsApp our ${i.country} desk with your tech pack, reference samples or concept brief. We share fabric swatches, factory photos and a transparent quote (EUR / GBP / USD / AED) within 24 hours.`,
@@ -777,13 +777,13 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
     heroImage: manufacturingImg,
     heroAlt: "Apparel manufacturer for Germany — Sialkot factory producing private-label clothing for German brands",
     category: "apparel",
-    shippingLane: "Karachi → Hamburg / Bremerhaven",
+    shippingLane: "Sialkot → Hamburg / Bremerhaven",
     transitDays: "21–26 days FOB · 5–7 days air",
     duties: "Most apparel categories enter Germany under EU GSP+ preferential tariff with reduced or zero duty when shipped from Pakistan with Form A.",
     intro: [
       "Irha Apparels is a verified apparel manufacturer for German brands, retailers and importers — supplying private-label sportswear, leatherwear, streetwear, trachten and leisurewear from our Sialkot factory direct to fulfilment centres across Germany. We serve labels from Berlin, Munich, Hamburg, Cologne, Düsseldorf, Frankfurt and Stuttgart with the compliance, documentation and on-time delivery that German buyers expect.",
       "Germany is one of the world's most demanding apparel markets — high quality benchmarks, strict supply-chain due diligence under LkSG (Lieferkettengesetz), and zero tolerance for late or incomplete shipments. Our merchandising team is trained on EU REACH, OEKO-TEX Standard 100 and CSDDD documentation, and our QC discipline (AQL 2.5, four-point fabric inspection, third-party pre-shipment audits) is built specifically around what German importers test for at goods receiving.",
-      "Pakistan holds GSP+ preferential trade status with the European Union, which means most apparel categories enter Germany at reduced or zero import duty when accompanied by a valid Form A certificate of origin. We handle the GSP+ documentation in-house and ship FOB Karachi, CIF Hamburg or full DDP delivered-duty-paid to your warehouse in Germany.",
+      "Pakistan holds GSP+ preferential trade status with the European Union, which means most apparel categories enter Germany at reduced or zero import duty when accompanied by a valid Form A certificate of origin. We handle the GSP+ documentation in-house and ship FOB Sialkot, CIF Hamburg or full DDP delivered-duty-paid to your warehouse in Germany.",
     ],
     capabilities: [
       { title: "Trachten & Bavarian wear", body: "Lederhosen, dirndls, trachten shirts, vests and accessories — historically the heart of German trachten tailoring, now produced in Sialkot to authentic Bavarian patterns with leather, linen, cotton and wool." },
@@ -798,7 +798,7 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
       { q: "Is Pakistan eligible for GSP+ tariff into Germany?", a: "Yes. Pakistan holds GSP+ preferential trade status with the EU. Most apparel HS codes enter Germany at reduced or zero import duty when accompanied by a valid Form A certificate of origin, which we issue in-house per shipment." },
       { q: "Are you compliant with the German Supply Chain Act (LkSG)?", a: "Yes. We maintain rolling Sedex SMETA 4-Pillar and WRAP audits, and provide the human-rights and environmental due-diligence documentation required under LkSG and the upcoming EU CSDDD." },
       { q: "Do you provide German-language labels and hangtags?", a: "Yes. Care labels per ISO 3758, fibre composition per EU Regulation 1007/2011, and German-language hangtags, neck labels and packaging are produced in-house at no extra setup cost." },
-      { q: "What is the typical lead time to Germany?", a: "Production lead time is 35–55 days from sample approval depending on category. Sea freight FOB Karachi → Hamburg is 21–26 days; full door-to-door DDP to a German warehouse is 45–70 days total. Air freight is 5–7 days for sample shipments or urgent restocks." },
+      { q: "What is the typical lead time to Germany?", a: "Production lead time is 35–55 days from sample approval depending on category. Sea freight FOB Sialkot → Hamburg is 21–26 days; full door-to-door DDP to a German warehouse is 45–70 days total. Air freight is 5–7 days for sample shipments or urgent restocks." },
       { q: "Can German buyers visit the Sialkot factory?", a: "Yes. We host German buyers at our Sialkot facility throughout the year, issue visa invitation letters where required, and coordinate hotel and translation support during the visit." },
     ],
     relatedCategorySlug: "bavarian",
@@ -822,13 +822,13 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
     heroImage: bavarianImg,
     heroAlt: "Lederhosen manufacturer for Austria — authentic Bavarian-style trachten production at Irha Apparels Sialkot",
     category: "lederhosen",
-    shippingLane: "Karachi → Hamburg → Vienna / Salzburg",
+    shippingLane: "Sialkot → Hamburg → Vienna / Salzburg",
     transitDays: "26–32 days FOB · 6–8 days air",
     duties: "Lederhosen and leather trachten enter Austria via the EU customs union, typically at reduced GSP+ tariff with valid Form A from Pakistan.",
     intro: [
       "Irha Apparels manufactures authentic Lederhosen, dirndls and complete trachten programs for Austrian importers, trachten houses, Oktoberfest retailers and traditional-wear brands across Vienna, Salzburg, Innsbruck, Linz and Graz. Our trachten atelier in Sialkot specialises in cowhide and goatskin Lederhosen with traditional embroidery, antler horn buttons, deer-bone fastenings and Bavarian-pattern stitching — produced to the standards Austrian trachten buyers have demanded for decades.",
       "Austria's trachten market is uniquely discerning — buyers know the difference between machine-printed imitation and hand-finished embroidery, between split-grain leather and full-grain Nappa, between true Alpine pattern detail and generic costume reproduction. We work directly with LWG-rated tanneries in Pakistan to source genuine full-grain cowhide and goatskin, and our trachten line is run by master craftsmen who have produced for European trachten brands for over 15 years.",
-      "Pakistan holds GSP+ preferential trade status with the European Union, meaning Lederhosen and leather trachten enter Austria at reduced or zero import duty when shipped with Form A from Pakistan. We handle the customs documentation in-house and offer FOB Karachi, CIF Hamburg with onward trucking, or full DDP delivered-duty-paid shipping to Austria — typically transiting via Hamburg or Bremerhaven and onward by road to Vienna or Salzburg.",
+      "Pakistan holds GSP+ preferential trade status with the European Union, meaning Lederhosen and leather trachten enter Austria at reduced or zero import duty when shipped with Form A from Pakistan. We handle the customs documentation in-house and offer FOB Sialkot, CIF Hamburg with onward trucking, or full DDP delivered-duty-paid shipping to Austria — typically transiting via Hamburg or Bremerhaven and onward by road to Vienna or Salzburg.",
     ],
     capabilities: [
       { title: "Authentic Lederhosen", body: "Knee-length and short Lederhosen in full-grain cowhide, suede goatskin and Nappa lambskin — hand-finished traditional embroidery, antler buttons, horn fastenings and authentic suspender constructions." },
@@ -867,13 +867,13 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
     heroImage: sportswearImg,
     heroAlt: "Sportswear manufacturer for UAE — sublimated team and gym wear production at Irha Apparels Sialkot for Dubai and Abu Dhabi buyers",
     category: "sportswear",
-    shippingLane: "Karachi → Jebel Ali / Dubai",
+    shippingLane: "Sialkot → Jebel Ali / Dubai",
     transitDays: "5–7 days FOB · 1–2 days air",
     duties: "GCC common external tariff applies; most sportswear HS codes enter the UAE at 5% duty, with free-zone re-export options for Jebel Ali Free Zone (JAFZA) and DAFZA importers.",
     intro: [
-      "Irha Apparels is a verified sportswear manufacturer for the UAE — supplying sublimated football, padel, cricket and rugby jerseys, gym wear, abaya-friendly modest activewear, school sportswear, corporate teamwear and tracksuits to brands, retailers and distributors across Dubai, Abu Dhabi, Sharjah, Ajman and Ras Al Khaimah. With Karachi to Jebel Ali shipping in just 5–7 days, we are effectively a near-shore manufacturing partner for the entire GCC.",
+      "Irha Apparels is a verified sportswear manufacturer for the UAE — supplying sublimated football, padel, cricket and rugby jerseys, gym wear, abaya-friendly modest activewear, school sportswear, corporate teamwear and tracksuits to brands, retailers and distributors across Dubai, Abu Dhabi, Sharjah, Ajman and Ras Al Khaimah. With Sialkot to Jebel Ali shipping in just 5–7 days, we are effectively a near-shore manufacturing partner for the entire GCC.",
       "The UAE sportswear market combines retail demand from global resident brands, corporate uniform programs for hotels, airlines and government bodies, school-uniform contracts across the Emirates, and a growing local sportswear label scene driven by padel, fitness and modest activewear. We support each of these segments with dedicated merchandisers, MOQs from 50 pieces, and full Arabic-language labelling and packaging on request.",
-      "Shipments from Karachi to Jebel Ali typically clear customs in 24–48 hours, making the UAE one of our fastest-turnaround export markets globally. We support FOB Karachi, CIF Jebel Ali and DDP delivered-duty-paid shipping with full customs clearance into Dubai or onward into the wider GCC via re-export through JAFZA and DAFZA free zones.",
+      "Shipments from Sialkot to Jebel Ali typically clear customs in 24–48 hours, making the UAE one of our fastest-turnaround export markets globally. We support FOB Sialkot, CIF Jebel Ali and DDP delivered-duty-paid shipping with full customs clearance into Dubai or onward into the wider GCC via re-export through JAFZA and DAFZA free zones.",
     ],
     capabilities: [
       { title: "Sublimated jerseys", body: "Full sublimation football, padel, cricket, rugby and basketball jerseys in 4-way stretch micro-mesh and interlock — single-pass dye-sub printing for vibrant colour, sweat resistance and Gulf-climate breathability." },
@@ -884,7 +884,7 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
       { title: "Arabic-language branding", body: "Arabic neck labels, bilingual care tags, RTL-oriented hangtags and Arabic-script embroidery — produced in-house at no extra setup cost for Gulf-market private labels." },
     ],
     faqs: [
-      { q: "How fast can you ship to Dubai?", a: "Sea freight FOB Karachi → Jebel Ali is just 5–7 days transit, with customs clearance typically completed in 24–48 hours. Air freight to DXB or DWC is 1–2 days for urgent restocks or sample shipments." },
+      { q: "How fast can you ship to Dubai?", a: "Sea freight FOB Sialkot → Jebel Ali is just 5–7 days transit, with customs clearance typically completed in 24–48 hours. Air freight to DXB or DWC is 1–2 days for urgent restocks or sample shipments." },
       { q: "Can you produce modest activewear and hijab-friendly sportswear?", a: "Yes. Long-sleeve tops, longline tunics, hijab-integrated training tops, burkinis and modest-coverage gym wear are produced in our dedicated knits atelier with the same construction quality as our standard sportswear lines." },
       { q: "Do you handle UAE customs clearance?", a: "Yes. Our nominated freight forwarders handle DDP clearance into Dubai, including 5% GCC duty, VAT registration verification and last-mile delivery to your warehouse, free-zone office or fulfilment centre." },
       { q: "Can you produce Arabic-language labels and packaging?", a: "Yes. Arabic neck labels, bilingual care tags, RTL-oriented hangtags, Arabic-script embroidery and bilingual packaging are produced in-house with no extra setup charge." },
@@ -912,13 +912,13 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
     heroImage: streetwearImg,
     heroAlt: "Private label clothing manufacturer for USA brands — Sialkot factory producing custom apparel for American DTC labels",
     category: "private label clothing",
-    shippingLane: "Karachi → Long Beach / New York / Savannah",
+    shippingLane: "Sialkot → Long Beach / New York / Savannah",
     transitDays: "28–35 days FOB · 4–6 days air",
     duties: "US apparel duties vary by HS code (typically 8.5–32%); we issue Section 321 documentation where applicable and support DDP delivery with duty pre-payment for transparent landed cost.",
     intro: [
       "Irha Apparels is a private-label clothing manufacturer trusted by American DTC brands, Shopify labels, Amazon sellers, boutique fitness studios and retail private-label programs across all 50 states. From our Sialkot factory we ship private-label sportswear, streetwear, leatherwear, leisurewear and custom apparel direct to fulfilment centres, 3PLs and warehouses in Los Angeles, New York, Houston, Chicago, Miami, Atlanta and Seattle — with full US-spec labelling, FTC-compliant care tags and tracked DDP delivery.",
       "American buyers face a unique challenge: balancing low landed cost against rising tariffs, the elimination of certain de-minimis exemptions, and increasing scrutiny on supply-chain transparency under the Uyghur Forced Labor Prevention Act (UFLPA) and FLA disclosures. Pakistan offers a clear advantage here — no XPCC or Xinjiang cotton in our supply chain, full traceability to LWG-rated tanneries and BCI cotton spinners, and Sedex SMETA audits that document chain-of-custody back to fibre.",
-      "We support FOB Karachi, CIF Long Beach / New York / Savannah and DDP delivered-duty-paid shipping to any US 3PL or fulfilment centre. Our nominated freight forwarders handle US customs entry, MID number registration, duty payment and last-mile delivery — giving American buyers a single transparent landed-cost quote with no surprise fees on arrival.",
+      "We support FOB Sialkot, CIF Long Beach / New York / Savannah and DDP delivered-duty-paid shipping to any US 3PL or fulfilment centre. Our nominated freight forwarders handle US customs entry, MID number registration, duty payment and last-mile delivery — giving American buyers a single transparent landed-cost quote with no surprise fees on arrival.",
     ],
     capabilities: [
       { title: "Custom DTC streetwear", body: "Heavyweight 400–500 GSM French terry hoodies, oversized tees, cargo pants, cropped sets and embroidered caps — for Shopify DTC brands, Instagram labels and Kickstarter campaigns." },
@@ -933,7 +933,7 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
       { q: "Is your supply chain UFLPA compliant?", a: "Yes. No Xinjiang cotton or XPCC-affiliated suppliers in our chain. We provide chain-of-custody documentation from BCI cotton spinners and LWG-rated tanneries, supporting US importer due-diligence requirements under the Uyghur Forced Labor Prevention Act." },
       { q: "What US-specific labels do you provide?", a: "FTC-compliant care symbols (16 CFR Part 423), country-of-origin marking, RN numbers, fibre composition per the Textile Fiber Products Identification Act, CPSIA-compliant children's wear trims, and California Prop 65 disclosures where applicable — all printed or woven in-house." },
       { q: "Can you produce for Amazon FBA?", a: "Yes. We routinely prep for Amazon FBA — FNSKU barcoding, individual polybagging with suffocation warnings, master carton labelling per FBA spec, and direct shipment to Amazon prep centres or FBA warehouses across the US." },
-      { q: "What is the typical lead time to the US?", a: "Production lead time is 35–55 days from sample approval. Sea freight FOB Karachi → Long Beach is 28–32 days, → New York 30–35 days. Full DDP to a US warehouse is typically 55–80 days total. Air freight is 4–6 days for sample shipments or urgent restocks." },
+      { q: "What is the typical lead time to the US?", a: "Production lead time is 35–55 days from sample approval. Sea freight FOB Sialkot → Long Beach is 28–32 days, → New York 30–35 days. Full DDP to a US warehouse is typically 55–80 days total. Air freight is 4–6 days for sample shipments or urgent restocks." },
       { q: "Do you accept low-MOQ orders for emerging US brands?", a: "Yes. Our Start-Up Program supports first-time American brands with free tech-packing, sampling support and the same 50-piece MOQ used by established labels. Many of our long-term US clients started with their first 100-piece capsule." },
     ],
     relatedCategorySlug: "streetwear",
@@ -957,11 +957,11 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
     heroImage: manufacturingImg,
     heroAlt: "Custom apparel manufacturer for UK brands — Sialkot factory producing private-label clothing for London, Manchester and Birmingham labels",
     category: "custom apparel",
-    shippingLane: "Karachi → Felixstowe / Southampton / London Gateway",
+    shippingLane: "Sialkot → Felixstowe / Southampton / London Gateway",
     transitDays: "22–28 days FOB · 5–7 days air",
     duties: "Pakistan holds GSP+ preferential trade status with the UK; most apparel HS codes enter the UK at reduced or zero duty when shipped with valid GSP Form A.",
     intro: [
-      "Irha Apparels is a custom apparel manufacturer trusted by UK brands, retailers, sports clubs, university merchandisers and DTC labels across London, Manchester, Birmingham, Leeds, Bristol, Glasgow and Edinburgh. From our Sialkot factory we produce custom sportswear, streetwear, leatherwear, trachten, leisurewear and corporate uniforms — shipped FOB Karachi, CIF Felixstowe or DDP delivered-duty-paid to your UK warehouse, fulfilment centre or 3PL.",
+      "Irha Apparels is a custom apparel manufacturer trusted by UK brands, retailers, sports clubs, university merchandisers and DTC labels across London, Manchester, Birmingham, Leeds, Bristol, Glasgow and Edinburgh. From our Sialkot factory we produce custom sportswear, streetwear, leatherwear, trachten, leisurewear and corporate uniforms — shipped FOB Sialkot, CIF Felixstowe or DDP delivered-duty-paid to your UK warehouse, fulfilment centre or 3PL.",
       "The UK apparel market post-Brexit demands flexible MOQs, transparent landed cost, strong supply-chain documentation under the Modern Slavery Act, and a manufacturing partner who can ship reliably outside the EU customs union. Pakistan is uniquely well-positioned for the UK — GSP+ preferential trade status delivers reduced or zero import duty on most apparel categories, our audited supply chain meets UK Modern Slavery Act due-diligence requirements, and our merchandising team is GBP-pricing fluent and based in UK business hours.",
       "We support every stage from concept sketch through tech pack, sampling, bulk production and shipping. Our Sialkot facility handles everything in-house — pattern-making, fabric sourcing, cutting, sewing, embroidery, printing, finishing and QC — with no outsourcing to unverified sub-contractors. UK buyers receive named QC and merchandising contacts, photo evidence per shipment, and the option of buyer-funded third-party pre-shipment inspection by SGS, Intertek or QIMA.",
     ],
@@ -977,7 +977,7 @@ const COUNTRY_PAGES: SeoLandingPage[] = [
       { q: "Is Pakistan eligible for UK GSP+ tariff?", a: "Yes. Pakistan retains GSP+ preferential trade status with the UK under the UK's Developing Countries Trading Scheme (DCTS). Most apparel HS codes enter the UK at reduced or zero import duty when accompanied by a valid GSP Form A, which we issue in-house per shipment." },
       { q: "Do you ship DDP to UK 3PLs?", a: "Yes. DDP delivered-duty-paid shipping to UK 3PLs (Huboo, James and James, Selazar, Mintsoft warehouses), Amazon FBA UK prep centres and direct-to-warehouse delivery in London, Manchester, Birmingham, Leeds and across the UK is supported." },
       { q: "Are you Modern Slavery Act compliant?", a: "Yes. We maintain rolling Sedex SMETA 4-Pillar and WRAP audits, and provide the supplier due-diligence documentation required for UK Modern Slavery Act Section 54 statements. Audit reports shared with buyers on request." },
-      { q: "What is the typical UK lead time?", a: "Production lead time is 35–55 days from sample approval depending on category. Sea freight FOB Karachi → Felixstowe is 22–28 days; full DDP to a UK warehouse is 45–70 days total. Air freight is 5–7 days for samples or urgent restocks." },
+      { q: "What is the typical UK lead time?", a: "Production lead time is 35–55 days from sample approval depending on category. Sea freight FOB Sialkot → Felixstowe is 22–28 days; full DDP to a UK warehouse is 45–70 days total. Air freight is 5–7 days for samples or urgent restocks." },
       { q: "Do you accept payment in GBP?", a: "Yes. We invoice in GBP, EUR, USD or AED on request, and accept TT (bank wire), Wise (formerly TransferWise) and LC payments. Standard terms are 30% deposit on order confirmation, balance against bill of lading copy." },
       { q: "Can UK buyers visit the Sialkot factory?", a: "Yes. We regularly host UK buyers at our Sialkot facility, issue visa invitation letters where required, and coordinate hotel, translation and ground transport during the visit." },
     ],

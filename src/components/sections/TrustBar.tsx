@@ -4,7 +4,7 @@ const ITEMS = [
   { Icon: Globe2,      k: "50+",        v: "Countries Served" },
   { Icon: Calendar,    k: "12 yrs",     v: "Export Heritage" },
   { Icon: Package,     k: "MOQ 50",     v: "Per Design / Color" },
-  { Icon: Truck,       k: "45-Day",     v: "FOB Karachi" },
+  { Icon: Truck,       k: "45-Day",     v: "FOB Sialkot" },
   { Icon: ShieldCheck, k: "OEKO-TEX",   v: "Std 100 Fabrics" },
   { Icon: BadgeCheck,  k: "BSCI · SEDEX", v: "Audited Atelier" },
 ];

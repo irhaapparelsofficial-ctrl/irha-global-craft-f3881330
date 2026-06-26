@@ -46,7 +46,7 @@ const macros = [
 const promises = [
   { icon: Factory, title: "Direct Factory", desc: "Owned atelier in Sialkot, Pakistan — no middlemen since 2014." },
   { icon: ShieldCheck, title: "Audited Quality", desc: "BSCI-aligned processes, full-grain leather, OEKO-TEX cotton." },
-  { icon: Truck, title: "45-Day Delivery", desc: "Tech-pack to FOB Karachi. Air & sea freight worldwide." },
+  { icon: Truck, title: "45-Day Delivery", desc: "Tech-pack to FOB Sialkot. Air & sea freight worldwide." },
   { icon: Award, title: "MOQ from 50", desc: "Low minimums for boutique brands and growing labels." },
 ];
 
@@ -193,7 +193,7 @@ export default function LederhosenHome() {
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h2 className="font-serif text-3xl md:text-5xl mb-6">Start your order today</h2>
           <p className="text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Send your tech-pack, sketches or reference samples. We reply within 12 hours with a full FOB Karachi quote.
+            Send your tech-pack, sketches or reference samples. We reply within 12 hours with a full FOB Sialkot quote.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link

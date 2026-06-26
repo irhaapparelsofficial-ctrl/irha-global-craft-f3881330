@@ -19,7 +19,7 @@ const BODY: Record<string, string[]> = {
   ],
   "sialkot-apparel-legacy": [
     "Sialkot sits on the Punjab plain near the Kashmir border. For two centuries it has been Pakistan's industrial atelier — first for surgical instruments, then sports goods, and now for premium apparel that ships to every continent.",
-    "What makes Sialkot different from Karachi or Faisalabad is generational specialization. The cutter you work with learned from his father, who learned from his. The result is craftsmanship density you rarely find in single-generation manufacturing zones.",
+    "What makes Sialkot different from Sialkot or Faisalabad is generational specialization. The cutter you work with learned from his father, who learned from his. The result is craftsmanship density you rarely find in single-generation manufacturing zones.",
     "We sit inside that lineage. Our floor combines master artisans with engineering-grade industrial machines — and the result is a hybrid that buyers can't replicate anywhere else at our price point.",
   ],
   "streetwear-500gsm": [
