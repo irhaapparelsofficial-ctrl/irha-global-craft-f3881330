@@ -1,8 +1,25 @@
 // Runs before `vite dev` and `vite build`; writes public/sitemap.xml.
 import { writeFileSync } from "fs";
 import { resolve } from "path";
+import { CATALOG } from "../src/lib/catalog";
 
 const BASE_URL = "https://www.irhaapparels.com";
+
+const slugify = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+const productEntries: { categorySlug: string; productSlug: string }[] = [];
+for (const group of CATALOG) {
+  for (const sub of group.subs) {
+    for (const p of sub.products) {
+      productEntries.push({
+        categorySlug: group.slug,
+        productSlug: slugify(p.name),
+      });
+    }
+  }
+}
+
 
 interface SitemapEntry {
   path: string;
@@ -63,6 +80,11 @@ const entries: SitemapEntry[] = [
   { path: "/privacy-policy", changefreq: "yearly", priority: "0.3" },
   ...seoLandingSlugs.map((slug) => ({ path: `/${slug}`, changefreq: "weekly" as const, priority: "0.95" })),
   ...categorySlugs.map((slug) => ({ path: `/products/${slug}`, changefreq: "weekly" as const, priority: "0.85" })),
+  ...productEntries.map(({ categorySlug, productSlug }) => ({
+    path: `/products/${categorySlug}/${productSlug}`,
+    changefreq: "monthly" as const,
+    priority: "0.7",
+  })),
   ...blogSlugs.map((slug) => ({ path: `/blog/${slug}`, changefreq: "monthly" as const, priority: "0.7" })),
   ...journalSlugs.map((slug) => ({ path: `/journal/${slug}`, changefreq: "monthly" as const, priority: "0.6" })),
 ];

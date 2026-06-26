@@ -10,7 +10,7 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
-import { ArrowUpRight, ChevronRight, Eye, MessageCircle } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Download, Eye, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 
 const SITE = "https://www.irhaapparels.com";
@@ -212,6 +212,13 @@ export default function CategoryPage() {
             >
               <Eye size={14} /> Preview Catalogue
             </button>
+            <a
+              href={`/catalogs/${category.slug}-catalog.pdf`}
+              download
+              className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+            >
+              <Download size={14} /> Download PDF
+            </a>
             <span className="text-xs uppercase tracking-[0.3em] text-foreground/55 ml-2">
               {totalProducts} styles · MOQ 50 · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
             </span>
