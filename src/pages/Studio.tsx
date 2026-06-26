@@ -142,7 +142,8 @@ export default function Studio() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pt-20">
+
       <Helmet>
         <title>B2B Custom Lab — Design Your Apparel | IRHA Apparels</title>
         <meta
@@ -153,7 +154,7 @@ export default function Studio() {
       </Helmet>
 
       {/* Header + hub toggle (sticky) */}
-      <div className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur">
+      <div className="sticky top-20 z-30 border-b border-border/60 bg-background/95 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-[0.3em] text-primary">B2B Custom Lab · Sialkot Factory Direct</p>
