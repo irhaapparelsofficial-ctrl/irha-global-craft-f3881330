@@ -103,16 +103,55 @@ export default function Home() {
         }}
       />
 
-      {/* HERO + CATEGORY SHOWCASE + ATMOSPHERIC GRID */}
+      {/* HERO */}
       <HeroCarousel />
+
+      {/* AI MOCKUP STUDIO HERO PROMO — above fold CTA */}
+      <section className="relative border-y border-gold/30 bg-gradient-to-r from-background via-card/40 to-background overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle_at_20%_50%,hsl(var(--gold))_0%,transparent_45%),radial-gradient(circle_at_85%_50%,hsl(var(--industrial))_0%,transparent_45%)]" />
+        <div className="container-luxe relative py-14 md:py-20">
+          <div className="grid md:grid-cols-[1fr,auto] gap-10 md:gap-14 items-center">
+            <div>
+              <p className="eyebrow mb-4 inline-flex items-center gap-2">
+                <Sparkles size={14} className="text-gold" /> AI Mockup Studio
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.04]">
+                Design your collection in <span className="text-gold italic">60 seconds</span>.
+              </h2>
+              <p className="mt-4 text-sm md:text-base text-foreground/75 max-w-xl leading-relaxed">
+                AI mockups with your logo, instant FOB Sialkot pricing — preview front &amp; back, change colors, request a quote in one click.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 md:min-w-[260px]">
+              <Link
+                to="/studio"
+                className="group inline-flex items-center justify-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.28em] font-medium shadow-gold hover:shadow-[0_0_40px_hsl(var(--gold)/0.6)] transition-all"
+                data-track="home-launch-ai-studio"
+              >
+                <Sparkles size={16} />
+                Launch AI Mockup Studio
+                <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </Link>
+              <a
+                href="/catalogue.pdf"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-3 border border-foreground/40 text-foreground hover:bg-foreground hover:text-background px-7 py-4 text-xs uppercase tracking-[0.28em] font-medium transition-colors"
+                data-track="home-download-catalog"
+              >
+                <Download size={14} /> Download Catalog
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <CategoryGrid />
       <AtmosphericGrid />
 
-
-
-
       <TrustBar />
       <ClientsMarquee />
+
 
       {/* 2-MACRO GATEWAYS */}
       <section className="py-24 md:py-32">
