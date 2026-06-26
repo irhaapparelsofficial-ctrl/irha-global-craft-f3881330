@@ -2,11 +2,11 @@ import SEO from "@/components/SEO";
 import journalHero from "@/assets/banners/journal-hero.jpg";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
-import bavarian from "@/assets/cat-bavarian.jpg";
-import leather from "@/assets/cat-leather.jpg";
-import streetwear from "@/assets/cat-streetwear.jpg";
-import sportswear from "@/assets/cat-sportswear.jpg";
-import nightwear from "@/assets/cat-nightwear.jpg";
+const bavarian = "/__l5e/assets-v1/18e78e80-1ac2-4ed5-bf35-4930c0bc76a3/irha-0035.jpg";
+const leather = "/__l5e/assets-v1/b55b7737-37a1-492a-8657-75c9c2d47f8a/irha-fix-0000.jpg";
+const streetwear = "/__l5e/assets-v1/2b3607f6-d2e8-4dcc-a58b-7b5602639f7b/irha-0206.jpg";
+const sportswear = "/__l5e/assets-v1/6ed8d48e-2b63-4777-a00d-32bdccbd5e05/irha-0109.jpg";
+const nightwear = "/__l5e/assets-v1/10eccef4-8445-4dfb-b41b-4c5fff6dda24/irha-0196.jpg";
 import factory from "@/assets/banners/factory-cinematic.jpg";
 
 export const ARTICLES = [

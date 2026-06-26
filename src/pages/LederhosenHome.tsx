@@ -4,13 +4,12 @@ import { ArrowRight, MessageCircle, Factory, ShieldCheck, Truck, Award } from "l
 import { whatsappLink, BRAND } from "@/lib/constants";
 
 import heroImg from "@/assets/hero.jpg";
-import catBavarian from "@/assets/cat-bavarian.jpg";
-import catLeather from "@/assets/cat-leather.jpg";
-import catSportswear from "@/assets/cat-sportswear.jpg";
-import catStreetwear from "@/assets/cat-streetwear.jpg";
-import catNightwear from "@/assets/cat-nightwear.jpg";
-import catLeisure from "@/assets/cat-leisure.jpg";
-
+const catBavarian = "/__l5e/assets-v1/18e78e80-1ac2-4ed5-bf35-4930c0bc76a3/irha-0035.jpg";
+const catLeather = "/__l5e/assets-v1/b55b7737-37a1-492a-8657-75c9c2d47f8a/irha-fix-0000.jpg";
+const catSportswear = "/__l5e/assets-v1/6ed8d48e-2b63-4777-a00d-32bdccbd5e05/irha-0109.jpg";
+const catStreetwear = "/__l5e/assets-v1/2b3607f6-d2e8-4dcc-a58b-7b5602639f7b/irha-0206.jpg";
+const catNightwear = "/__l5e/assets-v1/10eccef4-8445-4dfb-b41b-4c5fff6dda24/irha-0196.jpg";
+const catLeisure = "/__l5e/assets-v1/0a87c0d5-13a9-4596-a673-0b4f01711f0c/irha-0105.jpg";
 const macros = [
   {
     id: "bavarian-leather",
