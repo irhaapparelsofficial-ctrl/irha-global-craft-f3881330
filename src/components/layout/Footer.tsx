@@ -54,10 +54,20 @@ const COMPANY = [
   { to: "/contact", label: "Contact" },
 ];
 
+const COMPLIANCE = [
+  { label: "OEKO-TEX Standard 100", note: "Safe fabrics" },
+  { label: "BSCI", note: "Ethical manufacturing" },
+  { label: "SEDEX SMETA", note: "Social audit" },
+  { label: "ISO 9001", note: "Quality systems" },
+  { label: "GOTS", note: "Organic textiles (available)" },
+  { label: "WRAP", note: "US compliance" },
+  { label: "REACH", note: "EU chemicals" },
+];
+
 export default function Footer() {
   return (
     <footer className="relative bg-[#0A0A0A] border-t border-border/60 pt-16 pb-8 text-foreground/80">
-      <div className="container-luxe grid gap-12 md:grid-cols-4">
+      <div className="container-luxe grid gap-12 md:grid-cols-3 lg:grid-cols-5">
         {/* Col 1 — Brand */}
         <div>
           <Link to="/" className="inline-flex items-center" aria-label="Irha Apparels home">
