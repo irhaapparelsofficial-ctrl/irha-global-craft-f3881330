@@ -22,6 +22,7 @@ export default function QuoteForm({
     email: "",
     quantity: "",
     notes: "",
+    needsCompliance: false,
   });
   const [sent, setSent] = useState(false);
 
