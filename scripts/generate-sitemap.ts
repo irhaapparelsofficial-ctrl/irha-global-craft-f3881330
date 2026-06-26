@@ -1,8 +1,25 @@
 // Runs before `vite dev` and `vite build`; writes public/sitemap.xml.
 import { writeFileSync } from "fs";
 import { resolve } from "path";
+import { CATALOG } from "../src/lib/catalog";
 
 const BASE_URL = "https://www.irhaapparels.com";
+
+const slugify = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+const productEntries: { categorySlug: string; productSlug: string }[] = [];
+for (const group of CATALOG) {
+  for (const sub of group.subs) {
+    for (const p of sub.products) {
+      productEntries.push({
+        categorySlug: group.slug,
+        productSlug: slugify(p.name),
+      });
+    }
+  }
+}
+
 
 interface SitemapEntry {
   path: string;
