@@ -80,6 +80,11 @@ const entries: SitemapEntry[] = [
   { path: "/privacy-policy", changefreq: "yearly", priority: "0.3" },
   ...seoLandingSlugs.map((slug) => ({ path: `/${slug}`, changefreq: "weekly" as const, priority: "0.95" })),
   ...categorySlugs.map((slug) => ({ path: `/products/${slug}`, changefreq: "weekly" as const, priority: "0.85" })),
+  ...productEntries.map(({ categorySlug, productSlug }) => ({
+    path: `/products/${categorySlug}/${productSlug}`,
+    changefreq: "monthly" as const,
+    priority: "0.7",
+  })),
   ...blogSlugs.map((slug) => ({ path: `/blog/${slug}`, changefreq: "monthly" as const, priority: "0.7" })),
   ...journalSlugs.map((slug) => ({ path: `/journal/${slug}`, changefreq: "monthly" as const, priority: "0.6" })),
 ];
