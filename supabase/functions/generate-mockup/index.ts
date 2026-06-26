@@ -15,6 +15,13 @@ const MODEL = "google/gemini-3.1-flash-image";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const PUBLISHED_ORIGIN = "https://www.irhaapparels.com";
 const PER_CALL_TIMEOUT_MS = 25_000;
+const HEAL_TIMEOUT_MS = 55_000;
+const HEAL_MAX_ATTEMPTS = 3;
+const HEAL_BACKOFF_MS = 1_500;
+
+// Track in-flight self-heal jobs to avoid duplicate background work for the
+// same cache key during a single isolate's lifetime.
+const healingInFlight = new Set<string>();
 
 interface Body {
   productId: string;
@@ -81,6 +88,7 @@ async function generateView(
   logoDataUrl: string | null,
   prompt: string,
   apiKey: string,
+  timeoutMs: number = PER_CALL_TIMEOUT_MS,
 ): Promise<Uint8Array> {
   const content: any[] = [
     { type: "text", text: prompt },
@@ -89,7 +97,7 @@ async function generateView(
   if (logoDataUrl) content.push({ type: "image_url", image_url: { url: logoDataUrl } });
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PER_CALL_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   let res: Response;
   try {
     res = await fetch(GATEWAY, {
@@ -125,6 +133,66 @@ async function generateView(
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes;
 }
+
+// Background self-healing: re-runs failed views with extended timeout and
+// retries, then writes the cache so the next user request is an instant hit.
+async function selfHeal(opts: {
+  supabase: ReturnType<typeof createClient>;
+  cacheKey: string;
+  paths: { front: string; back: string };
+  baseDataUrl: string;
+  logoDataUrl: string | null;
+  apiKey: string;
+  enriched: Body & { productName: string };
+  need: { front: boolean; back: boolean };
+  existingGood: { front?: Uint8Array; back?: Uint8Array };
+}) {
+  const { supabase, cacheKey, paths, baseDataUrl, logoDataUrl, apiKey, enriched, need, existingGood } = opts;
+  if (healingInFlight.has(cacheKey)) return;
+  healingInFlight.add(cacheKey);
+  try {
+    const healView = async (view: "front" | "back"): Promise<Uint8Array | null> => {
+      const prompt = buildPrompt(enriched, view);
+      for (let attempt = 1; attempt <= HEAL_MAX_ATTEMPTS; attempt++) {
+        try {
+          return await generateView(baseDataUrl, logoDataUrl, prompt, apiKey, HEAL_TIMEOUT_MS);
+        } catch (err) {
+          console.warn(`[self-heal] ${view} attempt ${attempt} failed:`, err instanceof Error ? err.message : err);
+          if (attempt < HEAL_MAX_ATTEMPTS) {
+            await new Promise((r) => setTimeout(r, HEAL_BACKOFF_MS * attempt));
+          }
+        }
+      }
+      return null;
+    };
+
+    const [frontHealed, backHealed] = await Promise.all([
+      need.front ? healView("front") : Promise.resolve(existingGood.front ?? null),
+      need.back ? healView("back") : Promise.resolve(existingGood.back ?? null),
+    ]);
+
+    if (!frontHealed || !backHealed) {
+      console.warn(`[self-heal] ${cacheKey} incomplete — front:${!!frontHealed} back:${!!backHealed}`);
+      return;
+    }
+
+    await Promise.all([
+      supabase.storage.from(BUCKET).upload(paths.front, frontHealed, {
+        contentType: "image/png", upsert: true,
+      }),
+      supabase.storage.from(BUCKET).upload(paths.back, backHealed, {
+        contentType: "image/png", upsert: true,
+      }),
+    ]);
+    console.log(`[self-heal] ${cacheKey} cached successfully`);
+  } catch (err) {
+    console.error("[self-heal] unexpected error:", err);
+  } finally {
+    healingInFlight.delete(cacheKey);
+  }
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -240,6 +308,29 @@ Deno.serve(async (req) => {
 
     // Partial/total failure → return inline data URLs so the UI shows the base
     // image immediately with a watermark badge; nothing is cached.
+    // Kick off background self-heal so the next request hits cache instantly.
+    const healPromise = selfHeal({
+      supabase,
+      cacheKey,
+      paths,
+      baseDataUrl,
+      logoDataUrl,
+      apiKey,
+      enriched,
+      need: { front: frontFallback, back: backFallback },
+      existingGood: {
+        front: frontFallback ? undefined : frontBytes,
+        back: backFallback ? undefined : backBytes,
+      },
+    });
+    // @ts-ignore - EdgeRuntime is provided by the Supabase runtime
+    if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
+      // @ts-ignore
+      (EdgeRuntime as any).waitUntil(healPromise);
+    } else {
+      healPromise.catch((e) => console.error("[self-heal] detached error:", e));
+    }
+
     const inline = (bytes: Uint8Array, ct: string) => `data:${ct};base64,${bytesToBase64(bytes)}`;
     return new Response(
       JSON.stringify({
@@ -248,10 +339,12 @@ Deno.serve(async (req) => {
         cached: false,
         fallback: true,
         fallbackViews: { front: frontFallback, back: backFallback },
-        message: "AI back-preview pending — showing base reference",
+        healing: true,
+        message: "AI back-preview pending — regenerating in background, retry shortly",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("generate-mockup error:", msg);
