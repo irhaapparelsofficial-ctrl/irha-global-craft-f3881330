@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 
-import bavarian from "@/assets/og/og-bavarian.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
-import bavarianFb from "@/assets/og/og-bavarian.jpg?w=1600&format=webp&quality=74";
+import bavarian from "@/assets/og/og-bavarian-hero.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
+import bavarianFb from "@/assets/og/og-bavarian-hero.jpg?w=1600&format=webp&quality=74";
 import sportswear from "@/assets/og/og-sportswear.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import sportswearFb from "@/assets/og/og-sportswear.jpg?w=1600&format=webp&quality=74";
 import leather from "@/assets/og/og-leather.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
@@ -25,7 +25,7 @@ const SLIDES: Slide[] = [
   {
     src: bavarianFb,
     srcSet: bavarian,
-    alt: "Heritage Bavarian lederhosen — Irha Apparels",
+    alt: "Heritage Bavarian lederhosen with edelweiss embroidery on dark walnut — Irha Apparels",
     eyebrow: "Sialkot · Worldwide Export",
     title: "Bavarian Wear",
     highlight: "MOQ 50",
