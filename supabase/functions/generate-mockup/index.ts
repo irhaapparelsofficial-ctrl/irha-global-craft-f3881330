@@ -15,6 +15,13 @@ const MODEL = "google/gemini-3.1-flash-image";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const PUBLISHED_ORIGIN = "https://www.irhaapparels.com";
 const PER_CALL_TIMEOUT_MS = 25_000;
+const HEAL_TIMEOUT_MS = 55_000;
+const HEAL_MAX_ATTEMPTS = 3;
+const HEAL_BACKOFF_MS = 1_500;
+
+// Track in-flight self-heal jobs to avoid duplicate background work for the
+// same cache key during a single isolate's lifetime.
+const healingInFlight = new Set<string>();
 
 interface Body {
   productId: string;
