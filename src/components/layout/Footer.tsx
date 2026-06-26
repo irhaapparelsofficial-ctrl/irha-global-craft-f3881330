@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { BRAND, whatsappLink } from "@/lib/constants";
-import { Mail, MapPin, MessageCircle } from "lucide-react";
+import { Mail, MapPin, MessageCircle, ChevronDown } from "lucide-react";
 import irhaLogo from "@/assets/irha-logo.png.asset.json";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
@@ -76,85 +76,96 @@ export default function Footer() {
         </div>
 
         {/* Col 2 — Collections */}
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-gold mb-5">Collections</p>
-          <ul className="space-y-3 text-sm">
+        <details className="group md:open border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
+          <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
+            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Collections</span>
+            <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
+          </summary>
+          <ul className="space-y-3 text-sm pt-3 md:pt-0">
             {COLLECTIONS.map((c) => (
               <li key={c.slug}>
-                <Link to={`/products/${c.slug}`} className="text-foreground/70 hover:text-gold transition-colors">
+                <Link to={`/products/${c.slug}`} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">
                   {c.label}
                 </Link>
               </li>
             ))}
           </ul>
-        </div>
+        </details>
 
         {/* Col 3 — Company */}
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-gold mb-5">Company</p>
-          <ul className="space-y-3 text-sm">
+        <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
+          <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
+            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Company</span>
+            <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
+          </summary>
+          <ul className="space-y-3 text-sm pt-3 md:pt-0">
             {COMPANY.map((l) => (
               <li key={l.to}>
-                <Link to={l.to} className="text-foreground/70 hover:text-gold transition-colors">
+                <Link to={l.to} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">
                   {l.label}
                 </Link>
               </li>
             ))}
           </ul>
-        </div>
+        </details>
 
         {/* Col 4 — Connect */}
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-gold mb-5">Connect</p>
-          <div className="flex items-center gap-3 mb-5">
-            {SOCIALS.map((s) => (
-              <a
-                key={s.name}
-                href={s.href}
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label={`Irha Apparels on ${s.name}`}
-                className="inline-flex items-center justify-center w-9 h-9 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold transition-colors"
-              >
-                <s.Icon size={16} />
-              </a>
-            ))}
-          </div>
+        <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
+          <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
+            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Connect</span>
+            <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="pt-3 md:pt-0">
+            <div className="flex items-center gap-3 mb-5">
+              {SOCIALS.map((s) => (
+                <a
+                  key={s.name}
+                  href={s.href}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label={`Irha Apparels on ${s.name}`}
+                  className="inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold transition-colors"
+                >
+                  <s.Icon size={18} />
+                </a>
+              ))}
+            </div>
 
-          <ul className="space-y-3 text-sm">
-            <li>
-              <a
-                href={whatsappLink()}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-2 text-foreground/75 hover:text-gold transition-colors"
-              >
-                <WhatsAppIcon size={15} />
-                +92 320 4110066
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://wa.me/923204110066"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-2 text-foreground/55 hover:text-gold transition-colors text-xs"
-              >
-                <MessageCircle size={13} />
-                Chat on WhatsApp
-              </a>
-            </li>
-            <li>
-              <a
-                href="mailto:b2b@irhaapparels.com"
-                className="inline-flex items-center gap-2 text-foreground/75 hover:text-gold transition-colors break-all"
-              >
-                <Mail size={15} />
-                b2b@irhaapparels.com
-              </a>
-            </li>
-          </ul>
-        </div>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a
+                  href={whatsappLink()}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors"
+                >
+                  <WhatsAppIcon size={15} />
+                  +92 320 4110066
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/923204110066"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center gap-2 py-1 text-foreground/55 hover:text-gold transition-colors text-xs"
+                >
+                  <MessageCircle size={13} />
+                  Chat on WhatsApp
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:b2b@irhaapparels.com"
+                  className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors break-all"
+                >
+                  <Mail size={15} />
+                  b2b@irhaapparels.com
+                </a>
+              </li>
+            </ul>
+          </div>
+        </details>
       </div>
 
       {/* Promises strip */}
