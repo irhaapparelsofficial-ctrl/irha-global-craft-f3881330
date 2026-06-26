@@ -154,6 +154,17 @@ Notes: ${data.notes || "—"}`;
           aria-label="Notes"
         />
       </div>
+      <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground/80 border border-border bg-input/40 px-4 py-3 hover:border-gold/50 transition-colors">
+        <input
+          type="checkbox"
+          checked={data.needsCompliance}
+          onChange={(e) => setData((d) => ({ ...d, needsCompliance: e.target.checked }))}
+          className="mt-1 h-4 w-4 accent-[hsl(var(--gold))]"
+        />
+        <span className="leading-snug">
+          I require <span className="text-gold">OEKO-TEX / BSCI documentation</span> with order
+        </span>
+      </label>
       <button
         type="submit"
         className="w-full inline-flex items-center justify-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all"
