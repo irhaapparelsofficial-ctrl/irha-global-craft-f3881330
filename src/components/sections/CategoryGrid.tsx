@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import bavarian from "@/assets/cat-bavarian.jpg?w=800&format=webp&quality=78";
-import leather from "@/assets/cat-leather.jpg?w=800&format=webp&quality=78";
-import sportswear from "@/assets/cat-sportswear.jpg?w=800&format=webp&quality=78";
-import streetwear from "@/assets/cat-streetwear.jpg?w=800&format=webp&quality=78";
-import leisure from "@/assets/cat-leisure.jpg?w=800&format=webp&quality=78";
-import nightwear from "@/assets/cat-nightwear.jpg?w=800&format=webp&quality=78";
+const bavarian = "/__l5e/assets-v1/18e78e80-1ac2-4ed5-bf35-4930c0bc76a3/irha-0035.jpg";
+const leather = "/__l5e/assets-v1/b55b7737-37a1-492a-8657-75c9c2d47f8a/irha-fix-0000.jpg";
+const sportswear = "/__l5e/assets-v1/6ed8d48e-2b63-4777-a00d-32bdccbd5e05/irha-0109.jpg";
+const streetwear = "/__l5e/assets-v1/2b3607f6-d2e8-4dcc-a58b-7b5602639f7b/irha-0206.jpg";
+const leisure = "/__l5e/assets-v1/0a87c0d5-13a9-4596-a673-0b4f01711f0c/irha-0105.jpg";
+const nightwear = "/__l5e/assets-v1/10eccef4-8445-4dfb-b41b-4c5fff6dda24/irha-0196.jpg";
 
 const CATS = [
   { title: "Bavarian / Trachten", slug: "bavarian", image: bavarian },
