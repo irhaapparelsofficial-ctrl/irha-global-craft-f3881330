@@ -120,6 +120,45 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ----- Admin role gate -----
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const authClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } },
+    );
+    const { data: userData, error: userErr } = await authClient.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: roleRow } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userData.user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleRow) {
+      return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // ----- end gate -----
+
     const body = await req.json().catch(() => ({}));
     const productId = typeof body.productId === "string" ? body.productId : null;
     const targetQuantity = Number.isFinite(body.targetQuantity) ? Math.max(50, Math.floor(body.targetQuantity)) : 300;
@@ -132,6 +171,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
