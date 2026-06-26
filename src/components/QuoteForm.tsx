@@ -26,7 +26,7 @@ export default function QuoteForm({
   });
   const [sent, setSent] = useState(false);
 
-  const update = (k: keyof typeof data, v: string) =>
+  const update = (k: "name" | "company" | "country" | "email" | "quantity" | "notes", v: string) =>
     setData((d) => ({ ...d, [k]: v }));
 
   const submit = async (e: React.FormEvent) => {
@@ -36,6 +36,11 @@ export default function QuoteForm({
       return;
     }
 
+    const complianceNote = data.needsCompliance
+      ? "Requires OEKO-TEX / BSCI documentation with order."
+      : "";
+    const combinedNotes = [data.notes, complianceNote].filter(Boolean).join(" — ");
+
     // 1. Save to our dashboard DB (fire-and-forget; failure shouldn't block WhatsApp).
     void supabase.from("inquiries").insert({
       name: data.name,
@@ -44,7 +49,7 @@ export default function QuoteForm({
       country: data.country,
       quantity: data.quantity || null,
       category: defaultCategory || null,
-      message: data.notes || null,
+      message: combinedNotes || null,
       source: pageContext || "website",
     });
 
@@ -58,6 +63,7 @@ Company: ${data.company || "—"}
 Country: ${data.country}
 Email: ${data.email}
 Quantity: ${data.quantity || "—"}
+Compliance Docs: ${data.needsCompliance ? "Yes — OEKO-TEX / BSCI required" : "Not required"}
 Notes: ${data.notes || "—"}`;
     setSent(true);
     window.open(
