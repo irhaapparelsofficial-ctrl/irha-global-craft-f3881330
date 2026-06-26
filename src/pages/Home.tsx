@@ -146,94 +146,103 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2-MACRO GATEWAYS */}
-      <section className="py-24 md:py-32">
+      {/* STICKY TRUST BAR — 4 promises above the hubs */}
+      <section
+        aria-label="Order promises"
+        className="sticky top-[72px] md:top-[80px] z-30 border-y border-gold/30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      >
+        <div className="container-luxe py-4 md:py-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {[
+              { Icon: Package,  k: "MOQ 50 pcs",        v: "Per design / color" },
+              { Icon: Truck,    k: "FOB Sialkot",       v: "Worldwide export" },
+              { Icon: Calendar, k: "45-Day Production", v: "Bulk lead time" },
+              { Icon: Shirt,    k: "In-House Embroidery", v: "12-head Tajima" },
+            ].map(({ Icon, k, v }) => (
+              <div key={k} className="flex items-center gap-3 md:justify-center">
+                <span className="inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 border border-gold/50 text-gold shrink-0">
+                  <Icon size={16} strokeWidth={1.5} />
+                </span>
+                <div className="leading-tight min-w-0">
+                  <p className="font-display text-sm md:text-base truncate">{k}</p>
+                  <p className="text-[9px] md:text-[10px] uppercase tracking-[0.22em] text-muted-foreground mt-0.5 truncate">{v}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2 HUBS — large 50/50 cards */}
+      <section className="py-20 md:py-28">
         <div className="container-luxe">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-14">
-            <div className="max-w-2xl">
-              <p className="eyebrow mb-4">Two Production Hubs</p>
-              <h2 className="font-display text-4xl md:text-6xl leading-[1.02]">
-                One atelier. <br />
-                <span className="text-gold italic">Two macro worlds.</span>
-              </h2>
-              <p className="mt-5 text-sm md:text-base text-foreground/70 max-w-lg leading-relaxed">
-                Choose a hub to filter the live production catalogue below — every SKU is built inside one of these two pipelines.
-              </p>
-            </div>
-            <Link to="/products" className="text-xs uppercase tracking-[0.3em] hover-gold-underline">
-              View Full Catalogue →
-            </Link>
+          <div className="text-center max-w-2xl mx-auto mb-12 md:mb-14">
+            <p className="eyebrow mb-4 justify-center inline-flex">Two Production Hubs</p>
+            <h2 className="font-display text-3xl md:text-5xl leading-[1.05]">
+              One atelier. <span className="text-gold italic">Two macro worlds.</span>
+            </h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-            {MACRO_HUBS.map((hub) => {
-              const children = categories.filter((c) =>
-                (hub.childSlugs as readonly string[]).includes(c.slug),
-              );
-              const cover = children.find((c) => c.image_url)?.image_url;
-              const firstChild = children[0];
-              const Icon = hub.Icon;
+            {[
+              {
+                key: "bavarian",
+                image: resolveAsset("/src/assets/og/og-bavarian.jpg"),
+                eyebrow: "Hub 01 · Heritage",
+                title: "BAVARIAN HUB",
+                subtitle: "Lederhosen, Dirndl, Bundhosen",
+                href: "/products/bavarian",
+              },
+              {
+                key: "textile",
+                image: resolveAsset("/src/assets/og/og-sportswear.jpg"),
+                eyebrow: "Hub 02 · Performance",
+                title: "TEXTILE HUB",
+                subtitle: "Sportswear, Streetwear, Nightwear",
+                href: "/products/sportswear",
+              },
+            ].map((hub) => {
+              const cover = hub.key === "bavarian"
+                ? categories.find((c) => c.slug === "bavarian")?.image_url
+                : categories.find((c) => ["sportswear","streetwear","nightwear"].includes(c.slug))?.image_url;
+              const src = cover ? resolveAsset(cover) : hub.image;
               return (
-                <article
+                <Link
                   key={hub.key}
-                  className={`group relative border-2 border-border/60 ${hub.ringClass} ${hub.surfaceClass} transition-all duration-500 flex flex-col min-h-[560px] overflow-hidden`}
+                  to={hub.href}
+                  className="group relative block h-[400px] overflow-hidden border-2 border-border/60 hover:border-gold transition-all duration-500"
                 >
-                  {cover && (
-                    <img
-                      src={resolveAsset(cover)}
-                      alt={hub.title}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 group-hover:scale-[1.04] transition-all duration-[1400ms]"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/30" />
-
-                  <div className="relative p-8 md:p-10 pt-12 md:pt-16 flex flex-col flex-1">
-                    <div className="flex items-start justify-end mb-8">
-                      <span className={`inline-flex items-center justify-center w-12 h-12 border ${hub.badgeClass}`}>
-                        <Icon size={20} />
-                      </span>
-                    </div>
-
-                    <h3 className="font-display text-3xl md:text-4xl lg:text-5xl leading-[1.05] max-w-md">
+                  <img
+                    src={src}
+                    alt={hub.title}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] group-hover:scale-[1.06]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/20 transition-opacity group-hover:from-black/90" />
+                  <div className="relative h-full flex flex-col justify-end p-8 md:p-10">
+                    <div className="h-px w-12 bg-gold mb-5" />
+                    <p className="text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold mb-3">
+                      {hub.eyebrow}
+                    </p>
+                    <h3 className="font-display text-white text-3xl md:text-4xl lg:text-5xl leading-[1.02] tracking-tight">
                       {hub.title}
                     </h3>
-                    <p className="mt-4 text-sm md:text-base text-foreground/75 max-w-md leading-relaxed">
-                      {hub.tagline}
+                    <p className="mt-3 text-sm md:text-base text-white/80 max-w-md leading-relaxed">
+                      {hub.subtitle}
                     </p>
-
-                    <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-2.5 max-w-md">
-                      {hub.items.map((item) => (
-                        <li
-                          key={item}
-                          className="flex items-center gap-2 text-sm text-foreground/85"
-                        >
-                          <span className={`h-px w-4 ${hub.accentClass} bg-current opacity-60`} />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="mt-auto pt-10 flex flex-wrap items-center gap-3">
-                      {firstChild && (
-                        <Link
-                          to={`/products/${firstChild.slug}`}
-                          className={`inline-flex items-center gap-3 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-all ${hub.ctaClass}`}
-                        >
-                          {hub.key === "leather-bavarian" ? "Explore Bavarian" : "Explore Textile"}
-                          <ArrowUpRight size={16} />
-                        </Link>
-                      )}
-                    </div>
-
+                    <span className="mt-7 inline-flex items-center gap-3 self-start bg-gradient-gold text-primary-foreground px-7 py-3.5 text-xs uppercase tracking-[0.3em] font-medium group-hover:shadow-gold transition-all">
+                      Explore
+                      <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </span>
                   </div>
-                </article>
+                </Link>
               );
             })}
           </div>
-
         </div>
       </section>
+
+
 
 
       <CategoryGrid />
