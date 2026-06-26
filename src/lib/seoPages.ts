@@ -1,10 +1,10 @@
 // SEO landing page data — drives /sportswear-manufacturer-pakistan etc.
 // Each page is ~1500+ words rendered through SeoLandingPage template.
 
-import sportswearImg from "@/assets/cat-sportswear.jpg";
-import leatherImg from "@/assets/cat-leather.jpg";
-import bavarianImg from "@/assets/cat-bavarian.jpg";
-import streetwearImg from "@/assets/cat-streetwear.jpg";
+const sportswearImg = "/__l5e/assets-v1/6ed8d48e-2b63-4777-a00d-32bdccbd5e05/irha-0109.jpg";
+const leatherImg = "/__l5e/assets-v1/b55b7737-37a1-492a-8657-75c9c2d47f8a/irha-fix-0000.jpg";
+const bavarianImg = "/__l5e/assets-v1/18e78e80-1ac2-4ed5-bf35-4930c0bc76a3/irha-0035.jpg";
+const streetwearImg = "/__l5e/assets-v1/2b3607f6-d2e8-4dcc-a58b-7b5602639f7b/irha-0206.jpg";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 
 export type FAQ = { q: string; a: string };
