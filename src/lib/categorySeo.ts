@@ -23,9 +23,9 @@ export type CategorySEO = {
 
 export const CATEGORY_SEO: Record<string, CategorySEO> = {
   bavarian: {
-    title: "Lederhosen & Trachten Manufacturer Pakistan | Irha Apparels",
+    title: "Lederhosen & Dirndl Manufacturer Pakistan | Oktoberfest Supplier MOQ 50 | FOB Sialkot",
     description:
-      "Wholesale lederhosen, dirndl & trachten manufacturer in Sialkot. Authentic suede, hand embroidery, MOQ 50 sets. Export to Germany, Austria, USA.",
+      "Custom lederhosen, dirndl, bundhosen manufacturer. MOQ 50, in-house embroidery, 38-day lead. Wholesale trachten for Germany, Austria, USA.",
     keywords:
       "lederhosen manufacturer, trachten supplier, dirndl wholesale, Bavarian wear exporter Pakistan, Oktoberfest wholesale, suede lederhosen, alpine clothing manufacturer",
     h1: "Bavarian Wear Manufacturer — Lederhosen, Dirndl & Trachten",
@@ -43,9 +43,9 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
   },
 
   sportswear: {
-    title: "Sportswear & Activewear Manufacturer Sialkot | Irha Apparels",
+    title: "Custom Sportswear Manufacturer Pakistan | Sublimated Jerseys MOQ 50 | FOB Sialkot",
     description:
-      "Custom sublimated jerseys, tracksuits, gym wear & teamwear. OEM/ODM sportswear manufacturer in Sialkot. MOQ 50 sets. Export USA, EU, UAE.",
+      "Private label sportswear, basketball jerseys, tracksuits, gym wear. All-over sublimation, MOQ 50, FOB Sialkot. Export USA, UK, EU, UAE, Australia.",
     keywords:
       "sportswear manufacturer Pakistan, sublimated jersey supplier, custom tracksuit wholesale, gym wear manufacturer, activewear exporter Sialkot, teamwear manufacturer, soccer jersey wholesale",
     h1: "Sportswear Manufacturer — Sublimated Jerseys, Tracksuits & Gym Wear",
@@ -63,9 +63,9 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
   },
 
   leather: {
-    title: "Leather Jacket & Garment Manufacturer Pakistan | Irha Apparels",
+    title: "Custom Leather Jackets Manufacturer Pakistan | Small Batch OEM MOQ 50 | FOB Sialkot",
     description:
-      "Premium leather jacket manufacturer in Sialkot. Lambskin, cowhide & suede. Private-label for fashion brands. MOQ 50. Export USA, EU, UK, UAE.",
+      "Biker jackets, leather pants, custom leather wear. Small batch production, private label, FOB Sialkot. Export USA, UK, Germany, Canada, Australia.",
     keywords:
       "leather jacket manufacturer Sialkot, leather garments exporter Pakistan, lambskin jacket wholesale, biker jacket manufacturer, custom leather jackets, premium leather supplier, OEM leatherwear",
     h1: "Leather Garment Manufacturer — Jackets, Vests & Outerwear",
@@ -83,9 +83,9 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
   },
 
   streetwear: {
-    title: "Streetwear Manufacturer Pakistan — Hoodies & Tees | Irha Apparels",
+    title: "Streetwear Manufacturer Pakistan | Custom Hoodies MOQ 50 | Private Label FOB Sialkot",
     description:
-      "Heavyweight streetwear manufacturer in Sialkot. 320–500 GSM hoodies, oversized tees, puff print & embroidery. MOQ 50. Export USA, UK, EU.",
+      "Oversized hoodies, t-shirts, varsity jackets. MOQ 50 pieces, custom embroidery & printing, FOB Sialkot. OEM ODM for USA, UK, Germany, Canada, Australia.",
     keywords:
       "streetwear manufacturer Pakistan, hoodies manufacturer wholesale, heavyweight hoodie supplier, oversized t-shirt manufacturer, puff print hoodies, custom streetwear OEM, private label streetwear",
     h1: "Streetwear Manufacturer — Heavyweight Hoodies & Oversized Tees",
@@ -123,9 +123,9 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
   },
 
   nightwear: {
-    title: "Nightwear & Pyjama Manufacturer Pakistan | Irha Apparels",
+    title: "Pajama & Sleepwear Manufacturer Pakistan | MOQ 50 Wholesale | FOB Sialkot",
     description:
-      "Silk, satin & cotton nightwear manufacturer in Sialkot. Pyjama sets, robes, slips. Private-label MOQ 50. Export USA, UK, EU, UAE, Australia.",
+      "Custom sleepwear, loungewear, pajama sets. Private label, small MOQ, FOB Sialkot. Export USA, UK, Germany, Canada, Australia.",
     keywords:
       "nightwear manufacturer Pakistan, pyjama manufacturer wholesale, silk nightwear supplier, satin pyjama set, sleepwear manufacturer, robe manufacturer, private label nightwear",
     h1: "Nightwear Manufacturer — Silk, Satin & Cotton Pyjamas",

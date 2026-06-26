@@ -54,10 +54,10 @@ export default function LederhosenHome() {
   return (
     <>
       <Helmet>
-        <title>Irha Apparels — Two Macro Hubs: Bavarian Heritage & Global Activewear</title>
+        <title>Irha Apparels — Apparel Manufacturer Pakistan | MOQ 50 | FOB Sialkot | Private Label OEM ODM</title>
         <meta
           name="description"
-          content="Sialkot-based manufacturer organised in two macro hubs: Bavarian Heritage & Leather, and Textile, Streetwear & Active. OEM, ODM and Private Label worldwide."
+          content="B2B clothing manufacturer in Sialkot Pakistan. MOQ 50 pieces, FOB Sialkot pricing, 45-day production. Bavarian wear, sportswear, leather jackets, streetwear. AI mockup designer in 60 seconds."
         />
         <link rel="canonical" href="https://www.irhaapparels.com/" />
       </Helmet>
