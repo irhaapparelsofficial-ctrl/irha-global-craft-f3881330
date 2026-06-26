@@ -56,7 +56,23 @@ export default function Products() {
             to browse the full range — OEM, ODM and private-label programs available across every product.
           </p>
 
-        </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href="/catalogs/master-catalogue-2026.pdf"
+              download
+              className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+            >
+              <Download size={14} /> Master Catalogue 2026 (PDF)
+            </a>
+            <a
+              href={whatsappLink("Hello Irha Apparels — please send the latest master catalogue and FOB price list.")}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+            >
+              <MessageCircle size={16} /> Request FOB Price List
+            </a>
+          </div>
       </section>
 
       {/* Featured B2B Items — direct, click-through SKUs with explicit MOQ */}
