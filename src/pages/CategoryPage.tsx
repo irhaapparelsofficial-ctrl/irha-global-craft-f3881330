@@ -127,12 +127,16 @@ export default function CategoryPage() {
       eyebrow: "Irha Apparels · B2B Manufacturing",
       title: `Wholesale ${category.name} Manufacturer`,
       subtitle: seo.intro,
+      ctaLabel: "View Collection",
+      ctaHref: `/products/${category.slug}#collection`,
     },
     ...subs.slice(0, 4).map((sub) => ({
       image: sub.products[0]?.image ?? category.image,
       eyebrow: category.name,
       title: `${sub.name} — Bulk & Private Label`,
       subtitle: sub.short,
+      ctaLabel: "View Collection",
+      ctaHref: `/products/${category.slug}#${sub.slug}`,
     })),
   ].slice(0, 5);
 
