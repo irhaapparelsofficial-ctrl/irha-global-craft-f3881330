@@ -42,6 +42,24 @@ const blogSlugs = [
   "private-label-streetwear-manufacturing",
   "why-sialkot-is-global-apparel-hub",
   "oem-vs-odm-clothing-manufacturing",
+  "custom-hoodies-manufacturer-pakistan-moq-50",
+  "lederhosen-wholesale-germany-oktoberfest-supplier",
+  "private-label-sportswear-fob-sialkot",
+  "small-batch-clothing-manufacturer-pakistan",
+  "streetwear-oem-pakistan",
+  "dirndl-manufacturer-moq-50",
+  "sublimated-jerseys-wholesale-pakistan",
+  "leather-jacket-manufacturer-small-order",
+  "apparel-manufacturer-for-startups-moq-50",
+  "fob-sialkot-vs-cif-pricing-explained",
+];
+
+const countrySlugs = [
+  "usa-manufacturer",
+  "uk-manufacturer",
+  "germany-manufacturer",
+  "canada-manufacturer",
+  "australia-manufacturer",
 ];
 
 // Only slugs that have actual SeoLandingPage data in src/lib/seoPages.ts
@@ -85,6 +103,7 @@ const entries: SitemapEntry[] = [
     changefreq: "monthly" as const,
     priority: "0.7",
   })),
+  ...countrySlugs.map((slug) => ({ path: `/${slug}`, changefreq: "weekly" as const, priority: "0.9" })),
   ...blogSlugs.map((slug) => ({ path: `/blog/${slug}`, changefreq: "monthly" as const, priority: "0.7" })),
   ...journalSlugs.map((slug) => ({ path: `/journal/${slug}`, changefreq: "monthly" as const, priority: "0.6" })),
 ];

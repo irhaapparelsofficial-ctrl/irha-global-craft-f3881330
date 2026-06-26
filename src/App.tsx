@@ -43,7 +43,9 @@ function ScrollToTop() {
 
 // SEO landing slugs handled by SeoLanding template (auto-derived from data)
 import { SEO_PAGE_SLUGS } from "@/lib/seoPages";
+import { COUNTRY_SLUGS } from "@/lib/countryLandings";
 const SEO_LANDING_SLUGS = SEO_PAGE_SLUGS;
+const CountryLanding = lazy(() => import("./pages/CountryLanding"));
 
 const PageFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -99,6 +101,9 @@ const App = () => (
                     <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
                     {SEO_LANDING_SLUGS.map((slug) => (
                       <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
+                    ))}
+                    {COUNTRY_SLUGS.map((slug) => (
+                      <Route key={slug} path={`/${slug}`} element={<CountryLanding />} />
                     ))}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
