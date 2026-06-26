@@ -54,10 +54,20 @@ const COMPANY = [
   { to: "/contact", label: "Contact" },
 ];
 
+const COMPLIANCE = [
+  { label: "OEKO-TEX Standard 100", note: "Safe fabrics" },
+  { label: "BSCI", note: "Ethical manufacturing" },
+  { label: "SEDEX SMETA", note: "Social audit" },
+  { label: "ISO 9001", note: "Quality systems" },
+  { label: "GOTS", note: "Organic textiles (available)" },
+  { label: "WRAP", note: "US compliance" },
+  { label: "REACH", note: "EU chemicals" },
+];
+
 export default function Footer() {
   return (
     <footer className="relative bg-[#0A0A0A] border-t border-border/60 pt-16 pb-8 text-foreground/80">
-      <div className="container-luxe grid gap-12 md:grid-cols-4">
+      <div className="container-luxe grid gap-12 md:grid-cols-3 lg:grid-cols-5">
         {/* Col 1 — Brand */}
         <div>
           <Link to="/" className="inline-flex items-center" aria-label="Irha Apparels home">
@@ -166,7 +176,29 @@ export default function Footer() {
             </ul>
           </div>
         </details>
+
+        {/* Col 5 — Certifications */}
+        <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0 lg:col-span-1 md:col-span-3" open>
+          <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
+            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Certifications &amp; Compliance</span>
+            <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
+          </summary>
+          <ul className="space-y-2.5 text-sm pt-3 md:pt-0">
+            {COMPLIANCE.map((c) => (
+              <li key={c.label} className="leading-snug">
+                <Link
+                  to="/compliance"
+                  className="inline-block py-0.5 text-foreground/75 hover:text-gold transition-colors"
+                >
+                  <span className="font-medium">{c.label}</span>
+                  <span className="text-foreground/45"> — {c.note}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
       </div>
+
 
       {/* Promises strip */}
       <div className="container-luxe mt-14 pt-6 border-t border-foreground/10">

@@ -178,6 +178,14 @@ export default function ProductDetail() {
                 </Link>
               </div>
 
+              <p className="mt-4 text-[11px] md:text-xs text-foreground/60 leading-relaxed">
+                <span className="text-gold">✓</span> OEKO-TEX fabrics
+                <span className="text-foreground/30 mx-2">|</span>
+                <span className="text-gold">✓</span> BSCI compliant facility
+                <span className="text-foreground/30 mx-2">|</span>
+                <span className="text-gold">✓</span> FOB Sialkot
+              </p>
+
               {product.details?.length > 0 && (
                 <div className="mt-10 border-t border-border/60 pt-8">
                   <p className="eyebrow mb-5">Specification Sheet</p>
