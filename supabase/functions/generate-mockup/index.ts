@@ -308,6 +308,29 @@ Deno.serve(async (req) => {
 
     // Partial/total failure → return inline data URLs so the UI shows the base
     // image immediately with a watermark badge; nothing is cached.
+    // Kick off background self-heal so the next request hits cache instantly.
+    const healPromise = selfHeal({
+      supabase,
+      cacheKey,
+      paths,
+      baseDataUrl,
+      logoDataUrl,
+      apiKey,
+      enriched,
+      need: { front: frontFallback, back: backFallback },
+      existingGood: {
+        front: frontFallback ? undefined : frontBytes,
+        back: backFallback ? undefined : backBytes,
+      },
+    });
+    // @ts-ignore - EdgeRuntime is provided by the Supabase runtime
+    if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
+      // @ts-ignore
+      (EdgeRuntime as any).waitUntil(healPromise);
+    } else {
+      healPromise.catch((e) => console.error("[self-heal] detached error:", e));
+    }
+
     const inline = (bytes: Uint8Array, ct: string) => `data:${ct};base64,${bytesToBase64(bytes)}`;
     return new Response(
       JSON.stringify({
@@ -316,10 +339,12 @@ Deno.serve(async (req) => {
         cached: false,
         fallback: true,
         fallbackViews: { front: frontFallback, back: backFallback },
-        message: "AI back-preview pending — showing base reference",
+        healing: true,
+        message: "AI back-preview pending — regenerating in background, retry shortly",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("generate-mockup error:", msg);
