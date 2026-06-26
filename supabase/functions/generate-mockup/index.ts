@@ -134,6 +134,66 @@ async function generateView(
   return bytes;
 }
 
+// Background self-healing: re-runs failed views with extended timeout and
+// retries, then writes the cache so the next user request is an instant hit.
+async function selfHeal(opts: {
+  supabase: ReturnType<typeof createClient>;
+  cacheKey: string;
+  paths: { front: string; back: string };
+  baseDataUrl: string;
+  logoDataUrl: string | null;
+  apiKey: string;
+  enriched: Body & { productName: string };
+  need: { front: boolean; back: boolean };
+  existingGood: { front?: Uint8Array; back?: Uint8Array };
+}) {
+  const { supabase, cacheKey, paths, baseDataUrl, logoDataUrl, apiKey, enriched, need, existingGood } = opts;
+  if (healingInFlight.has(cacheKey)) return;
+  healingInFlight.add(cacheKey);
+  try {
+    const healView = async (view: "front" | "back"): Promise<Uint8Array | null> => {
+      const prompt = buildPrompt(enriched, view);
+      for (let attempt = 1; attempt <= HEAL_MAX_ATTEMPTS; attempt++) {
+        try {
+          return await generateView(baseDataUrl, logoDataUrl, prompt, apiKey, HEAL_TIMEOUT_MS);
+        } catch (err) {
+          console.warn(`[self-heal] ${view} attempt ${attempt} failed:`, err instanceof Error ? err.message : err);
+          if (attempt < HEAL_MAX_ATTEMPTS) {
+            await new Promise((r) => setTimeout(r, HEAL_BACKOFF_MS * attempt));
+          }
+        }
+      }
+      return null;
+    };
+
+    const [frontHealed, backHealed] = await Promise.all([
+      need.front ? healView("front") : Promise.resolve(existingGood.front ?? null),
+      need.back ? healView("back") : Promise.resolve(existingGood.back ?? null),
+    ]);
+
+    if (!frontHealed || !backHealed) {
+      console.warn(`[self-heal] ${cacheKey} incomplete — front:${!!frontHealed} back:${!!backHealed}`);
+      return;
+    }
+
+    await Promise.all([
+      supabase.storage.from(BUCKET).upload(paths.front, frontHealed, {
+        contentType: "image/png", upsert: true,
+      }),
+      supabase.storage.from(BUCKET).upload(paths.back, backHealed, {
+        contentType: "image/png", upsert: true,
+      }),
+    ]);
+    console.log(`[self-heal] ${cacheKey} cached successfully`);
+  } catch (err) {
+    console.error("[self-heal] unexpected error:", err);
+  } finally {
+    healingInFlight.delete(cacheKey);
+  }
+}
+
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
