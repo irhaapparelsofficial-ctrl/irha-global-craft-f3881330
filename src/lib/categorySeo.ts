@@ -38,7 +38,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
       { q: "What is the MOQ for wholesale lederhosen?", a: "Our standard MOQ is 50 sets per design and colorway. Inside the MOQ you may split sizes EU 44–60 (men) and equivalent women's and kids' sizing freely, so you can stock a full size run for a single shop or test launch." },
       { q: "Do you produce private-label dirndl dresses for boutiques?", a: "Yes. We offer full private-label and white-label dirndl programs — custom prints on the apron and bodice, custom lace trims, woven labels, branded hangtags and gift packaging. Tech-pack and CAD support is free for confirmed orders." },
       { q: "What leather grade do you use for genuine lederhosen?", a: "Heritage sets are cut from 1.2–1.4 mm genuine deer suede; entry programs use top-grain cowhide split suede. Both are vegetable-tanned at LWG-audited tanneries and tested to REACH Annex XVII azo-dye limits." },
-      { q: "What is your lead time from sample approval to FOB Karachi?", a: "Standard lead time is 45–60 days for lederhosen sets and 40–55 days for dirndl dresses. Pre-Oktoberfest peak (Jan–May) we recommend confirming POs at least 90 days before shipping." },
+      { q: "What is your lead time from sample approval to FOB Sialkot?", a: "Standard lead time is 45–60 days for lederhosen sets and 40–55 days for dirndl dresses. Pre-Oktoberfest peak (Jan–May) we recommend confirming POs at least 90 days before shipping." },
     ],
   },
 
@@ -76,9 +76,9 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     faqs: [
       { q: "What leather types do you stock for jacket production?", a: "We work with 0.7–1.2 mm lambskin nappa, cowhide aniline, sheep suede, goatskin and waxed buffalo. All hides come from LWG Gold and Silver-rated tanneries with REACH and CITES documentation." },
       { q: "What is the MOQ for custom leather jackets?", a: "MOQ is 50 pieces per design and colorway. Pattern, sample and tech-pack support is included for confirmed POs. Bespoke single-design runs under MOQ are quoted separately as a sampling program." },
-      { q: "Do you export leather jackets to the USA and EU?", a: "Yes. Leather is our second-largest export program. We ship to fashion brands, motorcycle apparel companies and private-label retailers across the USA, UK, Germany, Italy, France, the Netherlands and the UAE — DDP and FOB Karachi both available." },
+      { q: "Do you export leather jackets to the USA and EU?", a: "Yes. Leather is our second-largest export program. We ship to fashion brands, motorcycle apparel companies and private-label retailers across the USA, UK, Germany, Italy, France, the Netherlands and the UAE — DDP and FOB Sialkot both available." },
       { q: "Can you replicate a sample jacket I already own?", a: "Yes. Send us your reference sample by courier and we will pattern, grade and tech-pack it from scratch, then produce a counter-sample for approval before bulk production. Sampling lead time is 18–25 days." },
-      { q: "What is the lead time for leather production?", a: "55–70 days FOB Karachi from approved counter-sample and 30 percent advance. Air-freight upgrades are available; sea freight to USA East Coast averages 28–32 additional days." },
+      { q: "What is the lead time for leather production?", a: "55–70 days FOB Sialkot from approved counter-sample and 30 percent advance. Air-freight upgrades are available; sea freight to USA East Coast averages 28–32 additional days." },
     ],
   },
 
@@ -117,7 +117,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
       { q: "What fabrics do you use for loungewear sets?", a: "180–280 GSM French terry, modal-cotton jersey, bamboo viscose, slub jersey, waffle knit and recycled-cotton fleece. All fabrics are OEKO-TEX Standard 100 certified and GOTS-organic options are available on request." },
       { q: "What is the MOQ for wholesale loungewear sets?", a: "MOQ is 50 sets per design and colorway, with free size splits XS–3XL inside the MOQ. Co-ord sets (top + bottom) count as one set." },
       { q: "Do you offer custom packaging for DTC loungewear brands?", a: "Yes. Branded poly mailers, kraft boxes, ribbon tie-ups, thank-you cards, tissue wrap with custom prints and woven name labels — all sourced in-house to keep packaging within your unit cost target." },
-      { q: "Which markets do you export leisurewear to?", a: "Active programs ship to DTC loungewear and athleisure brands in the USA, UK, Germany, France, UAE, Saudi Arabia, Australia and New Zealand. We support FOB Karachi and DDP shipping." },
+      { q: "Which markets do you export leisurewear to?", a: "Active programs ship to DTC loungewear and athleisure brands in the USA, UK, Germany, France, UAE, Saudi Arabia, Australia and New Zealand. We support FOB Sialkot and DDP shipping." },
       { q: "What is your loungewear production lead time?", a: "Standard lead time is 35–45 days from approved sample and PO. Repeat orders on existing tech packs ship in 25–30 days." },
     ],
   },
@@ -137,7 +137,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
       { q: "Do you produce mulberry silk pyjama sets?", a: "Yes. We stock 19 and 22 momme grade-6A mulberry silk in piece-dyed and printed forms. All silk is OEKO-TEX Standard 100 certified with mill-issued grade certificates." },
       { q: "What is the MOQ for custom nightwear?", a: "MOQ is 50 sets per design and colorway across silk, satin and cotton programs. Size splits XS–3XL inside the MOQ are free; printed satin requires 25 yards minimum per custom print colorway." },
       { q: "Do you offer bridal and bridesmaid pyjama sets?", a: "Yes — bridal robe + pyjama gift sets, monogrammed satin slips and bridesmaid co-ords are one of our fastest-growing programs. Custom embroidery, names and dates are included from 25 pieces per colorway." },
-      { q: "Which countries do you ship nightwear to?", a: "We ship regularly to lingerie boutiques and DTC sleepwear brands in the USA, UK, France, Italy, UAE, Saudi Arabia and Australia. Both FOB Karachi and DDP shipping are supported." },
+      { q: "Which countries do you ship nightwear to?", a: "We ship regularly to lingerie boutiques and DTC sleepwear brands in the USA, UK, France, Italy, UAE, Saudi Arabia and Australia. Both FOB Sialkot and DDP shipping are supported." },
       { q: "What is the production lead time for pyjama sets?", a: "Cotton and brushed-cotton pyjamas ship in 30–40 days; silk and satin programs ship in 40–55 days from approved counter-sample and PO." },
     ],
   },

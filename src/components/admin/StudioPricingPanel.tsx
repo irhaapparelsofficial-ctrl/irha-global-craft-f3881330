@@ -155,7 +155,7 @@ export default function StudioPricingPanel() {
             </span>
           </div>
           <p className="text-[10px] text-muted-foreground leading-relaxed">
-            Final FOB Karachi rate confirmed directly via formal quote — share specs with our team to receive pricing.
+            Final FOB Sialkot rate confirmed directly via formal quote — share specs with our team to receive pricing.
           </p>
           <button
             className="w-full bg-industrial text-industrial-foreground text-[10px] uppercase tracking-[0.3em] font-bold py-3 hover:opacity-90 inline-flex items-center justify-center gap-2"

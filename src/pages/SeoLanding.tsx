@@ -163,7 +163,7 @@ export default function SeoLanding() {
         <div className="container-luxe">
           <p className="eyebrow mb-4">Manufacturing Process</p>
           <h2 className="font-display text-3xl md:text-5xl max-w-3xl">
-            From tech pack to FOB Karachi — six audited stages.
+            From tech pack to FOB Sialkot — six audited stages.
           </h2>
           <div className="mt-12 grid gap-px bg-border md:grid-cols-2 lg:grid-cols-3">
             {page.process.map((s) => (

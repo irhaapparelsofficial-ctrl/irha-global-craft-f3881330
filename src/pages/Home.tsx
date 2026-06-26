@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, ShieldCheck, Globe2, Factory, Award, Scissors, Activity } from "lucide-react";
+import { ArrowUpRight, ShieldCheck, Globe2, Factory, Award, Scissors, Activity, Sparkles, Download, Package, Truck, Calendar, Shirt } from "lucide-react";
 import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
 import CategoryGrid from "@/components/sections/CategoryGrid";
@@ -103,16 +103,48 @@ export default function Home() {
         }}
       />
 
-      {/* HERO + CATEGORY SHOWCASE + ATMOSPHERIC GRID */}
+      {/* HERO */}
       <HeroCarousel />
-      <CategoryGrid />
-      <AtmosphericGrid />
 
-
-
-
-      <TrustBar />
-      <ClientsMarquee />
+      {/* AI MOCKUP STUDIO HERO PROMO — above fold CTA */}
+      <section className="relative border-y border-gold/30 bg-gradient-to-r from-background via-card/40 to-background overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle_at_20%_50%,hsl(var(--gold))_0%,transparent_45%),radial-gradient(circle_at_85%_50%,hsl(var(--industrial))_0%,transparent_45%)]" />
+        <div className="container-luxe relative py-14 md:py-20">
+          <div className="grid md:grid-cols-[1fr,auto] gap-10 md:gap-14 items-center">
+            <div>
+              <p className="eyebrow mb-4 inline-flex items-center gap-2">
+                <Sparkles size={14} className="text-gold" /> AI Mockup Studio
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.04]">
+                Design your collection in <span className="text-gold italic">60 seconds</span>.
+              </h2>
+              <p className="mt-4 text-sm md:text-base text-foreground/75 max-w-xl leading-relaxed">
+                AI mockups with your logo, instant FOB Sialkot pricing — preview front &amp; back, change colors, request a quote in one click.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 md:min-w-[260px]">
+              <Link
+                to="/studio"
+                className="group inline-flex items-center justify-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.28em] font-medium shadow-gold hover:shadow-[0_0_40px_hsl(var(--gold)/0.6)] transition-all"
+                data-track="home-launch-ai-studio"
+              >
+                <Sparkles size={16} />
+                Launch AI Mockup Studio
+                <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </Link>
+              <a
+                href="/catalogue.pdf"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-3 border border-foreground/40 text-foreground hover:bg-foreground hover:text-background px-7 py-4 text-xs uppercase tracking-[0.28em] font-medium transition-colors"
+                data-track="home-download-catalog"
+              >
+                <Download size={14} /> Download Catalog
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* 2-MACRO GATEWAYS */}
       <section className="py-24 md:py-32">
@@ -188,11 +220,12 @@ export default function Home() {
                           to={`/products/${firstChild.slug}`}
                           className={`inline-flex items-center gap-3 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-all ${hub.ctaClass}`}
                         >
-                          Explore Hub
+                          {hub.key === "leather-bavarian" ? "Explore Bavarian" : "Explore Textile"}
                           <ArrowUpRight size={16} />
                         </Link>
                       )}
                     </div>
+
                   </div>
                 </article>
               );
@@ -201,6 +234,15 @@ export default function Home() {
 
         </div>
       </section>
+
+
+      <CategoryGrid />
+      <AtmosphericGrid />
+
+      <TrustBar />
+      <ClientsMarquee />
+
+
 
 
 
@@ -257,7 +299,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* PRE-CTA TRUST BAR — 4 promises */}
+      <section aria-label="Order promises" className="border-t border-border/60 bg-card/30">
+        <div className="container-luxe py-10 md:py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
+            {[
+              { Icon: Package,   k: "MOQ 50 pcs",       v: "Per design / color" },
+              { Icon: Truck,     k: "FOB Sialkot",      v: "Worldwide export" },
+              { Icon: Calendar,  k: "45-Day Production", v: "Bulk lead time" },
+              { Icon: Shirt,     k: "In-House Embroidery", v: "12-head Tajima" },
+            ].map(({ Icon, k, v }) => (
+              <div key={k} className="flex items-center gap-4 md:justify-center">
+                <span className="inline-flex items-center justify-center w-11 h-11 border border-gold/40 text-gold shrink-0">
+                  <Icon size={20} strokeWidth={1.5} />
+                </span>
+                <div className="leading-tight">
+                  <p className="font-display text-base md:text-lg">{k}</p>
+                  <p className="text-[10px] md:text-[11px] uppercase tracking-[0.22em] text-muted-foreground mt-1">{v}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FINAL CTA */}
+
       <section className="relative py-28 border-t border-border/60 overflow-hidden">
         <img src={leatherFlatlayFallback} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-15" />
         <div className="absolute inset-0 bg-background/80" />

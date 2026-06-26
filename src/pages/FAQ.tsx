@@ -31,7 +31,7 @@ const FAQS = [
   {
     group: "Shipping & Logistics",
     items: [
-      { q: "What are your shipping options?", a: "FOB Karachi (default), CIF, DDP and door-to-door air or sea freight. We work with DHL, FedEx, Maersk and Hapag-Lloyd for direct relationships and competitive rates." },
+      { q: "What are your shipping options?", a: "FOB Sialkot (default), CIF, DDP and door-to-door air or sea freight. We work with DHL, FedEx, Maersk and Hapag-Lloyd for direct relationships and competitive rates." },
       { q: "What are typical lead times?", a: "25–45 days for knits and sportswear, 45–60 days for trachten and leather. Air freight adds 5–7 days; sea freight 25–35 days depending on destination." },
       { q: "Which countries do you regularly export to?", a: "USA, Germany, UK, France, Italy, Netherlands, UAE, KSA, Canada, Australia and 20+ others. We handle export documentation, customs and certificates of origin in-house." },
     ],

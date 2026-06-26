@@ -1,13 +1,27 @@
 import { Link, useLocation } from "react-router-dom";
-import { MessageCircle, FileText } from "lucide-react";
+import { MessageCircle, FileText, Sparkles } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 
 export default function FloatingActions() {
   const { pathname } = useLocation();
   const onInquiry = pathname === "/inquiry";
+  const onStudio = pathname === "/studio";
 
   return (
     <>
+      {/* Floating AI Designer — bottom-right, stacked above WhatsApp */}
+      {!onStudio && (
+        <Link
+          to="/studio"
+          aria-label="Launch AI Mockup Studio"
+          data-track="floating-ai-designer"
+          className="fixed bottom-[6.25rem] right-4 sm:right-6 z-40 group inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground rounded-full pl-4 pr-5 py-3 shadow-gold hover:scale-105 hover:shadow-[0_0_40px_hsl(var(--gold)/0.6)] transition-all"
+        >
+          <Sparkles size={18} className="group-hover:rotate-12 transition-transform" />
+          <span className="text-[11px] font-medium uppercase tracking-[0.22em]">AI Designer</span>
+        </Link>
+      )}
+
       {/* Floating WhatsApp — bottom-right, all devices */}
       <a
         href={whatsappLink()}
@@ -46,3 +60,4 @@ export default function FloatingActions() {
     </>
   );
 }
+

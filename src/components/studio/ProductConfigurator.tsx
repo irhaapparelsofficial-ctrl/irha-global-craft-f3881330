@@ -266,7 +266,7 @@ export default function ProductConfigurator() {
       .filter(([, n]) => n > 0)
       .forEach(([s, n]) => lines.push(`  • ${s}: ${n}`));
     lines.push(`Total Qty: ${totalQty} units`);
-    lines.push(`Pricing: On Quote — please confirm FOB Karachi rate.`);
+    lines.push(`Pricing: On Quote — please confirm FOB Sialkot rate.`);
     return lines.join("\n");
   };
 
@@ -679,7 +679,7 @@ export default function ProductConfigurator() {
                   <p className="text-xs text-muted-foreground">Order ({totalQty} pcs)</p>
                   <p className="font-serif text-2xl">Price on Quote</p>
                   <p className="text-[10px] text-muted-foreground">
-                    Final FOB Karachi rate confirmed via direct quote.
+                    Final FOB Sialkot rate confirmed via direct quote.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
