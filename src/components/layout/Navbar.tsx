@@ -4,6 +4,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { BRAND } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import MockupRequestButton from "@/components/MockupRequestButton";
+import irhaLogo from "@/assets/irha-logo.png.asset.json";
 
 const mainLinks = [
   { to: "/", label: "Home" },
@@ -52,12 +53,16 @@ export default function Navbar() {
       )}
     >
       <div className="container-luxe flex items-center justify-between">
-        <Link to="/" className="group flex items-baseline gap-2 shrink-0">
-          <span className="font-display text-2xl tracking-tight">
-            <span className="text-gold">Irha</span>
-            <span className="text-foreground"> Apparels</span>
-          </span>
+        <Link to="/" className="group flex items-center shrink-0 mr-8" aria-label="Irha Apparels — home">
+          <img
+            src={irhaLogo.url}
+            alt="Irha Apparels"
+            className="h-9 md:h-12 w-auto object-contain transition-transform group-hover:scale-[1.04]"
+            loading="eager"
+            decoding="async"
+          />
         </Link>
+
 
         <nav className="hidden lg:flex items-center gap-8">
           {mainLinks.map((l) => (
