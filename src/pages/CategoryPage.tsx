@@ -52,6 +52,7 @@ export default function CategoryPage() {
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [activeProduct, setActiveProduct] = useState<FlatProduct | null>(null);
   const [flipOpen, setFlipOpen] = useState(false);
+  const [peekOpen, setPeekOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Flatten all sub products into one list with metadata + stable sort signals.
@@ -224,18 +225,38 @@ export default function CategoryPage() {
             </span>
           </div>
 
-          {/* Catalog page thumbnails — peek inside */}
-          <div className="mt-8 pt-6 border-t border-border/40">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-foreground/55 mb-3">
-              {category.name} catalogue · peek inside
-            </p>
-            <CatalogThumbnailStrip
-              slug={category.slug}
-              count={6}
-              skip={1}
-              onClick={() => setFlipOpen(true)}
-            />
+          {/* Catalog page thumbnails — collapsed by default, hover (desktop) or tap (mobile) to reveal */}
+          <div
+            className="mt-8 pt-6 border-t border-border/40 group/peek"
+            onMouseEnter={() => setPeekOpen(true)}
+            onMouseLeave={() => setPeekOpen(false)}
+          >
+            <button
+              type="button"
+              onClick={() => setPeekOpen((v) => !v)}
+              aria-expanded={peekOpen}
+              aria-controls="catalogue-peek-strip"
+              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-foreground/55 hover:text-primary transition-colors"
+            >
+              <Eye size={12} /> {category.name} catalogue · peek inside
+            </button>
+            <div
+              id="catalogue-peek-strip"
+              className={`grid transition-all duration-300 ease-out ${
+                peekOpen ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0 mt-0"
+              }`}
+            >
+              <div className="overflow-hidden">
+                <CatalogThumbnailStrip
+                  slug={category.slug}
+                  count={6}
+                  skip={1}
+                  onClick={() => setFlipOpen(true)}
+                />
+              </div>
+            </div>
           </div>
+
         </div>
       </section>
 
