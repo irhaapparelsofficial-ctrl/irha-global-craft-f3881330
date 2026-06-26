@@ -1,97 +1,49 @@
-## Goal
+# Catalog Rebuild — Decisions Locked
 
-Teen SEO upgrades:
-1. **Google Business Profile-grade structured data** — current `LocalBusiness` schema ko richer banana taake GBP / local pack me strongly match ho.
-2. **Auto-ping** — har deploy ke baad Google + Bing ko sitemap update ka signal jaye, plus daily cron jo Google ko remind karta rahe.
-3. **Hreflang tags** — Germany, UK, USA, Austria audiences ke liye locale signals.
+You confirmed: **no regen cap**, **CDN hosting**, **delete everything and replace**. Here is what I will execute next, in one continuous run.
 
----
+## Scope confirmed
+- 559 source images extracted from your 6 ZIPs (~849 MB)
+- 6 categories: Bavarian, Leatherwear, Sportswear, Streetwear, Leisurewear, Nightwear
+- Filenames encode product + view angle (front / back / side / three-quarter / folded / macro detail)
+- Existing DB has hardcoded arrays in `src/lib/categories.ts`, `catalog.ts`, `featuredProducts.ts` + populated `categories` / `products` tables → all gets wiped.
 
-## 1. Google Business Profile structured data
-
-`index.html` me existing `LocalBusiness` ko richer schema se replace:
-
-- `@type` ko `"LocalBusiness"` se `["LocalBusiness", "ClothingStore", "Manufacturer"]` multi-type karna (Google ko local + manufacturer dono context milta hai)
-- `logo` field add (favicon ki jagah proper logo URL — preview image se)
-- `foundingDate`, `numberOfEmployees`, `slogan` add
-- `contactPoint` array — sales/support ke alag entries with `availableLanguage: ["English","Urdu","German"]`
-- `hasOfferCatalog` — 6 product categories (Bavarian, Sportswear, Leatherwear, Streetwear, Leisurewear, Nightwear) as `OfferCatalog` with `Offer` items linking to `/products/<slug>`
-- `aggregateRating` skip (fake ratings = manual penalty); leave for real reviews later
-- `paymentAccepted`, `currenciesAccepted: "USD, EUR, GBP, AED"`
-- `knowsAbout` — keywords like "OEM apparel manufacturing", "Lederhosen production", etc.
-
-Naya separate `Organization` schema bhi rakhenge with `sameAs` for social profiles (already partially present) — yeh `LocalBusiness` ke side me crawlers ko entity disambiguation deta hai.
-
----
-
-## 2. Sitemap auto-ping
-
-Do layers:
-
-**A. Build-time ping** — `scripts/ping-search-engines.mjs` create karenge. `postbuild` script me add karenge taake har production build ke baad Google + Bing + IndexNow ko sitemap ka notification jaye:
+## Pipeline (automated, end-to-end)
 
 ```text
-GET https://www.google.com/ping?sitemap=https://www.irhaapparels.com/sitemap.xml
-GET https://www.bing.com/ping?sitemap=https://www.irhaapparels.com/sitemap.xml
-POST https://api.indexnow.org/indexnow  (Bing/Yandex modern protocol)
+1. PARSE        559 filenames → {category, product, view} JSON manifest
+2. GROUP        collapse to ~120-160 unique products, each with 1-4 views + macro
+3. UPLOAD       every keeper image → Lovable CDN via lovable-assets CLI
+                → produces 559 .asset.json pointers, zero binaries in repo
+4. BACKUP       snapshot current categories + products to *_backup_2026_06 tables
+5. WIPE         TRUNCATE products, categories (cascade)
+6. SEED         INSERT new categories (6) + sub-categories + products with CDN URLs
+7. REFACTOR     replace hardcoded src/lib/categories.ts + catalog.ts + featuredProducts.ts
+                with DB-driven loaders (useCategories hook already exists)
+8. SEO          regenerate sitemap.xml from new DB rows
+9. QA           build, smoke-test category pages, verify no broken images
 ```
 
-IndexNow ke liye 32-char key file `public/<key>.txt` me daal denge.
+## Time estimate
+- Upload phase is the bottleneck: 559 sequential CLI calls ≈ 25-40 min wall clock.
+- Parsing + DB seed + refactor ≈ 10 min.
+- I will stream progress as it goes; if a step fails I stop and surface it, no silent skips.
 
-**B. Daily Search Console refresh** — Supabase edge function `sitemap-ping` create karenge jo:
-- Lovable AI gateway ke connector se GSC ke `sitemaps.submit` endpoint ko call kare
-- `lastmod` refresh karne ke liye sitemap fetch + re-submit kare
+## What will be deleted (irreversible from chat — only revertable via History tab)
+- All rows in `public.categories`
+- All rows in `public.products`
+- Hardcoded product/category arrays in `src/lib/*.ts`
+- Local image binaries in `src/assets/cat-*.jpg` and product galleries (replaced by CDN pointers)
 
-Phir `pg_cron` + `pg_net` enable karke daily 03:00 UTC pe trigger hoga via `supabase--insert` SQL.
+## What stays untouched
+- Homepage, hero, About, Contact, FAQ, Blog, Studio, Admin panel structure
+- Supabase schema (only data is wiped, no column changes)
+- Auth, leads, social, mailing, PI generator features
+- 6 category catalog flipbooks in `/public/catalogs/` (separate PDF artifacts)
 
-> Note: Google ne `/ping` endpoint June 2023 me deprecate kar diya tha; isliye primary mechanism GSC API resubmit hai (jo already verified hai), aur `/ping` sirf belt-and-suspenders ke taur pe.
-
----
-
-## 3. Hreflang tags
-
-`src/components/SEO.tsx` me hreflang block add karenge. Site single-language (English) hai lekin geo-targeting alag-alag markets ke liye chahiye — so we'll emit:
-
-```html
-<link rel="alternate" hreflang="en" href="https://www.irhaapparels.com{path}" />
-<link rel="alternate" hreflang="en-US" href="…" />
-<link rel="alternate" hreflang="en-GB" href="…" />
-<link rel="alternate" hreflang="en-AU" href="…" />
-<link rel="alternate" hreflang="en-CA" href="…" />
-<link rel="alternate" hreflang="en-AE" href="…" />
-<link rel="alternate" hreflang="de-DE" href="…" />
-<link rel="alternate" hreflang="de-AT" href="…" />
-<link rel="alternate" hreflang="x-default" href="…" />
-```
-
-Sab same canonical URL pe point karenge (because content English hai for all markets). Yeh Google ko batata hai ki yeh page in sab regions ke liye relevant hai bina duplicate-content penalty ke. Hreflang har route pe auto-inject hoga because every page uses the `<SEO>` component.
+## One technical note (non-blocking)
+Your `categories` table already has the right shape (`slug`, `name`, `image_url`, `details[]`, etc.) and `products` already has `gallery[]`, `specs[]`, `details` jsonb. Zero schema changes needed — only data + frontend refactor.
 
 ---
 
-## Files to change
-
-| File | Change |
-|---|---|
-| `index.html` | Expand LocalBusiness schema (multi-type, contactPoint, hasOfferCatalog, knowsAbout) |
-| `src/components/SEO.tsx` | Inject hreflang `<link>` tags for en/en-US/en-GB/en-AU/en-CA/en-AE/de-DE/de-AT/x-default |
-| `scripts/ping-search-engines.mjs` (new) | Post-build ping: Google, Bing, IndexNow |
-| `package.json` | Update `postbuild` to also run ping script |
-| `public/<indexnow-key>.txt` (new) | IndexNow verification file |
-| `supabase/functions/sitemap-ping/index.ts` (new) | Daily GSC sitemap re-submit via connector gateway |
-| Cron SQL (run via `supabase--insert`) | `pg_cron` + `pg_net` enable + daily schedule for `sitemap-ping` |
-
----
-
-## What user should do after deploy
-
-1. **Publish** karna hoga taake hreflang + expanded schema live ho jaye
-2. **Google Business Profile** ([business.google.com](https://business.google.com)) par jakar manually claim karna hoga `Irha Apparels` Sialkot location — structured data sirf signal hai, profile khud user banata hai
-3. Cron daily Google ko ping karega — koi manual kaam nahi
-
----
-
-## Out of scope
-
-- Real translation of pages into German (would need full content migration; current site is English)
-- Real customer reviews / `aggregateRating` (fake = penalty risk)
-- Per-country pricing pages
+**Reply "go" and I start the pipeline immediately. It will run for ~40 min with progress updates. Reply with any changes to scope first if you want to adjust.**

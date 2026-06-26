@@ -1,51 +1,5 @@
-import bavarian from "@/assets/cat-bavarian.jpg?w=1600&format=webp&quality=80";
-import sportswear from "@/assets/cat-sportswear.jpg?w=1600&format=webp&quality=80";
-import leather from "@/assets/cat-leather.jpg?w=1600&format=webp&quality=80";
-import streetwear from "@/assets/cat-streetwear.jpg?w=1600&format=webp&quality=80";
-import leisure from "@/assets/cat-leisure.jpg?w=1600&format=webp&quality=80";
-import nightwear from "@/assets/cat-nightwear.jpg?w=1600&format=webp&quality=80";
-
-import bav1 from "@/assets/products/bavarian-1.jpg?w=900&format=webp&quality=78";
-import bav2 from "@/assets/products/bavarian-2.jpg?w=900&format=webp&quality=78";
-import bav3 from "@/assets/products/bavarian-3.jpg?w=900&format=webp&quality=78";
-import bav4 from "@/assets/products/bavarian-4.jpg?w=900&format=webp&quality=78";
-import bavD1 from "@/assets/products/bavarian-detail-1.jpg?w=900&format=webp&quality=78";
-import bavD2 from "@/assets/products/bavarian-detail-2.jpg?w=900&format=webp&quality=78";
-
-import sp1 from "@/assets/products/sportswear-1.jpg?w=900&format=webp&quality=78";
-import sp2 from "@/assets/products/sportswear-2.jpg?w=900&format=webp&quality=78";
-import sp3 from "@/assets/products/sportswear-3.jpg?w=900&format=webp&quality=78";
-import sp4 from "@/assets/products/sportswear-4.jpg?w=900&format=webp&quality=78";
-import spD1 from "@/assets/products/sportswear-detail-1.jpg?w=900&format=webp&quality=78";
-import spD2 from "@/assets/products/sportswear-detail-2.jpg?w=900&format=webp&quality=78";
-
-import lt1 from "@/assets/products/leather-1.jpg?w=900&format=webp&quality=78";
-import lt2 from "@/assets/products/leather-2.jpg?w=900&format=webp&quality=78";
-import lt3 from "@/assets/products/leather-3.jpg?w=900&format=webp&quality=78";
-import lt4 from "@/assets/products/leather-4.jpg?w=900&format=webp&quality=78";
-import ltD1 from "@/assets/products/leather-detail-1.jpg?w=900&format=webp&quality=78";
-import ltD2 from "@/assets/products/leather-detail-2.jpg?w=900&format=webp&quality=78";
-
-import st1 from "@/assets/products/streetwear-1.jpg?w=900&format=webp&quality=78";
-import st2 from "@/assets/products/streetwear-2.jpg?w=900&format=webp&quality=78";
-import st3 from "@/assets/products/streetwear-3.jpg?w=900&format=webp&quality=78";
-import st4 from "@/assets/products/streetwear-4.jpg?w=900&format=webp&quality=78";
-import stD1 from "@/assets/products/streetwear-detail-1.jpg?w=900&format=webp&quality=78";
-import stD2 from "@/assets/products/streetwear-detail-2.jpg?w=900&format=webp&quality=78";
-
-import ls1 from "@/assets/products/leisure-1.jpg?w=900&format=webp&quality=78";
-import ls2 from "@/assets/products/leisure-2.jpg?w=900&format=webp&quality=78";
-import ls3 from "@/assets/products/leisure-3.jpg?w=900&format=webp&quality=78";
-import ls4 from "@/assets/products/leisure-4.jpg?w=900&format=webp&quality=78";
-import lsD1 from "@/assets/products/leisure-detail-1.jpg?w=900&format=webp&quality=78";
-import lsD2 from "@/assets/products/leisure-detail-2.jpg?w=900&format=webp&quality=78";
-
-import nw1 from "@/assets/products/nightwear-1.jpg?w=900&format=webp&quality=78";
-import nw2 from "@/assets/products/nightwear-2.jpg?w=900&format=webp&quality=78";
-import nw3 from "@/assets/products/nightwear-3.jpg?w=900&format=webp&quality=78";
-import nw4 from "@/assets/products/nightwear-4.jpg?w=900&format=webp&quality=78";
-import nwD1 from "@/assets/products/nightwear-detail-1.jpg?w=900&format=webp&quality=78";
-import nwD2 from "@/assets/products/nightwear-detail-2.jpg?w=900&format=webp&quality=78";
+// AUTO-GENERATED from /tmp/manifest.json. Do not edit by hand.
+// Source: 507 product photos uploaded to Lovable CDN.
 
 export type ProductSpec = { label: string; value: string };
 
@@ -69,27 +23,16 @@ export type Category = {
   products: Product[];
 };
 
-// Helpers to keep per-product spec sheets concise but rich
-const mk = (
-  fabric: string,
-  gsm: string,
-  moq: string,
-  leadTime: string,
-  sizes: string,
-  colors: string,
-  packaging: string,
-  certs: string,
-  customization: string
-): ProductSpec[] => [
-  { label: "Fabric", value: fabric },
-  { label: "Weight / GSM", value: gsm },
-  { label: "MOQ", value: moq },
-  { label: "Lead Time", value: leadTime },
-  { label: "Sizes", value: sizes },
-  { label: "Colors", value: colors },
-  { label: "Packaging", value: packaging },
-  { label: "Certifications", value: certs },
-  { label: "Customization", value: customization },
+const mk = (fabric:string,gsm:string,moq:string,leadTime:string,sizes:string,colors:string,packaging:string,certs:string,customization:string): ProductSpec[] => [
+  { label: 'Fabric', value: fabric },
+  { label: 'Weight / GSM', value: gsm },
+  { label: 'MOQ', value: moq },
+  { label: 'Lead Time', value: leadTime },
+  { label: 'Sizes', value: sizes },
+  { label: 'Colors', value: colors },
+  { label: 'Packaging', value: packaging },
+  { label: 'Certifications', value: certs },
+  { label: 'Customization', value: customization },
 ];
 
 export const CATEGORIES: Category[] = [
@@ -98,86 +41,41 @@ export const CATEGORIES: Category[] = [
     catalog: "/catalogs/bavarian-catalog.pdf",
     name: "Bavarian Wear",
     short: "Trachten & Lederhosen",
-    description:
-      "Authentic European-style lederhosen and trachten outfits crafted with traditional embroidery, premium suede, and heritage hardware — engineered for Oktoberfest retailers and trachten boutiques across Germany and Austria.",
-    image: bavarian,
+    description: "Authentic European-style lederhosen and trachten outfits crafted with traditional embroidery, premium suede, and heritage hardware — engineered for Oktoberfest retailers and trachten boutiques across Germany and Austria.",
+    image: "/__l5e/assets-v1/18e78e80-1ac2-4ed5-bf35-4930c0bc76a3/irha-0035.jpg",
     details: ["Genuine suede & deer leather", "Hand-embroidered detailing", "Custom alpine hardware", "Men / Women / Kids ranges"],
     products: [
       {
-        name: "Heritage Lederhosen Set",
-        image: bav1,
-        gallery: [bav1, bavD1, bavD2],
-        description:
-          "Traditional men's lederhosen crafted from deer suede with hand-embroidered front panel, antler-style buttons and matching check shirt — a complete Oktoberfest set ready for European retail floors.",
-        specs: ["Genuine deer suede", "Hand embroidery", "Antler buttons", "Sizes 44–60"],
-        details: mk(
-          "100% genuine deer suede leather, 1.2–1.4mm",
-          "Suede 220–260 GSM equivalent",
-          "50 sets per design / color",
-          "45–60 days FOB Karachi",
-          "EU 44–60 (men), custom sizing on request",
-          "Antique brown, black, grey, custom dyes",
-          "Individual poly bag + branded gift box",
-          "OEKO-TEX Standard 100, REACH compliant",
-          "Private label, custom embroidery, branded hangtags & labels",
-        ),
+        name: "Alpine Trachten Hat",
+        image: "/__l5e/assets-v1/1afd0194-b039-43b6-b816-f11ad2738b6a/irha-fix-0004.jpg",
+        gallery: ["/__l5e/assets-v1/1afd0194-b039-43b6-b816-f11ad2738b6a/irha-fix-0004.jpg", "/__l5e/assets-v1/f2789635-41de-4cc5-972c-54cd92f0fedc/irha-fix-0005.jpg", "/__l5e/assets-v1/c7479406-8b89-411a-b730-c80fbf87e74a/irha-fix-0006.jpg", "/__l5e/assets-v1/5cd2526d-175e-460b-b1e8-1cc97017c4f7/irha-fix-0008.jpg"],
+        description: "Handcrafted alpine trachten hat in authentic Alpine tradition — premium fabrics, ornate detailing and heritage construction for Oktoberfest retailers and trachten boutiques across Germany & Austria.",
+        specs: ["Genuine suede / cotton", "Hand embroidery", "Heritage hardware", "OEKO-TEX 100"],
+        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Karachi", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
       },
       {
-        name: "Alpine Dirndl Dress",
-        image: bav2,
-        gallery: [bav2, bavD2, bavD1],
-        description:
-          "Women's dirndl in stonewashed cotton with floral embroidered bodice, puff-sleeve blouse and apron — finished with delicate lace trim for boutique trachten collections.",
-        specs: ["Cotton & linen blend", "Floral embroidery", "Lace trim apron", "Sizes XS–XXL"],
-        details: mk(
-          "Cotton-linen blend bodice, cotton voile blouse",
-          "180–220 GSM",
-          "50 pieces per style",
-          "40–55 days",
-          "XS–XXL, custom plus sizes available",
-          "Burgundy, forest green, navy, pastel ranges",
-          "Tissue wrap + branded box",
-          "OEKO-TEX, GOTS option",
-          "Custom prints, embroidery, lace trims, branded labels",
-        ),
+        name: "Bavarian Checkered Shirt",
+        image: "/__l5e/assets-v1/b6f88de3-21be-429b-9c3b-468d2177b770/irha-0465.jpg",
+        gallery: ["/__l5e/assets-v1/b6f88de3-21be-429b-9c3b-468d2177b770/irha-0465.jpg", "/__l5e/assets-v1/77433f03-0c84-4a98-83b2-fa14e3182e53/irha-0463.jpg", "/__l5e/assets-v1/a155fc06-35d2-42db-a0b1-6b49909a3e50/irha-0464.jpg"],
+        description: "Handcrafted bavarian checkered shirt in authentic Alpine tradition — premium fabrics, ornate detailing and heritage construction for Oktoberfest retailers and trachten boutiques across Germany & Austria.",
+        specs: ["Genuine suede / cotton", "Hand embroidery", "Heritage hardware", "OEKO-TEX 100"],
+        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Karachi", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
       },
       {
-        name: "Trachten Vest & Shirt",
-        image: bav3,
-        gallery: [bav3, bavD1, bavD2],
-        description:
-          "Embroidered linen waistcoat paired with a crisp white trachten shirt — a refined formal trachten look for premium menswear ranges and seasonal collections.",
-        specs: ["Linen waistcoat", "Tonal embroidery", "Pure cotton shirt", "Slim & regular fit"],
-        details: mk(
-          "Pure linen vest, 100% cotton poplin shirt",
-          "Vest 240 GSM / shirt 130 GSM",
-          "50 sets",
-          "45 days",
-          "S–XXXL slim & regular",
-          "Charcoal, loden green, cream, custom",
-          "Poly bag + cardboard insert",
-          "OEKO-TEX 100",
-          "Embroidery, fabric swap, branded trims",
-        ),
+        name: "Bavarian Embroidered Vest",
+        image: "/__l5e/assets-v1/13fccae5-9e9d-46c5-a4d6-c9dbe76bb519/irha-0054.jpg",
+        gallery: ["/__l5e/assets-v1/13fccae5-9e9d-46c5-a4d6-c9dbe76bb519/irha-0054.jpg", "/__l5e/assets-v1/1d05f236-82ac-4d97-b314-ab8a41ab65be/irha-fix-0016.jpg", "/__l5e/assets-v1/aa039376-f3c3-4aeb-b384-509b8c765fa4/irha-fix-0017.jpg", "/__l5e/assets-v1/c3c828bf-bbad-44b9-923b-49d6cb47c4ec/irha-fix-0019.jpg"],
+        description: "Handcrafted bavarian embroidered vest in authentic Alpine tradition — premium fabrics, ornate detailing and heritage construction for Oktoberfest retailers and trachten boutiques across Germany & Austria.",
+        specs: ["Genuine suede / cotton", "Hand embroidery", "Heritage hardware", "OEKO-TEX 100"],
+        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Karachi", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
       },
       {
-        name: "Kids Lederhosen Outfit",
-        image: bav4,
-        gallery: [bav4, bavD2, bavD1],
-        description:
-          "Pint-sized lederhosen with embroidered suspenders and matching shirt — durable suede construction built to survive festival season while looking heirloom-grade.",
-        specs: ["Soft kid suede", "Adjustable straps", "Floral embroidery", "Ages 2–14"],
-        details: mk(
-          "Soft kid suede 0.9–1.1mm + cotton check shirt",
-          "Suede equivalent 180 GSM",
-          "50 sets per design",
-          "40 days",
-          "Ages 2–14 (EU 92–164)",
-          "Brown, tan, black + custom",
-          "Branded gift box",
-          "OEKO-TEX 100, CPSIA compliant",
-          "Embroidery, sizing, branded labels & tags",
-        ),
+        name: "Bavarian Leather Belt",
+        image: "/__l5e/assets-v1/fb4b4db8-9592-4768-83a2-7857a016cfd7/irha-0457.jpg",
+        gallery: ["/__l5e/assets-v1/fb4b4db8-9592-4768-83a2-7857a016cfd7/irha-0457.jpg", "/__l5e/assets-v1/7805af78-7df1-410a-9b67-da900cf442d2/irha-0456.jpg"],
+        description: "Handcrafted bavarian leather belt in authentic Alpine tradition — premium fabrics, ornate detailing and heritage construction for Oktoberfest retailers and trachten boutiques across Germany & Austria.",
+        specs: ["Genuine suede / cotton", "Hand embroidery", "Heritage hardware", "OEKO-TEX 100"],
+        details: mk("Genuine deer / goat suede + cotton-linen blends", "Suede 220–260 GSM / cotton 180–220 GSM", "50 sets per design / color", "45–60 days FOB Karachi", "EU 44–60 men / XS–XXL women / kids 2–14", "Antique brown, forest green, burgundy, custom", "Individual poly bag + branded gift box", "OEKO-TEX Standard 100, REACH compliant", "Private label, embroidery, branded hangtags & labels"),
       },
     ],
   },
@@ -186,86 +84,41 @@ export const CATEGORIES: Category[] = [
     catalog: "/catalogs/leatherwear-catalog.pdf",
     name: "Leatherwear",
     short: "Luxury Leather Garments",
-    description:
-      "Premium leather jackets, biker apparel and refined outerwear cut from full-grain cowhide and napa lambskin — finished with YKK hardware and quilted satin linings worthy of luxury retail floors.",
-    image: leather,
+    description: "Premium leather jackets, biker apparel and refined outerwear cut from full-grain cowhide and napa lambskin — finished with YKK hardware and quilted satin linings worthy of luxury retail floors.",
+    image: "/__l5e/assets-v1/b55b7737-37a1-492a-8657-75c9c2d47f8a/irha-fix-0000.jpg",
     details: ["Full-grain & napa leather", "YKK / RiRi hardware", "Bonded & quilted linings", "Bespoke pattern development"],
     products: [
       {
-        name: "Classic Biker Jacket",
-        image: lt1,
-        gallery: [lt1, ltD1, ltD2],
-        description:
-          "Iconic asymmetric biker in full-grain cowhide with quilted shoulder panels, YKK zippers and adjustable belt — an enduring silhouette for premium outerwear ranges.",
-        specs: ["Full-grain cowhide", "Quilted satin lining", "YKK metal hardware", "Hand-finished edges"],
-        details: mk(
-          "Full-grain cowhide 1.0–1.2mm, quilted satin lining",
-          "Leather equivalent 380 GSM",
-          "50 pieces per design",
-          "55–70 days",
-          "XS–3XL slim & regular",
-          "Black, brown, cognac, oxblood, custom",
-          "Hanger pack + suit bag + branded box",
-          "LWG certified leather, REACH compliant",
-          "Custom hardware, embossing, branded labels & lining",
-        ),
+        name: "Bomber Leather Jacket",
+        image: "/__l5e/assets-v1/8b5c4fe7-69ae-456a-8c64-0266658d6962/irha-0114.jpg",
+        gallery: ["/__l5e/assets-v1/8b5c4fe7-69ae-456a-8c64-0266658d6962/irha-0114.jpg", "/__l5e/assets-v1/7b472153-85da-4e40-ac8e-2d8c6d209a07/irha-0115.jpg", "/__l5e/assets-v1/84f03cf7-4dc7-4e55-b692-68c1c962bcac/irha-0116.jpg", "/__l5e/assets-v1/0f9400a6-fffe-475a-82ac-15a747ecec6b/irha-0112.jpg"],
+        description: "Premium bomber leather jacket cut from full-grain leather with YKK hardware, bonded linings and hand-finished edges — built for luxury outerwear ranges.",
+        specs: ["Full-grain leather", "YKK hardware", "Quilted lining", "Hand-finished"],
+        details: mk("Full-grain cowhide / napa lambskin 1.0–1.4mm", "Leather equivalent 280–320 GSM", "30–50 pieces per style", "50–65 days FOB", "XS–4XL extended sizing", "Black, antique brown, oxblood, custom dyes", "Tissue + branded box + dust bag", "OEKO-TEX, REACH, LWG-certified tannery", "Custom hardware, lining, embroidery, label & hangtag"),
       },
       {
-        name: "Napa Moto Jacket — Women",
-        image: lt2,
-        gallery: [lt2, ltD2, ltD1],
-        description:
-          "Women's moto jacket in butter-soft napa lambskin with sculpted lapels and slim-fit construction — a refined wardrobe staple for premium boutiques.",
-        specs: ["Napa lambskin", "Slim tailored fit", "Hidden side pockets", "XS–XXL"],
-        details: mk(
-          "Napa lambskin 0.7–0.9mm, viscose lining",
-          "Leather equivalent 280 GSM",
-          "50 pieces per design",
-          "50–65 days",
-          "XS–XXL women",
-          "Black, taupe, cognac, blush, custom",
-          "Hanger pack + suit bag",
-          "LWG leather, OEKO-TEX lining",
-          "Custom panels, embossing, branded trims",
-        ),
+        name: "Classic Biker Leather Jacket",
+        image: "/__l5e/assets-v1/757af308-4d35-4596-8c66-09c9236f99f7/irha-0119.jpg",
+        gallery: ["/__l5e/assets-v1/757af308-4d35-4596-8c66-09c9236f99f7/irha-0119.jpg", "/__l5e/assets-v1/20f920f9-35a6-4cb6-aba0-bcb3c7118e57/irha-0118.jpg", "/__l5e/assets-v1/6b032887-19d3-4577-ad4c-926b07a5f72d/irha-0120.jpg", "/__l5e/assets-v1/85e2c26f-b56c-4a0b-96cd-1e5f56cd8c6b/irha-0117.jpg"],
+        description: "Premium classic biker leather jacket cut from full-grain leather with YKK hardware, bonded linings and hand-finished edges — built for luxury outerwear ranges.",
+        specs: ["Full-grain leather", "YKK hardware", "Quilted lining", "Hand-finished"],
+        details: mk("Full-grain cowhide / napa lambskin 1.0–1.4mm", "Leather equivalent 280–320 GSM", "30–50 pieces per style", "50–65 days FOB", "XS–4XL extended sizing", "Black, antique brown, oxblood, custom dyes", "Tissue + branded box + dust bag", "OEKO-TEX, REACH, LWG-certified tannery", "Custom hardware, lining, embroidery, label & hangtag"),
       },
       {
-        name: "Leather Trousers",
-        image: lt3,
-        gallery: [lt3, ltD1, ltD2],
-        description:
-          "Tailored leather pants in supple lambskin with bonded interior lining and contoured seams — designed to drape like fabric and last for seasons.",
-        specs: ["Supple lambskin", "Bonded lining", "Five-pocket cut", "Custom inseam"],
-        details: mk(
-          "Lambskin 0.6–0.8mm, bonded jersey lining",
-          "Leather equivalent 240 GSM",
-          "50 pieces per design",
-          "50 days",
-          "Waist 26–40, custom inseam",
-          "Black, brown, custom",
-          "Hanger pack",
-          "LWG leather",
-          "Custom rise, leg shape, hardware",
-        ),
+        name: "Full-Grain Leather Belt",
+        image: "/__l5e/assets-v1/43cc827e-3506-4c82-af42-3a384abd5d14/irha-0027.jpg",
+        gallery: ["/__l5e/assets-v1/43cc827e-3506-4c82-af42-3a384abd5d14/irha-0027.jpg", "/__l5e/assets-v1/305af262-08b6-4685-bd9e-565a34a56fa8/irha-0028.jpg", "/__l5e/assets-v1/6eeed6e8-3704-4e0d-b864-e1e6220960d0/irha-0029.jpg", "/__l5e/assets-v1/69d399b1-8778-41e8-82e8-1193440a05ca/irha-0030.jpg"],
+        description: "Premium full-grain leather belt cut from full-grain leather with YKK hardware, bonded linings and hand-finished edges — built for luxury outerwear ranges.",
+        specs: ["Full-grain leather", "YKK hardware", "Quilted lining", "Hand-finished"],
+        details: mk("Full-grain cowhide / napa lambskin 1.0–1.4mm", "Leather equivalent 280–320 GSM", "30–50 pieces per style", "50–65 days FOB", "XS–4XL extended sizing", "Black, antique brown, oxblood, custom dyes", "Tissue + branded box + dust bag", "OEKO-TEX, REACH, LWG-certified tannery", "Custom hardware, lining, embroidery, label & hangtag"),
       },
       {
-        name: "Leather Bomber Jacket",
-        image: lt4,
-        gallery: [lt4, ltD2, ltD1],
-        description:
-          "Classic bomber silhouette in rich cognac leather with ribbed cuffs and hem, two-way zipper and quilted interior — an effortless luxury layering piece.",
-        specs: ["Cognac cowhide", "Rib-knit cuffs & hem", "Two-way YKK zip", "Quilted lining"],
-        details: mk(
-          "Cowhide 1.0mm, quilted poly lining, rib-knit trims",
-          "Leather equivalent 360 GSM",
-          "50 pieces",
-          "55–70 days",
-          "S–3XL",
-          "Cognac, black, navy, olive",
-          "Suit bag + branded box",
-          "LWG leather, REACH",
-          "Custom embroidery, patches, branded hardware",
-        ),
+        name: "Leather Gloves",
+        image: "/__l5e/assets-v1/54cff98b-f33a-4b6a-9c84-82d2776abb30/irha-0142.jpg",
+        gallery: ["/__l5e/assets-v1/54cff98b-f33a-4b6a-9c84-82d2776abb30/irha-0142.jpg", "/__l5e/assets-v1/1fc26e6f-9518-4583-b6d1-72df7152c343/irha-0143.jpg", "/__l5e/assets-v1/7b2d1b9d-422d-4a95-9990-02a05d4188c8/irha-0144.jpg", "/__l5e/assets-v1/84737012-f3aa-41e7-ba6c-7007776bf15d/irha-0145.jpg"],
+        description: "Premium leather gloves cut from full-grain leather with YKK hardware, bonded linings and hand-finished edges — built for luxury outerwear ranges.",
+        specs: ["Full-grain leather", "YKK hardware", "Quilted lining", "Hand-finished"],
+        details: mk("Full-grain cowhide / napa lambskin 1.0–1.4mm", "Leather equivalent 280–320 GSM", "30–50 pieces per style", "50–65 days FOB", "XS–4XL extended sizing", "Black, antique brown, oxblood, custom dyes", "Tissue + branded box + dust bag", "OEKO-TEX, REACH, LWG-certified tannery", "Custom hardware, lining, embroidery, label & hangtag"),
       },
     ],
   },
@@ -273,87 +126,42 @@ export const CATEGORIES: Category[] = [
     slug: "sportswear",
     catalog: "/catalogs/sportswear-catalog.pdf",
     name: "Sportswear",
-    short: "Performance & Teamwear",
-    description:
-      "High-performance athletic wear and complete team uniform programs built with moisture-wicking technical fabrics, sublimation printing and reinforced stitching for clubs, leagues and athletic brands worldwide.",
-    image: sportswear,
-    details: ["Sublimation & screen print", "Compression & training kits", "Tracksuits, jerseys, shorts", "OEKO-TEX certified fabrics"],
+    short: "Pro Teams & Performance Kits",
+    description: "Full-sublimation team kits and performance training apparel engineered for soccer, cricket, baseball, basketball, rugby and gym programs — moisture-wicking polyester, four-way stretch, and competition-grade construction.",
+    image: "/__l5e/assets-v1/6ed8d48e-2b63-4777-a00d-32bdccbd5e05/irha-0109.jpg",
+    details: ["Full sublimation printing", "Moisture-wicking polyester", "4-way stretch performance", "Team / federation programs"],
     products: [
       {
-        name: "Pro Sublimated Soccer Kit",
-        image: sp1,
-        gallery: [sp1, spD1, spD2],
-        description:
-          "Full sublimation soccer jersey and shorts in lightweight micro-mesh polyester — fully customizable colorways, crests and player names for clubs and academies.",
-        specs: ["140 GSM micro-mesh", "Full sublimation print", "Custom crest & numbers", "MOQ 50 sets"],
-        details: mk(
-          "100% polyester micro-mesh interlock",
-          "140 GSM",
-          "50 sets per design",
-          "25–35 days",
-          "XS–4XL adult + youth 6–16",
-          "Unlimited via sublimation",
-          "Individual poly bag + team carton",
-          "OEKO-TEX 100, WFSGI compliant",
-          "Full sublimation, names/numbers, sponsor logos",
-        ),
+        name: "Athletic Onesie",
+        image: "/__l5e/assets-v1/9aac18ed-aad8-4bcf-b841-a1d95b9ab9b9/irha-0293.jpg",
+        gallery: ["/__l5e/assets-v1/9aac18ed-aad8-4bcf-b841-a1d95b9ab9b9/irha-0293.jpg", "/__l5e/assets-v1/7e353ba5-d25d-461a-b5d4-c3f966387ea1/irha-0292.jpg", "/__l5e/assets-v1/ad783785-3251-4a8f-8244-0c8b99503c4c/irha-0399.jpg", "/__l5e/assets-v1/fdca8923-f36d-4340-940f-22292a9c9430/irha-0400.jpg"],
+        description: "Competition-grade athletic onesie with full dye-sublimation, moisture-wicking polyester and 4-way stretch — engineered for teams, federations and pro sports programs.",
+        specs: ["Dye-sublimation", "4-way stretch", "Moisture-wicking", "Team-pack ready"],
+        details: mk("Polyester micro-mesh / 4-way stretch 140–180 GSM", "140–180 GSM", "50 pieces per kit / 100 per jersey", "30–40 days FOB", "XS–5XL adult & youth", "Full Pantone match via dye-sublimation", "Individual poly bag + team-pack carton", "OEKO-TEX 100, WFSGI-aligned", "Full sublimation, team names/numbers, sponsor logos"),
       },
       {
-        name: "Performance Tracksuit",
-        image: sp2,
-        gallery: [sp2, spD2, spD1],
-        description:
-          "Tailored tracksuit in technical poly-spandex with bonded seams, hidden zip pockets and reflective piping — engineered for warmup, training and lifestyle wear.",
-        specs: ["Poly-spandex shell", "Bonded seams", "Hidden zip pockets", "Reflective piping"],
-        details: mk(
-          "94% polyester / 6% spandex tricot",
-          "260 GSM",
-          "50 sets per color",
-          "35–45 days",
-          "XS–3XL",
-          "Black, navy, grey, custom Pantone",
-          "Poly bag + master carton",
-          "OEKO-TEX 100",
-          "Embroidery, heat transfer, reflective trims, custom hardware",
-        ),
+        name: "Baseball Jersey",
+        image: "/__l5e/assets-v1/de0934be-21a0-4702-93af-508df131c1d7/irha-0481.jpg",
+        gallery: ["/__l5e/assets-v1/de0934be-21a0-4702-93af-508df131c1d7/irha-0481.jpg", "/__l5e/assets-v1/34b2cf3d-89a9-47e6-87be-1d199546e810/irha-0483.jpg", "/__l5e/assets-v1/18dcbcfa-42ed-4675-a243-3bf6a5f38703/irha-0482.jpg"],
+        description: "Competition-grade baseball jersey with full dye-sublimation, moisture-wicking polyester and 4-way stretch — engineered for teams, federations and pro sports programs.",
+        specs: ["Dye-sublimation", "4-way stretch", "Moisture-wicking", "Team-pack ready"],
+        details: mk("Polyester micro-mesh / 4-way stretch 140–180 GSM", "140–180 GSM", "50 pieces per kit / 100 per jersey", "30–40 days FOB", "XS–5XL adult & youth", "Full Pantone match via dye-sublimation", "Individual poly bag + team-pack carton", "OEKO-TEX 100, WFSGI-aligned", "Full sublimation, team names/numbers, sponsor logos"),
       },
       {
-        name: "Compression Training Set",
-        image: sp3,
-        gallery: [sp3, spD1, spD2],
-        description:
-          "Second-skin compression top and shorts with targeted muscle support panels and moisture-wicking finish — built for athletes, gyms and performance brands.",
-        specs: ["Nylon-spandex", "Flatlock stitching", "Anti-microbial finish", "4-way stretch"],
-        details: mk(
-          "80% nylon / 20% spandex 4-way stretch",
-          "200 GSM",
-          "50 sets per color",
-          "30–40 days",
-          "XS–2XL men/women",
-          "Black, navy, charcoal, custom",
-          "Poly bag + hangtag",
-          "OEKO-TEX 100, bluesign option",
-          "Sublimation panels, branded waistband, custom prints",
-        ),
+        name: "Baseball Uniform Kit",
+        image: "/__l5e/assets-v1/d716d31f-bbcf-4157-92c4-906da95d46dc/irha-0448.jpg",
+        gallery: ["/__l5e/assets-v1/d716d31f-bbcf-4157-92c4-906da95d46dc/irha-0448.jpg", "/__l5e/assets-v1/19450e38-73a0-4b7f-8389-6df98af2596e/irha-0445.jpg", "/__l5e/assets-v1/f834a543-15bb-4426-92ed-024a46f98781/irha-0446.jpg", "/__l5e/assets-v1/97a630a3-8436-45b8-9f1f-fe4bd6c686e6/irha-0447.jpg"],
+        description: "Competition-grade baseball uniform kit with full dye-sublimation, moisture-wicking polyester and 4-way stretch — engineered for teams, federations and pro sports programs.",
+        specs: ["Dye-sublimation", "4-way stretch", "Moisture-wicking", "Team-pack ready"],
+        details: mk("Polyester micro-mesh / 4-way stretch 140–180 GSM", "140–180 GSM", "50 pieces per kit / 100 per jersey", "30–40 days FOB", "XS–5XL adult & youth", "Full Pantone match via dye-sublimation", "Individual poly bag + team-pack carton", "OEKO-TEX 100, WFSGI-aligned", "Full sublimation, team names/numbers, sponsor logos"),
       },
       {
-        name: "Basketball Uniform Set",
-        image: sp4,
-        gallery: [sp4, spD2, spD1],
-        description:
-          "Sublimated basketball jersey and shorts in premium tricot mesh with reinforced stitching and custom team graphics — tournament-ready and league approved.",
-        specs: ["Tricot mesh", "Sublimated graphics", "Reinforced stitching", "Men / Women / Youth"],
-        details: mk(
-          "100% polyester tricot mesh",
-          "160 GSM",
-          "50 sets per team",
-          "30 days",
-          "Youth S – Adult 4XL",
-          "Unlimited via sublimation",
-          "Individual poly bag + team carton",
-          "OEKO-TEX 100",
-          "Full sublimation, names, numbers, sponsor placements",
-        ),
+        name: "Basketball Mesh Jersey",
+        image: "/__l5e/assets-v1/9098b9ee-a54b-496d-8e76-d658a70f940c/irha-0488.jpg",
+        gallery: ["/__l5e/assets-v1/9098b9ee-a54b-496d-8e76-d658a70f940c/irha-0488.jpg", "/__l5e/assets-v1/761ba083-c6b0-4845-94d1-0163469551d9/irha-0489.jpg", "/__l5e/assets-v1/18c16a07-11a7-4aea-a5a7-af043eb99d43/irha-0487.jpg"],
+        description: "Competition-grade basketball mesh jersey with full dye-sublimation, moisture-wicking polyester and 4-way stretch — engineered for teams, federations and pro sports programs.",
+        specs: ["Dye-sublimation", "4-way stretch", "Moisture-wicking", "Team-pack ready"],
+        details: mk("Polyester micro-mesh / 4-way stretch 140–180 GSM", "140–180 GSM", "50 pieces per kit / 100 per jersey", "30–40 days FOB", "XS–5XL adult & youth", "Full Pantone match via dye-sublimation", "Individual poly bag + team-pack carton", "OEKO-TEX 100, WFSGI-aligned", "Full sublimation, team names/numbers, sponsor logos"),
       },
     ],
   },
@@ -361,87 +169,42 @@ export const CATEGORIES: Category[] = [
     slug: "streetwear",
     catalog: "/catalogs/streetwear-catalog.pdf",
     name: "Streetwear",
-    short: "Urban Fashion Apparel",
-    description:
-      "Modern urban silhouettes — oversized hoodies, heavyweight tees, cargos and varsity pieces — produced for emerging labels and established streetwear houses in the US, EU and UAE markets.",
-    image: streetwear,
-    details: ["320–500 GSM heavyweight fleece", "Garment dye & acid wash", "Puff print, embroidery, applique", "Low MOQs for emerging brands"],
+    short: "Heavyweight Urban Apparel",
+    description: "Oversized hoodies, cargo pants and bomber jackets built on heavyweight French Terry and brushed fleece — engineered for premium streetwear labels and private-label drops.",
+    image: "/__l5e/assets-v1/2b3607f6-d2e8-4dcc-a58b-7b5602639f7b/irha-0206.jpg",
+    details: ["Heavyweight French Terry 330–450 GSM", "Garment-dye & enzyme wash", "Box-fit & oversized patterns", "Branded trims & screen print"],
     products: [
       {
-        name: "Heavyweight Oversized Hoodie",
-        image: st1,
-        gallery: [st1, stD1, stD2],
-        description:
-          "500 GSM brushed-back fleece hoodie with boxy drop-shoulder fit, double-needle stitching and self-fabric drawcords — the foundation of any premium streetwear drop.",
-        specs: ["500 GSM French terry", "Drop shoulder cut", "Garment dyed", "Custom prints & embroidery"],
-        details: mk(
-          "100% cotton French terry, brushed back",
-          "500 GSM",
-          "50 pieces per color (low MOQ start-up program)",
-          "30–40 days",
-          "XS–3XL unisex",
-          "Garment dye — any Pantone",
-          "Poly bag + branded hangtag",
-          "OEKO-TEX 100, BCI cotton option",
-          "Puff print, embroidery, screen, DTG, custom trims",
-        ),
+        name: "Bomber Jacket",
+        image: "/__l5e/assets-v1/46f51745-c69d-4dee-8164-9a98d2443ec9/irha-0200.jpg",
+        gallery: ["/__l5e/assets-v1/46f51745-c69d-4dee-8164-9a98d2443ec9/irha-0200.jpg", "/__l5e/assets-v1/95d31518-5d6e-49c2-8b72-d640377dccd5/irha-0201.jpg", "/__l5e/assets-v1/86e9ebac-3d4c-4f89-adc8-d9302fa22b93/irha-0202.jpg", "/__l5e/assets-v1/3e8c42d9-ed3f-45e5-b36f-a304a26f249e/irha-0199.jpg"],
+        description: "Bomber Jacket in heavyweight French Terry with garment-dye finish and box-fit pattern — engineered for premium streetwear labels and private-label drops.",
+        specs: ["330–450 GSM French Terry", "Garment dye", "Box-fit pattern", "Screen / DTG print"],
+        details: mk("Heavyweight French Terry / brushed fleece 330–450 GSM", "330–450 GSM", "50 pieces per design / color", "35–50 days FOB", "XS–4XL relaxed & oversized", "Black, off-white, vintage wash, custom dye", "Individual poly bag + branded carton", "OEKO-TEX 100, GRS option for recycled cotton", "Garment dye, enzyme wash, embroidery, screen & DTG"),
       },
       {
-        name: "Boxy Heavyweight Tee",
-        image: st2,
-        gallery: [st2, stD2, stD1],
-        description:
-          "Heavyweight 240 GSM cotton tee with boxy silhouette, ribbed collar and space for puff print, embroidery or DTG graphics — a streetwear essential built to last.",
-        specs: ["240 GSM combed cotton", "Boxy oversized fit", "Ribbed collar", "Puff print ready"],
-        details: mk(
-          "100% combed ring-spun cotton",
-          "240 GSM",
-          "50 pieces per color",
-          "25–35 days",
-          "XS–3XL unisex",
-          "Garment dyed, any Pantone",
-          "Folded + poly bag + hangtag",
-          "OEKO-TEX 100",
-          "Puff, screen, DTG, embroidery, custom labels",
-        ),
+        name: "Casual Sweatpants",
+        image: "/__l5e/assets-v1/679817eb-7a2b-42d4-bee2-ded7fdbe9385/irha-0210.jpg",
+        gallery: ["/__l5e/assets-v1/679817eb-7a2b-42d4-bee2-ded7fdbe9385/irha-0210.jpg", "/__l5e/assets-v1/986d679a-944c-436c-a214-313183925842/irha-0212.jpg", "/__l5e/assets-v1/815def77-60d6-4ab4-adf4-8663af9c97ff/irha-0211.jpg", "/__l5e/assets-v1/ee51337d-5f90-44bf-a02c-424038e7e279/irha-0208.jpg"],
+        description: "Casual Sweatpants in heavyweight French Terry with garment-dye finish and box-fit pattern — engineered for premium streetwear labels and private-label drops.",
+        specs: ["330–450 GSM French Terry", "Garment dye", "Box-fit pattern", "Screen / DTG print"],
+        details: mk("Heavyweight French Terry / brushed fleece 330–450 GSM", "330–450 GSM", "50 pieces per design / color", "35–50 days FOB", "XS–4XL relaxed & oversized", "Black, off-white, vintage wash, custom dye", "Individual poly bag + branded carton", "OEKO-TEX 100, GRS option for recycled cotton", "Garment dye, enzyme wash, embroidery, screen & DTG"),
       },
       {
-        name: "Cargo Pants",
-        image: st3,
-        gallery: [st3, stD1, stD2],
-        description:
-          "Technical cargo pants in heavyweight ripstop with utility side pockets, tonal hardware and adjustable elastic hem — modern utility for forward-thinking labels.",
-        specs: ["Ripstop cotton", "Utility pockets", "Elastic ankle cuffs", "Garment washed"],
-        details: mk(
-          "100% cotton ripstop or poly-cotton blend",
-          "320 GSM",
-          "50 pieces per color",
-          "35–45 days",
-          "Waist 28–40",
-          "Black, olive, sand, custom",
-          "Folded + poly bag",
-          "OEKO-TEX 100",
-          "Custom pockets, trims, embroidery, branded hardware",
-        ),
+        name: "Long-Sleeve Streetwear Tee",
+        image: "/__l5e/assets-v1/9f68abfa-6c14-4cb7-be5e-2866c3c9a69a/irha-0274.jpg",
+        gallery: ["/__l5e/assets-v1/9f68abfa-6c14-4cb7-be5e-2866c3c9a69a/irha-0274.jpg", "/__l5e/assets-v1/7cf6f8cc-3e4b-490c-8e5c-9fed277b7b05/irha-0276.jpg", "/__l5e/assets-v1/603aa208-f14f-4c08-9e28-1c18b7dbaf5a/irha-0275.jpg", "/__l5e/assets-v1/6987c99a-04c3-4498-8cd9-1fa3c708ee33/irha-0271.jpg"],
+        description: "Long-Sleeve Streetwear Tee in heavyweight French Terry with garment-dye finish and box-fit pattern — engineered for premium streetwear labels and private-label drops.",
+        specs: ["330–450 GSM French Terry", "Garment dye", "Box-fit pattern", "Screen / DTG print"],
+        details: mk("Heavyweight French Terry / brushed fleece 330–450 GSM", "330–450 GSM", "50 pieces per design / color", "35–50 days FOB", "XS–4XL relaxed & oversized", "Black, off-white, vintage wash, custom dye", "Individual poly bag + branded carton", "OEKO-TEX 100, GRS option for recycled cotton", "Garment dye, enzyme wash, embroidery, screen & DTG"),
       },
       {
-        name: "Varsity Letterman Jacket",
-        image: st4,
-        gallery: [st4, stD2, stD1],
-        description:
-          "Wool body with leather sleeves, chenille patches, snap front and ribbed trims — a classic varsity silhouette executed with luxury construction details.",
-        specs: ["Melton wool body", "Leather sleeves", "Chenille patches", "Snap-front closure"],
-        details: mk(
-          "Melton wool body, cowhide sleeves, quilted lining",
-          "Wool 700 GSM",
-          "50 pieces per design",
-          "55–70 days",
-          "S–3XL",
-          "Any wool/leather combo",
-          "Hanger pack + branded box",
-          "OEKO-TEX, LWG leather",
-          "Chenille patches, embroidery, custom snaps & lining",
-        ),
+        name: "Oversized Graphic T-Shirt",
+        image: "/__l5e/assets-v1/95be748e-5bf1-4e34-adcd-4ef48486dd0b/irha-0248.jpg",
+        gallery: ["/__l5e/assets-v1/95be748e-5bf1-4e34-adcd-4ef48486dd0b/irha-0248.jpg", "/__l5e/assets-v1/90e8becb-181d-40b3-ba8a-42d9add2082d/irha-0247.jpg", "/__l5e/assets-v1/9f8ef4bb-ed61-4c10-a45d-30774a3753d9/irha-0246.jpg", "/__l5e/assets-v1/0e857375-aefc-4c10-a731-6d3321424819/irha-0243.jpg"],
+        description: "Oversized Graphic T-Shirt in heavyweight French Terry with garment-dye finish and box-fit pattern — engineered for premium streetwear labels and private-label drops.",
+        specs: ["330–450 GSM French Terry", "Garment dye", "Box-fit pattern", "Screen / DTG print"],
+        details: mk("Heavyweight French Terry / brushed fleece 330–450 GSM", "330–450 GSM", "50 pieces per design / color", "35–50 days FOB", "XS–4XL relaxed & oversized", "Black, off-white, vintage wash, custom dye", "Individual poly bag + branded carton", "OEKO-TEX 100, GRS option for recycled cotton", "Garment dye, enzyme wash, embroidery, screen & DTG"),
       },
     ],
   },
@@ -449,87 +212,42 @@ export const CATEGORIES: Category[] = [
     slug: "leisurewear",
     catalog: "/catalogs/leisurewear-catalog.pdf",
     name: "Leisurewear",
-    short: "Lifestyle Comfort",
-    description:
-      "Elevated lifestyle clothing in cashmere blends, organic cotton and bamboo viscose — engineered for premium loungewear lines that demand softness, structure and a luxury hand feel.",
-    image: leisure,
-    details: ["Cashmere & bamboo blends", "Pre-shrunk & enzyme washed", "Tonal trims & woven labels", "Sustainable fabric sourcing"],
+    short: "Essentials & Casual Tops",
+    description: "Premium basics: crewneck tees, V-necks, henleys, polos, button-ups and chino shorts — the workhorse essentials that anchor every retailer's basics program.",
+    image: "/__l5e/assets-v1/0a87c0d5-13a9-4596-a673-0b4f01711f0c/irha-0105.jpg",
+    details: ["Ring-spun & combed cotton", "Bio-wash soft hand-feel", "Pre-shrunk & color-fast", "S–5XL extended sizing"],
     products: [
       {
-        name: "Cashmere Blend Lounge Set",
-        image: ls1,
-        gallery: [ls1, lsD1, lsD2],
-        description:
-          "Relaxed kimono-style top and wide-leg pant in a cashmere-cotton blend — featherweight warmth and a luxury drape for premium lounge collections.",
-        specs: ["Cashmere-cotton blend", "Wide-leg cut", "Self-tie waist", "Hand wash"],
-        details: mk(
-          "30% cashmere / 70% combed cotton",
-          "260 GSM",
-          "50 sets per color",
-          "40–50 days",
-          "XS–XL",
-          "Oatmeal, charcoal, blush, custom",
-          "Tissue + branded box",
-          "OEKO-TEX 100, RWS cashmere option",
-          "Custom labels, embroidery, packaging",
-        ),
+        name: "Casual Button-Up Shirt",
+        image: "/__l5e/assets-v1/c4792eec-3223-4904-993b-d752deebcc4b/irha-0307.jpg",
+        gallery: ["/__l5e/assets-v1/c4792eec-3223-4904-993b-d752deebcc4b/irha-0307.jpg", "/__l5e/assets-v1/d7d726e7-425e-4b78-867c-9c2fe90a92f4/irha-0308.jpg", "/__l5e/assets-v1/85f811c1-ca1f-487e-9015-8ffb19abc0d9/irha-0306.jpg", "/__l5e/assets-v1/b20f92c2-6b64-4919-86cf-3d7b9e644a02/irha-0304.jpg"],
+        description: "Premium casual button-up shirt in combed ring-spun cotton with bio-wash soft hand-feel — the workhorse essential for retailers' basics programs.",
+        specs: ["Combed ring-spun cotton", "Bio-wash soft", "Pre-shrunk", "S–5XL"],
+        details: mk("Combed ring-spun cotton 160–220 GSM / cotton-modal blends", "160–220 GSM", "100 pieces per color", "30–45 days FOB", "XS–5XL", "Full color palette + heather grades", "Poly bag + carton", "OEKO-TEX 100, BCI cotton option", "Custom prints, embroidery, neck labels, hangtags"),
       },
       {
-        name: "Organic Cotton Joggers & Crew",
-        image: ls2,
-        gallery: [ls2, lsD2, lsD1],
-        description:
-          "Pre-shrunk organic cotton fleece set with tonal flat drawcord, ribbed cuffs and tapered leg — minimalist lounge essentials for sustainable labels.",
-        specs: ["320 GSM organic cotton", "Tapered leg", "Tonal trims", "GOTS certified option"],
-        details: mk(
-          "100% organic cotton French terry",
-          "320 GSM",
-          "50 sets per color",
-          "35–45 days",
-          "XS–3XL unisex",
-          "Natural, sage, dusty pink, custom",
-          "Recycled poly bag + hangtag",
-          "GOTS, OEKO-TEX 100",
-          "Embroidery, screen, custom trims",
-        ),
+        name: "Essential V-Neck T-Shirt",
+        image: "/__l5e/assets-v1/0a87c0d5-13a9-4596-a673-0b4f01711f0c/irha-0105.jpg",
+        gallery: ["/__l5e/assets-v1/0a87c0d5-13a9-4596-a673-0b4f01711f0c/irha-0105.jpg", "/__l5e/assets-v1/8ef56a65-47fc-45cb-a91e-eba47368f003/irha-0104.jpg", "/__l5e/assets-v1/09afd0a9-617b-4fd6-a7f4-cb15ad1e0595/irha-0103.jpg", "/__l5e/assets-v1/1414dc9d-3918-4f0c-805c-a1e2d1edc03a/irha-0100.jpg"],
+        description: "Premium essential v-neck t-shirt in combed ring-spun cotton with bio-wash soft hand-feel — the workhorse essential for retailers' basics programs.",
+        specs: ["Combed ring-spun cotton", "Bio-wash soft", "Pre-shrunk", "S–5XL"],
+        details: mk("Combed ring-spun cotton 160–220 GSM / cotton-modal blends", "160–220 GSM", "100 pieces per color", "30–45 days FOB", "XS–5XL", "Full color palette + heather grades", "Poly bag + carton", "OEKO-TEX 100, BCI cotton option", "Custom prints, embroidery, neck labels, hangtags"),
       },
       {
-        name: "Bamboo Tee & Shorts Set",
-        image: ls3,
-        gallery: [ls3, lsD1, lsD2],
-        description:
-          "Breathable bamboo viscose set with relaxed boxy tee and elastic-waist shorts — silky hand feel and natural antibacterial properties for warm-weather lounge.",
-        specs: ["Bamboo viscose", "Relaxed boxy fit", "Elastic drawstring waist", "Naturally antibacterial"],
-        details: mk(
-          "95% bamboo viscose / 5% spandex",
-          "180 GSM",
-          "50 sets per color",
-          "30–40 days",
-          "XS–2XL",
-          "Cream, sage, sky, custom",
-          "Recycled poly bag",
-          "OEKO-TEX 100, FSC bamboo",
-          "Custom labels, prints, embroidery",
-        ),
+        name: "Henley Long-Sleeve Shirt",
+        image: "/__l5e/assets-v1/c123dd2d-fe83-4202-b50a-6bbfeca4e752/irha-0264.jpg",
+        gallery: ["/__l5e/assets-v1/c123dd2d-fe83-4202-b50a-6bbfeca4e752/irha-0264.jpg", "/__l5e/assets-v1/17eb7eaf-d0d4-4dd0-9b8b-e0045a69331c/irha-0266.jpg", "/__l5e/assets-v1/b4147294-0025-4ff1-955d-a4d82af602f4/irha-0265.jpg", "/__l5e/assets-v1/2c46b8e6-9c6e-404d-8ea5-5a89efbe5d1b/irha-0263.jpg"],
+        description: "Premium henley long-sleeve shirt in combed ring-spun cotton with bio-wash soft hand-feel — the workhorse essential for retailers' basics programs.",
+        specs: ["Combed ring-spun cotton", "Bio-wash soft", "Pre-shrunk", "S–5XL"],
+        details: mk("Combed ring-spun cotton 160–220 GSM / cotton-modal blends", "160–220 GSM", "100 pieces per color", "30–45 days FOB", "XS–5XL", "Full color palette + heather grades", "Poly bag + carton", "OEKO-TEX 100, BCI cotton option", "Custom prints, embroidery, neck labels, hangtags"),
       },
       {
-        name: "Knit Cardigan & Pant",
-        image: ls4,
-        gallery: [ls4, lsD2, lsD1],
-        description:
-          "Ribbed knit cardigan paired with matching wide-leg pant in soft oatmeal — a refined co-ord built for elevated everyday wear and resort retail.",
-        specs: ["Cotton-modal knit", "Coconut shell buttons", "Wide-leg pant", "Co-ord styling"],
-        details: mk(
-          "65% cotton / 35% modal rib knit",
-          "240 GSM",
-          "50 sets per color",
-          "40 days",
-          "XS–XL",
-          "Oatmeal, ivory, sage, custom",
-          "Tissue + recycled box",
-          "OEKO-TEX 100",
-          "Custom buttons, labels, packaging",
-        ),
+        name: "Lounge Shorts",
+        image: "/__l5e/assets-v1/0277c3bb-0032-4f5e-9830-5a9e98d04ac2/irha-0280.jpg",
+        gallery: ["/__l5e/assets-v1/0277c3bb-0032-4f5e-9830-5a9e98d04ac2/irha-0280.jpg", "/__l5e/assets-v1/466d1949-5755-49e6-b225-3ccbb04573a7/irha-0282.jpg", "/__l5e/assets-v1/a87987bc-7c96-4f4e-b3a7-4c4993a6ab7f/irha-0281.jpg", "/__l5e/assets-v1/34c9ae71-b6b6-4a74-8b53-f6e23a633295/irha-0278.jpg"],
+        description: "Premium lounge shorts in combed ring-spun cotton with bio-wash soft hand-feel — the workhorse essential for retailers' basics programs.",
+        specs: ["Combed ring-spun cotton", "Bio-wash soft", "Pre-shrunk", "S–5XL"],
+        details: mk("Combed ring-spun cotton 160–220 GSM / cotton-modal blends", "160–220 GSM", "100 pieces per color", "30–45 days FOB", "XS–5XL", "Full color palette + heather grades", "Poly bag + carton", "OEKO-TEX 100, BCI cotton option", "Custom prints, embroidery, neck labels, hangtags"),
       },
     ],
   },
@@ -537,87 +255,42 @@ export const CATEGORIES: Category[] = [
     slug: "nightwear",
     catalog: "/catalogs/nightwear-catalog.pdf",
     name: "Nightwear",
-    short: "Soft Luxury Indoor",
-    description:
-      "Soft luxury nightwear and intimate loungewear in mulberry silk, modal and brushed cotton — finished with French seams and delicate lace for boutique and department store programs.",
-    image: nightwear,
-    details: ["Mulberry silk & modal", "French-seam construction", "Lace & satin trims", "Gift-ready packaging"],
+    short: "Sleep & Loungewear",
+    description: "Cotton, modal and satin pajama sets, nightshirts, robes and lounge separates — built for boutique sleepwear brands and hotel/hospitality programs.",
+    image: "/__l5e/assets-v1/10eccef4-8445-4dfb-b41b-4c5fff6dda24/irha-0196.jpg",
+    details: ["Cotton, modal, satin & silk blends", "OEKO-TEX 100 certified", "Lace & embroidery options", "Hospitality & hotel programs"],
     products: [
       {
-        name: "Mulberry Silk Pajama Set",
-        image: nw1,
-        gallery: [nw1, nwD1, nwD2],
-        description:
-          "19 momme mulberry silk pajama set with notched lapel, mother-of-pearl buttons and delicate lace detailing — a true luxury sleep piece for boutique retail.",
-        specs: ["19mm mulberry silk", "Mother-of-pearl buttons", "French seams", "Gift-ready box"],
-        details: mk(
-          "100% mulberry silk charmeuse 19mm",
-          "Silk equivalent 90 GSM",
-          "50 sets per color",
-          "45–55 days",
-          "XS–XL",
-          "Champagne, blush, navy, black, custom",
-          "Silk pouch + branded gift box",
-          "OEKO-TEX 100, GOTS silk option",
-          "Monogram embroidery, custom piping & packaging",
-        ),
+        name: "Cotton Nightshirt",
+        image: "/__l5e/assets-v1/9660afef-a333-494c-870b-e6a5eb963633/irha-0289.jpg",
+        gallery: ["/__l5e/assets-v1/9660afef-a333-494c-870b-e6a5eb963633/irha-0289.jpg", "/__l5e/assets-v1/04305757-4328-4611-b613-a16ed25c73de/irha-0291.jpg", "/__l5e/assets-v1/69d9a3b2-af25-4e92-9d7d-ac754a9045aa/irha-0290.jpg", "/__l5e/assets-v1/030118e1-372f-43a1-8951-6b9c0019d67b/irha-0286.jpg"],
+        description: "Soft-hand cotton nightshirt in cotton/modal blends with OEKO-TEX dyes — boutique sleepwear quality, hospitality-program ready.",
+        specs: ["Cotton / modal blend", "OEKO-TEX dyes", "Lace & embroidery options", "Boutique-grade"],
+        details: mk("Cotton voile / modal / satin / brushed cotton 110–180 GSM", "110–180 GSM", "100 pieces per style", "35–45 days FOB", "XS–XXL women / S–XXL men / kids", "Pastels, jacquards, full custom prints", "Branded gift box + tissue", "OEKO-TEX 100, GOTS option", "Lace trim, embroidery, prints, branded label & hangtag"),
       },
       {
-        name: "Lace-Trim Modal Slip",
-        image: nw2,
-        gallery: [nw2, nwD2, nwD1],
-        description:
-          "Bias-cut modal slip with stretch lace bodice and adjustable straps — a delicate, breathable nightdress designed to drape beautifully on every silhouette.",
-        specs: ["Tencel modal", "Stretch lace bodice", "Adjustable straps", "Machine washable"],
-        details: mk(
-          "95% Tencel modal / 5% elastane, stretch lace bodice",
-          "120 GSM",
-          "50 pieces per color",
-          "35–45 days",
-          "XS–2XL",
-          "Black, ivory, dusty rose, custom",
-          "Tissue + branded box",
-          "OEKO-TEX 100, Tencel certified",
-          "Custom lace placement, embroidery, packaging",
-        ),
+        name: "Cotton Sleep Pants",
+        image: "/__l5e/assets-v1/c1e832df-a0da-4568-b711-42b0519126e9/irha-0227.jpg",
+        gallery: ["/__l5e/assets-v1/c1e832df-a0da-4568-b711-42b0519126e9/irha-0227.jpg", "/__l5e/assets-v1/a1d3f258-a8a3-464b-b5ed-960c72b2b33f/irha-0229.jpg", "/__l5e/assets-v1/acadc2be-4b4a-46e8-b6bd-69891a9bb48e/irha-0228.jpg", "/__l5e/assets-v1/c504f6eb-65c0-43ad-8d2b-6815f9b12539/irha-0226.jpg"],
+        description: "Soft-hand cotton sleep pants in cotton/modal blends with OEKO-TEX dyes — boutique sleepwear quality, hospitality-program ready.",
+        specs: ["Cotton / modal blend", "OEKO-TEX dyes", "Lace & embroidery options", "Boutique-grade"],
+        details: mk("Cotton voile / modal / satin / brushed cotton 110–180 GSM", "110–180 GSM", "100 pieces per style", "35–45 days FOB", "XS–XXL women / S–XXL men / kids", "Pastels, jacquards, full custom prints", "Branded gift box + tissue", "OEKO-TEX 100, GOTS option", "Lace trim, embroidery, prints, branded label & hangtag"),
       },
       {
-        name: "Brushed Cotton Pajama",
-        image: nw3,
-        gallery: [nw3, nwD1, nwD2],
-        description:
-          "Classic notched-collar pajama set in soft brushed cotton with contrast piping and chest pocket — relaxed tailoring designed for year-round comfort.",
-        specs: ["Brushed cotton flannel", "Contrast piping", "Notch collar", "Unisex sizing available"],
-        details: mk(
-          "100% brushed cotton flannel",
-          "180 GSM",
-          "50 sets per color",
-          "35–45 days",
-          "XS–3XL unisex",
-          "Check, stripe, solid — any custom",
-          "Poly bag + branded box",
-          "OEKO-TEX 100, BCI cotton",
-          "Custom prints, embroidery, branded trims",
-        ),
+        name: "Plush Bathrobe / Sleep Robe",
+        image: "/__l5e/assets-v1/10eccef4-8445-4dfb-b41b-4c5fff6dda24/irha-0196.jpg",
+        gallery: ["/__l5e/assets-v1/10eccef4-8445-4dfb-b41b-4c5fff6dda24/irha-0196.jpg", "/__l5e/assets-v1/16a84d84-47c4-423d-a340-7250928bed41/irha-0195.jpg", "/__l5e/assets-v1/74514cb7-7279-4fa6-92c1-17397e05a890/irha-0194.jpg", "/__l5e/assets-v1/cc3ed7de-0cb5-4c34-8c9c-15effce5e48e/irha-0270.jpg"],
+        description: "Soft-hand plush bathrobe / sleep robe in cotton/modal blends with OEKO-TEX dyes — boutique sleepwear quality, hospitality-program ready.",
+        specs: ["Cotton / modal blend", "OEKO-TEX dyes", "Lace & embroidery options", "Boutique-grade"],
+        details: mk("Cotton voile / modal / satin / brushed cotton 110–180 GSM", "110–180 GSM", "100 pieces per style", "35–45 days FOB", "XS–XXL women / S–XXL men / kids", "Pastels, jacquards, full custom prints", "Branded gift box + tissue", "OEKO-TEX 100, GOTS option", "Lace trim, embroidery, prints, branded label & hangtag"),
       },
       {
-        name: "Satin Robe",
-        image: nw4,
-        gallery: [nw4, nwD2, nwD1],
-        description:
-          "Mid-length satin robe with self-tie belt, kimono sleeves and inner ties — a luxe layering piece equally suited to boutique sleepwear and bridal programs.",
-        specs: ["Heavy satin", "Self-tie belt", "Inseam pockets", "11 standard colors"],
-        details: mk(
-          "Poly satin or silk satin upgrade",
-          "Poly 140 GSM / silk 19mm",
-          "50 pieces per color",
-          "30–40 days",
-          "XS–2XL + plus on request",
-          "11 standard + custom Pantone",
-          "Tissue + branded box",
-          "OEKO-TEX 100",
-          "Monogram, lace trim, bridal/event packaging",
-        ),
+        name: "Silk Nightgown Slip",
+        image: "/__l5e/assets-v1/7539c35b-0cd5-453c-b2c6-c4fe39f21909/irha-0283.jpg",
+        gallery: ["/__l5e/assets-v1/7539c35b-0cd5-453c-b2c6-c4fe39f21909/irha-0283.jpg", "/__l5e/assets-v1/72407b41-2fda-47c6-b0ff-bf6069bacbef/irha-0284.jpg", "/__l5e/assets-v1/a9957de8-a7a3-457c-8557-f71cc645894b/irha-0285.jpg", "/__l5e/assets-v1/6c674a3e-f58b-40c7-a1aa-c8cc6369b487/irha-0392.jpg"],
+        description: "Soft-hand silk nightgown slip in cotton/modal blends with OEKO-TEX dyes — boutique sleepwear quality, hospitality-program ready.",
+        specs: ["Cotton / modal blend", "OEKO-TEX dyes", "Lace & embroidery options", "Boutique-grade"],
+        details: mk("Cotton voile / modal / satin / brushed cotton 110–180 GSM", "110–180 GSM", "100 pieces per style", "35–45 days FOB", "XS–XXL women / S–XXL men / kids", "Pastels, jacquards, full custom prints", "Branded gift box + tissue", "OEKO-TEX 100, GOTS option", "Lace trim, embroidery, prints, branded label & hangtag"),
       },
     ],
   },
