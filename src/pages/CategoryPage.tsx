@@ -10,7 +10,7 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
-import { ArrowUpRight, ChevronRight, Eye, MessageCircle } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Download, Eye, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 
 const SITE = "https://www.irhaapparels.com";
