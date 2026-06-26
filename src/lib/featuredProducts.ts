@@ -51,3 +51,11 @@ export const FEATURED_PRODUCTS: FeaturedProduct[] = [
     badge: "B2B",
   },
 ];
+
+export const findFeaturedProduct = (
+  categorySlug?: string,
+  productSlug?: string,
+): FeaturedProduct | undefined =>
+  FEATURED_PRODUCTS.find(
+    (p) => p.categorySlug === categorySlug && p.productSlug === productSlug,
+  );

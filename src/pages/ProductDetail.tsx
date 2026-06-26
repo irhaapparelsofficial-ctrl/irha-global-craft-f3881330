@@ -29,18 +29,22 @@ export default function ProductDetail() {
 
   // Use featured static when DB has no match
   const useFeatured = !data && !!featured;
+  const categoryName = useFeatured
+    ? (featured!.categorySlug.charAt(0).toUpperCase() + featured!.categorySlug.slice(1))
+    : "";
+  const material = "Premium export-grade fabric";
   const category = useFeatured
-    ? { slug: featured!.categorySlug, name: featured!.categoryName }
+    ? { slug: featured!.categorySlug, name: categoryName }
     : data!.category;
   const product = useFeatured
     ? {
         name: featured!.title,
         slug: featured!.productSlug,
-        description: featured!.longDescription,
+        description: featured!.description,
         image_url: featured!.image,
         gallery: [featured!.image],
         specs: [
-          featured!.material,
+          material,
           `Lead time: ${featured!.leadTime}`,
           `SKU: ${featured!.sku}`,
         ],
@@ -48,13 +52,14 @@ export default function ProductDetail() {
           { label: "SKU", value: featured!.sku },
           { label: "MOQ", value: featured!.moq.replace(/^MOQ:\s*/, "") },
           { label: "Lead Time", value: featured!.leadTime },
-          { label: "Material", value: featured!.material },
+          { label: "Material", value: material },
           { label: "Programs", value: "OEM · ODM · Private Label" },
         ],
-        seo_title: `${featured!.title} | ${featured!.categoryName} | IRHA Apparels`,
+        seo_title: `${featured!.title} | ${categoryName} | IRHA Apparels`,
         seo_description: featured!.description,
       }
     : data!.product;
+
 
   const gallery = resolveGallery(
     product.gallery.length ? product.gallery : [product.image_url ?? ""],
