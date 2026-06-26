@@ -2,7 +2,7 @@ import SEO from "@/components/SEO";
 import { CATEGORIES, type Category, type Product } from "@/lib/categories";
 import { CATALOG, findGroup } from "@/lib/catalog";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Eye, Maximize2, MessageCircle } from "lucide-react";
+import { ArrowUpRight, Download, Eye, Maximize2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
