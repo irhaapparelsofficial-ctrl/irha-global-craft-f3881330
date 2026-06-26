@@ -4,6 +4,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { BRAND } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import MockupRequestButton from "@/components/MockupRequestButton";
+import irhaLogo from "@/assets/irha-logo.png.asset.json";
 
 const mainLinks = [
   { to: "/", label: "Home" },
