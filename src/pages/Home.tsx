@@ -299,7 +299,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* PRE-CTA TRUST BAR — 4 promises */}
+      <section aria-label="Order promises" className="border-t border-border/60 bg-card/30">
+        <div className="container-luxe py-10 md:py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
+            {[
+              { Icon: Package,   k: "MOQ 50 pcs",       v: "Per design / color" },
+              { Icon: Truck,     k: "FOB Sialkot",      v: "Worldwide export" },
+              { Icon: Calendar,  k: "45-Day Production", v: "Bulk lead time" },
+              { Icon: Shirt,     k: "In-House Embroidery", v: "12-head Tajima" },
+            ].map(({ Icon, k, v }) => (
+              <div key={k} className="flex items-center gap-4 md:justify-center">
+                <span className="inline-flex items-center justify-center w-11 h-11 border border-gold/40 text-gold shrink-0">
+                  <Icon size={20} strokeWidth={1.5} />
+                </span>
+                <div className="leading-tight">
+                  <p className="font-display text-base md:text-lg">{k}</p>
+                  <p className="text-[10px] md:text-[11px] uppercase tracking-[0.22em] text-muted-foreground mt-1">{v}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FINAL CTA */}
+
       <section className="relative py-28 border-t border-border/60 overflow-hidden">
         <img src={leatherFlatlayFallback} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-15" />
         <div className="absolute inset-0 bg-background/80" />
