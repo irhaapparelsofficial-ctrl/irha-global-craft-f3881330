@@ -103,6 +103,9 @@ export default function LederhosenHome() {
         </div>
       </section>
 
+      {/* COMPLIANCE TRUST BAR */}
+      <ComplianceTrustBar />
+
       {/* TWO MACRO PILLARS */}
       <section className="bg-background py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
