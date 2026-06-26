@@ -88,6 +88,7 @@ async function generateView(
   logoDataUrl: string | null,
   prompt: string,
   apiKey: string,
+  timeoutMs: number = PER_CALL_TIMEOUT_MS,
 ): Promise<Uint8Array> {
   const content: any[] = [
     { type: "text", text: prompt },
@@ -96,7 +97,7 @@ async function generateView(
   if (logoDataUrl) content.push({ type: "image_url", image_url: { url: logoDataUrl } });
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PER_CALL_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   let res: Response;
   try {
     res = await fetch(GATEWAY, {
