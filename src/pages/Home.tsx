@@ -227,11 +227,12 @@ export default function Home() {
                           to={`/products/${firstChild.slug}`}
                           className={`inline-flex items-center gap-3 px-6 py-4 text-xs uppercase tracking-[0.3em] font-medium transition-all ${hub.ctaClass}`}
                         >
-                          Explore Hub
+                          {hub.key === "leather-bavarian" ? "Explore Bavarian" : "Explore Textile"}
                           <ArrowUpRight size={16} />
                         </Link>
                       )}
                     </div>
+
                   </div>
                 </article>
               );
