@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { BRAND, whatsappLink } from "@/lib/constants";
-import { Mail, MapPin, MessageCircle } from "lucide-react";
+import { Mail, MapPin, MessageCircle, ChevronDown } from "lucide-react";
 import irhaLogo from "@/assets/irha-logo.png.asset.json";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
