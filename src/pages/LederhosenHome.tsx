@@ -85,10 +85,10 @@ export default function LederhosenHome() {
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
             <Link
-              to="/studio#studio-engine"
+              to="/studio"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition"
             >
-              Launch AI Mockup Studio & FOB Estimator <ArrowRight className="h-4 w-4" />
+              Launch AI Mockup Studio <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href={whatsappLink()}

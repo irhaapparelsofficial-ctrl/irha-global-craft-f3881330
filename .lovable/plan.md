@@ -1,49 +1,57 @@
-# Catalog Rebuild — Decisions Locked
+# B2B Custom Lab — /studio rebuild
 
-You confirmed: **no regen cap**, **CDN hosting**, **delete everything and replace**. Here is what I will execute next, in one continuous run.
+Replace the existing FOB calculator + sketch pad with a real-product, 4-click custom-lab flow. Keep the route `/studio` so the homepage "Launch AI Mockup Studio" button keeps working.
 
-## Scope confirmed
-- 559 source images extracted from your 6 ZIPs (~849 MB)
-- 6 categories: Bavarian, Leatherwear, Sportswear, Streetwear, Leisurewear, Nightwear
-- Filenames encode product + view angle (front / back / side / three-quarter / folded / macro detail)
-- Existing DB has hardcoded arrays in `src/lib/categories.ts`, `catalog.ts`, `featuredProducts.ts` + populated `categories` / `products` tables → all gets wiped.
+## 1. Data layer
 
-## Pipeline (automated, end-to-end)
+- **No products schema change.** Read all 64 products from the existing `products` table joined to `categories`.
+- **New helper `src/lib/customLab.ts`:**
+  - `HUBS` map: `bavarian` → category slugs `[lederhosen-trachten, bundhosen, bavarian-shirts, vests, leather-jackets]`; `textile` → `[sportswear, leisurewear, activewear, nightwear, hoodies, tees]`. (Final slugs resolved against DB on first read — log + skip any that don't exist instead of crashing.)
+  - `CATEGORY_COLORS`: fixed 6-color palette per category (Black `#0a0a0a`, Charcoal `#2b2b2b`, Navy `#1b2a4a`, Olive `#4b5320`, Burgundy `#5e1a1a`, Natural `#d9c9a8`). Leather categories swap Natural → Cognac `#7a4a23`.
+  - `EMBROIDERY_PRESETS`: 5 presets per hub (e.g. Bavarian: Edelweiss, Oak Leaf, Alpine Crest, Monogram Block, Heritage Script; Textile: Sport Block, Athletic Script, Minimal Mark, Circle Crest, Bold Outline). Stored as `{ id, label, description }`.
+  - `PLACEMENTS`: `left-chest`, `center-back`, `right-sleeve`.
 
-```text
-1. PARSE        559 filenames → {category, product, view} JSON manifest
-2. GROUP        collapse to ~120-160 unique products, each with 1-4 views + macro
-3. UPLOAD       every keeper image → Lovable CDN via lovable-assets CLI
-                → produces 559 .asset.json pointers, zero binaries in repo
-4. BACKUP       snapshot current categories + products to *_backup_2026_06 tables
-5. WIPE         TRUNCATE products, categories (cascade)
-6. SEED         INSERT new categories (6) + sub-categories + products with CDN URLs
-7. REFACTOR     replace hardcoded src/lib/categories.ts + catalog.ts + featuredProducts.ts
-                with DB-driven loaders (useCategories hook already exists)
-8. SEO          regenerate sitemap.xml from new DB rows
-9. QA           build, smoke-test category pages, verify no broken images
-```
+## 2. Server-side mockup generation
 
-## Time estimate
-- Upload phase is the bottleneck: 559 sequential CLI calls ≈ 25-40 min wall clock.
-- Parsing + DB seed + refactor ≈ 10 min.
-- I will stream progress as it goes; if a step fails I stop and surface it, no silent skips.
+- **New edge function `supabase/functions/generate-mockup/index.ts`:**
+  - Input: `{ productId, color, placement, presetId, logoBase64? }`.
+  - Loads product image URL from DB. Computes deterministic cache key: `sha256(productId|color|placement|presetId|logoHash|view)`.
+  - **Cache:** new public storage bucket `mockup-cache`. On hit, return signed/public URL immediately.
+  - On miss: call Lovable AI Gateway `google/gemini-3.1-flash-image` with the product image as input + a prompt describing the recolor, embroidery preset, and placement. Generates front view; second call with prompt "show back view of the same garment with logo at center back" produces back view.
+  - Uploads both PNGs to `mockup-cache`, returns `{ frontUrl, backUrl }`.
+  - CORS open; no JWT required.
+- **New storage bucket** via `storage_create_bucket` (public). Service-role write from edge function.
 
-## What will be deleted (irreversible from chat — only revertable via History tab)
-- All rows in `public.categories`
-- All rows in `public.products`
-- Hardcoded product/category arrays in `src/lib/*.ts`
-- Local image binaries in `src/assets/cat-*.jpg` and product galleries (replaced by CDN pointers)
+## 3. UI rebuild — `src/pages/Studio.tsx`
 
-## What stays untouched
-- Homepage, hero, About, Contact, FAQ, Blog, Studio, Admin panel structure
-- Supabase schema (only data is wiped, no column changes)
-- Auth, leads, social, mailing, PI generator features
-- 6 category catalog flipbooks in `/public/catalogs/` (separate PDF artifacts)
+Dark theme, mobile-first. Remove `StudioPricingPanel`, `MockupSketchPad`, `ProductConfigurator` from the page (leave files in place but unimported — safer than deleting).
 
-## One technical note (non-blocking)
-Your `categories` table already has the right shape (`slug`, `name`, `image_url`, `details[]`, etc.) and `products` already has `gallery[]`, `specs[]`, `details` jsonb. Zero schema changes needed — only data + frontend refactor.
+Layout (single column on mobile, 2-col on lg):
 
----
+1. **Hub toggle** — sticky top: `[ BAVARIAN HERITAGE ] [ TEXTILE & ACTIVE ]`.
+2. **Step rail** showing 1·Product → 2·Color → 3·Logo → 4·Pattern → Generate.
+3. **Step 1 — Product grid:** filtered by hub. Real CDN thumbnails, category chips above to narrow further. Click selects.
+4. **Step 2 — Color swatches:** 6 swatches sourced from `CATEGORY_COLORS[product.category]`.
+5. **Step 3 — Logo upload + placement:** file input (PNG/SVG, max 2MB, read as base64 in browser). Three placement buttons.
+6. **Step 4 — Pattern preset:** 5 cards per hub.
+7. **Generate** button → calls edge function → renders Front + Back side-by-side with skeleton shimmer.
+8. **Result actions:**
+   - `Download PNG` — fetches each URL, triggers download via existing `forceDownload`.
+   - `Send to WhatsApp` — opens `https://wa.me/923204110066?text=` with prefilled body: `Custom Design: <Product> | Color: <Color> | Logo: <placement> | Pattern: <preset> | Qty: 50+ | Please send FOB Sialkot quote.`
+9. **MOQ badge** rendered persistently: `MOQ 50 — Request FOB Quote`. No prices anywhere.
 
-**Reply "go" and I start the pipeline immediately. It will run for ~40 min with progress updates. Reply with any changes to scope first if you want to adjust.**
+## 4. Homepage button safety
+
+`LederhosenHome.tsx` "Launch AI Mockup Studio" already links to `/studio`. Verify the href is intact post-edit — no other change needed.
+
+## 5. Verification
+
+- `bun run build` must pass.
+- Manual smoke via Playwright: load `/studio`, switch hubs, walk one flow, assert Generate POSTs to edge function and renders two images.
+- Publish.
+
+## Out of scope / explicitly removed
+
+- FOB pricing (`StudioPricingPanel`, `fobCalculator`, master FOB) — unimported from `/studio`. Other pages that use them stay untouched.
+- Drag-drop logo positioning. Placement is preset.
+- Login / auth. Public route.
