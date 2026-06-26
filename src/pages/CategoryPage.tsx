@@ -52,6 +52,7 @@ export default function CategoryPage() {
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [activeProduct, setActiveProduct] = useState<FlatProduct | null>(null);
   const [flipOpen, setFlipOpen] = useState(false);
+  const [peekOpen, setPeekOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Flatten all sub products into one list with metadata + stable sort signals.
