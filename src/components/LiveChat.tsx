@@ -6,17 +6,19 @@ import { supabase } from "@/integrations/supabase/client";
 type Msg = { role: "user" | "assistant"; content: string };
 
 const QUICK_PROMPTS = [
-  "What's your MOQ?",
-  "Lead time for hoodies?",
-  "Do you do custom embroidery?",
-  "Bavarian lederhosen pricing",
+  "Show me your Lederhosen range",
+  "What categories do you manufacture?",
+  "How does your sampling process work?",
+  "Welche Kollektionen habt ihr?",
+  "Wie läuft die Musterproduktion ab?",
 ];
 
 const WELCOME: Msg = {
   role: "assistant",
   content:
-    "Hi! I'm the Irha Assistant 👋\nAsk me anything about our collections, MOQs, lead times, or customization. For instant human support, tap WhatsApp below.",
+    "Hi! I'm Irha Guide 👋 — your assistant for our products, categories and manufacturing process.\nAsk me anything in English or German. For pricing or formal quotes, tap WhatsApp below.\n\nHallo! Ich bin Irha Guide — fragen Sie mich gerne auf Deutsch.",
 };
+
 
 export default function LiveChat() {
   const [open, setOpen] = useState(false);
@@ -154,14 +156,15 @@ export default function LiveChat() {
       {/* Trigger */}
       <button
         onClick={() => setOpen((o) => !o)}
-        aria-label="Open live chat"
+        aria-label="Open Irha Guide"
         className="fixed bottom-24 right-6 z-40 group flex items-center gap-2 bg-gradient-gold text-primary-foreground rounded-full pl-3 pr-4 py-3 shadow-gold hover:scale-105 transition-transform"
       >
         {open ? <X size={20} /> : <Sparkles size={20} />}
         <span className="text-[11px] font-medium uppercase tracking-[0.2em] hidden sm:inline">
-          {open ? "Close" : "Live Chat"}
+          {open ? "Close" : "Irha Guide"}
         </span>
       </button>
+
 
       {/* Panel */}
       {open && (
@@ -174,7 +177,7 @@ export default function LiveChat() {
                   <Sparkles size={16} className="text-primary-foreground" />
                 </div>
                 <div>
-                  <p className="font-display text-base leading-tight">Irha Assistant</p>
+                  <p className="font-display text-base leading-tight">Irha Guide</p>
                   <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/55 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Online · AI-powered
                   </p>
@@ -252,7 +255,7 @@ export default function LiveChat() {
                   }
                 }}
                 rows={1}
-                placeholder="Ask about MOQ, fabrics, lead time..."
+                placeholder="Ask about products, categories, manufacturing… (EN / DE)"
                 disabled={loading}
                 className="flex-1 resize-none bg-background border border-border/60 focus:border-primary outline-none text-sm px-3 py-2.5 rounded-sm max-h-28"
               />

@@ -1,4 +1,8 @@
-// Irha Apparels AI assistant — streaming chat via Lovable AI Gateway
+// Irha Guide — website AI assistant. Streams via Lovable AI Gateway.
+// Scope: products, categories, manufacturing/process only.
+// Languages: English + German. Pricing questions → redirect to WhatsApp.
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const securityHeaders = {
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "X-Content-Type-Options": "nosniff",
@@ -17,42 +21,82 @@ const corsHeaders = {
   ...securityHeaders,
 };
 
-const SYSTEM_PROMPT = `You are "Irha Assistant", the friendly AI sales concierge for Irha Apparels — a premium clothing manufacturer based in Sialkot, Pakistan.
+const WHATSAPP = "+92 320 411 0066";
+const WA_LINK = "https://wa.me/923204110066";
 
-ABOUT IRHA APPARELS:
-- Manufacturer and exporter of premium apparel since years; serves boutiques, brands, and retailers worldwide (Germany, Austria, USA, UAE, EU).
-- Six core categories: Bavarian Wear (Lederhosen, Dirndl, Trachten), Sportswear (jerseys, tracksuits, compression, basketball kits), Leatherwear (biker jackets, napa moto, leather trousers, bombers), Streetwear (heavyweight hoodies, boxy tees, cargos, varsity jackets), Leisurewear (cashmere lounge, organic cotton sets, bamboo, knit co-ords), Nightwear (mulberry silk pajamas, modal slips, brushed cotton pajamas, satin robes).
-- Services: OEM, ODM, Private Label, custom design, embroidery, sublimation, full sampling.
-- Typical MOQ: 30–100 pieces per design/color depending on category.
-- Lead times: 25–70 days depending on product (sportswear fastest, leather and varsity slowest).
-- Certifications: OEKO-TEX 100, GOTS (organic cotton), LWG (leather), BCI, REACH.
-- Packaging: Branded poly bags, gift boxes, hangtags, woven labels — fully customizable.
-- Shipping: FOB Karachi or DDP options via sea / air.
+const BASE_PROMPT = `You are "Irha Guide", the official website assistant for Irha Apparels — a premium B2B clothing manufacturer in Sialkot, Pakistan.
 
-CONTACT:
-- WhatsApp / Phone: +92 320 411 0066
-- Email: irhaapparelsofficial@gmail.com
-- Website: irhaapparels.com
+LANGUAGE POLICY (strict):
+- Reply ONLY in English or German.
+- Mirror the language the user wrote in. If the message is German, answer in German. Otherwise English.
+- If the user writes in another language, politely respond in English: "I can help in English or German. / Ich kann auf Englisch oder Deutsch helfen."
+
+SCOPE (strict — do NOT answer outside this):
+- Our products and categories (Bavarian Heritage, Leatherwear, Sportswear, Streetwear, Leisurewear, Nightwear).
+- Our manufacturing capabilities: OEM/ODM/Private Label, sampling, embroidery, sublimation, fabrics, certifications, MOQ rules, lead times, packaging, shipping (FOB Karachi / DDP).
+- The catalog facts injected below under "CATALOG DATA".
+- If a question is outside this scope (politics, general advice, recipes, code, competitors, etc.), politely steer back: "I can only help with our products and manufacturing. / Ich kann nur zu unseren Produkten und der Fertigung helfen."
+
+PRICING POLICY (ABSOLUTE — NEVER violate):
+- NEVER state, estimate, hint at, or imply any price, per-unit cost, sample fee, FOB rate, shipping cost, or ballpark. No ranges, no "starting from", no currency figures of any kind.
+- If the user asks anything price-related (cost, quote, rate, how much, Preis, Kosten, Angebot, Stückpreis), respond ONLY with the bilingual handoff template:
+
+  EN: "Pricing is bespoke and only confirmed via formal quote. Please WhatsApp our sales team on ${WHATSAPP} (${WA_LINK}) with your tech-pack, quantity, fabric and branding details — you'll get a tailored FOB Sialkot quote within 12 hours."
+  DE: "Preise sind individuell und werden nur per formellem Angebot bestätigt. Bitte schreiben Sie uns auf WhatsApp ${WHATSAPP} (${WA_LINK}) mit Tech-Pack, Stückzahl, Stoff- und Branding-Wünschen — Sie erhalten Ihr maßgeschneidertes FOB-Sialkot-Angebot innerhalb von 12 Stunden."
+
+  Pick the language matching the user. Do not add numbers, do not negotiate, do not soften.
 
 STYLE:
-- Reply in the same language the user writes in (English, Urdu, Roman Urdu, German). Default to English.
-- Be concise, warm, professional. Use short paragraphs and bullet points.
-- Always offer next steps: request a quote, share tech-pack, schedule a sample.
-- Never invent certifications, factory size numbers, or claims you weren't given.
-- If a question is outside apparel manufacturing, politely steer back.
+- Concise, warm, professional. Short paragraphs and bullets.
+- Always offer a clear next step (browse a category page, request a sample, send tech-pack via WhatsApp).
+- Never invent certifications, factory sizes, or claims not in CATALOG DATA.
 
-STRICT PRICING POLICY (NON-NEGOTIABLE):
-- NEVER disclose, estimate, quote, hint at, or discuss any product prices, per-unit costs, manufacturing costs, MOQ costs, sample fees, or shipping rates — not even ranges, "starting from", "approximately", or ballpark figures.
-- If the user asks about pricing, cost, quotes, rates, or how much something costs, do NOT give numbers. Politely and elegantly explain that Irha Apparels specializes in bespoke OEM manufacturing and pricing depends on custom specifications (fabric, embroidery, quantity, finishing, packaging).
-- Always guide them to share their tech pack or requirements via WhatsApp +92 320 411 0066 or email irhaapparelsofficial@gmail.com so the sales team can prepare an accurate, premium quote.
-- Example tone: "We would love to provide you with a custom quote! Since we specialize in bespoke OEM manufacturing tailored to your specific brand requirements, pricing varies based on quantity and customization details. Please share your design details with our team at irhaapparelsofficial@gmail.com or via WhatsApp +92 320 411 0066, and we will get back to you with an exclusive proposal."`;
+KEY FACTS:
+- MOQ: from 50 pieces per design (varies by category).
+- Lead times: 25–70 days depending on complexity.
+- Certifications: OEKO-TEX 100, GOTS, LWG (leather), BCI, REACH.
+- Contact: WhatsApp ${WHATSAPP} · irhaapparelsofficial@gmail.com · irhaapparels.com
+`;
 
-// Simple in-memory per-IP rate limit (per isolate). Best-effort abuse mitigation
-// for a public, unauthenticated chat widget.
+async function buildCatalogSummary(): Promise<string> {
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const [cats, prods] = await Promise.all([
+      supabase.from("categories").select("slug, name, short").eq("is_published", true).order("sort_order"),
+      supabase.from("products").select("name, slug, category_id, categories!inner(slug, name)").eq("is_published", true).order("sort_order").limit(200),
+    ]);
+    const catLines = (cats.data ?? []).map((c: any) => `- ${c.name} (/products/${c.slug})${c.short ? ` — ${c.short}` : ""}`).join("\n");
+    const grouped = new Map<string, string[]>();
+    for (const p of (prods.data ?? []) as any[]) {
+      const key = p.categories?.name ?? "Other";
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(p.name);
+    }
+    const prodLines = Array.from(grouped.entries())
+      .map(([cat, names]) => `• ${cat}: ${names.slice(0, 12).join(", ")}${names.length > 12 ? ` …(+${names.length - 12} more)` : ""}`)
+      .join("\n");
+    return `\nCATALOG DATA (live from database — only reference these facts):\n\nCATEGORIES:\n${catLines}\n\nPRODUCTS BY CATEGORY:\n${prodLines}\n`;
+  } catch (e) {
+    console.warn("catalog summary failed", e);
+    return "";
+  }
+}
+
+let cachedCatalog: { value: string; expires: number } | null = null;
+async function getCatalog(): Promise<string> {
+  const now = Date.now();
+  if (cachedCatalog && cachedCatalog.expires > now) return cachedCatalog.value;
+  const value = await buildCatalogSummary();
+  cachedCatalog = { value, expires: now + 10 * 60 * 1000 }; // 10 min
+  return value;
+}
+
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
 const ipHits = new Map<string, { count: number; reset: number }>();
-
 function rateLimited(ip: string): boolean {
   const now = Date.now();
   const entry = ipHits.get(ip);
@@ -95,18 +139,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Sanitize: only allow user/assistant roles, cap content length, cap history depth.
     const safeMessages = (messages as Array<{ role?: unknown; content?: unknown }>)
-      .filter(
-        (m) =>
-          m &&
-          typeof m.content === "string" &&
-          (m.role === "user" || m.role === "assistant"),
-      )
-      .map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: (m.content as string).slice(0, 2000),
-      }))
+      .filter((m) => m && typeof m.content === "string" && (m.role === "user" || m.role === "assistant"))
+      .map((m) => ({ role: m.role as "user" | "assistant", content: (m.content as string).slice(0, 2000) }))
       .slice(-20);
 
     if (safeMessages.length === 0) {
@@ -115,6 +150,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const systemPrompt = BASE_PROMPT + (await getCatalog());
 
     const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -126,7 +163,7 @@ Deno.serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         stream: true,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           ...safeMessages,
         ],
       }),
@@ -139,7 +176,7 @@ Deno.serve(async (req) => {
         upstream.status === 429
           ? "Rate limit reached. Please try again in a moment."
           : upstream.status === 402
-            ? "AI credits exhausted. Please contact us on WhatsApp +92 320 411 0066."
+            ? `AI credits exhausted. Please contact us on WhatsApp ${WHATSAPP}.`
             : "AI service error.";
       console.error("Gateway error", upstream.status, text);
       return new Response(JSON.stringify({ error: msg }), {
