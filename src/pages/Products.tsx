@@ -73,7 +73,9 @@ export default function Products() {
               <MessageCircle size={16} /> Request FOB Price List
             </a>
           </div>
+        </div>
       </section>
+
 
       {/* Featured B2B Items — direct, click-through SKUs with explicit MOQ */}
       <section className="py-20 border-b border-border/60 bg-card/20">
