@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, ShieldCheck, Globe2, Factory, Award, Scissors, Activity } from "lucide-react";
+import { ArrowUpRight, ShieldCheck, Globe2, Factory, Award, Scissors, Activity, Sparkles, Download, Package, Truck, Calendar, Needle } from "lucide-react";
 import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
 import CategoryGrid from "@/components/sections/CategoryGrid";
