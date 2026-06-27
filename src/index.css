@@ -105,3 +105,22 @@
 
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Mobile perf: disable expensive animations on small screens & for users
+   who prefer reduced motion. Keeps the dark theme and layout untouched. */
+@media (max-width: 768px) {
+  .animate-marquee,
+  [class*="animate-[kenburns"],
+  .animate-\[kenburns_22s_ease-in-out_infinite_alternate\] {
+    animation: none !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
