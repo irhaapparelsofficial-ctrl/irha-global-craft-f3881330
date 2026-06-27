@@ -33,6 +33,8 @@ const Admin = lazy(() => import("./pages/Admin"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Studio = lazy(() => import("./pages/Studio"));
 const Compliance = lazy(() => import("./pages/Compliance"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const ShippingReturns = lazy(() => import("./pages/ShippingReturns"));
 
 const queryClient = new QueryClient();
 
@@ -90,6 +92,8 @@ const App = () => (
                     <Route path="/inquiry" element={<Inquiry />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
+                    <Route path="/shipping-returns" element={<ShippingReturns />} />
                     <Route path="/seo-indexing" element={<SeoIndexing />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/studio" element={<Studio />} />
