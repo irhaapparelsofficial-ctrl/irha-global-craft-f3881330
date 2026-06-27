@@ -29,10 +29,8 @@ export default function ProductDetail() {
 
   // Use featured static when DB has no match
   const useFeatured = !data && !!featured;
-  const categoryName = useFeatured
-    ? (featured!.categorySlug.charAt(0).toUpperCase() + featured!.categorySlug.slice(1))
-    : "";
-  const material = "Premium export-grade fabric";
+  const categoryName = useFeatured ? featured!.categoryName : "";
+  const material = useFeatured ? featured!.material : "Premium export-grade fabric";
   const category = useFeatured
     ? { slug: featured!.categorySlug, name: categoryName }
     : data!.category;
@@ -40,7 +38,7 @@ export default function ProductDetail() {
     ? {
         name: featured!.title,
         slug: featured!.productSlug,
-        description: featured!.description,
+        description: featured!.longDescription,
         image_url: featured!.image,
         gallery: [featured!.image],
         specs: [
@@ -55,10 +53,11 @@ export default function ProductDetail() {
           { label: "Material", value: material },
           { label: "Programs", value: "OEM · ODM · Private Label" },
         ],
-        seo_title: `${featured!.title} | ${categoryName} | IRHA Apparels`,
+        seo_title: `${featured!.title} | Leather & Bavarian Hub | IRHA Apparels`,
         seo_description: featured!.description,
       }
     : data!.product;
+
 
 
   const gallery = resolveGallery(
