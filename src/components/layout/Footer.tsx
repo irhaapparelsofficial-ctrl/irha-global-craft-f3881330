@@ -212,9 +212,15 @@ export default function Footer() {
         <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/45">
           © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
         </p>
-        <div className="flex items-center gap-5 text-[10px] uppercase tracking-[0.25em]">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] uppercase tracking-[0.25em]">
           <Link to="/privacy-policy" className="text-foreground/45 hover:text-gold transition-colors">
             Privacy Policy
+          </Link>
+          <Link to="/terms-of-service" className="text-foreground/45 hover:text-gold transition-colors">
+            Terms of Service
+          </Link>
+          <Link to="/shipping-returns" className="text-foreground/45 hover:text-gold transition-colors">
+            Shipping &amp; Returns
           </Link>
           <button
             type="button"
