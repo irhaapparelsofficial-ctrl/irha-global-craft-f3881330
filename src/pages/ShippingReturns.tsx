@@ -125,8 +125,8 @@ export default function ShippingReturns() {
           <h2 className="text-xl font-semibold">10. Contact for shipping</h2>
           <p>
             Export desk:{" "}
-            <a className="underline" href="mailto:b2b@irhaapparels.com">
-              b2b@irhaapparels.com
+            <a className="underline" href="mailto:irhaapparelsofficial@gmail.com">
+              irhaapparelsofficial@gmail.com
             </a>{" "}
             · WhatsApp +92 320 4110066 · Sialkot, Pakistan.
           </p>

@@ -129,8 +129,8 @@ export default function TermsOfService() {
           <h2 className="text-xl font-semibold">13. Contact</h2>
           <p>
             Questions about these terms?{" "}
-            <a className="underline" href="mailto:b2b@irhaapparels.com">
-              b2b@irhaapparels.com
+            <a className="underline" href="mailto:irhaapparelsofficial@gmail.com">
+              irhaapparelsofficial@gmail.com
             </a>{" "}
             · WhatsApp +92 320 4110066
           </p>

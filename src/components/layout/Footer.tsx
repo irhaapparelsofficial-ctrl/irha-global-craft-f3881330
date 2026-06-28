@@ -166,11 +166,11 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:b2b@irhaapparels.com"
+                  href="mailto:irhaapparelsofficial@gmail.com"
                   className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors break-all"
                 >
                   <Mail size={15} />
-                  b2b@irhaapparels.com
+                  irhaapparelsofficial@gmail.com
                 </a>
               </li>
             </ul>
