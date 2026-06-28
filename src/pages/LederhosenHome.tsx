@@ -5,7 +5,7 @@ import { whatsappLink, BRAND } from "@/lib/constants";
 import ComplianceTrustBar from "@/components/sections/ComplianceTrustBar";
 import Footer from "@/components/layout/Footer";
 
-import heroImg from "@/assets/hero.jpg";
+import heroImg from "@/assets/hero-lederhosen-premium.jpg";
 const catBavarian = "/__l5e/assets-v1/c4c83428-e348-4701-91db-ab6d6416845d/irha-0073.jpg";
 const catLeather = "/__l5e/assets-v1/8b5c4fe7-69ae-456a-8c64-0266658d6962/irha-0114.jpg";
 const catSportswear = "/__l5e/assets-v1/6ed8d48e-2b63-4777-a00d-32bdccbd5e05/irha-0109.jpg";
@@ -56,12 +56,21 @@ export default function LederhosenHome() {
   return (
     <>
       <Helmet>
-        <title>Irha Apparels — Apparel Manufacturer Pakistan | MOQ 50 | FOB Sialkot | Private Label OEM ODM</title>
+        <title>Irha Apparels — Lederhosen & Trachten Hersteller Pakistan | MOQ 50 | FOB Sialkot</title>
         <meta
           name="description"
-          content="B2B clothing manufacturer in Sialkot Pakistan. MOQ 50 pieces, FOB Sialkot pricing, 45-day production. Bavarian wear, sportswear, leather jackets, streetwear. AI mockup designer in 60 seconds."
+          content="B2B Bekleidungshersteller in Sialkot, Pakistan. Lederhosen, Dirndl, Trachten, Lederjacken & Sportbekleidung. MOQ 50 Stück, FOB Sialkot, 45-Tage Produktion. Direkt vom Hersteller für Großhändler in Deutschland, Österreich & Schweiz."
+        />
+        <meta
+          name="keywords"
+          content="Lederhosen Hersteller, Trachten Großhandel, Dirndl Hersteller Pakistan, Bavarian Wear Hersteller, Lederhosen Sialkot, Oktoberfest Bekleidung Hersteller, Trachten OEM, Lederjacken Hersteller Pakistan, Bekleidungshersteller Sialkot, Eigenmarken Bekleidung, FOB Sialkot, MOQ 50, lederhosen manufacturer, trachten manufacturer, dirndl supplier, Bavarian clothing OEM, German wholesale lederhosen, Austrian trachten supplier"
         />
         <link rel="canonical" href="https://www.irhaapparels.com/" />
+        <link rel="alternate" hrefLang="en" href="https://www.irhaapparels.com/" />
+        <link rel="alternate" hrefLang="de" href="https://www.irhaapparels.com/de" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.irhaapparels.com/" />
+        <meta property="og:title" content="Lederhosen & Trachten Hersteller Pakistan — Irha Apparels" />
+        <meta property="og:description" content="Direkt vom Hersteller in Sialkot. Lederhosen, Dirndl, Trachten & Lederjacken. MOQ 50, FOB Sialkot, 45 Tage Produktion." />
       </Helmet>
 
       {/* HERO */}
