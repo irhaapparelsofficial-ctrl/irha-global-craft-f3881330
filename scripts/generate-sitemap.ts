@@ -86,6 +86,11 @@ const categorySlugs = ["bavarian", "sportswear", "leatherwear", "streetwear", "l
 
 const entries: SitemapEntry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/de", changefreq: "weekly", priority: "0.95" },
+  { path: "/connect", changefreq: "monthly", priority: "0.7" },
+  { path: "/compliance", changefreq: "monthly", priority: "0.7" },
+  { path: "/terms-of-service", changefreq: "yearly", priority: "0.3" },
+  { path: "/shipping-returns", changefreq: "yearly", priority: "0.5" },
   { path: "/about", changefreq: "monthly", priority: "0.8" },
   { path: "/products", changefreq: "weekly", priority: "0.9" },
   { path: "/manufacturing", changefreq: "monthly", priority: "0.8" },
