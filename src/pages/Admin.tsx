@@ -23,7 +23,7 @@ type Inquiry = {
   phone: string | null; category: string | null; quantity: string | null; message: string | null;
   source: string | null; status: string; created_at: string;
 };
-type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string };
+type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string; session_id?: string | null; country?: string | null; city?: string | null; region?: string | null };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
 type Tab = "home" | "macro" | "catalog" | "leads" | "directory" | "studio" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social" | "devops";
@@ -236,20 +236,55 @@ function InquiriesPanel() {
 function TrafficPanel() {
   const [rows, setRows] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastSync, setLastSync] = useState<Date>(new Date());
 
+  // Auto-refresh every 15s for "live" visitor tracking.
   useEffect(() => {
-    void (async () => {
-      const { data } = await supabase.from("page_views").select("*").order("created_at", { ascending: false }).limit(2000);
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("page_views")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(3000);
+      if (cancelled) return;
       setRows((data as PageView[]) ?? []);
       setLoading(false);
-    })();
+      setLastSync(new Date());
+    };
+    void load();
+    const id = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(id); };
   }, []);
 
   const stats = useMemo(() => {
-    const today = rows.filter((r) => new Date(r.created_at) > daysAgo(1)).length;
-    const week = rows.filter((r) => new Date(r.created_at) > daysAgo(7)).length;
-    const month = rows.filter((r) => new Date(r.created_at) > daysAgo(30)).length;
-    return { today, week, month };
+    const now = Date.now();
+    const within = (ms: number) => rows.filter((r) => now - new Date(r.created_at).getTime() < ms);
+    const activeSids = new Set(within(5 * 60 * 1000).map((r) => r.session_id || r.id));
+    return {
+      active: activeSids.size,
+      today: within(24 * 60 * 60 * 1000).length,
+      week: within(7 * 24 * 60 * 60 * 1000).length,
+      month: within(30 * 24 * 60 * 60 * 1000).length,
+    };
+  }, [rows]);
+
+  const liveVisitors = useMemo(() => {
+    const cutoff = Date.now() - 5 * 60 * 1000;
+    const bySession = new Map<string, PageView>();
+    for (const r of rows) {
+      if (new Date(r.created_at).getTime() < cutoff) continue;
+      const sid = r.session_id || r.id;
+      const existing = bySession.get(sid);
+      if (!existing || new Date(r.created_at) > new Date(existing.created_at)) bySession.set(sid, r);
+    }
+    return Array.from(bySession.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [rows]);
+
+  const topCountries = useMemo(() => {
+    const tally: Record<string, number> = {};
+    rows.forEach((r) => { const k = r.country || "(unknown)"; tally[k] = (tally[k] ?? 0) + 1; });
+    return Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, 10);
   }, [rows]);
 
   const topPaths = useMemo(() => {
@@ -276,13 +311,45 @@ function TrafficPanel() {
 
   return (
     <div className="space-y-8">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          Live · auto-refresh every 15s · last sync {lastSync.toLocaleTimeString()}
+        </div>
+      </div>
+
       <StatRow stats={[
+        { label: "Active now (5 min)", value: stats.active },
         { label: "Today", value: stats.today },
         { label: "Last 7 days", value: stats.week },
         { label: "Last 30 days", value: stats.month },
       ]} />
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <Panel title={`Live visitors · ${liveVisitors.length} active`}>
+        {liveVisitors.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-4">No one on the site right now.</p>
+        ) : (
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {liveVisitors.map((v) => (
+              <div key={v.id} className="flex items-center justify-between gap-3 text-xs py-2 border-b border-border/30 last:border-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Activity size={12} className="text-emerald-500 shrink-0" />
+                  <span className="text-foreground/80 truncate">{v.path}</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0 text-muted-foreground">
+                  <span className="inline-flex items-center gap-1"><MapPin size={11} />{v.city ? `${v.city}, ` : ""}{v.country || "—"}</span>
+                  <span className="tabular-nums">{new Date(v.created_at).toLocaleTimeString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        <Panel title="Top countries">
+          <BarList data={topCountries} max={topCountries[0]?.[1] ?? 1} />
+        </Panel>
         <Panel title="Top pages">
           <BarList data={topPaths} max={topPaths[0]?.[1] ?? 1} />
         </Panel>
