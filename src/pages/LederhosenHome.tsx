@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, MessageCircle, Factory, ShieldCheck, Truck, Award } from "lucide-react";
 import { whatsappLink, BRAND } from "@/lib/constants";
 import ComplianceTrustBar from "@/components/sections/ComplianceTrustBar";
+import Footer from "@/components/layout/Footer";
 
 import heroImg from "@/assets/hero.jpg";
 const catBavarian = "/__l5e/assets-v1/c4c83428-e348-4701-91db-ab6d6416845d/irha-0073.jpg";

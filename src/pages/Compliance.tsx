@@ -226,7 +226,7 @@ export default function Compliance() {
               <Download size={14} /> Request PDF
             </a>
             <a
-              href="mailto:b2b@irhaapparels.com?subject=Compliance%20Profile%20PDF%20Request"
+              href="mailto:irhaapparelsofficial@gmail.com?subject=Compliance%20Profile%20PDF%20Request"
               className="inline-flex items-center gap-2 border border-gold/70 text-gold hover:bg-gold hover:text-background px-6 py-3.5 text-xs uppercase tracking-[0.3em] transition-colors"
             >
               Email request

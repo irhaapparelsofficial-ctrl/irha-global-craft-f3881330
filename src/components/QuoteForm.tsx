@@ -65,6 +65,14 @@ Email: ${data.email}
 Quantity: ${data.quantity || "—"}
 Compliance Docs: ${data.needsCompliance ? "Yes — OEKO-TEX / BSCI required" : "Not required"}
 Notes: ${data.notes || "—"}`;
+    // Google Ads conversion event — fires when quote form is submitted
+    try {
+      (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
+        "event",
+        "conversion",
+        { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
+      );
+    } catch { /* no-op */ }
     setSent(true);
     window.open(
       `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`,
