@@ -84,6 +84,20 @@ const seoLandingSlugs = [
 
 const categorySlugs = ["bavarian", "sportswear", "leatherwear", "streetwear", "leisurewear", "nightwear"];
 
+const catalogueSlugs = [
+  "bavarian-garments",
+  "lederhosen",
+  "dirndl-dresses",
+  "trachten-accessories",
+  "kids-trachten",
+  "leather-garments",
+  "sportswear",
+  "activewear",
+  "streetwear",
+  "leisurewear",
+  "nightwear",
+];
+
 const entries: SitemapEntry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/de", changefreq: "weekly", priority: "0.95" },
