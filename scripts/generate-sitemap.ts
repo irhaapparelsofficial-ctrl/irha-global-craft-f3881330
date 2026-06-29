@@ -117,6 +117,10 @@ const entries: SitemapEntry[] = [
   { path: "/privacy-policy", changefreq: "yearly", priority: "0.3" },
   ...seoLandingSlugs.map((slug) => ({ path: `/${slug}`, changefreq: "weekly" as const, priority: "0.95" })),
   ...categorySlugs.map((slug) => ({ path: `/products/${slug}`, changefreq: "weekly" as const, priority: "0.85" })),
+  { path: "/catalogue", changefreq: "weekly" as const, priority: "0.95" },
+  { path: "/de/katalog", changefreq: "weekly" as const, priority: "0.9" },
+  ...catalogueSlugs.map((slug) => ({ path: `/catalogue/${slug}`, changefreq: "weekly" as const, priority: "0.9" })),
+  ...catalogueSlugs.map((slug) => ({ path: `/de/katalog/${slug}`, changefreq: "weekly" as const, priority: "0.85" })),
   ...productEntries.map(({ categorySlug, productSlug }) => ({
     path: `/products/${categorySlug}/${productSlug}`,
     changefreq: "monthly" as const,
