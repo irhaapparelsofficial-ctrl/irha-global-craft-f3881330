@@ -27,14 +27,6 @@ function LinkedInIcon({ className, size = 24 }: { className?: string; size?: num
     </svg>
   );
 }
-function XIcon({ className, size = 24 }: { className?: string; size?: number }) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
-      <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
-    </svg>
-  );
-}
 function TikTokIcon({ className, size = 24 }: { className?: string; size?: number }) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -42,13 +34,20 @@ function TikTokIcon({ className, size = 24 }: { className?: string; size?: numbe
     </svg>
   );
 }
+function WhatsAppIcon({ className, size = 24 }: { className?: string; size?: number }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  );
+}
 
 const SOCIALS = [
-  { name: "Instagram", Icon: InstagramIcon },
-  { name: "Facebook", Icon: FacebookIcon },
-  { name: "LinkedIn", Icon: LinkedInIcon },
-  { name: "X / Twitter", Icon: XIcon },
-  { name: "TikTok", Icon: TikTokIcon },
+  { name: "Instagram", Icon: InstagramIcon, href: "https://www.instagram.com/irhaapparels", handle: "@irhaapparels" },
+  { name: "Facebook", Icon: FacebookIcon, href: "https://web.facebook.com/profile.php?id=61590950402472", handle: "Irha Apparels" },
+  { name: "LinkedIn", Icon: LinkedInIcon, href: "https://www.linkedin.com/company/irha-apparels", handle: "Irha Apparels" },
+  { name: "TikTok", Icon: TikTokIcon, href: "https://www.tiktok.com/@irhaapparels", handle: "@irhaapparels" },
+  { name: "WhatsApp", Icon: WhatsAppIcon, href: "https://wa.me/923204110066", handle: "+92 320 4110066" },
 ];
 
 export default function Contact() {
@@ -97,11 +96,18 @@ export default function Contact() {
           <p className="eyebrow mb-8">Social</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
             {SOCIALS.map((s) => (
-              <div key={s.name} className="flex flex-col items-center gap-3 border border-border/60 p-6">
-                <s.Icon className="text-foreground/60" size={28} />
-                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{s.name}</span>
-                <span className="text-[9px] uppercase tracking-[0.15em] text-gold/80">Coming Soon</span>
-              </div>
+              <a
+                key={s.name}
+                href={s.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={`Irha Apparels on ${s.name}`}
+                className="flex flex-col items-center gap-3 border border-border/60 p-6 hover:border-gold transition-colors group"
+              >
+                <s.Icon className="text-foreground/60 group-hover:text-gold transition-colors" size={28} />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground">{s.name}</span>
+                <span className="text-[9px] uppercase tracking-[0.15em] text-gold/80">{s.handle}</span>
+              </a>
             ))}
           </div>
         </div>
