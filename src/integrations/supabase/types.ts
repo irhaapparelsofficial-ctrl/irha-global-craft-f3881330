@@ -92,6 +92,69 @@ export type Database = {
         }
         Relationships: []
       }
+      catalogue_leads: {
+        Row: {
+          admin_notes: string | null
+          catalogue_url: string | null
+          category_interest: string | null
+          company_name: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          language: string | null
+          message: string | null
+          name: string
+          source: string | null
+          status: string
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          catalogue_url?: string | null
+          category_interest?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          language?: string | null
+          message?: string | null
+          name: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          catalogue_url?: string | null
+          category_interest?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          language?: string | null
+          message?: string | null
+          name?: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           catalog_url: string | null

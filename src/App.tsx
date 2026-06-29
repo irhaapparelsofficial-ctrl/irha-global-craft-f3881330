@@ -36,6 +36,8 @@ const Compliance = lazy(() => import("./pages/Compliance"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const ShippingReturns = lazy(() => import("./pages/ShippingReturns"));
 const Connect = lazy(() => import("./pages/Connect"));
+const Catalogue = lazy(() => import("./pages/Catalogue"));
+const CatalogueCategory = lazy(() => import("./pages/CatalogueCategory"));
 
 const queryClient = new QueryClient();
 
@@ -96,6 +98,11 @@ const App = () => (
                     <Route path="/terms-of-service" element={<TermsOfService />} />
                     <Route path="/shipping-returns" element={<ShippingReturns />} />
                     <Route path="/connect" element={<Connect />} />
+                    <Route path="/catalogue" element={<Catalogue />} />
+                    <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
+                    <Route path="/de/katalog" element={<Catalogue />} />
+                    <Route path="/de/katalog/:slug" element={<CatalogueCategory />} />
+                    <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                     <Route path="/seo-indexing" element={<SeoIndexing />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/studio" element={<Studio />} />
