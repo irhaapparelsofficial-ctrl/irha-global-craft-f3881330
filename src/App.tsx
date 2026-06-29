@@ -98,6 +98,11 @@ const App = () => (
                     <Route path="/terms-of-service" element={<TermsOfService />} />
                     <Route path="/shipping-returns" element={<ShippingReturns />} />
                     <Route path="/connect" element={<Connect />} />
+                    <Route path="/catalogue" element={<Catalogue />} />
+                    <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
+                    <Route path="/de/katalog" element={<Catalogue />} />
+                    <Route path="/de/katalog/:slug" element={<CatalogueCategory />} />
+                    <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                     <Route path="/seo-indexing" element={<SeoIndexing />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/studio" element={<Studio />} />
