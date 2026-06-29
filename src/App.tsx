@@ -36,6 +36,8 @@ const Compliance = lazy(() => import("./pages/Compliance"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const ShippingReturns = lazy(() => import("./pages/ShippingReturns"));
 const Connect = lazy(() => import("./pages/Connect"));
+const Catalogue = lazy(() => import("./pages/Catalogue"));
+const CatalogueCategory = lazy(() => import("./pages/CatalogueCategory"));
 
 const queryClient = new QueryClient();
 
