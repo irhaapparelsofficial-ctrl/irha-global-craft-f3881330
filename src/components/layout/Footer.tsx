@@ -48,6 +48,7 @@ const COLLECTIONS = [
 ];
 
 const COMPANY = [
+  { to: "/catalogue", label: "Catalogue" },
   { to: "/about", label: "About" },
   { to: "/manufacturing", label: "Manufacturing" },
   { to: "/sustainability", label: "Sustainability" },
