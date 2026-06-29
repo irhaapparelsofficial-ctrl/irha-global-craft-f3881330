@@ -96,11 +96,18 @@ export default function Contact() {
           <p className="eyebrow mb-8">Social</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
             {SOCIALS.map((s) => (
-              <div key={s.name} className="flex flex-col items-center gap-3 border border-border/60 p-6">
-                <s.Icon className="text-foreground/60" size={28} />
-                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{s.name}</span>
-                <span className="text-[9px] uppercase tracking-[0.15em] text-gold/80">Coming Soon</span>
-              </div>
+              <a
+                key={s.name}
+                href={s.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={`Irha Apparels on ${s.name}`}
+                className="flex flex-col items-center gap-3 border border-border/60 p-6 hover:border-gold transition-colors group"
+              >
+                <s.Icon className="text-foreground/60 group-hover:text-gold transition-colors" size={28} />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground">{s.name}</span>
+                <span className="text-[9px] uppercase tracking-[0.15em] text-gold/80">{s.handle}</span>
+              </a>
             ))}
           </div>
         </div>
