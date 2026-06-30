@@ -79,6 +79,12 @@ export default function CatalogPanel() {
 
   const rootCats = cats.filter((c) => !c.parent_id);
   const subsOf = (parentId: string) => cats.filter((c) => c.parent_id === parentId);
+  // Recursive product count: direct products + all descendant categories' products
+  const totalProductsFor = (catId: string): number => {
+    const direct = productsByCat.get(catId)?.length ?? 0;
+    const childTotal = subsOf(catId).reduce((sum, s) => sum + totalProductsFor(s.id), 0);
+    return direct + childTotal;
+  };
 
   const saveCategory = async (c: Partial<Category>) => {
     const payload = {
@@ -174,7 +180,7 @@ export default function CatalogPanel() {
                   <img src={resolveAsset(c.image_url)} alt="" className="w-10 h-10 object-cover" />
                   <div className="min-w-0">
                     <p className="font-display text-base truncate">{c.name}</p>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground truncate">/{c.slug} · {list.length} products · {subs.length} subs {!c.is_published && "· Draft"}</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground truncate">/{c.slug} · {totalProductsFor(c.id)} products ({list.length} direct) · {subs.length} subs {!c.is_published && "· Draft"}</p>
                   </div>
                 </button>
                 <div className="flex gap-1 shrink-0">
