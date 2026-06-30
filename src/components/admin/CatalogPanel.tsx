@@ -79,6 +79,12 @@ export default function CatalogPanel() {
 
   const rootCats = cats.filter((c) => !c.parent_id);
   const subsOf = (parentId: string) => cats.filter((c) => c.parent_id === parentId);
+  // Recursive product count: direct products + all descendant categories' products
+  const totalProductsFor = (catId: string): number => {
+    const direct = productsByCat.get(catId)?.length ?? 0;
+    const childTotal = subsOf(catId).reduce((sum, s) => sum + totalProductsFor(s.id), 0);
+    return direct + childTotal;
+  };
 
   const saveCategory = async (c: Partial<Category>) => {
     const payload = {
