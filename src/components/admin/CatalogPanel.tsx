@@ -180,7 +180,7 @@ export default function CatalogPanel() {
                   <img src={resolveAsset(c.image_url)} alt="" className="w-10 h-10 object-cover" />
                   <div className="min-w-0">
                     <p className="font-display text-base truncate">{c.name}</p>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground truncate">/{c.slug} · {list.length} products · {subs.length} subs {!c.is_published && "· Draft"}</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground truncate">/{c.slug} · {totalProductsFor(c.id)} products ({list.length} direct) · {subs.length} subs {!c.is_published && "· Draft"}</p>
                   </div>
                 </button>
                 <div className="flex gap-1 shrink-0">
