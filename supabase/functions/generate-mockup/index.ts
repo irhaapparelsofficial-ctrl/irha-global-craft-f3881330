@@ -11,7 +11,8 @@ const corsHeaders = {
 };
 
 const BUCKET = "mockup-cache";
-const MODEL = "google/gemini-3.1-flash-image";
+const MODEL = "google/gemini-3-pro-image";
+const FALLBACK_MODEL = "google/gemini-3.1-flash-image";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const PUBLISHED_ORIGIN = "https://www.irhaapparels.com";
 const PER_CALL_TIMEOUT_MS = 25_000;
@@ -76,11 +77,63 @@ function buildPrompt(b: Body & { productName: string }, view: "front" | "back"):
     : "Show a clean back view of the same garment on a neutral studio background, no model, matching lighting and material.";
   return [
     `Photoreal B2B product mockup of: ${b.productName}.`,
-    `Recolor the entire base garment to ${b.color.label} (${b.color.hex}) while preserving material texture, stitching, and shadows.`,
+    `CRITICAL: The entire base fabric of the garment MUST be completely recolored to a saturated ${b.color.label} (hex ${b.color.hex}). Do NOT keep the original fabric color. Preserve stitching, seams, buttons, folds, texture and studio lighting exactly.`,
     logo,
     viewInstr,
-    "High resolution, sharp, realistic fabric, no text watermarks.",
+    "The output MUST be visibly different from the input in fabric color and applied branding. High resolution, sharp, realistic fabric, no text watermarks, no price tags, no fake certificates.",
   ].join(" ");
+}
+
+async function callGateway(
+  model: string,
+  content: any[],
+  apiKey: string,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(GATEWAY, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content }],
+        modalities: ["image", "text"],
+      }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function tryModel(
+  model: string,
+  content: any[],
+  apiKey: string,
+  timeoutMs: number,
+): Promise<Uint8Array> {
+  const res = await callGateway(model, content, apiKey, timeoutMs);
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Gateway ${res.status} (${model}): ${txt.slice(0, 300)}`);
+  }
+  const json = await res.json();
+  let b64: string | undefined = json?.data?.[0]?.b64_json;
+  if (!b64) {
+    const msg = json?.choices?.[0]?.message;
+    const images = msg?.images;
+    if (Array.isArray(images) && images[0]?.image_url?.url) {
+      const url: string = images[0].image_url.url;
+      b64 = url.startsWith("data:") ? url.split(",")[1] : url;
+    }
+  }
+  if (!b64) throw new Error(`No image in response (${model}): ${JSON.stringify(json).slice(0, 200)}`);
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
 }
 
 async function generateView(
@@ -96,42 +149,12 @@ async function generateView(
   ];
   if (logoDataUrl) content.push({ type: "image_url", image_url: { url: logoDataUrl } });
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let res: Response;
   try {
-    res = await fetch(GATEWAY, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [{ role: "user", content }],
-        modalities: ["image", "text"],
-      }),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timer);
+    return await tryModel(MODEL, content, apiKey, timeoutMs);
+  } catch (primaryErr) {
+    console.warn(`[generate-mockup] primary model failed, retrying with ${FALLBACK_MODEL}:`, primaryErr instanceof Error ? primaryErr.message : primaryErr);
+    return await tryModel(FALLBACK_MODEL, content, apiKey, timeoutMs);
   }
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`Gateway ${res.status}: ${txt.slice(0, 300)}`);
-  }
-  const json = await res.json();
-  let b64: string | undefined = json?.data?.[0]?.b64_json;
-  if (!b64) {
-    const msg = json?.choices?.[0]?.message;
-    const images = msg?.images;
-    if (Array.isArray(images) && images[0]?.image_url?.url) {
-      const url: string = images[0].image_url.url;
-      b64 = url.startsWith("data:") ? url.split(",")[1] : url;
-    }
-  }
-  if (!b64) throw new Error(`No image in response: ${JSON.stringify(json).slice(0, 300)}`);
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes;
 }
 
 // Background self-healing: re-runs failed views with extended timeout and

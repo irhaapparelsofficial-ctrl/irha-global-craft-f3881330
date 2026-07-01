@@ -40,7 +40,7 @@ export default function Studio() {
   const [preset, setPreset] = useState<Preset | null>(null);
   const [logo, setLogo] = useState<{ name: string; dataUrl: string } | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<{ frontUrl: string; backUrl: string } | null>(null);
+  const [result, setResult] = useState<{ frontUrl: string; backUrl: string; fallback?: boolean; message?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -117,7 +117,7 @@ export default function Studio() {
       });
       if (error) throw error;
       if (!data?.frontUrl || !data?.backUrl) throw new Error("Mockup generation failed");
-      setResult({ frontUrl: data.frontUrl, backUrl: data.backUrl });
+      setResult({ frontUrl: data.frontUrl, backUrl: data.backUrl, fallback: !!data.fallback, message: data.message });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed — please retry");
     } finally {
@@ -385,6 +385,11 @@ export default function Studio() {
         {(generating || result) && (
           <section className="mt-10">
             <h2 className="font-serif text-lg md:text-xl mb-4">Your Mockup</h2>
+            {result?.fallback && (
+              <div className="mb-4 border border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs p-3">
+                ⚠️ AI preview is regenerating in the background — the image below is the original product while the customized mockup finishes rendering. Click <b>Generate</b> again in ~30s to fetch the finished mockup.
+              </div>
+            )}
             <div className="grid md:grid-cols-2 gap-6">
               {(["frontUrl", "backUrl"] as const).map((k, i) => (
                 <div key={k} className="border border-border/60 bg-card/30">
