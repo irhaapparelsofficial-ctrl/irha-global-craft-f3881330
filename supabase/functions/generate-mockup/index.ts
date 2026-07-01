@@ -77,11 +77,35 @@ function buildPrompt(b: Body & { productName: string }, view: "front" | "back"):
     : "Show a clean back view of the same garment on a neutral studio background, no model, matching lighting and material.";
   return [
     `Photoreal B2B product mockup of: ${b.productName}.`,
-    `Recolor the entire base garment to ${b.color.label} (${b.color.hex}) while preserving material texture, stitching, and shadows.`,
+    `CRITICAL: The entire base fabric of the garment MUST be completely recolored to a saturated ${b.color.label} (hex ${b.color.hex}). Do NOT keep the original fabric color. Preserve stitching, seams, buttons, folds, texture and studio lighting exactly.`,
     logo,
     viewInstr,
-    "High resolution, sharp, realistic fabric, no text watermarks.",
+    "The output MUST be visibly different from the input in fabric color and applied branding. High resolution, sharp, realistic fabric, no text watermarks, no price tags, no fake certificates.",
   ].join(" ");
+}
+
+async function callGateway(
+  model: string,
+  content: any[],
+  apiKey: string,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(GATEWAY, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content }],
+        modalities: ["image", "text"],
+      }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function generateView(
