@@ -11,7 +11,8 @@ const corsHeaders = {
 };
 
 const BUCKET = "mockup-cache";
-const MODEL = "google/gemini-3.1-flash-image";
+const MODEL = "google/gemini-3-pro-image";
+const FALLBACK_MODEL = "google/gemini-3.1-flash-image";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const PUBLISHED_ORIGIN = "https://www.irhaapparels.com";
 const PER_CALL_TIMEOUT_MS = 25_000;
