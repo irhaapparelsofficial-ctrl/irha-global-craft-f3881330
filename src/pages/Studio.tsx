@@ -40,7 +40,7 @@ export default function Studio() {
   const [preset, setPreset] = useState<Preset | null>(null);
   const [logo, setLogo] = useState<{ name: string; dataUrl: string } | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<{ frontUrl: string; backUrl: string } | null>(null);
+  const [result, setResult] = useState<{ frontUrl: string; backUrl: string; fallback?: boolean; message?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
