@@ -385,6 +385,11 @@ export default function Studio() {
         {(generating || result) && (
           <section className="mt-10">
             <h2 className="font-serif text-lg md:text-xl mb-4">Your Mockup</h2>
+            {result?.fallback && (
+              <div className="mb-4 border border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs p-3">
+                ⚠️ AI preview is regenerating in the background — the image below is the original product while the customized mockup finishes rendering. Click <b>Generate</b> again in ~30s to fetch the finished mockup.
+              </div>
+            )}
             <div className="grid md:grid-cols-2 gap-6">
               {(["frontUrl", "backUrl"] as const).map((k, i) => (
                 <div key={k} className="border border-border/60 bg-card/30">
