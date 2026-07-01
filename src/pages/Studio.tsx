@@ -117,7 +117,7 @@ export default function Studio() {
       });
       if (error) throw error;
       if (!data?.frontUrl || !data?.backUrl) throw new Error("Mockup generation failed");
-      setResult({ frontUrl: data.frontUrl, backUrl: data.backUrl });
+      setResult({ frontUrl: data.frontUrl, backUrl: data.backUrl, fallback: !!data.fallback, message: data.message });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed — please retry");
     } finally {
