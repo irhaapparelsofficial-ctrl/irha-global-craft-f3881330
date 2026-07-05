@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { z } from "zod";
-import { ArrowLeft, ArrowRight, Check, MessageCircle, FileText, Package, BookOpen, Image as ImageIcon, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MessageCircle, FileText, Package, BookOpen, Image as ImageIcon, Calendar, type LucideIcon } from "lucide-react";
 import SEO from "@/components/SEO";
 import SecureFileUpload from "@/components/SecureFileUpload";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
