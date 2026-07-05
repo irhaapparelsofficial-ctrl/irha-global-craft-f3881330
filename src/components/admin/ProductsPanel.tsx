@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Search, Trash2, Edit3, X, ExternalLink, RefreshCw, ImageIcon } from "lucide-react";
 
-type Category = { id: string; name: string; slug: string };
+type Category = { id: string; name: string; slug: string; parent_id: string | null; is_published: boolean };
 type Product = {
   id: string;
   category_id: string;
@@ -63,7 +63,7 @@ export default function ProductsPanel() {
   const load = async () => {
     setLoading(true); setError(null);
     const [cRes, pRes] = await Promise.all([
-      supabase.from("categories").select("id,name,slug").order("name"),
+      supabase.from("categories").select("id,name,slug,parent_id,is_published").order("sort_order"),
       supabase.from("products").select("*").order("sort_order", { ascending: true }).limit(500),
     ]);
     if (cRes.error) setError(cRes.error.message);
@@ -73,6 +73,11 @@ export default function ProductsPanel() {
     setLoading(false);
   };
   useEffect(() => { void load(); }, []);
+
+  // Only subcategories (rows with a parent) can hold products.
+  const subCats = useMemo(() => cats.filter((c) => c.parent_id !== null), [cats]);
+  const mainCats = useMemo(() => cats.filter((c) => c.parent_id === null && c.is_published), [cats]);
+
 
   const filtered = useMemo(() => {
     let list = rows;
