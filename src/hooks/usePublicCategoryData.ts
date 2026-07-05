@@ -47,6 +47,7 @@ function adaptProduct(p: DbProduct): NormalizedProduct {
     description: p.description ?? "",
     specs: p.specs ?? [],
     details: Array.isArray(p.details) ? p.details : [],
+    created_at: p.created_at,
   };
 }
 
