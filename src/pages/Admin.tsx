@@ -1,17 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Inbox, BarChart3, MessageSquare, Search, LogOut, Shield, RefreshCw, Mail, Globe, Trash2, Share2, ExternalLink, Sparkles, Home, Users, FileText, Send, Store, Package, Layers, Cpu, Activity, MapPin } from "lucide-react";
+import {
+  Inbox, BarChart3, MessageSquare, Search, Shield, RefreshCw, Mail, Globe,
+  Trash2, Activity, MapPin, LogOut,
+} from "lucide-react";
+
+import { AdminShell, type AdminView } from "@/components/admin/AdminShell";
+import OverviewPanel from "@/components/admin/OverviewPanel";
+import ProductsPanel from "@/components/admin/ProductsPanel";
+import CategoriesPanel from "@/components/admin/CategoriesPanel";
+import NotBuiltPanel from "@/components/admin/NotBuiltPanel";
+
 import SocialPanel from "@/components/admin/SocialPanel";
 import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
-import HomePanel from "@/components/admin/HomePanel";
 import LeadsPanel from "@/components/admin/LeadsPanel";
 import PIGeneratorPanel from "@/components/admin/PIGeneratorPanel";
 import MailingPanel from "@/components/admin/MailingPanel";
-import ListingsPanel from "@/components/admin/ListingsPanel";
 import CatalogPanel from "@/components/admin/CatalogPanel";
 import MacroGatewayPanel from "@/components/admin/MacroGatewayPanel";
 import StudioPricingPanel from "@/components/admin/StudioPricingPanel";
@@ -26,128 +33,80 @@ type Inquiry = {
 type PageView = { id: string; path: string; referrer: string | null; user_agent: string | null; created_at: string; session_id?: string | null; country?: string | null; city?: string | null; region?: string | null };
 type ChatMsg = { id: string; session_id: string; role: string; message: string; created_at: string };
 
-type Tab = "home" | "macro" | "catalog" | "leads" | "directory" | "studio" | "pi" | "mailing" | "listings" | "ai" | "inquiries" | "traffic" | "chat" | "gsc" | "social" | "devops";
-
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
-  const [tab, setTab] = useState<Tab>("home");
+  const [view, setView] = useState<AdminView>("overview");
 
   if (loading) return <Center>Loading…</Center>;
   if (!user) return <Navigate to="/auth" replace />;
 
   return (
     <>
-      <SEO title="Atelier Dashboard — Irha Apparels" description="Private admin dashboard." path="/admin" noindex />
-      <section className="pt-32 pb-24">
-        <div className="container-luxe">
-          {/* HEADER */}
-          <div className="flex flex-wrap items-end justify-between gap-6 mb-10 border-b border-border/60 pb-6">
-            <div>
-              <p className="eyebrow mb-2">Private · Admin</p>
-              <h1 className="font-display text-4xl md:text-5xl">Atelier Dashboard</h1>
-              <p className="text-xs text-muted-foreground mt-2 uppercase tracking-[0.2em]">
-                Signed in as {user.email}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              {!isAdmin && <ClaimAdminButton />}
-              <a
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] border border-gold/60 text-gold px-4 py-2.5 hover:bg-gold hover:text-background transition-colors"
-              >
-                <ExternalLink size={14} /> Live Website Preview
-              </a>
-              <button
-                onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }}
-                className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary transition-colors"
-              >
-                <LogOut size={14} /> Sign out
-              </button>
-            </div>
-          </div>
-
-          {!isAdmin ? (
-            <div className="border border-border/60 bg-card/40 p-10 text-center">
-              <Shield className="mx-auto text-gold mb-4" size={32} />
-              <h2 className="font-display text-2xl">Access pending</h2>
-              <p className="text-sm text-foreground/70 mt-3 max-w-md mx-auto">
-                Your account is signed in but does not have admin access yet. If you are the site owner,
-                click <em>Claim admin</em> above (works only once, for the first admin).
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* TABS */}
-              <div className="flex flex-wrap gap-2 mb-8">
-                <TabButton active={tab === "home"} onClick={() => setTab("home")} icon={<Home size={14} />} label="Home" />
-                <TabButton active={tab === "macro"} onClick={() => setTab("macro")} icon={<Layers size={14} />} label="2-Macro Gateway" />
-                <TabButton active={tab === "catalog"} onClick={() => setTab("catalog")} icon={<Package size={14} />} label="Catalog" />
-                <TabButton active={tab === "studio"} onClick={() => setTab("studio")} icon={<Cpu size={14} />} label="AI Studio & FOB" />
-                <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={<Users size={14} />} label="Leads" />
-                <TabButton active={tab === "directory"} onClick={() => setTab("directory")} icon={<MapPin size={14} />} label="Export Directory" />
-                <TabButton active={tab === "pi"} onClick={() => setTab("pi")} icon={<FileText size={14} />} label="PI Generator" />
-                <TabButton active={tab === "mailing"} onClick={() => setTab("mailing")} icon={<Send size={14} />} label="Mailing" />
-                <TabButton active={tab === "listings"} onClick={() => setTab("listings")} icon={<Store size={14} />} label="Listings" />
-                <TabButton active={tab === "ai"} onClick={() => setTab("ai")} icon={<Sparkles size={14} />} label="AI Assistant" />
-                <TabButton active={tab === "inquiries"} onClick={() => setTab("inquiries")} icon={<Inbox size={14} />} label="Inquiries" />
-                <TabButton active={tab === "traffic"} onClick={() => setTab("traffic")} icon={<BarChart3 size={14} />} label="Traffic" />
-                <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={<MessageSquare size={14} />} label="Live Chat" />
-                <TabButton active={tab === "gsc"} onClick={() => setTab("gsc")} icon={<Search size={14} />} label="Google Search" />
-                <TabButton active={tab === "social"} onClick={() => setTab("social")} icon={<Share2 size={14} />} label="Social" />
-                <TabButton active={tab === "devops"} onClick={() => setTab("devops")} icon={<Activity size={14} />} label="Social Sync & DevOps" />
-              </div>
-
-              {tab === "home" && <HomePanel />}
-              {tab === "macro" && <MacroGatewayPanel />}
-              {tab === "catalog" && <CatalogPanel />}
-              {tab === "studio" && <StudioPricingPanel />}
-              {tab === "leads" && <LeadsPanel />}
-              {tab === "directory" && <ExportDirectoryPanel />}
-              {tab === "pi" && <PIGeneratorPanel />}
-              {tab === "mailing" && <MailingPanel />}
-              {tab === "listings" && <ListingsPanel />}
-              {tab === "ai" && <AIAssistantPanel />}
-              {tab === "inquiries" && <InquiriesPanel />}
-              {tab === "traffic" && <TrafficPanel />}
-              {tab === "chat" && <ChatPanel />}
-              {tab === "gsc" && <GSCPanel />}
-              {tab === "social" && <SocialPanel />}
-              {tab === "devops" && <SocialDevOpsPanel />}
-            </>
-          )}
-        </div>
-      </section>
+      <SEO title="Admin — Irha Apparels" description="Private admin dashboard." path="/admin" noindex />
+      {!isAdmin ? <AccessDenied email={user.email} /> : (
+        <AdminShell view={view} setView={setView} userEmail={user.email}>
+          <ViewRouter view={view} setView={setView} />
+        </AdminShell>
+      )}
     </>
   );
 }
 
-function Center({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-[60vh] flex items-center justify-center text-sm text-muted-foreground">{children}</div>;
+function ViewRouter({ view, setView }: { view: AdminView; setView: (v: AdminView) => void }) {
+  switch (view) {
+    case "overview": return <OverviewPanel go={setView} />;
+    case "products": return <ProductsPanel />;
+    case "categories": return <CategoriesPanel />;
+    case "catalogues": return <CatalogPanel />;
+    case "blog": return <NotBuiltPanel title="Blog" />;
+    case "faqs": return <NotBuiltPanel title="FAQs" />;
+    case "seo": return <NotBuiltPanel title="SEO editor" note="Google Search Console analytics are available under Growth → Google Search. Full on-page SEO CRUD is coming next phase." />;
+    case "links": return <NotBuiltPanel title="Internal Links" />;
+    case "leads": return <LeadsPanel />;
+    case "inquiries": return <InquiriesPanel />;
+    case "chat": return <ChatPanel />;
+    case "mailing": return <MailingPanel />;
+    case "ai": return <AIAssistantPanel />;
+    case "studio": return <StudioPricingPanel />;
+    case "pi": return <PIGeneratorPanel />;
+    case "directory": return <ExportDirectoryPanel />;
+    case "social": return <SocialPanel />;
+    case "devops": return <SocialDevOpsPanel />;
+    case "traffic": return <TrafficPanel />;
+    case "gsc": return <GSCPanel />;
+    case "macro": return <MacroGatewayPanel />;
+    case "system": return <SystemPanel />;
+    default: return <OverviewPanel go={setView} />;
+  }
 }
 
-function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+function AccessDenied({ email }: { email?: string }) {
   return (
-    <button
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs uppercase tracking-[0.25em] border transition-colors ${
-        active ? "border-primary text-primary bg-primary/5" : "border-border/60 text-foreground/70 hover:text-foreground"
-      }`}
-    >
-      {icon} {label}
-    </button>
-  );
-}
-
-function ClaimAdminButton() {
-  return (
-    <div className="text-xs uppercase tracking-[0.25em] text-foreground/60 border border-border/60 px-4 py-2.5">
-      <Shield size={14} className="inline mr-2" /> Admin access locked
+    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+      <div className="max-w-md w-full border border-border/60 bg-card/40 p-10 text-center">
+        <Shield className="mx-auto text-gold mb-4" size={32} />
+        <h1 className="font-display text-2xl">Access denied</h1>
+        <p className="text-sm text-foreground/70 mt-3">
+          Your account <span className="text-foreground">{email}</span> is signed in but does not have admin
+          permissions for this workspace. Ask a site owner to grant you admin access.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <a href="/" className="text-xs uppercase tracking-[0.25em] border border-border/60 px-4 py-2 hover:border-primary">Back to site</a>
+          <button
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = "/auth"; }}
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] border border-border/60 px-4 py-2 hover:border-primary"
+          >
+            <LogOut size={12} /> Sign out
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
+function Center({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">{children}</div>;
+}
 
 // ──────────────────────────────────────────────────────────
 // INQUIRIES
@@ -168,14 +127,10 @@ function InquiriesPanel() {
   const filtered = rows.filter((r) => filter === "all" || r.status === filter);
   const newCount = rows.filter((r) => r.status === "new").length;
 
-  const markRead = async (id: string) => {
-    await supabase.from("inquiries").update({ status: "read" }).eq("id", id);
-    void load();
-  };
+  const markRead = async (id: string) => { await supabase.from("inquiries").update({ status: "read" }).eq("id", id); void load(); };
   const remove = async (id: string) => {
     if (!confirm("Delete this inquiry?")) return;
-    await supabase.from("inquiries").delete().eq("id", id);
-    void load();
+    await supabase.from("inquiries").delete().eq("id", id); void load();
   };
 
   return (
@@ -195,7 +150,7 @@ function InquiriesPanel() {
         <button onClick={load} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-primary"><RefreshCw size={12} /> Refresh</button>
       </div>
 
-      {loading ? <Center>Loading inquiries…</Center> : filtered.length === 0 ? (
+      {loading ? <div className="text-sm text-muted-foreground py-10 text-center">Loading inquiries…</div> : filtered.length === 0 ? (
         <EmptyState icon={<Inbox size={28} />} title="No inquiries yet" body="When someone submits the quote form, it will appear here." />
       ) : (
         <div className="space-y-3">
@@ -238,15 +193,10 @@ function TrafficPanel() {
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState<Date>(new Date());
 
-  // Auto-refresh every 15s for "live" visitor tracking.
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const { data } = await supabase
-        .from("page_views")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(3000);
+      const { data } = await supabase.from("page_views").select("*").order("created_at", { ascending: false }).limit(3000);
       if (cancelled) return;
       setRows((data as PageView[]) ?? []);
       setLoading(false);
@@ -261,12 +211,7 @@ function TrafficPanel() {
     const now = Date.now();
     const within = (ms: number) => rows.filter((r) => now - new Date(r.created_at).getTime() < ms);
     const activeSids = new Set(within(5 * 60 * 1000).map((r) => r.session_id || r.id));
-    return {
-      active: activeSids.size,
-      today: within(24 * 60 * 60 * 1000).length,
-      week: within(7 * 24 * 60 * 60 * 1000).length,
-      month: within(30 * 24 * 60 * 60 * 1000).length,
-    };
+    return { active: activeSids.size, today: within(864e5).length, week: within(6048e5).length, month: within(2592e6).length };
   }, [rows]);
 
   const liveVisitors = useMemo(() => {
@@ -282,31 +227,26 @@ function TrafficPanel() {
   }, [rows]);
 
   const topCountries = useMemo(() => {
-    const tally: Record<string, number> = {};
-    rows.forEach((r) => { const k = r.country || "(unknown)"; tally[k] = (tally[k] ?? 0) + 1; });
-    return Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const t: Record<string, number> = {};
+    rows.forEach((r) => { const k = r.country || "(unknown)"; t[k] = (t[k] ?? 0) + 1; });
+    return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 10);
   }, [rows]);
-
   const topPaths = useMemo(() => {
-    const tally: Record<string, number> = {};
-    rows.forEach((r) => { tally[r.path] = (tally[r.path] ?? 0) + 1; });
-    return Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, 15);
+    const t: Record<string, number> = {};
+    rows.forEach((r) => { t[r.path] = (t[r.path] ?? 0) + 1; });
+    return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 15);
   }, [rows]);
-
   const topRefs = useMemo(() => {
-    const tally: Record<string, number> = {};
+    const t: Record<string, number> = {};
     rows.forEach((r) => {
       let k = "(direct)";
-      if (r.referrer) {
-        try { k = new URL(r.referrer).hostname || "(invalid)"; }
-        catch { k = "(invalid)"; }
-      }
-      tally[k] = (tally[k] ?? 0) + 1;
+      if (r.referrer) { try { k = new URL(r.referrer).hostname || "(invalid)"; } catch { k = "(invalid)"; } }
+      t[k] = (t[k] ?? 0) + 1;
     });
-    return Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 10);
   }, [rows]);
 
-  if (loading) return <Center>Loading traffic…</Center>;
+  if (loading) return <div className="text-sm text-muted-foreground py-10 text-center">Loading traffic…</div>;
   if (rows.length === 0) return <EmptyState icon={<BarChart3 size={28} />} title="No traffic data yet" body="Page views start logging from now. Visit a few pages to see them here." />;
 
   return (
@@ -347,15 +287,9 @@ function TrafficPanel() {
       </Panel>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <Panel title="Top countries">
-          <BarList data={topCountries} max={topCountries[0]?.[1] ?? 1} />
-        </Panel>
-        <Panel title="Top pages">
-          <BarList data={topPaths} max={topPaths[0]?.[1] ?? 1} />
-        </Panel>
-        <Panel title="Top referrers">
-          <BarList data={topRefs} max={topRefs[0]?.[1] ?? 1} />
-        </Panel>
+        <Panel title="Top countries"><BarList data={topCountries} max={topCountries[0]?.[1] ?? 1} /></Panel>
+        <Panel title="Top pages"><BarList data={topPaths} max={topPaths[0]?.[1] ?? 1} /></Panel>
+        <Panel title="Top referrers"><BarList data={topRefs} max={topRefs[0]?.[1] ?? 1} /></Panel>
       </div>
     </div>
   );
@@ -400,7 +334,7 @@ function ChatPanel() {
     return Array.from(map.entries()).sort((a, b) => new Date(b[1][b[1].length - 1].created_at).getTime() - new Date(a[1][a[1].length - 1].created_at).getTime());
   }, [rows]);
 
-  if (loading) return <Center>Loading chats…</Center>;
+  if (loading) return <div className="text-sm text-muted-foreground py-10 text-center">Loading chats…</div>;
   if (sessions.length === 0) return <EmptyState icon={<MessageSquare size={28} />} title="No conversations yet" body="When visitors use Live Chat, transcripts will appear here." />;
 
   return (
@@ -434,7 +368,6 @@ function ChatPanel() {
 // GSC
 // ──────────────────────────────────────────────────────────
 type GSCRow = { keys: string[]; clicks: number; impressions: number; ctr: number; position: number };
-
 function GSCPanel() {
   const [rows, setRows] = useState<GSCRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -461,7 +394,7 @@ function GSCPanel() {
       </div>
 
       {err && <div className="border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{err}</div>}
-      {loading ? <Center>Loading Search Console…</Center> : rows.length === 0 && !err ? (
+      {loading ? <div className="text-sm text-muted-foreground py-10 text-center">Loading Search Console…</div> : rows.length === 0 && !err ? (
         <EmptyState icon={<Search size={28} />} title="No data yet" body="Google Search Console needs a few days of impressions before data appears." />
       ) : (
         <div className="border border-border/60 overflow-x-auto">
@@ -489,9 +422,38 @@ function GSCPanel() {
           </table>
         </div>
       )}
-      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">
-        Last 28 days · Source: Google Search Console
-      </p>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">Last 28 days · Source: Google Search Console</p>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// SYSTEM
+// ──────────────────────────────────────────────────────────
+function SystemPanel() {
+  const { user, isAdmin } = useAuth();
+  return (
+    <div className="space-y-4 max-w-2xl">
+      <div className="border border-border/60 bg-card/30 p-5 text-sm space-y-2">
+        <p className="eyebrow mb-3">Session</p>
+        <Row k="Signed-in email" v={user?.email ?? "—"} />
+        <Row k="Admin role" v={isAdmin ? "Yes" : "No"} />
+        <Row k="User ID" v={user?.id ?? "—"} />
+      </div>
+      <div className="border border-border/60 bg-card/30 p-5 text-sm space-y-2">
+        <p className="eyebrow mb-3">Backend</p>
+        <Row k="Project" v="Lovable Cloud (managed)" />
+        <Row k="Auth" v="Google OAuth via Supabase" />
+        <Row k="Public site" v={<a className="text-primary hover:underline" href="/" target="_blank" rel="noreferrer">Open live site</a>} />
+      </div>
+    </div>
+  );
+}
+function Row({ k, v }: { k: string; v: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-1.5 border-b border-border/30 last:border-0">
+      <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{k}</span>
+      <span className="text-foreground/85 text-xs text-right break-all">{v}</span>
     </div>
   );
 }
@@ -501,7 +463,7 @@ function GSCPanel() {
 // ──────────────────────────────────────────────────────────
 function StatRow({ stats }: { stats: { label: string; value: number | string }[] }) {
   return (
-    <div className="grid grid-cols-3 gap-px bg-border/60 border border-border/60">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-border/60 border border-border/60">
       {stats.map((s) => (
         <div key={s.label} className="bg-card/40 p-5">
           <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{s.label}</p>

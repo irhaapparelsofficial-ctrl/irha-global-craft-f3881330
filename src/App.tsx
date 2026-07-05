@@ -76,6 +76,10 @@ const App = () => (
               <Route path="/de/" element={<LederhosenHome />} />
               <Route path="/legacy-home" element={<Layout><Index /></Layout>} />
 
+              {/* Admin & auth: standalone chrome — no public navbar/footer */}
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<Admin />} />
+
               {/* All other routes keep the legacy Layout (Navbar/Footer/FloatingActions/etc) */}
               <Route path="*" element={
                 <Layout>
@@ -104,15 +108,12 @@ const App = () => (
                     <Route path="/de/katalog/:slug" element={<CatalogueCategory />} />
                     <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                     <Route path="/seo-indexing" element={<SeoIndexing />} />
-                    <Route path="/auth" element={<Auth />} />
                     <Route path="/studio" element={<Studio />} />
-                    <Route path="/admin" element={<Admin />} />
                     <Route path="/login" element={<Navigate to="/auth" replace />} />
                     <Route path="/signin" element={<Navigate to="/auth" replace />} />
                     <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
                     <Route path="/log-in" element={<Navigate to="/auth" replace />} />
                     <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
-                    <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
                     <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
                     {SEO_LANDING_SLUGS.map((slug) => (
                       <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
