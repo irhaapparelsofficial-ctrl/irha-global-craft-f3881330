@@ -88,10 +88,32 @@ export default function CategoriesPanel() {
     detailsText: (c.details ?? []).join("\n"),
   });
 
+  // The 5 canonical main categories (top-level rows only, canonical slugs, published).
+  const mainCats = useMemo(
+    () => rows.filter((r) => !r.parent_id && CANONICAL_TOP_SLUGS.includes(r.slug as typeof CANONICAL_TOP_SLUGS[number])),
+    [rows],
+  );
+
   const save = async () => {
     if (!editing) return;
     const d = editing;
     if (!d.name.trim()) { toast({ title: "Name is required", variant: "destructive" }); return; }
+
+    // Structural guardrails: new categories must be subcategories under one of the 5 mains;
+    // parent (when set) must itself be a top-level canonical main.
+    const isExistingMain = d.id && mainCats.some((c) => c.id === d.id);
+    if (!isExistingMain) {
+      if (!d.parent_id) {
+        toast({ title: "Pick a main category", description: "New categories must be a subcategory under one of the 5 main categories.", variant: "destructive" });
+        return;
+      }
+      const parent = rows.find((r) => r.id === d.parent_id);
+      if (!parent || parent.parent_id !== null || !CANONICAL_TOP_SLUGS.includes(parent.slug as typeof CANONICAL_TOP_SLUGS[number])) {
+        toast({ title: "Invalid parent", description: "Parent must be one of the 5 main categories.", variant: "destructive" });
+        return;
+      }
+    }
+
     const payload = {
       parent_id: d.parent_id || null,
       slug: d.slug.trim() ? slugify(d.slug) : slugify(d.name),
@@ -106,6 +128,7 @@ export default function CategoriesPanel() {
       is_published: !!d.is_published,
       details: d.detailsText.split("\n").map((s) => s.trim()).filter(Boolean),
     };
+
     setSaving(true);
     try {
       let id = d.id;
