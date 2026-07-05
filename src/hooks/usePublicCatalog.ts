@@ -141,13 +141,21 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
         top = parent as DbCategory;
       }
 
-      if (top.slug !== categorySlug && category.slug !== categorySlug) {
-        return null; // slug mismatch → treat as not found
+      // Accept both current and legacy top-slug so old inbound URLs resolve.
+      const { LEGACY_TOP_SLUG_MAP } = await import("@/lib/legacyCategorySlugs");
+      const canonicalRequested = LEGACY_TOP_SLUG_MAP[categorySlug ?? ""] ?? categorySlug;
+      if (
+        top.slug !== canonicalRequested &&
+        category.slug !== categorySlug &&
+        top.slug !== categorySlug
+      ) {
+        return null;
       }
       return { product: dbProd, subCategory: category, topCategory: top };
     },
   });
 }
+
 
 // ---------- Adapter: DbProduct → legacy Product shape (for modal reuse) ----------
 
