@@ -136,11 +136,12 @@ export default function Home() {
         <div className="container-luxe py-4 md:py-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {[
-              { Icon: Package,  k: "MOQ 50 pcs",        v: "Per design / color" },
-              { Icon: Truck,    k: "FOB Sialkot",       v: "Worldwide export" },
-              { Icon: Calendar, k: "45-Day Production", v: "Bulk lead time" },
+              { Icon: Package,  k: "Flexible MOQ",       v: "By product & program" },
+              { Icon: Truck,    k: "FOB Sialkot",        v: "Worldwide export" },
+              { Icon: Calendar, k: "45-Day Production",  v: "Bulk lead time" },
               { Icon: Shirt,    k: "In-House Embroidery", v: "12-head Tajima" },
             ].map(({ Icon, k, v }) => (
+
               <div key={k} className="flex items-center gap-3 md:justify-center">
                 <span className="inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 border border-gold/50 text-gold shrink-0">
                   <Icon size={16} strokeWidth={1.5} />
@@ -166,41 +167,24 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-            {[
-              {
-                key: "bavarian",
-                image: resolveAsset("/src/assets/og/og-bavarian.jpg"),
-                eyebrow: "Hub 01 · Heritage",
-                title: "BAVARIAN HUB",
-                subtitle: "Lederhosen, Dirndl, Bundhosen",
-                href: "/products/bavarian",
-              },
-              {
-                key: "textile",
-                image: resolveAsset("/src/assets/og/og-sportswear.jpg"),
-                eyebrow: "Hub 02 · Performance",
-                title: "TEXTILE HUB",
-                subtitle: "Sportswear, Streetwear, Nightwear",
-                href: "/products/sportswear",
-              },
-            ].map((hub) => {
-              const cover = hub.key === "bavarian"
-                ? categories.find((c) => c.slug === "bavarian")?.image_url
-                : categories.find((c) => ["sportswear","streetwear","nightwear"].includes(c.slug))?.image_url;
-              const src = cover ? resolveAsset(cover) : hub.image;
+            {HUB_DEFS.map((hub) => {
+              const children = hub.childSlugs
+                .map((s) => categories.find((c) => c.slug === s && c.is_published))
+                .filter((c): c is NonNullable<typeof c> => !!c);
+              const cover = children[0]?.image_url;
+              const src = cover ? resolveAsset(cover) : resolveAsset(hub.image);
               return (
-                <Link
+                <div
                   key={hub.key}
-                  to={hub.href}
-                  className="group relative block h-[400px] overflow-hidden border-2 border-border/60 hover:border-gold transition-all duration-500"
+                  className="group relative block overflow-hidden border-2 border-border/60 hover:border-gold transition-all duration-500 min-h-[440px]"
                 >
                   <img
                     src={src}
                     alt={hub.title}
                     loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] group-hover:scale-[1.06]"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] group-hover:scale-[1.04]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/20 transition-opacity group-hover:from-black/90" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/25" />
                   <div className="relative h-full flex flex-col justify-end p-8 md:p-10">
                     <div className="h-px w-12 bg-gold mb-5" />
                     <p className="text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold mb-3">
@@ -212,15 +196,40 @@ export default function Home() {
                     <p className="mt-3 text-sm md:text-base text-white/80 max-w-md leading-relaxed">
                       {hub.subtitle}
                     </p>
-                    <span className="mt-7 inline-flex items-center gap-3 self-start bg-gradient-gold text-primary-foreground px-7 py-3.5 text-xs uppercase tracking-[0.3em] font-medium group-hover:shadow-gold transition-all">
-                      Explore
+
+                    {/* Real child categories — clickable, with real product counts */}
+                    <ul className="mt-6 space-y-1.5">
+                      {children.length === 0 && (
+                        <li className="text-white/50 text-sm">Loading categories…</li>
+                      )}
+                      {children.map((c) => (
+                        <li key={c.slug}>
+                          <Link
+                            to={`/products/${c.slug}`}
+                            className="group/link inline-flex items-baseline gap-3 text-white/95 hover:text-gold transition-colors"
+                          >
+                            <span className="font-display text-lg md:text-xl leading-tight">{c.name}</span>
+                            <span className="text-[10px] uppercase tracking-[0.25em] text-white/50 group-hover/link:text-gold/80">
+                              View →
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Link
+                      to={hub.href}
+                      className="mt-7 inline-flex items-center gap-3 self-start bg-gradient-gold text-primary-foreground px-7 py-3.5 text-xs uppercase tracking-[0.3em] font-medium group-hover:shadow-gold transition-all"
+                    >
+                      Explore Hub
                       <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </span>
+                    </Link>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
+
         </div>
       </section>
 
