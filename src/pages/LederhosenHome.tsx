@@ -47,7 +47,7 @@ const macros = [
 
 const promises = [
   { icon: Factory, title: "Direct Factory", desc: "Owned atelier in Sialkot, Pakistan — no middlemen since 2014." },
-  { icon: ShieldCheck, title: "Audited Quality", desc: "BSCI-aligned processes, full-grain leather, OEKO-TEX cotton." },
+  { icon: ShieldCheck, title: "Audited Quality", desc: "audit-on-request-aligned processes, full-grain leather, certified cotton." },
   { icon: Truck, title: "45-Day Delivery", desc: "Tech-pack to FOB Sialkot. Air & sea freight worldwide." },
   { icon: Award, title: "MOQ from 50", desc: "Low minimums for boutique brands and growing labels." },
 ];
@@ -56,21 +56,21 @@ export default function LederhosenHome() {
   return (
     <>
       <Helmet>
-        <title>Irha Apparels — Lederhosen & Trachten Hersteller Pakistan | MOQ 50 | FOB Sialkot</title>
+        <title>Irha Apparels — Lederhosen & Trachten Hersteller Pakistan | Flexible MOQ | FOB Sialkot</title>
         <meta
           name="description"
-          content="B2B Bekleidungshersteller in Sialkot, Pakistan. Lederhosen, Dirndl, Trachten, Lederjacken & Sportbekleidung. MOQ 50 Stück, FOB Sialkot, 45-Tage Produktion. Direkt vom Hersteller für Großhändler in Deutschland, Österreich & Schweiz."
+          content="B2B Bekleidungshersteller in Sialkot, Pakistan. Lederhosen, Dirndl, Trachten, Lederjacken & Sportbekleidung. flexible MOQ, FOB Sialkot, programmbasierte Produktion. Direkt vom Hersteller für Großhändler in Deutschland, Österreich & Schweiz."
         />
         <meta
           name="keywords"
-          content="Lederhosen Hersteller, Trachten Großhandel, Dirndl Hersteller Pakistan, Bavarian Wear Hersteller, Lederhosen Sialkot, Oktoberfest Bekleidung Hersteller, Trachten OEM, Lederjacken Hersteller Pakistan, Bekleidungshersteller Sialkot, Eigenmarken Bekleidung, FOB Sialkot, MOQ 50, lederhosen manufacturer, trachten manufacturer, dirndl supplier, Bavarian clothing OEM, German wholesale lederhosen, Austrian trachten supplier"
+          content="Lederhosen Hersteller, Trachten Großhandel, Dirndl Hersteller Pakistan, Bavarian Wear Hersteller, Lederhosen Sialkot, Oktoberfest Bekleidung Hersteller, Trachten OEM, Lederjacken Hersteller Pakistan, Bekleidungshersteller Sialkot, Eigenmarken Bekleidung, FOB Sialkot, Flexible MOQ, lederhosen manufacturer, trachten manufacturer, dirndl supplier, Bavarian clothing OEM, German wholesale lederhosen, Austrian trachten supplier"
         />
         <link rel="canonical" href="https://www.irhaapparels.com/" />
         <link rel="alternate" hrefLang="en" href="https://www.irhaapparels.com/" />
         <link rel="alternate" hrefLang="de" href="https://www.irhaapparels.com/de" />
         <link rel="alternate" hrefLang="x-default" href="https://www.irhaapparels.com/" />
         <meta property="og:title" content="Lederhosen & Trachten Hersteller Pakistan — Irha Apparels" />
-        <meta property="og:description" content="Direkt vom Hersteller in Sialkot. Lederhosen, Dirndl, Trachten & Lederjacken. MOQ 50, FOB Sialkot, 45 Tage Produktion." />
+        <meta property="og:description" content="Direkt vom Hersteller in Sialkot. Lederhosen, Dirndl, Trachten & Lederjacken. Flexible MOQ, FOB Sialkot, programmbasierte Produktion." />
       </Helmet>
 
       {/* HERO */}
@@ -92,7 +92,7 @@ export default function LederhosenHome() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
             Bavarian Heritage & Leather on one side. Textile, Streetwear & Active on the other.
-            OEM · ODM · Private Label · MOQ 50 · 45-day delivery worldwide.
+            OEM · ODM · Private Label · Flexible MOQ · worldwide export with program-based timelines.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
             <Link

@@ -37,7 +37,7 @@ export default function QuoteForm({
     }
 
     const complianceNote = data.needsCompliance
-      ? "Requires OEKO-TEX / BSCI documentation with order."
+      ? "Requires certified / audit-on-request documentation with order."
       : "";
     const combinedNotes = [data.notes, complianceNote].filter(Boolean).join(" — ");
 
@@ -63,7 +63,7 @@ Company: ${data.company || "—"}
 Country: ${data.country}
 Email: ${data.email}
 Quantity: ${data.quantity || "—"}
-Compliance Docs: ${data.needsCompliance ? "Yes — OEKO-TEX / BSCI required" : "Not required"}
+Compliance Docs: ${data.needsCompliance ? "Yes — certified / audit-on-request required" : "Not required"}
 Notes: ${data.notes || "—"}`;
     // Google Ads conversion event — fires when quote form is submitted
     try {
@@ -170,7 +170,7 @@ Notes: ${data.notes || "—"}`;
           className="mt-1 h-4 w-4 accent-[hsl(var(--gold))]"
         />
         <span className="leading-snug">
-          I require <span className="text-gold">OEKO-TEX / BSCI documentation</span> with order
+          I require <span className="text-gold">certified / audit-on-request documentation</span> with order
         </span>
       </label>
       <button

@@ -143,8 +143,8 @@ export default function CountryLanding() {
             Get a quote for <span className="text-gold italic">{data.country}</span> in 24 hours.
           </h2>
           <ul className="mt-8 mb-10 inline-flex flex-col gap-2 text-sm text-foreground/75 text-left">
-            <li className="flex items-center gap-2"><Check size={16} className="text-gold" /> MOQ 50 pieces · FOB Sialkot</li>
-            <li className="flex items-center gap-2"><Check size={16} className="text-gold" /> 45-day production · in-house embroidery & sublimation</li>
+            <li className="flex items-center gap-2"><Check size={16} className="text-gold" /> flexible MOQ · FOB Sialkot</li>
+            <li className="flex items-center gap-2"><Check size={16} className="text-gold" /> program-based production timeline · in-house embroidery & sublimation</li>
             <li className="flex items-center gap-2"><Check size={16} className="text-gold" /> Free tech-pack and counter-sample on confirmed POs</li>
           </ul>
           <div>

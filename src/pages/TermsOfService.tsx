@@ -39,7 +39,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-xl font-semibold">3. Minimum order quantity (MOQ)</h2>
           <p>
-            Our standard MOQ is 50 pieces per style, per color. Some product groups have a higher
+            Our standard MOQ is flexible MOQ per style, per color. Some product groups have a higher
             MOQ. The MOQ for your order is the one written on the PI.
           </p>
         </section>

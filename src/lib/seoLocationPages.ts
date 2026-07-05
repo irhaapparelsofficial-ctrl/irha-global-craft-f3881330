@@ -32,7 +32,7 @@ const RELATED_CATEGORY: Record<Category, string> = {
 const SHARED_PROCESS = [
   { step: "01", title: "Brief & Tech Pack", body: "Share sketches, reference garments or a Pinterest board — we engineer a production-ready tech pack with graded patterns, BoM, stitch call-outs and trim spec within 5–7 business days." },
   { step: "02", title: "Sample & Approval", body: "Counter-sample dispatched in 14–21 days. Fit, fabric, colour and construction signed off in writing before any bulk fabric is cut." },
-  { step: "03", title: "Sourcing", body: "Audited mills and tanneries only — LWG leather, BCI/GRS cotton and polyester, OEKO-TEX dyes. Full supplier list shared on request." },
+  { step: "03", title: "Sourcing", body: "Audited mills and tanneries only — vetted leather, BCI/GRS cotton and polyester, certified dyes. Full supplier list shared on request." },
   { step: "04", title: "Cutting & Sewing", body: "Bullmer auto-spread, Gerber CAD markers, 320+ machines across sewing, embroidery, printing and finishing — all in-house." },
   { step: "05", title: "QC & Finishing", body: "Four-point fabric inspection, in-line audits and AQL 2.5 end-line acceptance on every shipment. Photo evidence shared before dispatch." },
   { step: "06", title: "Export & Delivery", body: "FOB Sialkot, CIF or full DDP to your warehouse. Form A / EUR.1 / GSP+ documentation handled in-house per shipment." },
@@ -71,7 +71,7 @@ const buildLocationPage = (i: LocationPageInput): SeoLandingPage => {
   const h1 = `${i.product} Manufacturer for ${i.city} — Wholesale, OEM & Private Label`;
   const title = `${i.product} Manufacturer ${i.city} | Irha Apparels`.slice(0, 60);
   const metaDescription =
-    `Wholesale ${i.productLower} manufacturer supplying ${i.city}, ${i.country}. OEM, ODM & private label from Sialkot. MOQ 50. Shipping ${i.transitDays}.`.slice(0, 158);
+    `Wholesale ${i.productLower} manufacturer supplying ${i.city}, ${i.country}. OEM, ODM & private label from Sialkot. Flexible MOQ. Shipping ${i.transitDays}.`.slice(0, 158);
 
   return {
     slug: i.slug,
@@ -96,15 +96,15 @@ const buildLocationPage = (i: LocationPageInput): SeoLandingPage => {
     relatedCategorySlug: RELATED_CATEGORY[i.category],
     intro: [
       i.uniqueIntro,
-      `Irha Apparels is a verified B2B ${i.productLower} manufacturer supplying ${i.city} importers, multi-brand retailers, DTC labels and team-wear distributors direct from our Sialkot, Pakistan factory. We work factory-direct — no agents, no traders, no commission stacking — with low MOQs from 50 pieces per design and colourway, full OEM, ODM and private-label support, and audited compliance (WRAP, Sedex SMETA, OEKO-TEX) meeting the supply-chain due-diligence requirements of buyers in ${i.country}.`,
+      `Irha Apparels is a verified B2B ${i.productLower} manufacturer supplying ${i.city} importers, multi-brand retailers, DTC labels and team-wear distributors direct from our Sialkot, Pakistan factory. We work factory-direct — no agents, no traders, no commission stacking — with low MOQs from flexible MOQ per design and colourway, full OEM, ODM and private-label support, and audited compliance (audit-on-request, Sedex SMETA, certified) meeting the supply-chain due-diligence requirements of buyers in ${i.country}.`,
       i.uniqueAngle,
       `Our shipping lane to ${i.city} is ${i.shippingLane} — typically ${i.transitDays} — with FOB Sialkot, CIF and full DDP (delivered-duty-paid) options. ${i.duties} Complete export documentation (commercial invoice, packing list, certificate of origin, Form A / EUR.1 / GSP+ where applicable) is issued in-house per shipment, and dedicated account managers handle communication in ${i.city} business hours through WhatsApp, email and weekly Zoom updates during active production.`,
     ],
     whyChoose: [
       { title: `${i.city}-ready production`, body: `Tech packs, labels, hangtags and packaging engineered to the documentation and language standards expected by ${i.country} customs and retail buyers — including English, German or Arabic care symbols and barcoding as required.` },
       { title: "Factory-direct pricing", body: `You pay the Sialkot factory invoice directly. Typical landed-cost savings for ${i.city} buyers are 18–32% versus sourcing the same ${i.productLower} through Hong Kong, Dubai or Istanbul trading houses.` },
-      { title: "Low MOQs from 50 pieces", body: `Start with 50 pieces per ${i.productSingular} design and colourway — ideal for emerging ${i.city} labels, capsule drops, Kickstarter launches and seasonal restocks.` },
-      { title: "Audited compliance", body: "Rolling WRAP, Sedex SMETA 4-Pillar, BSCI and OEKO-TEX Standard 100 audits — fully aligned with EU CSDDD, German LkSG, UK Modern Slavery Act and US FLA buyer due-diligence requirements." },
+      { title: "Low MOQs from our flexible MOQ", body: `Start with our flexible MOQ per ${i.productSingular} design and colourway — ideal for emerging ${i.city} labels, capsule drops, Kickstarter launches and seasonal restocks.` },
+      { title: "Audited compliance", body: "Rolling audit-on-request, Sedex SMETA 4-Pillar, audit-on-request and certified fabrics on request audits — fully aligned with EU CSDDD, German LkSG, UK Modern Slavery Act and US FLA buyer due-diligence requirements." },
       { title: "DDP shipping option", body: `Door-to-door DDP delivery to ${i.city} warehouses via nominated forwarders — landed cost, customs, duties and last-mile delivery in one transparent invoice.` },
       { title: "IP-safe & confidential", body: "NDA signed pre-quote, dedicated production lines for sensitive programs, and a Brand Protection Addendum barring resale or copy production for third parties." },
     ],
@@ -153,8 +153,8 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     ],
     faqs: [
       { q: "Do you ship leather jackets DDP to New York?", a: "Yes. DDP shipping to NYC warehouses (Newark, Edison, Secaucus and Brooklyn 3PLs) is available via our nominated freight forwarders — landed cost, US CBP customs clearance, duty and last-mile delivery included." },
-      { q: "What leather grades do you offer?", a: "We work with A-grade and B-grade full-grain cowhide, lambskin, goatskin and nappa — all sourced from LWG-rated Pakistani and Italian tanneries with chromium-VI tested below REACH and US CPSIA limits." },
-      { q: "What is the MOQ for custom leather jackets?", a: "Minimum order quantity is 50 pieces per design per colourway. For NYC sample programs and trade-show capsules we can split runs across 2–3 colourways at 25 pieces each." },
+      { q: "What leather grades do you offer?", a: "We work with A-grade and B-grade full-grain cowhide, lambskin, goatskin and nappa — all sourced from vetted-rated Pakistani and Italian tanneries with chromium-VI tested below regulatory-documentation-as-required and US CPSIA limits." },
+      { q: "What is the MOQ for custom leather jackets?", a: "Minimum order quantity is flexible MOQ per design per colourway. For NYC sample programs and trade-show capsules we can split runs across 2–3 colourways at 25 pieces each." },
       { q: "Can you replicate a vintage leather jacket?", a: "Yes. Send the reference jacket to our Sialkot office or detailed photos with measurements — we reverse-engineer pattern, leather grade, hardware and lining and ship a counter-sample within 21 days." },
       { q: "Do you offer private label leather jackets for NYC brands?", a: "Yes. Your woven main label, neck label, hangtag, polybag, hardware engraving and gift box — zero Irha Apparels branding on retail-ready units." },
     ],
@@ -179,7 +179,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { q: "What is the MOQ for wholesale leather gloves to London?", a: "Minimum 100 pairs per design per colourway. Sample orders for buyer review are 10–20 pairs and can ship by air to London in 5–7 days." },
       { q: "Can you produce CE-certified motorcycle gloves?", a: "Yes. CE EN 13594 Level 1 motorcycle glove certification is available — we work with EU notified bodies and provide the test reports on request." },
       { q: "Do you ship DDP to UK warehouses?", a: "Yes. DDP delivery to London, Manchester, Birmingham, Leeds and other UK warehouses — duty-paid, VAT-paid, last-mile delivered." },
-      { q: "What leathers are used?", a: "Nappa lambskin, deerskin, peccary, cowhide split, goatskin and cabretta — all from LWG-rated tanneries with REACH-compliant chromium-VI testing." },
+      { q: "What leathers are used?", a: "Nappa lambskin, deerskin, peccary, cowhide split, goatskin and cabretta — all from vetted tanneries with regulatory-aligned chromium-VI testing." },
       { q: "Do you provide private label branding?", a: "Yes — your embossed cuff branding, printed silicon palm grip, woven label and hangtag, retail polybag and gift box." },
     ],
   }),
@@ -196,12 +196,12 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { title: "Lambskin skinny pants", body: "0.7–0.9 mm soft lambskin in skinny, slim and cigarette fits — black, oxblood, cognac, brown for boutique programs." },
       { title: "Cargo & utility leather", body: "Multi-pocket cargo leather pants in matte finish, ideal for Berlin streetwear capsule drops." },
       { title: "Zip-detail & punk", body: "Multi-zipper, lace-up, side-stripe and asymmetric closure designs — built to Schöneberg and Kreuzberg boutique briefs." },
-      { title: "Faux-leather PU programs", body: "Vegan PU leather pants for ethical-positioned Berlin brands — REACH-compliant base fabric and water-based PU coating." },
-      { title: "EU-compliant labelling", body: "German-language care labels (ISO 3758), fibre composition per EU Regulation 1007/2011, OEKO-TEX Standard 100 certified materials." },
+      { title: "Faux-leather PU programs", body: "Vegan PU leather pants for ethical-positioned Berlin brands — regulatory-aligned base fabric and water-based PU coating." },
+      { title: "EU-compliant labelling", body: "German-language care labels (ISO 3758), fibre composition per EU Regulation 1007/2011, material spec confirmed per program materials." },
     ],
     faqs: [
-      { q: "Are your leather pants REACH compliant?", a: "Yes. All leather supplied is tested for chromium-VI below 3 ppm per EU REACH Annex XVII, with test reports issued per shipment." },
-      { q: "Do you offer vegan leather pants?", a: "Yes — PU faux leather on cotton-poly base, REACH-compliant, water-based coating, full vegan-certified supply chain on request." },
+      { q: "Are your leather pants regulatory-aligned?", a: "Yes. All leather supplied is tested for chromium-VI below 3 ppm per EU regulatory dye limits per market." },
+      { q: "Do you offer vegan leather pants?", a: "Yes — PU faux leather on cotton-poly base, regulatory-aligned, water-based coating, full vegan-certified supply chain on request." },
       { q: "Can you produce a Berlin-fit block pattern?", a: "Yes. Our Berlin block (narrower hip, longer rise, slim thigh) is the default starting pattern — adjustments per your sample garment are made free of charge at sampling stage." },
       { q: "What is the lead time to Berlin?", a: "Production 35–50 days from sample approval; sea freight FOB Sialkot → Hamburg 21–26 days; full DDP to Berlin 45–65 days total." },
       { q: "Do you provide German-language hangtags?", a: "Yes — German hangtags, care labels, packaging copy and barcoding all produced in-house at no setup cost." },
@@ -226,7 +226,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "What MOQ applies for leather bags to Sydney?", a: "Minimum 100 pieces per design per colourway. Small leather goods (wallets, card holders) start at 200 pieces due to setup economics." },
       { q: "Do you ship to Sydney by sea?", a: "Yes — Sialkot → Port Botany direct, 24–30 days transit. Consolidated LCL shipments are also available for orders under 1 CBM." },
-      { q: "Can you produce vegetable-tanned full-grain leather?", a: "Yes. Our LWG-rated tannery partners supply vegetable-tanned and chrome-free full-grain cowhide for premium Australian programs." },
+      { q: "Can you produce vegetable-tanned full-grain leather?", a: "Yes. Our vetted-rated tannery partners supply vegetable-tanned and chrome-free full-grain cowhide for premium Australian programs." },
       { q: "Do you offer private label?", a: "Yes — embossed branding, branded hardware, woven labels, branded dust bags, gift boxes and shipping cartons." },
       { q: "Can you handle Australian Certificate of Origin requirements?", a: "Yes. We issue commercial invoice, packing list, Pakistan Chamber of Commerce Certificate of Origin and Form A per shipment for Australian customs clearance." },
     ],
@@ -252,7 +252,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { q: "Can you produce winter-rated leather jackets?", a: "Yes — heavyweight cowhide, thermal quilted lining, storm flap, storm cuff, double-stitched seams. We cold-flex test samples before bulk approval." },
       { q: "What is the typical lead time to Toronto?", a: "Production 35–55 days; sea freight Sialkot → Toronto 32–38 days; full DDP to Toronto 55–80 days total. Air freight 6–8 days for samples." },
       { q: "Do you offer private label for Toronto brands?", a: "Yes — full private label with your woven labels, hardware engraving, hangtags, polybags and shipping cartons." },
-      { q: "What is the MOQ?", a: "50 pieces per design per colourway; split colourways at 25 pieces each available for Toronto trade-show capsules." },
+      { q: "What is the MOQ?", a: "flexible MOQ per design per colourway; split colourways at 25 pieces each available for Toronto trade-show capsules." },
     ],
   }),
   buildLocationPage({
@@ -299,8 +299,8 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     ],
     faqs: [
       { q: "Are your Lederhosen authentic to Munich Tracht traditions?", a: "Yes. Our pattern library is built from 10+ years of working with Bavarian Tracht historians and Munich wholesalers — kurze, kniebund and lange cuts in Miesbacher, Werdenfelser, Chiemgauer regional styles, with authentic embroidery patterns and antler-button hardware." },
-      { q: "What leather grades are used?", a: "Suede deer (premium), suede goat (mid-tier) and suede cowhide (entry-level) — all from LWG-rated tanneries, REACH chromium-VI compliant." },
-      { q: "What is the MOQ for Munich Lederhosen programs?", a: "50 pieces per design per colourway. Sample sets (kurze + kniebund + child) can ship as 6-piece sample packs by air to Munich within 21 days." },
+      { q: "What leather grades are used?", a: "Suede deer (premium), suede goat (mid-tier) and suede cowhide (entry-level) — all from vetted tanneries, regulatory-documentation-as-required chromium-VI compliant." },
+      { q: "What is the MOQ for Munich Lederhosen programs?", a: "flexible MOQ per design per colourway. Sample sets (kurze + kniebund + child) can ship as 6-piece sample packs by air to Munich within 21 days." },
       { q: "Can you produce in time for Oktoberfest?", a: "Yes — Oktoberfest production windows open January–April for September delivery. Place orders by April for full sea freight; June for air freight." },
       { q: "Do you provide German-language hangtags?", a: "Yes. German Tracht-style hangtags, woven labels, care labels (ISO 3758) and packaging are all produced in-house at no setup cost." },
     ],
@@ -323,8 +323,8 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     ],
     faqs: [
       { q: "Do you produce traditional Austrian Dirndl cuts?", a: "Yes. Salzkammergut, Tyrolean, Vorarlberg, Steirisch and Wiener traditional cuts are all in our pattern library, with regional embroidery accuracy." },
-      { q: "What fabrics are available?", a: "Cotton, linen, cotton-linen blend, jacquard, silk-cotton and pure silk for premium Dirndls. All OEKO-TEX Standard 100 certified." },
-      { q: "What is the MOQ for Vienna Dirndl programs?", a: "50 pieces per design per colour-way. Mixed-size packs (XS–XXL) at 8–10 pieces per size are standard." },
+      { q: "What fabrics are available?", a: "Cotton, linen, cotton-linen blend, jacquard, silk-cotton and pure silk for premium Dirndls. All material spec confirmed per program." },
+      { q: "What is the MOQ for Vienna Dirndl programs?", a: "flexible MOQ per design per colour-way. Mixed-size packs (XS–XXL) at 8–10 pieces per size are standard." },
       { q: "Can you ship in time for Salzburger Festspiele?", a: "Yes — production windows for Austrian festival season open February–May for July delivery. Place orders 4–5 months ahead of festival dates." },
       { q: "Do you provide German-language hangtags and care labels?", a: "Yes — all German-language documentation, ISO 3758 care symbols and Austrian retail-ready packaging produced in-house." },
     ],
@@ -346,9 +346,9 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { title: "Custom heraldic embroidery", body: "Family crests, Austrian state coats of arms and Salzburger regional symbols embroidered to spec." },
     ],
     faqs: [
-      { q: "What boiled wool grades do you offer?", a: "300, 400 and 550 GSM boiled wool (Walkstoff), sourced from Austrian and Pakistani mills, all OEKO-TEX Standard 100 certified." },
+      { q: "What boiled wool grades do you offer?", a: "300, 400 and 550 GSM boiled wool (Walkstoff), sourced from Austrian and Pakistani mills, all material spec confirmed per program." },
       { q: "Can you source authentic Tyrolean loden?", a: "Yes — Austrian Tyrolean loden is sourced direct from Austrian mills on buyer request, at premium pricing with longer lead times." },
-      { q: "What is the MOQ for Salzburger Tracht jackets?", a: "50 pieces per design per colourway; mixed-size packs (S–XXL) at 8–10 pieces per size standard." },
+      { q: "What is the MOQ for Salzburger Tracht jackets?", a: "flexible MOQ per design per colourway; mixed-size packs (S–XXL) at 8–10 pieces per size standard." },
       { q: "Are antler horn buttons authentic?", a: "Yes — genuine antler buttons sourced from European antler suppliers; resin antler alternatives available for vegan and budget programs." },
       { q: "Do you produce children's Tracht?", a: "Yes — child sizes 86 cm to 176 cm in matching adult patterns, for family Tracht programs." },
     ],
@@ -373,7 +373,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { q: "Do you ship to Switzerland?", a: "Yes — Sialkot → Hamburg sea freight, then road to Zurich. Total transit 25–32 days FOB; full DDP to Zurich is 50–70 days." },
       { q: "Can you handle Swiss customs documentation?", a: "Yes. We issue commercial invoice, packing list and Pakistan Form A formatted for Swiss customs brokers; we work with established Swiss broker partners on request." },
       { q: "Do you provide Swiss multilingual labels?", a: "Yes — German, French and Italian language hangtags and care labels for the Swiss multilingual retail market." },
-      { q: "What is the MOQ for Swiss Oktoberfest programs?", a: "50 pieces per design per colourway for individual items; 30 sets per design for coordinated outfit packs." },
+      { q: "What is the MOQ for Swiss Oktoberfest programs?", a: "flexible MOQ per design per colourway for individual items; 30 sets per design for coordinated outfit packs." },
       { q: "When should I place orders for Zurich Oktoberfest?", a: "Order by April for sea freight delivery by August. Air freight orders can be placed up to July for August delivery." },
     ],
   }),
@@ -396,7 +396,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Do you produce Schwäbisch regional Trachten patterns?", a: "Yes — Schwäbisch heritage colour palettes, regional embroidery patterns and Cannstatter Volksfest-specific designs are all in our pattern library." },
       { q: "Can you deliver in time for Cannstatter Volksfest?", a: "Yes. Order by May for sea freight August delivery; air freight orders can be placed up to August for late-August delivery." },
-      { q: "What is the MOQ?", a: "50 pieces per design per colourway; mixed-size packs at 8–10 pieces per size standard for Stuttgart wholesalers." },
+      { q: "What is the MOQ?", a: "flexible MOQ per design per colourway; mixed-size packs at 8–10 pieces per size standard for Stuttgart wholesalers." },
       { q: "Do you provide German hangtags?", a: "Yes — all German-language hangtags, care labels, packaging and retail tagging produced in-house at no setup cost." },
       { q: "Do you ship DDP to Stuttgart?", a: "Yes — DDP delivery to Stuttgart warehouses, duty-paid, VAT-paid, last-mile included via nominated forwarders." },
     ],
@@ -420,9 +420,9 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { title: "Zip-up & pullover hoodies", body: "Matching zip-up and pullover hoodie tops for tracksuit programs — full size range XS–4XL." },
     ],
     faqs: [
-      { q: "What fabric weights are available?", a: "French terry 250–500 GSM, brushed fleece 280–550 GSM, tech polyester 140–220 GSM — all OEKO-TEX Standard 100 certified." },
+      { q: "What fabric weights are available?", a: "French terry 250–500 GSM, brushed fleece 280–550 GSM, tech polyester 140–220 GSM — all material spec confirmed per program." },
       { q: "Do you produce Manchester football club retail?", a: "We produce licensed-team-style retail tracksuits for distributors with appropriate licensing in place; we do not produce unlicensed counterfeit team kit." },
-      { q: "What is the MOQ for Manchester tracksuit programs?", a: "50 pieces per design per colourway; mixed-size packs (XS–4XL) at 6–10 pieces per size standard for UK wholesalers." },
+      { q: "What is the MOQ for Manchester tracksuit programs?", a: "flexible MOQ per design per colourway; mixed-size packs (XS–4XL) at 6–10 pieces per size standard for UK wholesalers." },
       { q: "Do you offer sublimated team tracksuits?", a: "Yes — full sublimation print on 100% polyester with player names, numbers, sponsor logos and pantone-matched team colours." },
       { q: "What is the lead time to Manchester?", a: "35–50 days production; 22–28 days sea freight Sialkot → Liverpool / Felixstowe; full DDP to Manchester 45–70 days." },
     ],
@@ -446,7 +446,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Can you turn around urgent LA team-wear orders?", a: "Yes — priority sample lines deliver sample in 10–14 days; bulk production 35 days; air freight Sialkot → LA in 5 days. Total urgent program 50–55 days." },
       { q: "Do you produce reversible basketball jerseys?", a: "Yes — full reversible construction with sublimated graphics on both sides, mesh body or interlock as specified." },
-      { q: "What is the MOQ for LA team jersey programs?", a: "50 pieces per design per colourway; mixed-size packs (YS–3XL) at 6–10 pieces per size standard for LA team-wear distributors." },
+      { q: "What is the MOQ for LA team jersey programs?", a: "flexible MOQ per design per colourway; mixed-size packs (YS–3XL) at 6–10 pieces per size standard for LA team-wear distributors." },
       { q: "Do you ship DDP to Los Angeles?", a: "Yes — DDP delivery to LA warehouses via Los Angeles / Long Beach port, US CBP customs clearance, duty-paid, last-mile included." },
       { q: "Do you provide US-compliant labelling?", a: "Yes — FTC-compliant fibre content, country-of-origin and care symbol labels per US 16 CFR Part 423." },
     ],
@@ -458,7 +458,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     shippingLane: "Sialkot → Algeciras / Valencia → Madrid", transitDays: "20–26 days FOB · 5–7 days air",
     duties: "Pakistan GSP+ reduced or zero EU duty on most legging HS lines with Form A; Spanish VAT 21% applies on import.",
     uniqueIntro: "Madrid is a fast-growing Spanish activewear market — local Madrid athleisure brands, DTC yoga and pilates labels, Spanish gym chain retail and Madrid fashion-tech startups all source wholesale leggings in volume. Irha Apparels supplies Madrid activewear brands with high-compression nylon-spandex, brushed buttery-soft polyester-spandex and recycled-polyester leggings — produced in Sialkot to European GSR certification standards.",
-    uniqueAngle: "Madrid buyers prioritise European compliance — GRS recycled-content certification, OEKO-TEX dyes, REACH-compliant nylon and spandex, and EU-language labels (Spanish, English) on every garment. Our Madrid program ships GRS-certified recycled polyester leggings with full chain-of-custody documentation.",
+    uniqueAngle: "Madrid buyers prioritise European compliance — GRS recycled-content certification, certified dyes, regulatory-aligned nylon and spandex, and EU-language labels (Spanish, English) on every garment. Our Madrid program ships GRS-certified recycled polyester leggings with full chain-of-custody documentation.",
     capabilities: [
       { title: "High-compression leggings", body: "240–280 GSM nylon-spandex 78/22 with high-rise waistband and squat-tested construction." },
       { title: "Buttery-soft brushed polyester", body: "Brushed polyester-spandex 'butter' leggings in 230–260 GSM for Madrid yoga and pilates brands." },
@@ -469,7 +469,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     ],
     faqs: [
       { q: "Are your leggings GRS-certified?", a: "Yes — recycled polyester leggings are produced with GRS-certified yarn and chain-of-custody documentation issued per shipment." },
-      { q: "What MOQ applies?", a: "50 pieces per design per colourway. Sample programs at 5–10 pieces per size available before bulk." },
+      { q: "What MOQ applies?", a: "flexible MOQ per design per colourway. Sample programs at 5–10 pieces per size available before bulk." },
       { q: "Do you ship DDP to Madrid?", a: "Yes — DDP to Madrid warehouses via Algeciras or Valencia ports, EU customs clearance, duty-paid, last-mile included." },
       { q: "Do you provide Spanish-language labels?", a: "Yes — Spanish-language care labels, fibre composition and hangtags per EU Regulation 1007/2011 included at no extra cost." },
       { q: "Can you produce seamless leggings?", a: "Yes — Santoni seamless knit leggings with body-mapped compression are produced on partner seamless-knit machines with Irha QC oversight." },
@@ -494,7 +494,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "How fast can you ship gym wear to Dubai?", a: "Sea freight Sialkot → Jebel Ali is 5–8 days. Air freight is 2–3 days. Full DDP from sample approval to Dubai is 35–45 days." },
       { q: "Do you produce modest activewear?", a: "Yes — full-length leggings, long-sleeve tops, modest-cut tank tops and hijab-friendly necklines are standard in our Dubai program." },
-      { q: "What MOQ applies for Dubai gym wear?", a: "50 pieces per design per colourway. Mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
+      { q: "What MOQ applies for Dubai gym wear?", a: "flexible MOQ per design per colourway. Mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
       { q: "Do you support Jebel Ali Free Zone re-export?", a: "Yes — export documentation suitable for Jebel Ali Free Zone bonded storage and onward re-export to GCC, Africa and CIS markets." },
       { q: "Do you invoice in AED?", a: "Yes — AED, USD, EUR or GBP invoicing on request; TT, Wise and LC payment terms standard with Dubai buyers." },
     ],
@@ -506,7 +506,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     shippingLane: "Sialkot → Rotterdam → Amsterdam", transitDays: "21–26 days FOB · 5–7 days air",
     duties: "Pakistan GSP+ reduced or zero EU duty on most sportswear HS lines with Form A; Dutch VAT 21% applies on import.",
     uniqueIntro: "Amsterdam is a key Dutch sportswear hub — cycling apparel brands (the Netherlands is the world's cycling capital), Amsterdam Marathon retail, Eredivisie football club merchandise, Amsterdam fitness studio retail and Dutch DTC athleisure labels. Irha Apparels supplies Amsterdam sportswear brands with cycling jerseys and bib shorts, team football kits, running apparel and full athleisure ranges — produced in Sialkot with European GSR sustainability documentation.",
-    uniqueAngle: "Dutch buyers expect strong sustainability credentials — GRS recycled polyester, BCI cotton, OEKO-TEX dyes and chain-of-custody documentation. Our Amsterdam program defaults to GRS recycled polyester for all sportswear unless the buyer specifies virgin material.",
+    uniqueAngle: "Dutch buyers expect strong sustainability credentials — GRS recycled polyester, sustainable cotton programs, certified dyes and chain-of-custody documentation. Our Amsterdam program defaults to GRS recycled polyester for all sportswear unless the buyer specifies virgin material.",
     capabilities: [
       { title: "Cycling jerseys & bib shorts", body: "Sublimated cycling jerseys in Italian-style cuts with three rear pockets and silicone hem grip; matching bib shorts with chamois pad." },
       { title: "Football team kits", body: "Sublimated Eredivisie-style team kits with player names, numbers and sponsor logos." },
@@ -518,7 +518,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Are your sportswear programs GRS-certified?", a: "Yes — GRS recycled polyester with full chain-of-custody documentation issued per shipment, suitable for Dutch sustainability-positioned brands." },
       { q: "Do you produce cycling jerseys?", a: "Yes — Italian-cut cycling jerseys with three rear pockets, silicone hem grip, full sublimation, and matching bib shorts with Italian chamois pad." },
-      { q: "What MOQ applies for Amsterdam programs?", a: "50 pieces per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
+      { q: "What MOQ applies for Amsterdam programs?", a: "flexible MOQ per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
       { q: "Do you ship DDP to Amsterdam?", a: "Yes — DDP delivery to Amsterdam warehouses via Rotterdam port, EU customs clearance, duty-paid, last-mile included." },
       { q: "Do you provide Dutch-language labels?", a: "Yes — Dutch-language care labels and hangtags per EU Regulation 1007/2011 produced in-house at no setup cost." },
     ],
@@ -542,7 +542,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Do you produce inclusive bra sizing?", a: "Yes — AA to G cup with custom grading available. Our pattern library covers full inclusive sizing as standard." },
       { q: "What construction methods do you offer?", a: "Cut-and-sew (cup-encapsulated), compression-fit, seamless knit (Santoni), and laser-cut bonded constructions all available." },
-      { q: "What is the MOQ for Melbourne sports bra programs?", a: "50 pieces per design per size-curve; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
+      { q: "What is the MOQ for Melbourne sports bra programs?", a: "flexible MOQ per design per size-curve; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
       { q: "Do you ship to Melbourne by sea?", a: "Yes — Sialkot → Port of Melbourne direct, 24–30 days. LCL consolidated shipments available for orders under 1 CBM." },
       { q: "Can you produce GRS recycled sports bras?", a: "Yes — GRS-certified recycled nylon-spandex sports bras with chain-of-custody documentation for sustainability-positioned Melbourne brands." },
     ],
@@ -554,7 +554,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     shippingLane: "Sialkot → Le Havre / Marseille → Paris", transitDays: "22–28 days FOB · 5–7 days air",
     duties: "Pakistan GSP+ reduced or zero EU duty on most team-wear HS lines with Form A; French VAT 20% applies on import.",
     uniqueIntro: "Paris is the French team-wear capital — Ligue 1 football clubs, French national federations, Top 14 rugby, Roland Garros tennis retail and Paris youth sport leagues all source bulk team wear. Irha Apparels supplies Paris team-wear distributors, French sport federations and Paris-based athletic apparel brands with full team kit programs — sublimated football jerseys, rugby kits, tennis apparel and youth-league bulk team wear.",
-    uniqueAngle: "Paris buyers expect French-language documentation, REACH compliance and EUR invoicing as standard. Our Paris program defaults to French-language hangtags, EUR invoicing and full EU REACH chemical compliance documentation per shipment.",
+    uniqueAngle: "Paris buyers expect French-language documentation, regulatory documentation as required and EUR invoicing as standard. Our Paris program defaults to French-language hangtags, EUR invoicing and full EU regulatory-documentation-as-required chemical compliance documentation per shipment.",
     capabilities: [
       { title: "Football team kits", body: "Sublimated Ligue 1-style team kits with player names, numbers and sponsor logos in 140 GSM polyester interlock or pin-mesh." },
       { title: "Rugby team wear", body: "Reinforced rugby jerseys with bonded seams, woven crests and Top 14-grade construction." },
@@ -564,8 +564,8 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { title: "Federation programs", body: "Custom team-wear programs for French sport federations with full national-colours sublimation." },
     ],
     faqs: [
-      { q: "Do you produce REACH-compliant team wear?", a: "Yes — all dyes, prints and finishes are REACH-compliant with test reports issued per shipment." },
-      { q: "What MOQ applies for Paris team wear?", a: "50 pieces per design per colourway; bulk youth-league programs at 200+ pieces qualify for tiered pricing." },
+      { q: "Do you produce regulatory-aligned team wear?", a: "Yes — all dyes, prints and finishes are regulatory-aligned with test reports issued per shipment." },
+      { q: "What MOQ applies for Paris team wear?", a: "flexible MOQ per design per colourway; bulk youth-league programs at 200+ pieces qualify for tiered pricing." },
       { q: "Do you provide French-language labels?", a: "Yes — French-language care labels and hangtags per EU Regulation 1007/2011 produced in-house." },
       { q: "Do you ship DDP to Paris?", a: "Yes — DDP delivery to Paris warehouses via Le Havre or Marseille ports, EU customs, duty-paid, last-mile included." },
       { q: "Can you turn around urgent French league orders?", a: "Yes — priority sample lines deliver in 10–14 days; bulk in 35 days; air freight Sialkot → Paris in 5–7 days." },
@@ -592,7 +592,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Can you produce 500 GSM heavyweight hoodies?", a: "Yes — 500 GSM ring-spun cotton French terry is in stock at our Sialkot mill partner; samples available in 14 days." },
       { q: "Do you support extended Tokyo sampling cycles?", a: "Yes — we expect and budget for 2–4 sample iterations on Tokyo programs, with photo and video documentation of each version." },
-      { q: "What MOQ applies for Tokyo hoodie programs?", a: "50 pieces per design per colourway; capsule programs at 25 pieces per colourway with split colourways accepted." },
+      { q: "What MOQ applies for Tokyo hoodie programs?", a: "flexible MOQ per design per colourway; capsule programs at 25 pieces per colourway with split colourways accepted." },
       { q: "Can you produce garment-dyed hoodies?", a: "Yes — full garment-dye, pigment-dye, acid wash and stone wash finishing all available in-house." },
       { q: "Do you ship to Tokyo?", a: "Yes — Sialkot → Yokohama 20–26 days FOB; air freight 5–7 days for samples and urgent restocks." },
     ],
@@ -616,7 +616,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Do you produce ripstop cargo pants?", a: "Yes — 320–400 GSM cotton ripstop with reinforced knee panels is our standard heavyweight cargo construction." },
       { q: "What pocket configurations do you offer?", a: "Our pattern library includes 40+ pocket configurations — angled thigh cargo, magnetic hidden, double-zip side, expandable bellows, hammer loops. Custom configurations engineered free of charge." },
-      { q: "What MOQ applies for Berlin cargo programs?", a: "50 pieces per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
+      { q: "What MOQ applies for Berlin cargo programs?", a: "flexible MOQ per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
       { q: "Do you provide German-language labels?", a: "Yes — German care labels and hangtags per EU Regulation 1007/2011 produced in-house." },
       { q: "Can you produce parachute cargo pants?", a: "Yes — lightweight nylon parachute-fabric cargo pants in technical streetwear styles, with bonded seams option." },
     ],
@@ -635,14 +635,14 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { title: "Boxy & longline cuts", body: "Boxy short-body, longline elongated and cropped boxy women's cuts for London streetwear programs." },
       { title: "Puff print & embroidery", body: "Puff print, high-density screen print, chenille embroidery and applique patches." },
       { title: "Vintage-style mock necks", body: "Mock-neck oversized tees in heavyweight ring-spun cotton with vintage construction details." },
-      { title: "Sustainable BCI/GRS programs", body: "BCI cotton and GRS recycled cotton oversized tees with full chain-of-custody documentation." },
+      { title: "Sustainable BCI/GRS programs", body: "sustainable cotton programs and GRS recycled cotton oversized tees with full chain-of-custody documentation." },
     ],
     faqs: [
       { q: "What is your standard London oversized tee fit?", a: "Our London block uses 4–6 cm dropped shoulder, 50–55 cm body width on size M, and dropped armhole — the London streetwear silhouette." },
       { q: "Do you produce acid-wash and garment-dyed tees?", a: "Yes — full acid wash, pigment dye, garment dye, stone wash and tie-dye finishing in-house." },
-      { q: "What MOQ applies for London tee programs?", a: "50 pieces per design per colourway; mixed-size packs (XS–4XL) at 6–10 pieces per size standard." },
+      { q: "What MOQ applies for London tee programs?", a: "flexible MOQ per design per colourway; mixed-size packs (XS–4XL) at 6–10 pieces per size standard." },
       { q: "Do you ship DDP to London?", a: "Yes — DDP delivery to London warehouses, UK customs cleared, duty-paid, VAT-paid, last-mile included." },
-      { q: "Can you produce BCI cotton tees?", a: "Yes — BCI cotton and GRS recycled cotton with full chain-of-custody documentation per shipment." },
+      { q: "Can you produce sustainable cotton programs tees?", a: "Yes — sustainable cotton programs and GRS recycled cotton with full chain-of-custody documentation per shipment." },
     ],
   }),
   buildLocationPage({
@@ -663,7 +663,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     ],
     faqs: [
       { q: "Do you support extended NYC sampling cycles?", a: "Yes — 3–5 sample iterations standard for NYC programs, with full wash-cycle testing before bulk approval." },
-      { q: "What MOQ applies for NYC streetwear programs?", a: "50 pieces per design per colourway; capsule programs at 25 pieces per colourway with split colourways accepted." },
+      { q: "What MOQ applies for NYC streetwear programs?", a: "flexible MOQ per design per colourway; capsule programs at 25 pieces per colourway with split colourways accepted." },
       { q: "Do you ship DDP to New York?", a: "Yes — DDP delivery to NYC area warehouses (Newark, Edison, Secaucus, Brooklyn 3PLs), US customs cleared, duty-paid, last-mile included." },
       { q: "Can you produce varsity jackets?", a: "Yes — Melton wool body, leather sleeves, chenille letters, rib-knit collar/cuff/hem — full varsity construction." },
       { q: "Do you provide US-compliant labels?", a: "Yes — FTC-compliant fibre content, country-of-origin and care labels per US 16 CFR Part 423." },
@@ -688,7 +688,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Do you produce premium woven labels?", a: "Yes — woven main labels with embroidered detail, satin neck labels, custom hangtags. We work with multiple label suppliers for the highest quality options." },
       { q: "Do you provide French-language documentation?", a: "Yes — French-language care labels, hangtags, packaging copy and invoicing in EUR." },
-      { q: "What MOQ applies for Paris private-label programs?", a: "50 pieces per design per colourway; capsule programs at 25 pieces per colourway accepted." },
+      { q: "What MOQ applies for Paris private-label programs?", a: "flexible MOQ per design per colourway; capsule programs at 25 pieces per colourway accepted." },
       { q: "Do you ship DDP to Paris?", a: "Yes — DDP delivery to Paris warehouses via Le Havre port, EU customs, duty-paid, last-mile included." },
       { q: "Can you produce custom branded hardware?", a: "Yes — engraved zipper pulls, snaps, rivets and aglets with brand logo via partner hardware suppliers." },
     ],
@@ -712,7 +712,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Do you produce heavyweight winter hoodies for Toronto?", a: "Yes — 400–550 GSM brushed fleece with optional sherpa-lined hood and thermal-lined pouch as standard Toronto winter constructions." },
       { q: "Can you handle bulk music merchandise programs?", a: "Yes — full sublimation, all-over print, screen print and embroidery for music industry tour merchandise at high volume." },
-      { q: "What MOQ applies for Toronto hoodie programs?", a: "50 pieces per design per colourway; music merchandise bulk runs at 200+ pieces qualify for tiered pricing." },
+      { q: "What MOQ applies for Toronto hoodie programs?", a: "flexible MOQ per design per colourway; music merchandise bulk runs at 200+ pieces qualify for tiered pricing." },
       { q: "Do you ship to Toronto?", a: "Yes — Sialkot → Toronto via Montreal 32–38 days FOB; air freight 6–8 days for samples and urgent." },
       { q: "Do you provide CBSA-ready documentation?", a: "Yes — commercial invoice, packing list, Form A, HS-coded line items formatted for Canadian customs broker submission." },
     ],
@@ -725,10 +725,10 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     city: "Copenhagen", country: "Denmark", region: "Europe",
     shippingLane: "Sialkot → Aarhus / Copenhagen", transitDays: "23–28 days FOB · 6–8 days air",
     duties: "Pakistan GSP+ reduced or zero EU duty on most loungewear HS lines with Form A; Danish VAT 25% on import.",
-    uniqueIntro: "Copenhagen is Scandinavia's loungewear capital — Danish DTC loungewear brands, Copenhagen Fashion Week emerging designers and Scandinavian minimalist boutiques drive bulk demand for premium loungewear sets. Irha Apparels supplies Copenhagen loungewear brands with organic cotton, modal-cotton blend and bamboo-blend loungewear sets — engineered to Scandinavian minimalist aesthetics with GOTS certification and OEKO-TEX Standard 100 documentation.",
-    uniqueAngle: "Copenhagen buyers expect minimalist aesthetics, organic certification (GOTS), OEKO-TEX dye certification and Scandinavian-cut blocks — softer shoulder, longer body, drop-shoulder with subtle relaxed fit. Our Copenhagen program defaults to GOTS-certified organic cotton with Scandinavian minimalist pattern blocks.",
+    uniqueIntro: "Copenhagen is Scandinavia's loungewear capital — Danish DTC loungewear brands, Copenhagen Fashion Week emerging designers and Scandinavian minimalist boutiques drive bulk demand for premium loungewear sets. Irha Apparels supplies Copenhagen loungewear brands with organic cotton, modal-cotton blend and bamboo-blend loungewear sets — engineered to Scandinavian minimalist aesthetics with organic-on-request certification and certified fabrics on request documentation.",
+    uniqueAngle: "Copenhagen buyers expect minimalist aesthetics, organic certification (organic-on-request), certified dye certification and Scandinavian-cut blocks — softer shoulder, longer body, drop-shoulder with subtle relaxed fit. Our Copenhagen program defaults to organic-on-request-certified organic cotton with Scandinavian minimalist pattern blocks.",
     capabilities: [
-      { title: "Organic cotton loungewear", body: "GOTS-certified organic cotton loungewear sets — long-sleeve tops, joggers, shorts, tees, robes." },
+      { title: "Organic cotton loungewear", body: "organic-on-request-certified organic cotton loungewear sets — long-sleeve tops, joggers, shorts, tees, robes." },
       { title: "Modal-cotton blend", body: "Buttery-soft modal-cotton blend loungewear with subtle drape and superior hand-feel." },
       { title: "Bamboo-blend loungewear", body: "Bamboo-cotton blend loungewear with natural antibacterial and moisture-wicking properties." },
       { title: "Scandinavian minimalist cuts", body: "Soft drop-shoulder, relaxed-fit loungewear blocks engineered to Scandinavian aesthetic." },
@@ -736,9 +736,9 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { title: "Robe & kaftan styles", body: "Long robes, short kaftans and kimono-style loungewear in organic cotton and modal blends." },
     ],
     faqs: [
-      { q: "Are your loungewear programs GOTS-certified?", a: "Yes — GOTS-certified organic cotton with full chain-of-custody documentation issued per shipment." },
+      { q: "Are your loungewear programs organic-on-request-certified?", a: "Yes — organic-on-request-certified organic cotton with full chain-of-custody documentation issued per shipment." },
       { q: "Do you produce modal-cotton blends?", a: "Yes — buttery-soft modal-cotton blends with various weights and finishes for premium loungewear." },
-      { q: "What MOQ applies for Copenhagen loungewear?", a: "50 pieces per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
+      { q: "What MOQ applies for Copenhagen loungewear?", a: "flexible MOQ per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
       { q: "Do you provide Danish-language labels?", a: "Yes — Danish-language care labels and hangtags per EU Regulation 1007/2011 produced in-house." },
       { q: "Do you ship DDP to Copenhagen?", a: "Yes — DDP delivery to Copenhagen warehouses, EU customs cleared, duty-paid, last-mile included." },
     ],
@@ -761,8 +761,8 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     ],
     faqs: [
       { q: "Do you produce hospitality-grade robes?", a: "Yes — 400–500 GSM cotton terry robes engineered for industrial wash-durability with hotel monogram embroidery." },
-      { q: "What luxury fabrics are available?", a: "Cotton terry, waffle weave, satin, silk-cotton blend, modal-cotton blend, bamboo-cotton blend — all OEKO-TEX Standard 100 certified." },
-      { q: "What MOQ applies for Milan robe programs?", a: "50 pieces per design per colourway for retail; hospitality programs typically start at 200+ pieces with tiered pricing." },
+      { q: "What luxury fabrics are available?", a: "Cotton terry, waffle weave, satin, silk-cotton blend, modal-cotton blend, bamboo-cotton blend — all material spec confirmed per program." },
+      { q: "What MOQ applies for Milan robe programs?", a: "flexible MOQ per design per colourway for retail; hospitality programs typically start at 200+ pieces with tiered pricing." },
       { q: "Do you ship DDP to Milan?", a: "Yes — DDP delivery to Milan warehouses via Genoa port, EU customs cleared, duty-paid, last-mile included." },
       { q: "Do you provide Italian-language labels?", a: "Yes — Italian-language care labels and hangtags per EU Regulation 1007/2011 produced in-house." },
     ],
@@ -773,10 +773,10 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     city: "Stockholm", country: "Sweden", region: "Europe",
     shippingLane: "Sialkot → Gothenburg → Stockholm", transitDays: "24–30 days FOB · 6–8 days air",
     duties: "Pakistan GSP+ reduced or zero EU duty on apparel HS lines with Form A; Swedish VAT 25% on import.",
-    uniqueIntro: "Stockholm leisurewear blends Scandinavian minimalism with sustainability-led production — Swedish DTC casualwear brands, Stockholm boutiques and Scandinavian sustainability-positioned brands drive demand for premium casual sets in organic cotton, recycled materials and natural-fibre blends. Irha Apparels supplies Stockholm casualwear brands with GOTS-certified organic cotton casual sets engineered to Swedish sustainability and minimalist design standards.",
+    uniqueIntro: "Stockholm leisurewear blends Scandinavian minimalism with sustainability-led production — Swedish DTC casualwear brands, Stockholm boutiques and Scandinavian sustainability-positioned brands drive demand for premium casual sets in organic cotton, recycled materials and natural-fibre blends. Irha Apparels supplies Stockholm casualwear brands with organic-on-request-certified organic cotton casual sets engineered to Swedish sustainability and minimalist design standards.",
     uniqueAngle: "Swedish buyers test full supply chain transparency — tier 1, 2 and 3 supplier disclosure, water footprint, carbon footprint per garment and recycled-content traceability. Our Stockholm program provides full supply chain disclosure documentation per program.",
     capabilities: [
-      { title: "Organic cotton casual sets", body: "GOTS-certified organic cotton matching sets — long-sleeve tops, sweat shorts, joggers, tees, hoodies." },
+      { title: "Organic cotton casual sets", body: "organic-on-request-certified organic cotton matching sets — long-sleeve tops, sweat shorts, joggers, tees, hoodies." },
       { title: "GRS recycled programs", body: "GRS-certified recycled cotton and recycled polyester casual sets with chain-of-custody." },
       { title: "Scandinavian minimalist cuts", body: "Soft drop-shoulder, relaxed-fit casual blocks engineered to Scandinavian aesthetic." },
       { title: "Matching coordinated colours", body: "Top + bottom matching sets in neutral Scandinavian palettes (oat, sand, sage, ash, charcoal)." },
@@ -785,8 +785,8 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     ],
     faqs: [
       { q: "Can you provide full supply chain transparency?", a: "Yes — tier 1, 2 and 3 supplier disclosure with water and carbon footprint per garment included for Stockholm sustainability programs." },
-      { q: "Are your casual sets GOTS-certified?", a: "Yes — GOTS-certified organic cotton with full chain-of-custody documentation per shipment." },
-      { q: "What MOQ applies for Stockholm programs?", a: "50 pieces per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size." },
+      { q: "Are your casual sets organic-on-request-certified?", a: "Yes — organic-on-request-certified organic cotton with full chain-of-custody documentation per shipment." },
+      { q: "What MOQ applies for Stockholm programs?", a: "flexible MOQ per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size." },
       { q: "Do you ship DDP to Stockholm?", a: "Yes — DDP delivery to Stockholm warehouses via Gothenburg port, EU customs cleared, duty-paid, last-mile included." },
       { q: "Do you provide Swedish-language labels?", a: "Yes — Swedish-language care labels and hangtags per EU Regulation 1007/2011." },
     ],
@@ -810,7 +810,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Do you provide premium packaging by default?", a: "Yes — branded dust bags, gift boxes, ribbon-wrap and tissue paper engineering included as default for Paris luxury loungewear programs." },
       { q: "Do you produce silk-cotton blends?", a: "Yes — premium silk-cotton blend loungewear with superior drape for high-end Paris boutique programs." },
-      { q: "What MOQ applies for Paris loungewear?", a: "50 pieces per design per colourway; luxury capsule programs at 25 pieces per colourway accepted." },
+      { q: "What MOQ applies for Paris loungewear?", a: "flexible MOQ per design per colourway; luxury capsule programs at 25 pieces per colourway accepted." },
       { q: "Do you provide French-language labels?", a: "Yes — French-language care labels, hangtags and packaging copy per EU Regulation 1007/2011." },
       { q: "Do you ship DDP to Paris?", a: "Yes — DDP delivery to Paris warehouses via Le Havre port, EU customs cleared, duty-paid, last-mile included." },
     ],
@@ -834,7 +834,7 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
     faqs: [
       { q: "Do you produce hospitality-grade robes?", a: "Yes — 500+ GSM cotton terry engineered for 200+ industrial wash cycles with embroidered hotel branding." },
       { q: "How fast can you ship robes to Dubai?", a: "Sea freight Sialkot → Jebel Ali 5–8 days; air freight 2–3 days. Total from sample approval to Dubai warehouse 35–45 days." },
-      { q: "What MOQ applies for Dubai hospitality programs?", a: "Hospitality programs typically start at 200+ pieces with tiered pricing; retail/DTC programs at 50 pieces per design per colourway." },
+      { q: "What MOQ applies for Dubai hospitality programs?", a: "Hospitality programs typically start at 200+ pieces with tiered pricing; retail/DTC programs at flexible MOQ per design per colourway." },
       { q: "Do you support Jebel Ali Free Zone re-export?", a: "Yes — export documentation suitable for Jebel Ali Free Zone bonded storage and onward re-export to GCC." },
       { q: "Do you invoice in AED?", a: "Yes — AED, USD, EUR or GBP; TT, Wise and LC payment terms standard." },
     ],
@@ -853,14 +853,14 @@ export const LOCATION_PAGES: SeoLandingPage[] = [
       { title: "Modal-cotton blends", body: "Buttery-soft modal-cotton blend sets in 180–220 GSM with superior drape." },
       { title: "Resort wear & kaftans", body: "Resort-style kaftans, tunics and beach cover-ups for Sydney resort and DTC brands." },
       { title: "E-commerce packaging", body: "Recycled poly mailers, gift-receipt inserts, branded tissue paper for Sydney DTC e-commerce programs." },
-      { title: "Sustainable certifications", body: "GOTS organic cotton, GRS recycled programs with chain-of-custody for Sydney sustainability-positioned brands." },
+      { title: "Sustainable certifications", body: "organic cotton, GRS recycled programs with chain-of-custody for Sydney sustainability-positioned brands." },
     ],
     faqs: [
       { q: "Do you produce e-commerce packaging?", a: "Yes — recycled poly mailers, gift-receipt inserts, branded tissue paper engineered for Sydney DTC e-commerce programs." },
-      { q: "What lightweight fabrics do you offer?", a: "Linen-cotton 140–180 GSM, lightweight cotton 140–180 GSM, modal-cotton 180–220 GSM — all OEKO-TEX Standard 100 certified." },
-      { q: "What MOQ applies for Sydney casual sets?", a: "50 pieces per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
+      { q: "What lightweight fabrics do you offer?", a: "Linen-cotton 140–180 GSM, lightweight cotton 140–180 GSM, modal-cotton 180–220 GSM — all material spec confirmed per program." },
+      { q: "What MOQ applies for Sydney casual sets?", a: "flexible MOQ per design per colourway; mixed-size packs (XS–3XL) at 6–10 pieces per size standard." },
       { q: "Do you ship to Sydney by sea?", a: "Yes — Sialkot → Port Botany direct 24–30 days. LCL consolidated available for orders under 1 CBM." },
-      { q: "Can you produce GOTS organic sets?", a: "Yes — GOTS organic cotton with full chain-of-custody documentation per shipment." },
+      { q: "Can you produce organic sets?", a: "Yes — organic cotton with full chain-of-custody documentation per shipment." },
     ],
   }),
 ];

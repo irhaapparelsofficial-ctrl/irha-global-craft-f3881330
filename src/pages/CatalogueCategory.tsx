@@ -205,9 +205,9 @@ export default function CatalogueCategory() {
       {/* Trust strip */}
       <div className="border-b border-border/60 bg-card/30">
         <div className="container-luxe py-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px] md:text-xs uppercase tracking-[0.25em] text-foreground/65 text-center">
-          <span>MOQ from 50 pcs</span>
+          <span>Flexible MOQ</span>
           <span className="hidden md:inline">|</span>
-          <span>45-day production</span>
+          <span>program-based production timeline</span>
           <span className="hidden md:inline">|</span>
           <span>FOB Sialkot</span>
           <span>OEM • ODM • Private Label</span>

@@ -148,7 +148,7 @@ export default function Studio() {
         <title>B2B Custom Lab — Design Your Apparel | IRHA Apparels</title>
         <meta
           name="description"
-          content="Design custom Bavarian, leather, sportswear & streetwear in 4 clicks. Upload your logo, pick a color, get a realistic front + back mockup. MOQ 50. FOB Sialkot."
+          content="Design custom Bavarian, leather, sportswear & streetwear in 4 clicks. Upload your logo, pick a color, get a realistic front + back mockup. Flexible MOQ. FOB Sialkot."
         />
         <link rel="canonical" href="https://www.irhaapparels.com/studio" />
       </Helmet>
@@ -179,7 +179,7 @@ export default function Studio() {
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-6 md:py-10">
         {/* MOQ badge */}
         <div className="inline-flex items-center gap-2 border border-primary/40 bg-primary/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-primary mb-6">
-          <Sparkles className="h-3 w-3" /> MOQ 50 — Request FOB Quote
+          <Sparkles className="h-3 w-3" /> Flexible MOQ — Request FOB Quote
         </div>
 
         {/* Step rail */}
@@ -431,7 +431,7 @@ export default function Studio() {
                   <MessageCircle className="h-4 w-4" /> Send to WhatsApp
                 </a>
                 <span className="inline-flex items-center gap-2 border border-primary/40 bg-primary/10 px-3 py-3 text-[10px] uppercase tracking-[0.25em] text-primary">
-                  <Sparkles className="h-3 w-3" /> MOQ 50 — Request FOB Quote
+                  <Sparkles className="h-3 w-3" /> Flexible MOQ — Request FOB Quote
                 </span>
               </div>
             )}

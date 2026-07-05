@@ -30,7 +30,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
       "lederhosen manufacturer, trachten supplier, dirndl wholesale, Bavarian wear exporter Pakistan, Oktoberfest wholesale, suede lederhosen, alpine clothing manufacturer",
     h1: "Bavarian Wear Manufacturer — Lederhosen, Dirndl & Trachten",
     intro:
-      "Authentic European trachten produced at our Sialkot atelier for Oktoberfest retailers, alpine boutiques and trachten chains across Germany, Austria, Switzerland and the United States. Genuine deer suede, hand-embroidered florals, antique alpine hardware and made-to-measure sizing — at wholesale MOQs starting from 50 sets.",
+      "Authentic European trachten produced at our Sialkot atelier for Oktoberfest retailers, alpine boutiques and trachten chains across Germany, Austria, Switzerland and the United States. Genuine deer suede, hand-embroidered florals, antique alpine hardware and made-to-measure sizing — at wholesale MOQs starting from our flexible MOQ.",
     exportMarkets: ["Germany", "Austria", "Switzerland", "USA", "Italy"],
     ogImage: ogBavarian,
     faqs: [
@@ -55,7 +55,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     ogImage: ogSportswear,
     faqs: [
       { q: "Do you manufacture fully sublimated custom team jerseys?", a: "Yes. We run full dye-sublimation in-house on 140–180 GSM micro-mesh and interlock polyester — unlimited print colors, custom crests, numbers, names and sponsor logos at no extra setup beyond the digitizing fee." },
-      { q: "What is the MOQ for custom sportswear and tracksuits?", a: "Our MOQ is flexible sets per design. Within the 50-set MOQ you can split sizes XS–3XL freely; multi-color splits within one print are accepted from 25 sets per colorway." },
+      { q: "What is the MOQ for custom sportswear and tracksuits?", a: "Our MOQ is flexible sets per design. Within the flexible MOQ you can split sizes XS–3XL freely; multi-color splits within one print are accepted from 25 sets per colorway." },
       { q: "Which countries do you export activewear to?", a: "Active programs ship to gym wear brands and sports retailers in the USA, UK, Australia, UAE, Saudi Arabia, Germany, France and the Nordics. We offer DDP shipping to most major markets on request." },
       { q: "Do you offer eco-friendly recycled polyester fabric?", a: "Yes. We stock GRS-certified recycled polyester micro-mesh and interlock in 140–220 GSM, plus recycled nylon for compression wear. Certificates and traceability documents are provided with each shipment." },
       { q: "How long does sportswear production take?", a: "Lead time is 25–35 days from approved strike-off and PO confirmation. Express 18-day production is available for repeat customers on existing tech packs." },
