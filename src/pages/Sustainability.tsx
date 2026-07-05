@@ -5,35 +5,34 @@ import { Link } from "react-router-dom";
 import Certifications from "@/components/sections/Certifications";
 
 const PILLARS = [
-  { Icon: Leaf, t: "Sustainable Sourcing", d: "BCI cotton, GOTS organic options, LWG-certified leather and recycled polyester programs across every category." },
-  { Icon: Users, t: "Ethical Labor", d: "BSCI and SEDEX audited factory — living wages, safe conditions, zero child labor, fully documented." },
-  { Icon: Droplets, t: "Water Reduction", d: "Closed-loop water systems and low-impact dyes reduce our wash-floor water use by 40% vs. industry average." },
-  { Icon: Recycle, t: "Recycled Packaging", d: "FSC-certified cartons, recycled poly bags and biodegradable hangtags as a default packaging option." },
-  { Icon: ShieldCheck, t: "Chemical Compliance", d: "Full REACH compliance, OEKO-TEX 100 fabrics, ZDHC chemical management across the wet-process floor." },
-  { Icon: Heart, t: "Community Investment", d: "Education stipends, healthcare access and skills training for our 350+ artisans and their families in Sialkot." },
+  { Icon: Leaf, t: "Responsible Sourcing", d: "Organic and recycled fabric programs available on request per program — sourced from mills reviewed against your project requirements." },
+  { Icon: Users, t: "Fair Working Conditions", d: "Documented working hours, safe workshops, first-aid and clean drinking water in our Sialkot atelier." },
+  { Icon: Droplets, t: "Lower-Impact Wet Processing", d: "Low-impact dye options available and water-use tracked across wash and finishing." },
+  { Icon: Recycle, t: "Recyclable Packaging", d: "Recycled poly bags and paper hangtags available as default packaging on request." },
+  { Icon: ShieldCheck, t: "Chemical Management", d: "Dye and chemical selection aligned to buyer market requirements; documentation prepared per program." },
+  { Icon: Heart, t: "Community Focus", d: "Long-term relationships with our team and their families in Sialkot, built around stable programs." },
 ];
 
 const COMMITMENTS = [
-  { y: "2025", t: "100% OEKO-TEX 100 fabric program" },
-  { y: "2026", t: "50% renewable energy on factory floor" },
-  { y: "2027", t: "Zero single-use plastic in packaging" },
-  { y: "2030", t: "Carbon-neutral production targeted" },
+  { y: "Now", t: "Recycled & organic fabric programs on request" },
+  { y: "Ongoing", t: "Waste reduction across cutting and finishing" },
+  { y: "Roadmap", t: "Reduce single-use plastic in packaging" },
+  { y: "Roadmap", t: "Renewable energy on factory floor" },
 ];
 
 export default function Sustainability() {
   return (
     <>
       <SEO
-        title="Sustainability — Ethical & Eco Apparel Manufacturing | Irha Apparels"
-        description="Irha Apparels' sustainability commitments — BSCI audited, OEKO-TEX 100 fabrics, organic & recycled programs, ethical labor and carbon-reduction roadmap."
+        title="Sustainability — Responsible Apparel Manufacturing | Irha Apparels"
+        description="Irha Apparels' approach to responsible manufacturing — organic and recycled fabric programs on request, fair working conditions, and buyer-aligned material documentation."
         path="/sustainability"
       />
 
-      {/* HERO */}
       <section className="relative pt-40 pb-24 md:pb-32 overflow-hidden">
         <img
           src={sustainabilityImg}
-          alt="Sustainable apparel manufacturing"
+          alt="Responsible apparel manufacturing"
           loading="eager"
           width={1920}
           height={1080}
@@ -43,31 +42,28 @@ export default function Sustainability() {
         <div className="container-luxe relative">
           <p className="eyebrow mb-6">Responsibility</p>
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-5xl">
-            Crafted with <span className="text-gold italic">conscience</span>.
+            Made with <span className="text-gold italic">care</span>.
           </h1>
           <p className="mt-8 max-w-2xl text-lg text-foreground/75">
-            Premium apparel and ethical manufacturing are not opposites. Every Irha garment is built on
-            certified materials, audited labor practices and a measurable environmental roadmap.
+            Premium apparel and responsible manufacturing are not opposites. We work with buyers on material,
+            packaging and labelling choices that fit their program and destination market.
           </p>
         </div>
       </section>
 
-      {/* PILLARS */}
       <section className="py-24 md:py-32 border-t border-border/60">
         <div className="container-luxe">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-14">
-            <div>
-              <p className="eyebrow mb-4">Our Pillars</p>
-              <h2 className="font-display text-4xl md:text-5xl leading-[1.05] max-w-2xl">
-                Six commitments behind <span className="text-gold italic">every order</span>.
-              </h2>
-            </div>
+          <div className="mb-14">
+            <p className="eyebrow mb-4">How We Work</p>
+            <h2 className="font-display text-4xl md:text-5xl leading-[1.05] max-w-2xl">
+              Six focus areas behind <span className="text-gold italic">every order</span>.
+            </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border/60 border border-border/60">
             {PILLARS.map(({ Icon, t, d }) => (
               <div key={t} className="bg-background p-8 hover:bg-card transition-colors">
-                <Icon size={28} className="text-primary mb-5" strokeWidth={1.4} />
-                <p className="font-display text-2xl">{t}</p>
+                <Icon size={28} className="text-gold mb-5" strokeWidth={1.4} />
+                <p className="font-display text-xl md:text-2xl">{t}</p>
                 <p className="text-sm text-foreground/65 mt-3 leading-relaxed">{d}</p>
               </div>
             ))}
@@ -77,17 +73,16 @@ export default function Sustainability() {
 
       <Certifications />
 
-      {/* ROADMAP */}
       <section className="py-24 md:py-32">
         <div className="container-luxe">
-          <p className="eyebrow mb-4">Roadmap</p>
+          <p className="eyebrow mb-4">Focus Areas</p>
           <h2 className="font-display text-4xl md:text-5xl leading-[1.05] max-w-3xl mb-14">
-            Where we are heading <span className="text-gold italic">— and when</span>.
+            Where we <span className="text-gold italic">focus</span>.
           </h2>
           <div className="grid md:grid-cols-4 gap-px bg-border/60 border border-border/60">
-            {COMMITMENTS.map((c) => (
-              <div key={c.y} className="bg-background p-8">
-                <p className="font-display text-5xl text-gold">{c.y}</p>
+            {COMMITMENTS.map((c, i) => (
+              <div key={`${c.y}-${i}`} className="bg-background p-8">
+                <p className="font-display text-3xl md:text-4xl text-gold">{c.y}</p>
                 <p className="text-sm text-foreground/80 mt-4 leading-relaxed">{c.t}</p>
               </div>
             ))}
