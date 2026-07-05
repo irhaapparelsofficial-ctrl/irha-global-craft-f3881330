@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import SEO from "@/components/SEO";
 import { usePublicProduct } from "@/hooks/usePublicCatalog";
-import { resolveAsset, resolveGallery } from "@/lib/assetResolver";
+import { resolveGallery } from "@/lib/assetResolver";
 import { ChevronRight, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
-import { findFeaturedProduct } from "@/lib/featuredProducts";
 
 const SITE = "https://www.irhaapparels.com";
 
@@ -16,45 +15,17 @@ export default function ProductDetail() {
 
   useEffect(() => setActiveImg(0), [productSlug]);
 
-  // Static fallback for hand-curated B2B items not yet in the DB
-  const featured = findFeaturedProduct(categorySlug, productSlug);
-
-  if (isLoading && !featured) {
+  if (isLoading) {
     return <div className="pt-40 pb-20 container-luxe text-sm text-muted-foreground">Loading product…</div>;
   }
-
-  if ((error || !data) && !featured) {
+  if (error || !data) {
     return <Navigate to={`/products/${categorySlug ?? ""}`} replace />;
   }
 
-  const useFeatured = !data && !!featured;
-  const material = useFeatured ? featured!.material : "Premium export-grade fabric";
-  const category = useFeatured
-    ? { slug: featured!.categorySlug, name: featured!.categoryName }
-    : { slug: data!.topCategory.slug, name: data!.topCategory.name };
-  const product = useFeatured
-    ? {
-        name: featured!.title,
-        slug: featured!.productSlug,
-        description: featured!.longDescription,
-        image_url: featured!.image,
-        gallery: [featured!.image],
-        specs: [
-          material,
-          `Lead time: ${featured!.leadTime}`,
-          `SKU: ${featured!.sku}`,
-        ],
-        details: [
-          { label: "SKU", value: featured!.sku },
-          { label: "MOQ", value: featured!.moq.replace(/^MOQ:\s*/, "") },
-          { label: "Lead Time", value: featured!.leadTime },
-          { label: "Material", value: material },
-          { label: "Programs", value: "OEM · ODM · Private Label" },
-        ],
-        seo_title: `${featured!.title} | Leather & Bavarian Hub | IRHA Apparels`,
-        seo_description: featured!.description,
-      }
-    : data!.product;
+  const category = { slug: data.topCategory.slug, name: data.topCategory.name };
+  const product = data.product;
+
+
 
 
 
