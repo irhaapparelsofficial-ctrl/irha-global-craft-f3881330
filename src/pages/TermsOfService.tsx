@@ -57,7 +57,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-xl font-semibold">5. Production time</h2>
           <p>
-            Standard production is 30 to 45 days after deposit and sample approval. Larger or
+            Production timeline is confirmed after specification, quantity and customization review. Larger or
             complex orders may take longer; the exact lead time is written on the PI.
           </p>
         </section>
