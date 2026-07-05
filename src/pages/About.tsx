@@ -89,9 +89,9 @@ export default function About() {
       <section className="py-24 md:py-32">
         <div className="container-luxe grid lg:grid-cols-3 gap-10">
           {[
-            { n: "01", t: "Quality Control", d: "Every garment passes a 7-point inspection — measurements, stitching, seams, trims, wash, packaging and final QA — before clearance for export." },
-            { n: "02", t: "Production Capacity", d: "Up to 500,000 units annually across knits, wovens and leather, with flexible MOQs starting from 50 pieces per style for emerging brands." },
-            { n: "03", t: "Compliance & Ethics", d: "OEKO-TEX certified fabrics, ethical labor practices, and full transparency on sourcing — built for brands that audit their supply chain." },
+            { n: "01", t: "Quality Control", d: "Every garment passes inline and final quality checks — measurements, stitching, seams, trims, wash and packaging — before clearance for export." },
+            { n: "02", t: "Production Capacity", d: "Capacity across knits, wovens and leather with flexible MOQ scoped to your program." },
+            { n: "03", t: "Compliance & Documentation", d: "Materials, labelling and export documentation prepared according to your destination market requirements." },
           ].map((c) => (
             <div key={c.n} className="border border-border/70 p-10 bg-card/40">
               <p className="font-display text-5xl text-gold">{c.n}</p>
