@@ -377,7 +377,7 @@ export default function CategoryPage() {
         <div className="container-luxe">
           <p className="eyebrow mb-6">Other collections</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {CATEGORIES.filter((c) => c.slug !== category.slug).map((c) => (
+            {allCategories.filter((c) => c.slug !== category.slug).map((c) => (
               <Link
                 key={c.slug}
                 to={`/products/${c.slug}`}
