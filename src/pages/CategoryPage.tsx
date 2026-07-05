@@ -2,7 +2,8 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SEO from "@/components/SEO";
 import type { Product } from "@/lib/categories";
-import { CATEGORY_SEO } from "@/lib/categorySeo";
+import { CATEGORY_SEO, type CategorySEO } from "@/lib/categorySeo";
+import { resolveLegacyCategorySlug } from "@/lib/legacyCategorySlugs";
 
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
@@ -14,86 +15,85 @@ import { usePublicCategories, useNormalizedCategory } from "@/hooks/usePublicCat
 
 const SITE = "https://www.irhaapparels.com";
 
-type SortKey = "newest" | "price" | "popular";
+type SortKey = "recommended" | "name" | "newest";
 
 type FlatProduct = Product & {
   subSlug: string;
   subName: string;
   sku: string;
   productSlug: string;
-  _priceRank: number;
-  _popRank: number;
   _order: number;
 };
-
-function hash(str: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return Math.abs(h);
-}
 
 const INITIAL_VISIBLE = 200;
 const CHUNK = 200;
 const LOAD_MORE_THRESHOLD = 250;
 
+function extractMoq(details: FlatProduct["details"]): string {
+  const row = details?.find((d) => /moq/i.test(d.label));
+  if (!row?.value) return "MOQ on request";
+  return `MOQ ${row.value.split(/[,/]/)[0].trim()}`;
+}
+
 export default function CategoryPage() {
   const { slug = "" } = useParams<{ slug: string }>();
-  const { category, isLoading } = useNormalizedCategory(slug);
+
+  // 1) Legacy slug → canonical 5-top redirect
+  const legacy = resolveLegacyCategorySlug(slug);
+
+  const { category, isLoading } = useNormalizedCategory(legacy ? legacy.top : slug);
   const { categories: allCategories } = usePublicCategories();
-  const seo = CATEGORY_SEO[slug];
+  const seoHardcoded = CATEGORY_SEO[slug] ?? CATEGORY_SEO[legacy?.top ?? ""];
   const subs = category?.subs ?? [];
   const [activeFilter, setActiveFilter] = useState<string>("all");
-  const [sort, setSort] = useState<SortKey>("newest");
+  const [sort, setSort] = useState<SortKey>("recommended");
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [activeProduct, setActiveProduct] = useState<FlatProduct | null>(null);
   const [flipOpen, setFlipOpen] = useState(false);
   const [peekOpen, setPeekOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
+  // ?subcategory=<sub-slug> deep-link for legacy inbound links
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const sub = sp.get("subcategory") ?? legacy?.sub;
+    if (sub) setActiveFilter(sub);
+  }, [legacy?.sub, slug]);
+
   const allProducts: FlatProduct[] = useMemo(() => {
     const out: FlatProduct[] = [];
     let order = 0;
     subs.forEach((sub) => {
       sub.products.forEach((p) => {
-        const sku = `IRH-${slug.slice(0, 3).toUpperCase()}-${String(order + 1).padStart(4, "0")}`;
+        const sku = `IRH-${(category?.slug ?? slug).slice(0, 3).toUpperCase()}-${String(order + 1).padStart(4, "0")}`;
         out.push({
           ...p,
           subSlug: sub.slug,
           subName: sub.name,
           sku,
           productSlug: p.slug,
-          _priceRank: hash(p.name + ":price") % 10000,
-          _popRank: hash(p.name + ":pop") % 10000,
           _order: order++,
         });
       });
     });
     return out;
-  }, [subs, slug]);
+  }, [subs, slug, category?.slug]);
 
-  // Filter + sort
   const filteredSorted = useMemo(() => {
     const filtered =
       activeFilter === "all"
         ? allProducts
         : allProducts.filter((p) => p.subSlug === activeFilter);
     const sorted = [...filtered];
-    if (sort === "newest") sorted.sort((a, b) => b._order - a._order);
-    else if (sort === "price") sorted.sort((a, b) => a._priceRank - b._priceRank);
-    else if (sort === "popular") sorted.sort((a, b) => b._popRank - a._popRank);
+    if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === "newest") sorted.sort((a, b) => b._order - a._order);
+    // "recommended" preserves DB sort_order (source order)
     return sorted;
   }, [allProducts, activeFilter, sort]);
 
-  // Reset visible window when filter/sort changes.
-  useEffect(() => {
-    setVisible(INITIAL_VISIBLE);
-  }, [activeFilter, sort]);
+  useEffect(() => { setVisible(INITIAL_VISIBLE); }, [activeFilter, sort]);
 
-  // Auto-extend on scroll until we reach LOAD_MORE_THRESHOLD; beyond that
-  // the user must click "Load More" so the page stays manageable.
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -111,16 +111,32 @@ export default function CategoryPage() {
     return () => io.disconnect();
   }, [visible, filteredSorted.length]);
 
-  if (!seo) return <Navigate to="/products" replace />;
+  // Redirect legacy slugs to canonical (after data hooks so refs stay stable)
+  if (legacy && slug !== legacy.top) {
+    const sp = legacy.sub ? `?subcategory=${legacy.sub}` : "";
+    return <Navigate to={`/products/${legacy.top}${sp}`} replace />;
+  }
+
   if (isLoading && !category) {
     return <div className="pt-40 pb-20 container-luxe text-sm text-muted-foreground">Loading collection…</div>;
   }
   if (!category) return <Navigate to="/products" replace />;
 
+  // 2) Build resolved SEO from hardcoded enhancement OR DB fallback — never redirect for missing hardcoded entry.
+  const seo: CategorySEO & { intro: string; h1: string } = seoHardcoded ?? {
+    title: category.seoTitle ?? `${category.name} Manufacturer & Wholesale Supplier | IRHA Apparels`,
+    description: category.seoDescription ?? category.short ?? category.description.slice(0, 158),
+    keywords: `${category.name} manufacturer, wholesale ${category.name}, private label ${category.name}`,
+    h1: `${category.name} Manufacturer — Wholesale, OEM & Private Label`,
+    intro: category.description || category.short || "",
+    exportMarkets: ["USA", "UK", "Germany", "Australia", "Canada", "UAE"],
+    ogImage: category.image,
+    faqs: [],
+  };
+
   const totalProducts = allProducts.length;
   const url = `${SITE}/products/${category.slug}`;
 
-  // Build slideshow: category banner + first product images per sub
   const heroSlides: CategoryHeroSlide[] = [
     {
       image: category.image,
@@ -140,7 +156,7 @@ export default function CategoryPage() {
     })),
   ].slice(0, 5);
 
-  const jsonLd = [
+  const jsonLd: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
@@ -159,7 +175,9 @@ export default function CategoryPage() {
         { "@type": "ListItem", position: 3, name: category.name, item: url },
       ],
     },
-    {
+  ];
+  if (seo.faqs.length > 0) {
+    jsonLd.push({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: seo.faqs.map((f) => ({
@@ -167,8 +185,8 @@ export default function CategoryPage() {
         name: f.q,
         acceptedAnswer: { "@type": "Answer", text: f.a },
       })),
-    },
-  ];
+    });
+  }
 
   const renderProducts = filteredSorted.slice(0, visible);
   const hiddenProducts = filteredSorted.slice(visible);
@@ -185,12 +203,10 @@ export default function CategoryPage() {
         jsonLd={jsonLd}
       />
 
-      {/* Slideshow hero */}
       <div className="pt-28">
         <CategoryHero slides={heroSlides} />
       </div>
 
-      {/* Page intro / breadcrumb strip */}
       <section className="py-10 border-b border-border/60">
         <div className="container-luxe">
           <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-foreground/55 mb-6">
@@ -225,11 +241,10 @@ export default function CategoryPage() {
               <Download size={14} /> Download PDF
             </a>
             <span className="text-xs uppercase tracking-[0.3em] text-foreground/55 ml-2">
-              {totalProducts} styles · MOQ 50 · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
+              {totalProducts} styles · Flexible MOQ · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
             </span>
           </div>
 
-          {/* Catalog page thumbnails — collapsed by default, hover (desktop) or tap (mobile) to reveal */}
           <div
             className="mt-8 pt-6 border-t border-border/40 group/peek"
             onMouseEnter={() => setPeekOpen(true)}
@@ -260,11 +275,9 @@ export default function CategoryPage() {
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
-      {/* Sticky filter + sort bar */}
       <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur border-b border-border/60">
         <div className="container-luxe py-4 flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap gap-2 flex-1 min-w-0">
@@ -291,15 +304,14 @@ export default function CategoryPage() {
               onChange={(e) => setSort(e.target.value as SortKey)}
               className="bg-transparent border border-border/60 px-3 py-2 text-xs uppercase tracking-[0.2em] focus:outline-none focus:border-primary"
             >
+              <option value="recommended">Recommended</option>
+              <option value="name">A–Z</option>
               <option value="newest">Newest</option>
-              <option value="popular">Popular</option>
-              <option value="price">Price</option>
             </select>
           </label>
         </div>
       </div>
 
-      {/* Product grid — all on one page, lazy streamed */}
       <section className="py-10">
         <div className="container-luxe">
           <p className="text-xs uppercase tracking-[0.3em] text-foreground/50 mb-6">
@@ -311,25 +323,24 @@ export default function CategoryPage() {
               <ProductCard
                 key={p.sku}
                 product={p}
+                categorySlug={category.slug}
                 onQuickView={() => setActiveProduct(p)}
               />
             ))}
           </div>
 
-          {/* SEO: render the rest in a hidden block so Googlebot still sees every product */}
           {hiddenProducts.length > 0 && (
             <div className="sr-only" aria-hidden="true">
               <ul>
                 {hiddenProducts.map((p) => (
                   <li key={p.sku}>
-                    <a href={`/products/${slug}#${p.sku}`}>{p.name}</a> — {p.subName} — {p.sku}
+                    <a href={`/products/${category.slug}/${p.productSlug}`}>{p.name}</a> — {p.subName}
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* Sentinel for IntersectionObserver-based streaming */}
           <div ref={sentinelRef} className="h-12" />
 
           {showLoadMoreButton && (
@@ -348,33 +359,33 @@ export default function CategoryPage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-20 border-y border-border/60">
-        <div className="container-luxe grid lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-4">
-            <p className="eyebrow mb-4">Buyer FAQs</p>
-            <h2 className="font-display text-3xl md:text-4xl leading-tight">
-              {category.name} — questions from sourcing teams
-            </h2>
-            <p className="mt-6 text-sm text-foreground/65 leading-relaxed">
-              Direct answers from our merchandisers on MOQs, fabrics, certifications and shipping for {category.name.toLowerCase()} buyers in {seo.exportMarkets.slice(0, 3).join(", ")} and beyond.
-            </p>
+      {seo.faqs.length > 0 && (
+        <section className="py-20 border-y border-border/60">
+          <div className="container-luxe grid lg:grid-cols-12 gap-10">
+            <div className="lg:col-span-4">
+              <p className="eyebrow mb-4">Buyer FAQs</p>
+              <h2 className="font-display text-3xl md:text-4xl leading-tight">
+                {category.name} — questions from sourcing teams
+              </h2>
+              <p className="mt-6 text-sm text-foreground/65 leading-relaxed">
+                Direct answers from our merchandisers on MOQs, fabrics and shipping for {category.name.toLowerCase()} buyers in {seo.exportMarkets.slice(0, 3).join(", ")} and beyond.
+              </p>
+            </div>
+            <div className="lg:col-span-8 divide-y divide-border/60 border-y border-border/60">
+              {seo.faqs.map((f, i) => (
+                <details key={i} className="group py-6">
+                  <summary className="cursor-pointer list-none flex items-start justify-between gap-6">
+                    <h3 className="font-display text-lg md:text-xl leading-snug group-open:text-primary transition-colors">{f.q}</h3>
+                    <span className="text-gold mt-1 transition-transform group-open:rotate-45 text-xl leading-none">+</span>
+                  </summary>
+                  <p className="mt-4 text-foreground/75 leading-relaxed">{f.a}</p>
+                </details>
+              ))}
+            </div>
           </div>
-          <div className="lg:col-span-8 divide-y divide-border/60 border-y border-border/60">
-            {seo.faqs.map((f, i) => (
-              <details key={i} className="group py-6">
-                <summary className="cursor-pointer list-none flex items-start justify-between gap-6">
-                  <h3 className="font-display text-lg md:text-xl leading-snug group-open:text-primary transition-colors">{f.q}</h3>
-                  <span className="text-gold mt-1 transition-transform group-open:rotate-45 text-xl leading-none">+</span>
-                </summary>
-                <p className="mt-4 text-foreground/75 leading-relaxed">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Cross-link other categories */}
       <section className="py-16">
         <div className="container-luxe">
           <p className="eyebrow mb-6">Other collections</p>
@@ -407,16 +418,8 @@ export default function CategoryPage() {
 }
 
 function FilterChip({
-  label,
-  count,
-  active,
-  onClick,
-}: {
-  label: string;
-  count: number;
-  active: boolean;
-  onClick: () => void;
-}) {
+  label, count, active, onClick,
+}: { label: string; count: number; active: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -434,26 +437,22 @@ function FilterChip({
 }
 
 function ProductCard({
-  product,
-  onQuickView,
+  product, categorySlug, onQuickView,
 }: {
   product: FlatProduct;
+  categorySlug: string;
   onQuickView: () => void;
 }) {
   const primary = product.image;
   const secondary = product.gallery?.[1] ?? product.image;
   return (
-    <article
-      id={product.sku}
-      className="group flex flex-col text-left"
-    >
+    <article id={product.sku} className="group flex flex-col text-left">
       <button
         type="button"
         onClick={onQuickView}
         aria-label={`Quick view ${product.name}`}
         className="relative aspect-square overflow-hidden bg-card mb-3 w-full"
       >
-        {/* Primary image */}
         <img
           src={primary}
           alt={product.name}
@@ -464,35 +463,22 @@ function ProductCard({
           sizes="(min-width: 1024px) 23vw, (min-width: 768px) 31vw, 48vw"
           className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:opacity-0"
         />
-        {/* Secondary image revealed on hover (zoomed) */}
         <img
           src={secondary}
           alt=""
           loading="lazy"
           decoding="async"
-          fetchPriority="low"
-          width={750}
-          height={750}
-          sizes="(min-width: 1024px) 23vw, (min-width: 768px) 31vw, 48vw"
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover scale-110 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:scale-100"
+          className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
         />
-
-        {/* Hover overlay: SKU + Quick View */}
-        <div className="absolute inset-x-0 bottom-0 p-3 flex items-end justify-between gap-2 bg-gradient-to-t from-background/90 via-background/40 to-transparent opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
-          <span className="text-[9px] uppercase tracking-[0.25em] text-foreground/80">
-            SKU {product.sku}
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] bg-primary text-primary-foreground px-3 py-1.5">
-            <Eye size={12} /> Quick View
-          </span>
-        </div>
       </button>
-      <h3 className="font-display text-sm md:text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+      <Link
+        to={`/products/${categorySlug}/${product.productSlug}`}
+        className="font-display text-sm md:text-base leading-tight hover:text-primary transition-colors"
+      >
         {product.name}
-      </h3>
-      <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-1.5">
-        {product.subName} · MOQ 50
+      </Link>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-1">
+        {extractMoq(product.details)}
       </p>
     </article>
   );

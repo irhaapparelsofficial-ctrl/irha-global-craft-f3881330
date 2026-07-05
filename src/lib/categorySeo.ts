@@ -142,3 +142,10 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
     ],
   },
 };
+
+// Aliases for canonical Phase 3 slugs — reuse existing rich SEO copy where it fits.
+CATEGORY_SEO["bavarian-trachten-wear"] = CATEGORY_SEO.bavarian;
+CATEGORY_SEO["premium-leather-apparel"] = CATEGORY_SEO.leatherwear;
+CATEGORY_SEO["streetwear-activewear"] = CATEGORY_SEO.streetwear;
+CATEGORY_SEO["leisure-nightwear"] = CATEGORY_SEO.leisure;
+

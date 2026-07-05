@@ -26,8 +26,17 @@ type Draft = Omit<Category, "id" | "created_at" | "updated_at" | "details"> & {
   detailsText: string;
 };
 
-const emptyDraft = (): Draft => ({
-  parent_id: null,
+// Canonical 5 top-level slugs — enforced across the admin so we can't drift.
+export const CANONICAL_TOP_SLUGS = [
+  "bavarian-trachten-wear",
+  "premium-leather-apparel",
+  "sportswear",
+  "streetwear-activewear",
+  "leisure-nightwear",
+] as const;
+
+const emptyDraft = (defaultParentId: string | null = null): Draft => ({
+  parent_id: defaultParentId,
   slug: "",
   name: "",
   short: "",
@@ -43,6 +52,7 @@ const emptyDraft = (): Draft => ({
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
+
 
 export default function CategoriesPanel() {
   const [rows, setRows] = useState<Category[]>([]);
@@ -78,10 +88,32 @@ export default function CategoriesPanel() {
     detailsText: (c.details ?? []).join("\n"),
   });
 
+  // The 5 canonical main categories (top-level rows only, canonical slugs, published).
+  const mainCats = useMemo(
+    () => rows.filter((r) => !r.parent_id && CANONICAL_TOP_SLUGS.includes(r.slug as typeof CANONICAL_TOP_SLUGS[number])),
+    [rows],
+  );
+
   const save = async () => {
     if (!editing) return;
     const d = editing;
     if (!d.name.trim()) { toast({ title: "Name is required", variant: "destructive" }); return; }
+
+    // Structural guardrails: new categories must be subcategories under one of the 5 mains;
+    // parent (when set) must itself be a top-level canonical main.
+    const isExistingMain = d.id && mainCats.some((c) => c.id === d.id);
+    if (!isExistingMain) {
+      if (!d.parent_id) {
+        toast({ title: "Pick a main category", description: "New categories must be a subcategory under one of the 5 main categories.", variant: "destructive" });
+        return;
+      }
+      const parent = rows.find((r) => r.id === d.parent_id);
+      if (!parent || parent.parent_id !== null || !CANONICAL_TOP_SLUGS.includes(parent.slug as typeof CANONICAL_TOP_SLUGS[number])) {
+        toast({ title: "Invalid parent", description: "Parent must be one of the 5 main categories.", variant: "destructive" });
+        return;
+      }
+    }
+
     const payload = {
       parent_id: d.parent_id || null,
       slug: d.slug.trim() ? slugify(d.slug) : slugify(d.name),
@@ -96,6 +128,7 @@ export default function CategoriesPanel() {
       is_published: !!d.is_published,
       details: d.detailsText.split("\n").map((s) => s.trim()).filter(Boolean),
     };
+
     setSaving(true);
     try {
       let id = d.id;
@@ -143,11 +176,12 @@ export default function CategoriesPanel() {
         </button>
         <div className="ml-auto text-xs text-muted-foreground">{loading ? "Loading…" : `${filtered.length} of ${rows.length}`}</div>
         <button
-          onClick={() => setEditing(emptyDraft())}
+          onClick={() => setEditing(emptyDraft(mainCats[0]?.id ?? null))}
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] bg-gradient-gold text-primary-foreground px-4 py-2 hover:shadow-gold"
         >
-          <Plus size={14} /> New category
+          <Plus size={14} /> New subcategory
         </button>
+
       </div>
 
       {error && <div className="border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
@@ -213,29 +247,32 @@ export default function CategoriesPanel() {
 
       {editing && (
         <CategoryEditor
-          draft={editing} setDraft={setEditing} all={rows}
+          draft={editing} setDraft={setEditing} all={rows} mainCats={mainCats}
           onCancel={() => setEditing(null)} onSave={save} saving={saving}
         />
       )}
+
     </div>
   );
 }
 
 function CategoryEditor({
-  draft, setDraft, all, onCancel, onSave, saving,
+  draft, setDraft, all, mainCats, onCancel, onSave, saving,
 }: {
-  draft: Draft; setDraft: (d: Draft) => void; all: Category[];
+  draft: Draft; setDraft: (d: Draft) => void; all: Category[]; mainCats: Category[];
   onCancel: () => void; onSave: () => void; saving: boolean;
 }) {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft({ ...draft, [k]: v });
-  const parentCandidates = all.filter((c) => c.id !== draft.id);
+  const isExistingMain = !!draft.id && mainCats.some((c) => c.id === draft.id);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/80 backdrop-blur-sm p-4 md:p-8">
       <div className="w-full max-w-3xl bg-card border border-border/60 shadow-xl">
         <div className="sticky top-0 flex items-center justify-between border-b border-border/60 bg-card/95 px-6 py-4 z-10">
           <div>
-            <p className="eyebrow">{draft.id ? "Edit" : "New"} · Category</p>
+            <p className="eyebrow">
+              {draft.id ? "Edit" : "New"} · {isExistingMain ? "Main category" : "Subcategory"}
+            </p>
             <h2 className="font-display text-xl mt-1">{draft.name || "Untitled category"}</h2>
           </div>
           <button onClick={onCancel} className="p-2 text-muted-foreground hover:text-foreground"><X size={18} /></button>
@@ -247,16 +284,29 @@ function CategoryEditor({
             <Field label="Slug" hint="Auto from name if empty">
               <input value={draft.slug} onChange={(e) => set("slug", e.target.value)} placeholder="auto" className={inputCls} />
             </Field>
-            <Field label="Parent category">
-              <select value={draft.parent_id ?? ""} onChange={(e) => set("parent_id", e.target.value || null)} className={inputCls}>
-                <option value="">— None (top-level) —</option>
-                {parentCandidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            <Field label={isExistingMain ? "Parent (locked to top-level)" : "Main category *"}
+                   hint={isExistingMain ? "This is one of the 5 main categories" : "Required — only the 5 main categories can be parents"}>
+              <select
+                value={draft.parent_id ?? ""}
+                onChange={(e) => set("parent_id", e.target.value || null)}
+                disabled={isExistingMain}
+                className={inputCls}
+              >
+                {isExistingMain
+                  ? <option value="">— Top-level main category —</option>
+                  : <>
+                      <option value="">— Select a main category —</option>
+                      {mainCats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </>
+                }
               </select>
             </Field>
             <Field label="Sort order">
               <input type="number" value={draft.sort_order} onChange={(e) => set("sort_order", Number(e.target.value))} className={inputCls} />
             </Field>
           </div>
+
+
 
           <Field label="Short tagline"><input value={draft.short ?? ""} onChange={(e) => set("short", e.target.value)} className={inputCls} /></Field>
           <Field label="Description"><textarea rows={4} value={draft.description ?? ""} onChange={(e) => set("description", e.target.value)} className={inputCls} /></Field>

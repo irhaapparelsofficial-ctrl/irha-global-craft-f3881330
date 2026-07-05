@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Search, Trash2, Edit3, X, ExternalLink, RefreshCw, ImageIcon } from "lucide-react";
 
-type Category = { id: string; name: string; slug: string };
+type Category = { id: string; name: string; slug: string; parent_id: string | null; is_published: boolean };
 type Product = {
   id: string;
   category_id: string;
@@ -63,7 +63,7 @@ export default function ProductsPanel() {
   const load = async () => {
     setLoading(true); setError(null);
     const [cRes, pRes] = await Promise.all([
-      supabase.from("categories").select("id,name,slug").order("name"),
+      supabase.from("categories").select("id,name,slug,parent_id,is_published").order("sort_order"),
       supabase.from("products").select("*").order("sort_order", { ascending: true }).limit(500),
     ]);
     if (cRes.error) setError(cRes.error.message);
@@ -73,6 +73,11 @@ export default function ProductsPanel() {
     setLoading(false);
   };
   useEffect(() => { void load(); }, []);
+
+  // Only subcategories (rows with a parent) can hold products.
+  const subCats = useMemo(() => cats.filter((c) => c.parent_id !== null), [cats]);
+  const mainCats = useMemo(() => cats.filter((c) => c.parent_id === null && c.is_published), [cats]);
+
 
   const filtered = useMemo(() => {
     let list = rows;
@@ -88,9 +93,10 @@ export default function ProductsPanel() {
   }, [rows, q, catFilter, sort]);
 
   const openNew = () => {
-    if (cats.length === 0) { toast({ title: "Create a category first", variant: "destructive" }); return; }
-    setEditing(emptyDraft(cats[0].id));
+    if (subCats.length === 0) { toast({ title: "Create a subcategory first", variant: "destructive" }); return; }
+    setEditing(emptyDraft(subCats[0].id));
   };
+
   const openEdit = (p: Product) => {
     setEditing({
       id: p.id,
@@ -113,8 +119,19 @@ export default function ProductsPanel() {
     if (!editing) return;
     const d = editing;
     if (!d.name.trim() || !d.category_id) {
-      toast({ title: "Name and category are required", variant: "destructive" }); return;
+      toast({ title: "Name and subcategory are required", variant: "destructive" }); return;
     }
+    // Enforce: products live under subcategories, not directly under main categories.
+    const selected = cats.find((c) => c.id === d.category_id);
+    if (!selected || selected.parent_id === null) {
+      toast({
+        title: "Pick a subcategory",
+        description: "Products must be assigned to a subcategory (not a main category).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const slug = d.slug.trim() ? slugify(d.slug) : slugify(d.name);
     const payload = {
       category_id: d.category_id,
@@ -184,8 +201,15 @@ export default function ProductsPanel() {
           className="text-sm bg-card/40 border border-border/60 px-3 py-2"
         >
           <option value="all">All categories</option>
-          {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {mainCats.map((m) => (
+            <optgroup key={m.id} label={m.name}>
+              {subCats.filter((s) => s.parent_id === m.id).map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </optgroup>
+          ))}
         </select>
+
         <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="text-sm bg-card/40 border border-border/60 px-3 py-2">
           <option value="sort_order">Sort: order</option>
           <option value="name">Sort: name</option>
@@ -316,11 +340,18 @@ function ProductEditor({
             <Field label="Name *">
               <input value={draft.name} onChange={(e) => set("name", e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Category *">
+            <Field label="Subcategory *" hint="Products must live under a subcategory">
               <select value={draft.category_id} onChange={(e) => set("category_id", e.target.value)} className={inputCls}>
-                {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {cats.filter((c) => c.parent_id === null && c.is_published).map((main) => (
+                  <optgroup key={main.id} label={main.name}>
+                    {cats.filter((s) => s.parent_id === main.id).map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </Field>
+
             <Field label="Slug" hint="Auto-generated from name if empty">
               <input value={draft.slug} onChange={(e) => set("slug", e.target.value)} placeholder="auto-generated" className={inputCls} />
             </Field>

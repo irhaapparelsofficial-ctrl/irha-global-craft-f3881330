@@ -1,26 +1,34 @@
 import SEO from "@/components/SEO";
 import type { Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Eye, Maximize2, MessageCircle } from "lucide-react";
+import { ArrowUpRight, Download, Maximize2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
-import { FEATURED_PRODUCTS } from "@/lib/featuredProducts";
 import { whatsappLink } from "@/lib/constants";
 import { usePublicCategories, type NormalizedCategory } from "@/hooks/usePublicCategoryData";
 
+function extractMoq(details: Product["details"] | undefined): string {
+  const row = details?.find((d) => /moq/i.test(d.label));
+  if (!row?.value) return "MOQ on request";
+  return `MOQ ${row.value.split(/[,/]/)[0].trim()}`;
+}
+
 export default function Products() {
-  const { categories: CATEGORIES, isLoading } = usePublicCategories();
+  const { categories: CATEGORIES } = usePublicCategories();
   const [previewCat, setPreviewCat] = useState<NormalizedCategory | null>(null);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeSub, setActiveSub] = useState<Record<string, string>>({});
 
+  const totalStyles = CATEGORIES.reduce((n, c) => n + c.productCount, 0);
+  const categoryCount = CATEGORIES.length;
+
   return (
     <>
       <SEO
-        title="Apparel Collections — 600+ Styles | Irha Apparels"
-        description="Premium apparel by Irha Apparels: Bavarian, sportswear, leather, streetwear, leisure & nightwear. 600+ styles. OEM, ODM and private-label programs."
+        title="Apparel Collections — Five Specialist Categories | Irha Apparels"
+        description="Five specialist apparel programs from our Sialkot atelier: Bavarian & trachten, premium leather, sportswear, streetwear & activewear, leisure & nightwear. OEM, ODM and private-label."
         path="/products"
         jsonLd={{
           "@context": "https://schema.org",
@@ -28,7 +36,7 @@ export default function Products() {
           name: "Apparel Collections — Irha Apparels",
           url: "https://www.irhaapparels.com/products",
           description:
-            "Six apparel categories produced in Sialkot: Bavarian, sportswear, leather, streetwear, leisurewear and nightwear. OEM, ODM and private-label programs.",
+            "Five specialist apparel programs produced in Sialkot: Bavarian & Trachten, Premium Leather, Sportswear, Streetwear & Activewear, and Leisure & Nightwear. OEM, ODM and private-label programs.",
           isPartOf: { "@type": "WebSite", name: "Irha Apparels", url: "https://www.irhaapparels.com/" },
           hasPart: CATEGORIES.map((c) => ({
             "@type": "CollectionPage",
@@ -38,19 +46,20 @@ export default function Products() {
         }}
       />
 
-
       <section className="relative pt-40 pb-20 border-b border-border/60 overflow-hidden">
         <img src={flatlay} alt="" loading="eager" className="absolute inset-0 w-full h-full object-cover opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background" />
         <div className="container-luxe relative">
           <p className="eyebrow mb-6">The Collections</p>
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-5xl">
-            Six categories. <br />
-            600+ <span className="text-gold italic">styles</span>.
+            {categoryCount || "Five"} specialist <br />
+            <span className="text-gold italic">categories</span>.
           </h1>
           <p className="mt-10 text-lg text-foreground/70 max-w-2xl">
-            Every collection below is produced in-house at our Sialkot atelier. Click any sub-category
-            to browse the full range — OEM, ODM and private-label programs available across every product.
+            {totalStyles > 0
+              ? `${totalStyles} live styles and growing — every collection below is produced in-house at our Sialkot atelier. `
+              : "Every collection below is produced in-house at our Sialkot atelier. "}
+            OEM, ODM and private-label programs available across every product.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -62,82 +71,16 @@ export default function Products() {
               <Download size={14} /> Master Catalogue 2026 (PDF)
             </a>
             <a
-              href={whatsappLink("Hello Irha Apparels — please send the latest master catalogue and FOB price list.")}
+              href={whatsappLink("Hello Irha Apparels — please send the latest master catalogue and quote.")}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
             >
-              <MessageCircle size={16} /> Request FOB Price List
+              <MessageCircle size={16} /> Request a Quote
             </a>
           </div>
         </div>
       </section>
-
-
-      {/* Featured B2B Items — direct, click-through SKUs with explicit MOQ */}
-      <section className="py-20 border-b border-border/60 bg-card/20">
-        <div className="container-luxe">
-          <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
-            <div>
-              <p className="eyebrow mb-3">Featured B2B Items</p>
-              <h2 className="font-display text-3xl md:text-4xl leading-tight">
-                Direct from factory — clickable SKUs
-              </h2>
-            </div>
-            <p className="text-xs uppercase tracking-[0.3em] text-foreground/50 max-w-sm">
-              Each card links to its full spec sheet. MOQ, lead time and material visible up-front.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7">
-            {FEATURED_PRODUCTS.map((p) => (
-              <Link
-                key={p.sku}
-                to={`/products/${p.categorySlug}/${p.productSlug}`}
-                className="group flex flex-col text-left border border-border/60 bg-background hover:border-primary/60 transition-colors"
-                aria-label={`View ${p.title} (${p.sku})`}
-              >
-                <div className="relative aspect-[3/4] overflow-hidden bg-card">
-                  <img
-                    src={p.image}
-                    alt={p.title}
-                    loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
-                  />
-                  <span className="absolute top-3 left-3 bg-background/90 backdrop-blur px-2.5 py-1 text-[9px] font-mono uppercase tracking-[0.2em] text-foreground/80 border border-border/60">
-                    {p.sku}
-                  </span>
-                  <span className="absolute top-3 right-3 bg-primary text-primary-foreground px-2.5 py-1 text-[9px] uppercase tracking-[0.2em] font-bold">
-                    {p.badge}
-                  </span>
-                </div>
-                <div className="p-4 flex flex-col gap-3 flex-1">
-                  <h3 className="font-display text-base leading-tight group-hover:text-primary transition-colors">
-                    {p.title}
-                  </h3>
-                  <p className="text-xs text-foreground/65 leading-relaxed line-clamp-3">
-                    {p.description}
-                  </p>
-                  <div className="mt-auto pt-3 border-t border-border/40 grid grid-cols-2 gap-2 text-[10px] font-mono uppercase tracking-[0.15em]">
-                    <div>
-                      <p className="text-foreground/45">MOQ</p>
-                      <p className="text-foreground/90">{p.moq.replace(/^MOQ:\s*/, "")}</p>
-                    </div>
-                    <div>
-                      <p className="text-foreground/45">Lead Time</p>
-                      <p className="text-foreground/90">{p.leadTime}</p>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-primary font-bold pt-1">
-                    View spec sheet <ArrowUpRight size={12} />
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
 
       <section className="py-20">
         <div className="container-luxe space-y-32">
@@ -180,7 +123,7 @@ export default function Products() {
                       ))}
                     </ul>
                     <p className="mt-8 text-xs uppercase tracking-[0.3em] text-foreground/50">
-                      {subs.length} sub-categories · {totalProducts} styles
+                      {subs.length} sub-categories · {totalProducts} styles · Flexible MOQ by product
                     </p>
                     <div className="mt-6 flex flex-wrap gap-3">
                       <Link
@@ -201,22 +144,18 @@ export default function Products() {
                   </div>
                 </div>
 
-                {/* Sub-category tabs */}
                 {subs.length > 0 && currentSub && (
                   <div className="mt-20">
                     <div className="flex items-end justify-between mb-8 border-b border-border/60 pb-6 flex-wrap gap-4">
                       <div>
                         <p className="eyebrow mb-2">Browse {c.name}</p>
-                        <h3 className="font-display text-2xl md:text-3xl">
-                          Sub-categories
-                        </h3>
+                        <h3 className="font-display text-2xl md:text-3xl">Sub-categories</h3>
                       </div>
                       <p className="text-xs uppercase tracking-[0.3em] text-foreground/50">
                         {currentSub.products.length} styles in {currentSub.name}
                       </p>
                     </div>
 
-                    {/* Sub tabs */}
                     <div className="flex flex-wrap gap-2 mb-10">
                       {subs.map((s) => (
                         <button
@@ -239,11 +178,10 @@ export default function Products() {
 
                     <p className="text-sm text-foreground/65 mb-8 max-w-2xl">{currentSub.short}</p>
 
-                    {/* Products grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 lg:gap-7">
                       {currentSub.products.map((p) => (
                         <button
-                          key={p.name}
+                          key={p.slug}
                           type="button"
                           onClick={() => setActiveProduct(p)}
                           className="group flex flex-col text-left"
@@ -266,7 +204,7 @@ export default function Products() {
                             {p.name}
                           </h4>
                           <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">
-                            MOQ {p.details.find((d) => d.label === "MOQ")?.value.split(/[,/]/)[0] || "—"}
+                            {extractMoq(p.details)}
                           </p>
                         </button>
                       ))}
