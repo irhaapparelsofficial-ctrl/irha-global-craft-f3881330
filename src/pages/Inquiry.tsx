@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import SEO from "@/components/SEO";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight, Check, MessageCircle } from "lucide-react";
@@ -27,10 +28,38 @@ const steps = [
 ];
 
 export default function Inquiry() {
+  const [params] = useSearchParams();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<Partial<FormData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
+
+  // Preserve product context (§20). Prefill notes + category when arriving from
+  // a product page: /inquiry?product=<slug>&name=<name>&category=<cat-slug>
+  useEffect(() => {
+    const productName = params.get("name");
+    const productSlug = params.get("product");
+    const categorySlug = params.get("category");
+    const intent = params.get("intent");
+    if (!productName && !productSlug && !categorySlug && !intent) return;
+    setData((d) => {
+      const next = { ...d };
+      if (categorySlug && CATEGORIES.some((c) => c.slug === categorySlug)) {
+        next.category = categorySlug;
+      }
+      const parts: string[] = [];
+      if (productName) parts.push(`Product of interest: ${productName}`);
+      if (productSlug && !productName) parts.push(`Product slug: ${productSlug}`);
+      if (intent === "reference") parts.push("I'd like to share a reference design (please provide upload details).");
+      if (parts.length > 0) {
+        const existing = d.notes ?? "";
+        next.notes = existing.includes(parts[0]) ? existing : [parts.join("\n"), existing].filter(Boolean).join("\n\n");
+      }
+      return next;
+    });
+    if (productName || productSlug) setStep(2);
+  }, [params]);
+
 
   const update = (k: keyof FormData, v: string) => setData((d) => ({ ...d, [k]: v }));
 
