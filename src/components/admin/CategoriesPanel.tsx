@@ -257,20 +257,22 @@ export default function CategoriesPanel() {
 }
 
 function CategoryEditor({
-  draft, setDraft, all, onCancel, onSave, saving,
+  draft, setDraft, all, mainCats, onCancel, onSave, saving,
 }: {
-  draft: Draft; setDraft: (d: Draft) => void; all: Category[];
+  draft: Draft; setDraft: (d: Draft) => void; all: Category[]; mainCats: Category[];
   onCancel: () => void; onSave: () => void; saving: boolean;
 }) {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft({ ...draft, [k]: v });
-  const parentCandidates = all.filter((c) => c.id !== draft.id);
+  const isExistingMain = !!draft.id && mainCats.some((c) => c.id === draft.id);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/80 backdrop-blur-sm p-4 md:p-8">
       <div className="w-full max-w-3xl bg-card border border-border/60 shadow-xl">
         <div className="sticky top-0 flex items-center justify-between border-b border-border/60 bg-card/95 px-6 py-4 z-10">
           <div>
-            <p className="eyebrow">{draft.id ? "Edit" : "New"} · Category</p>
+            <p className="eyebrow">
+              {draft.id ? "Edit" : "New"} · {isExistingMain ? "Main category" : "Subcategory"}
+            </p>
             <h2 className="font-display text-xl mt-1">{draft.name || "Untitled category"}</h2>
           </div>
           <button onClick={onCancel} className="p-2 text-muted-foreground hover:text-foreground"><X size={18} /></button>
@@ -282,12 +284,28 @@ function CategoryEditor({
             <Field label="Slug" hint="Auto from name if empty">
               <input value={draft.slug} onChange={(e) => set("slug", e.target.value)} placeholder="auto" className={inputCls} />
             </Field>
-            <Field label="Parent category">
-              <select value={draft.parent_id ?? ""} onChange={(e) => set("parent_id", e.target.value || null)} className={inputCls}>
-                <option value="">— None (top-level) —</option>
-                {parentCandidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            <Field label={isExistingMain ? "Parent (locked to top-level)" : "Main category *"}
+                   hint={isExistingMain ? "This is one of the 5 main categories" : "Required — only the 5 main categories can be parents"}>
+              <select
+                value={draft.parent_id ?? ""}
+                onChange={(e) => set("parent_id", e.target.value || null)}
+                disabled={isExistingMain}
+                className={inputCls}
+              >
+                {isExistingMain
+                  ? <option value="">— Top-level main category —</option>
+                  : <>
+                      <option value="">— Select a main category —</option>
+                      {mainCats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </>
+                }
               </select>
             </Field>
+            <Field label="Sort order">
+              <input type="number" value={draft.sort_order} onChange={(e) => set("sort_order", Number(e.target.value))} className={inputCls} />
+            </Field>
+          </div>
+
             <Field label="Sort order">
               <input type="number" value={draft.sort_order} onChange={(e) => set("sort_order", Number(e.target.value))} className={inputCls} />
             </Field>
