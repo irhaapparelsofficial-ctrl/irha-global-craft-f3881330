@@ -353,7 +353,7 @@ export default function Studio() {
         {/* Generate */}
         <div className="border-t border-border/60 pt-6 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
           <div className="text-xs text-muted-foreground">
-            All steps complete? Tap generate — front + back mockups render in ~6–10s.
+            Concept preview only — non-binding. Final specs, MOQ and pricing are confirmed after our team reviews your requirements.
           </div>
           <div className="flex gap-2">
             {(product || result) && (
