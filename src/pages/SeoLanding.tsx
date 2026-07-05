@@ -89,7 +89,7 @@ export default function SeoLanding() {
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-2"><MapPin size={12}/> Sialkot, Pakistan</span>
               <span className="inline-flex items-center gap-2"><Factory size={12}/> 320+ machines · in-house</span>
-              <span className="inline-flex items-center gap-2"><Shield size={12}/> WRAP · Sedex · OEKO-TEX</span>
+              <span className="inline-flex items-center gap-2"><Shield size={12}/> Documentation on request</span>
             </div>
           </div>
           <div className="aspect-[4/5] overflow-hidden border border-border">

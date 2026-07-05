@@ -84,7 +84,7 @@ View all leads: https://www.irhaapparels.com/admin`;
     <>
       <Helmet>
         <title>Connect with Irha Apparels — Bavarian, Trachten & Leather Manufacturer | irhaapparels.com/connect</title>
-        <meta name="description" content="Quick contact form for all social platforms. Reach Irha Apparels — Sialkot's premium B2B apparel manufacturer. Lederhosen, Trachten, sportswear, streetwear & leather jackets. MOQ 50, FOB Sialkot." />
+        <meta name="description" content="Quick contact form for all social platforms. Reach Irha Apparels — Sialkot's premium B2B apparel manufacturer. Lederhosen, Trachten, sportswear, streetwear & leather jackets. Flexible MOQ, FOB Sialkot." />
         <link rel="canonical" href="https://www.irhaapparels.com/connect" />
       </Helmet>
 

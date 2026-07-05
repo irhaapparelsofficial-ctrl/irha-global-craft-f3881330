@@ -62,7 +62,7 @@ export default function ShippingReturns() {
             <li>Bill of Lading or Air Waybill</li>
             <li>Form E (Pakistan State Bank export form)</li>
             <li>GSP+ / EUR.1 form for EU buyers (when eligible)</li>
-            <li>OEKO-TEX / BSCI / test reports on request (where applicable)</li>
+            <li>certified / audit-on-request / test reports on request (where applicable)</li>
           </ul>
         </section>
 

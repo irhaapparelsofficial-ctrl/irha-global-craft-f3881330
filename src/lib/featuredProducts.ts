@@ -26,8 +26,8 @@ export const FEATURED_PRODUCTS: FeaturedProduct[] = [
     categorySlug: "bavarian",
     categoryName: "Bavarian Wear",
     productSlug: "lederhosen",
-    moq: "MOQ: 50 sets per design / color",
-    leadTime: "45–60 days FOB Sialkot",
+    moq: "MOQ: flexible per design and color",
+    leadTime: "lead time confirmed per program",
     badge: "B2B",
     material:
       "1.2–1.4mm aniline cowhide suede + hand embroidery, antique-brass hardware, corozo buttons",
@@ -43,8 +43,8 @@ export const FEATURED_PRODUCTS: FeaturedProduct[] = [
     categorySlug: "leatherwear",
     categoryName: "Leatherwear",
     productSlug: "leather-belt",
-    moq: "MOQ: 30–50 pieces per style",
-    leadTime: "50–65 days FOB",
+    moq: "MOQ: flexible per style",
+    leadTime: "lead time confirmed per program",
     badge: "B2B",
     material:
       "3.5–4mm full-grain milled cowhide + solid brass / gunmetal hardware, Chicago screws",
@@ -60,8 +60,8 @@ export const FEATURED_PRODUCTS: FeaturedProduct[] = [
     categorySlug: "sportswear",
     categoryName: "Sportswear",
     productSlug: "zip-fleece-jacket",
-    moq: "MOQ: 50 pieces per kit / 100 per jersey",
-    leadTime: "30–40 days FOB",
+    moq: "MOQ: flexible per kit and jersey",
+    leadTime: "lead time confirmed per program",
     badge: "B2B",
     material:
       "320 GSM brushed-back polyester fleece, 4-way stretch + YKK reverse-coil zip, flatlock seams",
@@ -77,8 +77,8 @@ export const FEATURED_PRODUCTS: FeaturedProduct[] = [
     categorySlug: "streetwear",
     categoryName: "Streetwear",
     productSlug: "oversized-hoodie",
-    moq: "MOQ: 50 pieces per design / color",
-    leadTime: "35–50 days FOB",
+    moq: "MOQ: flexible per design and color",
+    leadTime: "lead time confirmed per program",
     badge: "B2B",
     material:
       "480 GSM heavyweight French Terry (100% ring-spun combed cotton), garment-dyed",

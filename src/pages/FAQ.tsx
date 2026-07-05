@@ -7,7 +7,7 @@ const FAQS = [
   {
     group: "Ordering & MOQ",
     items: [
-      { q: "What is your minimum order quantity (MOQ)?", a: "Our standard MOQ is 50 pieces per design/color across all categories — streetwear, trachten, leather, performance and lounge. Our emerging-brand program allows mixed-size runs at this 50-piece minimum." },
+      { q: "What is your minimum order quantity (MOQ)?", a: "Our MOQ is flexible per program across all categories — streetwear, trachten, leather, performance and lounge. Our emerging-brand program allows mixed-size runs at our flexible MOQ." },
       { q: "Can I order mixed sizes and colors within the MOQ?", a: "Yes. Within a single style/print, you can split across sizes (XS–3XL) freely. Color splits within the 50-piece MOQ are accepted at 25 pieces per color minimum after the initial MOQ is met." },
       { q: "Do you accept small trial orders before bulk?", a: "Absolutely. We offer paid sampling and a 'pilot run' option (typically 25–50 pieces) before committing to full bulk, so you can validate fit, fabric and finish on your retail floor." },
     ],
@@ -48,7 +48,7 @@ const FAQS = [
     group: "Quality & Compliance",
     items: [
       { q: "What QC standards do you follow?", a: "AQL 2.5 (general level II) is our default. 7-point inspection covering measurement, stitching, seams, trims, wash, packaging and shade. Third-party inspections (SGS, Intertek, Bureau Veritas) welcomed on buyer's account." },
-      { q: "Are your fabrics certified?", a: "Yes — OEKO-TEX 100 is standard. GOTS organic, BCI cotton, RWS wool, FSC bamboo, LWG leather and recycled polyester options on request." },
+      { q: "Are your fabrics certified?", a: "Yes — certified fabrics on request is standard. organic, sustainable cotton programs, wool and bamboo options, vetted leather and recycled polyester options on request." },
       { q: "What is your defect policy?", a: "Any garment failing your approved AQL is replaced or credited in full. We document and resolve defects within 14 days of buyer notification." },
     ],
   },

@@ -73,7 +73,7 @@ export default function Catalogue() {
           </h1>
           <p className="text-foreground/70 mt-6 max-w-2xl text-sm md:text-base leading-relaxed">
             Browse our full export range. Every category supports OEM, ODM and private label —
-            MOQ from 50 pieces, 45-day production, shipped FOB Sialkot.
+            Flexible MOQ, program-based production timeline, shipped FOB Sialkot.
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
             <button

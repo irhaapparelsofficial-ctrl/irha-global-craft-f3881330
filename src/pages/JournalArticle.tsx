@@ -31,16 +31,16 @@ const BODY: Record<string, string[]> = {
     "Fifth, packaging. A folded poly bag is the floor. A printed band, branded hangtag and recycled mailer is the ceiling — and it shows on the unboxing.",
   ],
   "sustainable-cotton-program": [
-    "Every buyer asks for 'sustainable cotton' but few know what they're actually asking for. There are three relevant certifications — BCI, GOTS, and OCS — and they certify completely different things.",
-    "BCI (Better Cotton Initiative) is a mass-balance program. It funds better farming practices but the actual cotton in your garment may not be BCI cotton. It's the lowest-cost 'sustainable' claim and it works for high-volume basics.",
-    "GOTS (Global Organic Textile Standard) certifies organically grown cotton through the entire chain of custody. It's the gold standard — and the most expensive — and the only claim that lets you call a garment 'certified organic.'",
-    "OCS (Organic Content Standard) sits between the two. It tracks organic cotton from farm to finished product but doesn't certify processing chemicals the way GOTS does.",
+    "Every buyer asks for 'sustainable cotton' but few know what they're actually asking for. There are three relevant certifications — BCI, organic-on-request, and OCS — and they certify completely different things.",
+    "BCI (Better Cotton Initiative) is a mass-balance program. It funds better farming practices but the actual cotton in your garment may not be sustainable cotton programs. It's the lowest-cost 'sustainable' claim and it works for high-volume basics.",
+    "organic-on-request (Global Organic Textile Standard) certifies organically grown cotton through the entire chain of custody. It's the gold standard — and the most expensive — and the only claim that lets you call a garment 'certified organic.'",
+    "OCS (Organic Content Standard) sits between the two. It tracks organic cotton from farm to finished product but doesn't certify processing chemicals the way organic-on-request does.",
   ],
   "moq-economics": [
-    "Buyers often ask why 50 pieces costs more per unit than 500. The answer is fabric minimums, machine setup and digitizing — three fixed costs spread across whatever quantity you order.",
+    "Buyers often ask why our flexible MOQ costs more per unit than 500. The answer is fabric minimums, machine setup and digitizing — three fixed costs spread across whatever quantity you order.",
     "Fabric minimums are the first wall. Mills typically run 300+ meters minimum per shade. Below that, we buy stock and charge a premium.",
-    "Machine setup is the second. Setting up a sublimation press, embroidery digitizing or a screen frame takes the same 2 hours whether you're printing 50 pieces or 5,000. That cost gets amortized.",
-    "Digitizing — converting your logo to a machine-readable embroidery file — is a one-time $30 fee. On 50 pieces it's $0.60 per garment. On 5,000 it's $0.006.",
+    "Machine setup is the second. Setting up a sublimation press, embroidery digitizing or a screen frame takes the same 2 hours whether you're printing our flexible MOQ or 5,000. That cost gets amortized.",
+    "Digitizing — converting your logo to a machine-readable embroidery file — is a one-time $30 fee. On our flexible MOQ it's $0.60 per garment. On 5,000 it's $0.006.",
     "The good news: as an emerging brand, you can negotiate the MOQ wall by combining colors within a single fabric/wash, by sharing setup costs across multiple SKUs, and by committing to a re-order cadence we can plan around.",
   ],
 };

@@ -2,11 +2,11 @@ import { ShieldCheck, BadgeCheck, Award, ClipboardCheck, FlaskConical, Check } f
 import { Link } from "react-router-dom";
 
 const ITEMS = [
-  { Icon: ShieldCheck, name: "OEKO-TEX® 100", note: "Compliant Fabrics", status: "compliant" as const },
-  { Icon: ClipboardCheck, name: "BSCI Audited", note: "In Progress", status: "progress" as const },
-  { Icon: Award, name: "ISO 9001:2015", note: "Quality Management", status: "compliant" as const },
-  { Icon: BadgeCheck, name: "SEDEX Member", note: "Social Audit", status: "compliant" as const },
-  { Icon: FlaskConical, name: "REACH", note: "EU Compliant", status: "compliant" as const },
+  { Icon: ShieldCheck, name: "Quality Checks", note: "Before dispatch", status: "compliant" as const },
+  { Icon: ClipboardCheck, name: "Buyer Audits", note: "Third-party welcome", status: "compliant" as const },
+  { Icon: Award, name: "Documented QMS", note: "Per program", status: "compliant" as const },
+  { Icon: BadgeCheck, name: "Export Documentation", note: "Form-E · COO", status: "compliant" as const },
+  { Icon: FlaskConical, name: "Material Documentation", note: "On request", status: "compliant" as const },
 ];
 
 export default function ComplianceTrustBar() {

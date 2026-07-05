@@ -9,7 +9,6 @@ import WhyB2B from "@/components/sections/WhyB2B";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import BuyerPromise from "@/components/sections/BuyerPromise";
 import Certifications from "@/components/sections/Certifications";
-import FounderNote from "@/components/sections/FounderNote";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
@@ -177,9 +176,6 @@ export default function Home() {
 
       {/* PRODUCTION DISCIPLINE (capability-based, no fake certs) */}
       <Certifications />
-
-      {/* FOUNDER NOTE */}
-      <FounderNote />
 
       {/* FINAL CTA */}
       <StartProgramCTA />

@@ -41,10 +41,11 @@ const SOCIALS = [
 ];
 
 const COLLECTIONS = [
-  { slug: "bavarian", label: "Bavarian" },
+  { slug: "bavarian-trachten-wear", label: "Bavarian & Trachten" },
+  { slug: "premium-leather-apparel", label: "Premium Leather" },
   { slug: "sportswear", label: "Sportswear" },
-  { slug: "leather", label: "Leather" },
-  { slug: "streetwear", label: "Streetwear" },
+  { slug: "streetwear-activewear", label: "Streetwear & Activewear" },
+  { slug: "leisure-nightwear", label: "Leisure & Nightwear" },
 ];
 
 const COMPANY = [
@@ -202,7 +203,7 @@ export default function Footer() {
       {/* Promises strip */}
       <div className="container-luxe mt-14 pt-6 border-t border-foreground/10">
         <p className="text-center text-[11px] md:text-xs uppercase tracking-[0.3em] text-foreground/65">
-          Flexible MOQ <span className="text-gold mx-2">|</span> FOB Sialkot <span className="text-gold mx-2">|</span> In-House Embroidery &amp; Sublimation
+          Flexible MOQ <span className="text-gold mx-2">|</span> FOB Sialkot <span className="text-gold mx-2">|</span> OEM · ODM · Private Label
         </p>
       </div>
 

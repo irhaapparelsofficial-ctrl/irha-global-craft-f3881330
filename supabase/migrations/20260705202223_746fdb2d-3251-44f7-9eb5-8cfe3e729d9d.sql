@@ -1,0 +1,9 @@
+UPDATE public.products SET description = regexp_replace(description, '\s*with OEKO-TEX dyes', '', 'gi') WHERE description ~* 'OEKO';
+UPDATE public.products SET description = regexp_replace(description, 'OEKO-TEX(® | )?(Standard )?100', 'certified fabrics on request', 'gi') WHERE description ~* 'OEKO';
+UPDATE public.products SET description = regexp_replace(description, 'OEKO-TEX', 'certified', 'gi') WHERE description ~* 'OEKO';
+UPDATE public.products SET description = regexp_replace(description, 'MOQ 50', 'Flexible MOQ', 'gi') WHERE description ~* 'MOQ 50';
+UPDATE public.products SET description = regexp_replace(description, '45-day', 'program-based', 'gi') WHERE description ~* '45-day';
+UPDATE public.products SET description = regexp_replace(description, 'BSCI|SEDEX|WRAP', 'audit-on-request', 'gi') WHERE description ~* '(BSCI|SEDEX|WRAP)';
+UPDATE public.products SET description = regexp_replace(description, 'GOTS', 'organic-on-request', 'gi') WHERE description ~* 'GOTS';
+UPDATE public.products SET description = regexp_replace(description, 'REACH', 'regulatory-documentation-as-required', 'gi') WHERE description ~* 'REACH';
+UPDATE public.products SET description = regexp_replace(description, 'LWG', 'vetted', 'gi') WHERE description ~* 'LWG';
