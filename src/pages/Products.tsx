@@ -29,6 +29,10 @@ export default function Products() {
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeSub, setActiveSub] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
+  const shortlist = useShortlist();
+  const shortlistRfqLink = shortlist.items.length
+    ? `/inquiry?shortlist=${encodeURIComponent(shortlist.items.map((i) => i.slug).join(","))}&names=${encodeURIComponent(shortlist.items.map((i) => i.name).join(","))}`
+    : "/inquiry";
 
   const totalStyles = CATEGORIES.reduce((n, c) => n + c.productCount, 0);
   const categoryCount = CATEGORIES.length;
