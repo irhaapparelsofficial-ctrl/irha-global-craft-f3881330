@@ -1,13 +1,14 @@
 import SEO from "@/components/SEO";
 import type { Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Maximize2, MessageCircle, Search, X } from "lucide-react";
+import { ArrowUpRight, Bookmark, Download, Maximize2, MessageCircle, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { whatsappLink } from "@/lib/constants";
 import { usePublicCategories, type NormalizedCategory, type NormalizedProduct } from "@/hooks/usePublicCategoryData";
+import { useShortlist } from "@/lib/shortlist";
 
 function extractMoq(details: Product["details"] | undefined): string {
   const row = details?.find((d) => /moq/i.test(d.label));
@@ -28,6 +29,10 @@ export default function Products() {
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeSub, setActiveSub] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
+  const shortlist = useShortlist();
+  const shortlistRfqLink = shortlist.items.length
+    ? `/inquiry?shortlist=${encodeURIComponent(shortlist.items.map((i) => i.slug).join(","))}&names=${encodeURIComponent(shortlist.items.map((i) => i.name).join(","))}`
+    : "/inquiry";
 
   const totalStyles = CATEGORIES.reduce((n, c) => n + c.productCount, 0);
   const categoryCount = CATEGORIES.length;
@@ -107,6 +112,23 @@ export default function Products() {
           </div>
         </div>
       </section>
+
+      {shortlist.items.length > 0 && (
+        <div className="sticky top-16 z-30 border-b border-primary/30 bg-primary/10 backdrop-blur">
+          <div className="container-luxe flex flex-wrap items-center justify-between gap-3 py-3">
+            <p className="text-xs uppercase tracking-[0.25em] text-foreground/80 inline-flex items-center gap-2">
+              <Bookmark size={14} className="text-primary" />
+              {shortlist.items.length} saved product{shortlist.items.length === 1 ? "" : "s"}
+            </p>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={shortlist.clear} className="text-[11px] uppercase tracking-[0.25em] text-foreground/60 hover:text-foreground">Clear</button>
+              <Link to={shortlistRfqLink} className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-[11px] uppercase tracking-[0.25em]">
+                Request Quote <ArrowUpRight size={12} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Catalog search — lightweight, client-side over the loaded tree. */}
       <section className="py-10 border-b border-border/60">

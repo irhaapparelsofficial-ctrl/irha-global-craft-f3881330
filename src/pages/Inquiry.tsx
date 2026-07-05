@@ -35,13 +35,15 @@ export default function Inquiry() {
   const [done, setDone] = useState(false);
 
   // Preserve product context (§20). Prefill notes + category when arriving from
-  // a product page: /inquiry?product=<slug>&name=<name>&category=<cat-slug>
+  // a product page, shortlist, or compare view.
   useEffect(() => {
     const productName = params.get("name");
     const productSlug = params.get("product");
     const categorySlug = params.get("category");
     const intent = params.get("intent");
-    if (!productName && !productSlug && !categorySlug && !intent) return;
+    const shortlistSlugs = params.get("shortlist");
+    const shortlistNames = params.get("names");
+    if (!productName && !productSlug && !categorySlug && !intent && !shortlistSlugs) return;
     setData((d) => {
       const next = { ...d };
       if (categorySlug && CATEGORIES.some((c) => c.slug === categorySlug)) {
@@ -50,14 +52,22 @@ export default function Inquiry() {
       const parts: string[] = [];
       if (productName) parts.push(`Product of interest: ${productName}`);
       if (productSlug && !productName) parts.push(`Product slug: ${productSlug}`);
+      if (shortlistSlugs) {
+        const names = (shortlistNames ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+        const slugs = shortlistSlugs.split(",").map((s) => s.trim()).filter(Boolean);
+        const list = (names.length ? names : slugs).map((n, i) => `${i + 1}. ${n}`).join("\n");
+        if (list) parts.push(`Shortlisted products:\n${list}`);
+      }
       if (intent === "reference") parts.push("I'd like to share a reference design (please provide upload details).");
+      if (intent === "sample") parts.push("Sample request — please advise on sample availability, timeline and shipping.");
+      if (intent === "meeting") parts.push("Meeting request — please share available time slots.");
       if (parts.length > 0) {
         const existing = d.notes ?? "";
-        next.notes = existing.includes(parts[0]) ? existing : [parts.join("\n"), existing].filter(Boolean).join("\n\n");
+        next.notes = existing.includes(parts[0]) ? existing : [parts.join("\n\n"), existing].filter(Boolean).join("\n\n");
       }
       return next;
     });
-    if (productName || productSlug) setStep(2);
+    if (productName || productSlug || shortlistSlugs) setStep(2);
   }, [params]);
 
 
