@@ -82,7 +82,14 @@ const seoLandingSlugs = [
   "uk-custom-apparel-manufacturer",
 ];
 
-const categorySlugs = ["bavarian", "sportswear", "leatherwear", "streetwear", "leisurewear", "nightwear"];
+// Phase 3 canonical top-level category slugs (5).
+const categorySlugs = [
+  "bavarian-trachten-wear",
+  "premium-leather-apparel",
+  "sportswear",
+  "streetwear-activewear",
+  "leisure-nightwear",
+];
 
 const catalogueSlugs = [
   "bavarian-garments",

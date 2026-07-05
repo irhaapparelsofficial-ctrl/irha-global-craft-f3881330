@@ -125,7 +125,6 @@ export default function HeroCarousel() {
             width={1920}
             height={1280}
             loading={i === 0 ? "eager" : "lazy"}
-            fetchPriority={i === 0 ? "high" : "low"}
             decoding="async"
             className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[1200ms] ease-in-out ${
               i === index ? "opacity-100" : "opacity-0"
