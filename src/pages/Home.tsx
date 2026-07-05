@@ -304,11 +304,12 @@ export default function Home() {
         <div className="container-luxe py-10 md:py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
             {[
-              { Icon: Package,   k: "MOQ 50 pcs",       v: "Per design / color" },
-              { Icon: Truck,     k: "FOB Sialkot",      v: "Worldwide export" },
+              { Icon: Package,   k: "Flexible MOQ",      v: "By product & program" },
+              { Icon: Truck,     k: "FOB Sialkot",       v: "Worldwide export" },
               { Icon: Calendar,  k: "45-Day Production", v: "Bulk lead time" },
               { Icon: Shirt,     k: "In-House Embroidery", v: "12-head Tajima" },
             ].map(({ Icon, k, v }) => (
+
               <div key={k} className="flex items-center gap-4 md:justify-center">
                 <span className="inline-flex items-center justify-center w-11 h-11 border border-gold/40 text-gold shrink-0">
                   <Icon size={20} strokeWidth={1.5} />
