@@ -84,7 +84,7 @@ export default function LederhosenHome() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
         <div className="relative mx-auto w-full max-w-7xl px-6 pb-20 pt-32">
           <p className="text-xs uppercase tracking-[0.3em] text-primary mb-6">
-            Direct Factory · Sialkot, Pakistan · Since 2014
+            Direct Factory · Sialkot, Pakistan
           </p>
           <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl leading-tight max-w-4xl">
             Two macro hubs.<br />
