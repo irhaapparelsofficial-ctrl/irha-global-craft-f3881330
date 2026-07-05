@@ -108,6 +108,78 @@ export default function Products() {
         </div>
       </section>
 
+      {/* Catalog search — lightweight, client-side over the loaded tree. */}
+      <section className="py-10 border-b border-border/60">
+        <div className="container-luxe">
+          <label className="block">
+            <span className="eyebrow mb-3 block">Search the catalog</span>
+            <div className="relative max-w-2xl">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/50" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search products, categories, or SKU…"
+                aria-label="Search products"
+                className="w-full pl-11 pr-11 py-3.5 bg-card/40 border border-border/60 focus:border-primary outline-none text-sm"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-foreground/50 hover:text-primary"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </label>
+
+          {query.trim().length >= 2 && (
+            <div className="mt-6">
+              {searchHits.length === 0 ? (
+                <p className="text-sm text-foreground/60">
+                  No products match “{query.trim()}”. Try a different keyword or{" "}
+                  <a href={whatsappLink(`Hello Irha Apparels — I'm looking for "${query.trim()}". Can you help?`)} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    ask us on WhatsApp
+                  </a>
+                  .
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs uppercase tracking-[0.25em] text-foreground/50 mb-4">
+                    {searchHits.length} result{searchHits.length === 1 ? "" : "s"} for “{query.trim()}”
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                    {searchHits.map((h) => (
+                      <Link
+                        key={`${h.categorySlug}-${h.product.slug}`}
+                        to={`/products/${h.categorySlug}/${h.product.slug}`}
+                        className="group flex flex-col text-left"
+                      >
+                        <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
+                          <img
+                            src={h.product.image}
+                            alt={h.product.name}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                          />
+                        </div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/50">{h.categoryName} · {h.subName}</p>
+                        <h4 className="font-display text-base leading-tight group-hover:text-primary transition-colors mt-1">
+                          {h.product.name}
+                        </h4>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="py-20">
         <div className="container-luxe space-y-32">
           {CATEGORIES.map((c, i) => {
