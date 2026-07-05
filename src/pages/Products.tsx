@@ -1,13 +1,14 @@
 import SEO from "@/components/SEO";
 import type { Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Maximize2, MessageCircle, Search, X } from "lucide-react";
+import { ArrowUpRight, Bookmark, Download, Maximize2, MessageCircle, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { whatsappLink } from "@/lib/constants";
 import { usePublicCategories, type NormalizedCategory, type NormalizedProduct } from "@/hooks/usePublicCategoryData";
+import { useShortlist } from "@/lib/shortlist";
 
 function extractMoq(details: Product["details"] | undefined): string {
   const row = details?.find((d) => /moq/i.test(d.label));
