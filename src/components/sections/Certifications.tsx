@@ -1,12 +1,12 @@
 import { ShieldCheck, Leaf, Award, BadgeCheck, Factory, Globe2 } from "lucide-react";
 
 const CERTS = [
-  { Icon: ShieldCheck, name: "OEKO-TEX® 100", desc: "Tested for harmful substances across every textile component." },
-  { Icon: Leaf, name: "GOTS Organic", desc: "Certified organic cotton with full chain-of-custody traceability." },
-  { Icon: Award, name: "BSCI Audited", desc: "Business Social Compliance Initiative — ethical labor practices verified." },
-  { Icon: BadgeCheck, name: "SEDEX SMETA", desc: "Four-pillar audit on labor, health, environment & business ethics." },
-  { Icon: Factory, name: "WRAP Certified", desc: "Worldwide Responsible Accredited Production for ethical manufacturing." },
-  { Icon: Globe2, name: "REACH Compliant", desc: "EU regulation compliance on chemicals, dyes and finishes." },
+  { Icon: ShieldCheck, name: "In-House Quality Control", desc: "Inline and final AQL inspection on every production run before dispatch." },
+  { Icon: Leaf, name: "Responsible Sourcing", desc: "Traceable fabric and leather sourcing from vetted mill and tannery partners." },
+  { Icon: Award, name: "Ethical Manufacturing", desc: "Fair, safe working conditions across our Sialkot atelier — documented SOPs." },
+  { Icon: BadgeCheck, name: "Export Documentation", desc: "Form-E, COO, packing lists and commercial invoices prepared in-house." },
+  { Icon: Factory, name: "OEM · ODM · Private Label", desc: "Full-package production from tech pack to labelled, retail-ready cartons." },
+  { Icon: Globe2, name: "EU & US Market Ready", desc: "Labelling, packaging and documentation aligned to buyer requirements." },
 ];
 
 export default function Certifications() {
@@ -15,13 +15,13 @@ export default function Certifications() {
       <div className="container-luxe">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-14">
           <div>
-            <p className="eyebrow mb-4">Compliance & Certifications</p>
+            <p className="eyebrow mb-4">Production Discipline</p>
             <h2 className="font-display text-4xl md:text-5xl leading-[1.05] max-w-2xl">
-              Audited, certified and <span className="text-gold italic">retail-ready</span>.
+              Disciplined, documented and <span className="text-gold italic">retail-ready</span>.
             </h2>
           </div>
           <p className="text-sm text-foreground/65 max-w-md leading-relaxed">
-            Every fabric and finishing process meets international compliance standards demanded by EU, USA and Gulf retailers.
+            Every fabric and finishing process is built around the QC and documentation discipline EU, USA and Gulf retailers demand.
           </p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border/60 border border-border/60">

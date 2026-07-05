@@ -138,7 +138,7 @@ export default function Home() {
             {[
               { Icon: Package,  k: "Flexible MOQ",       v: "By product & program" },
               { Icon: Truck,    k: "FOB Sialkot",        v: "Worldwide export" },
-              { Icon: Calendar, k: "45-Day Production",  v: "Bulk lead time" },
+              { Icon: Calendar, k: "Program Lead Times", v: "Quoted per order" },
               { Icon: Shirt,    k: "In-House Embroidery", v: "12-head Tajima" },
             ].map(({ Icon, k, v }) => (
 
@@ -306,7 +306,7 @@ export default function Home() {
             {[
               { Icon: Package,   k: "Flexible MOQ",      v: "By product & program" },
               { Icon: Truck,     k: "FOB Sialkot",       v: "Worldwide export" },
-              { Icon: Calendar,  k: "45-Day Production", v: "Bulk lead time" },
+              { Icon: Calendar,  k: "Program Lead Times", v: "Quoted per order" },
               { Icon: Shirt,     k: "In-House Embroidery", v: "12-head Tajima" },
             ].map(({ Icon, k, v }) => (
 

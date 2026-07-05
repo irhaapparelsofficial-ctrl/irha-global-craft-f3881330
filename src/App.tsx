@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import LederhosenHome from "./pages/LederhosenHome";
+import Home from "./pages/Home";
 import Index from "./pages/Index";
 import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
@@ -70,8 +71,9 @@ const App = () => (
           <PageViewTracker />
           <Suspense fallback={<PageFallback />}>
             <Routes>
-              {/* New Lederhosen-focused homepage — no shared Layout, owns its own chrome */}
-              <Route path="/" element={<LederhosenHome />} />
+              {/* Phase 3 canonical homepage — 2 production hubs backed by the live catalog */}
+              <Route path="/" element={<Layout><Home /></Layout>} />
+              {/* German-market landing keeps its own chrome */}
               <Route path="/de" element={<LederhosenHome />} />
               <Route path="/de/" element={<LederhosenHome />} />
               <Route path="/legacy-home" element={<Layout><Index /></Layout>} />

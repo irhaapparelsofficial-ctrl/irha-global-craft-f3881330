@@ -1,12 +1,12 @@
 import { Globe2, Calendar, Package, Truck, ShieldCheck, BadgeCheck } from "lucide-react";
 
 const ITEMS = [
-  { Icon: Globe2,      k: "50+",        v: "Countries Served" },
-  { Icon: Calendar,    k: "12 yrs",     v: "Export Heritage" },
-  { Icon: Package,     k: "MOQ 50",     v: "Per Design / Color" },
-  { Icon: Truck,       k: "45-Day",     v: "FOB Sialkot" },
-  { Icon: ShieldCheck, k: "OEKO-TEX",   v: "Std 100 Fabrics" },
-  { Icon: BadgeCheck,  k: "BSCI · SEDEX", v: "Audited Atelier" },
+  { Icon: Globe2,      k: "50+",          v: "Countries Served" },
+  { Icon: Calendar,    k: "12 yrs",       v: "Export Heritage" },
+  { Icon: Package,     k: "Flexible MOQ", v: "By Program" },
+  { Icon: Truck,       k: "FOB Sialkot",  v: "Worldwide Export" },
+  { Icon: ShieldCheck, k: "In-House QC",  v: "AQL Inspected" },
+  { Icon: BadgeCheck,  k: "OEM · ODM",    v: "Private Label" },
 ];
 
 export default function TrustBar() {
