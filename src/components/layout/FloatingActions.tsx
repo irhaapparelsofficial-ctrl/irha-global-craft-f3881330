@@ -19,12 +19,11 @@ export default function FloatingActions() {
           to="/studio"
           aria-label="Launch AI Mockup Studio"
           data-track="floating-ai-designer"
-          className="fixed z-40 group bg-gradient-gold text-primary-foreground shadow-gold hover:scale-105 transition-all
-                     bottom-[4.75rem] right-4 h-11 w-11 rounded-full inline-flex items-center justify-center
-                     md:bottom-[6.25rem] md:right-6 md:h-auto md:w-auto md:rounded-full md:pl-4 md:pr-5 md:py-3"
+          className="hidden md:inline-flex fixed z-40 group bg-gradient-gold text-primary-foreground shadow-gold hover:scale-105 transition-all
+                     md:bottom-[6.25rem] md:right-6 md:rounded-full md:pl-4 md:pr-5 md:py-3 items-center"
         >
           <Sparkles size={18} className="group-hover:rotate-12 transition-transform" />
-          <span className="hidden md:inline text-[11px] font-medium uppercase tracking-[0.22em] ml-2">
+          <span className="text-[11px] font-medium uppercase tracking-[0.22em] ml-2">
             AI Designer
           </span>
         </Link>
