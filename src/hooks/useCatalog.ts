@@ -34,6 +34,29 @@ export type DbProduct = {
   seo_description: string | null;
   sort_order: number;
   is_published: boolean;
+  // Phase 5 B2B fields (all optional / nullable for backward compat)
+  sku?: string | null;
+  is_featured?: boolean;
+  short_description?: string | null;
+  moq_display?: string | null;
+  moq_min?: number | null;
+  sample_available?: boolean | null;
+  sample_timeline?: string | null;
+  production_timeline?: string | null;
+  country_of_origin?: string | null;
+  primary_material?: string | null;
+  fabric_composition?: string | null;
+  gsm?: string | null;
+  available_sizes?: string[];
+  size_notes?: string | null;
+  available_colors?: string[];
+  custom_colors?: boolean | null;
+  customization?: Record<string, boolean>;
+  packaging_standard?: string | null;
+  packaging_custom?: boolean | null;
+  related_product_ids?: string[];
+  created_at?: string;
+  updated_at?: string;
 };
 
 export function useCategories() {

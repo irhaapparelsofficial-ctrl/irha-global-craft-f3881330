@@ -1,13 +1,13 @@
 import SEO from "@/components/SEO";
 import type { Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Maximize2, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { ArrowUpRight, Download, Maximize2, MessageCircle, Search, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { whatsappLink } from "@/lib/constants";
-import { usePublicCategories, type NormalizedCategory } from "@/hooks/usePublicCategoryData";
+import { usePublicCategories, type NormalizedCategory, type NormalizedProduct } from "@/hooks/usePublicCategoryData";
 
 function extractMoq(details: Product["details"] | undefined): string {
   const row = details?.find((d) => /moq/i.test(d.label));
@@ -15,14 +15,40 @@ function extractMoq(details: Product["details"] | undefined): string {
   return `MOQ ${row.value.split(/[,/]/)[0].trim()}`;
 }
 
+type SearchHit = {
+  categorySlug: string;
+  categoryName: string;
+  subName: string;
+  product: NormalizedProduct;
+};
+
 export default function Products() {
   const { categories: CATEGORIES } = usePublicCategories();
   const [previewCat, setPreviewCat] = useState<NormalizedCategory | null>(null);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeSub, setActiveSub] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState("");
 
   const totalStyles = CATEGORIES.reduce((n, c) => n + c.productCount, 0);
   const categoryCount = CATEGORIES.length;
+
+  const searchHits = useMemo<SearchHit[]>(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const hits: SearchHit[] = [];
+    for (const c of CATEGORIES) {
+      for (const s of c.subs) {
+        for (const p of s.products) {
+          const hay = `${p.name} ${s.name} ${c.name} ${p.description ?? ""}`.toLowerCase();
+          if (hay.includes(q)) {
+            hits.push({ categorySlug: c.slug, categoryName: c.name, subName: s.name, product: p });
+          }
+        }
+      }
+    }
+    return hits.slice(0, 40);
+  }, [CATEGORIES, query]);
+
 
   return (
     <>
@@ -79,6 +105,78 @@ export default function Products() {
               <MessageCircle size={16} /> Request a Quote
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* Catalog search — lightweight, client-side over the loaded tree. */}
+      <section className="py-10 border-b border-border/60">
+        <div className="container-luxe">
+          <label className="block">
+            <span className="eyebrow mb-3 block">Search the catalog</span>
+            <div className="relative max-w-2xl">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/50" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search products, categories, or SKU…"
+                aria-label="Search products"
+                className="w-full pl-11 pr-11 py-3.5 bg-card/40 border border-border/60 focus:border-primary outline-none text-sm"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-foreground/50 hover:text-primary"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </label>
+
+          {query.trim().length >= 2 && (
+            <div className="mt-6">
+              {searchHits.length === 0 ? (
+                <p className="text-sm text-foreground/60">
+                  No products match “{query.trim()}”. Try a different keyword or{" "}
+                  <a href={whatsappLink(`Hello Irha Apparels — I'm looking for "${query.trim()}". Can you help?`)} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    ask us on WhatsApp
+                  </a>
+                  .
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs uppercase tracking-[0.25em] text-foreground/50 mb-4">
+                    {searchHits.length} result{searchHits.length === 1 ? "" : "s"} for “{query.trim()}”
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                    {searchHits.map((h) => (
+                      <Link
+                        key={`${h.categorySlug}-${h.product.slug}`}
+                        to={`/products/${h.categorySlug}/${h.product.slug}`}
+                        className="group flex flex-col text-left"
+                      >
+                        <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
+                          <img
+                            src={h.product.image}
+                            alt={h.product.name}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                          />
+                        </div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/50">{h.categoryName} · {h.subName}</p>
+                        <h4 className="font-display text-base leading-tight group-hover:text-primary transition-colors mt-1">
+                          {h.product.name}
+                        </h4>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

@@ -573,54 +573,114 @@ export type Database = {
       }
       products: {
         Row: {
+          available_colors: string[]
+          available_sizes: string[]
           category_id: string
+          country_of_origin: string | null
           created_at: string
+          custom_colors: boolean | null
+          customization: Json
           description: string | null
           details: Json
+          fabric_composition: string | null
           gallery: string[]
+          gsm: string | null
           id: string
           image_url: string | null
+          is_featured: boolean
           is_published: boolean
           material_specifications: string | null
+          moq_display: string | null
+          moq_min: number | null
           name: string
+          packaging_custom: boolean | null
+          packaging_standard: string | null
+          primary_material: string | null
+          production_timeline: string | null
+          related_product_ids: string[]
+          sample_available: boolean | null
+          sample_timeline: string | null
           seo_description: string | null
           seo_title: string | null
+          short_description: string | null
+          size_notes: string | null
+          sku: string | null
           slug: string
           sort_order: number
           specs: string[]
           updated_at: string
         }
         Insert: {
+          available_colors?: string[]
+          available_sizes?: string[]
           category_id: string
+          country_of_origin?: string | null
           created_at?: string
+          custom_colors?: boolean | null
+          customization?: Json
           description?: string | null
           details?: Json
+          fabric_composition?: string | null
           gallery?: string[]
+          gsm?: string | null
           id?: string
           image_url?: string | null
+          is_featured?: boolean
           is_published?: boolean
           material_specifications?: string | null
+          moq_display?: string | null
+          moq_min?: number | null
           name: string
+          packaging_custom?: boolean | null
+          packaging_standard?: string | null
+          primary_material?: string | null
+          production_timeline?: string | null
+          related_product_ids?: string[]
+          sample_available?: boolean | null
+          sample_timeline?: string | null
           seo_description?: string | null
           seo_title?: string | null
+          short_description?: string | null
+          size_notes?: string | null
+          sku?: string | null
           slug: string
           sort_order?: number
           specs?: string[]
           updated_at?: string
         }
         Update: {
+          available_colors?: string[]
+          available_sizes?: string[]
           category_id?: string
+          country_of_origin?: string | null
           created_at?: string
+          custom_colors?: boolean | null
+          customization?: Json
           description?: string | null
           details?: Json
+          fabric_composition?: string | null
           gallery?: string[]
+          gsm?: string | null
           id?: string
           image_url?: string | null
+          is_featured?: boolean
           is_published?: boolean
           material_specifications?: string | null
+          moq_display?: string | null
+          moq_min?: number | null
           name?: string
+          packaging_custom?: boolean | null
+          packaging_standard?: string | null
+          primary_material?: string | null
+          production_timeline?: string | null
+          related_product_ids?: string[]
+          sample_available?: boolean | null
+          sample_timeline?: string | null
           seo_description?: string | null
           seo_title?: string | null
+          short_description?: string | null
+          size_notes?: string | null
+          sku?: string | null
           slug?: string
           sort_order?: number
           specs?: string[]

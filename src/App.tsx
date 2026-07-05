@@ -32,6 +32,7 @@ const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
 const Compliance = lazy(() => import("./pages/Compliance"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
@@ -90,6 +91,7 @@ const App = () => (
                     <Route path="/products" element={<Products />} />
                     <Route path="/products/:slug" element={<CategoryPage />} />
                     <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
+                    <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
                     <Route path="/manufacturing" element={<Manufacturing />} />
                     <Route path="/sustainability" element={<Sustainability />} />
                     <Route path="/compliance" element={<Compliance />} />
