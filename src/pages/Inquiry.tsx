@@ -1,109 +1,167 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import SEO from "@/components/SEO";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { z } from "zod";
-import { ArrowLeft, ArrowRight, Check, MessageCircle } from "lucide-react";
-import { CATEGORIES } from "@/lib/categories";
+import { ArrowLeft, ArrowRight, Check, MessageCircle, FileText, Package, BookOpen, Image as ImageIcon, Calendar } from "lucide-react";
+import SEO from "@/components/SEO";
+import SecureFileUpload from "@/components/SecureFileUpload";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
+import { CATEGORIES } from "@/lib/categories";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  clearDraft,
+  loadDraft,
+  saveDraft,
+  type InquiryDraft,
+  type InquiryIntent,
+  type UploadedFileRef,
+} from "@/lib/inquiryDraft";
 
-const schema = z.object({
+const INTENTS: { id: InquiryIntent; label: string; blurb: string; icon: React.ComponentType<{ size?: number }> }[] = [
+  { id: "rfq", label: "Request Quote", blurb: "OEM / ODM / private-label pricing", icon: FileText },
+  { id: "sample", label: "Request Sample", blurb: "Physical samples for evaluation", icon: Package },
+  { id: "catalogue", label: "Request Catalogue", blurb: "PDF catalogue + fabric options", icon: BookOpen },
+  { id: "reference", label: "Upload Reference", blurb: "Tech pack / artwork / mockup", icon: ImageIcon },
+  { id: "meeting", label: "Request Meeting", blurb: "Video call with our team", icon: Calendar },
+];
+
+const contactSchema = z.object({
   name: z.string().trim().min(2, "Name required").max(80),
   company: z.string().trim().min(2, "Company required").max(120),
-  country: z.string().trim().min(2, "Country required").max(60),
-  category: z.string().min(1, "Select a category"),
-  quantity: z.string().trim().min(1, "Quantity required").max(40),
   email: z.string().trim().email("Invalid email").max(120),
-  whatsapp: z.string().trim().min(6, "WhatsApp required").max(30),
-  notes: z.string().max(800).optional(),
+  whatsapp: z.string().trim().min(6, "WhatsApp / phone required").max(30),
+  country: z.string().trim().min(2, "Country required").max(60),
 });
 
-type FormData = z.infer<typeof schema>;
+type Step = 1 | 2 | 3 | 4 | 5;
+const STEP_LABELS = ["Intent", "Requirements", "Files", "Contact", "Review"] as const;
 
-const steps = [
-  { id: 1, label: "About You", fields: ["name", "company", "country"] as const },
-  { id: 2, label: "Product", fields: ["category", "quantity"] as const },
-  { id: 3, label: "Contact", fields: ["email", "whatsapp", "notes"] as const },
-];
+function isValidIntent(x: string | null): x is InquiryIntent {
+  return !!x && ["rfq", "sample", "catalogue", "reference", "meeting"].includes(x);
+}
+
+function getSessionId(): string {
+  try {
+    const KEY = "irha_inquiry_session";
+    let sid = sessionStorage.getItem(KEY);
+    if (!sid) {
+      sid = "s-" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      sessionStorage.setItem(KEY, sid);
+    }
+    return sid;
+  } catch {
+    return "s-" + Date.now().toString(36);
+  }
+}
 
 export default function Inquiry() {
   const [params] = useSearchParams();
-  const [step, setStep] = useState(1);
-  const [data, setData] = useState<Partial<FormData>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [done, setDone] = useState(false);
 
-  // Preserve product context (§20). Prefill notes + category when arriving from
-  // a product page, shortlist, or compare view.
-  useEffect(() => {
-    const productName = params.get("name");
-    const productSlug = params.get("product");
-    const categorySlug = params.get("category");
-    const intent = params.get("intent");
-    const shortlistSlugs = params.get("shortlist");
-    const shortlistNames = params.get("names");
-    if (!productName && !productSlug && !categorySlug && !intent && !shortlistSlugs) return;
-    setData((d) => {
-      const next = { ...d };
-      if (categorySlug && CATEGORIES.some((c) => c.slug === categorySlug)) {
-        next.category = categorySlug;
-      }
-      const parts: string[] = [];
-      if (productName) parts.push(`Product of interest: ${productName}`);
-      if (productSlug && !productName) parts.push(`Product slug: ${productSlug}`);
-      if (shortlistSlugs) {
-        const names = (shortlistNames ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-        const slugs = shortlistSlugs.split(",").map((s) => s.trim()).filter(Boolean);
-        const list = (names.length ? names : slugs).map((n, i) => `${i + 1}. ${n}`).join("\n");
-        if (list) parts.push(`Shortlisted products:\n${list}`);
-      }
-      if (intent === "reference") parts.push("I'd like to share a reference design (please provide upload details).");
-      if (intent === "sample") parts.push("Sample request — please advise on sample availability, timeline and shipping.");
-      if (intent === "meeting") parts.push("Meeting request — please share available time slots.");
-      if (parts.length > 0) {
-        const existing = d.notes ?? "";
-        next.notes = existing.includes(parts[0]) ? existing : [parts.join("\n\n"), existing].filter(Boolean).join("\n\n");
-      }
-      return next;
-    });
-    if (productName || productSlug || shortlistSlugs) setStep(2);
+  // ---- Product / list context from URL (source of truth on first load) ----
+  const urlContext = useMemo(() => {
+    const shortlist = (params.get("shortlist") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const shortlistNames = (params.get("names") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const compareSlugs = (params.get("compare") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const compareNames = (params.get("compareNames") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    return {
+      productSlug: params.get("product") ?? undefined,
+      productName: params.get("name") ?? undefined,
+      categorySlug: params.get("category") ?? undefined,
+      shortlistSlugs: shortlist.length ? shortlist : undefined,
+      shortlistNames: shortlistNames.length ? shortlistNames : undefined,
+      compareSlugs: compareSlugs.length ? compareSlugs : undefined,
+      compareNames: compareNames.length ? compareNames : undefined,
+    };
   }, [params]);
 
+  // ---- State ----
+  const initialIntent: InquiryIntent = isValidIntent(params.get("intent")) ? (params.get("intent") as InquiryIntent) : "rfq";
+  const [step, setStep] = useState<Step>(1);
+  const [draft, setDraft] = useState<Omit<InquiryDraft, "v" | "updatedAt">>(() => ({
+    step: 1,
+    intent: initialIntent,
+    files: [],
+    productContext: urlContext,
+  }));
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [restored, setRestored] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState<null | { ref: string }>(null);
+  const submitLockRef = useRef(false);
+  const sessionId = useMemo(getSessionId, []);
 
-  const update = (k: keyof FormData, v: string) => setData((d) => ({ ...d, [k]: v }));
-
-  const validateStep = () => {
-    const fields = steps[step - 1].fields;
-    const partial = Object.fromEntries(fields.map((f) => [f, data[f] ?? ""]));
-    const result = schema.pick(Object.fromEntries(fields.map((f) => [f, true])) as any).safeParse(partial);
-    if (!result.success) {
-      const errs: Record<string, string> = {};
-      result.error.issues.forEach((i) => (errs[i.path[0] as string] = i.message));
-      setErrors(errs);
-      return false;
+  // ---- Load draft once ----
+  useEffect(() => {
+    const d = loadDraft();
+    if (d) {
+      setDraft((prev) => ({
+        ...prev,
+        ...d,
+        // URL params override draft's product context if present
+        intent: isValidIntent(params.get("intent")) ? (params.get("intent") as InquiryIntent) : d.intent,
+        productContext: urlContext.productSlug || urlContext.shortlistSlugs || urlContext.compareSlugs ? urlContext : d.productContext,
+      }));
+      setStep((d.step as Step) || 1);
+      setRestored(true);
     }
-    setErrors({});
-    return true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---- Autosave (debounced) ----
+  useEffect(() => {
+    const t = window.setTimeout(() => saveDraft({ ...draft, step }), 400);
+    return () => window.clearTimeout(t);
+  }, [draft, step]);
+
+  const setField = useCallback(<K extends keyof typeof draft>(k: K, v: (typeof draft)[K]) => {
+    setDraft((d) => ({ ...d, [k]: v }));
+  }, []);
+
+  // ---- Step validation ----
+  const validateStep = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (step === 2) {
+      if (!draft.company?.trim()) errs.company = "Company required";
+      if (!draft.country?.trim()) errs.country = "Destination country required";
+      if (draft.intent === "rfq" && !draft.quantity?.trim()) errs.quantity = "Estimated quantity required";
+      if (draft.intent === "sample" && !draft.sampleQty?.trim()) errs.sampleQty = "Sample quantity required";
+      if (draft.intent === "meeting" && !draft.meetingTopic?.trim()) errs.meetingTopic = "Topic required";
+    }
+    if (step === 4) {
+      const parsed = contactSchema.safeParse({
+        name: draft.name ?? "",
+        company: draft.company ?? "",
+        email: draft.email ?? "",
+        whatsapp: draft.whatsapp ?? "",
+        country: draft.country ?? "",
+      });
+      if (!parsed.success) {
+        parsed.error.issues.forEach((i) => (errs[i.path[0] as string] = i.message));
+      }
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  const next = () => validateStep() && setStep((s) => Math.min(3, s + 1));
-  const back = () => setStep((s) => Math.max(1, s - 1));
-
-  const submit = () => {
+  const next = () => {
     if (!validateStep()) return;
-    const parsed = schema.safeParse(data);
-    if (!parsed.success) {
-      toast({ title: "Please complete all fields", variant: "destructive" });
-      return;
-    }
+    setStep((s) => (Math.min(5, s + 1) as Step));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const back = () => {
+    setStep((s) => (Math.max(1, s - 1) as Step));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-    // Build lead_context (Phase 6 conversion foundation) — captures product/shortlist/UTM/referrer context.
-    const productSlug = params.get("product") ?? undefined;
-    const productName = params.get("name") ?? undefined;
-    const shortlistSlugs = (params.get("shortlist") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-    const shortlistNames = (params.get("names") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-    const intent = params.get("intent") ?? (shortlistSlugs.length > 1 ? "multi-product-rfq" : productSlug ? "single-product-rfq" : "general-rfq");
+  // ---- Submit ----
+  const submit = async () => {
+    if (submitLockRef.current || submitting) return;
+    if (!validateStep()) return;
+    submitLockRef.current = true;
+    setSubmitting(true);
+
+    const ref = "IRQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+
     const utm = {
       source: params.get("utm_source") ?? undefined,
       medium: params.get("utm_medium") ?? undefined,
@@ -111,195 +169,213 @@ export default function Inquiry() {
       content: params.get("utm_content") ?? undefined,
       term: params.get("utm_term") ?? undefined,
     };
-    const leadContext = {
+
+    const ctx = draft.productContext ?? {};
+    const derivedIntentType =
+      draft.intent === "rfq"
+        ? ctx.shortlistSlugs && ctx.shortlistSlugs.length > 1
+          ? "multi-product-rfq"
+          : ctx.compareSlugs && ctx.compareSlugs.length > 1
+            ? "compare-rfq"
+            : ctx.productSlug
+              ? "single-product-rfq"
+              : "general-rfq"
+        : draft.intent;
+
+    const leadContext: Record<string, unknown> = {
       conversion_type: "inquiry",
-      intent,
+      intent: draft.intent,
+      intent_detail: derivedIntentType,
+      inquiry_ref: ref,
       source_page: window.location.pathname + window.location.search,
-      referrer: document.referrer || null,
+      current_page: window.location.href,
       landing_page: sessionStorage.getItem("irha_landing") || window.location.pathname,
-      product_slug: productSlug,
-      product_name: productName,
-      category_slug: params.get("category") ?? parsed.data.category,
-      shortlist_slugs: shortlistSlugs.length ? shortlistSlugs : undefined,
-      shortlist_names: shortlistNames.length ? shortlistNames : undefined,
-      quantity: parsed.data.quantity,
-      destination_country: parsed.data.country,
-      utm,
-      device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
+      referrer: document.referrer || null,
+      device_type: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
+      product_slug: ctx.productSlug ?? null,
+      product_name: ctx.productName ?? null,
+      product_slugs: ctx.shortlistSlugs ?? ctx.compareSlugs ?? null,
+      product_names: ctx.shortlistNames ?? ctx.compareNames ?? null,
+      category: ctx.categorySlug ?? null,
+      shortlist_origin: ctx.shortlistSlugs ? true : false,
+      compare_origin: ctx.compareSlugs ? true : false,
+      utm_source: utm.source ?? null,
+      utm_medium: utm.medium ?? null,
+      utm_campaign: utm.campaign ?? null,
+      utm_content: utm.content ?? null,
+      utm_term: utm.term ?? null,
+      buyer_type: draft.buyerType ?? null,
+      quantity: draft.quantity ?? null,
+      destination_country: draft.country ?? null,
+      uploaded_files: draft.files.map((f) => ({ path: f.path, name: f.name, size: f.size, mime: f.mime })),
+      sample_requirements: draft.intent === "sample" ? {
+        quantity: draft.sampleQty,
+        size: draft.sampleSize,
+        color: draft.sampleColor,
+        branding: draft.sampleBranding,
+      } : null,
+      catalogue_preferences: draft.intent === "catalogue" ? {
+        preference: draft.cataloguePreference,
+        categories: draft.catalogueCategories ?? [],
+      } : null,
+      reference_notes: draft.intent === "reference" ? draft.referenceNotes ?? null : null,
+      meeting_preferences: draft.intent === "meeting" ? {
+        topic: draft.meetingTopic,
+        date: draft.meetingDate,
+        time_window: draft.meetingTime,
+        timezone: draft.meetingTz,
+      } : null,
       submitted_at: new Date().toISOString(),
     };
 
-    // Save to dashboard DB with unified lead_context.
-    void supabase.from("inquiries").insert({
-      name: parsed.data.name,
-      email: parsed.data.email,
-      company: parsed.data.company,
-      country: parsed.data.country,
-      phone: parsed.data.whatsapp,
-      category: parsed.data.category,
-      quantity: parsed.data.quantity,
-      message: parsed.data.notes || null,
-      source: "inquiry-page",
-      intent,
-      lead_context: leadContext,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
-
-    const msg = `New B2B Inquiry — Irha Apparels
-━━━━━━━━━━━━━━━━━━
-Name: ${parsed.data.name}
-Company: ${parsed.data.company}
-Country: ${parsed.data.country}
-Category: ${parsed.data.category}
-Quantity: ${parsed.data.quantity}
-Email: ${parsed.data.email}
-WhatsApp: ${parsed.data.whatsapp}
-Notes: ${parsed.data.notes || "—"}`;
-    setDone(true);
-    setTimeout(() => {
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
-    }, 600);
+    try {
+      const { error } = await supabase.from("inquiries").insert({
+        name: draft.name!,
+        email: draft.email!,
+        company: draft.company ?? null,
+        country: draft.country ?? null,
+        phone: draft.whatsapp ?? null,
+        category: ctx.categorySlug ?? null,
+        quantity: draft.quantity ?? draft.sampleQty ?? null,
+        message: buildMessage(draft),
+        source: "inquiry-wizard",
+        intent: draft.intent,
+        lead_context: leadContext,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        inquiry_ref: ref,
+      } as any);
+      if (error) {
+        // Unique-violation ⇒ treat as already-submitted (idempotent)
+        if (!String(error.message).toLowerCase().includes("duplicate")) throw error;
+      }
+      clearDraft();
+      setDone({ ref });
+      setStep(5);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Please try again";
+      toast({ title: "Submission failed", description: msg, variant: "destructive" });
+      submitLockRef.current = false;
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-
-  const inputCls = "w-full bg-input border border-border focus:border-primary outline-none px-5 py-4 text-foreground placeholder:text-muted-foreground/60 transition-colors";
-  const labelCls = "block text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-3";
+  // ---- Render ----
+  const stepIdx = step - 1;
+  const contextChip = describeContext(draft);
 
   return (
     <>
       <SEO
-        title="Get a Quote — B2B Apparel Inquiry | Irha Apparels"
-        description="Request a B2B quote from Irha Apparels. OEM, ODM and private label apparel manufacturing. Quick WhatsApp response from Sialkot, Pakistan."
+        title="B2B Inquiry — Quote, Sample, Catalogue | Irha Apparels"
+        description="Send a B2B inquiry to Irha Apparels: request a quote, sample, catalogue, meeting, or share your reference design. OEM & private-label garment manufacturing."
         path="/inquiry"
       />
 
-      <section className="pt-40 pb-16 border-b border-border/60">
-        <div className="container-luxe">
-          <p className="eyebrow mb-6">B2B Inquiry</p>
-          <h1 className="font-display text-5xl md:text-7xl leading-[0.95] max-w-4xl">
-            Tell us about your <span className="text-gold italic">order</span>.
+      <section className="pt-32 pb-10 border-b border-border/60">
+        <div className="container-luxe max-w-4xl">
+          <p className="eyebrow mb-4">B2B Inquiry</p>
+          <h1 className="font-display text-4xl md:text-6xl leading-[1.02]">
+            Tell us what you need.
           </h1>
-          <p className="mt-8 text-foreground/70 max-w-xl">
-            Three quick steps. We'll reply on WhatsApp within hours with pricing, lead time and sample options.
-          </p>
+          {contextChip && (
+            <p className="mt-4 text-xs uppercase tracking-[0.25em] text-primary/90">{contextChip}</p>
+          )}
+          {restored && !done && (
+            <p className="mt-4 text-xs text-foreground/60">
+              Draft restored.{" "}
+              <button
+                type="button"
+                onClick={() => { clearDraft(); setDraft({ step: 1, intent: initialIntent, files: [], productContext: urlContext }); setStep(1); setRestored(false); }}
+                className="underline hover:text-primary"
+              >
+                Start over
+              </button>
+            </p>
+          )}
         </div>
       </section>
 
-      <section className="py-20 md:py-28">
-        <div className="container-luxe max-w-3xl">
+      <section className="py-10 md:py-14">
+        <div className="container-luxe max-w-4xl">
+          {!done && (
+            <ol className="flex items-center gap-2 md:gap-4 mb-8 md:mb-10 overflow-x-auto">
+              {STEP_LABELS.map((lbl, i) => {
+                const n = i + 1;
+                const active = n === step;
+                const past = n < step;
+                return (
+                  <li key={lbl} className="flex items-center gap-2 md:gap-3 shrink-0">
+                    <span
+                      className={`w-7 h-7 md:w-8 md:h-8 inline-flex items-center justify-center border text-[11px] ${
+                        active ? "border-primary bg-primary text-primary-foreground"
+                        : past ? "border-primary text-primary"
+                        : "border-border text-foreground/50"
+                      }`}
+                    >
+                      {past ? <Check size={12} /> : n}
+                    </span>
+                    <span className={`text-[10px] md:text-[11px] uppercase tracking-[0.2em] ${
+                      active ? "text-foreground" : past ? "text-primary" : "text-foreground/50"
+                    }`}>{lbl}</span>
+                    {i < STEP_LABELS.length - 1 && (
+                      <span className={`hidden md:inline w-8 h-px ${past ? "bg-primary" : "bg-border"}`} />
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+
           {done ? (
-            <div className="border border-primary/40 bg-card/60 p-12 text-center animate-scale-in">
-              <div className="mx-auto w-16 h-16 rounded-full bg-gradient-gold flex items-center justify-center mb-6">
-                <Check className="text-primary-foreground" size={28} />
-              </div>
-              <h2 className="font-display text-3xl md:text-4xl">Inquiry Received</h2>
-              <p className="text-foreground/70 mt-4">
-                Redirecting you to WhatsApp to finalize your inquiry with our team.
-              </p>
-              <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}`}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-8 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em]"
-              >
-                <MessageCircle size={16}/> Open WhatsApp
-              </a>
-            </div>
+            <SuccessScreen
+              ref={done.ref}
+              draft={draft}
+            />
           ) : (
-            <>
-              {/* Stepper */}
-              <div className="flex items-center gap-4 mb-12">
-                {steps.map((s, i) => (
-                  <div key={s.id} className="flex-1 flex items-center gap-4">
-                    <div className={`flex items-center gap-3 ${step >= s.id ? "text-primary" : "text-muted-foreground"}`}>
-                      <span className={`w-8 h-8 flex items-center justify-center border ${step >= s.id ? "border-primary bg-primary/10" : "border-border"} text-xs`}>
-                        {s.id}
-                      </span>
-                      <span className="text-xs uppercase tracking-[0.25em] hidden sm:inline">{s.label}</span>
-                    </div>
-                    {i < steps.length - 1 && <div className={`flex-1 h-px ${step > s.id ? "bg-primary" : "bg-border"}`} />}
-                  </div>
-                ))}
-              </div>
+            <div className="border border-border/60 bg-card/40 p-6 md:p-10">
+              {step === 1 && <StepIntent draft={draft} setField={setField} />}
+              {step === 2 && <StepRequirements draft={draft} setField={setField} errors={errors} />}
+              {step === 3 && (
+                <StepFiles
+                  draft={draft}
+                  onFiles={(files) => setField("files", files)}
+                  sessionId={sessionId}
+                />
+              )}
+              {step === 4 && <StepContact draft={draft} setField={setField} errors={errors} />}
+              {step === 5 && <StepReview draft={draft} onEditStep={(s) => setStep(s as Step)} />}
 
-              <div className="border border-border bg-card/40 p-8 md:p-12 animate-fade-in" key={step}>
-                {step === 1 && (
-                  <div className="space-y-6">
-                    <Field label="Your Name" error={errors.name}>
-                      <input className={inputCls} placeholder="Full name" value={data.name || ""} onChange={(e)=>update("name",e.target.value)} />
-                    </Field>
-                    <Field label="Company / Brand" error={errors.company}>
-                      <input className={inputCls} placeholder="Brand or company" value={data.company || ""} onChange={(e)=>update("company",e.target.value)} />
-                    </Field>
-                    <Field label="Country" error={errors.country}>
-                      <input className={inputCls} placeholder="e.g. United States" value={data.country || ""} onChange={(e)=>update("country",e.target.value)} />
-                    </Field>
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div className="space-y-6">
-                    <Field label="Product Category" error={errors.category}>
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        {CATEGORIES.map((c)=>(
-                          <button
-                            type="button"
-                            key={c.slug}
-                            onClick={()=>update("category", c.name)}
-                            className={`text-left p-4 border transition-all ${data.category === c.name ? "border-primary bg-primary/5 text-primary" : "border-border hover:border-foreground/40"}`}
-                          >
-                            <p className="font-display text-lg">{c.name}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{c.short}</p>
-                          </button>
-                        ))}
-                      </div>
-                    </Field>
-                    <Field label="Estimated Quantity" error={errors.quantity}>
-                      <input className={inputCls} placeholder="e.g. 500 pieces" value={data.quantity || ""} onChange={(e)=>update("quantity",e.target.value)} />
-                    </Field>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="space-y-6">
-                    <Field label="Email" error={errors.email}>
-                      <input type="email" className={inputCls} placeholder="you@brand.com" value={data.email || ""} onChange={(e)=>update("email",e.target.value)} />
-                    </Field>
-                    <Field label="WhatsApp Number" error={errors.whatsapp}>
-                      <input className={inputCls} placeholder="+1 555 000 0000" value={data.whatsapp || ""} onChange={(e)=>update("whatsapp",e.target.value)} />
-                    </Field>
-                    <Field label="Notes (optional)">
-                      <textarea rows={4} className={inputCls} placeholder="Tell us more about your project, fabric preferences, deadlines…" value={data.notes || ""} onChange={(e)=>update("notes",e.target.value)} />
-                    </Field>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between mt-10 pt-6 border-t border-border">
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/60">
+                <button
+                  type="button"
+                  onClick={back}
+                  disabled={step === 1 || submitting}
+                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-foreground/70 hover:text-foreground disabled:opacity-30"
+                >
+                  <ArrowLeft size={14} /> Back
+                </button>
+                {step < 5 ? (
                   <button
-                    onClick={back}
-                    disabled={step===1}
-                    className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-foreground/70 hover:text-foreground disabled:opacity-30 transition-colors"
+                    type="button"
+                    onClick={next}
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90"
                   >
-                    <ArrowLeft size={14}/> Back
+                    Continue <ArrowRight size={14} />
                   </button>
-                  {step < 3 ? (
-                    <button
-                      onClick={next}
-                      className="inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all"
-                    >
-                      Continue <ArrowRight size={14}/>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={submit}
-                      className="inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all"
-                    >
-                      Send to WhatsApp <MessageCircle size={14}/>
-                    </button>
-                  )}
-                </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={submit}
+                    disabled={submitting}
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90 disabled:opacity-60"
+                  >
+                    {submitting ? "Sending…" : "Submit inquiry"} <ArrowRight size={14} />
+                  </button>
+                )}
               </div>
-            </>
+            </div>
           )}
         </div>
       </section>
@@ -307,12 +383,410 @@ Notes: ${parsed.data.notes || "—"}`;
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+/* ---------- helpers ---------- */
+
+function describeContext(d: Pick<InquiryDraft, "intent" | "productContext">): string | null {
+  const c = d.productContext;
+  if (!c) return null;
+  if (c.productName) return `For: ${c.productName}`;
+  if (c.shortlistNames?.length) return `Shortlist · ${c.shortlistNames.length} product${c.shortlistNames.length > 1 ? "s" : ""}`;
+  if (c.compareNames?.length) return `Compare · ${c.compareNames.length} products`;
+  if (c.categorySlug) return `Category: ${c.categorySlug}`;
+  return null;
+}
+
+function buildMessage(d: InquiryDraft | Omit<InquiryDraft, "v" | "updatedAt">): string {
+  const parts: string[] = [];
+  parts.push(`Intent: ${d.intent.toUpperCase()}`);
+  if (d.productContext?.productName) parts.push(`Product: ${d.productContext.productName}`);
+  if (d.productContext?.shortlistNames?.length) parts.push(`Shortlist: ${d.productContext.shortlistNames.join(", ")}`);
+  if (d.productContext?.compareNames?.length) parts.push(`Compare: ${d.productContext.compareNames.join(", ")}`);
+  if (d.buyerType) parts.push(`Buyer type: ${d.buyerType}`);
+  if (d.quantity) parts.push(`Quantity: ${d.quantity}`);
+  if (d.intent === "sample" && d.sampleQty) parts.push(`Sample: ${d.sampleQty} · ${d.sampleSize ?? ""} · ${d.sampleColor ?? ""} · ${d.sampleBranding ?? ""}`);
+  if (d.intent === "catalogue") parts.push(`Catalogue: ${d.cataloguePreference ?? "full"}${d.catalogueCategories?.length ? " · " + d.catalogueCategories.join(", ") : ""}`);
+  if (d.intent === "reference" && d.referenceNotes) parts.push(`Reference notes: ${d.referenceNotes}`);
+  if (d.intent === "meeting") parts.push(`Meeting: ${d.meetingTopic ?? ""} · ${d.meetingDate ?? ""} ${d.meetingTime ?? ""} ${d.meetingTz ?? ""}`);
+  if (d.notes) parts.push(`Notes: ${d.notes}`);
+  if (d.files.length) parts.push(`Files attached: ${d.files.length}`);
+  return parts.join("\n");
+}
+
+/* ---------- step components ---------- */
+
+function StepIntent({
+  draft, setField,
+}: { draft: Omit<InquiryDraft, "v" | "updatedAt">; setField: <K extends keyof InquiryDraft>(k: K, v: InquiryDraft[K]) => void }) {
   return (
     <div>
-      <label className="block text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-3">{label}</label>
-      {children}
-      {error && <p className="text-destructive text-xs mt-2">{error}</p>}
+      <h2 className="font-display text-2xl md:text-3xl mb-2">What do you need?</h2>
+      <p className="text-sm text-foreground/60 mb-6">Choose one — you can add more detail on the next step.</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {INTENTS.map(({ id, label, blurb, icon: Icon }) => {
+          const active = draft.intent === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setField("intent", id)}
+              className={`text-left p-5 border transition-all ${
+                active ? "border-primary bg-primary/5 text-primary" : "border-border/60 hover:border-foreground/40"
+              }`}
+            >
+              <Icon size={20} />
+              <p className="font-display text-lg mt-3">{label}</p>
+              <p className="text-xs text-foreground/60 mt-1">{blurb}</p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StepRequirements({
+  draft, setField, errors,
+}: {
+  draft: Omit<InquiryDraft, "v" | "updatedAt">;
+  setField: <K extends keyof InquiryDraft>(k: K, v: InquiryDraft[K]) => void;
+  errors: Record<string, string>;
+}) {
+  const input = "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm";
+  const label = "block text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2";
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="font-display text-2xl md:text-3xl mb-2">Requirements</h2>
+        <p className="text-sm text-foreground/60">Share the essentials. We reply within one working day.</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className={label}>Buyer type</label>
+          <select
+            className={input}
+            value={draft.buyerType ?? ""}
+            onChange={(e) => setField("buyerType", e.target.value)}
+          >
+            <option value="">Select…</option>
+            <option value="brand">Brand / Retailer</option>
+            <option value="wholesaler">Wholesaler / Importer</option>
+            <option value="agency">Sourcing Agency</option>
+            <option value="uniform">Uniform / Club / Team</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label className={label}>Company / Brand *</label>
+          <input className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
+          {errors.company && <p className="text-xs text-destructive mt-1">{errors.company}</p>}
+        </div>
+        <div>
+          <label className={label}>Destination country *</label>
+          <input className={input} placeholder="e.g. Germany" value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
+          {errors.country && <p className="text-xs text-destructive mt-1">{errors.country}</p>}
+        </div>
+        {(draft.intent === "rfq") && (
+          <div>
+            <label className={label}>Estimated quantity *</label>
+            <input className={input} placeholder="e.g. 500 pcs / style" value={draft.quantity ?? ""} onChange={(e) => setField("quantity", e.target.value)} />
+            {errors.quantity && <p className="text-xs text-destructive mt-1">{errors.quantity}</p>}
+          </div>
+        )}
+      </div>
+
+      {draft.intent === "sample" && (
+        <div className="grid md:grid-cols-2 gap-4 border-t border-border/40 pt-4">
+          <div>
+            <label className={label}>Sample quantity *</label>
+            <input className={input} placeholder="e.g. 2 pcs / style" value={draft.sampleQty ?? ""} onChange={(e) => setField("sampleQty", e.target.value)} />
+            {errors.sampleQty && <p className="text-xs text-destructive mt-1">{errors.sampleQty}</p>}
+          </div>
+          <div>
+            <label className={label}>Size</label>
+            <input className={input} placeholder="e.g. M / L" value={draft.sampleSize ?? ""} onChange={(e) => setField("sampleSize", e.target.value)} />
+          </div>
+          <div>
+            <label className={label}>Color / Colorway</label>
+            <input className={input} placeholder="e.g. Navy / Ivory" value={draft.sampleColor ?? ""} onChange={(e) => setField("sampleColor", e.target.value)} />
+          </div>
+          <div>
+            <label className={label}>Plain or branded</label>
+            <select className={input} value={draft.sampleBranding ?? ""} onChange={(e) => setField("sampleBranding", (e.target.value || undefined) as InquiryDraft["sampleBranding"])}>
+              <option value="">Select…</option>
+              <option value="plain">Plain</option>
+              <option value="branded">Branded (with our logo)</option>
+            </select>
+          </div>
+          <p className="md:col-span-2 text-[11px] text-foreground/60">
+            Availability, cost and timeline are confirmed after requirement review.
+          </p>
+        </div>
+      )}
+
+      {draft.intent === "catalogue" && (
+        <div className="grid gap-4 border-t border-border/40 pt-4">
+          <div>
+            <label className={label}>Catalogue preference</label>
+            <select
+              className={input}
+              value={draft.cataloguePreference ?? "full"}
+              onChange={(e) => setField("cataloguePreference", e.target.value as InquiryDraft["cataloguePreference"])}
+            >
+              <option value="full">Full catalogue</option>
+              <option value="selected">Selected categories</option>
+            </select>
+          </div>
+          {draft.cataloguePreference === "selected" && (
+            <div>
+              <label className={label}>Categories</label>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {CATEGORIES.map((c) => {
+                  const on = draft.catalogueCategories?.includes(c.slug) ?? false;
+                  return (
+                    <label key={c.slug} className={`flex items-center gap-3 border px-3 py-2 cursor-pointer text-sm ${on ? "border-primary text-primary" : "border-border/60"}`}>
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={(e) => {
+                          const cur = draft.catalogueCategories ?? [];
+                          setField("catalogueCategories", e.target.checked ? [...cur, c.slug] : cur.filter((x) => x !== c.slug));
+                        }}
+                      />
+                      {c.name}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {draft.intent === "reference" && (
+        <div className="border-t border-border/40 pt-4">
+          <label className={label}>Reference / customization notes</label>
+          <textarea
+            rows={4}
+            className={input}
+            placeholder="Describe what you'd like to build — fabric, print, embellishments, references…"
+            value={draft.referenceNotes ?? ""}
+            onChange={(e) => setField("referenceNotes", e.target.value)}
+          />
+          <p className="text-[11px] text-foreground/60 mt-2">Upload tech pack / artwork on the next step.</p>
+        </div>
+      )}
+
+      {draft.intent === "meeting" && (
+        <div className="grid md:grid-cols-2 gap-4 border-t border-border/40 pt-4">
+          <div className="md:col-span-2">
+            <label className={label}>Topic *</label>
+            <input className={input} placeholder="e.g. AW26 uniform program" value={draft.meetingTopic ?? ""} onChange={(e) => setField("meetingTopic", e.target.value)} />
+            {errors.meetingTopic && <p className="text-xs text-destructive mt-1">{errors.meetingTopic}</p>}
+          </div>
+          <div>
+            <label className={label}>Preferred date</label>
+            <input type="date" className={input} value={draft.meetingDate ?? ""} onChange={(e) => setField("meetingDate", e.target.value)} />
+          </div>
+          <div>
+            <label className={label}>Time window</label>
+            <input className={input} placeholder="e.g. 10:00–12:00" value={draft.meetingTime ?? ""} onChange={(e) => setField("meetingTime", e.target.value)} />
+          </div>
+          <div>
+            <label className={label}>Timezone</label>
+            <input className={input} placeholder="e.g. CET / EST" value={draft.meetingTz ?? ""} onChange={(e) => setField("meetingTz", e.target.value)} />
+          </div>
+          <p className="md:col-span-2 text-[11px] text-foreground/60">
+            Meeting request received. Availability will be confirmed.
+          </p>
+        </div>
+      )}
+
+      <div>
+        <label className={label}>Notes / requirements</label>
+        <textarea
+          rows={4}
+          className={input}
+          placeholder="Fabric preferences, deadlines, target price band, anything else…"
+          value={draft.notes ?? ""}
+          onChange={(e) => setField("notes", e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StepFiles({
+  draft, onFiles, sessionId,
+}: { draft: Omit<InquiryDraft, "v" | "updatedAt">; onFiles: (files: UploadedFileRef[]) => void; sessionId: string }) {
+  return (
+    <div>
+      <h2 className="font-display text-2xl md:text-3xl mb-2">Files (optional)</h2>
+      <p className="text-sm text-foreground/60 mb-6">
+        {draft.intent === "reference"
+          ? "Attach your tech pack, artwork, or mockups."
+          : draft.intent === "sample"
+            ? "Attach reference images / logo if applicable."
+            : "Attach a tech pack, logo, brief or reference photo if useful."}
+      </p>
+      <SecureFileUpload value={draft.files} onChange={onFiles} sessionId={sessionId} />
+    </div>
+  );
+}
+
+function StepContact({
+  draft, setField, errors,
+}: {
+  draft: Omit<InquiryDraft, "v" | "updatedAt">;
+  setField: <K extends keyof InquiryDraft>(k: K, v: InquiryDraft[K]) => void;
+  errors: Record<string, string>;
+}) {
+  const input = "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm";
+  const label = "block text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2";
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="font-display text-2xl md:text-3xl mb-2">Your contact details</h2>
+        <p className="text-sm text-foreground/60">We reply on email + WhatsApp. Nothing is shared.</p>
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className={label}>Full name *</label>
+          <input className={input} value={draft.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
+          {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
+        </div>
+        <div>
+          <label className={label}>Company *</label>
+          <input className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
+          {errors.company && <p className="text-xs text-destructive mt-1">{errors.company}</p>}
+        </div>
+        <div>
+          <label className={label}>Email *</label>
+          <input type="email" className={input} value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} />
+          {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+        </div>
+        <div>
+          <label className={label}>WhatsApp / phone *</label>
+          <input className={input} placeholder="+1 555 000 0000" value={draft.whatsapp ?? ""} onChange={(e) => setField("whatsapp", e.target.value)} />
+          {errors.whatsapp && <p className="text-xs text-destructive mt-1">{errors.whatsapp}</p>}
+        </div>
+        <div className="md:col-span-2">
+          <label className={label}>Country *</label>
+          <input className={input} value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
+          {errors.country && <p className="text-xs text-destructive mt-1">{errors.country}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepReview({
+  draft, onEditStep,
+}: { draft: Omit<InquiryDraft, "v" | "updatedAt">; onEditStep: (s: number) => void }) {
+  const row = "flex items-start justify-between gap-4 py-3 border-b border-border/40 last:border-0";
+  const key = "text-[11px] uppercase tracking-[0.25em] text-foreground/55 min-w-[140px]";
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="font-display text-2xl md:text-3xl mb-2">Review & submit</h2>
+        <p className="text-sm text-foreground/60">We won't send anything until you press Submit.</p>
+      </div>
+      <section>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-foreground/60">Intent</p>
+          <button type="button" onClick={() => onEditStep(1)} className="text-[11px] uppercase tracking-[0.2em] text-primary hover:underline">Edit</button>
+        </div>
+        <div className={row}><span className={key}>Type</span><span className="text-sm">{INTENTS.find((i) => i.id === draft.intent)?.label ?? draft.intent}</span></div>
+        {draft.productContext?.productName && <div className={row}><span className={key}>Product</span><span className="text-sm">{draft.productContext.productName}</span></div>}
+        {draft.productContext?.shortlistNames?.length ? <div className={row}><span className={key}>Shortlist</span><span className="text-sm">{draft.productContext.shortlistNames.join(", ")}</span></div> : null}
+        {draft.productContext?.compareNames?.length ? <div className={row}><span className={key}>Compare</span><span className="text-sm">{draft.productContext.compareNames.join(", ")}</span></div> : null}
+      </section>
+      <section>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-foreground/60">Requirements</p>
+          <button type="button" onClick={() => onEditStep(2)} className="text-[11px] uppercase tracking-[0.2em] text-primary hover:underline">Edit</button>
+        </div>
+        {draft.buyerType && <div className={row}><span className={key}>Buyer type</span><span className="text-sm">{draft.buyerType}</span></div>}
+        {draft.country && <div className={row}><span className={key}>Country</span><span className="text-sm">{draft.country}</span></div>}
+        {draft.quantity && <div className={row}><span className={key}>Quantity</span><span className="text-sm">{draft.quantity}</span></div>}
+        {draft.intent === "sample" && (draft.sampleQty || draft.sampleSize || draft.sampleColor) &&
+          <div className={row}><span className={key}>Sample</span><span className="text-sm">{[draft.sampleQty, draft.sampleSize, draft.sampleColor, draft.sampleBranding].filter(Boolean).join(" · ")}</span></div>}
+        {draft.intent === "catalogue" &&
+          <div className={row}><span className={key}>Catalogue</span><span className="text-sm">{draft.cataloguePreference ?? "full"}{draft.catalogueCategories?.length ? " · " + draft.catalogueCategories.join(", ") : ""}</span></div>}
+        {draft.intent === "meeting" &&
+          <div className={row}><span className={key}>Meeting</span><span className="text-sm">{[draft.meetingTopic, draft.meetingDate, draft.meetingTime, draft.meetingTz].filter(Boolean).join(" · ")}</span></div>}
+        {draft.notes && <div className={row}><span className={key}>Notes</span><span className="text-sm whitespace-pre-wrap">{draft.notes}</span></div>}
+        {draft.intent === "reference" && draft.referenceNotes &&
+          <div className={row}><span className={key}>Reference</span><span className="text-sm whitespace-pre-wrap">{draft.referenceNotes}</span></div>}
+      </section>
+      <section>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-foreground/60">Files</p>
+          <button type="button" onClick={() => onEditStep(3)} className="text-[11px] uppercase tracking-[0.2em] text-primary hover:underline">Edit</button>
+        </div>
+        {draft.files.length ? (
+          <ul className="text-sm space-y-1">
+            {draft.files.map((f) => <li key={f.path} className="flex items-center gap-2 text-foreground/80"><FileText size={14} /> {f.name}</li>)}
+          </ul>
+        ) : <p className="text-sm text-foreground/60">No files attached.</p>}
+      </section>
+      <section>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-foreground/60">Contact</p>
+          <button type="button" onClick={() => onEditStep(4)} className="text-[11px] uppercase tracking-[0.2em] text-primary hover:underline">Edit</button>
+        </div>
+        <div className={row}><span className={key}>Name</span><span className="text-sm">{draft.name}</span></div>
+        <div className={row}><span className={key}>Company</span><span className="text-sm">{draft.company}</span></div>
+        <div className={row}><span className={key}>Email</span><span className="text-sm">{draft.email}</span></div>
+        <div className={row}><span className={key}>WhatsApp</span><span className="text-sm">{draft.whatsapp}</span></div>
+      </section>
+      <p className="text-[11px] text-foreground/55">
+        Prices, sample cost, production time, shipping and meeting slots are confirmed after our team reviews your requirements.
+      </p>
+    </div>
+  );
+}
+
+function SuccessScreen({
+  ref: inquiryRef, draft,
+}: { ref: string; draft: Omit<InquiryDraft, "v" | "updatedAt"> }) {
+  const summary = [
+    `Inquiry ${inquiryRef}`,
+    `Intent: ${INTENTS.find((i) => i.id === draft.intent)?.label ?? draft.intent}`,
+    draft.productContext?.productName ? `Product: ${draft.productContext.productName}` : null,
+    draft.productContext?.shortlistNames?.length ? `Shortlist: ${draft.productContext.shortlistNames.join(", ")}` : null,
+    draft.company ? `Company: ${draft.company}` : null,
+    draft.country ? `Country: ${draft.country}` : null,
+  ].filter(Boolean).join("\n");
+  const waHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi Irha Apparels — following up on my inquiry.\n\n${summary}`)}`;
+  return (
+    <div className="border border-primary/40 bg-card/60 p-10 text-center">
+      <div className="mx-auto w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center mb-5">
+        <Check className="text-primary" size={26} />
+      </div>
+      <h2 className="font-display text-3xl md:text-4xl">Inquiry received</h2>
+      <p className="text-sm text-foreground/70 mt-3">
+        Reference <span className="font-mono text-foreground">{inquiryRef}</span>. Our merchandising team will reply within one working day on email and WhatsApp.
+      </p>
+      <p className="text-[11px] text-foreground/55 mt-3">
+        We'll confirm availability, cost and timeline after reviewing your requirements.
+      </p>
+      <div className="mt-8 flex flex-wrap gap-3 justify-center">
+        <a
+          href={waHref}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-3 bg-primary text-primary-foreground px-7 py-3.5 text-xs uppercase tracking-[0.25em]"
+        >
+          <MessageCircle size={14} /> Continue on WhatsApp
+        </a>
+        <Link
+          to="/products"
+          className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-3.5 text-xs uppercase tracking-[0.25em]"
+        >
+          Browse collections
+        </Link>
+      </div>
     </div>
   );
 }
