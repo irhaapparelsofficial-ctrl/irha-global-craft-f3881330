@@ -143,11 +143,10 @@ export default function Products() {
         <div className="container-luxe space-y-32">
           {CATEGORIES.map((c, i) => {
             const reverse = i % 2 === 1;
-            const group = findGroup(c.slug);
-            const subs = group?.subs ?? [];
+            const subs = c.subs;
             const currentSubSlug = activeSub[c.slug] || subs[0]?.slug;
             const currentSub = subs.find((s) => s.slug === currentSubSlug) ?? subs[0];
-            const totalProducts = subs.reduce((n, s) => n + s.products.length, 0);
+            const totalProducts = c.productCount;
 
             return (
               <article key={c.slug} id={c.slug} className="scroll-mt-32">
