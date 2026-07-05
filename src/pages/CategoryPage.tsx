@@ -1,10 +1,8 @@
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SEO from "@/components/SEO";
-import { CATEGORIES, type Product } from "@/lib/categories";
-import { findGroup } from "@/lib/catalog";
+import type { Product } from "@/lib/categories";
 import { CATEGORY_SEO } from "@/lib/categorySeo";
-
 
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
@@ -12,6 +10,7 @@ import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
 import { ArrowUpRight, ChevronRight, Download, Eye, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
+import { usePublicCategories, useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 
 const SITE = "https://www.irhaapparels.com";
 
@@ -21,13 +20,12 @@ type FlatProduct = Product & {
   subSlug: string;
   subName: string;
   sku: string;
-  // stable synthetic signals for sort
+  productSlug: string;
   _priceRank: number;
   _popRank: number;
   _order: number;
 };
 
-// Stable hash for synthetic sort signals (we don't store price/popularity)
 function hash(str: string): number {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
@@ -43,10 +41,10 @@ const LOAD_MORE_THRESHOLD = 250;
 
 export default function CategoryPage() {
   const { slug = "" } = useParams<{ slug: string }>();
-  const category = CATEGORIES.find((c) => c.slug === slug);
+  const { category, isLoading } = useNormalizedCategory(slug);
+  const { categories: allCategories } = usePublicCategories();
   const seo = CATEGORY_SEO[slug];
-  const group = findGroup(slug);
-  const subs = group?.subs ?? [];
+  const subs = category?.subs ?? [];
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [sort, setSort] = useState<SortKey>("newest");
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
@@ -55,7 +53,6 @@ export default function CategoryPage() {
   const [peekOpen, setPeekOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Flatten all sub products into one list with metadata + stable sort signals.
   const allProducts: FlatProduct[] = useMemo(() => {
     const out: FlatProduct[] = [];
     let order = 0;
@@ -67,6 +64,7 @@ export default function CategoryPage() {
           subSlug: sub.slug,
           subName: sub.name,
           sku,
+          productSlug: p.slug,
           _priceRank: hash(p.name + ":price") % 10000,
           _popRank: hash(p.name + ":pop") % 10000,
           _order: order++,
@@ -113,9 +111,11 @@ export default function CategoryPage() {
     return () => io.disconnect();
   }, [visible, filteredSorted.length]);
 
-  if (!category || !seo) {
-    return <Navigate to="/products" replace />;
+  if (!seo) return <Navigate to="/products" replace />;
+  if (isLoading && !category) {
+    return <div className="pt-40 pb-20 container-luxe text-sm text-muted-foreground">Loading collection…</div>;
   }
+  if (!category) return <Navigate to="/products" replace />;
 
   const totalProducts = allProducts.length;
   const url = `${SITE}/products/${category.slug}`;
@@ -379,7 +379,7 @@ export default function CategoryPage() {
         <div className="container-luxe">
           <p className="eyebrow mb-6">Other collections</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {CATEGORIES.filter((c) => c.slug !== category.slug).map((c) => (
+            {allCategories.filter((c) => c.slug !== category.slug).map((c) => (
               <Link
                 key={c.slug}
                 to={`/products/${c.slug}`}

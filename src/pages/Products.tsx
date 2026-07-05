@@ -1,6 +1,5 @@
 import SEO from "@/components/SEO";
-import { CATEGORIES, type Category, type Product } from "@/lib/categories";
-import { CATALOG, findGroup } from "@/lib/catalog";
+import type { Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Download, Eye, Maximize2, MessageCircle } from "lucide-react";
 import { useState } from "react";
@@ -8,14 +7,12 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { FEATURED_PRODUCTS } from "@/lib/featuredProducts";
-
-import { whatsappLink, BRAND } from "@/lib/constants";
-
-
-
+import { whatsappLink } from "@/lib/constants";
+import { usePublicCategories, type NormalizedCategory } from "@/hooks/usePublicCategoryData";
 
 export default function Products() {
-  const [previewCat, setPreviewCat] = useState<Category | null>(null);
+  const { categories: CATEGORIES, isLoading } = usePublicCategories();
+  const [previewCat, setPreviewCat] = useState<NormalizedCategory | null>(null);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeSub, setActiveSub] = useState<Record<string, string>>({});
 
@@ -146,11 +143,10 @@ export default function Products() {
         <div className="container-luxe space-y-32">
           {CATEGORIES.map((c, i) => {
             const reverse = i % 2 === 1;
-            const group = findGroup(c.slug);
-            const subs = group?.subs ?? [];
+            const subs = c.subs;
             const currentSubSlug = activeSub[c.slug] || subs[0]?.slug;
             const currentSub = subs.find((s) => s.slug === currentSubSlug) ?? subs[0];
-            const totalProducts = subs.reduce((n, s) => n + s.products.length, 0);
+            const totalProducts = c.productCount;
 
             return (
               <article key={c.slug} id={c.slug} className="scroll-mt-32">
