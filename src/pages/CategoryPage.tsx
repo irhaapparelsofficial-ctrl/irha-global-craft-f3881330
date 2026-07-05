@@ -111,9 +111,11 @@ export default function CategoryPage() {
     return () => io.disconnect();
   }, [visible, filteredSorted.length]);
 
-  if (!category || !seo) {
-    return <Navigate to="/products" replace />;
+  if (!seo) return <Navigate to="/products" replace />;
+  if (isLoading && !category) {
+    return <div className="pt-40 pb-20 container-luxe text-sm text-muted-foreground">Loading collection…</div>;
   }
+  if (!category) return <Navigate to="/products" replace />;
 
   const totalProducts = allProducts.length;
   const url = `${SITE}/products/${category.slug}`;
