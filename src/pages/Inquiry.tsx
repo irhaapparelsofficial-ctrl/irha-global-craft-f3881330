@@ -17,7 +17,7 @@ import {
   type UploadedFileRef,
 } from "@/lib/inquiryDraft";
 
-const INTENTS: { id: InquiryIntent; label: string; blurb: string; icon: React.ComponentType<{ size?: number }> }[] = [
+const INTENTS: { id: InquiryIntent; label: string; blurb: string; icon: LucideIcon }[] = [
   { id: "rfq", label: "Request Quote", blurb: "OEM / ODM / private-label pricing", icon: FileText },
   { id: "sample", label: "Request Sample", blurb: "Physical samples for evaluation", icon: Package },
   { id: "catalogue", label: "Request Catalogue", blurb: "PDF catalogue + fabric options", icon: BookOpen },
