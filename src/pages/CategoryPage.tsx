@@ -337,7 +337,37 @@ export default function CategoryPage() {
         </div>
       </section>
 
-      <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur border-b border-border/60">
+      {/* Mobile: compact sticky Filter + Sort row */}
+      <div className="sticky top-[64px] z-30 bg-background/95 backdrop-blur border-b border-border/60 md:hidden pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="container-luxe py-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setFilterOpen(true)}
+            aria-label="Open filters"
+            className="flex-1 inline-flex items-center justify-center gap-2 border border-border/60 px-4 py-2.5 text-[11px] uppercase tracking-[0.25em] hover:border-primary hover:text-primary"
+          >
+            <SlidersHorizontal size={14} /> Filter
+            {(activeFilter !== "all" || q) && (
+              <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] px-1">
+                {(activeFilter !== "all" ? 1 : 0) + (q ? 1 : 0)}
+              </span>
+            )}
+          </button>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            aria-label="Sort"
+            className="flex-1 bg-transparent border border-border/60 px-3 py-2.5 text-[11px] uppercase tracking-[0.2em] focus:outline-none focus:border-primary"
+          >
+            <option value="recommended">Sort · Recommended</option>
+            <option value="name">Sort · A–Z</option>
+            <option value="newest">Sort · Newest</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Desktop: inline chips + search + sort (preserved experience) */}
+      <div className="hidden md:block sticky top-[72px] z-30 bg-background/95 backdrop-blur border-b border-border/60">
         <div className="container-luxe py-4 flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap gap-2 flex-1 min-w-0">
             <FilterChip
@@ -356,6 +386,31 @@ export default function CategoryPage() {
               />
             ))}
           </div>
+          <form
+            onSubmit={(e) => { e.preventDefault(); setQ(qInput); }}
+            className="relative flex items-center"
+          >
+            <Search size={14} className="absolute left-3 text-foreground/50 pointer-events-none" />
+            <input
+              type="search"
+              value={qInput}
+              onChange={(e) => setQInput(e.target.value)}
+              onBlur={() => { if (qInput !== q) setQ(qInput); }}
+              placeholder="Search in category"
+              aria-label="Search within category"
+              className="bg-transparent border border-border/60 pl-9 pr-8 py-2 text-xs w-56 focus:outline-none focus:border-primary"
+            />
+            {q && (
+              <button
+                type="button"
+                onClick={() => { setQInput(""); setQ(""); }}
+                aria-label="Clear search"
+                className="absolute right-2 text-foreground/50 hover:text-foreground"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </form>
           <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-foreground/60">
             Sort
             <select
@@ -371,11 +426,110 @@ export default function CategoryPage() {
         </div>
       </div>
 
+      {/* Mobile filter drawer */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="bottom" className="h-[85vh] flex flex-col p-0">
+          <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60 text-left">
+            <SheetTitle className="text-sm uppercase tracking-[0.25em]">Filter {category.name}</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+            <form
+              onSubmit={(e) => { e.preventDefault(); setQ(qInput); setFilterOpen(false); }}
+              className="relative flex items-center"
+            >
+              <Search size={16} className="absolute left-3 text-foreground/50 pointer-events-none" />
+              <input
+                type="search"
+                value={qInput}
+                onChange={(e) => setQInput(e.target.value)}
+                placeholder="Search products, SKU, description"
+                aria-label="Search within category"
+                className="w-full bg-transparent border border-border/60 pl-10 pr-3 py-3 text-sm focus:outline-none focus:border-primary"
+              />
+            </form>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-foreground/55 mb-2">Subcategory</p>
+              <ul className="divide-y divide-border/50 border-y border-border/50">
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter("all")}
+                    className={`w-full flex items-center justify-between py-3 text-left text-sm ${activeFilter === "all" ? "text-primary" : "text-foreground/80"}`}
+                  >
+                    <span>All Products</span>
+                    <span className="text-foreground/40 text-xs">({allProducts.length})</span>
+                  </button>
+                </li>
+                {subs.map((s) => (
+                  <li key={s.slug}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveFilter(s.slug)}
+                      className={`w-full flex items-center justify-between py-3 text-left text-sm ${activeFilter === s.slug ? "text-primary" : "text-foreground/80"}`}
+                    >
+                      <span>{s.name}</span>
+                      <span className="text-foreground/40 text-xs">({s.products.length})</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <SheetFooter className="p-4 border-t border-border/60 flex-row gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => {
+                setQInput("");
+                setSearchParams(new URLSearchParams(), { replace: false });
+              }}
+              className="flex-1 border border-border/60 px-4 py-3 text-xs uppercase tracking-[0.25em] hover:border-primary hover:text-primary"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => { setQ(qInput); setFilterOpen(false); }}
+              className="flex-1 bg-primary text-primary-foreground px-4 py-3 text-xs uppercase tracking-[0.25em]"
+            >
+              Apply
+            </button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
       <section className="py-10">
         <div className="container-luxe">
-          <p className="text-xs uppercase tracking-[0.3em] text-foreground/50 mb-6">
-            Showing {Math.min(visible, filteredSorted.length)} of {filteredSorted.length}
-          </p>
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-foreground/50">
+              Showing {Math.min(visible, filteredSorted.length)} of {filteredSorted.length}
+              {q && <span className="ml-2 normal-case tracking-normal text-foreground/70">· results for "{q}"</span>}
+            </p>
+            {q && (
+              <button
+                type="button"
+                onClick={() => { setQInput(""); setQ(""); }}
+                className="text-[11px] uppercase tracking-[0.25em] text-primary hover:underline"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+
+          {filteredSorted.length === 0 && (
+            <div className="border border-dashed border-border/60 p-10 text-center">
+              <p className="text-sm text-foreground/70">
+                No {category.name.toLowerCase()} products match {q ? `"${q}"` : "these filters"}.
+              </p>
+              <button
+                type="button"
+                onClick={() => { setQInput(""); setSearchParams(new URLSearchParams(), { replace: false }); }}
+                className="mt-4 inline-flex px-6 py-3 border border-border/60 hover:border-primary hover:text-primary text-[11px] uppercase tracking-[0.25em]"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
+
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
             {renderProducts.map((p) => (
