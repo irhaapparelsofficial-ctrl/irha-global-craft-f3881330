@@ -1,10 +1,11 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Bookmark, ChevronDown, Menu, X } from "lucide-react";
 import { BRAND } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import MockupRequestButton from "@/components/MockupRequestButton";
 import irhaLogo from "@/assets/irha-logo.png.asset.json";
+import { useShortlist } from "@/lib/shortlist";
 
 const mainLinks = [
   { to: "/", label: "Home" },
@@ -30,6 +31,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const { pathname } = useLocation();
+  const shortlist = useShortlist();
+  const savedCount = shortlist.items.length;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -130,6 +133,18 @@ export default function Navbar() {
 
         <div className="hidden lg:flex items-center gap-3">
           <MockupRequestButton variant="nav">Mockup Design</MockupRequestButton>
+          <Link
+            to="/shortlist"
+            aria-label={`Shortlist (${savedCount} saved)`}
+            className="relative inline-flex items-center justify-center p-2 text-foreground/80 hover:text-primary transition-colors"
+          >
+            <Bookmark size={18} />
+            {savedCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center">
+                {savedCount}
+              </span>
+            )}
+          </Link>
           <Link
             to="/inquiry"
             className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-medium hover:shadow-gold transition-all"
