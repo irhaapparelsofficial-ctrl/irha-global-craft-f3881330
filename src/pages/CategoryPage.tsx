@@ -9,7 +9,7 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
-import { ArrowUpRight, ChevronRight, Download, Eye, MessageCircle, Search, SlidersHorizontal, X } from "lucide-react";
+import { ChevronRight, Download, Eye, MessageCircle, Search, SlidersHorizontal, X } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 import { usePublicCategories, useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
