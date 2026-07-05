@@ -70,7 +70,7 @@ export const CATEGORY_SEO: Record<string, CategorySEO> = {
       "leather jacket manufacturer Sialkot, leather garments exporter Pakistan, lambskin jacket wholesale, biker jacket manufacturer, custom leather jackets, premium leather supplier, OEM leatherwear",
     h1: "Leather Garment Manufacturer — Jackets, Vests & Outerwear",
     intro:
-      "Three generations of Sialkot leatherworking, applied to premium fashion outerwear, biker jackets, bomber jackets, vests and skirts. We work with lambskin, cowhide nappa, sheep nappa and genuine suede from LWG-rated tanneries — built for fashion houses, motorcycle apparel brands and private-label boutiques across the USA, EU, UK and the Gulf.",
+      "Three generations of Sialkot leatherworking, applied to premium fashion outerwear, biker jackets, bomber jackets, vests and skirts. We work with lambskin, cowhide nappa, sheep nappa and genuine suede from vetted tanneries — built for fashion houses, motorcycle apparel brands and private-label boutiques across the USA, EU, UK and the Gulf.",
     exportMarkets: ["USA", "UK", "Germany", "Italy", "UAE", "Canada"],
     ogImage: ogLeather,
     faqs: [
