@@ -1,6 +1,5 @@
 import SEO from "@/components/SEO";
-import { CATEGORIES, type Category, type Product } from "@/lib/categories";
-import { CATALOG, findGroup } from "@/lib/catalog";
+import type { Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Download, Eye, Maximize2, MessageCircle } from "lucide-react";
 import { useState } from "react";
@@ -8,14 +7,12 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { FEATURED_PRODUCTS } from "@/lib/featuredProducts";
-
-import { whatsappLink, BRAND } from "@/lib/constants";
-
-
-
+import { whatsappLink } from "@/lib/constants";
+import { usePublicCategories, type NormalizedCategory } from "@/hooks/usePublicCategoryData";
 
 export default function Products() {
-  const [previewCat, setPreviewCat] = useState<Category | null>(null);
+  const { categories: CATEGORIES, isLoading } = usePublicCategories();
+  const [previewCat, setPreviewCat] = useState<NormalizedCategory | null>(null);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeSub, setActiveSub] = useState<Record<string, string>>({});
 
