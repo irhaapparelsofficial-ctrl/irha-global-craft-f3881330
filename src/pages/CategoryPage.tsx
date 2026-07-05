@@ -1,5 +1,5 @@
-import { useParams, Link, Navigate } from "react-router-dom";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, Link, Navigate, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SEO from "@/components/SEO";
 import type { Product } from "@/lib/categories";
 import { CATEGORY_SEO, type CategorySEO } from "@/lib/categorySeo";
@@ -9,9 +9,10 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
-import { ArrowUpRight, ChevronRight, Download, Eye, MessageCircle } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Download, Eye, MessageCircle, Search, SlidersHorizontal, X } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 import { usePublicCategories, useNormalizedCategory } from "@/hooks/usePublicCategoryData";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 
 const SITE = "https://www.irhaapparels.com";
 
