@@ -74,37 +74,25 @@ export default function CookieConsent() {
     return () => window.removeEventListener(OPEN_COOKIE_SETTINGS_EVENT, open);
   }, []);
 
-  // Initial mount: apply prior choice or geo-check for EU/UK
+  // Initial mount: apply prior choice, or default to showing the compact banner.
+  // No client-side geo lookup — CORS-prone third-party calls removed.
+  // Locale is a cheap heuristic: EU/UK locales get the banner, others auto-grant analytics.
   useEffect(() => {
     const stored = readStored();
     if (stored) {
       applyConsent(stored.categories);
       return;
     }
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("https://ipapi.co/json/", { cache: "no-store" });
-        if (!res.ok) {
-          // API failed — safest fallback is to show banner (assume EU)
-          if (!cancelled) setVisible(true);
-          return;
-        }
-        const data = await res.json();
-        const country = String(data?.country_code || data?.country || "").toUpperCase();
-        if (!cancelled && EU_EEA_UK.has(country)) {
-          setVisible(true);
-        } else if (!cancelled) {
-          // Non-EU visitor — auto-grant analytics, keep ads denied
-          const c = { analytics: true, ads: false };
-          save(c);
-          applyConsent(c);
-        }
-      } catch {
-        if (!cancelled) setVisible(true); // fail-safe: show banner
-      }
-    })();
-    return () => { cancelled = true; };
+    const lang = (navigator.language || "").toUpperCase();
+    const region = lang.split("-")[1] || "";
+    const isEuLocale = EU_EEA_UK.has(region);
+    if (isEuLocale || !region) {
+      setVisible(true);
+    } else {
+      const c = { analytics: true, ads: false };
+      save(c);
+      applyConsent(c);
+    }
   }, []);
 
   const acceptAll = useCallback(() => {
