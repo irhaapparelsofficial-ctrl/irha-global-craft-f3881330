@@ -113,7 +113,26 @@ export default function Products() {
         </div>
       </section>
 
+      {shortlist.items.length > 0 && (
+        <div className="sticky top-16 z-30 border-b border-primary/30 bg-primary/10 backdrop-blur">
+          <div className="container-luxe flex flex-wrap items-center justify-between gap-3 py-3">
+            <p className="text-xs uppercase tracking-[0.25em] text-foreground/80 inline-flex items-center gap-2">
+              <Bookmark size={14} className="text-primary" />
+              {shortlist.items.length} saved product{shortlist.items.length === 1 ? "" : "s"}
+            </p>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={shortlist.clear} className="text-[11px] uppercase tracking-[0.25em] text-foreground/60 hover:text-foreground">Clear</button>
+              <Link to={shortlistRfqLink} className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-[11px] uppercase tracking-[0.25em]">
+                Request Quote <ArrowUpRight size={12} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Catalog search — lightweight, client-side over the loaded tree. */}
+      <section className="py-10 border-b border-border/60">
+        <div className="container-luxe">
       <section className="py-10 border-b border-border/60">
         <div className="container-luxe">
           <label className="block">
