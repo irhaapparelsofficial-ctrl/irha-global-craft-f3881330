@@ -15,6 +15,7 @@ const mainLinks = [
 ];
 
 const moreLinks = [
+  { to: "/shortlist", label: "Shortlist" },
   { to: "/sustainability", label: "Sustainability" },
   { to: "/blog", label: "Blog" },
   { to: "/journal", label: "Journal" },
