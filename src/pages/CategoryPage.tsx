@@ -23,8 +23,11 @@ type FlatProduct = Product & {
   subName: string;
   sku: string;
   productSlug: string;
+  createdAt?: string;
   _order: number;
 };
+
+const VALID_SORTS: SortKey[] = ["recommended", "name", "newest"];
 
 const INITIAL_VISIBLE = 200;
 const CHUNK = 200;
