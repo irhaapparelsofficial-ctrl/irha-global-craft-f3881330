@@ -19,7 +19,7 @@ const PROMISES = [
   {
     Icon: Clock,
     t: "Lead times we actually hit",
-    d: "45-day FOB on standard programs, contractually guaranteed. Penalty clauses welcomed on PO — we ship on date or we pay.",
+    d: "Lead times agreed per program on the PO, contractually guaranteed. Penalty clauses welcomed — we ship on date or we pay.",
   },
   {
     Icon: Lock,
@@ -29,7 +29,7 @@ const PROMISES = [
   {
     Icon: FileText,
     t: "Documentation, done right",
-    d: "Form-E, COO, Packing List, Commercial Invoice, OEKO-TEX certificates — every doc delivered before vessel ETA, no chasing.",
+    d: "Form-E, COO, Packing List, Commercial Invoice, fabric test reports — every doc delivered before vessel ETA, no chasing.",
   },
 ];
 

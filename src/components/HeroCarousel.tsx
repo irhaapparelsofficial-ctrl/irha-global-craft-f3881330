@@ -28,7 +28,7 @@ const SLIDES: Slide[] = [
     alt: "Heritage Bavarian lederhosen with edelweiss embroidery on dark walnut — Irha Apparels",
     eyebrow: "Sialkot · Worldwide Export",
     title: "Bavarian Wear",
-    highlight: "MOQ 50",
+    highlight: "Flexible MOQ",
     subtitle: "Authentic lederhosen, dirndl & trachten — handcrafted for DACH wholesalers.",
     ctaLabel: "View Collection",
     ctaHref: "/products/bavarian",

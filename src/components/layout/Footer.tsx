@@ -56,13 +56,11 @@ const COMPANY = [
 ];
 
 const COMPLIANCE = [
-  { label: "OEKO-TEX Standard 100", note: "Safe fabrics" },
-  { label: "BSCI", note: "Ethical manufacturing" },
-  { label: "SEDEX SMETA", note: "Social audit" },
-  { label: "ISO 9001", note: "Quality systems" },
-  { label: "GOTS", note: "Organic textiles (available)" },
-  { label: "WRAP", note: "US compliance" },
-  { label: "REACH", note: "EU chemicals" },
+  { label: "In-House Quality Control", note: "AQL inspections" },
+  { label: "Responsible Sourcing", note: "Vetted mill partners" },
+  { label: "Ethical Manufacturing", note: "Sialkot atelier" },
+  { label: "Export Documentation", note: "Form-E, COO, invoices" },
+  { label: "EU & US Market Ready", note: "Buyer-aligned compliance" },
 ];
 
 export default function Footer() {
@@ -204,7 +202,7 @@ export default function Footer() {
       {/* Promises strip */}
       <div className="container-luxe mt-14 pt-6 border-t border-foreground/10">
         <p className="text-center text-[11px] md:text-xs uppercase tracking-[0.3em] text-foreground/65">
-          MOQ 50 pcs <span className="text-gold mx-2">|</span> 45-Day Production <span className="text-gold mx-2">|</span> In-House Embroidery &amp; Sublimation
+          Flexible MOQ <span className="text-gold mx-2">|</span> FOB Sialkot <span className="text-gold mx-2">|</span> In-House Embroidery &amp; Sublimation
         </p>
       </div>
 
