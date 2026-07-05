@@ -49,21 +49,46 @@ export default function CategoryPage() {
   const { categories: allCategories } = usePublicCategories();
   const seoHardcoded = CATEGORY_SEO[slug] ?? CATEGORY_SEO[legacy?.top ?? ""];
   const subs = category?.subs ?? [];
-  const [activeFilter, setActiveFilter] = useState<string>("all");
-  const [sort, setSort] = useState<SortKey>("recommended");
+
+  // ---- URL-backed filter/sort/search state ----
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawSort = searchParams.get("sort") ?? "recommended";
+  const sort: SortKey = (VALID_SORTS as string[]).includes(rawSort) ? (rawSort as SortKey) : "recommended";
+  const activeFilter = searchParams.get("subcategory") ?? legacy?.sub ?? "all";
+  const q = searchParams.get("q") ?? "";
+  const [qInput, setQInput] = useState(q);
+  useEffect(() => { setQInput(q); }, [q]);
+
+  const updateParams = useCallback(
+    (patch: Record<string, string | null>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [k, v] of Object.entries(patch)) {
+            if (v === null || v === "" || (k === "subcategory" && v === "all") || (k === "sort" && v === "recommended")) {
+              next.delete(k);
+            } else {
+              next.set(k, v);
+            }
+          }
+          return next;
+        },
+        { replace: false },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const setActiveFilter = useCallback((v: string) => updateParams({ subcategory: v }), [updateParams]);
+  const setSort = useCallback((v: SortKey) => updateParams({ sort: v }), [updateParams]);
+  const setQ = useCallback((v: string) => updateParams({ q: v.trim() }), [updateParams]);
+
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [activeProduct, setActiveProduct] = useState<FlatProduct | null>(null);
   const [flipOpen, setFlipOpen] = useState(false);
   const [peekOpen, setPeekOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-
-  // ?subcategory=<sub-slug> deep-link for legacy inbound links
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const sp = new URLSearchParams(window.location.search);
-    const sub = sp.get("subcategory") ?? legacy?.sub;
-    if (sub) setActiveFilter(sub);
-  }, [legacy?.sub, slug]);
 
   const allProducts: FlatProduct[] = useMemo(() => {
     const out: FlatProduct[] = [];
@@ -77,6 +102,7 @@ export default function CategoryPage() {
           subName: sub.name,
           sku,
           productSlug: p.slug,
+          createdAt: (p as { created_at?: string }).created_at,
           _order: order++,
         });
       });
@@ -85,18 +111,47 @@ export default function CategoryPage() {
   }, [subs, slug, category?.slug]);
 
   const filteredSorted = useMemo(() => {
-    const filtered =
+    const bySub =
       activeFilter === "all"
         ? allProducts
         : allProducts.filter((p) => p.subSlug === activeFilter);
+    const needle = q.trim().toLowerCase();
+    const filtered = !needle
+      ? bySub
+      : bySub.filter((p) => {
+          const hay = `${p.name} ${p.sku} ${p.description ?? ""} ${p.subName}`.toLowerCase();
+          return hay.includes(needle);
+        });
     const sorted = [...filtered];
-    if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
-    else if (sort === "newest") sorted.sort((a, b) => b._order - a._order);
+    if (sort === "name") {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === "newest") {
+      // Real created_at desc; undated products go last, preserving stable order among them.
+      sorted.sort((a, b) => {
+        const ad = a.createdAt ? Date.parse(a.createdAt) : NaN;
+        const bd = b.createdAt ? Date.parse(b.createdAt) : NaN;
+        const aHas = Number.isFinite(ad);
+        const bHas = Number.isFinite(bd);
+        if (aHas && bHas) return bd - ad;
+        if (aHas) return -1;
+        if (bHas) return 1;
+        return a._order - b._order;
+      });
+    }
     // "recommended" preserves DB sort_order (source order)
     return sorted;
-  }, [allProducts, activeFilter, sort]);
+  }, [allProducts, activeFilter, sort, q]);
 
-  useEffect(() => { setVisible(INITIAL_VISIBLE); }, [activeFilter, sort]);
+  useEffect(() => { setVisible(INITIAL_VISIBLE); }, [activeFilter, sort, q]);
+
+  // Lock body scroll while mobile filter drawer is open
+  useEffect(() => {
+    if (!filterOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [filterOpen]);
+
 
   useEffect(() => {
     const el = sentinelRef.current;
