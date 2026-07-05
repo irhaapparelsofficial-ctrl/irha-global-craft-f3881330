@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "irha-apparels-mcp",
+      "version": "0.1.0",
+      "title": "Irha Apparels"
+    },
+    "tools": [
+      {
+        "name": "list_products",
+        "title": "List products",
+        "description": "List B2B garment products from Irha Apparels. Optionally filter by category slug (e.g. 'lederhosen', 'business-suits') or search text.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category_slug": {
+              "type": "string",
+              "description": "Filter by category slug, e.g. 'lederhosen'."
+            },
+            "search": {
+              "type": "string",
+              "description": "Case-insensitive substring match against product name."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_categories",
+        "title": "List categories",
+        "description": "List all product categories with slug and description.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_faqs",
+        "title": "List FAQs",
+        "description": "List published FAQ entries. Useful for buyer questions about MOQ, lead times, shipping, samples.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Substring match against question."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_blog_posts",
+        "title": "List blog posts",
+        "description": "List published blog posts (title, slug, excerpt, tags). Use get_blog_post for full body.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "submit_inquiry",
+        "title": "Submit B2B inquiry",
+        "description": "Submit a wholesale/B2B inquiry to Irha Apparels. Creates a lead the sales team will follow up on.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Contact full name."
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Contact email."
+            },
+            "company": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string",
+              "description": "Buyer country (e.g. 'Germany')."
+            },
+            "phone": {
+              "type": "string"
+            },
+            "product_interest": {
+              "type": "string",
+              "description": "Which product / category the buyer is interested in."
+            },
+            "quantity": {
+              "type": "string",
+              "description": "Estimated order quantity, e.g. '500 units'."
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Free-form buyer message."
+            }
+          },
+          "required": [
+            "name",
+            "email",
+            "message"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
