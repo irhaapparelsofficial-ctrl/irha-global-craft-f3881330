@@ -340,11 +340,18 @@ function ProductEditor({
             <Field label="Name *">
               <input value={draft.name} onChange={(e) => set("name", e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Category *">
+            <Field label="Subcategory *" hint="Products must live under a subcategory">
               <select value={draft.category_id} onChange={(e) => set("category_id", e.target.value)} className={inputCls}>
-                {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {cats.filter((c) => c.parent_id === null && c.is_published).map((main) => (
+                  <optgroup key={main.id} label={main.name}>
+                    {cats.filter((s) => s.parent_id === main.id).map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </Field>
+
             <Field label="Slug" hint="Auto-generated from name if empty">
               <input value={draft.slug} onChange={(e) => set("slug", e.target.value)} placeholder="auto-generated" className={inputCls} />
             </Field>
