@@ -435,6 +435,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          inquiry_ref: string | null
           intent: string | null
           lead_context: Json
           message: string | null
@@ -451,6 +452,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          inquiry_ref?: string | null
           intent?: string | null
           lead_context?: Json
           message?: string | null
@@ -467,6 +469,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          inquiry_ref?: string | null
           intent?: string | null
           lead_context?: Json
           message?: string | null
