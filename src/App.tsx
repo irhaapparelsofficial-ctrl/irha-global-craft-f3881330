@@ -32,6 +32,7 @@ const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
 const Compliance = lazy(() => import("./pages/Compliance"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
