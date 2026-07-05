@@ -236,6 +236,25 @@ export default function ProductDetail() {
                 >
                   <MessageCircle size={16} /> WhatsApp
                 </a>
+                <button
+                  type="button"
+                  onClick={() =>
+                    shortlist.toggle({
+                      slug: product.slug,
+                      name: product.name,
+                      image: product.image_url ?? gallery[0],
+                      categorySlug: category.slug,
+                      categoryName: category.name,
+                      addedAt: Date.now(),
+                    })
+                  }
+                  aria-pressed={shortlist.has(product.slug)}
+                  aria-label={shortlist.has(product.slug) ? "Remove from shortlist" : "Save to shortlist"}
+                  className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+                >
+                  {shortlist.has(product.slug) ? <BookmarkCheck size={16} className="text-primary" /> : <Bookmark size={16} />}
+                  {shortlist.has(product.slug) ? "Saved" : "Save"}
+                </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.25em]">
                 <Link to={`/inquiry?product=${encodeURIComponent(product.slug)}&intent=reference`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2">
