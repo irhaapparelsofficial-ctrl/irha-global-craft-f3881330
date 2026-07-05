@@ -91,6 +91,7 @@ const App = () => (
                     <Route path="/products" element={<Products />} />
                     <Route path="/products/:slug" element={<CategoryPage />} />
                     <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
+                    <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
                     <Route path="/manufacturing" element={<Manufacturing />} />
                     <Route path="/sustainability" element={<Sustainability />} />
                     <Route path="/compliance" element={<Compliance />} />
