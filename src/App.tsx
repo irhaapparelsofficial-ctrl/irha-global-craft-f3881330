@@ -40,6 +40,8 @@ const ShippingReturns = lazy(() => import("./pages/ShippingReturns"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Catalogue = lazy(() => import("./pages/Catalogue"));
 const CatalogueCategory = lazy(() => import("./pages/CatalogueCategory"));
+const Shortlist = lazy(() => import("./pages/Shortlist"));
+const Compare = lazy(() => import("./pages/Compare"));
 
 const queryClient = new QueryClient();
 
@@ -113,6 +115,8 @@ const App = () => (
                     <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                     <Route path="/seo-indexing" element={<SeoIndexing />} />
                     <Route path="/studio" element={<Studio />} />
+                    <Route path="/shortlist" element={<Shortlist />} />
+                    <Route path="/compare" element={<Compare />} />
                     <Route path="/login" element={<Navigate to="/auth" replace />} />
                     <Route path="/signin" element={<Navigate to="/auth" replace />} />
                     <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
