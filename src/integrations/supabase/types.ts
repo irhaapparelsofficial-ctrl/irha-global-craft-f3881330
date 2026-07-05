@@ -435,6 +435,8 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          intent: string | null
+          lead_context: Json
           message: string | null
           name: string
           phone: string | null
@@ -449,6 +451,8 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          intent?: string | null
+          lead_context?: Json
           message?: string | null
           name: string
           phone?: string | null
@@ -463,6 +467,8 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          intent?: string | null
+          lead_context?: Json
           message?: string | null
           name?: string
           phone?: string | null

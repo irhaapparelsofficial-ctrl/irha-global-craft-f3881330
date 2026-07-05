@@ -98,7 +98,38 @@ export default function Inquiry() {
       return;
     }
 
-    // Save to dashboard DB
+    // Build lead_context (Phase 6 conversion foundation) — captures product/shortlist/UTM/referrer context.
+    const productSlug = params.get("product") ?? undefined;
+    const productName = params.get("name") ?? undefined;
+    const shortlistSlugs = (params.get("shortlist") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const shortlistNames = (params.get("names") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const intent = params.get("intent") ?? (shortlistSlugs.length > 1 ? "multi-product-rfq" : productSlug ? "single-product-rfq" : "general-rfq");
+    const utm = {
+      source: params.get("utm_source") ?? undefined,
+      medium: params.get("utm_medium") ?? undefined,
+      campaign: params.get("utm_campaign") ?? undefined,
+      content: params.get("utm_content") ?? undefined,
+      term: params.get("utm_term") ?? undefined,
+    };
+    const leadContext = {
+      conversion_type: "inquiry",
+      intent,
+      source_page: window.location.pathname + window.location.search,
+      referrer: document.referrer || null,
+      landing_page: sessionStorage.getItem("irha_landing") || window.location.pathname,
+      product_slug: productSlug,
+      product_name: productName,
+      category_slug: params.get("category") ?? parsed.data.category,
+      shortlist_slugs: shortlistSlugs.length ? shortlistSlugs : undefined,
+      shortlist_names: shortlistNames.length ? shortlistNames : undefined,
+      quantity: parsed.data.quantity,
+      destination_country: parsed.data.country,
+      utm,
+      device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
+      submitted_at: new Date().toISOString(),
+    };
+
+    // Save to dashboard DB with unified lead_context.
     void supabase.from("inquiries").insert({
       name: parsed.data.name,
       email: parsed.data.email,
@@ -109,7 +140,10 @@ export default function Inquiry() {
       quantity: parsed.data.quantity,
       message: parsed.data.notes || null,
       source: "inquiry-page",
-    });
+      intent,
+      lead_context: leadContext,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
 
     const msg = `New B2B Inquiry — Irha Apparels
 ━━━━━━━━━━━━━━━━━━
