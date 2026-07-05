@@ -306,10 +306,7 @@ function CategoryEditor({
             </Field>
           </div>
 
-            <Field label="Sort order">
-              <input type="number" value={draft.sort_order} onChange={(e) => set("sort_order", Number(e.target.value))} className={inputCls} />
-            </Field>
-          </div>
+
 
           <Field label="Short tagline"><input value={draft.short ?? ""} onChange={(e) => set("short", e.target.value)} className={inputCls} /></Field>
           <Field label="Description"><textarea rows={4} value={draft.description ?? ""} onChange={(e) => set("description", e.target.value)} className={inputCls} /></Field>
