@@ -6,8 +6,9 @@ import { usePublicProduct } from "@/hooks/usePublicCatalog";
 import { resolveGallery } from "@/lib/assetResolver";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbProduct } from "@/hooks/useCatalog";
-import { ChevronRight, MessageCircle, Printer, Upload } from "lucide-react";
+import { Bookmark, BookmarkCheck, ChevronRight, MessageCircle, Printer, Upload } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
+import { useShortlist, pushRecentlyViewed } from "@/lib/shortlist";
 
 const SITE = "https://www.irhaapparels.com";
 
