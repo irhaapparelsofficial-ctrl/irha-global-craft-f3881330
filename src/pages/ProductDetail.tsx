@@ -16,8 +16,21 @@ export default function ProductDetail() {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
   const { data, isLoading, error } = usePublicProduct(categorySlug, productSlug);
   const [activeImg, setActiveImg] = useState(0);
+  const shortlist = useShortlist();
 
   useEffect(() => setActiveImg(0), [productSlug]);
+
+  // Push to recently viewed on load
+  useEffect(() => {
+    if (!data) return;
+    pushRecentlyViewed({
+      slug: data.product.slug,
+      name: data.product.name,
+      image: data.product.image_url ?? data.product.gallery?.[0],
+      categorySlug: data.topCategory.slug,
+      categoryName: data.topCategory.name,
+    });
+  }, [data]);
 
   // Related products (same subcategory, exclude self, limit 4). DB-driven.
   const related = useQuery({
