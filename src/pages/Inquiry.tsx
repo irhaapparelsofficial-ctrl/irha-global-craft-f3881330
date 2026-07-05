@@ -416,7 +416,7 @@ function buildMessage(d: InquiryDraft | Omit<InquiryDraft, "v" | "updatedAt">): 
 
 function StepIntent({
   draft, setField,
-}: { draft: Omit<InquiryDraft, "v" | "updatedAt">; setField: <K extends keyof InquiryDraft>(k: K, v: InquiryDraft[K]) => void }) {
+}: { draft: Omit<InquiryDraft, "v" | "updatedAt">; setField: <K extends keyof Omit<InquiryDraft,"v"|"updatedAt">>(k: K, v: InquiryDraft[K]) => void }) {
   return (
     <div>
       <h2 className="font-display text-2xl md:text-3xl mb-2">What do you need?</h2>
@@ -448,7 +448,7 @@ function StepRequirements({
   draft, setField, errors,
 }: {
   draft: Omit<InquiryDraft, "v" | "updatedAt">;
-  setField: <K extends keyof InquiryDraft>(k: K, v: InquiryDraft[K]) => void;
+  setField: <K extends keyof Omit<InquiryDraft,"v"|"updatedAt">>(k: K, v: InquiryDraft[K]) => void;
   errors: Record<string, string>;
 }) {
   const input = "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm";
@@ -638,7 +638,7 @@ function StepContact({
   draft, setField, errors,
 }: {
   draft: Omit<InquiryDraft, "v" | "updatedAt">;
-  setField: <K extends keyof InquiryDraft>(k: K, v: InquiryDraft[K]) => void;
+  setField: <K extends keyof Omit<InquiryDraft,"v"|"updatedAt">>(k: K, v: InquiryDraft[K]) => void;
   errors: Record<string, string>;
 }) {
   const input = "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm";
