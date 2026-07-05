@@ -176,12 +176,13 @@ export default function ProductDetail() {
               </div>
 
               <p className="mt-4 text-[11px] md:text-xs text-foreground/60 leading-relaxed">
-                <span className="text-gold">✓</span> OEKO-TEX fabrics
+                <span className="text-gold">✓</span> Custom Manufacturing
                 <span className="text-foreground/30 mx-2">|</span>
-                <span className="text-gold">✓</span> BSCI compliant facility
+                <span className="text-gold">✓</span> Private Label Available
                 <span className="text-foreground/30 mx-2">|</span>
-                <span className="text-gold">✓</span> FOB Sialkot
+                <span className="text-gold">✓</span> Worldwide Export · FOB Sialkot
               </p>
+
 
               {product.details?.length > 0 && (
                 <div className="mt-10 border-t border-border/60 pt-8">

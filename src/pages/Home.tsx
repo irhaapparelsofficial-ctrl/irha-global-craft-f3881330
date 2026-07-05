@@ -287,7 +287,7 @@ export default function Home() {
               { Icon: Factory, t: "Vertical Production", d: "Cut, sew & finish in-house" },
               { Icon: ShieldCheck, t: "7-Point QC", d: "Pre-shipment inspection" },
               { Icon: Globe2, t: "Worldwide Export", d: "DACH · UK · USA · CA · AU" },
-              { Icon: Award, t: "OEKO-TEX Fabrics", d: "Certified sourcing" },
+              { Icon: Award, t: "Custom Manufacturing", d: "OEM · ODM · Private Label" },
             ].map(({ Icon, t, d }) => (
               <div key={t} className="border border-border/70 bg-card/40 backdrop-blur p-6">
                 <Icon className="text-industrial" size={22} />
