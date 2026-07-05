@@ -7,7 +7,7 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { whatsappLink } from "@/lib/constants";
-import { usePublicCategories, type NormalizedCategory } from "@/hooks/usePublicCategoryData";
+import { usePublicCategories, type NormalizedCategory, type NormalizedProduct } from "@/hooks/usePublicCategoryData";
 
 function extractMoq(details: Product["details"] | undefined): string {
   const row = details?.find((d) => /moq/i.test(d.label));
@@ -19,7 +19,7 @@ type SearchHit = {
   categorySlug: string;
   categoryName: string;
   subName: string;
-  product: Product;
+  product: NormalizedProduct;
 };
 
 export default function Products() {
