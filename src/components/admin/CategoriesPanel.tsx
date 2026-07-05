@@ -26,8 +26,17 @@ type Draft = Omit<Category, "id" | "created_at" | "updated_at" | "details"> & {
   detailsText: string;
 };
 
-const emptyDraft = (): Draft => ({
-  parent_id: null,
+// Canonical 5 top-level slugs — enforced across the admin so we can't drift.
+export const CANONICAL_TOP_SLUGS = [
+  "bavarian-trachten-wear",
+  "premium-leather-apparel",
+  "sportswear",
+  "streetwear-activewear",
+  "leisure-nightwear",
+] as const;
+
+const emptyDraft = (defaultParentId: string | null = null): Draft => ({
+  parent_id: defaultParentId,
   slug: "",
   name: "",
   short: "",
@@ -43,6 +52,7 @@ const emptyDraft = (): Draft => ({
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
+
 
 export default function CategoriesPanel() {
   const [rows, setRows] = useState<Category[]>([]);
