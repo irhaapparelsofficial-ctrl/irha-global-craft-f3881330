@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import SEO from "@/components/SEO";
-import { useProductBySlug } from "@/hooks/useCatalog";
+import { usePublicProduct } from "@/hooks/usePublicCatalog";
 import { resolveAsset, resolveGallery } from "@/lib/assetResolver";
 import { ChevronRight, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
@@ -11,12 +11,12 @@ const SITE = "https://www.irhaapparels.com";
 
 export default function ProductDetail() {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
-  const { data, isLoading, error } = useProductBySlug(categorySlug, productSlug);
+  const { data, isLoading, error } = usePublicProduct(categorySlug, productSlug);
   const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => setActiveImg(0), [productSlug]);
 
-  // Static fallback for featured / hand-curated B2B items not yet in the DB
+  // Static fallback for hand-curated B2B items not yet in the DB
   const featured = findFeaturedProduct(categorySlug, productSlug);
 
   if (isLoading && !featured) {
@@ -27,13 +27,11 @@ export default function ProductDetail() {
     return <Navigate to={`/products/${categorySlug ?? ""}`} replace />;
   }
 
-  // Use featured static when DB has no match
   const useFeatured = !data && !!featured;
-  const categoryName = useFeatured ? featured!.categoryName : "";
   const material = useFeatured ? featured!.material : "Premium export-grade fabric";
   const category = useFeatured
-    ? { slug: featured!.categorySlug, name: categoryName }
-    : data!.category;
+    ? { slug: featured!.categorySlug, name: featured!.categoryName }
+    : { slug: data!.topCategory.slug, name: data!.topCategory.name };
   const product = useFeatured
     ? {
         name: featured!.title,
