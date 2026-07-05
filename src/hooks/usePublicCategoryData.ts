@@ -1,5 +1,6 @@
-// Adapts DB catalog tree → the legacy in-file shape used by public pages,
-// so we can switch data source with minimal UI churn.
+// Adapts DB catalog tree → the legacy in-file shape used by public pages.
+// After the Phase 3 canonical migration, no product lives directly under a
+// top-level category, so the "implicit Featured sub" hack has been removed.
 //
 // Falls back to hardcoded CATEGORIES + CATALOG ONLY when the DB fetch
 // errored (never when it merely returned zero rows).
@@ -11,7 +12,8 @@ import { CATALOG, type CategoryGroup as LegacyGroup, type SubCategory as LegacyS
 
 export type NormalizedProduct = LegacyProduct & {
   id?: string;
-  slug: string; // real slug (DB) or slugified name (legacy)
+  slug: string;
+  created_at?: string;
 };
 
 export type NormalizedSub = {
@@ -29,8 +31,9 @@ export type NormalizedCategory = {
   image: string;
   details: string[];
   subs: NormalizedSub[];
-  // convenience total
   productCount: number;
+  seoTitle?: string;
+  seoDescription?: string;
 };
 
 function adaptProduct(p: DbProduct): NormalizedProduct {
@@ -54,16 +57,6 @@ function adaptTop(top: PublicTopCategory): NormalizedCategory {
     short: s.short ?? "",
     products: s.products.map(adaptProduct),
   }));
-  // If some products live directly under the top-level category
-  // (no sub), expose them as an implicit "featured" sub so the UI can render.
-  if (top.directProducts.length) {
-    subs.unshift({
-      slug: `${top.slug}-featured`,
-      name: "Featured",
-      short: top.short ?? "",
-      products: top.directProducts.map(adaptProduct),
-    });
-  }
   return {
     slug: top.slug,
     name: top.name,
@@ -73,6 +66,8 @@ function adaptTop(top: PublicTopCategory): NormalizedCategory {
     details: Array.isArray(top.details) ? top.details : [],
     subs,
     productCount: subs.reduce((n, s) => n + s.products.length, 0),
+    seoTitle: top.seo_title ?? undefined,
+    seoDescription: top.seo_description ?? undefined,
   };
 }
 
@@ -101,17 +96,16 @@ function legacyAdaptGroup(cat: LegacyCategory, group: LegacyGroup | undefined): 
 
 export function usePublicCategories() {
   const q = usePublicCatalogTree();
-  // Success (even with 0 rows) → use DB.
   if (q.data) {
     return {
       isLoading: q.isLoading,
       isError: false as const,
       source: "db" as const,
-      categories: q.data.map(adaptTop),
+      // Only expose published top-level rows to the public UI
+      categories: q.data.filter((t) => t.is_published).map(adaptTop),
     };
   }
   if (q.isError) {
-    // Emergency fallback to legacy hardcoded catalog.
     const cats = CATEGORIES.map((c) => legacyAdaptGroup(c, CATALOG.find((g) => g.slug === c.slug)));
     return { isLoading: false, isError: true as const, source: "legacy" as const, categories: cats };
   }
