@@ -201,8 +201,15 @@ export default function ProductsPanel() {
           className="text-sm bg-card/40 border border-border/60 px-3 py-2"
         >
           <option value="all">All categories</option>
-          {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {mainCats.map((m) => (
+            <optgroup key={m.id} label={m.name}>
+              {subCats.filter((s) => s.parent_id === m.id).map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </optgroup>
+          ))}
         </select>
+
         <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="text-sm bg-card/40 border border-border/60 px-3 py-2">
           <option value="sort_order">Sort: order</option>
           <option value="name">Sort: name</option>
