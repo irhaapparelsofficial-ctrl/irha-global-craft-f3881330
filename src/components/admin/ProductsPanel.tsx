@@ -93,9 +93,10 @@ export default function ProductsPanel() {
   }, [rows, q, catFilter, sort]);
 
   const openNew = () => {
-    if (cats.length === 0) { toast({ title: "Create a category first", variant: "destructive" }); return; }
-    setEditing(emptyDraft(cats[0].id));
+    if (subCats.length === 0) { toast({ title: "Create a subcategory first", variant: "destructive" }); return; }
+    setEditing(emptyDraft(subCats[0].id));
   };
+
   const openEdit = (p: Product) => {
     setEditing({
       id: p.id,
@@ -118,8 +119,19 @@ export default function ProductsPanel() {
     if (!editing) return;
     const d = editing;
     if (!d.name.trim() || !d.category_id) {
-      toast({ title: "Name and category are required", variant: "destructive" }); return;
+      toast({ title: "Name and subcategory are required", variant: "destructive" }); return;
     }
+    // Enforce: products live under subcategories, not directly under main categories.
+    const selected = cats.find((c) => c.id === d.category_id);
+    if (!selected || selected.parent_id === null) {
+      toast({
+        title: "Pick a subcategory",
+        description: "Products must be assigned to a subcategory (not a main category).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const slug = d.slug.trim() ? slugify(d.slug) : slugify(d.name);
     const payload = {
       category_id: d.category_id,
