@@ -133,8 +133,6 @@ export default function Products() {
       {/* Catalog search — lightweight, client-side over the loaded tree. */}
       <section className="py-10 border-b border-border/60">
         <div className="container-luxe">
-      <section className="py-10 border-b border-border/60">
-        <div className="container-luxe">
           <label className="block">
             <span className="eyebrow mb-3 block">Search the catalog</span>
             <div className="relative max-w-2xl">
