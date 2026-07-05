@@ -48,7 +48,7 @@ export const ARTICLES = [
   },
   {
     slug: "sustainable-cotton-program",
-    title: "BCI, GOTS, Organic: A Plain-English Guide for Buyers",
+    title: "Sustainable Cotton Options: A Plain-English Guide for Buyers",
     excerpt: "We break down the cotton certifications buyers ask about most — what each actually certifies, what it costs, and how to choose for your brand story.",
     category: "Sustainability",
     readTime: "5 min",
