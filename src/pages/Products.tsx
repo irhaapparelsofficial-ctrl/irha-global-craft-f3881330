@@ -1,8 +1,8 @@
 import SEO from "@/components/SEO";
 import type { Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Download, Maximize2, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { ArrowUpRight, Download, Maximize2, MessageCircle, Search, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
@@ -15,14 +15,40 @@ function extractMoq(details: Product["details"] | undefined): string {
   return `MOQ ${row.value.split(/[,/]/)[0].trim()}`;
 }
 
+type SearchHit = {
+  categorySlug: string;
+  categoryName: string;
+  subName: string;
+  product: Product;
+};
+
 export default function Products() {
   const { categories: CATEGORIES } = usePublicCategories();
   const [previewCat, setPreviewCat] = useState<NormalizedCategory | null>(null);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeSub, setActiveSub] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState("");
 
   const totalStyles = CATEGORIES.reduce((n, c) => n + c.productCount, 0);
   const categoryCount = CATEGORIES.length;
+
+  const searchHits = useMemo<SearchHit[]>(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const hits: SearchHit[] = [];
+    for (const c of CATEGORIES) {
+      for (const s of c.subs) {
+        for (const p of s.products) {
+          const hay = `${p.name} ${s.name} ${c.name} ${p.description ?? ""}`.toLowerCase();
+          if (hay.includes(q)) {
+            hits.push({ categorySlug: c.slug, categoryName: c.name, subName: s.name, product: p });
+          }
+        }
+      }
+    }
+    return hits.slice(0, 40);
+  }, [CATEGORIES, query]);
+
 
   return (
     <>
