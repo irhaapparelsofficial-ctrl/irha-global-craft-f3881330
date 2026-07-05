@@ -176,11 +176,12 @@ export default function CategoriesPanel() {
         </button>
         <div className="ml-auto text-xs text-muted-foreground">{loading ? "Loading…" : `${filtered.length} of ${rows.length}`}</div>
         <button
-          onClick={() => setEditing(emptyDraft())}
+          onClick={() => setEditing(emptyDraft(mainCats[0]?.id ?? null))}
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] bg-gradient-gold text-primary-foreground px-4 py-2 hover:shadow-gold"
         >
-          <Plus size={14} /> New category
+          <Plus size={14} /> New subcategory
         </button>
+
       </div>
 
       {error && <div className="border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
@@ -246,10 +247,11 @@ export default function CategoriesPanel() {
 
       {editing && (
         <CategoryEditor
-          draft={editing} setDraft={setEditing} all={rows}
+          draft={editing} setDraft={setEditing} all={rows} mainCats={mainCats}
           onCancel={() => setEditing(null)} onSave={save} saving={saving}
         />
       )}
+
     </div>
   );
 }
