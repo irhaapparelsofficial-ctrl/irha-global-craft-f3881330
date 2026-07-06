@@ -15,12 +15,16 @@ function verifiedReleaseMetadata(): Plugin {
         .replace(/<meta name="description" content="[^"]*"\s*\/?>/i, '<meta name="description" content="Custom B2B apparel manufacturing in Sialkot, Pakistan for brands, wholesalers, importers and private-label buyers. Requirements are reviewed before commercial commitments." />')
         .replace(/\s*<meta name="keywords"[^>]*>/i, "")
         .replace(/\s*<link rel="alternate" hreflang="de"[^>]*>/gi, "")
-        .replace(/\s*<meta name="x-irha-build"[^>]*>/gi, '<meta name="x-irha-release" content="gate4-2026-07-06-r2" />');
+        .replace(/\s*<meta name="x-irha-(?:build|release)"[^>]*>/gi, '<meta name="x-irha-release" content="gate4-2026-07-06-r3" />')
+        .replace(/<meta property="og:title" content="[^"]*"\s*\/?>/i, '<meta property="og:title" content="Irha Apparels — B2B Custom Apparel Manufacturer" />')
+        .replace(/<meta property="og:description" content="[^"]*"\s*\/?>/i, '<meta property="og:description" content="Custom apparel programs for brands, wholesalers, importers and private-label buyers. Requirements are reviewed before commercial commitments." />')
+        .replace(/<meta name="twitter:title" content="[^"]*"\s*\/?>/i, '<meta name="twitter:title" content="Irha Apparels — B2B Custom Apparel Manufacturer" />')
+        .replace(/<meta name="twitter:description" content="[^"]*"\s*\/?>/i, '<meta name="twitter:description" content="Custom apparel manufacturing in Sialkot, Pakistan for B2B buyers." />')
+        .replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, "");
     },
   };
 }
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
