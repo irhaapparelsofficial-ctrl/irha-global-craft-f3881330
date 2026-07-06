@@ -7,7 +7,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import LederhosenHome from "./pages/LederhosenHome";
 import Home from "./pages/Home";
-import Index from "./pages/Index";
 import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -72,12 +71,12 @@ const App = () => (
           <PageViewTracker />
           <Suspense fallback={<PageFallback />}>
             <Routes>
-              {/* Phase 3 canonical homepage — 2 production hubs backed by the live catalog */}
+              {/* Canonical homepage — two production hubs backed by the live catalog */}
               <Route path="/" element={<Layout><Home /></Layout>} />
               {/* German-market landing keeps its own chrome */}
               <Route path="/de" element={<LederhosenHome />} />
               <Route path="/de/" element={<LederhosenHome />} />
-              <Route path="/legacy-home" element={<Layout><Index /></Layout>} />
+              <Route path="/legacy-home" element={<Navigate to="/" replace />} />
 
               {/* Admin & auth: standalone chrome — no public navbar/footer */}
               <Route path="/auth" element={<Auth />} />
