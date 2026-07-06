@@ -7,7 +7,6 @@ import FiveCategories from "@/components/sections/FiveCategories";
 import WhyB2B from "@/components/sections/WhyB2B";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import BuyerPromise from "@/components/sections/BuyerPromise";
-import Certifications from "@/components/sections/Certifications";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
@@ -169,9 +168,6 @@ export default function Home() {
 
       {/* BUYER PROMISE */}
       <BuyerPromise />
-
-      {/* PRODUCTION DISCIPLINE (capability-based, no fake certs) */}
-      <Certifications />
 
       {/* FINAL CTA */}
       <StartProgramCTA />
