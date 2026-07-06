@@ -12,6 +12,7 @@ function InstagramIcon({ size = 20 }: { size?: number }) {
     </svg>
   );
 }
+
 function FacebookIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -19,6 +20,7 @@ function FacebookIcon({ size = 20 }: { size?: number }) {
     </svg>
   );
 }
+
 function TikTokIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -26,6 +28,7 @@ function TikTokIcon({ size = 20 }: { size?: number }) {
     </svg>
   );
 }
+
 function WhatsAppIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -52,7 +55,7 @@ const COMPANY = [
   { to: "/catalogue", label: "Catalogue" },
   { to: "/about", label: "About" },
   { to: "/manufacturing", label: "Manufacturing" },
-  { to: "/sustainability", label: "Sustainability" },
+  { to: "/compliance", label: "Compliance" },
   { to: "/contact", label: "Contact" },
 ];
 
@@ -165,7 +168,6 @@ export default function Footer() {
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] uppercase tracking-[0.25em]">
           <Link to="/privacy-policy" className="text-foreground/45 hover:text-gold transition-colors">Privacy Policy</Link>
           <Link to="/terms-of-service" className="text-foreground/45 hover:text-gold transition-colors">Terms of Service</Link>
-          <Link to="/shipping-returns" className="text-foreground/45 hover:text-gold transition-colors">Shipping &amp; Returns</Link>
           <button type="button" onClick={() => window.dispatchEvent(new Event("irha:open-cookie-settings"))} className="text-foreground/45 hover:text-gold transition-colors">Cookie Settings</button>
         </div>
       </div>
