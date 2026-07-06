@@ -1,5 +1,7 @@
-// Irha Guide — website assistant. AI is optional because the frontend has a
-// deterministic backup mode for products and manufacturing questions.
+// Irha Guide — website assistant.
+// Primary AI provider: Google Gemini API free tier (BYOK via GEMINI_API_KEY).
+// No Lovable AI gateway dependency. The frontend keeps a deterministic backup
+// mode, so the guide still works when the free provider is unavailable or rate-limited.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const securityHeaders = {
@@ -20,6 +22,7 @@ const corsHeaders = {
   ...securityHeaders,
 };
 
+const GEMINI_MODEL = "gemini-3.1-flash-lite";
 const WHATSAPP = "+92 320 411 0066";
 const WA_LINK = "https://wa.me/923204110066";
 
@@ -87,8 +90,8 @@ async function buildCatalogSummary(): Promise<string> {
       .join("\n");
 
     return `\nCATALOG DATA (live from database — only reference these facts):\n\nCATEGORIES:\n${catLines}\n\nPRODUCTS BY CATEGORY:\n${prodLines}\n`;
-  } catch (e) {
-    console.warn("catalog summary failed", e);
+  } catch (error) {
+    console.warn("catalog summary failed", error);
     return "";
   }
 }
@@ -103,7 +106,7 @@ async function getCatalog(): Promise<string> {
 }
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_MAX = 8;
 const ipHits = new Map<string, { count: number; reset: number }>();
 
 function rateLimited(ip: string): boolean {
@@ -117,13 +120,60 @@ function rateLimited(ip: string): boolean {
   return entry.count > RATE_LIMIT_MAX;
 }
 
+function redactForExternalAi(value: string): string {
+  return value
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email removed]")
+    .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g, "[phone removed]")
+    .replace(/https?:\/\/\S+/gi, "[link removed]")
+    .slice(0, 2000);
+}
+
+function toGeminiContents(messages: Array<{ role: "user" | "assistant"; content: string }>) {
+  return messages.slice(-8).map((message) => ({
+    role: message.role === "assistant" ? "model" : "user",
+    parts: [{ text: redactForExternalAi(message.content) }],
+  }));
+}
+
+function extractGeminiText(payload: any): string {
+  const parts = payload?.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(parts)) return "";
+  return parts
+    .map((part: any) => (typeof part?.text === "string" ? part.text : ""))
+    .filter(Boolean)
+    .join("")
+    .trim();
+}
+
+function openAiCompatibleSse(text: string): Response {
+  const encoder = new TextEncoder();
+  const body = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`));
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      controller.close();
+    },
+  });
+
+  return new Response(body, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-store",
+      Connection: "keep-alive",
+      "X-Irha-AI-Provider": "gemini-free-tier",
+    },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GOOGLE_AI_API_KEY");
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "guide_unavailable" }), {
+      return new Response(JSON.stringify({ error: "free_ai_not_configured" }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -150,9 +200,12 @@ Deno.serve(async (req) => {
     }
 
     const safeMessages = (messages as Array<{ role?: unknown; content?: unknown }>)
-      .filter((m) => m && typeof m.content === "string" && (m.role === "user" || m.role === "assistant"))
-      .map((m) => ({ role: m.role as "user" | "assistant", content: (m.content as string).slice(0, 2000) }))
-      .slice(-20);
+      .filter((message) => message && typeof message.content === "string" && (message.role === "user" || message.role === "assistant"))
+      .map((message) => ({
+        role: message.role as "user" | "assistant",
+        content: (message.content as string).slice(0, 2000),
+      }))
+      .slice(-8);
 
     if (safeMessages.length === 0) {
       return new Response(JSON.stringify({ error: "invalid_messages" }), {
@@ -162,43 +215,48 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = BASE_PROMPT + (await getCatalog());
-    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Lovable-API-Key": apiKey,
-        "Content-Type": "application/json",
+    const upstream = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: toGeminiContents(safeMessages),
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 500,
+          },
+          store: false,
+        }),
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        stream: true,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...safeMessages,
-        ],
-      }),
-    });
+    );
 
     if (!upstream.ok) {
       const text = await upstream.text();
-      console.error("Gateway error", upstream.status, text);
+      console.error("Gemini error", upstream.status, text.slice(0, 600));
       const status = upstream.status === 429 ? 429 : 503;
-      return new Response(JSON.stringify({ error: "guide_unavailable" }), {
+      return new Response(JSON.stringify({ error: status === 429 ? "guide_busy" : "guide_unavailable" }), {
         status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(upstream.body, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
-  } catch (e) {
-    console.error("chat fn error", e);
+    const payload = await upstream.json();
+    const answer = extractGeminiText(payload);
+    if (!answer) {
+      return new Response(JSON.stringify({ error: "guide_unavailable" }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return openAiCompatibleSse(answer);
+  } catch (error) {
+    console.error("chat fn error", error);
     return new Response(JSON.stringify({ error: "guide_unavailable" }), {
       status: 503,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
