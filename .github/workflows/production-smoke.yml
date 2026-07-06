@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
-      - name: Verify production identity and legacy-claim absence
+      - name: Verify production identity, crawler parity and legacy-claim absence
         run: node scripts/production-smoke.mjs
