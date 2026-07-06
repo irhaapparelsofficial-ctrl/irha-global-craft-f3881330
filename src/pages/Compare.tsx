@@ -11,9 +11,6 @@ type Row = { label: string; get: (p: DbProduct) => string | null | undefined };
 const ROWS: Row[] = [
   { label: "Category", get: (p) => (p as unknown as { category_name?: string }).category_name },
   { label: "SKU", get: (p) => p.sku },
-  { label: "MOQ", get: (p) => p.moq_display },
-  { label: "Sample", get: (p) => (p.sample_available === false ? "Not available" : p.sample_timeline) },
-  { label: "Production", get: (p) => p.production_timeline },
   { label: "Primary Material", get: (p) => p.primary_material },
   { label: "Fabric", get: (p) => p.fabric_composition },
   { label: "GSM / Weight", get: (p) => p.gsm },
@@ -35,7 +32,6 @@ export default function Compare() {
     },
   });
 
-  // Preserve order per shortlist selection
   const ordered = slugs
     .map((s) => products.find((p) => p.slug === s))
     .filter((p): p is DbProduct => !!p);
@@ -44,7 +40,6 @@ export default function Compare() {
     ? `/inquiry?intent=rfq&compare=${encodeURIComponent(compare.items.map((i) => i.slug).join(","))}&compareNames=${encodeURIComponent(compare.items.map((i) => i.name).join(","))}`
     : "/inquiry?intent=rfq";
 
-  // Hide rows where no product has a value
   const visibleRows = ROWS.filter((r) => ordered.some((p) => (r.get(p) ?? "").toString().trim().length > 0));
 
   return (
@@ -57,7 +52,7 @@ export default function Compare() {
           <h1 className="font-display text-4xl md:text-6xl leading-[0.95]">
             Compare <span className="text-gold italic">specs</span>
           </h1>
-          <p className="mt-4 text-sm text-foreground/70">Add 2–4 products from your Shortlist or product pages. Prices are quotation-based.</p>
+          <p className="mt-4 text-sm text-foreground/70">Add 2–4 products from your Shortlist or product pages. Pricing and commercial terms are confirmed after requirement review.</p>
 
           {compare.items.length === 0 ? (
             <div className="mt-12 border border-dashed border-border/60 p-10 text-center">
@@ -113,7 +108,7 @@ export default function Compare() {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-4 text-xs text-foreground/50">No prices shown — MOQ, sample availability, and lead times are confirmed after requirement review.</p>
+              <p className="mt-4 text-xs text-foreground/50">MOQ, sample plan, production timing, pricing and shipping are confirmed after requirement review.</p>
             </>
           )}
         </div>
