@@ -18,10 +18,6 @@ const Inquiry = lazy(() => import("./pages/Inquiry"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Sustainability = lazy(() => import("./pages/Sustainability"));
 const FAQ = lazy(() => import("./pages/FAQ"));
-const Journal = lazy(() => import("./pages/Journal"));
-const JournalArticle = lazy(() => import("./pages/JournalArticle"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -85,10 +81,6 @@ const App = () => (
                       <Route path="/manufacturing" element={<Manufacturing />} />
                       <Route path="/sustainability" element={<Sustainability />} />
                       <Route path="/compliance" element={<Compliance />} />
-                      <Route path="/journal" element={<Journal />} />
-                      <Route path="/journal/:slug" element={<JournalArticle />} />
-                      <Route path="/blog" element={<Blog />} />
-                      <Route path="/blog/:slug" element={<BlogPost />} />
                       <Route path="/faq" element={<FAQ />} />
                       <Route path="/inquiry" element={<Inquiry />} />
                       <Route path="/contact" element={<Contact />} />
@@ -105,6 +97,10 @@ const App = () => (
                       <Route path="/studio" element={<Studio />} />
                       <Route path="/shortlist" element={<Shortlist />} />
                       <Route path="/compare" element={<Compare />} />
+                      <Route path="/blog" element={<Navigate to="/" replace />} />
+                      <Route path="/blog/:slug" element={<Navigate to="/" replace />} />
+                      <Route path="/journal" element={<Navigate to="/" replace />} />
+                      <Route path="/journal/:slug" element={<Navigate to="/" replace />} />
                       <Route path="/login" element={<Navigate to="/auth" replace />} />
                       <Route path="/signin" element={<Navigate to="/auth" replace />} />
                       <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
