@@ -55,7 +55,7 @@ export default function Contact() {
     <>
       <SEO
         title="Contact Irha Apparels — Sialkot, Pakistan"
-        description="Reach the Irha Apparels team in Sialkot, Pakistan via WhatsApp, email or direct call. We respond within hours to international B2B inquiries."
+        description="Reach the Irha Apparels team in Sialkot, Pakistan via WhatsApp, email or direct call for international B2B apparel manufacturing enquiries."
         path="/contact"
       />
 
@@ -77,9 +77,12 @@ export default function Contact() {
             <ContactRow Icon={MapPin} label="Atelier" value={BRAND.address} />
           </div>
           <div className="bg-card/40 border border-border p-10 md:p-12">
-            <p className="eyebrow mb-6">Business Hours</p>
-            <h3 className="font-display text-3xl mb-6">We respond within hours.</h3>
-            <ul className="space-y-4 text-foreground/75">
+            <p className="eyebrow mb-6">Business Enquiries</p>
+            <h3 className="font-display text-3xl mb-6">Share your requirements.</h3>
+            <p className="text-foreground/70 leading-relaxed">
+              Our team reviews business enquiries and follows up using the contact details you provide. Response timing depends on the request and working schedule.
+            </p>
+            <ul className="space-y-4 text-foreground/75 mt-8">
               <li className="flex justify-between border-b border-border/60 pb-3"><span>Monday – Friday</span><span>9:00 — 19:00 PKT</span></li>
               <li className="flex justify-between border-b border-border/60 pb-3"><span>Saturday</span><span>10:00 — 16:00 PKT</span></li>
               <li className="flex justify-between"><span>Sunday</span><span className="text-muted-foreground">Closed</span></li>
