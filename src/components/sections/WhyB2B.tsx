@@ -1,12 +1,12 @@
 import { Layers, Palette, Tag, Boxes, ClipboardCheck, Ship } from "lucide-react";
 
 const POINTS = [
-  { Icon: Layers, t: "Custom Cut & Sew", d: "Full-package apparel manufacturing from your tech pack, sketch, or reference sample." },
-  { Icon: Palette, t: "Custom Branding", d: "Screen, sublimation, DTG, embroidery, patches, heat-transfer — decoration to your artwork." },
-  { Icon: Tag, t: "Private Label Ready", d: "Woven labels, hang-tags, care labels and packaging built to your brand system." },
-  { Icon: Boxes, t: "Product Development", d: "Sampling, fit refinement, material sourcing and construction feedback before bulk." },
-  { Icon: ClipboardCheck, t: "Documented Quality", d: "Inline checks and pre-shipment AQL inspection with photo/video reporting on request." },
-  { Icon: Ship, t: "Export Support", d: "Form-E, COO, packing lists, commercial invoices — prepared in-house for your destination." },
+  { Icon: Layers, t: "Custom Cut & Sew", d: "Develop programs from a tech pack, sketch, reference sample or clear product brief." },
+  { Icon: Palette, t: "Branding Options", d: "Printing, embroidery, patches and heat-transfer requirements are reviewed by product." },
+  { Icon: Tag, t: "Private Label Ready", d: "Woven labels, care labels, hangtags and packaging can be scoped to your brand system." },
+  { Icon: Boxes, t: "Product Development", d: "Sampling, fit, material and construction requirements are reviewed before bulk production." },
+  { Icon: ClipboardCheck, t: "Quality Requirements", d: "Measurements, workmanship, finishing and reporting needs can be scoped per program." },
+  { Icon: Ship, t: "Order Documentation", d: "Share the documents and destination requirements you need so they can be reviewed before confirmation." },
 ];
 
 export default function WhyB2B() {
