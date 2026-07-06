@@ -1,13 +1,11 @@
 // Public catalog data layer — Supabase is the runtime source of truth.
-// Legacy hardcoded files in src/lib/{categories,catalog}.ts remain untouched
-// as an emergency fallback (only used on genuine network/fetch errors).
+// Commercial fields are intentionally hidden from public output until they are
+// reviewed per product. Admin data remains unchanged.
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
 import type { Product as LegacyProduct } from "@/lib/categories";
-
-// ---------- Types ----------
 
 export type PublicSubCategory = DbCategory & {
   products: DbProduct[];
@@ -15,38 +13,47 @@ export type PublicSubCategory = DbCategory & {
 
 export type PublicTopCategory = DbCategory & {
   subs: PublicSubCategory[];
-  directProducts: DbProduct[]; // products attached directly to top-level cat
+  directProducts: DbProduct[];
 };
 
-// ---------- Query keys ----------
 const K = {
   tree: ["public-catalog", "tree"] as const,
   topWithSubs: (slug: string) => ["public-catalog", "top", slug] as const,
-  product: (cat: string, prod: string) =>
-    ["public-catalog", "product", cat, prod] as const,
+  product: (cat: string, prod: string) => ["public-catalog", "product", cat, prod] as const,
 };
 
-// ---------- Fetchers ----------
+function sanitizePublicProduct(p: DbProduct): DbProduct {
+  const details = (Array.isArray(p.details) ? p.details : []).filter(
+    (d) => !/(moq|lead\s*time|production\s*timeline|sample\s*timeline|shipping\s*time)/i.test(d.label),
+  );
+  return {
+    ...p,
+    details,
+    moq_display: null,
+    moq_min: null,
+    production_timeline: null,
+    sample_timeline: null,
+  };
+}
 
 async function fetchTree(): Promise<PublicTopCategory[]> {
-  const [{ data: cats, error: cErr }, { data: prods, error: pErr }] =
-    await Promise.all([
-      supabase
-        .from("categories")
-        .select("*")
-        .eq("is_published", true)
-        .order("sort_order", { ascending: true }),
-      supabase
-        .from("products")
-        .select("*")
-        .eq("is_published", true)
-        .order("sort_order", { ascending: true }),
-    ]);
+  const [{ data: cats, error: cErr }, { data: prods, error: pErr }] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("products")
+      .select("*")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true }),
+  ]);
   if (cErr) throw cErr;
   if (pErr) throw pErr;
 
   const allCats = (cats ?? []) as DbCategory[];
-  const allProds = (prods ?? []) as unknown as DbProduct[];
+  const allProds = ((prods ?? []) as unknown as DbProduct[]).map(sanitizePublicProduct);
 
   const byParent = new Map<string, DbCategory[]>();
   const tops: DbCategory[] = [];
@@ -79,8 +86,6 @@ async function fetchTree(): Promise<PublicTopCategory[]> {
   });
 }
 
-// ---------- Public hooks ----------
-
 export function usePublicCatalogTree() {
   return useQuery({
     queryKey: K.tree,
@@ -95,12 +100,6 @@ export function usePublicTopCategory(slug?: string) {
   return { ...q, data: top };
 }
 
-/**
- * Resolve a product by URL (categorySlug/productSlug).
- * The URL uses the TOP-LEVEL category slug but products live under
- * sub-categories. We match the product by slug then verify its category
- * (or its category's parent) has the requested slug.
- */
 export function usePublicProduct(categorySlug?: string, productSlug?: string) {
   return useQuery({
     queryKey: K.product(categorySlug ?? "", productSlug ?? ""),
@@ -115,7 +114,7 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
         .maybeSingle();
       if (pErr) throw pErr;
       if (!prod) return null;
-      const dbProd = prod as unknown as DbProduct;
+      const dbProd = sanitizePublicProduct(prod as unknown as DbProduct);
 
       const { data: cat, error: cErr } = await supabase
         .from("categories")
@@ -127,7 +126,6 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
       if (!cat) return null;
       const category = cat as DbCategory;
 
-      // Resolve top-level ancestor.
       let top: DbCategory = category;
       if (category.parent_id) {
         const { data: parent, error: paErr } = await supabase
@@ -141,14 +139,9 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
         top = parent as DbCategory;
       }
 
-      // Accept both current and legacy top-slug so old inbound URLs resolve.
       const { LEGACY_TOP_SLUG_MAP } = await import("@/lib/legacyCategorySlugs");
       const canonicalRequested = LEGACY_TOP_SLUG_MAP[categorySlug ?? ""] ?? categorySlug;
-      if (
-        top.slug !== canonicalRequested &&
-        category.slug !== categorySlug &&
-        top.slug !== categorySlug
-      ) {
+      if (top.slug !== canonicalRequested && category.slug !== categorySlug && top.slug !== categorySlug) {
         return null;
       }
       return { product: dbProd, subCategory: category, topCategory: top };
@@ -156,22 +149,20 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
   });
 }
 
-
-// ---------- Adapter: DbProduct → legacy Product shape (for modal reuse) ----------
-
 export function adaptDbProduct(
   p: DbProduct,
 ): LegacyProduct & { slug: string; id: string } {
-  const gallery = p.gallery?.length ? p.gallery : p.image_url ? [p.image_url] : [];
-  const details: ProductDetailSpec[] = Array.isArray(p.details) ? p.details : [];
+  const clean = sanitizePublicProduct(p);
+  const gallery = clean.gallery?.length ? clean.gallery : clean.image_url ? [clean.image_url] : [];
+  const details: ProductDetailSpec[] = Array.isArray(clean.details) ? clean.details : [];
   return {
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    image: p.image_url ?? gallery[0] ?? "",
+    id: clean.id,
+    slug: clean.slug,
+    name: clean.name,
+    image: clean.image_url ?? gallery[0] ?? "",
     gallery,
-    description: p.description ?? "",
-    specs: p.specs ?? [],
+    description: clean.description ?? "",
+    specs: clean.specs ?? [],
     details,
   };
 }
