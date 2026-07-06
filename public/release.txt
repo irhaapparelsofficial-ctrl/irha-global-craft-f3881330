@@ -1,0 +1,3 @@
+IRHA_GATE4_RELEASE_2026_07_06_R2
+Source: GitHub main
+Purpose: production deployment identity probe
