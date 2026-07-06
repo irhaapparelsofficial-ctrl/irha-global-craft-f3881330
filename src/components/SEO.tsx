@@ -21,8 +21,6 @@ export default function SEO({
   noindex,
   type = "website",
 }: Props) {
-  // Always emit absolute canonical / og:url so crawlers attribute each
-  // page to its real URL (relative URLs silently break attribution).
   const url = path.startsWith("http")
     ? path
     : `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
@@ -32,29 +30,13 @@ export default function SEO({
       : `${SITE_URL}${image.startsWith("/") ? image : `/${image}`}`
     : undefined;
 
-  // Hreflang: site is English but markets it in DE/AT/UK/US/AU/CA/AE.
-  // All point at the same URL — Google uses this to surface the page
-  // in each locale's results without a duplicate-content penalty.
-  const hreflangs: Array<[string, string]> = [
-    ["en", url],
-    ["en-US", url],
-    ["en-GB", url],
-    ["en-AU", url],
-    ["en-CA", url],
-    ["en-AE", url],
-    ["de-DE", url],
-    ["de-AT", url],
-    ["x-default", url],
-  ];
-
   return (
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={url} />
-      {hreflangs.map(([lang, href]) => (
-        <link key={lang} rel="alternate" hrefLang={lang} href={href} />
-      ))}
+      <link rel="alternate" hrefLang="en" href={url} />
+      <link rel="alternate" hrefLang="x-default" href={url} />
       {noindex && <meta name="robots" content="noindex,follow" />}
 
       <meta property="og:title" content={title} />
