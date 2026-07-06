@@ -22,4 +22,4 @@ jobs:
           node-version: 24
 
       - name: Verify production identity, crawler parity and legacy-claim absence
-        run: node scripts/production-smoke.mjs
+        run: node scripts/production-smoke-v2.mjs
