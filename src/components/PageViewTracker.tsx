@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
+const CONSENT_KEY = "irha_cookie_consent_v1";
+
 function getSessionId(): string {
   try {
     let s = sessionStorage.getItem("irha:sid");
@@ -15,10 +17,24 @@ function getSessionId(): string {
   }
 }
 
+function hasAnalyticsConsent(): boolean {
+  try {
+    const raw = localStorage.getItem(CONSENT_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as { categories?: { analytics?: boolean } };
+    return parsed?.categories?.analytics === true;
+  } catch {
+    return false;
+  }
+}
+
 export default function PageViewTracker() {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
+    if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
+    if (!hasAnalyticsConsent()) return;
+
     const pageLocation = window.location.href;
     const pagePath = pathname + search;
 
@@ -29,8 +45,6 @@ export default function PageViewTracker() {
         send_to: "G-RV39YH4CPF",
       });
     }
-
-    if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
 
     void supabase.from("page_views").insert({
       path: pagePath,
