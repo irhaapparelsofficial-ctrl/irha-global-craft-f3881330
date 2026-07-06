@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <OccasionBanner />
       <Navbar />
-      <main className="flex-1 pb-14 md:pb-0">{children}</main>
+      <main className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
       <Footer />
       <FloatingActions />
       <FloatingSocialRail />
