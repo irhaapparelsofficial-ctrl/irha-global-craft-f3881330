@@ -56,36 +56,30 @@ const COMPANY = [
   { to: "/contact", label: "Contact" },
 ];
 
-const COMPLIANCE = [
+const READINESS = [
   { label: "In-House Quality Control", note: "AQL inspections" },
   { label: "Responsible Sourcing", note: "Vetted mill partners" },
   { label: "Ethical Manufacturing", note: "Sialkot atelier" },
   { label: "Export Documentation", note: "Form-E, COO, invoices" },
-  { label: "EU & US Market Ready", note: "Buyer-aligned compliance" },
+  { label: "EU & US Market Ready", note: "Buyer-aligned requirements" },
 ];
 
 export default function Footer() {
   return (
     <footer className="relative bg-[#0A0A0A] border-t border-border/60 pt-16 pb-8 text-foreground/80">
       <div className="container-luxe grid gap-12 md:grid-cols-3 lg:grid-cols-5">
-        {/* Col 1 — Brand */}
         <div>
           <Link to="/" className="inline-flex items-center" aria-label="Irha Apparels home">
             <img src={irhaLogo.url} alt="Irha Apparels" className="h-10 w-auto" />
           </Link>
-          <p className="mt-5 text-sm font-medium text-foreground/90">
-            B2B Apparel Manufacturer
-          </p>
-          <p className="mt-2 text-sm text-foreground/60 leading-relaxed">
-            Sialkot, Pakistan — FOB Sialkot
-          </p>
+          <p className="mt-5 text-sm font-medium text-foreground/90">B2B Apparel Manufacturer</p>
+          <p className="mt-2 text-sm text-foreground/60 leading-relaxed">Sialkot, Pakistan — FOB Sialkot</p>
           <p className="mt-5 flex items-start gap-2 text-xs text-foreground/55 leading-relaxed">
             <MapPin size={14} className="text-gold mt-0.5 shrink-0" />
             {BRAND.address}
           </p>
         </div>
 
-        {/* Col 2 — Collections */}
         <details className="group md:open border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
           <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
             <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Collections</span>
@@ -102,7 +96,6 @@ export default function Footer() {
           </ul>
         </details>
 
-        {/* Col 3 — Company */}
         <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
           <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
             <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Company</span>
@@ -119,7 +112,6 @@ export default function Footer() {
           </ul>
         </details>
 
-        {/* Col 4 — Connect */}
         <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
           <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
             <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Connect</span>
@@ -177,19 +169,15 @@ export default function Footer() {
           </div>
         </details>
 
-        {/* Col 5 — Certifications */}
         <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0 lg:col-span-1 md:col-span-3" open>
           <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
-            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Certifications &amp; Compliance</span>
+            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Quality &amp; Export Readiness</span>
             <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
           </summary>
           <ul className="space-y-2.5 text-sm pt-3 md:pt-0">
-            {COMPLIANCE.map((c) => (
+            {READINESS.map((c) => (
               <li key={c.label} className="leading-snug">
-                <Link
-                  to="/compliance"
-                  className="inline-block py-0.5 text-foreground/75 hover:text-gold transition-colors"
-                >
+                <Link to="/compliance" className="inline-block py-0.5 text-foreground/75 hover:text-gold transition-colors">
                   <span className="font-medium">{c.label}</span>
                   <span className="text-foreground/45"> — {c.note}</span>
                 </Link>
@@ -199,29 +187,20 @@ export default function Footer() {
         </details>
       </div>
 
-
-      {/* Promises strip */}
       <div className="container-luxe mt-14 pt-6 border-t border-foreground/10">
         <p className="text-center text-[11px] md:text-xs uppercase tracking-[0.3em] text-foreground/65">
           Flexible MOQ <span className="text-gold mx-2">|</span> FOB Sialkot <span className="text-gold mx-2">|</span> OEM · ODM · Private Label
         </p>
       </div>
 
-      {/* Bottom legal */}
       <div className="container-luxe mt-6 flex flex-col md:flex-row items-center justify-between gap-3">
         <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/45">
           © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
         </p>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] uppercase tracking-[0.25em]">
-          <Link to="/privacy-policy" className="text-foreground/45 hover:text-gold transition-colors">
-            Privacy Policy
-          </Link>
-          <Link to="/terms-of-service" className="text-foreground/45 hover:text-gold transition-colors">
-            Terms of Service
-          </Link>
-          <Link to="/shipping-returns" className="text-foreground/45 hover:text-gold transition-colors">
-            Shipping &amp; Returns
-          </Link>
+          <Link to="/privacy-policy" className="text-foreground/45 hover:text-gold transition-colors">Privacy Policy</Link>
+          <Link to="/terms-of-service" className="text-foreground/45 hover:text-gold transition-colors">Terms of Service</Link>
+          <Link to="/shipping-returns" className="text-foreground/45 hover:text-gold transition-colors">Shipping &amp; Returns</Link>
           <button
             type="button"
             onClick={() => window.dispatchEvent(new Event("irha:open-cookie-settings"))}
