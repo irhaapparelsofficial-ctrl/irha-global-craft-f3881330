@@ -2,86 +2,62 @@ import SEO from "@/components/SEO";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 import { Link } from "react-router-dom";
-import Certifications from "@/components/sections/Certifications";
-import { Check } from "lucide-react";
+import { Check, MessageCircle } from "lucide-react";
 
-const steps = [
-  { n: "01", t: "Pattern & Sampling", d: "Tech packs translated into pre-production samples — timeline confirmed per program." },
-  { n: "02", t: "Cutting", d: "Automated and manual cutting floors calibrated for knit, woven and leather." },
-  { n: "03", t: "Stitching", d: "Specialized lines per category — overlock, flat-lock, bartack and leather-grade machines." },
-  { n: "04", t: "Embellishment", d: "In-house embroidery, screen, sublimation, puff and DTG printing." },
-  { n: "05", t: "Washing & Finishing", d: "Enzyme, stone, garment dye and acid wash treatments with consistent shade control." },
-  { n: "06", t: "Quality Control", d: "Inline and final quality checks before every shipment — 3rd-party inspection welcome." },
-  { n: "07", t: "Packaging & Export", d: "Custom poly bags, hangtags, retail-ready cartons and door-to-door logistics." },
-];
+const STEPS = [
+  ["01", "Requirement Review", "Product, quantity, material, branding, sizing and destination needs are reviewed first."],
+  ["02", "Sample & Specification", "Reference garments, sketches or tech packs are translated into the details needed for sampling and costing."],
+  ["03", "Material & Trim Confirmation", "Fabric, leather, trims, labels and packaging are confirmed against the buyer requirement."],
+  ["04", "Production Planning", "Construction, decoration and finishing methods are reviewed before timing and commercial terms are confirmed."],
+  ["05", "Quality Review", "Measurements, workmanship and packaging checks are matched to the product and buyer requirement."],
+  ["06", "Dispatch Preparation", "Packing, labels, shipment documents and logistics requirements are confirmed for the approved order."],
+] as const;
 
-const CAPACITY = [
-  { cat: "Knits (tees, polos, hoodies)", lead: "25–35 days", moq: "Flexible" },
-  { cat: "Wovens (shirts, chinos)", lead: "35–45 days", moq: "Flexible" },
-  { cat: "Sportswear (sublimated)", lead: "25–35 days", moq: "Flexible" },
-  { cat: "Leather garments", lead: "55–70 days", moq: "Flexible" },
-  { cat: "Trachten / Lederhosen", lead: "45–60 days", moq: "Flexible" },
-  { cat: "Silk & nightwear", lead: "35–55 days", moq: "Flexible" },
-];
-
-const QC = [
-  "Fabric inspection at intake",
-  "Cutting accuracy & marker efficiency check",
-  "In-line stitching audits during production",
-  "Mid-line measurement & seam strength",
-  "Final inspection — workmanship, trims, wash",
-  "Pre-shipment inspection (3rd party welcome)",
-];
-
-const MACHINES = [
-  "Single & double-needle lockstitch",
-  "Overlock & flat-lock for knits",
-  "Bartack & buttonhole",
-  "Leather-grade walking-foot machines",
-  "Computerized embroidery",
-  "Sublimation press (wide format)",
-  "Screen, DTG & puff print stations",
-  "Industrial wash & garment dye line",
+const CAPABILITIES = [
+  "Cut-and-sew apparel programs",
+  "Embroidery and print options",
+  "Private labels, care labels and hangtags",
+  "Custom packaging options",
+  "Sampling and product development",
+  "Buyer-specified materials and trims",
 ];
 
 export default function Manufacturing() {
   return (
     <>
       <SEO
-        title="Manufacturing — OEM, ODM, Private Label | Irha Apparels Sialkot"
-        description="Inside Irha Apparels' Sialkot factory — cutting, stitching, washing, QC and export logistics. OEM, ODM and private label apparel manufacturing under one roof."
+        title="Manufacturing Process — Irha Apparels Sialkot"
+        description="How Irha Apparels reviews custom B2B apparel programs, from requirements and sampling to production planning, quality review and dispatch preparation."
         path="/manufacturing"
       />
 
       <section className="relative pt-40 pb-24 md:pb-32 overflow-hidden">
-        <img src={factoryCinematic} loading="eager" width={1920} height={1080} alt="Factory floor" className="absolute inset-0 w-full h-full object-cover opacity-30"/>
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background"/>
+        <img src={factoryCinematic} loading="eager" width={1920} height={1080} alt="Apparel manufacturing environment" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" />
         <div className="container-luxe relative">
-          <p className="eyebrow mb-6">The Atelier</p>
+          <p className="eyebrow mb-6">Manufacturing</p>
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-5xl">
-            Inside the <span className="text-gold italic">Sialkot floor</span>.
+            From requirement to a <span className="text-gold italic">reviewed production path</span>.
           </h1>
           <p className="mt-8 max-w-2xl text-lg text-foreground/75">
-            Seven coordinated stages. One uncompromising standard. This is how every Irha garment moves
-            from concept to container.
+            Each program is reviewed against its actual construction, material, branding, quantity and destination needs before feasibility, pricing or timing are confirmed.
           </p>
         </div>
       </section>
 
-      {/* 7-STAGE PROCESS */}
       <section className="py-24 md:py-32 border-t border-border/60">
         <div className="container-luxe">
-          <p className="eyebrow mb-4">The Production Floor</p>
+          <p className="eyebrow mb-4">Typical Workflow</p>
           <h2 className="font-display text-4xl md:text-5xl leading-[1.05] max-w-2xl mb-14">
-            A <span className="text-gold italic">seven-stage</span> journey, end to end.
+            Clear steps before <span className="text-gold italic">commitments</span>.
           </h2>
           <div className="grid md:grid-cols-2 gap-x-16 gap-y-2">
-            {steps.map((s) => (
-              <div key={s.n} className="grid grid-cols-[auto_1fr] gap-8 py-10 border-b border-border/60">
-                <p className="font-display text-5xl text-gold">{s.n}</p>
+            {STEPS.map(([n, title, body]) => (
+              <div key={n} className="grid grid-cols-[auto_1fr] gap-8 py-10 border-b border-border/60">
+                <p className="font-display text-5xl text-gold">{n}</p>
                 <div>
-                  <h3 className="font-display text-2xl">{s.t}</h3>
-                  <p className="text-foreground/70 mt-3 leading-relaxed text-sm">{s.d}</p>
+                  <h3 className="font-display text-2xl">{title}</h3>
+                  <p className="text-foreground/70 mt-3 leading-relaxed text-sm">{body}</p>
                 </div>
               </div>
             ))}
@@ -89,89 +65,44 @@ export default function Manufacturing() {
         </div>
       </section>
 
-      {/* CAPACITY MATRIX */}
       <section className="py-24 md:py-32 bg-secondary/40 border-y border-border/60">
-        <div className="container-luxe">
-          <p className="eyebrow mb-4">Production Capacity</p>
-          <h2 className="font-display text-4xl md:text-5xl leading-[1.05] max-w-2xl mb-14">
-            Lead times & MOQ, <span className="text-gold italic">by category</span>.
-          </h2>
-          <div className="border border-border/60 bg-background overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/60 text-left">
-                  <th className="px-6 py-5 text-[11px] uppercase tracking-[0.25em] text-foreground/60 font-normal">Category</th>
-                  <th className="px-6 py-5 text-[11px] uppercase tracking-[0.25em] text-foreground/60 font-normal">Typical Lead Time</th>
-                  <th className="px-6 py-5 text-[11px] uppercase tracking-[0.25em] text-foreground/60 font-normal">MOQ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CAPACITY.map((r) => (
-                  <tr key={r.cat} className="border-b border-border/60 last:border-0 hover:bg-card/50 transition-colors">
-                    <td className="px-6 py-5 font-display text-base md:text-lg">{r.cat}</td>
-                    <td className="px-6 py-5 text-foreground/70">{r.lead}</td>
-                    <td className="px-6 py-5 text-foreground/70">{r.moq}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="px-6 py-4 text-xs text-foreground/55 border-t border-border/60">
-              Indicative ranges — lead time and MOQ confirmed per program on the PO.
+        <div className="container-luxe grid lg:grid-cols-2 gap-14 items-start">
+          <div>
+            <p className="eyebrow mb-4">Capabilities</p>
+            <h2 className="font-display text-4xl md:text-5xl leading-[1.05]">
+              Confirmed against the <span className="text-gold italic">actual program</span>.
+            </h2>
+            <p className="text-sm text-foreground/65 mt-6 leading-relaxed">
+              MOQ, samples, production timing, pricing and shipping are confirmed after requirement review.
             </p>
           </div>
-        </div>
-      </section>
-
-
-      {/* MACHINERY + QC */}
-      <section className="py-24 md:py-32">
-        <div className="container-luxe grid lg:grid-cols-12 gap-16">
-          <div className="lg:col-span-6">
-            <p className="eyebrow mb-4">Machinery & Capability</p>
-            <h2 className="font-display text-3xl md:text-4xl leading-[1.05] mb-10">
-              Machines for <span className="text-gold italic">every discipline</span>.
-            </h2>
-            <ul className="space-y-3">
-              {MACHINES.map((m) => (
-                <li key={m} className="flex items-start gap-3 text-foreground/80">
-                  <Check size={18} className="text-primary shrink-0 mt-0.5" />
-                  <span>{m}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="lg:col-span-6">
-            <p className="eyebrow mb-4">6-Stage Quality Control</p>
-            <h2 className="font-display text-3xl md:text-4xl leading-[1.05] mb-10">
-              <span className="text-gold italic">Documented</span> checks, every shipment.
-            </h2>
-            <ol className="space-y-4">
-              {QC.map((q, i) => (
-                <li key={q} className="flex items-start gap-4 text-foreground/80 border-l-2 border-primary/40 pl-5">
-                  <span className="font-display text-2xl text-gold w-8 shrink-0">{(i + 1).toString().padStart(2, "0")}</span>
-                  <span className="pt-1">{q}</span>
-                </li>
-              ))}
-            </ol>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {CAPABILITIES.map((item) => (
+              <div key={item} className="border border-border/60 bg-background p-6 flex items-start gap-3">
+                <Check size={18} className="text-gold shrink-0 mt-0.5" />
+                <span className="text-foreground/80">{item}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <Certifications />
-
       <section className="py-24 md:py-32">
-        <div className="container-luxe relative aspect-[16/7] overflow-hidden">
-          <img src={manufacturingImg} alt="Factory" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-background/70 flex items-center justify-center text-center px-6">
-            <div className="max-w-2xl">
-              <h2 className="font-display text-3xl md:text-5xl leading-[1.05]">
-                Production capacity, ready when <span className="text-gold italic">your brand</span> is.
-              </h2>
-              <Link to="/inquiry" className="mt-10 inline-flex bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all">
-                Start an Inquiry
-              </Link>
-            </div>
+        <div className="container-luxe grid lg:grid-cols-2 gap-14 items-center">
+          <div className="relative aspect-[4/3] overflow-hidden">
+            <img src={manufacturingImg} alt="Sialkot apparel manufacturing" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+          </div>
+          <div>
+            <p className="eyebrow mb-4">Direct Trust Check</p>
+            <h2 className="font-display text-4xl md:text-5xl leading-[1.05]">
+              Request a <span className="text-gold italic">live video call</span>.
+            </h2>
+            <p className="text-foreground/70 mt-6 leading-relaxed">
+              Buyers can request a live video call to discuss the program and view the manufacturing environment before moving forward.
+            </p>
+            <Link to="/inquiry?intent=meeting" className="mt-8 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all">
+              <MessageCircle size={15} /> Request Live Video Call
+            </Link>
           </div>
         </div>
       </section>
