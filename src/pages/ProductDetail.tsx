@@ -20,7 +20,6 @@ export default function ProductDetail() {
 
   useEffect(() => setActiveImg(0), [productSlug]);
 
-  // Push to recently viewed on load
   useEffect(() => {
     if (!data) return;
     pushRecentlyViewed({
@@ -32,7 +31,6 @@ export default function ProductDetail() {
     });
   }, [data]);
 
-  // Related products (same subcategory, exclude self, limit 4). DB-driven.
   const related = useQuery({
     queryKey: ["related-products", data?.product.id],
     enabled: !!data?.product.id,
@@ -70,12 +68,9 @@ export default function ProductDetail() {
   const category = { slug: data.topCategory.slug, name: data.topCategory.name };
   const subCat = data.subCategory;
   const product = data.product;
-  const gallery = resolveGallery(
-    product.gallery.length ? product.gallery : [product.image_url ?? ""],
-  );
+  const gallery = resolveGallery(product.gallery.length ? product.gallery : [product.image_url ?? ""]);
   const url = `${SITE}/products/${category.slug}/${product.slug}`;
 
-  // B2B info rows — only include fields with real data. No fabricated values.
   const b2bRows: Array<{ label: string; value: string }> = [];
   const pushIf = (label: string, value?: string | null) => {
     if (value && value.trim()) b2bRows.push({ label, value: value.trim() });
@@ -95,11 +90,7 @@ export default function ProductDetail() {
   }
   pushIf("Packaging", product.packaging_standard);
 
-  // Fall back to legacy `details` when new fields empty — but drop MOQ/Lead-Time
-  // duplicates that new fields already cover.
-  const legacyDetails = (product.details ?? []).filter(
-    (d) => !/(moq|lead time)/i.test(d.label),
-  );
+  const legacyDetails = (product.details ?? []).filter((d) => !/(moq|lead time)/i.test(d.label));
 
   const custom = product.customization ?? {};
   const customEnabled = Object.entries(custom)
@@ -108,7 +99,6 @@ export default function ProductDetail() {
 
   const whatsappMsg = `Hello Irha Apparels — I'm interested in ${product.name} (${subCat.name}, ${category.name}). Product page: ${url}`;
 
-  // JSON-LD: Product schema WITHOUT price/Offer (quotation-based B2B).
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -168,24 +158,14 @@ export default function ProductDetail() {
           </nav>
 
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-16">
-            {/* Gallery */}
             <div className="lg:col-span-7">
               <div className="relative aspect-[4/5] overflow-hidden bg-card mb-4">
-                <img
-                  src={gallery[activeImg] ?? gallery[0]}
-                  alt={product.name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+                <img src={gallery[activeImg] ?? gallery[0]} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
               </div>
               {gallery.length > 1 && (
                 <div className="grid grid-cols-4 gap-3">
                   {gallery.map((g, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveImg(i)}
-                      aria-label={`View image ${i + 1}`}
-                      className={`aspect-square overflow-hidden border ${i === activeImg ? "border-primary" : "border-border/60"}`}
-                    >
+                    <button key={i} onClick={() => setActiveImg(i)} aria-label={`View image ${i + 1}`} className={`aspect-square overflow-hidden border ${i === activeImg ? "border-primary" : "border-border/60"}`}>
                       <img src={g} alt="" loading="lazy" className="w-full h-full object-cover" />
                     </button>
                   ))}
@@ -193,7 +173,6 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Info */}
             <div className="lg:col-span-5">
               <p className="eyebrow mb-3">
                 <Link to={`/products/${category.slug}`} className="hover:text-primary">{category.name}</Link>
@@ -201,69 +180,33 @@ export default function ProductDetail() {
                 {subCat.name}
               </p>
               <h1 className="font-display text-3xl md:text-4xl leading-[1.05]">{product.name}</h1>
-              {product.sku && (
-                <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-foreground/50">SKU · {product.sku}</p>
-              )}
-              {(product.short_description ?? product.description) && (
-                <p className="mt-5 text-foreground/75 leading-relaxed">
-                  {product.short_description ?? product.description}
-                </p>
-              )}
+              {product.sku && <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-foreground/50">SKU · {product.sku}</p>}
+              {(product.short_description ?? product.description) && <p className="mt-5 text-foreground/75 leading-relaxed">{product.short_description ?? product.description}</p>}
 
               {product.specs?.length > 0 && (
                 <ul className="mt-7 space-y-2">
                   {product.specs.map((s) => (
-                    <li key={s} className="flex items-start gap-3 text-sm text-foreground/85">
-                      <span className="text-primary mt-1">✦</span> {s}
-                    </li>
+                    <li key={s} className="flex items-start gap-3 text-sm text-foreground/85"><span className="text-primary mt-1">✦</span> {s}</li>
                   ))}
                 </ul>
               )}
 
-              {/* CTA hierarchy: primary=Request a Quote, secondary=WhatsApp, contextual */}
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  to={`/inquiry?intent=rfq&product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}`}
-                  className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
-                >
+                <Link to={`/inquiry?intent=rfq&product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}`} className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
                   Request a Quote
                 </Link>
-                <a
-                  href={whatsappLink(whatsappMsg)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
-                >
+                <a href={whatsappLink(whatsappMsg)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
                   <MessageCircle size={16} /> WhatsApp
                 </a>
-                <button
-                  type="button"
-                  onClick={() =>
-                    shortlist.toggle({
-                      slug: product.slug,
-                      name: product.name,
-                      image: product.image_url ?? gallery[0],
-                      categorySlug: category.slug,
-                      categoryName: category.name,
-                      addedAt: Date.now(),
-                    })
-                  }
-                  aria-pressed={shortlist.has(product.slug)}
-                  aria-label={shortlist.has(product.slug) ? "Remove from shortlist" : "Save to shortlist"}
-                  className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
-                >
+                <button type="button" onClick={() => shortlist.toggle({ slug: product.slug, name: product.name, image: product.image_url ?? gallery[0], categorySlug: category.slug, categoryName: category.name, addedAt: Date.now() })} aria-pressed={shortlist.has(product.slug)} aria-label={shortlist.has(product.slug) ? "Remove from shortlist" : "Save to shortlist"} className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
                   {shortlist.has(product.slug) ? <BookmarkCheck size={16} className="text-primary" /> : <Bookmark size={16} />}
                   {shortlist.has(product.slug) ? "Saved" : "Save"}
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.25em]">
-                <Link to={`/inquiry?product=${encodeURIComponent(product.slug)}&intent=reference`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2">
-                  <Upload size={12} /> Upload reference design
-                </Link>
+                <Link to={`/inquiry?product=${encodeURIComponent(product.slug)}&intent=reference`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Upload size={12} /> Upload reference design</Link>
                 <span className="text-foreground/25">·</span>
-                <Link to={`/products/${category.slug}/${product.slug}/spec-sheet`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2">
-                  <Printer size={12} /> Print spec sheet
-                </Link>
+                <Link to={`/products/${category.slug}/${product.slug}/spec-sheet`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Printer size={12} /> Print spec sheet</Link>
               </div>
 
               <p className="mt-6 text-[11px] md:text-xs text-foreground/60 leading-relaxed">
@@ -271,7 +214,7 @@ export default function ProductDetail() {
                 <span className="text-foreground/30 mx-2">|</span>
                 <span className="text-gold">✓</span> OEM · ODM · Private Label
                 <span className="text-foreground/30 mx-2">|</span>
-                <span className="text-gold">✓</span> Worldwide export · FOB Sialkot
+                <span className="text-gold">✓</span> MOQ · Timeline · Shipping confirmed after review
               </p>
 
               {b2bRows.length > 0 && (
@@ -292,11 +235,7 @@ export default function ProductDetail() {
                 <div className="mt-8 border-t border-border/60 pt-8">
                   <p className="eyebrow mb-4">Customization Available</p>
                   <ul className="flex flex-wrap gap-2">
-                    {customEnabled.map((c) => (
-                      <li key={c} className="inline-flex items-center px-3 py-1.5 border border-border/60 text-[11px] uppercase tracking-[0.22em] text-foreground/80 capitalize">
-                        {c}
-                      </li>
-                    ))}
+                    {customEnabled.map((c) => <li key={c} className="inline-flex items-center px-3 py-1.5 border border-border/60 text-[11px] uppercase tracking-[0.22em] text-foreground/80 capitalize">{c}</li>)}
                   </ul>
                 </div>
               )}
@@ -317,32 +256,18 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Related products */}
           {related.data && related.data.length > 0 && (
             <div className="mt-24 border-t border-border/60 pt-12">
               <p className="eyebrow mb-2">Related products</p>
               <h2 className="font-display text-2xl md:text-3xl mb-8">More from {subCat.name}</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-5 lg:gap-7">
                 {related.data.map((r) => (
-                  <Link
-                    key={r.id}
-                    to={`/products/${category.slug}/${r.slug}`}
-                    className="group flex flex-col text-left"
-                  >
+                  <Link key={r.id} to={`/products/${category.slug}/${r.slug}`} className="group flex flex-col text-left">
                     <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
-                      <img
-                        src={r.image_url ?? r.gallery?.[0] ?? ""}
-                        alt={r.name}
-                        loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
-                      />
+                      <img src={r.image_url ?? r.gallery?.[0] ?? ""} alt={r.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
                     </div>
-                    <h4 className="font-display text-base leading-tight group-hover:text-primary transition-colors">
-                      {r.name}
-                    </h4>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">
-                      {r.moq_display ?? "MOQ on request"}
-                    </p>
+                    <h4 className="font-display text-base leading-tight group-hover:text-primary transition-colors">{r.name}</h4>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">MOQ confirmed after review</p>
                   </Link>
                 ))}
               </div>
