@@ -36,6 +36,29 @@ const Compare = lazy(() => import("./pages/Compare"));
 
 const queryClient = new QueryClient();
 
+const LEGACY_REDIRECTS = [
+  ["/sportswear-manufacturer-pakistan", "/products/sportswear"],
+  ["/sportswear-manufacturer-sialkot", "/products/sportswear"],
+  ["/private-label-sportswear-manufacturer", "/products/sportswear"],
+  ["/leatherwear-manufacturer-pakistan", "/products/premium-leather-apparel"],
+  ["/leather-jacket-manufacturer", "/products/premium-leather-apparel"],
+  ["/lederhosen-manufacturer", "/products/bavarian-trachten-wear"],
+  ["/trachten-manufacturer", "/products/bavarian-trachten-wear"],
+  ["/oktoberfest-clothing-manufacturer", "/products/bavarian-trachten-wear"],
+  ["/austria-lederhosen-manufacturer", "/products/bavarian-trachten-wear"],
+  ["/streetwear-manufacturer-pakistan", "/products/streetwear-activewear"],
+  ["/uae-sportswear-manufacturer", "/products/sportswear"],
+  ["/custom-apparel-manufacturer-pakistan", "/products"],
+  ["/germany-apparel-manufacturer", "/products"],
+  ["/usa-private-label-clothing-manufacturer", "/products"],
+  ["/uk-custom-apparel-manufacturer", "/products"],
+  ["/usa-manufacturer", "/products"],
+  ["/uk-manufacturer", "/products"],
+  ["/germany-manufacturer", "/products"],
+  ["/canada-manufacturer", "/products"],
+  ["/australia-manufacturer", "/products"],
+] as const;
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -101,6 +124,9 @@ const App = () => (
                       <Route path="/blog/:slug" element={<Navigate to="/" replace />} />
                       <Route path="/journal" element={<Navigate to="/" replace />} />
                       <Route path="/journal/:slug" element={<Navigate to="/" replace />} />
+                      {LEGACY_REDIRECTS.map(([from, to]) => (
+                        <Route key={from} path={from} element={<Navigate to={to} replace />} />
+                      ))}
                       <Route path="/login" element={<Navigate to="/auth" replace />} />
                       <Route path="/signin" element={<Navigate to="/auth" replace />} />
                       <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
