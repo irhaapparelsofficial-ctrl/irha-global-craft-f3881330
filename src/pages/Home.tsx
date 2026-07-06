@@ -4,7 +4,7 @@ import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
 import CapabilityStrip from "@/components/sections/CapabilityStrip";
 import FiveCategories from "@/components/sections/FiveCategories";
-
+import ManufacturingCapabilities from "@/components/sections/ManufacturingCapabilities";
 import WhyB2B from "@/components/sections/WhyB2B";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import BuyerPromise from "@/components/sections/BuyerPromise";
@@ -162,6 +162,8 @@ export default function Home() {
       {/* 5 CATEGORIES — live DB */}
       <FiveCategories />
 
+      {/* MANUFACTURING CAPABILITIES — preserve; final premium polish later */}
+      <ManufacturingCapabilities />
 
       {/* WHY B2B — replaces fake testimonials */}
       <WhyB2B />
