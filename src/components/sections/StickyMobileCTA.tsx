@@ -9,7 +9,7 @@ export default function StickyMobileCTA() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <Link
-        to="/inquiry"
+        to="/inquiry?intent=rfq"
         aria-label="Request a quote"
         className="flex items-center justify-center gap-2 bg-gradient-gold text-primary-foreground py-3.5 text-[11px] uppercase tracking-[0.25em] font-medium min-h-11"
       >
