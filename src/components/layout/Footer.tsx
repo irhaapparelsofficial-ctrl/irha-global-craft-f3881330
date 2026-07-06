@@ -35,9 +35,9 @@ function WhatsAppIcon({ size = 20 }: { size?: number }) {
 }
 
 const SOCIALS = [
-  { name: "Instagram", href: "https://www.instagram.com/irhaapparels", Icon: InstagramIcon, handle: "@irhaapparels" },
-  { name: "Facebook", href: "https://web.facebook.com/profile.php?id=61590950402472", Icon: FacebookIcon, handle: "Irha Apparels" },
-  { name: "TikTok", href: "https://www.tiktok.com/@irhaapparels", Icon: TikTokIcon, handle: "@irhaapparels" },
+  { name: "Instagram", href: "https://www.instagram.com/irhaapparels", Icon: InstagramIcon },
+  { name: "Facebook", href: "https://web.facebook.com/profile.php?id=61590950402472", Icon: FacebookIcon },
+  { name: "TikTok", href: "https://www.tiktok.com/@irhaapparels", Icon: TikTokIcon },
 ];
 
 const COLLECTIONS = [
@@ -56,12 +56,11 @@ const COMPANY = [
   { to: "/contact", label: "Contact" },
 ];
 
-const READINESS = [
-  { label: "In-House Quality Control", note: "AQL inspections" },
-  { label: "Responsible Sourcing", note: "Vetted mill partners" },
-  { label: "Ethical Manufacturing", note: "Sialkot atelier" },
-  { label: "Export Documentation", note: "Form-E, COO, invoices" },
-  { label: "EU & US Market Ready", note: "Buyer-aligned requirements" },
+const BUYER_READINESS = [
+  { label: "Requirement-led review", note: "Scope confirmed before commitment" },
+  { label: "Private-label options", note: "Labels, tags and packaging by program" },
+  { label: "Order documentation", note: "Requirements confirmed before dispatch" },
+  { label: "Live factory view", note: "Available by video call" },
 ];
 
 export default function Footer() {
@@ -72,8 +71,8 @@ export default function Footer() {
           <Link to="/" className="inline-flex items-center" aria-label="Irha Apparels home">
             <img src={irhaLogo.url} alt="Irha Apparels" className="h-10 w-auto" />
           </Link>
-          <p className="mt-5 text-sm font-medium text-foreground/90">B2B Apparel Manufacturer</p>
-          <p className="mt-2 text-sm text-foreground/60 leading-relaxed">Sialkot, Pakistan — FOB Sialkot</p>
+          <p className="mt-5 text-sm font-medium text-foreground/90">B2B Custom Apparel Manufacturer</p>
+          <p className="mt-2 text-sm text-foreground/60 leading-relaxed">Sialkot, Pakistan</p>
           <p className="mt-5 flex items-start gap-2 text-xs text-foreground/55 leading-relaxed">
             <MapPin size={14} className="text-gold mt-0.5 shrink-0" />
             {BRAND.address}
@@ -88,9 +87,7 @@ export default function Footer() {
           <ul className="space-y-3 text-sm pt-3 md:pt-0">
             {COLLECTIONS.map((c) => (
               <li key={c.slug}>
-                <Link to={`/products/${c.slug}`} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">
-                  {c.label}
-                </Link>
+                <Link to={`/products/${c.slug}`} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{c.label}</Link>
               </li>
             ))}
           </ul>
@@ -103,11 +100,7 @@ export default function Footer() {
           </summary>
           <ul className="space-y-3 text-sm pt-3 md:pt-0">
             {COMPANY.map((l) => (
-              <li key={l.to}>
-                <Link to={l.to} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">
-                  {l.label}
-                </Link>
-              </li>
+              <li key={l.to}><Link to={l.to} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{l.label}</Link></li>
             ))}
           </ul>
         </details>
@@ -120,49 +113,25 @@ export default function Footer() {
           <div className="pt-3 md:pt-0">
             <div className="flex items-center gap-3 mb-5">
               {SOCIALS.map((s) => (
-                <a
-                  key={s.name}
-                  href={s.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  aria-label={`Irha Apparels on ${s.name}`}
-                  className="inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold transition-colors"
-                >
+                <a key={s.name} href={s.href} target="_blank" rel="noreferrer noopener" aria-label={`Irha Apparels on ${s.name}`} className="inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold transition-colors">
                   <s.Icon size={18} />
                 </a>
               ))}
             </div>
-
             <ul className="space-y-3 text-sm">
               <li>
-                <a
-                  href={whatsappLink()}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors"
-                >
-                  <WhatsAppIcon size={15} />
-                  +92 320 4110066
+                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors">
+                  <WhatsAppIcon size={15} /> +92 320 4110066
                 </a>
               </li>
               <li>
-                <a
-                  href="https://wa.me/923204110066"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex items-center gap-2 py-1 text-foreground/55 hover:text-gold transition-colors text-xs"
-                >
-                  <MessageCircle size={13} />
-                  Chat on WhatsApp
+                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 py-1 text-foreground/55 hover:text-gold transition-colors text-xs">
+                  <MessageCircle size={13} /> Chat on WhatsApp
                 </a>
               </li>
               <li>
-                <a
-                  href="mailto:irhaapparelsofficial@gmail.com"
-                  className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors break-all"
-                >
-                  <Mail size={15} />
-                  irhaapparelsofficial@gmail.com
+                <a href={`mailto:${BRAND.email}`} className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors break-all">
+                  <Mail size={15} /> {BRAND.email}
                 </a>
               </li>
             </ul>
@@ -171,16 +140,14 @@ export default function Footer() {
 
         <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0 lg:col-span-1 md:col-span-3" open>
           <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
-            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Quality &amp; Export Readiness</span>
+            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Buyer Readiness</span>
             <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
           </summary>
           <ul className="space-y-2.5 text-sm pt-3 md:pt-0">
-            {READINESS.map((c) => (
-              <li key={c.label} className="leading-snug">
-                <Link to="/compliance" className="inline-block py-0.5 text-foreground/75 hover:text-gold transition-colors">
-                  <span className="font-medium">{c.label}</span>
-                  <span className="text-foreground/45"> — {c.note}</span>
-                </Link>
+            {BUYER_READINESS.map((item) => (
+              <li key={item.label} className="leading-snug">
+                <span className="text-foreground/75 font-medium">{item.label}</span>
+                <span className="text-foreground/45"> — {item.note}</span>
               </li>
             ))}
           </ul>
@@ -189,25 +156,17 @@ export default function Footer() {
 
       <div className="container-luxe mt-14 pt-6 border-t border-foreground/10">
         <p className="text-center text-[11px] md:text-xs uppercase tracking-[0.3em] text-foreground/65">
-          Flexible MOQ <span className="text-gold mx-2">|</span> FOB Sialkot <span className="text-gold mx-2">|</span> OEM · ODM · Private Label
+          MOQ · Timing · Pricing confirmed per program <span className="text-gold mx-2">|</span> OEM · ODM · Private Label
         </p>
       </div>
 
       <div className="container-luxe mt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/45">
-          © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
-        </p>
+        <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/45">© {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] uppercase tracking-[0.25em]">
           <Link to="/privacy-policy" className="text-foreground/45 hover:text-gold transition-colors">Privacy Policy</Link>
           <Link to="/terms-of-service" className="text-foreground/45 hover:text-gold transition-colors">Terms of Service</Link>
           <Link to="/shipping-returns" className="text-foreground/45 hover:text-gold transition-colors">Shipping &amp; Returns</Link>
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event("irha:open-cookie-settings"))}
-            className="text-foreground/45 hover:text-gold transition-colors"
-          >
-            Cookie Settings
-          </button>
+          <button type="button" onClick={() => window.dispatchEvent(new Event("irha:open-cookie-settings"))} className="text-foreground/45 hover:text-gold transition-colors">Cookie Settings</button>
         </div>
       </div>
     </footer>
