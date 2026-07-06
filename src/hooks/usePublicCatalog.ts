@@ -1,5 +1,5 @@
 // Public catalog data layer — Supabase is the runtime source of truth.
-// Commercial fields are intentionally hidden from public output until they are
+// Commercial and evidence-sensitive fields are hidden from public output until
 // reviewed per product. Admin data remains unchanged.
 
 import { useQuery } from "@tanstack/react-query";
@@ -7,10 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
 import type { Product as LegacyProduct } from "@/lib/categories";
 
-export type PublicSubCategory = DbCategory & {
-  products: DbProduct[];
-};
-
+export type PublicSubCategory = DbCategory & { products: DbProduct[] };
 export type PublicTopCategory = DbCategory & {
   subs: PublicSubCategory[];
   directProducts: DbProduct[];
@@ -22,13 +19,44 @@ const K = {
   product: (cat: string, prod: string) => ["public-catalog", "product", cat, prod] as const,
 };
 
+const BLOCKED_PUBLIC_TERMS = [
+  "moq",
+  "lead time",
+  "production timeline",
+  "sample timeline",
+  "shipping time",
+  "delivery time",
+  "oeko",
+  "bsci",
+  "sedex",
+  "iso 9001",
+  "gots",
+  "wrap",
+  "reach",
+  "ddp",
+  "fob",
+  "weekly shipment",
+  "container load",
+];
+
+function hasBlockedPublicTerm(value: string): boolean {
+  const text = value.toLowerCase();
+  return BLOCKED_PUBLIC_TERMS.some((term) => text.includes(term));
+}
+
 function sanitizePublicProduct(p: DbProduct): DbProduct {
   const details = (Array.isArray(p.details) ? p.details : []).filter(
-    (d) => !/(moq|lead\s*time|production\s*timeline|sample\s*timeline|shipping\s*time)/i.test(d.label),
+    (d) => !hasBlockedPublicTerm(`${d.label} ${d.value}`),
+  );
+  const specs = (Array.isArray(p.specs) ? p.specs : []).filter(
+    (s) => !hasBlockedPublicTerm(s),
   );
   return {
     ...p,
     details,
+    specs,
+    seo_title: null,
+    seo_description: null,
     moq_display: null,
     moq_min: null,
     production_timeline: null,
@@ -38,23 +66,14 @@ function sanitizePublicProduct(p: DbProduct): DbProduct {
 
 async function fetchTree(): Promise<PublicTopCategory[]> {
   const [{ data: cats, error: cErr }, { data: prods, error: pErr }] = await Promise.all([
-    supabase
-      .from("categories")
-      .select("*")
-      .eq("is_published", true)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("products")
-      .select("*")
-      .eq("is_published", true)
-      .order("sort_order", { ascending: true }),
+    supabase.from("categories").select("*").eq("is_published", true).order("sort_order", { ascending: true }),
+    supabase.from("products").select("*").eq("is_published", true).order("sort_order", { ascending: true }),
   ]);
   if (cErr) throw cErr;
   if (pErr) throw pErr;
 
   const allCats = (cats ?? []) as DbCategory[];
   const allProds = ((prods ?? []) as unknown as DbProduct[]).map(sanitizePublicProduct);
-
   const byParent = new Map<string, DbCategory[]>();
   const tops: DbCategory[] = [];
   for (const c of allCats) {
@@ -78,20 +97,12 @@ async function fetchTree(): Promise<PublicTopCategory[]> {
       ...s,
       products: prodsByCat.get(s.id) ?? [],
     }));
-    return {
-      ...top,
-      subs,
-      directProducts: prodsByCat.get(top.id) ?? [],
-    };
+    return { ...top, subs, directProducts: prodsByCat.get(top.id) ?? [] };
   });
 }
 
 export function usePublicCatalogTree() {
-  return useQuery({
-    queryKey: K.tree,
-    queryFn: fetchTree,
-    staleTime: 60_000,
-  });
+  return useQuery({ queryKey: K.tree, queryFn: fetchTree, staleTime: 60_000 });
 }
 
 export function usePublicTopCategory(slug?: string) {
@@ -141,17 +152,13 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
 
       const { LEGACY_TOP_SLUG_MAP } = await import("@/lib/legacyCategorySlugs");
       const canonicalRequested = LEGACY_TOP_SLUG_MAP[categorySlug ?? ""] ?? categorySlug;
-      if (top.slug !== canonicalRequested && category.slug !== categorySlug && top.slug !== categorySlug) {
-        return null;
-      }
+      if (top.slug !== canonicalRequested && category.slug !== categorySlug && top.slug !== categorySlug) return null;
       return { product: dbProd, subCategory: category, topCategory: top };
     },
   });
 }
 
-export function adaptDbProduct(
-  p: DbProduct,
-): LegacyProduct & { slug: string; id: string } {
+export function adaptDbProduct(p: DbProduct): LegacyProduct & { slug: string; id: string } {
   const clean = sanitizePublicProduct(p);
   const gallery = clean.gallery?.length ? clean.gallery : clean.image_url ? [clean.image_url] : [];
   const details: ProductDetailSpec[] = Array.isArray(clean.details) ? clean.details : [];
