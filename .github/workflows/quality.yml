@@ -35,7 +35,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Guard against legacy production claims
+      - name: Guard production output against legacy claims
         shell: bash
         run: |
           set -euo pipefail
@@ -51,8 +51,8 @@ jobs:
             "SEDEX Member"
           )
           for term in "${terms[@]}"; do
-            if grep -RniF --exclude-dir=node_modules --exclude-dir=.git --exclude='*.lock' "$term" src public index.html; then
-              echo "Forbidden legacy production claim found: $term"
+            if grep -RniF "$term" dist index.html; then
+              echo "Forbidden legacy production claim found in deployable output: $term"
               exit 1
             fi
           done
