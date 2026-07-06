@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Layers, Users, Inbox, MessageSquare, BarChart3, FileText, HelpCircle, Sparkles, Plus, ExternalLink } from "lucide-react";
 import type { AdminView } from "./AdminShell";
+import PasskeySetupBanner from "./PasskeySetupBanner";
 
 type Counts = {
   products: number; categories: number; inquiries: number; leads: number;
@@ -54,7 +55,8 @@ export default function OverviewPanel({ go }: { go: (v: AdminView) => void }) {
 
   return (
     <div className="space-y-8">
-      {/* Quick actions */}
+      <PasskeySetupBanner />
+
       <div className="flex flex-wrap gap-2">
         <QuickAction label="Add product" icon={<Plus size={12} />} onClick={() => go("products")} />
         <QuickAction label="Add category" icon={<Plus size={12} />} onClick={() => go("categories")} />
@@ -62,7 +64,6 @@ export default function OverviewPanel({ go }: { go: (v: AdminView) => void }) {
         <QuickAction label="AI Assistant" icon={<Sparkles size={12} />} onClick={() => go("ai")} />
       </div>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((s) => (
           <button
