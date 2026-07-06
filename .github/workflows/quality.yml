@@ -35,7 +35,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Guard production output against legacy claims
+      - name: Guard production text output against legacy claims
         shell: bash
         run: |
           set -euo pipefail
@@ -50,9 +50,15 @@ jobs:
             "ISO 9001:2015"
             "SEDEX Member"
           )
+          mapfile -d '' files < <(
+            find dist -type f \
+              \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.txt' -o -name '*.xml' \) \
+              -print0
+          )
+          files+=(index.html)
           for term in "${terms[@]}"; do
-            if grep -RniF "$term" dist index.html; then
-              echo "Forbidden legacy production claim found in deployable output: $term"
+            if grep -niF -- "$term" "${files[@]}"; then
+              echo "Forbidden legacy production claim found in deployable text output: $term"
               exit 1
             fi
           done
