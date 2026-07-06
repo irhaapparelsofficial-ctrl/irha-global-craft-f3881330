@@ -10,10 +10,6 @@ interface Props {
   categoryInterest?: string;
 }
 
-/**
- * Catalogue lead form — used by catalogue index + category pages
- * for PDF requests and quick inquiries. Writes to public.catalogue_leads.
- */
 export default function CatalogueLeadForm({ onClose, catalogueUrl, source, categoryInterest }: Props) {
   const [data, setData] = useState({
     name: "",
@@ -37,7 +33,6 @@ export default function CatalogueLeadForm({ onClose, catalogueUrl, source, categ
     setLoading(true);
 
     const params = new URLSearchParams(window.location.search);
-
     const { error } = await supabase.from("catalogue_leads").insert({
       name: data.name,
       whatsapp: data.whatsapp || null,
@@ -60,14 +55,15 @@ export default function CatalogueLeadForm({ onClose, catalogueUrl, source, categ
       return;
     }
 
-    // Google Ads conversion
     try {
       (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
         "event",
         "conversion",
         { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
       );
-    } catch { /* no-op */ }
+    } catch {
+      // Analytics failure must never block lead submission.
+    }
 
     setSent(true);
     setLoading(false);
@@ -78,10 +74,7 @@ export default function CatalogueLeadForm({ onClose, catalogueUrl, source, categ
 
   return (
     <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-card border border-border max-w-lg w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-card border border-border max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h3 className="font-display text-xl">Request Catalogue</h3>
           <button onClick={onClose} aria-label="Close" className="text-foreground/60 hover:text-gold">
@@ -94,9 +87,9 @@ export default function CatalogueLeadForm({ onClose, catalogueUrl, source, categ
             <div className="mx-auto w-12 h-12 rounded-full bg-gradient-gold flex items-center justify-center mb-4">
               <Send className="text-primary-foreground" size={18} />
             </div>
-            <h4 className="font-display text-2xl">Thank you</h4>
+            <h4 className="font-display text-2xl">Request received</h4>
             <p className="text-foreground/70 mt-2 text-sm">
-              Our team will send the catalogue and reply within 4 working hours (Mon–Sat).
+              Our team will review your requirement and continue the catalogue discussion using the contact details you provided.
             </p>
             <a
               href="https://wa.me/923204110066"
