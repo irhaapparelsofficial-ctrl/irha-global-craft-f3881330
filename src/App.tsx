@@ -23,7 +23,6 @@ const Journal = lazy(() => import("./pages/Journal"));
 const JournalArticle = lazy(() => import("./pages/JournalArticle"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
-const SeoLanding = lazy(() => import("./pages/SeoLanding"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -48,11 +47,10 @@ function ScrollToTop() {
   return null;
 }
 
-// SEO landing slugs handled by SeoLanding template (auto-derived from data)
+// Legacy SEO and country landing slugs remain known so old links can be safely redirected
+// until Phase 9 rebuilds them from current, verified business data.
 import { SEO_PAGE_SLUGS } from "@/lib/seoPages";
 import { COUNTRY_SLUGS } from "@/lib/countryLandings";
-const SEO_LANDING_SLUGS = SEO_PAGE_SLUGS;
-const CountryLanding = lazy(() => import("./pages/CountryLanding"));
 
 const PageFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -72,7 +70,8 @@ const App = () => (
             <Routes>
               {/* Canonical homepage — two production hubs backed by the live catalog */}
               <Route path="/" element={<Layout><Home /></Layout>} />
-              {/* Legacy German landing is quarantined until the Phase 9 German buyer journey is rebuilt from current DB data. */}
+
+              {/* Legacy German landing is quarantined until Phase 9. */}
               <Route path="/de" element={<Navigate to="/" replace />} />
               <Route path="/de/" element={<Navigate to="/" replace />} />
               <Route path="/legacy-home" element={<Navigate to="/" replace />} />
@@ -106,8 +105,8 @@ const App = () => (
                     <Route path="/connect" element={<Connect />} />
                     <Route path="/catalogue" element={<Catalogue />} />
                     <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
-                    <Route path="/de/katalog" element={<Catalogue />} />
-                    <Route path="/de/katalog/:slug" element={<CatalogueCategory />} />
+                    <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
+                    <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
                     <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                     <Route path="/seo-indexing" element={<SeoIndexing />} />
                     <Route path="/studio" element={<Studio />} />
@@ -119,12 +118,15 @@ const App = () => (
                     <Route path="/log-in" element={<Navigate to="/auth" replace />} />
                     <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
                     <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
-                    {SEO_LANDING_SLUGS.map((slug) => (
-                      <Route key={slug} path={`/${slug}`} element={<SeoLanding />} />
+
+                    {/* Quarantine legacy acquisition pages containing unverified historic claims. */}
+                    {SEO_PAGE_SLUGS.map((slug) => (
+                      <Route key={`seo-${slug}`} path={`/${slug}`} element={<Navigate to="/products" replace />} />
                     ))}
                     {COUNTRY_SLUGS.map((slug) => (
-                      <Route key={slug} path={`/${slug}`} element={<CountryLanding />} />
+                      <Route key={`country-${slug}`} path={`/${slug}`} element={<Navigate to="/products" replace />} />
                     ))}
+
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>
