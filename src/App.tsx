@@ -16,8 +16,6 @@ const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const Manufacturing = lazy(() => import("./pages/Manufacturing"));
 const Inquiry = lazy(() => import("./pages/Inquiry"));
 const Contact = lazy(() => import("./pages/Contact"));
-const Sustainability = lazy(() => import("./pages/Sustainability"));
-const FAQ = lazy(() => import("./pages/FAQ"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -27,7 +25,6 @@ const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
 const Compliance = lazy(() => import("./pages/Compliance"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const ShippingReturns = lazy(() => import("./pages/ShippingReturns"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Catalogue = lazy(() => import("./pages/Catalogue"));
 const CatalogueCategory = lazy(() => import("./pages/CatalogueCategory"));
@@ -102,14 +99,14 @@ const App = () => (
                       <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
                       <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
                       <Route path="/manufacturing" element={<Manufacturing />} />
-                      <Route path="/sustainability" element={<Sustainability />} />
                       <Route path="/compliance" element={<Compliance />} />
-                      <Route path="/faq" element={<FAQ />} />
+                      <Route path="/sustainability" element={<Navigate to="/inquiry?intent=rfq" replace />} />
+                      <Route path="/faq" element={<Navigate to="/inquiry?intent=rfq" replace />} />
+                      <Route path="/shipping-returns" element={<Navigate to="/inquiry?intent=rfq" replace />} />
                       <Route path="/inquiry" element={<Inquiry />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                       <Route path="/terms-of-service" element={<TermsOfService />} />
-                      <Route path="/shipping-returns" element={<ShippingReturns />} />
                       <Route path="/connect" element={<Connect />} />
                       <Route path="/catalogue" element={<Catalogue />} />
                       <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
