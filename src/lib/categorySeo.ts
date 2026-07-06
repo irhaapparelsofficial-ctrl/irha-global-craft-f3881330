@@ -29,7 +29,7 @@ const safe = (
   keywords,
   h1,
   intro,
-  exportMarkets: [],
+  exportMarkets: ["reviewed per program"],
   ogImage,
   faqs: [],
 });
