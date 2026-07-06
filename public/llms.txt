@@ -1,27 +1,29 @@
 # Irha Apparels
 
-> OEM, ODM and private-label apparel manufacturer based in Sialkot, Pakistan — Bavarian & trachten, premium leather, sportswear, streetwear & activewear, and leisure & nightwear, exported worldwide.
+> B2B custom apparel manufacturer based in Sialkot, Pakistan for brands, wholesalers, importers, retailers and private-label buyers.
 
-Irha Apparels is a B2B apparel manufacturer producing garments for brands, retailers and sourcing teams across the USA, EU, UK, UAE and beyond. In-house cutting, stitching, embroidery, sublimation, leather work and sampling studio. MOQ, sample availability, cost and lead times are confirmed after requirement review — nothing is fixed until a specification is agreed.
+Irha Apparels presents custom apparel program categories and inquiry tools. Product feasibility, materials, construction, MOQ, sampling, pricing, production timing, shipping and documentation are confirmed after requirement review.
 
-## Pages
+The website does not publish fixed commercial commitments or unverified certification claims. Buyers may also request a live factory view by video call during requirement discussion.
 
-- [Home](/): Overview of Irha Apparels — categories, capabilities and how to start an order.
-- [About](/about): Company story, Sialkot atelier and values.
-- [Collections](/products): Five specialist apparel categories with sub-categories and downloadable catalogues.
-- [Manufacturing](/manufacturing): Production capacity, machinery and quality-control workflow.
-- [Sustainability](/sustainability): Materials, recycled inputs and ethical practices. Third-party certifications are confirmed per program.
-- [Journal](/journal): Editorial articles on craft, sourcing and the apparel industry.
-- [FAQ](/faq): Sampling, customization, shipping, payment terms and QC.
-- [Inquiry](/inquiry): Unified B2B inquiry — quotes, samples, catalogues, tech-pack uploads and meeting requests.
-- [Studio](/studio): Non-binding AI mockup concept preview for requirement discussion.
-- [Contact](/contact): Email, WhatsApp and Sialkot atelier address.
+## Public pages
 
-## Journal
+- [Home](/): B2B manufacturing overview and main buyer actions.
+- [Collections](/products): Five canonical apparel categories with published products.
+- [Catalogue](/catalogue): Buyer-friendly catalogue groups backed by published product data.
+- [About](/about): Company and manufacturing context.
+- [Manufacturing](/manufacturing): Requirement-led production workflow.
+- [Compliance](/compliance): Buyer requirements and evidence-before-claims policy.
+- [Inquiry](/inquiry): Unified B2B inquiry for quotes, samples, catalogue requests, references and meetings.
+- [Studio](/studio): Non-binding concept preview for requirement discussion.
+- [Contact](/contact): Email and WhatsApp contact options.
+- [Privacy Policy](/privacy-policy): Website privacy information.
+- [Terms](/terms-of-service): Website terms; order-specific commercial terms are separate.
 
-- [Craft of Lederhosen](/journal/craft-of-lederhosen): The heritage lederhosen production journey.
-- [Leather Grades Explained](/journal/leather-grades-explained): Full-grain vs. Napa buyer's guide.
-- [Sialkot Apparel Legacy](/journal/sialkot-apparel-legacy): How Sialkot became a global apparel hub.
-- [Building a 500 GSM Hoodie](/journal/streetwear-500gsm): Anatomy of a premium streetwear hoodie.
-- [Sustainable Cotton Program](/journal/sustainable-cotton-program): BCI vs. GOTS vs. OCS, plain English.
-- [MOQ Economics](/journal/moq-economics): How MOQ and unit cost interact across production tiers.
+## Product categories
+
+- Bavarian & Trachten Wear
+- Premium Leather Apparel
+- Sportswear
+- Streetwear & Activewear
+- Leisure & Nightwear
