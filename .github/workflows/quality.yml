@@ -1,0 +1,59 @@
+name: Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test -- --passWithNoTests
+
+      - name: Build
+        run: npm run build
+
+      - name: Guard against legacy production claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          terms=(
+            "Since 2014"
+            "MOQ 50"
+            "45-day delivery"
+            "45-Day Production"
+            "reply within 12 hours"
+            "OEKO-TEX® 100"
+            "BSCI Audited"
+            "ISO 9001:2015"
+            "SEDEX Member"
+          )
+          for term in "${terms[@]}"; do
+            if grep -RniF --exclude-dir=node_modules --exclude-dir=.git --exclude='*.lock' "$term" src public index.html; then
+              echo "Forbidden legacy production claim found: $term"
+              exit 1
+            fi
+          done
