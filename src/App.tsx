@@ -10,7 +10,6 @@ import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
-// Route-level code splitting for faster initial paint
 const About = lazy(() => import("./pages/About"));
 const Products = lazy(() => import("./pages/Products"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
@@ -43,14 +42,11 @@ const queryClient = new QueryClient();
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); }, [pathname]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, [pathname]);
   return null;
 }
-
-// Legacy SEO and country landing slugs remain known so old links can be safely redirected
-// until Phase 9 rebuilds them from current, verified business data.
-import { SEO_PAGE_SLUGS } from "@/lib/seoPages";
-import { COUNTRY_SLUGS } from "@/lib/countryLandings";
 
 const PageFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -68,69 +64,58 @@ const App = () => (
           <PageViewTracker />
           <Suspense fallback={<PageFallback />}>
             <Routes>
-              {/* Canonical homepage — two production hubs backed by the live catalog */}
               <Route path="/" element={<Layout><Home /></Layout>} />
-
-              {/* Legacy German landing is quarantined until Phase 9. */}
               <Route path="/de" element={<Navigate to="/" replace />} />
               <Route path="/de/" element={<Navigate to="/" replace />} />
               <Route path="/legacy-home" element={<Navigate to="/" replace />} />
 
-              {/* Admin & auth: standalone chrome — no public navbar/footer */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
 
-              {/* All other routes keep the public Layout (Navbar/Footer/FloatingActions/etc) */}
-              <Route path="*" element={
-                <Layout>
-                  <Routes>
-                    <Route path="/about" element={<About />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/products/:slug" element={<CategoryPage />} />
-                    <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
-                    <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
-                    <Route path="/manufacturing" element={<Manufacturing />} />
-                    <Route path="/sustainability" element={<Sustainability />} />
-                    <Route path="/compliance" element={<Compliance />} />
-                    <Route path="/journal" element={<Journal />} />
-                    <Route path="/journal/:slug" element={<JournalArticle />} />
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/blog/:slug" element={<BlogPost />} />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/inquiry" element={<Inquiry />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="/terms-of-service" element={<TermsOfService />} />
-                    <Route path="/shipping-returns" element={<ShippingReturns />} />
-                    <Route path="/connect" element={<Connect />} />
-                    <Route path="/catalogue" element={<Catalogue />} />
-                    <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
-                    <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
-                    <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
-                    <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
-                    <Route path="/seo-indexing" element={<SeoIndexing />} />
-                    <Route path="/studio" element={<Studio />} />
-                    <Route path="/shortlist" element={<Shortlist />} />
-                    <Route path="/compare" element={<Compare />} />
-                    <Route path="/login" element={<Navigate to="/auth" replace />} />
-                    <Route path="/signin" element={<Navigate to="/auth" replace />} />
-                    <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
-                    <Route path="/log-in" element={<Navigate to="/auth" replace />} />
-                    <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
-                    <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
-
-                    {/* Quarantine legacy acquisition pages containing unverified historic claims. */}
-                    {SEO_PAGE_SLUGS.map((slug) => (
-                      <Route key={`seo-${slug}`} path={`/${slug}`} element={<Navigate to="/products" replace />} />
-                    ))}
-                    {COUNTRY_SLUGS.map((slug) => (
-                      <Route key={`country-${slug}`} path={`/${slug}`} element={<Navigate to="/products" replace />} />
-                    ))}
-
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
-              } />
+              <Route
+                path="*"
+                element={
+                  <Layout>
+                    <Routes>
+                      <Route path="/about" element={<About />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/products/:slug" element={<CategoryPage />} />
+                      <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
+                      <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
+                      <Route path="/manufacturing" element={<Manufacturing />} />
+                      <Route path="/sustainability" element={<Sustainability />} />
+                      <Route path="/compliance" element={<Compliance />} />
+                      <Route path="/journal" element={<Journal />} />
+                      <Route path="/journal/:slug" element={<JournalArticle />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:slug" element={<BlogPost />} />
+                      <Route path="/faq" element={<FAQ />} />
+                      <Route path="/inquiry" element={<Inquiry />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/terms-of-service" element={<TermsOfService />} />
+                      <Route path="/shipping-returns" element={<ShippingReturns />} />
+                      <Route path="/connect" element={<Connect />} />
+                      <Route path="/catalogue" element={<Catalogue />} />
+                      <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
+                      <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
+                      <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
+                      <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
+                      <Route path="/seo-indexing" element={<SeoIndexing />} />
+                      <Route path="/studio" element={<Studio />} />
+                      <Route path="/shortlist" element={<Shortlist />} />
+                      <Route path="/compare" element={<Compare />} />
+                      <Route path="/login" element={<Navigate to="/auth" replace />} />
+                      <Route path="/signin" element={<Navigate to="/auth" replace />} />
+                      <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
+                      <Route path="/log-in" element={<Navigate to="/auth" replace />} />
+                      <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                      <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Layout>
+                }
+              />
             </Routes>
           </Suspense>
           <CookieConsent />
