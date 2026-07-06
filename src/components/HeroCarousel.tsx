@@ -25,35 +25,35 @@ const SLIDES: Slide[] = [
   {
     src: bavarianFb,
     srcSet: bavarian,
-    alt: "Heritage Bavarian lederhosen with edelweiss embroidery on dark walnut — Irha Apparels",
-    eyebrow: "Sialkot · Worldwide Export",
+    alt: "Bavarian lederhosen with decorative embroidery — Irha Apparels",
+    eyebrow: "Sialkot · Custom B2B Manufacturing",
     title: "Bavarian Wear",
-    highlight: "Flexible MOQ",
-    subtitle: "Authentic lederhosen, dirndl & trachten — handcrafted for DACH wholesalers.",
+    highlight: "Program-Based",
+    subtitle: "Custom lederhosen, dirndl and Trachten programs for wholesalers, retailers and private-label buyers.",
     ctaLabel: "View Collection",
-    ctaHref: "/products/bavarian",
+    ctaHref: "/products/bavarian-trachten-wear",
   },
   {
     src: sportswearFb,
     srcSet: sportswear,
-    alt: "Custom sportswear & streetwear hoodies",
+    alt: "Custom sportswear and streetwear apparel",
     eyebrow: "OEM · ODM · Private Label",
     title: "Streetwear & Sportswear",
-    highlight: "FOB Sialkot",
-    subtitle: "Sublimation jerseys, tracksuits & heavyweight hoodies — built for global brands.",
+    highlight: "Made to Requirement",
+    subtitle: "Custom sportswear, tracksuits and streetwear programs developed around buyer specifications.",
     ctaLabel: "View Collection",
     ctaHref: "/products/sportswear",
   },
   {
     src: leatherFb,
     srcSet: leather,
-    alt: "Full-grain leather jacket — atelier production",
-    eyebrow: "Heritage Craftsmanship",
-    title: "Custom Leather",
-    highlight: "In-House Production",
-    subtitle: "Full-grain biker, fashion & motorcycle jackets — engineered for UK, USA & EU.",
+    alt: "Custom leather jacket production concept",
+    eyebrow: "Custom Leather Programs",
+    title: "Leather Apparel",
+    highlight: "Requirement-Led",
+    subtitle: "Custom leather jackets and apparel programs reviewed against material, construction and branding requirements.",
     ctaLabel: "View Collection",
-    ctaHref: "/products/leather",
+    ctaHref: "/products/premium-leather-apparel",
   },
 ];
 
@@ -66,19 +66,16 @@ export default function HeroCarousel() {
   const touchStartX = useRef<number | null>(null);
   const count = SLIDES.length;
 
-  const go = useCallback(
-    (next: number) => {
-      const n = ((next % count) + count) % count;
-      setLoaded((prev) => {
-        if (prev.has(n)) return prev;
-        const copy = new Set(prev);
-        copy.add(n);
-        return copy;
-      });
-      setIndex(n);
-    },
-    [count],
-  );
+  const go = useCallback((next: number) => {
+    const n = ((next % count) + count) % count;
+    setLoaded((prev) => {
+      if (prev.has(n)) return prev;
+      const copy = new Set(prev);
+      copy.add(n);
+      return copy;
+    });
+    setIndex(n);
+  }, [count]);
 
   useEffect(() => {
     if (paused) return;
@@ -102,9 +99,7 @@ export default function HeroCarousel() {
       className="relative h-[70vh] min-h-[480px] md:min-h-[560px] w-full overflow-hidden bg-background"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      onTouchStart={(e) => {
-        touchStartX.current = e.touches[0].clientX;
-      }}
+      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
       onTouchEnd={(e) => {
         if (touchStartX.current == null) return;
         const dx = e.changedTouches[0].clientX - touchStartX.current;
@@ -126,36 +121,27 @@ export default function HeroCarousel() {
             height={1280}
             loading={i === 0 ? "eager" : "lazy"}
             decoding="async"
-            className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[1200ms] ease-in-out ${
-              i === index ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[1200ms] ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`}
           />
         );
       })}
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20" />
 
-      {/* Per-slide content */}
       {SLIDES.map((s, i) => (
         <div
           key={`content-${i}`}
-          className={`absolute inset-0 z-10 flex items-center transition-opacity duration-[1000ms] ${
-            i === index ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
+          className={`absolute inset-0 z-10 flex items-center transition-opacity duration-[1000ms] ${i === index ? "opacity-100" : "opacity-0 pointer-events-none"}`}
           aria-hidden={i !== index}
         >
           <div className="container-luxe">
             <div className="max-w-2xl">
               <div className="h-px w-16 bg-gold mb-6" />
-              <p className="mb-4 text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold">
-                {s.eyebrow}
-              </p>
+              <p className="mb-4 text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold">{s.eyebrow}</p>
               <h1 className="font-display text-white text-4xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
                 {s.title} <span className="text-gold italic font-normal">— {s.highlight}</span>
               </h1>
-              <p className="mt-6 max-w-xl text-sm md:text-base text-white/80 leading-relaxed">
-                {s.subtitle}
-              </p>
+              <p className="mt-6 max-w-xl text-sm md:text-base text-white/80 leading-relaxed">{s.subtitle}</p>
               <Link
                 to={s.ctaHref}
                 tabIndex={i === index ? 0 : -1}
@@ -169,25 +155,13 @@ export default function HeroCarousel() {
         </div>
       ))}
 
-      {/* Arrows */}
-      <button
-        type="button"
-        onClick={() => go(index - 1)}
-        aria-label="Previous slide"
-        className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/60 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors"
-      >
+      <button type="button" onClick={() => go(index - 1)} aria-label="Previous slide" className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/60 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
         <ChevronLeft size={18} />
       </button>
-      <button
-        type="button"
-        onClick={() => go(index + 1)}
-        aria-label="Next slide"
-        className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/60 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors"
-      >
+      <button type="button" onClick={() => go(index + 1)} aria-label="Next slide" className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/60 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
         <ChevronRight size={18} />
       </button>
 
-      {/* Dots */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
         {SLIDES.map((_, i) => (
           <button
@@ -195,9 +169,7 @@ export default function HeroCarousel() {
             type="button"
             onClick={() => go(i)}
             aria-label={`Go to slide ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all ${
-              i === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"
-            }`}
+            className={`h-1.5 rounded-full transition-all ${i === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"}`}
           />
         ))}
       </div>
