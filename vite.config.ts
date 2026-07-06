@@ -1,9 +1,24 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { imagetools } from "vite-imagetools";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
+
+function verifiedReleaseMetadata(): Plugin {
+  return {
+    name: "irha-verified-release-metadata",
+    enforce: "post",
+    transformIndexHtml(html) {
+      return html
+        .replace(/<title>[\s\S]*?<\/title>/i, "<title>Irha Apparels — B2B Custom Apparel Manufacturer in Sialkot</title>")
+        .replace(/<meta name="description" content="[^"]*"\s*\/?>/i, '<meta name="description" content="Custom B2B apparel manufacturing in Sialkot, Pakistan for brands, wholesalers, importers and private-label buyers. Requirements are reviewed before commercial commitments." />')
+        .replace(/\s*<meta name="keywords"[^>]*>/i, "")
+        .replace(/\s*<link rel="alternate" hreflang="de"[^>]*>/gi, "")
+        .replace(/\s*<meta name="x-irha-build"[^>]*>/gi, '<meta name="x-irha-release" content="gate4-2026-07-06-r2" />');
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -14,7 +29,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), imagetools(), mcpPlugin(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [verifiedReleaseMetadata(), react(), imagetools(), mcpPlugin(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
