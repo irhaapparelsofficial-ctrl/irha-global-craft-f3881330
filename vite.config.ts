@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { rmSync } from "fs";
 import { componentTagger } from "lovable-tagger";
 import { imagetools } from "vite-imagetools";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
@@ -25,13 +26,30 @@ function verifiedReleaseMetadata(): Plugin {
   };
 }
 
+function retireLegacyCatalogueFiles(): Plugin {
+  return {
+    name: "irha-retire-legacy-catalogue-files",
+    apply: "build",
+    closeBundle() {
+      rmSync(path.resolve(__dirname, "dist/catalogs"), { recursive: true, force: true });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
     hmr: { overlay: false },
   },
-  plugins: [verifiedReleaseMetadata(), react(), imagetools(), mcpPlugin(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    verifiedReleaseMetadata(),
+    retireLegacyCatalogueFiles(),
+    react(),
+    imagetools(),
+    mcpPlugin(),
+    mode === "development" && componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
