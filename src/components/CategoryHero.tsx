@@ -21,7 +21,7 @@ type Props = {
  * - 4s autoplay, pause on hover/focus
  * - arrow + dot controls
  * - touch swipe on mobile
- * - lazy-loads non-active images, eager preloads only the first
+ * - lazy-loads non-active images, eager loads only the first
  * - smooth fade transition
  */
 export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
@@ -90,7 +90,6 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
             src={shouldLoad ? s.image : undefined}
             alt={s.title}
             loading={i === 0 ? "eager" : "lazy"}
-            fetchPriority={i === 0 ? "high" : "low"}
             decoding="async"
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1000ms] ease-in-out ${
               i === index ? "opacity-100" : "opacity-0"
@@ -100,10 +99,8 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
         );
       })}
 
-      {/* Dark overlay for readability */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20" />
 
-      {/* Per-slide content */}
       {slides.map((s, i) => {
         const active = i === index;
         return (
@@ -117,17 +114,9 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
             <div className="container-luxe relative h-full flex items-center">
               <div className="max-w-2xl py-12">
                 <div className="h-px w-16 bg-gold mb-5" />
-                {s.eyebrow && (
-                  <p className="eyebrow mb-4 text-gold">{s.eyebrow}</p>
-                )}
-                <h2 className="font-display text-white text-3xl md:text-5xl lg:text-6xl leading-[1.02]">
-                  {s.title}
-                </h2>
-                {s.subtitle && (
-                  <p className="mt-5 text-sm md:text-base text-white/80 max-w-xl leading-relaxed">
-                    {s.subtitle}
-                  </p>
-                )}
+                {s.eyebrow && <p className="eyebrow mb-4 text-gold">{s.eyebrow}</p>}
+                <h2 className="font-display text-white text-3xl md:text-5xl lg:text-6xl leading-[1.02]">{s.title}</h2>
+                {s.subtitle && <p className="mt-5 text-sm md:text-base text-white/80 max-w-xl leading-relaxed">{s.subtitle}</p>}
                 {s.ctaHref && (
                   <Link
                     to={s.ctaHref}
@@ -146,20 +135,10 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
 
       {count > 1 && (
         <>
-          <button
-            type="button"
-            onClick={() => go(index - 1)}
-            aria-label="Previous slide"
-            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors"
-          >
+          <button type="button" onClick={() => go(index - 1)} aria-label="Previous slide" className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
             <ChevronLeft size={18} />
           </button>
-          <button
-            type="button"
-            onClick={() => go(index + 1)}
-            aria-label="Next slide"
-            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors"
-          >
+          <button type="button" onClick={() => go(index + 1)} aria-label="Next slide" className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
             <ChevronRight size={18} />
           </button>
 
@@ -170,9 +149,7 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
                 type="button"
                 onClick={() => go(i)}
                 aria-label={`Go to slide ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"
-                }`}
+                className={`h-1.5 rounded-full transition-all ${i === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"}`}
               />
             ))}
           </div>
