@@ -41,8 +41,8 @@ export default function Compare() {
     .filter((p): p is DbProduct => !!p);
 
   const rfqLink = compare.items.length
-    ? `/inquiry?shortlist=${encodeURIComponent(compare.items.map((i) => i.slug).join(","))}&names=${encodeURIComponent(compare.items.map((i) => i.name).join(","))}&intent=compare`
-    : "/inquiry";
+    ? `/inquiry?intent=rfq&compare=${encodeURIComponent(compare.items.map((i) => i.slug).join(","))}&compareNames=${encodeURIComponent(compare.items.map((i) => i.name).join(","))}`
+    : "/inquiry?intent=rfq";
 
   // Hide rows where no product has a value
   const visibleRows = ROWS.filter((r) => ordered.some((p) => (r.get(p) ?? "").toString().trim().length > 0));

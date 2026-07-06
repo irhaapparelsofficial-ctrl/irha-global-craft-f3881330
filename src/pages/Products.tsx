@@ -31,8 +31,8 @@ export default function Products() {
   const [query, setQuery] = useState("");
   const shortlist = useShortlist();
   const shortlistRfqLink = shortlist.items.length
-    ? `/inquiry?shortlist=${encodeURIComponent(shortlist.items.map((i) => i.slug).join(","))}&names=${encodeURIComponent(shortlist.items.map((i) => i.name).join(","))}`
-    : "/inquiry";
+    ? `/inquiry?intent=rfq&shortlist=${encodeURIComponent(shortlist.items.map((i) => i.slug).join(","))}&names=${encodeURIComponent(shortlist.items.map((i) => i.name).join(","))}`
+    : "/inquiry?intent=rfq";
 
   const totalStyles = CATEGORIES.reduce((n, c) => n + c.productCount, 0);
   const categoryCount = CATEGORIES.length;

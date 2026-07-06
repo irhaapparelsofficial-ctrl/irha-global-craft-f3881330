@@ -9,8 +9,8 @@ export default function Shortlist() {
   const compare = useCompare();
 
   const rfqLink = shortlist.items.length
-    ? `/inquiry?shortlist=${encodeURIComponent(shortlist.items.map((i) => i.slug).join(","))}&names=${encodeURIComponent(shortlist.items.map((i) => i.name).join(","))}`
-    : "/inquiry";
+    ? `/inquiry?intent=rfq&shortlist=${encodeURIComponent(shortlist.items.map((i) => i.slug).join(","))}&names=${encodeURIComponent(shortlist.items.map((i) => i.name).join(","))}`
+    : "/inquiry?intent=rfq";
 
   const whatsappMsg = shortlist.items.length
     ? `Hello Irha Apparels — I've shortlisted these products:\n${shortlist.items.map((i, n) => `${n + 1}. ${i.name}`).join("\n")}\n\nPlease share a quotation.`

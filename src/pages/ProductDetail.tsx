@@ -223,7 +223,7 @@ export default function ProductDetail() {
               {/* CTA hierarchy: primary=Request a Quote, secondary=WhatsApp, contextual */}
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  to={`/inquiry?product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}`}
+                  to={`/inquiry?intent=rfq&product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}`}
                   className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
                 >
                   Request a Quote

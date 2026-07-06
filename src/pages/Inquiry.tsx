@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Check, MessageCircle, FileText, Package, BookOpe
 import SEO from "@/components/SEO";
 import SecureFileUpload from "@/components/SecureFileUpload";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
-import { CATEGORIES } from "@/lib/categories";
+
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -89,6 +89,31 @@ export default function Inquiry() {
   const [done, setDone] = useState<null | { ref: string }>(null);
   const submitLockRef = useRef(false);
   const sessionId = useMemo(getSessionId, []);
+  const [dbCategories, setDbCategories] = useState<{ slug: string; name: string }[]>([]);
+
+  // ---- Live DB categories for the catalogue picker ----
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("categories")
+      .select("slug,name,sort_order")
+      .is("parent_id", null)
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true, nullsFirst: false })
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        setDbCategories(data.map((c) => ({ slug: c.slug as string, name: c.name as string })));
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // ---- Ensure inquiryRef exists once per draft (idempotency for retries) ----
+  useEffect(() => {
+    if (!draft.inquiryRef) {
+      const ref = "IRQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+      setDraft((d) => ({ ...d, inquiryRef: ref }));
+    }
+  }, [draft.inquiryRef]);
 
   // ---- Load draft once ----
   useEffect(() => {
@@ -160,7 +185,12 @@ export default function Inquiry() {
     submitLockRef.current = true;
     setSubmitting(true);
 
-    const ref = "IRQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+    // Reuse the ref persisted in the draft — never generate a new one per attempt.
+    let ref = draft.inquiryRef;
+    if (!ref) {
+      ref = "IRQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+      setDraft((d) => ({ ...d, inquiryRef: ref }));
+    }
 
     const utm = {
       source: params.get("utm_source") ?? undefined,
@@ -171,12 +201,14 @@ export default function Inquiry() {
     };
 
     const ctx = draft.productContext ?? {};
+    const hasCompare = !!(ctx.compareSlugs && ctx.compareSlugs.length);
+    const hasShortlist = !!(ctx.shortlistSlugs && ctx.shortlistSlugs.length);
     const derivedIntentType =
       draft.intent === "rfq"
-        ? ctx.shortlistSlugs && ctx.shortlistSlugs.length > 1
-          ? "multi-product-rfq"
-          : ctx.compareSlugs && ctx.compareSlugs.length > 1
-            ? "compare-rfq"
+        ? hasCompare
+          ? "compare-rfq"
+          : hasShortlist && ctx.shortlistSlugs!.length > 1
+            ? "multi-product-rfq"
             : ctx.productSlug
               ? "single-product-rfq"
               : "general-rfq"
@@ -194,11 +226,11 @@ export default function Inquiry() {
       device_type: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
       product_slug: ctx.productSlug ?? null,
       product_name: ctx.productName ?? null,
-      product_slugs: ctx.shortlistSlugs ?? ctx.compareSlugs ?? null,
-      product_names: ctx.shortlistNames ?? ctx.compareNames ?? null,
+      product_slugs: hasCompare ? ctx.compareSlugs : hasShortlist ? ctx.shortlistSlugs : null,
+      product_names: hasCompare ? ctx.compareNames : hasShortlist ? ctx.shortlistNames : null,
       category: ctx.categorySlug ?? null,
-      shortlist_origin: ctx.shortlistSlugs ? true : false,
-      compare_origin: ctx.compareSlugs ? true : false,
+      shortlist_origin: hasShortlist && !hasCompare,
+      compare_origin: hasCompare,
       utm_source: utm.source ?? null,
       utm_medium: utm.medium ?? null,
       utm_campaign: utm.campaign ?? null,
@@ -245,8 +277,14 @@ export default function Inquiry() {
         inquiry_ref: ref,
       } as any);
       if (error) {
-        // Unique-violation ⇒ treat as already-submitted (idempotent)
-        if (!String(error.message).toLowerCase().includes("duplicate")) throw error;
+        // Only treat 23505 on inquiry_ref as idempotent success (retry after successful insert).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const e = error as any;
+        const isDupOnRef =
+          e?.code === "23505" &&
+          typeof e?.message === "string" &&
+          e.message.toLowerCase().includes("inquiry_ref");
+        if (!isDupOnRef) throw error;
       }
       clearDraft();
       setDone({ ref });
@@ -336,7 +374,7 @@ export default function Inquiry() {
           ) : (
             <div className="border border-border/60 bg-card/40 p-6 md:p-10">
               {step === 1 && <StepIntent draft={draft} setField={setField} />}
-              {step === 2 && <StepRequirements draft={draft} setField={setField} errors={errors} />}
+              {step === 2 && <StepRequirements draft={draft} setField={setField} errors={errors} dbCategories={dbCategories} />}
               {step === 3 && (
                 <StepFiles
                   draft={draft}
@@ -389,8 +427,8 @@ function describeContext(d: Pick<InquiryDraft, "intent" | "productContext">): st
   const c = d.productContext;
   if (!c) return null;
   if (c.productName) return `For: ${c.productName}`;
+  if (c.compareNames?.length) return `Compare · ${c.compareNames.length} product${c.compareNames.length > 1 ? "s" : ""}`;
   if (c.shortlistNames?.length) return `Shortlist · ${c.shortlistNames.length} product${c.shortlistNames.length > 1 ? "s" : ""}`;
-  if (c.compareNames?.length) return `Compare · ${c.compareNames.length} products`;
   if (c.categorySlug) return `Category: ${c.categorySlug}`;
   return null;
 }
@@ -445,11 +483,12 @@ function StepIntent({
 }
 
 function StepRequirements({
-  draft, setField, errors,
+  draft, setField, errors, dbCategories,
 }: {
   draft: Omit<InquiryDraft, "v" | "updatedAt">;
   setField: <K extends keyof Omit<InquiryDraft,"v"|"updatedAt">>(k: K, v: InquiryDraft[K]) => void;
   errors: Record<string, string>;
+  dbCategories: { slug: string; name: string }[];
 }) {
   const input = "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm";
   const label = "block text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2";
@@ -457,7 +496,7 @@ function StepRequirements({
     <div className="space-y-5">
       <div>
         <h2 className="font-display text-2xl md:text-3xl mb-2">Requirements</h2>
-        <p className="text-sm text-foreground/60">Share the essentials. We reply within one working day.</p>
+        <p className="text-sm text-foreground/60">Our team reviews your requirements and follows up using the contact details provided.</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -541,7 +580,7 @@ function StepRequirements({
             <div>
               <label className={label}>Categories</label>
               <div className="grid sm:grid-cols-2 gap-2">
-                {CATEGORIES.map((c) => {
+                {dbCategories.map((c) => {
                   const on = draft.catalogueCategories?.includes(c.slug) ?? false;
                   return (
                     <label key={c.slug} className={`flex items-center gap-3 border px-3 py-2 cursor-pointer text-sm ${on ? "border-primary text-primary" : "border-border/60"}`}>
@@ -766,7 +805,7 @@ function SuccessScreen({
       </div>
       <h2 className="font-display text-3xl md:text-4xl">Inquiry received</h2>
       <p className="text-sm text-foreground/70 mt-3">
-        Reference <span className="font-mono text-foreground">{inquiryRef}</span>. Our merchandising team will reply within one working day on email and WhatsApp.
+        Reference <span className="font-mono text-foreground">{inquiryRef}</span>. Our team reviews your requirements and follows up using the contact details provided.
       </p>
       <p className="text-[11px] text-foreground/55 mt-3">
         We'll confirm availability, cost and timeline after reviewing your requirements.

@@ -17,20 +17,20 @@ export default function StartProgramCTA() {
 
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
           <Link
-            to="/inquiry"
+            to="/inquiry?intent=rfq"
             className="group inline-flex items-center justify-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-4 text-[11px] uppercase tracking-[0.28em] font-medium hover:shadow-gold transition-all"
           >
             <FileText size={14} /> Request a Quote
             <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
           <Link
-            to="/studio"
+            to="/inquiry?intent=reference"
             className="inline-flex items-center justify-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-4 text-[11px] uppercase tracking-[0.28em] font-medium transition-colors"
           >
             <Upload size={14} /> Upload Reference Design
           </Link>
           <Link
-            to="/catalogue"
+            to="/inquiry?intent=catalogue"
             className="inline-flex items-center justify-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-4 text-[11px] uppercase tracking-[0.28em] font-medium transition-colors"
           >
             <BookOpen size={14} /> Request Catalogue
