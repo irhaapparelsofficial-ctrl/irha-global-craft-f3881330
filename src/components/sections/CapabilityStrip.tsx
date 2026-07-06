@@ -1,10 +1,10 @@
 import { Package, Layers, Tag, Ship } from "lucide-react";
 
 const ITEMS = [
-  { Icon: Package, k: "Flexible MOQ", v: "By product" },
-  { Icon: Layers, k: "Custom Manufacturing", v: "OEM · ODM" },
-  { Icon: Tag, k: "Private Label", v: "Your brand system" },
-  { Icon: Ship, k: "Worldwide Export", v: "FOB Sialkot" },
+  { Icon: Package, k: "MOQ", v: "Confirmed per program" },
+  { Icon: Layers, k: "Custom Manufacturing", v: "Requirement-led" },
+  { Icon: Tag, k: "Private Label", v: "Labels · tags · packaging" },
+  { Icon: Ship, k: "Shipping", v: "Reviewed per destination" },
 ];
 
 export default function CapabilityStrip() {
