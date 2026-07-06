@@ -1,104 +1,108 @@
 import SEO from "@/components/SEO";
 import manufacturingImg from "@/assets/manufacturing.jpg";
-import { Globe2, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Factory, MessageCircle, PackageCheck } from "lucide-react";
 
-const markets = ["United States", "Germany", "United Kingdom", "France", "Italy", "United Arab Emirates", "Saudi Arabia", "Canada", "Australia", "Netherlands"];
+const principles = [
+  {
+    Icon: Factory,
+    title: "Requirement-led manufacturing",
+    body: "Materials, construction and finishing are reviewed against the actual program before commitments are made.",
+  },
+  {
+    Icon: PackageCheck,
+    title: "Private-label programs",
+    body: "Branding, labels, tags and packaging are scoped to the buyer's requirements and confirmed before production.",
+  },
+];
 
 export default function About() {
   return (
     <>
       <SEO
-        title="About Irha Apparels — Sialkot's Premium Garment Manufacturer"
-        description="Discover Irha Apparels — a Sialkot-based premium apparel manufacturer exporting to USA, Europe and UAE. Heritage craftsmanship, modern production capacity."
+        title="About Irha Apparels — B2B Apparel Manufacturer in Sialkot"
+        description="Irha Apparels is a Sialkot-based B2B custom apparel manufacturer for brands, wholesalers and importers. Our website is new; our manufacturing work is built on hands-on production experience."
         path="/about"
       />
 
-      {/* HERO */}
       <section className="pt-40 pb-24 md:pb-32 border-b border-border/60">
-        <div className="container-luxe grid lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-2 hidden lg:block">
-            <p className="eyebrow rotate-90 origin-top-left translate-y-20">About · 2026</p>
-          </div>
-          <div className="lg:col-span-10">
-            <p className="eyebrow mb-6 lg:hidden">About Irha</p>
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95]">
-              A heritage of <span className="text-gold italic">craft</span>. <br />
-              A future built for <span className="text-gold italic">scale</span>.
-            </h1>
-            <p className="mt-10 max-w-2xl text-lg text-foreground/75 leading-relaxed">
-              Irha Apparels was founded on a single belief: that the garments produced in Sialkot
-              deserve to stand beside the finest labels in Milan, Munich and New York. Today, we
-              manufacture for brands that share that conviction.
-            </p>
-          </div>
+        <div className="container-luxe max-w-5xl">
+          <p className="eyebrow mb-6">About Irha</p>
+          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95]">
+            Built for serious <span className="text-gold italic">B2B programs</span>.
+          </h1>
+          <p className="mt-10 max-w-3xl text-lg text-foreground/75 leading-relaxed">
+            Irha Apparels is a Sialkot-based custom apparel manufacturer working with brands,
+            wholesalers, importers and private-label buyers who need requirement-led production.
+          </p>
         </div>
       </section>
 
-      {/* STORY */}
       <section className="py-24 md:py-32">
-        <div className="container-luxe grid lg:grid-cols-2 gap-16">
+        <div className="container-luxe grid lg:grid-cols-2 gap-16 items-center">
           <div className="relative aspect-[4/5] overflow-hidden">
-            <img src={manufacturingImg} alt="Sialkot manufacturing heritage" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover" />
+            <img
+              src={manufacturingImg}
+              alt="Apparel manufacturing in Sialkot"
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
           </div>
-          <div className="space-y-8 self-center">
-            <p className="eyebrow">Sialkot Heritage</p>
+
+          <div>
+            <p className="eyebrow mb-5">The honest version</p>
             <h2 className="font-display text-4xl md:text-5xl leading-[1.05]">
-              Where the world's <span className="text-gold italic">finest garments</span> are stitched.
+              Our online presence is new. <span className="text-gold italic">Our manufacturing work is not</span>.
             </h2>
-            <p className="text-foreground/75 leading-relaxed">
-              For over a century, Sialkot has been Pakistan's atelier — supplying the global sports,
-              leather and fashion industries with goods that combine artisan skill with industrial precision.
-              Irha Apparels stands in that lineage, building on generations of expertise while
-              re-engineering the export experience for modern brands.
+            <p className="text-foreground/75 leading-relaxed mt-7">
+              This website is a newer part of Irha Apparels. The manufacturing work behind it is based on
+              hands-on apparel production experience in Sialkot and direct understanding of sampling,
+              materials, customization, branding and buyer requirements.
             </p>
-            <p className="text-foreground/75 leading-relaxed">
-              Our facility brings together cutting, sewing, embroidery, washing, finishing and
-              packaging under one roof — eliminating the bottlenecks that slow most overseas production.
+            <p className="text-foreground/75 leading-relaxed mt-5">
+              MOQ, samples, pricing, production timing, documentation and shipping are confirmed against
+              the actual program before a final commitment is made.
             </p>
-            <div className="grid grid-cols-2 gap-6 pt-4">
-              {[{Icon: Users, t:"250+ Artisans"},{Icon: ShieldCheck, t:"ISO QC Standards"},{Icon: Globe2, t:"30+ Export Countries"},{Icon: Sparkles, t:"OEM · ODM · Private Label"}].map(({Icon,t})=>(
-                <div key={t} className="flex items-center gap-3">
-                  <Icon className="text-primary shrink-0" size={20}/>
-                  <span className="text-sm text-foreground/80">{t}</span>
-                </div>
-              ))}
+
+            <div className="mt-8 border border-gold/40 bg-card/30 p-6">
+              <p className="font-display text-2xl">Factory view available by live video call.</p>
+              <p className="text-sm text-foreground/65 mt-3 leading-relaxed">
+                Buyers can request a live video call to view the manufacturing environment and discuss requirements directly.
+              </p>
+              <Link
+                to="/inquiry?intent=meeting"
+                className="mt-5 inline-flex items-center gap-2 text-xs uppercase tracking-[0.28em] text-gold hover:text-foreground transition-colors"
+              >
+                <MessageCircle size={14} /> Request a live video call
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* MARKETS */}
       <section className="py-24 md:py-32 bg-secondary/40 border-y border-border/60">
-        <div className="container-luxe">
-          <p className="eyebrow mb-6">Export Markets</p>
-          <h2 className="font-display text-4xl md:text-6xl leading-[1.02] max-w-3xl">
-            Trusted by brands in <span className="text-gold italic">30+ countries</span>.
-          </h2>
-          <div className="mt-14 grid grid-cols-2 md:grid-cols-5 gap-x-8 gap-y-4 border-t border-border/60 pt-10">
-            {markets.map((m, i) => (
-              <div key={m} className="flex items-center justify-between border-b border-border/60 py-4">
-                <span className="font-display text-xl">{m}</span>
-                <span className="text-xs text-muted-foreground">0{i+1}</span>
-              </div>
-            ))}
-          </div>
+        <div className="container-luxe grid md:grid-cols-2 gap-px bg-border/60 border border-border/60">
+          {principles.map(({ Icon, title, body }) => (
+            <article key={title} className="bg-background p-8 md:p-10">
+              <Icon size={24} className="text-gold" strokeWidth={1.4} />
+              <h3 className="font-display text-2xl mt-6">{title}</h3>
+              <p className="text-sm text-foreground/65 mt-4 leading-relaxed">{body}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* CAPABILITIES */}
-      <section className="py-24 md:py-32">
-        <div className="container-luxe grid lg:grid-cols-3 gap-10">
-          {[
-            { n: "01", t: "Quality Control", d: "Every garment passes inline and final quality checks — measurements, stitching, seams, trims, wash and packaging — before clearance for export." },
-            { n: "02", t: "Production Capacity", d: "Capacity across knits, wovens and leather with flexible MOQ scoped to your program." },
-            { n: "03", t: "Compliance & Documentation", d: "Materials, labelling and export documentation prepared according to your destination market requirements." },
-          ].map((c) => (
-            <div key={c.n} className="border border-border/70 p-10 bg-card/40">
-              <p className="font-display text-5xl text-gold">{c.n}</p>
-              <h3 className="font-display text-2xl mt-6">{c.t}</h3>
-              <p className="text-sm text-foreground/70 mt-4 leading-relaxed">{c.d}</p>
-            </div>
-          ))}
+      <section className="py-24 md:py-32 text-center">
+        <div className="container-luxe max-w-3xl">
+          <h2 className="font-display text-4xl md:text-5xl leading-[1.05]">
+            Bring the requirement. We will review the <span className="text-gold italic">real production path</span>.
+          </h2>
+          <Link
+            to="/inquiry?intent=rfq"
+            className="mt-10 inline-flex bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all"
+          >
+            Start an Inquiry
+          </Link>
         </div>
       </section>
     </>
