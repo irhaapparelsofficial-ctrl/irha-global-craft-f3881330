@@ -2,7 +2,6 @@ import SEO from "@/components/SEO";
 import sustainabilityImg from "@/assets/banners/sustainability.jpg";
 import { Leaf, Users, Droplets, Recycle, ShieldCheck, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import Certifications from "@/components/sections/Certifications";
 
 const PILLARS = [
   { Icon: Leaf, t: "Responsible Sourcing", d: "Organic and recycled fabric programs available on request per program — sourced from mills reviewed against your project requirements." },
@@ -70,8 +69,6 @@ export default function Sustainability() {
           </div>
         </div>
       </section>
-
-      <Certifications />
 
       <section className="py-24 md:py-32">
         <div className="container-luxe">
