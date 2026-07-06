@@ -15,7 +15,7 @@ function verifiedReleaseMetadata(): Plugin {
         .replace(/<meta name="description" content="[^"]*"\s*\/?>/i, '<meta name="description" content="Custom B2B apparel manufacturing in Sialkot, Pakistan for brands, wholesalers, importers and private-label buyers. Requirements are reviewed before commercial commitments." />')
         .replace(/\s*<meta name="keywords"[^>]*>/i, "")
         .replace(/\s*<link rel="alternate" hreflang="de"[^>]*>/gi, "")
-        .replace(/\s*<meta name="x-irha-(?:build|release)"[^>]*>/gi, '<meta name="x-irha-release" content="gate4-2026-07-06-r4" />')
+        .replace(/\s*<meta name="x-irha-(?:build|release)"[^>]*>/gi, '<meta name="x-irha-release" content="gate4-2026-07-06-r5" />')
         .replace(/<meta property="og:title" content="[^"]*"\s*\/?>/i, '<meta property="og:title" content="Irha Apparels — B2B Custom Apparel Manufacturer" />')
         .replace(/<meta property="og:description" content="[^"]*"\s*\/?>/i, '<meta property="og:description" content="Custom apparel programs for brands, wholesalers, importers and private-label buyers. Requirements are reviewed before commercial commitments." />')
         .replace(/<meta name="twitter:title" content="[^"]*"\s*\/?>/i, '<meta name="twitter:title" content="Irha Apparels — B2B Custom Apparel Manufacturer" />')
@@ -29,15 +29,11 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    hmr: {
-      overlay: false,
-    },
+    hmr: { overlay: false },
   },
   plugins: [verifiedReleaseMetadata(), react(), imagetools(), mcpPlugin(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: { "@": path.resolve(__dirname, "./src") },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
   build: {
