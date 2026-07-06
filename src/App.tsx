@@ -5,7 +5,6 @@ import { useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
-import LederhosenHome from "./pages/LederhosenHome";
 import Home from "./pages/Home";
 import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
@@ -73,9 +72,9 @@ const App = () => (
             <Routes>
               {/* Canonical homepage — two production hubs backed by the live catalog */}
               <Route path="/" element={<Layout><Home /></Layout>} />
-              {/* German-market landing keeps its own chrome */}
-              <Route path="/de" element={<LederhosenHome />} />
-              <Route path="/de/" element={<LederhosenHome />} />
+              {/* Legacy German landing is quarantined until the Phase 9 German buyer journey is rebuilt from current DB data. */}
+              <Route path="/de" element={<Navigate to="/" replace />} />
+              <Route path="/de/" element={<Navigate to="/" replace />} />
               <Route path="/legacy-home" element={<Navigate to="/" replace />} />
 
               {/* Admin & auth: standalone chrome — no public navbar/footer */}
