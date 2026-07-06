@@ -1,140 +1,98 @@
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
 
 export default function TermsOfService() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-16">
+    <main className="mx-auto max-w-3xl px-4 py-24 md:py-32">
       <Helmet>
-        <title>Terms of Service — Irha Apparels</title>
+        <title>Website Terms | Irha Apparels</title>
         <meta
           name="description"
-          content="B2B terms of service for Irha Apparels: orders, MOQ, production, payment, IP, warranties, and dispute resolution."
+          content="Website terms for Irha Apparels. Commercial order terms, pricing, payment, production, shipping and claims are confirmed separately for each B2B order."
         />
         <link rel="canonical" href="https://www.irhaapparels.com/terms-of-service" />
       </Helmet>
 
-      <h1 className="mb-2 text-3xl font-semibold">Terms of Service</h1>
-      <p className="mb-8 text-sm text-foreground/60">
-        Last updated: June 2026. These terms apply to all B2B orders placed with Irha Apparels.
+      <p className="eyebrow mb-5">Website Terms</p>
+      <h1 className="font-display text-4xl md:text-6xl leading-[1.05]">
+        General website terms. <span className="text-gold italic">Order terms are separate</span>.
+      </h1>
+      <p className="mt-7 text-foreground/70 leading-relaxed">
+        These terms govern use of the Irha Apparels website and inquiry tools. They do not create a final quotation,
+        purchase contract, price, payment term, delivery promise or manufacturing commitment.
       </p>
 
-      <div className="prose prose-neutral max-w-none space-y-5 text-sm leading-relaxed">
-        <section>
-          <h2 className="text-xl font-semibold">1. Who we are</h2>
-          <p>
-            Irha Apparels is a B2B garment manufacturer based in Sialkot, Pakistan. We sell only to
-            registered businesses, brands, importers, and resellers. We do not sell to consumers.
+      <div className="mt-14 space-y-10 text-sm leading-relaxed text-foreground/75">
+        <section className="border-t border-border/60 pt-8">
+          <h2 className="font-display text-2xl text-foreground">1. B2B website purpose</h2>
+          <p className="mt-3">
+            The website is intended for brands, wholesalers, importers, retailers, distributors and other business buyers seeking custom apparel manufacturing.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold">2. Quotes and orders</h2>
-          <p>
-            All quotes are valid for 14 days unless stated otherwise. An order is confirmed only
-            after we send a Pro Forma Invoice (PI) and receive your signed approval plus the agreed
-            deposit. Prices on the website are indicative; the final price is the one written on
-            the PI.
+        <section className="border-t border-border/60 pt-8">
+          <h2 className="font-display text-2xl text-foreground">2. Inquiry content is not a final quote</h2>
+          <p className="mt-3">
+            Product pages, mockups, AI concepts, forms, messages and general website content are for requirement discussion. Final feasibility, specification, price, MOQ, payment terms, production timing and shipping are confirmed separately by the Irha Apparels team.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold">3. Minimum order quantity (MOQ)</h2>
-          <p>
-            Our standard MOQ is flexible MOQ per style, per color. Some product groups have a higher
-            MOQ. The MOQ for your order is the one written on the PI.
+        <section className="border-t border-border/60 pt-8">
+          <h2 className="font-display text-2xl text-foreground">3. Order-specific commercial terms</h2>
+          <p className="mt-3">
+            A B2B order is governed by the quotation, pro forma invoice, purchase order acceptance, specification approval and other commercial documents agreed for that order. Where those documents conflict with general website text, the agreed order documents control.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold">4. Payment terms</h2>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>50% advance deposit before production starts.</li>
-            <li>50% balance before shipment / before the Bill of Lading is released.</li>
-            <li>Payment by bank wire (T/T) in USD or EUR. L/C at sight is accepted for orders above USD 20,000.</li>
-            <li>All bank charges on the buyer side are paid by the buyer.</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold">5. Production time</h2>
-          <p>
-            Production timeline is confirmed after specification, quantity and customization review. Larger or
-            complex orders may take longer; the exact lead time is written on the PI.
+        <section className="border-t border-border/60 pt-8">
+          <h2 className="font-display text-2xl text-foreground">4. Samples and approvals</h2>
+          <p className="mt-3">
+            Sample cost, development scope, approvals and any effect on bulk production are confirmed for the specific program. Do not rely on a generic website statement as approval to begin production.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold">6. Samples</h2>
-          <p>
-            Pre-production samples are charged at sample rate plus courier. Sample cost may be
-            credited against the bulk order at our discretion. Bulk production starts only after
-            you approve the sample in writing.
+        <section className="border-t border-border/60 pt-8">
+          <h2 className="font-display text-2xl text-foreground">5. Buyer-provided intellectual property</h2>
+          <p className="mt-3">
+            Buyers are responsible for having the right to use logos, artwork, designs, trademarks and other files they submit. Private-label and confidentiality requirements should be stated during the commercial discussion.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold">7. Quality and tolerances</h2>
-          <p>
-            We follow standard apparel tolerances: measurements ±1 cm on small parts and ±2 cm on
-            length, weight ±5%, and color ±5% against the approved lab dip. Claims must be raised
-            within 14 days of receiving the goods, with photos and the affected piece count.
+        <section className="border-t border-border/60 pt-8">
+          <h2 className="font-display text-2xl text-foreground">6. AI concept previews</h2>
+          <p className="mt-3">
+            AI-generated mockups are non-binding concept previews for requirement discussion. Final materials, construction, color matching, manufacturability, price and timing require human review.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold">8. Intellectual property</h2>
-          <p>
-            You keep all rights to your brand, logos, artwork, tech packs, and designs. We will not
-            sell, copy, or show your designs to other customers. You confirm you own (or are
-            licensed to use) the artwork you send us, and you protect us against any third-party
-            claim about that artwork.
+        <section className="border-t border-border/60 pt-8">
+          <h2 className="font-display text-2xl text-foreground">7. Website accuracy and updates</h2>
+          <p className="mt-3">
+            We may update website content, product presentation and available tools. A change to website content does not automatically amend an already agreed order.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold">9. Confidentiality</h2>
-          <p>
-            Both sides agree to keep prices, designs, and order details confidential. A separate
-            NDA can be signed on request.
+        <section className="border-t border-border/60 pt-8">
+          <h2 className="font-display text-2xl text-foreground">8. Contact</h2>
+          <p className="mt-3">
+            For commercial terms, send the actual requirement through the inquiry flow or contact the Irha Apparels team directly.
           </p>
         </section>
+      </div>
 
-        <section>
-          <h2 className="text-xl font-semibold">10. Force majeure</h2>
-          <p>
-            We are not responsible for delays caused by events outside our control, such as port
-            strikes, customs delays, power outages, war, fire, flood, or government action. We
-            will inform you as soon as possible and agree a new shipment date.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold">11. Limitation of liability</h2>
-          <p>
-            Our maximum liability for any order is limited to the invoice value of that order. We
-            are not liable for indirect losses such as lost profit, lost sales, or lost
-            customers.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold">12. Governing law and disputes</h2>
-          <p>
-            These terms are governed by the laws of Pakistan. The parties will first try to solve
-            any dispute by friendly talks. If that fails, the dispute will be settled by
-            arbitration in Sialkot, Pakistan, under the Arbitration Act 1940.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold">13. Contact</h2>
-          <p>
-            Questions about these terms?{" "}
-            <a className="underline" href="mailto:irhaapparelsofficial@gmail.com">
-              irhaapparelsofficial@gmail.com
-            </a>{" "}
-            · WhatsApp +92 320 4110066
-          </p>
-        </section>
+      <div className="mt-14 flex flex-wrap gap-3">
+        <Link
+          to="/inquiry?intent=rfq"
+          className="bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.28em] hover:shadow-gold transition-all"
+        >
+          Start an Inquiry
+        </Link>
+        <Link
+          to="/contact"
+          className="border border-gold/70 text-gold px-7 py-4 text-xs uppercase tracking-[0.28em] hover:bg-gold hover:text-background transition-colors"
+        >
+          Contact Team
+        </Link>
       </div>
     </main>
   );
