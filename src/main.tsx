@@ -2,19 +2,39 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// One-time client self-heal: unregister any legacy service workers and purge
-// CacheStorage so browsers that cached an old deployment load current code.
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .getRegistrations()
-    .then((regs) => regs.forEach((reg) => reg.unregister()))
-    .catch(() => {});
+const CACHE_HEAL_KEY = "irha:cache-heal-version";
+const CACHE_HEAL_VERSION = "2026-07-06-v1";
+
+async function healLegacyClientCacheOnce() {
+  let alreadyHealed = false;
+  try {
+    alreadyHealed = localStorage.getItem(CACHE_HEAL_KEY) === CACHE_HEAL_VERSION;
+  } catch {
+    // Storage can be unavailable in hardened/privacy contexts. In that rare case,
+    // run the cleanup for this page load rather than risking a permanently stale client.
+  }
+
+  if (alreadyHealed) return;
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+  } finally {
+    try {
+      localStorage.setItem(CACHE_HEAL_KEY, CACHE_HEAL_VERSION);
+    } catch {
+      // Ignore storage failures; the application must still render.
+    }
+  }
 }
-if ("caches" in window) {
-  caches
-    .keys()
-    .then((keys) => keys.forEach((k) => caches.delete(k)))
-    .catch(() => {});
-}
+
+void healLegacyClientCacheOnce();
 
 createRoot(document.getElementById("root")!).render(<App />);
