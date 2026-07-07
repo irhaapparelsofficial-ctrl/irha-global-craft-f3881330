@@ -1,13 +1,12 @@
 import SEO from "@/components/SEO";
 import type { Product } from "@/lib/categories";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Bookmark, Download, Maximize2, MessageCircle, Search, X } from "lucide-react";
+import { ArrowUpRight, Bookmark, Maximize2, MessageCircle, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
-import CatalogFlipbook from "@/components/CatalogFlipbook";
 import flatlay from "@/assets/banners/products-flatlay.jpg";
 import { whatsappLink } from "@/lib/constants";
-import { usePublicCategories, type NormalizedCategory, type NormalizedProduct } from "@/hooks/usePublicCategoryData";
+import { usePublicCategories, type NormalizedProduct } from "@/hooks/usePublicCategoryData";
 import { useShortlist } from "@/lib/shortlist";
 
 function extractMoq(details: Product["details"] | undefined): string {
@@ -25,7 +24,6 @@ type SearchHit = {
 
 export default function Products() {
   const { categories: CATEGORIES } = usePublicCategories();
-  const [previewCat, setPreviewCat] = useState<NormalizedCategory | null>(null);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeSub, setActiveSub] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
@@ -44,7 +42,7 @@ export default function Products() {
     for (const c of CATEGORIES) {
       for (const s of c.subs) {
         for (const p of s.products) {
-          const hay = `${p.name} ${s.name} ${c.name} ${p.description ?? ""}`.toLowerCase();
+          const hay = `${p.name} ${p.sku ?? ""} ${s.name} ${c.name} ${p.description ?? ""}`.toLowerCase();
           if (hay.includes(q)) {
             hits.push({ categorySlug: c.slug, categoryName: c.name, subName: s.name, product: p });
           }
@@ -53,7 +51,6 @@ export default function Products() {
     }
     return hits.slice(0, 40);
   }, [CATEGORIES, query]);
-
 
   return (
     <>
@@ -94,13 +91,12 @@ export default function Products() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a
-              href="/catalogs/master-catalogue-2026.pdf"
-              download
+            <Link
+              to="/catalogue"
               className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
             >
-              <Download size={14} /> Master Catalogue 2026 (PDF)
-            </a>
+              View Live Catalogue <ArrowUpRight size={14} />
+            </Link>
             <a
               href={whatsappLink("Hello Irha Apparels — please send the latest master catalogue and quote.")}
               target="_blank"
@@ -188,7 +184,9 @@ export default function Products() {
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
                           />
                         </div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/50">{h.categoryName} · {h.subName}</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/50">
+                          {h.product.sku ? `${h.product.sku} · ` : ""}{h.categoryName} · {h.subName}
+                        </p>
                         <h4 className="font-display text-base leading-tight group-hover:text-primary transition-colors mt-1">
                           {h.product.name}
                         </h4>
@@ -336,25 +334,6 @@ export default function Products() {
           })}
         </div>
       </section>
-
-      {previewCat && (
-        <CatalogFlipbook
-          slug={previewCat.slug}
-          title={`${previewCat.name} — 2026 Catalogue`}
-          open={!!previewCat}
-          onClose={() => setPreviewCat(null)}
-          action={
-            <a
-              href={whatsappLink(`Hello Irha Apparels — I'd like a quote for the ${previewCat.name} catalog.`)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 border border-gold/70 text-gold hover:bg-gold hover:text-background px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
-            >
-              <MessageCircle size={13} /> Request Quote
-            </a>
-          }
-        />
-      )}
 
       <ProductDetailModal product={activeProduct} onClose={() => setActiveProduct(null)} />
     </>
