@@ -1,18 +1,21 @@
 import { useMemo, useState } from "react";
-import { FileText, Download } from "lucide-react";
+import { FileText, Printer } from "lucide-react";
 
 export default function PIGeneratorPanel() {
-  const [client, setClient] = useState("Trachten GmbH");
-  const [product, setProduct] = useState("Herren Lederhosen");
-  const [qty, setQty] = useState(100);
-  const [price, setPrice] = useState(45);
-  const [currency, setCurrency] = useState("EUR");
+  const [client, setClient] = useState("");
+  const [product, setProduct] = useState("");
+  const [qty, setQty] = useState(0);
+  const [price, setPrice] = useState(0);
+  const [currency, setCurrency] = useState("USD");
+  const [terms, setTerms] = useState("");
   const [preview, setPreview] = useState(false);
 
   const total = useMemo(() => qty * price, [qty, price]);
-  const piNo = useMemo(() => `PI-${Date.now().toString().slice(-6)}`, []);
+  const piNo = useMemo(() => `PI-DRAFT-${Date.now().toString().slice(-6)}`, []);
+  const canPreview = client.trim().length > 0 && product.trim().length > 0 && qty > 0 && price > 0;
 
   const print = () => {
+    if (!canPreview) return;
     setPreview(true);
     setTimeout(() => window.print(), 200);
   };
@@ -20,7 +23,10 @@ export default function PIGeneratorPanel() {
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       <div className="border border-border/60 bg-card/30 p-6 space-y-4 print:hidden">
-        <h3 className="font-display text-xl text-gold flex items-center gap-2"><FileText size={18} /> New Proforma Invoice</h3>
+        <h3 className="font-display text-xl text-gold flex items-center gap-2"><FileText size={18} /> New Proforma Invoice Draft</h3>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Start from blank commercial terms. Review buyer details, quantity, price, delivery and payment terms before issuing any final PI.
+        </p>
         <Field label="Client" value={client} onChange={setClient} />
         <Field label="Product" value={product} onChange={setProduct} />
         <div className="grid grid-cols-3 gap-3">
@@ -29,19 +35,32 @@ export default function PIGeneratorPanel() {
           <div>
             <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Currency</label>
             <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="mt-1 w-full bg-background border border-border/60 px-3 py-2 text-sm">
-              {["EUR", "USD", "GBP", "AUD"].map((c) => <option key={c}>{c}</option>)}
+              {["USD", "EUR", "GBP", "AUD"].map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
         </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Commercial Terms</label>
+          <textarea
+            value={terms}
+            onChange={(e) => setTerms(e.target.value)}
+            rows={4}
+            placeholder="Add approved payment, delivery, Incoterm and validity terms for this buyer…"
+            className="mt-1 w-full bg-background border border-border/60 px-3 py-2 text-sm focus:border-gold outline-none resize-y"
+          />
+        </div>
+        {!canPreview && (
+          <p className="text-[11px] text-amber-500">Client, product, quantity and unit price are required before preview or print.</p>
+        )}
         <div className="flex gap-2 pt-2">
-          <button onClick={() => setPreview(true)} className="flex-1 bg-gradient-gold text-background text-xs uppercase tracking-[0.25em] py-3 hover:opacity-90">Preview PDF</button>
-          <button onClick={print} className="inline-flex items-center gap-2 border border-gold/60 text-gold text-xs uppercase tracking-[0.25em] px-4 py-3 hover:bg-gold hover:text-background">
-            <Download size={12} /> Print
+          <button disabled={!canPreview} onClick={() => setPreview(true)} className="flex-1 bg-gradient-gold text-background text-xs uppercase tracking-[0.25em] py-3 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">Preview Draft</button>
+          <button disabled={!canPreview} onClick={print} className="inline-flex items-center gap-2 border border-gold/60 text-gold text-xs uppercase tracking-[0.25em] px-4 py-3 hover:bg-gold hover:text-background disabled:opacity-40 disabled:cursor-not-allowed">
+            <Printer size={12} /> Print Draft
           </button>
         </div>
       </div>
 
-      {preview && (
+      {preview && canPreview && (
         <div className="border border-gold/40 bg-background p-8 print:border-0 print:p-0">
           <div className="flex justify-between items-start mb-8">
             <div>
@@ -49,7 +68,7 @@ export default function PIGeneratorPanel() {
               <p className="text-xs text-muted-foreground mt-1">Sialkot, Pakistan · irhaapparels.com</p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Proforma Invoice</p>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Proforma Invoice Draft</p>
               <p className="font-display text-lg text-gold">{piNo}</p>
               <p className="text-xs text-muted-foreground">{new Date().toLocaleDateString()}</p>
             </div>
@@ -82,7 +101,13 @@ export default function PIGeneratorPanel() {
               <p className="font-display text-3xl text-gold">{currency} {total.toFixed(2)}</p>
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-8 text-center">Terms: 30% advance, 70% before shipment · Delivery 45 days</p>
+          {terms.trim() && (
+            <div className="mt-8 border-t border-border/40 pt-4">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Approved Commercial Terms</p>
+              <p className="text-xs text-foreground/80 whitespace-pre-wrap">{terms.trim()}</p>
+            </div>
+          )}
+          <p className="text-[10px] text-amber-500 mt-8 text-center print:text-black">DRAFT — verify buyer details and commercial terms before issue.</p>
         </div>
       )}
     </div>
