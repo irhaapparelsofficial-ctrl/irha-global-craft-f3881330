@@ -42,19 +42,18 @@ function adaptProduct(p: DbProduct): NormalizedProduct {
   const baseGallery = p.gallery?.length ? p.gallery : p.image_url ? [p.image_url] : [];
   const realMedia = PRODUCT_REAL_MEDIA[p.slug];
   const gallery = realMedia
-    ? [
-        baseGallery[0] ?? p.image_url ?? "",
-        ...realMedia.gallery,
-        ...baseGallery.slice(1),
-      ].filter((image, index, images) => Boolean(image) && images.indexOf(image) === index)
+    ? [...realMedia.gallery, ...baseGallery].filter(
+        (image, index, images) => Boolean(image) && images.indexOf(image) === index,
+      )
     : baseGallery;
+  const heroImage = realMedia?.gallery[0] ?? p.image_url ?? gallery[0] ?? "";
 
   return {
     id: p.id,
     slug: p.slug,
     sku: p.sku ?? null,
     name: p.name,
-    image: p.image_url ?? gallery[0] ?? "",
+    image: heroImage,
     gallery,
     description: p.description ?? "",
     specs: p.specs ?? [],
