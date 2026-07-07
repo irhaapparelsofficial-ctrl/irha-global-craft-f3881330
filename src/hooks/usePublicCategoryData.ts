@@ -13,6 +13,7 @@ import { CATALOG, type CategoryGroup as LegacyGroup, type SubCategory as LegacyS
 export type NormalizedProduct = LegacyProduct & {
   id?: string;
   slug: string;
+  sku?: string | null;
   created_at?: string;
 };
 
@@ -41,6 +42,7 @@ function adaptProduct(p: DbProduct): NormalizedProduct {
   return {
     id: p.id,
     slug: p.slug,
+    sku: p.sku ?? null,
     name: p.name,
     image: p.image_url ?? gallery[0] ?? "",
     gallery,
