@@ -1,0 +1,47 @@
+name: Sync Product Media
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/product-media-manifest.json"
+      - "scripts/sync-product-media.mjs"
+      - ".github/workflows/sync-product-media.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch and optimize product media
+        run: node scripts/sync-product-media.mjs
+
+      - name: Commit first-party media assets
+        run: |
+          if git diff --quiet -- public/product-media; then
+            echo "No media changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/product-media
+          git commit -m "Sync first-party product media"
+          git push
