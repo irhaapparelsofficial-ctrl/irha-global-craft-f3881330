@@ -6,14 +6,12 @@ on:
     paths:
       - "scripts/product-media-manifest.json"
       - "scripts/sync_product_media.py"
-      - "scripts/media-sync-trigger.txt"
       - ".github/workflows/sync-product-media.yml"
   pull_request:
     branches: [main]
     paths:
       - "scripts/product-media-manifest.json"
       - "scripts/sync_product_media.py"
-      - "scripts/media-sync-trigger.txt"
       - ".github/workflows/sync-product-media.yml"
   workflow_dispatch:
 
