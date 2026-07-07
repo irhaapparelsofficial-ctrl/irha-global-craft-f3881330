@@ -1,13 +1,13 @@
-import { Helmet } from "react-helmet-async";
+import SEO from "@/components/SEO";
 
 export default function PrivacyPolicy() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-24 md:py-32">
-      <Helmet>
-        <title>Privacy Policy — Irha Apparels</title>
-        <meta name="description" content="How Irha Apparels handles website analytics, inquiry details, uploaded files and local draft data." />
-        <link rel="canonical" href="https://www.irhaapparels.com/privacy-policy" />
-      </Helmet>
+      <SEO
+        title="Privacy Policy — Irha Apparels"
+        description="How Irha Apparels handles website analytics, inquiry details, uploaded files and local draft data."
+        path="/privacy-policy"
+      />
 
       <p className="eyebrow mb-5">Privacy</p>
       <h1 className="font-display text-4xl md:text-6xl leading-[1.05]">Privacy Policy</h1>
@@ -19,7 +19,10 @@ export default function PrivacyPolicy() {
         <section className="border-t border-border/60 pt-7">
           <h2 className="font-display text-2xl text-foreground">Cookies and analytics</h2>
           <p className="mt-3">
-            The website uses consent controls before optional analytics or advertising storage is enabled. You can reopen Cookie Settings from the footer and change your choice.
+            Essential website functions remain available without optional tracking. Analytics and advertising storage stay denied until you make a choice through the cookie banner. You can accept all optional categories, reject them, or choose categories individually.
+          </p>
+          <p className="mt-3">
+            Your saved choice is kept in browser storage for up to six months unless you clear browser storage earlier. You can reopen Cookie Settings from the footer and change your choice at any time.
           </p>
         </section>
 
