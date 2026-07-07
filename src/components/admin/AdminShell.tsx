@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Home, Package, Layers, BookOpen, FileText, Search, Link2,
-  Users, Inbox, MessageSquare, Send, Sparkles, Cpu, ScrollText,
+  Users, MessageSquare, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
   BarChart3,
 } from "lucide-react";
@@ -38,8 +38,7 @@ const NAV: NavGroup[] = [
     { key: "links", label: "Internal Links", icon: Link2 },
   ]},
   { title: "Leads & Communication", items: [
-    { key: "leads", label: "Leads", icon: Users },
-    { key: "inquiries", label: "Inquiries", icon: Inbox },
+    { key: "leads", label: "Buyer Inbox", icon: Users },
     { key: "chat", label: "Live Chat", icon: MessageSquare },
     { key: "mailing", label: "Mailing", icon: Send },
   ]},
@@ -120,7 +119,6 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
-      {/* Sidebar — desktop */}
       <aside
         className={cn(
           "hidden md:flex flex-col border-r border-border/60 bg-card/30 transition-[width] duration-200",
@@ -147,7 +145,6 @@ export function AdminShell({
         {nav}
       </aside>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
@@ -161,9 +158,7 @@ export function AdminShell({
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Header */}
         <header className="h-14 border-b border-border/60 bg-card/20 backdrop-blur flex items-center gap-3 px-4 md:px-6 sticky top-0 z-30">
           <button
             className="md:hidden p-2 -ml-2 text-foreground/80"
