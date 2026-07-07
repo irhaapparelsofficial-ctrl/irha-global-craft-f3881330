@@ -1,14 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 const STORAGE_KEY = "irha_cookie_consent_v1";
 const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
 export const OPEN_COOKIE_SETTINGS_EVENT = "irha:open-cookie-settings";
-
-const EU_EEA_UK = new Set([
-  "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT",
-  "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE","IS","LI","NO","GB",
-]);
 
 type Categories = { analytics: boolean; ads: boolean };
 type Consent = { categories: Categories; ts: number };
@@ -49,7 +44,7 @@ const save = (categories: Categories) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ categories, ts: Date.now() }));
   } catch {
-    /* ignore */
+    /* Storage can be unavailable in restricted browsing modes. */
   }
 };
 
@@ -59,14 +54,11 @@ export default function CookieConsent() {
   const [analytics, setAnalytics] = useState(false);
   const [ads, setAds] = useState(false);
 
-  // Re-open from footer link / anywhere
   useEffect(() => {
     const open = () => {
       const stored = readStored();
-      if (stored) {
-        setAnalytics(stored.categories.analytics);
-        setAds(stored.categories.ads);
-      }
+      setAnalytics(stored?.categories.analytics ?? false);
+      setAds(stored?.categories.ads ?? false);
       setCustomizing(true);
       setVisible(true);
     };
@@ -74,40 +66,40 @@ export default function CookieConsent() {
     return () => window.removeEventListener(OPEN_COOKIE_SETTINGS_EVENT, open);
   }, []);
 
-  // Initial mount: apply prior choice, or default to showing the compact banner.
-  // No client-side geo lookup — CORS-prone third-party calls removed.
-  // Locale is a cheap heuristic: EU/UK locales get the banner, others auto-grant analytics.
+  // Apply an existing choice. Without a valid stored choice, keep optional
+  // storage denied and ask every visitor to decide explicitly.
   useEffect(() => {
     const stored = readStored();
     if (stored) {
       applyConsent(stored.categories);
       return;
     }
-    const lang = (navigator.language || "").toUpperCase();
-    const region = lang.split("-")[1] || "";
-    const isEuLocale = EU_EEA_UK.has(region);
-    if (isEuLocale || !region) {
-      setVisible(true);
-    } else {
-      const c = { analytics: true, ads: false };
-      save(c);
-      applyConsent(c);
-    }
+    applyConsent({ analytics: false, ads: false });
+    setVisible(true);
   }, []);
 
   const acceptAll = useCallback(() => {
     const c = { analytics: true, ads: true };
-    save(c); applyConsent(c); setVisible(false); setCustomizing(false);
+    save(c);
+    applyConsent(c);
+    setVisible(false);
+    setCustomizing(false);
   }, []);
 
   const rejectAll = useCallback(() => {
     const c = { analytics: false, ads: false };
-    save(c); applyConsent(c); setVisible(false); setCustomizing(false);
+    save(c);
+    applyConsent(c);
+    setVisible(false);
+    setCustomizing(false);
   }, []);
 
   const savePrefs = useCallback(() => {
     const c = { analytics, ads };
-    save(c); applyConsent(c); setVisible(false); setCustomizing(false);
+    save(c);
+    applyConsent(c);
+    setVisible(false);
+    setCustomizing(false);
   }, [analytics, ads]);
 
   if (!visible) return null;
@@ -121,7 +113,7 @@ export default function CookieConsent() {
     >
       <div className="flex flex-col gap-3 px-4 py-3.5">
         <p className="text-[13px] leading-snug text-white/90">
-          We use cookies to improve your experience.{" "}
+          We use optional analytics and advertising cookies only after your choice.{" "}
           <Link to="/privacy-policy" className="underline underline-offset-2 hover:text-white">
             Privacy Policy
           </Link>
@@ -161,14 +153,14 @@ export default function CookieConsent() {
             onClick={acceptAll}
             className="flex-1 rounded-md bg-[#16a34a] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#15803d]"
           >
-            Accept
+            Accept All
           </button>
           <button
             type="button"
             onClick={rejectAll}
             className="flex-1 rounded-md border border-white/40 px-3 py-2 text-xs font-medium text-white hover:bg-white/10"
           >
-            Reject
+            Reject Optional
           </button>
           {!customizing ? (
             <button
@@ -184,7 +176,7 @@ export default function CookieConsent() {
               onClick={savePrefs}
               className="text-[11px] text-white/90 underline underline-offset-2 hover:text-white"
             >
-              Save
+              Save Preferences
             </button>
           )}
         </div>
