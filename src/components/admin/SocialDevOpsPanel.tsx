@@ -1,115 +1,83 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, CheckCircle2, Clock, Send, Linkedin, Facebook, Music2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Facebook, Linkedin, Music2, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type Product = { id: string; name: string; slug: string };
 type ChannelKey = "facebook" | "instagram" | "linkedin" | "tiktok";
 
-const SYNC_INTERVAL_HOURS = 6;
+type SyncSummary = {
+  published: string[];
+  verified: string[];
+  skipped: string[];
+  failed: string[];
+};
 
-const STACK = [
-  { service: "Lovable Cloud DB", status: "operational" },
-  { service: "Edge Functions Runtime", status: "operational" },
-  { service: "Connector Gateway (LinkedIn/TikTok)", status: "operational" },
-  { service: "Email Queue (notify.www.irhaapparels.com)", status: "operational" },
+type SyncResponse = {
+  success?: boolean;
+  partial?: boolean;
+  product?: { name: string; url: string };
+  summary?: SyncSummary;
+  results?: Record<string, unknown>;
+  error?: string;
+};
+
+const CHANNELS: Array<{
+  key: ChannelKey;
+  label: string;
+  note: string;
+  Icon: typeof Facebook;
+}> = [
+  { key: "facebook", label: "Facebook Page", note: "Publish attempt", Icon: Facebook },
+  { key: "instagram", label: "Instagram Business", note: "Publish attempt", Icon: Facebook },
+  { key: "linkedin", label: "LinkedIn", note: "Publish attempt", Icon: Linkedin },
+  { key: "tiktok", label: "TikTok", note: "Profile verification only", Icon: Music2 },
 ];
-
-function formatRelative(iso: string | null): string {
-  if (!iso) return "Awaiting first sync";
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const m = Math.round(diffMs / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m} min ago`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.round(h / 24);
-  return `${d}d ago`;
-}
-
-function formatNextSync(lastIso: string | null): string {
-  const base = lastIso ? new Date(lastIso).getTime() : Date.now();
-  let next = base + SYNC_INTERVAL_HOURS * 3600_000;
-  while (next < Date.now()) next += SYNC_INTERVAL_HOURS * 3600_000;
-  return new Date(next).toLocaleString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function SocialDevOpsPanel() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [selected, setSelected] = useState<string>("");
-  const [channels, setChannels] = useState({
-    facebook: true,
-    instagram: true,
-    linkedin: true,
+  const [selected, setSelected] = useState("");
+  const [channels, setChannels] = useState<Record<ChannelKey, boolean>>({
+    facebook: false,
+    instagram: false,
+    linkedin: false,
     tiktok: false,
   });
   const [busy, setBusy] = useState(false);
-  const [lastResult, setLastResult] = useState<Record<string, unknown> | null>(null);
-  const [lastSync, setLastSync] = useState<Record<ChannelKey, string | null>>({
-    facebook: null,
-    instagram: null,
-    linkedin: null,
-    tiktok: null,
-  });
-
-  const loadLastSync = async () => {
-    const { data } = await supabase
-      .from("social_posts")
-      .select("channels, created_at")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    const map: Record<ChannelKey, string | null> = {
-      facebook: null,
-      instagram: null,
-      linkedin: null,
-      tiktok: null,
-    };
-    (data ?? []).forEach((row: { channels: string[] | null; created_at: string }) => {
-      (row.channels ?? []).forEach((ch) => {
-        const k = ch as ChannelKey;
-        if (k in map && !map[k]) map[k] = row.created_at;
-      });
-    });
-    setLastSync(map);
-  };
+  const [lastResult, setLastResult] = useState<SyncResponse | null>(null);
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("products")
         .select("id,name,slug")
         .eq("is_published", true)
         .order("sort_order")
-        .limit(50);
+        .limit(100);
+
+      if (error) {
+        toast({ title: "Products could not load", description: error.message, variant: "destructive" });
+        return;
+      }
+
       const list = (data ?? []) as Product[];
       setProducts(list);
       if (list[0]) setSelected(list[0].id);
-      await loadLastSync();
     })();
   }, []);
 
-  const metaLast = useMemo(
-    () => [lastSync.facebook, lastSync.instagram].filter(Boolean).sort().reverse()[0] ?? null,
-    [lastSync]
-  );
-
   const trigger = async () => {
     if (!selected) {
-      toast({ title: "Pick a product", variant: "destructive" });
+      toast({ title: "Pick a published product", variant: "destructive" });
       return;
     }
-    const picked = Object.entries(channels)
-      .filter(([, on]) => on)
-      .map(([k]) => k);
+
+    const picked = CHANNELS.filter(({ key }) => channels[key]).map(({ key }) => key);
     if (picked.length === 0) {
       toast({ title: "Select at least one channel", variant: "destructive" });
       return;
     }
+
     setBusy(true);
     setLastResult(null);
     try {
@@ -117,176 +85,61 @@ export default function SocialDevOpsPanel() {
         body: { productId: selected, channels: picked },
       });
       if (error) throw error;
-      setLastResult(data as Record<string, unknown>);
-      await loadLastSync();
-      toast({ title: "Sync dispatched", description: "Check the breakdown below." });
+
+      const result = (data ?? {}) as SyncResponse;
+      setLastResult(result);
+
+      const published = result.summary?.published.length ?? 0;
+      const verified = result.summary?.verified.length ?? 0;
+      const issues = (result.summary?.failed.length ?? 0) + (result.summary?.skipped.length ?? 0);
+
+      if (published > 0 && issues === 0) {
+        toast({ title: "Publish complete", description: `${published} channel${published === 1 ? "" : "s"} published successfully.` });
+      } else if (published > 0) {
+        toast({ title: "Partial result", description: `${published} published; ${issues} channel${issues === 1 ? "" : "s"} need attention.` });
+      } else if (verified > 0 && issues === 0) {
+        toast({ title: "Connection verified", description: "No post was published in this action." });
+      } else {
+        toast({ title: "Nothing published", description: "Review the exact channel breakdown below.", variant: "destructive" });
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Unknown failure";
-      toast({ title: "Sync failed", description: message, variant: "destructive" });
+      toast({ title: "Social action failed", description: message, variant: "destructive" });
     } finally {
       setBusy(false);
     }
   };
 
+  const summary = lastResult?.summary;
+
   return (
     <div className="space-y-8">
-      {/* Health grid */}
-      <section className="border border-border/60 bg-card/40 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Activity size={14} className="text-industrial" />
-          <h3 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            Cloud DevOps Stack Health
-          </h3>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {STACK.map((s) => (
-            <div key={s.service} className="bg-background border border-border/60 p-4">
-              <p className="text-xs font-mono text-foreground/80">{s.service}</p>
-              <div className="flex items-center gap-1.5 mt-3">
-                <span className="w-2 h-2 rounded-full bg-industrial" />
-                <span className="text-[10px] uppercase tracking-[0.2em] text-industrial font-bold">
-                  Operational
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Connected Platform Status — One-Click Token Engine */}
-      <section className="border border-border/60 bg-card/40 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <CheckCircle2 size={14} className="text-industrial" />
-          <h3 className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            One-Click Token Engine — Connected Channels
-          </h3>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Meta Hub */}
-          <div className="relative overflow-hidden border border-border/60 bg-gradient-to-br from-[#1877F2]/10 via-background to-[#E1306C]/10 p-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
-              Meta Hub
-            </p>
-            <div className="flex items-center gap-3 mb-4">
-              {/* Facebook brand */}
-              <span className="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center shadow-md">
-                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#fff" aria-label="Facebook">
-                  <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.77l-.44 2.89h-2.33v6.99A10 10 0 0 0 22 12Z" />
-                </svg>
-              </span>
-              {/* Instagram brand */}
-              <span className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style={{ background: "radial-gradient(circle at 30% 110%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" }}>
-                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="#fff" strokeWidth="2" aria-label="Instagram">
-                  <rect x="3" y="3" width="18" height="18" rx="5" />
-                  <circle cx="12" cy="12" r="4" />
-                  <circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none" />
-                </svg>
-              </span>
-            </div>
-            <p className="text-sm font-semibold text-foreground">Facebook Page & Instagram Business</p>
-            <div className="flex items-center gap-1.5 mt-3">
-              <span className="w-2 h-2 rounded-full bg-industrial animate-pulse" />
-              <span className="text-[10px] uppercase tracking-[0.2em] text-industrial font-bold">
-                Synced & Operational
-              </span>
-            </div>
-            <div className="mt-3 pt-3 border-t border-border/40 grid grid-cols-2 gap-2 text-[10px] font-mono">
-              <div>
-                <p className="text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Last sync</p>
-                <p className="text-foreground/90 inline-flex items-center gap-1"><Clock size={10} />{formatRelative(metaLast)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Next scheduled</p>
-                <p className="text-foreground/90">{formatNextSync(metaLast)}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* LinkedIn */}
-          <div className="relative overflow-hidden border border-border/60 bg-gradient-to-br from-[#0A66C2]/15 via-background to-[#0A66C2]/5 p-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
-              LinkedIn B2B V2 API
-            </p>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="w-10 h-10 rounded-md bg-[#0A66C2] flex items-center justify-center shadow-md">
-                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#fff" aria-label="LinkedIn">
-                  <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45Z" />
-                </svg>
-              </span>
-            </div>
-            <p className="text-sm font-semibold text-foreground">Corporate Post Engine</p>
-            <div className="flex items-center gap-1.5 mt-3">
-              <span className="w-2 h-2 rounded-full bg-industrial animate-pulse" />
-              <span className="text-[10px] uppercase tracking-[0.2em] text-industrial font-bold">
-                Connected · Admin Context
-              </span>
-            </div>
-            <div className="mt-3 pt-3 border-t border-border/40 grid grid-cols-2 gap-2 text-[10px] font-mono">
-              <div>
-                <p className="text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Last sync</p>
-                <p className="text-foreground/90 inline-flex items-center gap-1"><Clock size={10} />{formatRelative(lastSync.linkedin)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Next scheduled</p>
-                <p className="text-foreground/90">{formatNextSync(lastSync.linkedin)}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* TikTok */}
-          <div className="relative overflow-hidden border border-border/60 bg-gradient-to-br from-[#FF0050]/15 via-background to-[#000]/40 p-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
-              TikTok Share Kit V2
-            </p>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-md relative">
-                <svg viewBox="0 0 24 24" className="w-5 h-5" aria-label="TikTok">
-                  <path fill="#25F4EE" d="M19.6 6.8a5.7 5.7 0 0 1-3.3-1.06V15.4a5.8 5.8 0 1 1-5.8-5.8c.2 0 .4 0 .6.03v2.95a2.85 2.85 0 1 0 2.25 2.79V2h2.85a5.7 5.7 0 0 0 3.4 4.8V6.8Z" />
-                  <path fill="#FE2C55" d="M20.6 7.8a5.7 5.7 0 0 1-3.3-1.06V16.4a5.8 5.8 0 1 1-5.8-5.8c.2 0 .4 0 .6.03v2.95a2.85 2.85 0 1 0 2.25 2.79V3h2.85a5.7 5.7 0 0 0 3.4 4.8V7.8Z" />
-                  <path fill="#fff" d="M20.1 7.3a5.7 5.7 0 0 1-3.3-1.06V15.9a5.8 5.8 0 1 1-5.8-5.8c.2 0 .4 0 .6.03v2.95a2.85 2.85 0 1 0 2.25 2.79V2.5h2.85a5.7 5.7 0 0 0 3.4 4.8V7.3Z" />
-                </svg>
-              </span>
-            </div>
-            <p className="text-sm font-semibold text-foreground">Short-Form Factory Logs</p>
-            <div className="flex items-center gap-1.5 mt-3">
-              <span className="w-2 h-2 rounded-full bg-industrial animate-pulse" />
-              <span className="text-[10px] uppercase tracking-[0.2em] text-industrial font-bold">
-                Live Sync Enabled
-              </span>
-            </div>
-            <div className="mt-3 pt-3 border-t border-border/40 grid grid-cols-2 gap-2 text-[10px] font-mono">
-              <div>
-                <p className="text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Last sync</p>
-                <p className="text-foreground/90 inline-flex items-center gap-1"><Clock size={10} />{formatRelative(lastSync.tiktok)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Next scheduled</p>
-                <p className="text-foreground/90">{formatNextSync(lastSync.tiktok)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* Multi-channel sync */}
-      <section className="border border-border/60 bg-card/40 p-6">
-        <div className="flex items-end justify-between flex-wrap gap-4 mb-5">
+      <section className="border border-amber-500/40 bg-amber-500/10 p-6">
+        <div className="flex items-start gap-3">
+          <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-display text-2xl">One-Click Multi-Channel Sync</h3>
-            <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-              Publishes product card + SEO URL to selected channels via the Lovable Connector Gateway
-              (LinkedIn, TikTok) and Meta Graph API (Facebook, Instagram).
+            <h3 className="font-display text-xl">Manual Social Delivery Console</h3>
+            <p className="text-xs text-muted-foreground mt-2 max-w-3xl leading-relaxed">
+              No channel is assumed connected or operational. Select channels deliberately, run the action manually, and use the result breakdown below as the source of truth. TikTok currently verifies the connected profile only and does not publish a post.
             </p>
           </div>
         </div>
+      </section>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-4">
+      <section className="border border-border/60 bg-card/40 p-6">
+        <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
+          <div>
+            <p className="eyebrow mb-2">Manual Action</p>
+            <h3 className="font-display text-2xl">Select Product and Channels</h3>
+          </div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">No automatic schedule</p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="space-y-5">
             <div>
               <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
-                Product
+                Published Product
               </label>
               <select
                 value={selected}
@@ -294,63 +147,89 @@ export default function SocialDevOpsPanel() {
                 className="w-full bg-background border border-border/60 p-2.5 text-xs focus:border-industrial outline-none"
               >
                 {products.length === 0 && <option value="">No published products</option>}
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>{product.name}</option>
                 ))}
               </select>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            <div>
+              <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
                 Channels
               </label>
-              {[
-                { key: "facebook" as const, label: "Facebook Page", Icon: Facebook },
-                { key: "instagram" as const, label: "Instagram Business", Icon: Facebook },
-                { key: "linkedin" as const, label: "LinkedIn Organization", Icon: Linkedin },
-                { key: "tiktok" as const, label: "TikTok Creator", Icon: Music2 },
-              ].map(({ key, label, Icon }) => (
-                <label key={key} className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={channels[key]}
-                    onChange={(e) => setChannels((c) => ({ ...c, [key]: e.target.checked }))}
-                    className="accent-industrial"
-                  />
-                  <Icon size={12} className="text-muted-foreground" />
-                  {label}
-                </label>
-              ))}
+              <div className="space-y-2">
+                {CHANNELS.map(({ key, label, note, Icon }) => (
+                  <label key={key} className="flex items-center justify-between gap-4 border border-border/60 bg-background px-3 py-3 cursor-pointer hover:border-industrial/60">
+                    <span className="flex items-center gap-3 text-xs text-foreground/85">
+                      <input
+                        type="checkbox"
+                        checked={channels[key]}
+                        onChange={(e) => setChannels((current) => ({ ...current, [key]: e.target.checked }))}
+                        className="accent-industrial"
+                      />
+                      <Icon size={14} className="text-muted-foreground" />
+                      {label}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{note}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <button
-              disabled={busy}
+              disabled={busy || !selected}
               onClick={trigger}
               className="w-full bg-industrial text-industrial-foreground text-[10px] uppercase tracking-[0.3em] font-bold py-3 hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
-              <Send size={12} /> {busy ? "Dispatching…" : "Publish Now"}
+              <Send size={12} /> {busy ? "Running…" : "Run Selected Channels"}
             </button>
           </div>
 
-          <div className="bg-background border border-border/60 p-4 min-h-[260px]">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3 inline-flex items-center gap-1">
-              <CheckCircle2 size={11} className="text-industrial" /> Last Sync Result
-            </p>
-            {lastResult ? (
-              <pre className="text-[10px] font-mono text-foreground/80 whitespace-pre-wrap break-all">
-                {JSON.stringify(lastResult, null, 2)}
-              </pre>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                No sync triggered yet. Make sure LinkedIn / TikTok connectors are linked in Workspace Settings,
-                and Meta secrets (META_PAGE_ID, META_ACCESS_TOKEN, optionally IG_ACCOUNT_ID) are configured.
+          <div className="border border-border/60 bg-background p-5 min-h-[320px]">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground inline-flex items-center gap-2">
+                <CheckCircle2 size={12} className="text-industrial" /> Verified Result
               </p>
+              {lastResult?.product?.url && (
+                <a href={lastResult.product.url} target="_blank" rel="noreferrer" className="text-[10px] uppercase tracking-[0.2em] text-industrial hover:underline">
+                  Open Product ↗
+                </a>
+              )}
+            </div>
+
+            {!lastResult ? (
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                No social action has been run in this session. Results will appear only after the backend returns an exact per-channel outcome.
+              </p>
+            ) : (
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-3">
+                  <ResultCount label="Published" count={summary?.published.length ?? 0} />
+                  <ResultCount label="Verified only" count={summary?.verified.length ?? 0} />
+                  <ResultCount label="Skipped" count={summary?.skipped.length ?? 0} />
+                  <ResultCount label="Failed" count={summary?.failed.length ?? 0} />
+                </div>
+
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Exact channel breakdown</p>
+                  <pre className="text-[10px] font-mono text-foreground/80 whitespace-pre-wrap break-all border border-border/60 p-3 max-h-[360px] overflow-auto">
+                    {JSON.stringify(lastResult.results ?? lastResult, null, 2)}
+                  </pre>
+                </div>
+              </div>
             )}
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function ResultCount({ label, count }: { label: string; count: number }) {
+  return (
+    <div className="border border-border/60 p-3">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+      <p className="font-display text-2xl mt-1">{count}</p>
     </div>
   );
 }
