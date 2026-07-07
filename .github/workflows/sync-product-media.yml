@@ -47,6 +47,23 @@ jobs:
           path: public/product-media
           if-no-files-found: error
 
+      - name: Commit validated media to PR branch
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          git fetch origin "$HEAD_REF"
+          git checkout -B "$HEAD_REF" "origin/$HEAD_REF"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/product-media
+          if git diff --cached --quiet; then
+            echo "No media changes to commit."
+            exit 0
+          fi
+          git commit -m "Sync first-party product media"
+          git push origin "HEAD:$HEAD_REF"
+
       - name: Commit first-party media assets
         if: github.event_name == 'push'
         run: |
