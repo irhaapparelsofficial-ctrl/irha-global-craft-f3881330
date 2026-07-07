@@ -7,6 +7,12 @@ on:
       - "scripts/product-media-manifest.json"
       - "scripts/sync-product-media.mjs"
       - ".github/workflows/sync-product-media.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/product-media-manifest.json"
+      - "scripts/sync-product-media.mjs"
+      - ".github/workflows/sync-product-media.yml"
   workflow_dispatch:
 
 permissions:
@@ -34,7 +40,16 @@ jobs:
       - name: Fetch and optimize product media
         run: node scripts/sync-product-media.mjs
 
+      - name: Upload validation artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-media-validation
+          path: public/product-media
+          if-no-files-found: error
+
       - name: Commit first-party media assets
+        if: github.event_name == 'push'
         run: |
           if git diff --quiet -- public/product-media; then
             echo "No media changes to commit."
