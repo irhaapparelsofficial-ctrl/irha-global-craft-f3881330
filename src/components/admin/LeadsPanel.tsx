@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Download, FileText, RefreshCw, Search } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { BookOpen, ChevronDown, ChevronUp, Download, FileText, RefreshCw, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -49,6 +49,26 @@ type Lead = {
   lead_context?: LeadContext | null;
   created_at: string;
 };
+
+type CatalogueLead = {
+  id: string;
+  name: string;
+  email: string | null;
+  whatsapp: string | null;
+  company_name: string | null;
+  country: string | null;
+  category_interest: string | null;
+  message: string | null;
+  catalogue_url: string | null;
+  source: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  language: string | null;
+  created_at: string;
+};
+
+type InboxView = "inquiries" | "catalogue";
 
 const STATUSES = [
   "new",
@@ -131,8 +151,24 @@ function formatBytes(value?: number) {
   return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function downloadCsv(filename: string, headers: string[], rows: Array<Array<string | number>>) {
+  const lines = [headers.join(",")];
+  for (const row of rows) {
+    lines.push(row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","));
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function LeadsPanel() {
   const [rows, setRows] = useState<Lead[]>([]);
+  const [catalogueRows, setCatalogueRows] = useState<CatalogueLead[]>([]);
+  const [view, setView] = useState<InboxView>("inquiries");
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -140,13 +176,20 @@ export default function LeadsPanel() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("inquiries")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (error) toast({ title: "Could not load leads", description: error.message, variant: "destructive" });
-    setRows((data as Lead[]) || []);
+    const [inquiriesResult, catalogueResult] = await Promise.all([
+      supabase.from("inquiries").select("*").order("created_at", { ascending: false }).limit(500),
+      supabase.from("catalogue_leads").select("*").order("created_at", { ascending: false }).limit(500),
+    ]);
+
+    if (inquiriesResult.error) {
+      toast({ title: "Could not load inquiries", description: inquiriesResult.error.message, variant: "destructive" });
+    }
+    if (catalogueResult.error) {
+      toast({ title: "Could not load catalogue requests", description: catalogueResult.error.message, variant: "destructive" });
+    }
+
+    setRows((inquiriesResult.data as Lead[]) || []);
+    setCatalogueRows((catalogueResult.data as CatalogueLead[]) || []);
     setLoading(false);
   };
 
@@ -187,69 +230,94 @@ export default function LeadsPanel() {
       .includes(q.toLowerCase());
   }), [q, rows, statusFilter]);
 
+  const filteredCatalogue = useMemo(() => catalogueRows.filter((row) => {
+    if (!q.trim()) return true;
+    return [
+      row.name,
+      row.company_name,
+      row.country,
+      row.email,
+      row.whatsapp,
+      row.category_interest,
+      row.source,
+      row.utm_source,
+      row.message,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q.toLowerCase());
+  }), [catalogueRows, q]);
+
   const stats = useMemo(() => ({
-    total: rows.length,
-    new: rows.filter((row) => row.status === "new").length,
-    qualified: rows.filter((row) => row.status === "qualified").length,
+    total: rows.length + catalogueRows.length,
+    inquiries: rows.length,
+    catalogue: catalogueRows.length,
     action: rows.filter((row) => ["new", "qualified", "replied", "quote_requested", "sample_requested", "follow_up"].includes(row.status)).length,
-  }), [rows]);
+  }), [catalogueRows, rows]);
 
   const exportCsv = () => {
-    const headers = [
-      "Created",
-      "Inquiry Ref",
-      "Intent",
-      "Name",
-      "Company",
-      "Country",
-      "Email",
-      "Phone",
-      "Buyer Type",
-      "Product Context",
-      "Quantity",
-      "Source",
-      "Status",
-      "Files",
-      "Message",
-    ];
-    const lines = [headers.join(",")];
-    for (const row of filtered) {
-      const ctx = contextFor(row);
-      const values = [
-        new Date(row.created_at).toISOString(),
-        row.inquiry_ref || ctx.inquiry_ref || "",
-        intentLabel(row),
-        row.name,
-        row.company || "",
-        row.country || "",
-        row.email,
-        row.phone || "",
-        ctx.buyer_type || "",
-        productSummary(row),
-        row.quantity || "",
-        row.source || "",
-        row.status,
-        (ctx.uploaded_files ?? []).map((file) => file.name || file.path || "file").join(" | "),
-        (row.message || "").replace(/\n/g, " "),
-      ];
-      lines.push(values.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","));
+    const date = new Date().toISOString().slice(0, 10);
+
+    if (view === "catalogue") {
+      downloadCsv(
+        `irha-catalogue-requests-${date}.csv`,
+        ["Created", "Name", "Company", "Country", "Email", "WhatsApp", "Category Interest", "Source", "Catalogue URL", "UTM Source", "UTM Medium", "UTM Campaign", "Message"],
+        filteredCatalogue.map((row) => [
+          new Date(row.created_at).toISOString(),
+          row.name,
+          row.company_name || "",
+          row.country || "",
+          row.email || "",
+          row.whatsapp || "",
+          row.category_interest || "",
+          row.source || "",
+          row.catalogue_url || "",
+          row.utm_source || "",
+          row.utm_medium || "",
+          row.utm_campaign || "",
+          (row.message || "").replace(/\n/g, " "),
+        ]),
+      );
+      return;
     }
-    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `irha-leads-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+
+    downloadCsv(
+      `irha-inquiries-${date}.csv`,
+      ["Created", "Inquiry Ref", "Intent", "Name", "Company", "Country", "Email", "Phone", "Buyer Type", "Product Context", "Quantity", "Source", "Status", "Files", "Message"],
+      filtered.map((row) => {
+        const ctx = contextFor(row);
+        return [
+          new Date(row.created_at).toISOString(),
+          row.inquiry_ref || ctx.inquiry_ref || "",
+          intentLabel(row),
+          row.name,
+          row.company || "",
+          row.country || "",
+          row.email,
+          row.phone || "",
+          String(ctx.buyer_type || ""),
+          productSummary(row),
+          row.quantity || "",
+          row.source || "",
+          row.status,
+          (ctx.uploaded_files ?? []).map((file) => file.name || file.path || "file").join(" | "),
+          (row.message || "").replace(/\n/g, " "),
+        ];
+      }),
+    );
   };
+
+  const visibleCount = view === "inquiries" ? filtered.length : filteredCatalogue.length;
+  const totalCount = view === "inquiries" ? rows.length : catalogueRows.length;
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          ["Total inquiries", stats.total],
-          ["New", stats.new],
-          ["Qualified", stats.qualified],
+          ["Total buyer records", stats.total],
+          ["RFQ & inquiries", stats.inquiries],
+          ["Catalogue requests", stats.catalogue],
           ["Needs action", stats.action],
         ].map(([label, value]) => (
           <div key={String(label)} className="border border-border/60 bg-card/30 px-4 py-3">
@@ -259,159 +327,221 @@ export default function LeadsPanel() {
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-2 border-b border-border/60 pb-3">
+        <button
+          type="button"
+          onClick={() => { setView("inquiries"); setStatusFilter(""); setExpandedId(null); }}
+          className={`inline-flex items-center gap-2 px-3 py-2 text-[10px] uppercase tracking-[0.2em] border ${view === "inquiries" ? "border-gold text-gold bg-gold/5" : "border-border/60 text-muted-foreground"}`}
+        >
+          <FileText size={12} /> RFQ & Inquiries ({rows.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => { setView("catalogue"); setStatusFilter(""); setExpandedId(null); }}
+          className={`inline-flex items-center gap-2 px-3 py-2 text-[10px] uppercase tracking-[0.2em] border ${view === "catalogue" ? "border-gold text-gold bg-gold/5" : "border-border/60 text-muted-foreground"}`}
+        >
+          <BookOpen size={12} /> Catalogue Requests ({catalogueRows.length})
+        </button>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-3 border border-border/60 bg-card/30 px-4 py-2.5 flex-1 min-w-[220px] max-w-xl">
           <Search size={14} className="text-muted-foreground" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search buyer, company, inquiry ref, product…"
+            placeholder={view === "inquiries" ? "Search buyer, company, inquiry ref, product…" : "Search buyer, company, country, interest…"}
             className="bg-transparent text-sm w-full outline-none"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-card/30 border border-border/60 px-3 py-2.5 text-xs uppercase tracking-[0.15em]"
-        >
-          <option value="">All statuses</option>
-          {STATUSES.map((status) => <option key={status} value={status}>{statusLabel[status]}</option>)}
-        </select>
+        {view === "inquiries" && (
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-card/30 border border-border/60 px-3 py-2.5 text-xs uppercase tracking-[0.15em]"
+          >
+            <option value="">All statuses</option>
+            {STATUSES.map((status) => <option key={status} value={status}>{statusLabel[status]}</option>)}
+          </select>
+        )}
         <button onClick={() => void load()} className="inline-flex items-center gap-2 border border-border/60 px-3 py-2.5 text-[10px] uppercase tracking-[0.2em] hover:border-gold hover:text-gold">
           <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh
         </button>
         <button onClick={exportCsv} className="inline-flex items-center gap-2 border border-border/60 px-3 py-2.5 text-[10px] uppercase tracking-[0.2em] hover:border-gold hover:text-gold">
-          <Download size={12} /> Export CSV
+          <Download size={12} /> Export Current View
         </button>
         <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground ml-auto">
-          {filtered.length} of {rows.length}
+          {visibleCount} of {totalCount}
         </span>
       </div>
 
-      <div className="border border-border/60 overflow-x-auto">
-        <table className="w-full text-sm min-w-[1120px]">
-          <thead className="bg-card/60 text-[10px] uppercase tracking-[0.2em] text-gold/80">
-            <tr>
-              {['Date / Ref', 'Buyer', 'Contact', 'Intent', 'Product context', 'Source', 'Status', ''].map((heading) => (
-                <th key={heading} className="text-left px-4 py-3 font-normal">{heading}</th>
+      {view === "catalogue" ? (
+        <div className="border border-border/60 overflow-x-auto">
+          <table className="w-full text-sm min-w-[980px]">
+            <thead className="bg-card/60 text-[10px] uppercase tracking-[0.2em] text-gold/80">
+              <tr>
+                {['Date', 'Buyer', 'Contact', 'Interest', 'Source', 'Message'].map((heading) => (
+                  <th key={heading} className="text-left px-4 py-3 font-normal">{heading}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground text-xs">Loading…</td></tr>}
+              {!loading && filteredCatalogue.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground text-xs">No catalogue requests match this view.</td></tr>
+              )}
+              {filteredCatalogue.map((row) => (
+                <tr key={row.id} className="border-t border-border/40 hover:bg-card/40 align-top">
+                  <td className="px-4 py-3 text-xs text-foreground/60 whitespace-nowrap">{new Date(row.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{row.name}</div>
+                    <div className="text-xs text-foreground/60 mt-1">{row.company_name || "No company provided"}</div>
+                    <div className="text-[10px] text-foreground/45 mt-1">{row.country || "Country not provided"}</div>
+                  </td>
+                  <td className="px-4 py-3 space-y-1">
+                    {row.email && <a href={`mailto:${row.email}`} className="block text-gold hover:underline text-xs">{row.email}</a>}
+                    {row.whatsapp && (
+                      <a href={`https://wa.me/${row.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer noopener" className="block text-emerald-400 hover:underline text-xs">{row.whatsapp}</a>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs">
+                    <div>{row.category_interest || "General catalogue"}</div>
+                    {row.catalogue_url && <div className="mt-1 text-[10px] text-foreground/45 break-all">{row.catalogue_url}</div>}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-foreground/60">
+                    <div>{row.source || "—"}</div>
+                    {row.utm_source && <div className="mt-1 text-[10px]">utm: {row.utm_source}</div>}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-foreground/70 max-w-[320px] whitespace-pre-wrap">{row.message || "—"}</td>
+                </tr>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground text-xs">Loading…</td></tr>
-            )}
-            {!loading && filtered.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground text-xs">
-                No leads match this view. New RFQ, sample, catalogue, reference and meeting inquiries appear here from the live inquiry flow.
-              </td></tr>
-            )}
-            {filtered.map((row) => {
-              const ctx = contextFor(row);
-              const files = ctx.uploaded_files ?? [];
-              const inquiryRef = row.inquiry_ref || ctx.inquiry_ref || "—";
-              const expanded = expandedId === row.id;
-              return (
-                <>
-                  <tr key={row.id} className="border-t border-border/40 hover:bg-card/40 align-top">
-                    <td className="px-4 py-3 text-foreground/60 whitespace-nowrap text-xs">
-                      <div>{new Date(row.created_at).toLocaleDateString()}</div>
-                      <code className="block mt-1 text-[10px] text-gold/80">{inquiryRef}</code>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{row.name}</div>
-                      <div className="text-xs text-foreground/60 mt-1">{row.company || "No company provided"}</div>
-                      {ctx.buyer_type && <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/45 mt-1">{String(ctx.buyer_type)}</div>}
-                    </td>
-                    <td className="px-4 py-3 space-y-1">
-                      <a href={`mailto:${row.email}`} className="block text-gold hover:underline text-xs">{row.email}</a>
-                      {row.phone && (
-                        <a href={`https://wa.me/${row.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer noopener" className="block text-emerald-400 hover:underline text-xs">
-                          {row.phone}
-                        </a>
-                      )}
-                      <div className="text-[10px] text-foreground/45">{row.country || ctx.destination_country || "Country not provided"}</div>
-                    </td>
-                    <td className="px-4 py-3 text-xs capitalize">
-                      {intentLabel(row)}
-                      {ctx.compare_origin && <span className="block mt-1 text-[9px] uppercase tracking-[0.16em] text-purple-300">Compare origin</span>}
-                      {ctx.shortlist_origin && <span className="block mt-1 text-[9px] uppercase tracking-[0.16em] text-cyan-300">Shortlist origin</span>}
-                    </td>
-                    <td className="px-4 py-3 text-foreground/70 text-xs max-w-[260px]">
-                      <div className="line-clamp-2">{productSummary(row)}</div>
-                      {row.quantity && <div className="mt-1 text-[10px] text-foreground/45">Qty: {row.quantity}</div>}
-                      {files.length > 0 && <div className="mt-1 text-[10px] text-gold/70">{files.length} file{files.length > 1 ? "s" : ""} attached</div>}
-                    </td>
-                    <td className="px-4 py-3 text-foreground/60 text-[11px]">
-                      <div>{row.source || "—"}</div>
-                      {ctx.utm_source && <div className="mt-1">utm: {String(ctx.utm_source)}</div>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={row.status}
-                        onChange={(e) => void updateStatus(row.id, e.target.value)}
-                        className={`text-[10px] uppercase tracking-[0.14em] px-2 py-1.5 border bg-transparent ${statusColor[row.status] || statusColor.new}`}
-                      >
-                        {!STATUSES.includes(row.status as typeof STATUSES[number]) && <option value={row.status}>{row.status}</option>}
-                        {STATUSES.map((status) => <option key={status} value={status} className="bg-background text-foreground">{statusLabel[status]}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedId(expanded ? null : row.id)}
-                        aria-label={expanded ? "Collapse lead details" : "Expand lead details"}
-                        className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-foreground/60 hover:text-gold"
-                      >
-                        {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                        Details
-                      </button>
-                    </td>
-                  </tr>
-                  {expanded && (
-                    <tr key={`${row.id}-details`} className="border-t border-border/30 bg-card/20">
-                      <td colSpan={8} className="px-5 py-5">
-                        <div className="grid lg:grid-cols-3 gap-5 text-xs">
-                          <div className="lg:col-span-2">
-                            <p className="text-[9px] uppercase tracking-[0.22em] text-gold/70 mb-2">Requirement</p>
-                            <p className="whitespace-pre-wrap leading-relaxed text-foreground/80">{row.message || "No additional message provided."}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] uppercase tracking-[0.22em] text-gold/70 mb-2">Attribution</p>
-                            <div className="space-y-1 text-foreground/60 break-all">
-                              <div>Source page: {String(ctx.source_page || "—")}</div>
-                              <div>Referrer: {String(ctx.referrer || "—")}</div>
-                              <div>UTM source: {String(ctx.utm_source || "—")}</div>
-                              <div>UTM medium: {String(ctx.utm_medium || "—")}</div>
-                              <div>UTM campaign: {String(ctx.utm_campaign || "—")}</div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {files.length > 0 && (
-                          <div className="mt-5 pt-4 border-t border-border/40">
-                            <p className="text-[9px] uppercase tracking-[0.22em] text-gold/70 mb-2">Uploaded files</p>
-                            <div className="flex flex-wrap gap-2">
-                              {files.map((file, index) => (
-                                <span key={`${file.path || file.name || "file"}-${index}`} className="inline-flex items-center gap-2 border border-border/60 bg-background/40 px-3 py-2 text-[11px] text-foreground/70">
-                                  <FileText size={12} />
-                                  {file.name || `File ${index + 1}`}
-                                  {file.size ? <span className="text-foreground/40">{formatBytes(file.size)}</span> : null}
-                                </span>
-                              ))}
-                            </div>
-                            <p className="text-[10px] text-foreground/40 mt-2">Files stay private. Signed admin download access will be added with the CRM file workspace.</p>
-                          </div>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="border border-border/60 overflow-x-auto">
+          <table className="w-full text-sm min-w-[1120px]">
+            <thead className="bg-card/60 text-[10px] uppercase tracking-[0.2em] text-gold/80">
+              <tr>
+                {['Date / Ref', 'Buyer', 'Contact', 'Intent', 'Product context', 'Source', 'Status', ''].map((heading) => (
+                  <th key={heading} className="text-left px-4 py-3 font-normal">{heading}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading && (
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground text-xs">Loading…</td></tr>
+              )}
+              {!loading && filtered.length === 0 && (
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground text-xs">
+                  No leads match this view. New RFQ, sample, reference and meeting inquiries appear here from the live inquiry flow.
+                </td></tr>
+              )}
+              {filtered.map((row) => {
+                const ctx = contextFor(row);
+                const files = ctx.uploaded_files ?? [];
+                const inquiryRef = row.inquiry_ref || ctx.inquiry_ref || "—";
+                const expanded = expandedId === row.id;
+                return (
+                  <Fragment key={row.id}>
+                    <tr className="border-t border-border/40 hover:bg-card/40 align-top">
+                      <td className="px-4 py-3 text-foreground/60 whitespace-nowrap text-xs">
+                        <div>{new Date(row.created_at).toLocaleDateString()}</div>
+                        <code className="block mt-1 text-[10px] text-gold/80">{inquiryRef}</code>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{row.name}</div>
+                        <div className="text-xs text-foreground/60 mt-1">{row.company || "No company provided"}</div>
+                        {ctx.buyer_type && <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/45 mt-1">{String(ctx.buyer_type)}</div>}
+                      </td>
+                      <td className="px-4 py-3 space-y-1">
+                        <a href={`mailto:${row.email}`} className="block text-gold hover:underline text-xs">{row.email}</a>
+                        {row.phone && (
+                          <a href={`https://wa.me/${row.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer noopener" className="block text-emerald-400 hover:underline text-xs">{row.phone}</a>
                         )}
+                        <div className="text-[10px] text-foreground/45">{row.country || ctx.destination_country || "Country not provided"}</div>
+                      </td>
+                      <td className="px-4 py-3 text-xs capitalize">
+                        {intentLabel(row)}
+                        {ctx.compare_origin && <span className="block mt-1 text-[9px] uppercase tracking-[0.16em] text-purple-300">Compare origin</span>}
+                        {ctx.shortlist_origin && <span className="block mt-1 text-[9px] uppercase tracking-[0.16em] text-cyan-300">Shortlist origin</span>}
+                      </td>
+                      <td className="px-4 py-3 text-foreground/70 text-xs max-w-[260px]">
+                        <div className="line-clamp-2">{productSummary(row)}</div>
+                        {row.quantity && <div className="mt-1 text-[10px] text-foreground/45">Qty: {row.quantity}</div>}
+                        {files.length > 0 && <div className="mt-1 text-[10px] text-gold/70">{files.length} file{files.length > 1 ? "s" : ""} attached</div>}
+                      </td>
+                      <td className="px-4 py-3 text-foreground/60 text-[11px]">
+                        <div>{row.source || "—"}</div>
+                        {ctx.utm_source && <div className="mt-1">utm: {String(ctx.utm_source)}</div>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={row.status}
+                          onChange={(e) => void updateStatus(row.id, e.target.value)}
+                          className={`text-[10px] uppercase tracking-[0.14em] px-2 py-1.5 border bg-transparent ${statusColor[row.status] || statusColor.new}`}
+                        >
+                          {!STATUSES.includes(row.status as typeof STATUSES[number]) && <option value={row.status}>{row.status}</option>}
+                          {STATUSES.map((status) => <option key={status} value={status} className="bg-background text-foreground">{statusLabel[status]}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedId(expanded ? null : row.id)}
+                          aria-label={expanded ? "Collapse lead details" : "Expand lead details"}
+                          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-foreground/60 hover:text-gold"
+                        >
+                          {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          Details
+                        </button>
                       </td>
                     </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    {expanded && (
+                      <tr className="border-t border-border/30 bg-card/20">
+                        <td colSpan={8} className="px-5 py-5">
+                          <div className="grid lg:grid-cols-3 gap-5 text-xs">
+                            <div className="lg:col-span-2">
+                              <p className="text-[9px] uppercase tracking-[0.22em] text-gold/70 mb-2">Requirement</p>
+                              <p className="whitespace-pre-wrap leading-relaxed text-foreground/80">{row.message || "No additional message provided."}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] uppercase tracking-[0.22em] text-gold/70 mb-2">Attribution</p>
+                              <div className="space-y-1 text-foreground/60 break-all">
+                                <div>Source page: {String(ctx.source_page || "—")}</div>
+                                <div>Referrer: {String(ctx.referrer || "—")}</div>
+                                <div>UTM source: {String(ctx.utm_source || "—")}</div>
+                                <div>UTM medium: {String(ctx.utm_medium || "—")}</div>
+                                <div>UTM campaign: {String(ctx.utm_campaign || "—")}</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {files.length > 0 && (
+                            <div className="mt-5 pt-4 border-t border-border/40">
+                              <p className="text-[9px] uppercase tracking-[0.22em] text-gold/70 mb-2">Uploaded files</p>
+                              <div className="flex flex-wrap gap-2">
+                                {files.map((file, index) => (
+                                  <span key={`${file.path || file.name || "file"}-${index}`} className="inline-flex items-center gap-2 border border-border/60 bg-background/40 px-3 py-2 text-[11px] text-foreground/70">
+                                    <FileText size={12} />
+                                    {file.name || `File ${index + 1}`}
+                                    {file.size ? <span className="text-foreground/40">{formatBytes(file.size)}</span> : null}
+                                  </span>
+                                ))}
+                              </div>
+                              <p className="text-[10px] text-foreground/40 mt-2">Files stay private. Signed admin download access will be added with the CRM file workspace.</p>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
