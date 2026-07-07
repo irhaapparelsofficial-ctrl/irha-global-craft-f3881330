@@ -1,6 +1,7 @@
-// social-multi-sync — Publishes a product to multiple channels.
-// LinkedIn & TikTok via Lovable Connector Gateway (no manual token mgmt).
-// Facebook & Instagram via Meta Graph API (requires META_ACCESS_TOKEN + META_PAGE_ID / IG_ACCOUNT_ID secrets).
+// social-multi-sync — Attempts product delivery to selected social channels.
+// LinkedIn via Lovable Connector Gateway.
+// TikTok currently verifies the connected profile only; it does not publish without a video asset flow.
+// Facebook & Instagram via Meta Graph API.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -14,6 +15,8 @@ interface Body {
   productId: string;
   channels: Array<"facebook" | "instagram" | "linkedin" | "tiktok">;
 }
+
+type ChannelResult = Record<string, unknown>;
 
 const PUBLIC_BASE = "https://www.irhaapparels.com";
 const GATEWAY = "https://connector-gateway.lovable.dev";
@@ -75,7 +78,7 @@ Deno.serve(async (req: Request) => {
     : `${PUBLIC_BASE}${product.image_url ?? ""}`;
   const caption = `${product.name}\n\n${product.description ?? ""}\n\nFactory direct from Sialkot · ${productUrl}\n#ApparelManufacturer #B2BExports #IrhaApparels`;
 
-  const results: Record<string, unknown> = {};
+  const results: Record<string, ChannelResult> = {};
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
   // ── LinkedIn (connector gateway) ──────────────────────────────
@@ -85,8 +88,7 @@ Deno.serve(async (req: Request) => {
       results.linkedin = { skipped: "LINKEDIN_API_KEY missing — link LinkedIn connector in Workspace Settings" };
     } else {
       try {
-        // Resolve org URN
-        const orgUrn = Deno.env.get("LINKEDIN_ORG_URN"); // optional override e.g. urn:li:organization:12345
+        const orgUrn = Deno.env.get("LINKEDIN_ORG_URN");
         let author = orgUrn;
         if (!author) {
           const me = await fetch(`${GATEWAY}/linkedin/v2/userinfo`, {
@@ -135,7 +137,7 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // ── TikTok (connector gateway) ────────────────────────────────
+  // ── TikTok (profile verification only) ────────────────────────
   if (body.channels.includes("tiktok")) {
     const tiktokKey = Deno.env.get("TIKTOK_API_KEY");
     if (!tiktokKey || !lovableKey) {
@@ -146,7 +148,9 @@ Deno.serve(async (req: Request) => {
           headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": tiktokKey },
         });
         results.tiktok = {
-          note: "TikTok requires a video asset URL for publishing; profile verified.",
+          verified: r.ok,
+          status: r.status,
+          note: "TikTok publishing is not implemented here; this action only verifies the connected profile.",
           profile: await safeJson(r),
         };
       } catch (e) {
@@ -200,8 +204,48 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  return json({ success: true, product: { url: productUrl, name: product.name }, results }, 200);
+  const summary = summarizeResults(results);
+  const success = summary.published.length > 0 && summary.failed.length === 0 && summary.skipped.length === 0;
+  const partial = summary.published.length > 0 && !success;
+
+  return json({
+    success,
+    partial,
+    product: { url: productUrl, name: product.name },
+    summary,
+    results,
+  }, 200);
 });
+
+function summarizeResults(results: Record<string, ChannelResult>) {
+  const published: string[] = [];
+  const verified: string[] = [];
+  const skipped: string[] = [];
+  const failed: string[] = [];
+
+  for (const [channel, result] of Object.entries(results)) {
+    if (typeof result.error === "string") {
+      failed.push(channel);
+      continue;
+    }
+    if (typeof result.skipped === "string") {
+      skipped.push(channel);
+      continue;
+    }
+    if (channel === "tiktok") {
+      if (result.verified === true) verified.push(channel);
+      else failed.push(channel);
+      continue;
+    }
+    if (typeof result.status === "number" && result.status >= 200 && result.status < 300) {
+      published.push(channel);
+    } else {
+      failed.push(channel);
+    }
+  }
+
+  return { published, verified, skipped, failed };
+}
 
 function json(payload: unknown, status: number) {
   return new Response(JSON.stringify(payload), {
