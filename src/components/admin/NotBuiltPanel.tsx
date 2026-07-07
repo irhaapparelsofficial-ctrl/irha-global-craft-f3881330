@@ -4,9 +4,9 @@ export default function NotBuiltPanel({ title, note }: { title: string; note?: s
   return (
     <div className="border border-dashed border-border/60 bg-card/20 p-12 text-center">
       <Wrench className="mx-auto mb-3 text-muted-foreground/70" size={28} />
-      <h3 className="font-display text-xl">{title} · Not built yet</h3>
+      <h3 className="font-display text-xl">{title} · Unavailable</h3>
       <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-        {note ?? "This module's full CRUD is coming in the next phase. The underlying database table already exists — no data will be lost."}
+        {note ?? "This admin module is not connected to a production workflow yet. No action can be completed from this screen."}
       </p>
     </div>
   );
