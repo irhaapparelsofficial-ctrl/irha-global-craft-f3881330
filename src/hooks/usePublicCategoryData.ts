@@ -9,6 +9,7 @@ import { usePublicCatalogTree, type PublicTopCategory } from "@/hooks/usePublicC
 import type { DbProduct } from "@/hooks/useCatalog";
 import { CATEGORIES, type Category as LegacyCategory, type Product as LegacyProduct } from "@/lib/categories";
 import { CATALOG, type CategoryGroup as LegacyGroup, type SubCategory as LegacySub } from "@/lib/catalog";
+import { PRODUCT_REAL_MEDIA } from "@/lib/productRealMedia";
 
 export type NormalizedProduct = LegacyProduct & {
   id?: string;
@@ -38,7 +39,16 @@ export type NormalizedCategory = {
 };
 
 function adaptProduct(p: DbProduct): NormalizedProduct {
-  const gallery = p.gallery?.length ? p.gallery : p.image_url ? [p.image_url] : [];
+  const baseGallery = p.gallery?.length ? p.gallery : p.image_url ? [p.image_url] : [];
+  const realMedia = PRODUCT_REAL_MEDIA[p.slug];
+  const gallery = realMedia
+    ? [
+        baseGallery[0] ?? p.image_url ?? "",
+        ...realMedia.gallery,
+        ...baseGallery.slice(1),
+      ].filter((image, index, images) => Boolean(image) && images.indexOf(image) === index)
+    : baseGallery;
+
   return {
     id: p.id,
     slug: p.slug,
