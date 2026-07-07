@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Layers, Users, Inbox, MessageSquare, BarChart3, FileText, HelpCircle, Sparkles, Plus, ExternalLink } from "lucide-react";
+import { Package, Layers, Users, Inbox, MessageSquare, BarChart3, Sparkles, Plus, ExternalLink } from "lucide-react";
 import type { AdminView } from "./AdminShell";
 
 type Counts = {
-  products: number; categories: number; inquiries: number; leads: number;
-  chat: number; views: number; blog: number; faqs: number;
+  products: number;
+  categories: number;
+  inquiries: number;
+  catalogue: number;
+  chat: number;
+  views: number;
 };
 
 type Inquiry = { id: string; name: string; email: string; company: string | null; created_at: string; status: string };
@@ -21,17 +25,23 @@ export default function OverviewPanel({ go }: { go: (v: AdminView) => void }) {
     void (async () => {
       const head = (t: string) =>
         supabase.from(t as never).select("*", { count: "exact", head: true });
-      const [p, c1, i, l, ch, v, b, f, recentQ, viewsQ] = await Promise.all([
-        head("products"), head("categories"), head("inquiries"),
-        head("catalogue_leads"), head("chat_messages"), head("page_views"),
-        head("blog_posts"), head("faqs"),
+      const [p, c1, i, catalogue, ch, v, recentQ, viewsQ] = await Promise.all([
+        head("products"),
+        head("categories"),
+        head("inquiries"),
+        head("catalogue_leads"),
+        head("chat_messages"),
+        head("page_views"),
         supabase.from("inquiries").select("id,name,email,company,created_at,status").order("created_at", { ascending: false }).limit(5),
         supabase.from("page_views").select("path").order("created_at", { ascending: false }).limit(500),
       ]);
       setC({
-        products: p.count ?? 0, categories: c1.count ?? 0, inquiries: i.count ?? 0,
-        leads: l.count ?? 0, chat: ch.count ?? 0, views: v.count ?? 0,
-        blog: b.count ?? 0, faqs: f.count ?? 0,
+        products: p.count ?? 0,
+        categories: c1.count ?? 0,
+        inquiries: i.count ?? 0,
+        catalogue: catalogue.count ?? 0,
+        chat: ch.count ?? 0,
+        views: v.count ?? 0,
       });
       setRecent((recentQ.data as Inquiry[]) ?? []);
       const tally: Record<string, number> = {};
@@ -44,12 +54,10 @@ export default function OverviewPanel({ go }: { go: (v: AdminView) => void }) {
   const stats = [
     { label: "Products", value: c?.products, icon: Package, view: "products" as AdminView },
     { label: "Categories", value: c?.categories, icon: Layers, view: "categories" as AdminView },
-    { label: "Inquiries", value: c?.inquiries, icon: Inbox, view: "inquiries" as AdminView },
-    { label: "Catalogue leads", value: c?.leads, icon: Users, view: "leads" as AdminView },
+    { label: "RFQ & inquiries", value: c?.inquiries, icon: Inbox, view: "leads" as AdminView },
+    { label: "Catalogue requests", value: c?.catalogue, icon: Users, view: "leads" as AdminView },
     { label: "Chat messages", value: c?.chat, icon: MessageSquare, view: "chat" as AdminView },
     { label: "Page views", value: c?.views, icon: BarChart3, view: "traffic" as AdminView },
-    { label: "Blog posts", value: c?.blog, icon: FileText, view: "blog" as AdminView },
-    { label: "FAQs", value: c?.faqs, icon: HelpCircle, view: "faqs" as AdminView },
   ];
 
   return (
@@ -57,11 +65,11 @@ export default function OverviewPanel({ go }: { go: (v: AdminView) => void }) {
       <div className="flex flex-wrap gap-2">
         <QuickAction label="Add product" icon={<Plus size={12} />} onClick={() => go("products")} />
         <QuickAction label="Add category" icon={<Plus size={12} />} onClick={() => go("categories")} />
-        <QuickAction label="View leads" icon={<Users size={12} />} onClick={() => go("leads")} />
+        <QuickAction label="Buyer Inbox" icon={<Users size={12} />} onClick={() => go("leads")} />
         <QuickAction label="AI Assistant" icon={<Sparkles size={12} />} onClick={() => go("ai")} />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {stats.map((s) => (
           <button
             key={s.label}
