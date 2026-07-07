@@ -16,10 +16,8 @@ const mainLinks = [
 
 const moreLinks = [
   { to: "/shortlist", label: "Shortlist" },
-  { to: "/sustainability", label: "Sustainability" },
-  { to: "/blog", label: "Blog" },
-  { to: "/journal", label: "Journal" },
-  { to: "/faq", label: "FAQ" },
+  { to: "/catalogue", label: "Catalogue" },
+  { to: "/compliance", label: "Compliance" },
 ];
 
 const tailLinks = [
@@ -85,14 +83,14 @@ export default function Navbar() {
             </NavLink>
           ))}
 
-          {/* Company dropdown */}
+          {/* Secondary navigation */}
           <div
             className="relative"
             onMouseEnter={() => setMoreOpen(true)}
             onMouseLeave={() => setMoreOpen(false)}
           >
             <button className="flex items-center gap-1 text-[11px] uppercase tracking-[0.25em] text-foreground/80 hover:text-foreground transition-colors">
-              Company <ChevronDown size={12} />
+              More <ChevronDown size={12} />
             </button>
             {moreOpen && (
               <div className="absolute top-full left-1/2 -translate-x-1/2 pt-5 animate-fade-in">
