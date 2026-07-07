@@ -1,0 +1,31 @@
+{
+  "products": {
+    "traditional-lederhosen": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1tLF2AgqD2MaZAOE6aZ0K72Fdjjri9SBv",
+        "fallback": "https://drive.google.com/thumbnail?id=1tLF2AgqD2MaZAOE6aZ0K72Fdjjri9SBv&sz=w1600",
+        "file": "01-front-embroidery.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1ylvMIDk8Mo6x5DRnvi0lW-3xgYjYJY0C",
+        "fallback": "https://drive.google.com/thumbnail?id=1ylvMIDk8Mo6x5DRnvi0lW-3xgYjYJY0C&sz=w1600",
+        "file": "02-back-construction.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=18weJJOySX-IFH5gkL_gxCj6oDcRPqzTg",
+        "fallback": "https://drive.google.com/thumbnail?id=18weJJOySX-IFH5gkL_gxCj6oDcRPqzTg&sz=w1600",
+        "file": "03-side-embroidery-lacing.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1340bnnN2S4KpLbL7uPdxOfb5oS4Fb72o",
+        "fallback": "https://drive.google.com/thumbnail?id=1340bnnN2S4KpLbL7uPdxOfb5oS4Fb72o&sz=w1600",
+        "file": "04-pocket-leather-detail.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1Bq5c6yubWJht3DaHJYwpqs9SEdtSftHe",
+        "fallback": "https://drive.google.com/thumbnail?id=1Bq5c6yubWJht3DaHJYwpqs9SEdtSftHe&sz=w1600",
+        "file": "05-suspender-buckle-detail.webp"
+      }
+    ]
+  }
+}
