@@ -34,6 +34,7 @@ const Compare = lazy(() => import("./pages/Compare"));
 const queryClient = new QueryClient();
 
 const LEGACY_REDIRECTS = [
+  ["/catalogs/master-catalogue-2026.pdf", "/catalogue"],
   ["/sportswear-manufacturer-pakistan", "/products/sportswear"],
   ["/sportswear-manufacturer-sialkot", "/products/sportswear"],
   ["/private-label-sportswear-manufacturer", "/products/sportswear"],
