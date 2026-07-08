@@ -6,11 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
 import type { Product as LegacyProduct } from "@/lib/categories";
-import {
-  createWhiteEmbroideredLederhosen,
-  isMensTrachtenSubcategory,
-  WHITE_EMBROIDERED_LEDERHOSEN_SLUG,
-} from "@/lib/supplementalCatalog";
+import { createSupplementalProductsForSubcategory } from "@/lib/supplementalCatalog";
 
 export type PublicSubCategory = DbCategory & { products: DbProduct[] };
 export type PublicTopCategory = DbCategory & {
@@ -71,11 +67,14 @@ function sanitizePublicProduct(p: DbProduct): DbProduct {
 
 function productsForSubcategory(top: DbCategory, sub: DbCategory, dbProducts: DbProduct[]): DbProduct[] {
   const products = [...dbProducts];
-  const isTarget = isMensTrachtenSubcategory(top.slug, sub.slug, sub.name);
-  const alreadyExists = products.some((p) => p.slug === WHITE_EMBROIDERED_LEDERHOSEN_SLUG);
+  const existingSlugs = new Set(products.map((product) => product.slug));
+  const supplemental = createSupplementalProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id);
 
-  if (isTarget && !alreadyExists) {
-    products.push(sanitizePublicProduct(createWhiteEmbroideredLederhosen(sub.id)));
+  for (const product of supplemental) {
+    if (!existingSlugs.has(product.slug)) {
+      products.push(sanitizePublicProduct(product));
+      existingSlugs.add(product.slug);
+    }
   }
 
   return products;

@@ -43,6 +43,28 @@
         "fallback": "https://drive.google.com/thumbnail?id=187WD7f76NpoguhrAujqbgFv1V9bODlG2&sz=w1600",
         "file": "06-b2b-bulk-proof.webp"
       }
+    ],
+    "brown-short-lederhosen": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1qkpGFFXqMIRUhFCpbFV-mDx7VgxoCjng",
+        "fallback": "https://drive.google.com/thumbnail?id=1qkpGFFXqMIRUhFCpbFV-mDx7VgxoCjng&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1tV5BSih96LKDKvkWxR385LpG8uC9neXv",
+        "fallback": "https://drive.google.com/thumbnail?id=1tV5BSih96LKDKvkWxR385LpG8uC9neXv&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1df1Tl8smDjZdmrFx0WIHUW2mtm3AtzuF",
+        "fallback": "https://drive.google.com/thumbnail?id=1df1Tl8smDjZdmrFx0WIHUW2mtm3AtzuF&sz=w1600",
+        "file": "04-detail-side-construction.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1dL2y4PctUL3VBGAAanstRZj4QS3XI1Tp",
+        "fallback": "https://drive.google.com/thumbnail?id=1dL2y4PctUL3VBGAAanstRZj4QS3XI1Tp&sz=w1600",
+        "file": "05-detail-embroidery-buttons.webp"
+      }
     ]
   }
 }
