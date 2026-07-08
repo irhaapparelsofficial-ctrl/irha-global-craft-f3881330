@@ -59,9 +59,10 @@ export default function ProductSpecSheet() {
     <>
       <SEO
         title={`${product.name} — Specification Sheet | Irha Apparels`}
-        description={(product.short_description ?? product.description ?? "").slice(0, 158)}
-        path={`/products/${topCategory.slug}/${product.slug}/spec-sheet`}
-        type="article"
+        description={(product.short_description ?? product.description ?? `${product.name} manufacturing specification sheet for B2B requirement review.`).slice(0, 158)}
+        path={`/products/${topCategory.slug}/${product.slug}`}
+        type="product"
+        noindex
       />
       <style>{`
         @media print {
