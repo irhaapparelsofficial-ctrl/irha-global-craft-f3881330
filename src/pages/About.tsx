@@ -2,6 +2,12 @@ import SEO from "@/components/SEO";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import { Link } from "react-router-dom";
 import { Factory, MessageCircle, PackageCheck } from "lucide-react";
+import {
+  ORGANIZATION_ID,
+  SITE_URL,
+  WEBSITE_ID,
+  breadcrumbSchema,
+} from "@/lib/seoSchema";
 
 const principles = [
   {
@@ -17,12 +23,34 @@ const principles = [
 ];
 
 export default function About() {
+  const description = "Irha Apparels is a Sialkot-based B2B custom apparel manufacturer for brands, wholesalers and importers. Our website is new; our manufacturing work is built on hands-on production experience.";
+  const pageUrl = `${SITE_URL}/about`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      "@id": `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: "About Irha Apparels",
+      description,
+      isPartOf: { "@id": WEBSITE_ID },
+      about: { "@id": ORGANIZATION_ID },
+      mainEntity: { "@id": ORGANIZATION_ID },
+      inLanguage: "en",
+    },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "About", path: "/about" },
+    ]),
+  ];
+
   return (
     <>
       <SEO
         title="About Irha Apparels — B2B Apparel Manufacturer in Sialkot"
-        description="Irha Apparels is a Sialkot-based B2B custom apparel manufacturer for brands, wholesalers and importers. Our website is new; our manufacturing work is built on hands-on production experience."
+        description={description}
         path="/about"
+        jsonLd={jsonLd}
       />
 
       <section className="pt-40 pb-24 md:pb-32 border-b border-border/60">
