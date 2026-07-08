@@ -3,6 +3,12 @@ import manufacturingImg from "@/assets/manufacturing.jpg";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 import { Link } from "react-router-dom";
 import { Check, MessageCircle } from "lucide-react";
+import {
+  ORGANIZATION_ID,
+  SITE_URL,
+  WEBSITE_ID,
+  breadcrumbSchema,
+} from "@/lib/seoSchema";
 
 const STEPS = [
   ["01", "Requirement Review", "Product, quantity, material, branding, sizing and destination needs are reviewed first."],
@@ -23,12 +29,33 @@ const CAPABILITIES = [
 ];
 
 export default function Manufacturing() {
+  const description = "How Irha Apparels reviews custom B2B apparel programs, from requirements and sampling to production planning, quality review and dispatch preparation.";
+  const pageUrl = `${SITE_URL}/manufacturing`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: "Manufacturing Process — Irha Apparels Sialkot",
+      description,
+      isPartOf: { "@id": WEBSITE_ID },
+      about: { "@id": ORGANIZATION_ID },
+      inLanguage: "en",
+    },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Manufacturing", path: "/manufacturing" },
+    ]),
+  ];
+
   return (
     <>
       <SEO
         title="Manufacturing Process — Irha Apparels Sialkot"
-        description="How Irha Apparels reviews custom B2B apparel programs, from requirements and sampling to production planning, quality review and dispatch preparation."
+        description={description}
         path="/manufacturing"
+        jsonLd={jsonLd}
       />
 
       <section className="relative pt-40 pb-24 md:pb-32 overflow-hidden">
