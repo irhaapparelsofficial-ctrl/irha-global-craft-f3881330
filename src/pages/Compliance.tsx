@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import {
   ShieldCheck,
@@ -8,7 +7,14 @@ import {
   FileText,
   MessageCircle,
 } from "lucide-react";
+import SEO from "@/components/SEO";
 import { whatsappLink } from "@/lib/constants";
+import {
+  ORGANIZATION_ID,
+  SITE_URL,
+  WEBSITE_ID,
+  breadcrumbSchema,
+} from "@/lib/seoSchema";
 
 const CAPABILITIES = [
   {
@@ -59,16 +65,43 @@ const FAQ = [
 ];
 
 export default function Compliance() {
+  const pageUrl = `${SITE_URL}/compliance`;
+  const description = "Share buyer, material, documentation and destination-market requirements with Irha Apparels for program-specific review before production commitments are made.";
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: "Compliance & Documentation Review",
+      description,
+      isPartOf: { "@id": WEBSITE_ID },
+      about: { "@id": ORGANIZATION_ID },
+      inLanguage: "en",
+    },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Compliance", path: "/compliance" },
+    ]),
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: FAQ.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a },
+      })),
+    },
+  ];
+
   return (
     <>
-      <Helmet>
-        <title>Compliance & Documentation Review | Irha Apparels</title>
-        <meta
-          name="description"
-          content="Share your buyer, material, documentation and destination-market requirements with Irha Apparels for program-specific review before production commitments are made."
-        />
-        <link rel="canonical" href="https://www.irhaapparels.com/compliance" />
-      </Helmet>
+      <SEO
+        title="Compliance & Documentation Review | Irha Apparels"
+        description={description}
+        path="/compliance"
+        jsonLd={jsonLd}
+      />
 
       <section className="pt-32 pb-12 md:pt-40 md:pb-16 bg-[#0A0A0A] border-b border-border/60">
         <div className="container-luxe">

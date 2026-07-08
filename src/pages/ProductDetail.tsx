@@ -9,8 +9,12 @@ import type { DbProduct } from "@/hooks/useCatalog";
 import { Bookmark, BookmarkCheck, ChevronRight, MessageCircle, Printer, Upload } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 import { useShortlist, pushRecentlyViewed } from "@/lib/shortlist";
-
-const SITE = "https://www.irhaapparels.com";
+import {
+  ORGANIZATION_ID,
+  SITE_URL,
+  WEBSITE_ID,
+  breadcrumbSchema,
+} from "@/lib/seoSchema";
 
 export default function ProductDetail() {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
@@ -69,7 +73,7 @@ export default function ProductDetail() {
   const subCat = data.subCategory;
   const product = data.product;
   const gallery = resolveGallery(product.gallery.length ? product.gallery : [product.image_url ?? ""]);
-  const url = `${SITE}/products/${category.slug}/${product.slug}`;
+  const url = `${SITE_URL}/products/${category.slug}/${product.slug}`;
 
   const b2bRows: Array<{ label: string; value: string }> = [];
   const pushIf = (label: string, value?: string | null) => {
@@ -98,50 +102,52 @@ export default function ProductDetail() {
     .map(([k]) => k.replace(/_/g, " "));
 
   const whatsappMsg = `Hello Irha Apparels — I'm interested in ${product.name} (${subCat.name}, ${category.name}). Product page: ${url}`;
+  const fallbackDescription = `${product.name} custom B2B manufacturing by Irha Apparels in Sialkot. OEM, ODM and private-label requirements are reviewed before quotation and production commitments.`;
+  const metaDescription = product.seo_description ?? product.description?.slice(0, 158) ?? fallbackDescription;
+  const serviceId = `${url}#service`;
 
   const jsonLd = [
     {
       "@context": "https://schema.org",
-      "@type": "Product",
-      name: product.name,
-      description: product.description ?? "",
-      image: gallery,
-      brand: { "@type": "Brand", name: "Irha Apparels" },
-      manufacturer: {
-        "@type": "Organization",
-        name: "Irha Apparels",
-        url: SITE,
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: "Sialkot",
-          addressCountry: "PK",
-        },
-      },
-      category: `${category.name} > ${subCat.name}`,
+      "@type": "WebPage",
+      "@id": `${url}#webpage`,
       url,
-      ...(product.sku ? { sku: product.sku } : {}),
-      ...(product.primary_material ? { material: product.primary_material } : {}),
+      name: product.name,
+      description: metaDescription,
+      isPartOf: { "@id": WEBSITE_ID },
+      about: { "@id": serviceId },
+      mainEntity: { "@id": serviceId },
+      inLanguage: "en",
     },
     {
       "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: `${SITE}/` },
-        { "@type": "ListItem", position: 2, name: "Collections", item: `${SITE}/products` },
-        { "@type": "ListItem", position: 3, name: category.name, item: `${SITE}/products/${category.slug}` },
-        { "@type": "ListItem", position: 4, name: product.name, item: url },
-      ],
+      "@type": "Service",
+      "@id": serviceId,
+      name: `Custom ${product.name} Manufacturing`,
+      serviceType: "B2B custom apparel manufacturing",
+      description: product.description ?? fallbackDescription,
+      provider: { "@id": ORGANIZATION_ID },
+      areaServed: { "@type": "Place", name: "Worldwide" },
+      category: `${category.name} > ${subCat.name}`,
+      url,
+      image: gallery,
     },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Collections", path: "/products" },
+      { name: category.name, path: `/products/${category.slug}` },
+      { name: product.name, path: `/products/${category.slug}/${product.slug}` },
+    ]),
   ];
 
   return (
     <>
       <SEO
         title={product.seo_title ?? `${product.name} | ${category.name} Manufacturer | Irha Apparels`}
-        description={product.seo_description ?? (product.description ?? "").slice(0, 158)}
+        description={metaDescription}
         path={`/products/${category.slug}/${product.slug}`}
         image={gallery[0]}
-        type="article"
+        type="product"
         jsonLd={jsonLd}
       />
 

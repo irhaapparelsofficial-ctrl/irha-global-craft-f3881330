@@ -1,7 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import defaultSocialImage from "@/assets/banners/products-flatlay.jpg";
-
-const SITE_URL = "https://www.irhaapparels.com";
+import { SITE_URL } from "@/lib/seoSchema";
 
 type Props = {
   title: string;
@@ -10,7 +9,7 @@ type Props = {
   image?: string;
   jsonLd?: object | object[];
   noindex?: boolean;
-  type?: "website" | "article";
+  type?: "website" | "article" | "product";
 };
 
 function absoluteUrl(value: string): string {
@@ -30,20 +29,24 @@ export default function SEO({
 }: Props) {
   const url = absoluteUrl(path);
   const ogImage = absoluteUrl(image || defaultSocialImage);
+  const robots = noindex
+    ? "noindex,follow,max-image-preview:large"
+    : "index,follow,max-image-preview:large";
 
   return (
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <meta name="robots" content={robots} />
       <link rel="canonical" href={url} />
       <link rel="alternate" hrefLang="en" href={url} />
       <link rel="alternate" hrefLang="x-default" href={url} />
-      {noindex && <meta name="robots" content="noindex,follow" />}
 
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
       <meta property="og:type" content={type} />
+      <meta property="og:locale" content="en_US" />
       <meta property="og:site_name" content="Irha Apparels" />
       <meta property="og:image" content={ogImage} />
       <meta property="og:image:alt" content={`${title} — Irha Apparels`} />

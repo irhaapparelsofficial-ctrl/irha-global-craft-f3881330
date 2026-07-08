@@ -1,18 +1,15 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Send, MessageCircle, Mail, Instagram, Facebook, Linkedin, Music2 } from "lucide-react";
+import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { BRAND } from "@/lib/constants";
-
-/**
- * Universal social form — one form for all social platforms.
- * Saves to inquiries (visible in Admin → Leads) and opens a pre-filled
- * email to the owner inbox so they are notified instantly.
- *
- * Shareable URL: https://www.irhaapparels.com/connect
- */
-const OWNER_EMAIL = "irhaapparelsofficial@gmail.com";
+import {
+  ORGANIZATION_ID,
+  SITE_URL,
+  WEBSITE_ID,
+  breadcrumbSchema,
+} from "@/lib/seoSchema";
 
 const SOCIALS = [
   { label: "Instagram", href: "https://www.instagram.com/irhaapparels", Icon: Instagram },
@@ -35,58 +32,71 @@ export default function Connect() {
       toast({ title: "Please add your name and either email or WhatsApp", variant: "destructive" });
       return;
     }
-    setLoading(true);
 
-    // 1. Save lead to backend (visible in Admin → Leads).
-    await supabase.from("inquiries").insert({
-      name: data.name,
-      email: data.email || `${data.whatsapp}@whatsapp.local`,
-      company: data.company || null,
+    setLoading(true);
+    const { error } = await supabase.from("inquiries").insert({
+      name: data.name.trim(),
+      email: data.email.trim() || `${data.whatsapp.trim()}@whatsapp.local`,
+      company: data.company.trim() || null,
       country: null,
-      phone: data.whatsapp || null,
+      phone: data.whatsapp.trim() || null,
       category: data.source || "social-form",
-      message: data.message || null,
+      message: data.message.trim() || null,
       source: data.source ? `connect:${data.source}` : "connect-universal-form",
     });
 
-    // 2. Fire Google Ads conversion (same as quote form).
+    if (error) {
+      setLoading(false);
+      toast({
+        title: "Message could not be saved",
+        description: "Please try again or contact us directly on WhatsApp.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
         "event",
         "conversion",
         { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
       );
-    } catch { /* no-op */ }
-
-    // 3. Open pre-filled email to owner inbox as instant notification fallback.
-    const subject = `New lead via /connect — ${data.name}${data.company ? ` (${data.company})` : ""}`;
-    const body = `A new lead arrived on the universal social form.
-
-Name: ${data.name}
-Company: ${data.company || "—"}
-Email: ${data.email || "—"}
-WhatsApp: ${data.whatsapp || "—"}
-Source platform: ${data.source || "—"}
-Message: ${data.message || "—"}
-
-View all leads: https://www.irhaapparels.com/admin`;
-    const mailto = `mailto:${OWNER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    // Open in new tab so the form's success state stays visible.
-    window.open(mailto, "_blank");
+    } catch {
+      // Analytics must never block a successfully saved buyer request.
+    }
 
     setSent(true);
     setLoading(false);
   };
 
   const input = "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors";
+  const pageUrl = `${SITE_URL}/connect`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: "Connect with Irha Apparels",
+      description: "Contact Irha Apparels about custom B2B apparel manufacturing requirements.",
+      isPartOf: { "@id": WEBSITE_ID },
+      about: { "@id": ORGANIZATION_ID },
+      inLanguage: "en",
+    },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Connect", path: "/connect" },
+    ]),
+  ];
 
   return (
     <>
-      <Helmet>
-        <title>Connect with Irha Apparels — Bavarian, Trachten & Leather Manufacturer | irhaapparels.com/connect</title>
-        <meta name="description" content="Quick contact form for all social platforms. Reach Irha Apparels — Sialkot's premium B2B apparel manufacturer. Lederhosen, Trachten, sportswear, streetwear & leather jackets. Flexible MOQ, FOB Sialkot." />
-        <link rel="canonical" href="https://www.irhaapparels.com/connect" />
-      </Helmet>
+      <SEO
+        title="Connect with Irha Apparels — B2B Apparel Manufacturing"
+        description="Contact Irha Apparels in Sialkot about custom B2B apparel manufacturing, OEM, ODM and private-label requirements."
+        path="/connect"
+        jsonLd={jsonLd}
+      />
 
       <section className="pt-28 md:pt-36 pb-20">
         <div className="container-luxe max-w-2xl">
@@ -95,7 +105,7 @@ View all leads: https://www.irhaapparels.com/admin`;
             Get in touch with <span className="text-gold italic">{BRAND.name}</span>
           </h1>
           <p className="text-foreground/70 mt-4 leading-relaxed text-sm md:text-base">
-            One form, every channel. We reply within 4 working hours on email & WhatsApp — Mon–Sat.
+            One form, every channel. Share your product, company and contact details so our team can review the request and reply using the information you provide.
           </p>
 
           <div className="flex flex-wrap gap-2 mt-6">
@@ -119,7 +129,7 @@ View all leads: https://www.irhaapparels.com/admin`;
               </div>
               <h2 className="font-display text-2xl">Message received</h2>
               <p className="text-foreground/70 mt-2 text-sm">
-                We've saved your request and notified the team at <strong>{OWNER_EMAIL}</strong>. Reply within 4 working hours.
+                Your request was saved successfully. Our team will review it and reply using the contact details you provided.
               </p>
             </div>
           ) : (
@@ -142,10 +152,10 @@ View all leads: https://www.irhaapparels.com/admin`;
               </select>
               <textarea className={input} rows={3} placeholder="What can we help you with? (product, MOQ, deadline…)" value={data.message} onChange={(e) => update("message", e.target.value)} aria-label="Message" />
               <p className="text-[10px] text-muted-foreground">
-                * Either email or WhatsApp required. Submissions are notified to <strong>{OWNER_EMAIL}</strong>.
+                * Either email or WhatsApp is required so the team can reply to your saved request.
               </p>
               <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all disabled:opacity-60">
-                {loading ? "Sending…" : <>Send message <Send size={14} /></>}
+                {loading ? "Saving…" : <>Send message <Send size={14} /></>}
               </button>
             </form>
           )}
