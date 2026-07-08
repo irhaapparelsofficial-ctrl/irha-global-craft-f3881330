@@ -15,6 +15,7 @@ const SUPABASE_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ??
   process.env.SUPABASE_ANON_KEY ??
   "sb_publishable_W8362N3MaYpOyMEMBu3Wuw_R0vJA3dw";
+const REQUIRE_DB_ENTRIES = process.env.npm_lifecycle_event === "prebuild";
 
 interface SitemapEntry {
   path: string;
@@ -88,7 +89,11 @@ async function fetchDbEntries(): Promise<{ entries: SitemapEntry[]; source: stri
 
   const byId = new Map(cats.map((category) => [category.id, category]));
   const tops = cats.filter((category) => category.parent_id === null);
+  if (tops.length === 0) throw new Error("no published top categories returned");
+  if (prods.length === 0) throw new Error("no published products returned");
+
   const entries: SitemapEntry[] = [];
+  let productEntryCount = 0;
 
   for (const top of tops) {
     entries.push({
@@ -111,11 +116,16 @@ async function fetchDbEntries(): Promise<{ entries: SitemapEntry[]; source: stri
       priority: "0.75",
       lastmod: product.updated_at.slice(0, 10),
     });
+    productEntryCount += 1;
+  }
+
+  if (productEntryCount === 0) {
+    throw new Error("published products could not be resolved to canonical product URLs");
   }
 
   return {
     entries,
-    source: `db (${tops.length} top categories, ${prods.length} products)`,
+    source: `db (${tops.length} top categories, ${productEntryCount} product URLs)`,
   };
 }
 
@@ -128,7 +138,11 @@ async function main() {
     dbEntries = result.entries;
     source = result.source;
   } catch (error) {
-    console.warn(`sitemap: DB fetch failed — writing canonical static routes only. ${(error as Error).message}`);
+    const message = (error as Error).message;
+    if (REQUIRE_DB_ENTRIES) {
+      throw new Error(`sitemap: refusing build without live product/category URLs. ${message}`);
+    }
+    console.warn(`sitemap: DB fetch failed — writing canonical static routes only. ${message}`);
   }
 
   const today = new Date().toISOString().slice(0, 10);
