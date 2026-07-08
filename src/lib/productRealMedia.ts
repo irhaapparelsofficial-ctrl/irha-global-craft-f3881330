@@ -37,4 +37,14 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/brown-short-lederhosen/05-detail-embroidery-buttons.webp",
     ],
   },
+  "distressed-brown-short-lederhosen": {
+    gallery: [
+      "/product-media/distressed-brown-short-lederhosen/01-hero-front.webp",
+      "/product-media/distressed-brown-short-lederhosen/03-angle-back.webp",
+      "/product-media/distressed-brown-short-lederhosen/04-detail-front-flap.webp",
+      "/product-media/distressed-brown-short-lederhosen/05-detail-side-leg.webp",
+      "/product-media/distressed-brown-short-lederhosen/07-extra-front-without-suspenders.webp",
+      "/product-media/distressed-brown-short-lederhosen/08-extra-rear-pocket.webp",
+    ],
+  },
 };

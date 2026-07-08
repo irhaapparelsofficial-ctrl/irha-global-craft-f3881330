@@ -63,6 +63,28 @@ const SUPPLEMENTAL_PRODUCTS: SupplementalProductDefinition[] = [
       "Brown short Lederhosen for wholesale, OEM, ODM and private-label programs.",
     sortOrder: 1000,
   },
+  {
+    id: "00000000-0000-0000-0000-000000000067",
+    topCategorySlug: "bavarian-trachten-wear",
+    subcategorySlugs: ["men"],
+    subcategoryNames: ["menstrachten"],
+    slug: "distressed-brown-short-lederhosen",
+    name: "Distressed Brown Short Lederhosen",
+    description:
+      "Short-cut Bavarian-style Lederhosen in a distressed brown colourway with a traditional front flap, matching suspenders and detailed front, side and rear construction, prepared for wholesale and private-label buyer programs.",
+    specs: [
+      "Distressed brown visual finish",
+      "Traditional front-flap construction",
+      "Matching suspenders",
+      "Private-label customization available",
+    ],
+    seoTitle: "Distressed Brown Short Lederhosen Manufacturer | Irha Apparels",
+    seoDescription:
+      "Distressed brown short Lederhosen for wholesale and private-label programs from Irha Apparels, a B2B apparel manufacturer in Sialkot, Pakistan.",
+    shortDescription:
+      "Distressed brown short Lederhosen for wholesale, OEM, ODM and private-label programs.",
+    sortOrder: 1001,
+  },
 ];
 
 function matchesSubcategory(
