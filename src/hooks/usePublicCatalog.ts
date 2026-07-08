@@ -6,6 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
 import type { Product as LegacyProduct } from "@/lib/categories";
+import {
+  createWhiteEmbroideredLederhosen,
+  isMensTrachtenSubcategory,
+  WHITE_EMBROIDERED_LEDERHOSEN_SLUG,
+} from "@/lib/supplementalCatalog";
 
 export type PublicSubCategory = DbCategory & { products: DbProduct[] };
 export type PublicTopCategory = DbCategory & {
@@ -64,6 +69,18 @@ function sanitizePublicProduct(p: DbProduct): DbProduct {
   };
 }
 
+function productsForSubcategory(top: DbCategory, sub: DbCategory, dbProducts: DbProduct[]): DbProduct[] {
+  const products = [...dbProducts];
+  const isTarget = isMensTrachtenSubcategory(top.slug, sub.slug, sub.name);
+  const alreadyExists = products.some((p) => p.slug === WHITE_EMBROIDERED_LEDERHOSEN_SLUG);
+
+  if (isTarget && !alreadyExists) {
+    products.push(sanitizePublicProduct(createWhiteEmbroideredLederhosen(sub.id)));
+  }
+
+  return products;
+}
+
 async function fetchTree(): Promise<PublicTopCategory[]> {
   const [{ data: cats, error: cErr }, { data: prods, error: pErr }] = await Promise.all([
     supabase.from("categories").select("*").eq("is_published", true).order("sort_order", { ascending: true }),
@@ -95,7 +112,7 @@ async function fetchTree(): Promise<PublicTopCategory[]> {
   return tops.map((top) => {
     const subs = (byParent.get(top.id) ?? []).map((s) => ({
       ...s,
-      products: prodsByCat.get(s.id) ?? [],
+      products: productsForSubcategory(top, s, prodsByCat.get(s.id) ?? []),
     }));
     return { ...top, subs, directProducts: prodsByCat.get(top.id) ?? [] };
   });
@@ -124,7 +141,23 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
         .eq("is_published", true)
         .maybeSingle();
       if (pErr) throw pErr;
-      if (!prod) return null;
+
+      if (!prod) {
+        const tree = await fetchTree();
+        const { LEGACY_TOP_SLUG_MAP } = await import("@/lib/legacyCategorySlugs");
+        const canonicalRequested = LEGACY_TOP_SLUG_MAP[categorySlug ?? ""] ?? categorySlug;
+        const top = tree.find((t) => t.slug === canonicalRequested || t.slug === categorySlug) ?? null;
+        if (!top) return null;
+
+        for (const sub of top.subs) {
+          const supplemental = sub.products.find((p) => p.slug === productSlug);
+          if (supplemental) {
+            return { product: supplemental, subCategory: sub, topCategory: top };
+          }
+        }
+        return null;
+      }
+
       const dbProd = sanitizePublicProduct(prod as unknown as DbProduct);
 
       const { data: cat, error: cErr } = await supabase
