@@ -9,7 +9,13 @@ import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
-import { BRAND } from "@/lib/constants";
+import {
+  ORGANIZATION_ID,
+  SITE_URL,
+  WEBSITE_ID,
+  organizationSchema,
+  websiteSchema,
+} from "@/lib/seoSchema";
 
 type HubDef = {
   key: "heritage" | "performance";
@@ -46,37 +52,35 @@ export default function Home() {
   const { data: tree = [] } = usePublicCatalogTree();
   const allCats = tree.flatMap((t) => [t, ...t.subs]);
 
+  const jsonLd = [
+    organizationSchema,
+    websiteSchema,
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/#webpage`,
+      url: `${SITE_URL}/`,
+      name: "Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers",
+      description:
+        "OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan for brands, wholesalers and importers worldwide.",
+      isPartOf: { "@id": WEBSITE_ID },
+      about: { "@id": ORGANIZATION_ID },
+      inLanguage: "en",
+    },
+  ];
+
   return (
     <>
       <SEO
         title="Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers"
         description="OEM, ODM and private-label apparel manufacturer in Sialkot, Pakistan. Custom cut & sew, embroidery, printing, private label and export support for brands and importers worldwide."
         path="/"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: BRAND.name,
-          url: "https://www.irhaapparels.com/",
-          logo: "https://www.irhaapparels.com/favicon.ico",
-          description:
-            "Custom B2B apparel manufacturing for brands, wholesalers, importers and private-label programs. Two production hubs: Heritage (Bavarian & Leather) and Performance (Sportswear, Streetwear & Leisure).",
-          telephone: BRAND.phone,
-          address: { "@type": "PostalAddress", addressLocality: "Sialkot", addressCountry: "PK" },
-          sameAs: [
-            "https://www.instagram.com/irhaapparels",
-            "https://www.facebook.com/irhaapparels",
-            "https://www.linkedin.com/company/irha-apparels",
-          ],
-        }}
+        jsonLd={jsonLd}
       />
 
-      {/* HERO */}
       <HeroCarousel />
-
-      {/* CAPABILITY STRIP — non-sticky, elegant */}
       <CapabilityStrip />
 
-      {/* TWO PRODUCTION HUBS */}
       <section className="py-20 md:py-28">
         <div className="container-luxe">
           <div className="max-w-2xl mb-12 md:mb-14">
@@ -156,16 +160,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5 CATEGORIES — live DB */}
       <FiveCategories />
-
-      {/* WHY B2B — replaces fake testimonials */}
       <WhyB2B />
-
-      {/* PRODUCTION JOURNEY */}
       <ProcessTimeline />
-
-      {/* FINAL CTA */}
       <StartProgramCTA />
     </>
   );
