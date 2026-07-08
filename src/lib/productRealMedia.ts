@@ -1,6 +1,7 @@
 // Real product media mapped to exact public product slugs.
 // Locked buyer-facing order: 1 hero → 2 angles → 2 details → 1 B2B proof → extras.
 // Keep one exact product set per slug and never mix unrelated variants.
+// When an exact role image is not available, leave it absent rather than using a wrong product.
 
 export type ProductRealMedia = {
   gallery: string[];
@@ -19,6 +20,13 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/traditional-lederhosen/02-back-construction.webp",
       "/product-media/traditional-lederhosen/04-pocket-leather-detail.webp",
       "/product-media/traditional-lederhosen/05-suspender-buckle-detail.webp",
+    ],
+  },
+  "white-embroidered-lederhosen": {
+    gallery: [
+      "/product-media/white-embroidered-lederhosen/01-hero-front.webp",
+      "/product-media/white-embroidered-lederhosen/04-detail-embroidery.webp",
+      "/product-media/white-embroidered-lederhosen/06-b2b-bulk-proof.webp",
     ],
   },
 };
