@@ -1,67 +1,57 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, MessageCircle, Send, Share2 } from "lucide-react";
-import { CATALOGUE_GROUPS } from "@/lib/catalogueGroups";
-import { whatsappLink, BRAND } from "@/lib/constants";
-import CatalogueLeadForm from "@/components/CatalogueLeadForm";
 import { useState } from "react";
-
-const SITE = "https://www.irhaapparels.com";
-const OG_IMAGE = `${SITE}/og-image.jpg`;
+import SEO from "@/components/SEO";
+import CatalogueLeadForm from "@/components/CatalogueLeadForm";
+import { CATALOGUE_GROUPS } from "@/lib/catalogueGroups";
+import { whatsappLink } from "@/lib/constants";
+import {
+  ORGANIZATION_ID,
+  SITE_URL,
+  WEBSITE_ID,
+  breadcrumbSchema,
+} from "@/lib/seoSchema";
 
 export default function Catalogue() {
   const [shareOpen, setShareOpen] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
 
-  const shareUrl = `${SITE}/catalogue`;
+  const shareUrl = `${SITE_URL}/catalogue`;
   const shareText = "Irha Apparels — B2B product catalogue for custom apparel programs in Sialkot, Pakistan.";
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    name: "Irha Apparels Product Catalogue",
-    description:
-      "B2B product catalogue for custom Bavarian and Trachten wear, leather apparel, sportswear, streetwear, activewear, leisurewear and nightwear programs.",
-    url: shareUrl,
-    publisher: {
-      "@type": "Organization",
-      name: BRAND.name,
-      url: SITE,
-      logo: `${SITE}/icon-512x512.png`,
-    },
-    hasPart: CATALOGUE_GROUPS.map((g) => ({
+  const description = "Explore custom B2B apparel programs from Irha Apparels in Sialkot, Pakistan. Product specifications and commercial terms are confirmed after requirement review.";
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: g.name,
-      url: `${SITE}/catalogue/${g.slug}`,
-      description: g.description,
-    })),
-  };
+      "@id": `${shareUrl}#collection`,
+      name: "Irha Apparels Product Catalogue",
+      description,
+      url: shareUrl,
+      isPartOf: { "@id": WEBSITE_ID },
+      publisher: { "@id": ORGANIZATION_ID },
+      hasPart: CATALOGUE_GROUPS.map((group) => ({
+        "@type": "CollectionPage",
+        "@id": `${SITE_URL}/catalogue/${group.slug}#collection`,
+        name: group.name,
+        url: `${SITE_URL}/catalogue/${group.slug}`,
+        description: group.description,
+      })),
+    },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Catalogue", path: "/catalogue" },
+    ]),
+  ];
 
   return (
     <>
-      <Helmet>
-        <title>Irha Apparels Product Catalogue | Custom Apparel Manufacturer</title>
-        <meta
-          name="description"
-          content="Explore custom B2B apparel programs from Irha Apparels in Sialkot, Pakistan. Product specifications and commercial terms are confirmed after requirement review."
-        />
-        <link rel="canonical" href={shareUrl} />
-        <link rel="alternate" hrefLang="en" href={shareUrl} />
-        <link rel="alternate" hrefLang="x-default" href={shareUrl} />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Irha Apparels B2B Product Catalogue" />
-        <meta property="og:description" content="Custom apparel programs for brands, wholesalers, importers and private-label buyers." />
-        <meta property="og:url" content={shareUrl} />
-        <meta property="og:image" content={OG_IMAGE} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:site_name" content="Irha Apparels" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Irha Apparels B2B Product Catalogue" />
-        <meta name="twitter:description" content="Custom apparel programs reviewed against buyer requirements." />
-        <meta name="twitter:image" content={OG_IMAGE} />
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-      </Helmet>
+      <SEO
+        title="Irha Apparels Product Catalogue | Custom Apparel Manufacturer"
+        description={description}
+        path="/catalogue"
+        image="/og-image.jpg"
+        jsonLd={jsonLd}
+      />
 
       <section className="pt-32 md:pt-40 pb-12 border-b border-border/60">
         <div className="container-luxe">
