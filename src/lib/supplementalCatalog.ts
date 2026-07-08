@@ -85,6 +85,29 @@ const SUPPLEMENTAL_PRODUCTS: SupplementalProductDefinition[] = [
       "Distressed brown short Lederhosen for wholesale, OEM, ODM and private-label programs.",
     sortOrder: 1001,
   },
+  {
+    id: "00000000-0000-0000-0000-000000000068",
+    topCategorySlug: "bavarian-trachten-wear",
+    subcategorySlugs: ["men"],
+    subcategoryNames: ["menstrachten"],
+    slug: "contrast-piped-brown-short-lederhosen",
+    name: "Contrast-Piped Brown Short Lederhosen",
+    description:
+      "Short-cut Bavarian-style Lederhosen in a brown colourway with light contrast piping, a decorative front flap, leg embroidery and side-button detailing, prepared for wholesale and private-label buyer programs.",
+    specs: [
+      "Light contrast-piping accents",
+      "Traditional front-flap construction",
+      "Decorative leg embroidery",
+      "Side-button detail",
+      "Private-label customization available",
+    ],
+    seoTitle: "Contrast-Piped Brown Short Lederhosen Manufacturer | Irha Apparels",
+    seoDescription:
+      "Contrast-piped brown short Lederhosen for wholesale and private-label programs from Irha Apparels, a B2B apparel manufacturer in Sialkot, Pakistan.",
+    shortDescription:
+      "Contrast-piped brown short Lederhosen for wholesale, OEM, ODM and private-label programs.",
+    sortOrder: 1002,
+  },
 ];
 
 function matchesSubcategory(

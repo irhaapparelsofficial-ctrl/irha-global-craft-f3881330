@@ -47,4 +47,12 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/distressed-brown-short-lederhosen/08-extra-rear-pocket.webp",
     ],
   },
+  "contrast-piped-brown-short-lederhosen": {
+    gallery: [
+      "/product-media/contrast-piped-brown-short-lederhosen/01-hero-front.webp",
+      "/product-media/contrast-piped-brown-short-lederhosen/03-angle-back.webp",
+      "/product-media/contrast-piped-brown-short-lederhosen/04-detail-front-flap.webp",
+      "/product-media/contrast-piped-brown-short-lederhosen/05-detail-leg-embroidery-buttons.webp",
+    ],
+  },
 };

@@ -97,6 +97,28 @@
         "fallback": "https://drive.google.com/thumbnail?id=1568Fh79vxi3yjqkjjml-xwFBfYcpdZ13&sz=w1600",
         "file": "08-extra-rear-pocket.webp"
       }
+    ],
+    "contrast-piped-brown-short-lederhosen": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=143M2sVlO8yrjTRETyV84si1POCkYfLzp",
+        "fallback": "https://drive.google.com/thumbnail?id=143M2sVlO8yrjTRETyV84si1POCkYfLzp&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1Wa4aLkSgWlYq9BjnixB4X2YrRmwZDxSE",
+        "fallback": "https://drive.google.com/thumbnail?id=1Wa4aLkSgWlYq9BjnixB4X2YrRmwZDxSE&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1YAAv99bsQMyQ05RtVUT-Dg_OqbNn6dXx",
+        "fallback": "https://drive.google.com/thumbnail?id=1YAAv99bsQMyQ05RtVUT-Dg_OqbNn6dXx&sz=w1600",
+        "file": "04-detail-front-flap.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1Esz7xmunvlZaKBI8em5sK2ZtIjbOU9Oo",
+        "fallback": "https://drive.google.com/thumbnail?id=1Esz7xmunvlZaKBI8em5sK2ZtIjbOU9Oo&sz=w1600",
+        "file": "05-detail-leg-embroidery-buttons.webp"
+      }
     ]
   }
 }
