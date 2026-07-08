@@ -29,4 +29,12 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/white-embroidered-lederhosen/06-b2b-bulk-proof.webp",
     ],
   },
+  "brown-short-lederhosen": {
+    gallery: [
+      "/product-media/brown-short-lederhosen/01-hero-front.webp",
+      "/product-media/brown-short-lederhosen/03-angle-back.webp",
+      "/product-media/brown-short-lederhosen/04-detail-side-construction.webp",
+      "/product-media/brown-short-lederhosen/05-detail-embroidery-buttons.webp",
+    ],
+  },
 };
