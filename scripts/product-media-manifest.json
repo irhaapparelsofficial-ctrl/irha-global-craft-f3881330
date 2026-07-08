@@ -26,6 +26,23 @@
         "fallback": "https://drive.google.com/thumbnail?id=1OkyBotSuuijbAGJTQa3QO644tm5xwAKf&sz=w1600",
         "file": "05-detail-leg-embroidery-tie.webp"
       }
+    ],
+    "white-embroidered-lederhosen": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1IeRwCaX_mF8T39Sa8DwKE4GYQLEdI9RN",
+        "fallback": "https://drive.google.com/thumbnail?id=1IeRwCaX_mF8T39Sa8DwKE4GYQLEdI9RN&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1d3jNHposJc1wuPeE1-zRn2Yy2FoA7bP-",
+        "fallback": "https://drive.google.com/thumbnail?id=1d3jNHposJc1wuPeE1-zRn2Yy2FoA7bP-&sz=w1600",
+        "file": "04-detail-embroidery.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=187WD7f76NpoguhrAujqbgFv1V9bODlG2",
+        "fallback": "https://drive.google.com/thumbnail?id=187WD7f76NpoguhrAujqbgFv1V9bODlG2&sz=w1600",
+        "file": "06-b2b-bulk-proof.webp"
+      }
     ]
   }
 }
