@@ -1,17 +1,35 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
+import { SITE_URL, WEBSITE_ID, breadcrumbSchema } from "@/lib/seoSchema";
 
 export default function TermsOfService() {
+  const description = "Website terms for Irha Apparels. Commercial order terms, pricing, payment, production, shipping and claims are confirmed separately for each B2B order.";
+  const pageUrl = `${SITE_URL}/terms-of-service`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: "Website Terms | Irha Apparels",
+      description,
+      isPartOf: { "@id": WEBSITE_ID },
+      inLanguage: "en",
+    },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Website Terms", path: "/terms-of-service" },
+    ]),
+  ];
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-24 md:py-32">
-      <Helmet>
-        <title>Website Terms | Irha Apparels</title>
-        <meta
-          name="description"
-          content="Website terms for Irha Apparels. Commercial order terms, pricing, payment, production, shipping and claims are confirmed separately for each B2B order."
-        />
-        <link rel="canonical" href="https://www.irhaapparels.com/terms-of-service" />
-      </Helmet>
+      <SEO
+        title="Website Terms | Irha Apparels"
+        description={description}
+        path="/terms-of-service"
+        jsonLd={jsonLd}
+      />
 
       <p className="eyebrow mb-5">Website Terms</p>
       <h1 className="font-display text-4xl md:text-6xl leading-[1.05]">
