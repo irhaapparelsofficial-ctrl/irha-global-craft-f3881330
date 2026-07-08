@@ -65,6 +65,38 @@
         "fallback": "https://drive.google.com/thumbnail?id=1dL2y4PctUL3VBGAAanstRZj4QS3XI1Tp&sz=w1600",
         "file": "05-detail-embroidery-buttons.webp"
       }
+    ],
+    "distressed-brown-short-lederhosen": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1FxOf4X6OHjxkeHXBGiwdoP7QUHZz6Bu2",
+        "fallback": "https://drive.google.com/thumbnail?id=1FxOf4X6OHjxkeHXBGiwdoP7QUHZz6Bu2&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1NCgnz_nEPurcF52wUxTqbqr1xw4SjDdt",
+        "fallback": "https://drive.google.com/thumbnail?id=1NCgnz_nEPurcF52wUxTqbqr1xw4SjDdt&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1XjiYI6rJg9-IJ25ftMOEgAvflgDRqQPc",
+        "fallback": "https://drive.google.com/thumbnail?id=1XjiYI6rJg9-IJ25ftMOEgAvflgDRqQPc&sz=w1600",
+        "file": "04-detail-front-flap.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1s7ez9tua0grhOJlbKodyvUDtObkvi6iW",
+        "fallback": "https://drive.google.com/thumbnail?id=1s7ez9tua0grhOJlbKodyvUDtObkvi6iW&sz=w1600",
+        "file": "05-detail-side-leg.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1TbszrSdefvakJS_UAl8_hloW3Oob3ISx",
+        "fallback": "https://drive.google.com/thumbnail?id=1TbszrSdefvakJS_UAl8_hloW3Oob3ISx&sz=w1600",
+        "file": "07-extra-front-without-suspenders.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1568Fh79vxi3yjqkjjml-xwFBfYcpdZ13",
+        "fallback": "https://drive.google.com/thumbnail?id=1568Fh79vxi3yjqkjjml-xwFBfYcpdZ13&sz=w1600",
+        "file": "08-extra-rear-pocket.webp"
+      }
     ]
   }
 }
