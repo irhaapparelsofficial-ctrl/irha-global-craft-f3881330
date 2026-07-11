@@ -1,0 +1,39 @@
+{
+  "products": {
+    "white-tie-neck-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1379cHolnwvpo7ZjIsFOydncPcs6rRIr1",
+        "fallback": "https://drive.google.com/thumbnail?id=1379cHolnwvpo7ZjIsFOydncPcs6rRIr1&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "white-stand-collar-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1-02JrV9vHWKckpBe2fC9sFCGb00I0zqK",
+        "fallback": "https://drive.google.com/thumbnail?id=1-02JrV9vHWKckpBe2fC9sFCGb00I0zqK&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "white-point-collar-pintuck-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1N8d1jf99oOriGyklSdxsUtRDfRhn1Kg0",
+        "fallback": "https://drive.google.com/thumbnail?id=1N8d1jf99oOriGyklSdxsUtRDfRhn1Kg0&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "white-classic-point-collar-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1BQwyF8UFhr_9fqJaNF9L5Aim3ESXQJ5l",
+        "fallback": "https://drive.google.com/thumbnail?id=1BQwyF8UFhr_9fqJaNF9L5Aim3ESXQJ5l&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "white-green-trim-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1AtyjmqAlu4ugJKTj4qXFmnv236OTFHMi",
+        "fallback": "https://drive.google.com/thumbnail?id=1AtyjmqAlu4ugJKTj4qXFmnv236OTFHMi&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ]
+  }
+}
