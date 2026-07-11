@@ -1,7 +1,12 @@
 // Executes an approved Irha AI action.
-// Admin-only. Never treats a connector verification as a successful publish.
+// Admin-only. Never treats connector verification as a successful publish.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import {
+  actionGuard,
+  loadAiBusinessRules,
+  rulesReference,
+} from "../_shared/ai-business-rules.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,8 +53,30 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (actionError || !action) return json({ error: "Action not found" }, 404);
     if (!action.requires_approval) return json({ error: "This action does not require execution approval" }, 400);
-    if (!['proposed', 'approved', 'failed'].includes(action.status)) {
+    if (!["proposed", "approved", "failed"].includes(action.status)) {
       return json({ error: `Action cannot run from status ${action.status}` }, 409);
+    }
+
+    const rulesState = await loadAiBusinessRules(service);
+    const guard = actionGuard(action.action_type, action.payload, action.description, rulesState);
+    if (!guard.executable) {
+      return json({
+        error: "Execution blocked by Business Rules",
+        reason: guard.reason,
+        action_id: action.id,
+        rules_reference: rulesReference(rulesState),
+      }, 409);
+    }
+
+    const plannedRulesVersion = readPlannedRulesVersion(action.payload);
+    if (plannedRulesVersion !== null && rulesState.version !== plannedRulesVersion) {
+      return json({
+        error: "Business Rules changed after this action was planned",
+        reason: "Re-run the AI plan so the action uses the current approved rules version.",
+        action_id: action.id,
+        planned_rules_version: plannedRulesVersion,
+        current_rules_version: rulesState.version,
+      }, 409);
     }
 
     const approvedAt = new Date().toISOString();
@@ -64,13 +91,30 @@ Deno.serve(async (req) => {
       .eq("id", action.id);
 
     let result: Record<string, unknown>;
-    if (action.action_type === "social_publish") {
-      result = await executeSocialPublish(action.payload, authHeader);
-    } else if (action.action_type === "listing_task") {
-      result = await executeListingTask(service, action.payload);
-    } else {
-      throw new Error(`Execution is not enabled for ${action.action_type}`);
+    try {
+      if (action.action_type === "social_publish") {
+        result = await executeSocialPublish(action.payload, authHeader);
+      } else if (action.action_type === "listing_task") {
+        result = await executeListingTask(service, action.payload);
+      } else {
+        throw new Error(`Execution is not enabled for ${action.action_type}`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Execution failed";
+      result = {
+        ok: false,
+        error: message,
+        external_execution: false,
+        rules_reference: rulesReference(rulesState),
+      };
     }
+
+    result = {
+      ...result,
+      rules_reference: rulesReference(rulesState),
+      owner_approved_by: user.id,
+      owner_approved_at: approvedAt,
+    };
 
     const completed = result.ok === true;
     await service
@@ -99,7 +143,7 @@ async function executeSocialPublish(payload: unknown, authHeader: string) {
     ? value.channels.filter((item): item is string => typeof item === "string" && allowed.has(item))
     : [];
   if (!productId || channels.length === 0) {
-    return { ok: false, error: "Valid productId and at least one supported channel are required" };
+    return { ok: false, error: "Valid productId and at least one supported channel are required", external_execution: false };
   }
 
   const response = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/social-multi-sync`, {
@@ -119,17 +163,26 @@ async function executeSocialPublish(payload: unknown, authHeader: string) {
   } catch {
     data = { raw: text.slice(0, 1000) };
   }
-  if (!response.ok) return { ok: false, error: `Social backend returned ${response.status}`, response: data };
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: `Social backend returned ${response.status}`,
+      response: data,
+      external_execution: false,
+    };
+  }
 
   const summary = isRecord(data.summary) ? data.summary : {};
   const published = Array.isArray(summary.published) ? summary.published : [];
   const verified = Array.isArray(summary.verified) ? summary.verified : [];
   const failed = Array.isArray(summary.failed) ? summary.failed : [];
   const skipped = Array.isArray(summary.skipped) ? summary.skipped : [];
-  const didSomething = published.length + verified.length > 0;
+  const publishedSomething = published.length > 0;
 
   return {
-    ok: didSomething,
+    ok: publishedSomething,
+    partial: !publishedSomething && verified.length > 0,
+    external_execution: publishedSomething,
     published,
     verified_only: verified,
     failed,
@@ -138,7 +191,11 @@ async function executeSocialPublish(payload: unknown, authHeader: string) {
       ? "Verified-only channels were not counted as published."
       : "Only channels reported in published were treated as published.",
     response: data,
-    error: didSomething ? null : "No selected channel published or verified successfully",
+    error: publishedSomething
+      ? null
+      : verified.length > 0
+        ? "Channel connection was verified, but no post was published"
+        : "No selected channel published successfully",
   };
 }
 
@@ -152,13 +209,16 @@ async function executeListingTask(service: ReturnType<typeof createClient>, payl
   const nextAction = typeof value.next_action === "string" ? value.next_action.trim().slice(0, 1200) : "";
   const notes = typeof value.notes === "string" ? value.notes.trim().slice(0, 4000) || null : null;
   const allowedStatuses = new Set(["not_started", "in_progress", "pending_verification", "active", "needs_attention", "paused", "rejected"]);
-  const status = typeof value.status === "string" && allowedStatuses.has(value.status) ? value.status : "not_started";
-  if (!platform || !nextAction) return { ok: false, error: "platform and next_action are required" };
+  const requestedStatus = typeof value.status === "string" && allowedStatuses.has(value.status) ? value.status : "not_started";
+  const status = requestedStatus === "active" && !profileUrl ? "pending_verification" : requestedStatus;
+  if (!platform || !nextAction) {
+    return { ok: false, error: "platform and next_action are required", external_execution: false };
+  }
 
   let query = service.from("business_listings").select("id").ilike("platform", platform).limit(1);
   query = profileUrl ? query.eq("profile_url", profileUrl) : query.is("profile_url", null);
   const { data: existing, error: findError } = await query.maybeSingle();
-  if (findError) return { ok: false, error: findError.message };
+  if (findError) return { ok: false, error: findError.message, external_execution: false };
 
   const values = {
     platform,
@@ -179,11 +239,29 @@ async function executeListingTask(service: ReturnType<typeof createClient>, payl
       .eq("id", existing.id)
       .select("*")
       .single();
-    return error ? { ok: false, error: error.message } : { ok: true, operation: "updated", listing: data };
+    return error
+      ? { ok: false, error: error.message, external_execution: false }
+      : {
+          ok: true,
+          operation: "updated",
+          listing: data,
+          internal_registry_only: true,
+          external_platform_changed: false,
+          status_adjusted: requestedStatus !== status,
+        };
   }
 
   const { data, error } = await service.from("business_listings").insert(values).select("*").single();
-  return error ? { ok: false, error: error.message } : { ok: true, operation: "created", listing: data };
+  return error
+    ? { ok: false, error: error.message, external_execution: false }
+    : {
+        ok: true,
+        operation: "created",
+        listing: data,
+        internal_registry_only: true,
+        external_platform_changed: false,
+        status_adjusted: requestedStatus !== status,
+      };
 }
 
 async function finalizeRun(service: ReturnType<typeof createClient>, runId: string) {
@@ -202,6 +280,12 @@ async function finalizeRun(service: ReturnType<typeof createClient>, runId: stri
     runStatus = "completed";
   }
   await service.from("ai_runs").update({ status: runStatus }).eq("id", runId);
+}
+
+function readPlannedRulesVersion(payload: unknown) {
+  if (!isRecord(payload)) return null;
+  const reference = isRecord(payload._rules_reference) ? payload._rules_reference : null;
+  return reference && typeof reference.version === "number" ? reference.version : null;
 }
 
 function safeUrl(input: string) {

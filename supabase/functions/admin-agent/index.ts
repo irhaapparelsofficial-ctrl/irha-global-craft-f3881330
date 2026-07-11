@@ -3,6 +3,12 @@
 // and stores every run/action for approval and audit.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import {
+  actionGuard,
+  loadAiBusinessRules,
+  rulesPromptSnapshot,
+  rulesReference,
+} from "../_shared/ai-business-rules.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,7 +27,7 @@ const ALLOWED_ACTION_TYPES = new Set([
   "outreach_campaign_plan",
 ]);
 
-const APPROVAL_REQUIRED = new Set(["social_publish", "listing_task"]);
+const EXTERNAL_ACTION_TYPES = new Set(["social_publish", "listing_task"]);
 
 type ProposedAction = {
   action_type?: unknown;
@@ -63,7 +69,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const command = typeof body?.command === "string" ? body.command.trim().slice(0, 6000) : "";
-    const mode = body?.mode === "operate" ? "operate" : "plan";
+    const requestedMode = body?.mode === "operate" ? "operate" : "plan";
     if (!command) return json({ error: "command is required" }, 400);
 
     const service = createClient(
@@ -71,12 +77,21 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const context = await buildBusinessContext(service);
+    const rulesState = await loadAiBusinessRules(service);
+    const effectiveMode = requestedMode === "operate" && rulesState.approved ? "operate" : "plan";
+    const businessContext = await buildBusinessContext(service);
+    const context = {
+      ...businessContext,
+      requested_mode: requestedMode,
+      effective_mode: effectiveMode,
+      business_rules: rulesPromptSnapshot(rulesState),
+    };
+
     const { data: run, error: runError } = await service
       .from("ai_runs")
       .insert({
         command,
-        mode,
+        mode: effectiveMode,
         status: "planning",
         requested_by: user.id,
         context_snapshot: context,
@@ -129,19 +144,38 @@ Deno.serve(async (req) => {
       ? parsed.reply.trim().slice(0, 12000)
       : "Plan prepared. Review the actions below.";
     const actions = normalizeActions(parsed.actions);
+    const rulesRef = rulesReference(rulesState);
 
     const rows = actions.map((action) => {
-      const requiresApproval = APPROVAL_REQUIRED.has(action.action_type);
+      const guard = actionGuard(action.action_type, action.payload, action.description, rulesState);
+      const requiresApproval = guard.requiresApproval;
+      const external = EXTERNAL_ACTION_TYPES.has(action.action_type);
       return {
         run_id: run.id,
         action_type: action.action_type,
         title: action.title,
         description: action.description,
         status: requiresApproval ? "proposed" : "completed",
-        risk_level: action.risk_level,
+        risk_level: requiresApproval && action.risk_level === "low" ? "medium" : action.risk_level,
         requires_approval: requiresApproval,
-        payload: action.payload,
-        result: requiresApproval ? {} : action.payload,
+        payload: {
+          ...action.payload,
+          _rules_reference: rulesRef,
+          _execution_guard: {
+            external,
+            executable: guard.executable,
+            authority: guard.authority,
+            reason: guard.reason,
+          },
+        },
+        result: requiresApproval
+          ? {}
+          : {
+              kind: "draft_or_plan",
+              external_execution: false,
+              output: action.payload,
+              rules_reference: rulesRef,
+            },
         executed_at: requiresApproval ? null : new Date().toISOString(),
       };
     });
@@ -160,10 +194,15 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
-      run: { ...run, status: "planned", reply },
+      run: { ...run, mode: effectiveMode, status: "planned", reply },
       actions: savedActions,
       guardrails: {
-        approval_required_for: Array.from(APPROVAL_REQUIRED),
+        requested_mode: requestedMode,
+        effective_mode: effectiveMode,
+        operate_downgraded: requestedMode === "operate" && effectiveMode === "plan",
+        business_rules: rulesRef,
+        business_rules_missing: rulesState.missing,
+        external_actions_require_approval: Array.from(EXTERNAL_ACTION_TYPES),
         external_execution_claimed: false,
       },
     });
@@ -249,11 +288,14 @@ IRHA RULES:
 - Irha Apparels is an experienced B2B apparel manufacturer in Sialkot, Pakistan; the website is newly built.
 - Buyers may request a live factory view by video call.
 - No public prices. Never invent MOQ, delivery dates, certifications, buyer counts, reviews, customers, platform metrics or successful posts.
-- Public claims must be supported by the supplied context.
+- Public claims must be supported by the supplied context and approved Business Rules.
+- If Business Rules are missing, incomplete or draft, stay plan-only and explicitly identify missing facts.
+- Final price, quotation, discount, payment terms, production/delivery commitment, complaint settlement and shipment claims always remain owner-controlled.
 - Write in the same language as the owner. If the owner uses Roman Urdu, reply in Roman Urdu.
 - Social content must target wholesalers, importers, retailers, distributors and private-label brands, not retail consumers.
 - For multilingual SEO, do not propose hidden keyword stuffing, machine-generated doorway pages or hreflang for untranslated pages. Propose useful localized pages, native-quality review and published-locale-only sitemaps.
-- External writes require approval. Do not claim a post, message, listing or outreach was sent.
+- External writes require owner approval and a fresh server-side Business Rules check. Do not claim a post, message, listing or outreach was sent.
+- A listing_task updates the internal listing registry only; it does not publish or edit an external platform profile.
 - For outreach, propose a campaign brief only. The owner selects CRM leads and reviews drafts in Leads & Communication → Mailing before any Gmail send.
 
 ALLOWED ACTION TYPES AND PAYLOADS:
@@ -266,7 +308,7 @@ ALLOWED ACTION TYPES AND PAYLOADS:
    payload: { market: string, buyer_types: string[], products: string[], target_count: number, sources: string[], outreach_languages: string[], qualification_rules: string[], follow_up_cadence: string[], csv_columns: string[] }
 4. listing_task
    payload: { platform: string, profile_url?: string, account_name?: string, status: "not_started"|"in_progress"|"pending_verification"|"active"|"needs_attention"|"paused"|"rejected", next_action: string, notes?: string }
-   This always requires owner approval.
+   This always requires owner approval and changes only the internal registry.
 5. buyer_reply_draft
    payload: { lead_reference?: string, channel: string, language: string, subject?: string, body: string }
 6. seo_localization_plan
@@ -326,12 +368,14 @@ function normalizeActions(value: unknown) {
       : type.replaceAll("_", " ");
     const description = typeof raw.description === "string" ? raw.description.trim().slice(0, 1200) : null;
     const risk = raw.risk_level === "high" || raw.risk_level === "medium" ? raw.risk_level : "low";
-    const payload = raw.payload && typeof raw.payload === "object" && !Array.isArray(raw.payload) ? raw.payload : {};
+    const payload = raw.payload && typeof raw.payload === "object" && !Array.isArray(raw.payload)
+      ? raw.payload as Record<string, unknown>
+      : {};
     return [{
       action_type: type,
       title,
       description,
-      risk_level: APPROVAL_REQUIRED.has(type) && risk === "low" ? "medium" : risk,
+      risk_level: EXTERNAL_ACTION_TYPES.has(type) && risk === "low" ? "medium" : risk,
       payload,
     }];
   });
