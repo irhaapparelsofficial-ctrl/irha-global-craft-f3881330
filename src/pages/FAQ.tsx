@@ -5,51 +5,105 @@ import { whatsappLink } from "@/lib/constants";
 
 const FAQS = [
   {
-    group: "Ordering & MOQ",
+    group: "Company & Verification",
     items: [
-      { q: "What is your minimum order quantity (MOQ)?", a: "Our MOQ is flexible per program across all categories — streetwear, trachten, leather, performance and lounge. Our emerging-brand program allows mixed-size runs at our flexible MOQ." },
-      { q: "Can I order mixed sizes and colors within the MOQ?", a: "Yes. Within a single style/print, you can split across sizes (XS–3XL) freely. Color splits within the 50-piece MOQ are accepted at 25 pieces per color minimum after the initial MOQ is met." },
-      { q: "Do you accept small trial orders before bulk?", a: "Absolutely. We offer paid sampling and a 'pilot run' option (typically 25–50 pieces) before committing to full bulk, so you can validate fit, fabric and finish on your retail floor." },
+      {
+        q: "Is Irha Apparels a new manufacturer?",
+        a: "No. Irha Apparels is an experienced apparel manufacturer in Sialkot. The website is newly built, so buyers are encouraged to verify the team and program directly instead of relying on website age alone.",
+      },
+      {
+        q: "Can I see the factory before placing an order?",
+        a: "You can request a scheduled live factory video call. The team confirms availability and the relevant viewing scope after reviewing your category and meeting request.",
+      },
+      {
+        q: "How can my company verify Irha Apparels?",
+        a: "Share your business requirement, request a live call, review the quotation and program evidence, and confirm specifications, samples and commercial terms before committing to production.",
+      },
     ],
   },
   {
-    group: "Samples",
+    group: "Quotes & MOQ",
     items: [
-      { q: "How much does a sample cost?", a: "Sample costs range from $40 to $250 depending on category (knit vs. leather vs. embellished). Sample fees are 100% refundable against bulk orders above 500 units." },
-      { q: "How long does sampling take?", a: "Pre-production samples are typically ready in 7–14 days from receipt of tech pack and approved counter-samples for fabric/trims." },
-      { q: "Do you provide development for new designs?", a: "Yes — our ODM team includes pattern makers, illustrators and a CAD studio. We can develop from sketch, reference image, or a competitor sample." },
+      {
+        q: "What is your minimum order quantity?",
+        a: "MOQ is confirmed per program. It depends on the product, material, color split, customization, labels, packaging and production setup. Send the exact requirement for a reliable answer.",
+      },
+      {
+        q: "Why are prices not shown on the website?",
+        a: "Irha Apparels is a custom B2B manufacturer, not a fixed-price retail store. Unit cost changes with fabric or leather, construction, embellishment, quantity, packaging, destination and shipping scope.",
+      },
+      {
+        q: "What information is needed for a quotation?",
+        a: "Provide the product or reference, material preference, estimated quantity, size and color range, customization, branding, destination country and target delivery window. A tech pack is helpful but not required for the first review.",
+      },
     ],
   },
   {
-    group: "Customization",
+    group: "Samples & Development",
     items: [
-      { q: "What customization options do you offer?", a: "Full OEM/ODM/Private Label service: custom fabrics, prints, embroidery, sublimation, puff print, DTG, custom hardware (zippers, buttons, snaps), woven & leather labels, hangtags, branded packaging and gift boxes." },
-      { q: "Can you match a specific Pantone color?", a: "Yes. Lab dips are produced for any Pantone TCX/TPX shade with shade approval before bulk. Approved shades are then locked across all production lots." },
-      { q: "Do you produce private label / white label?", a: "Yes. We produce under your brand exclusively — no Irha labels appear on your goods. Full IP confidentiality NDAs available." },
+      {
+        q: "Can I request a sample before bulk production?",
+        a: "Yes, sample requests can be reviewed before bulk production. Sample feasibility, cost, timing and shipping are confirmed after the product and customization scope are understood.",
+      },
+      {
+        q: "Can you develop a product from a sketch or reference image?",
+        a: "OEM, ODM and private-label development can start from a tech pack, sketch, reference garment or image. The team first confirms what can be developed without copying protected branding or unsupported details.",
+      },
+      {
+        q: "What happens if I request changes after sample approval?",
+        a: "Changes are documented and reviewed again because they may affect material use, pattern, artwork, cost or timing. Bulk should proceed only against the latest approved specification.",
+      },
     ],
   },
   {
-    group: "Shipping & Logistics",
+    group: "Customization & Private Label",
     items: [
-      { q: "What are your shipping options?", a: "FOB Sialkot (default), CIF, DDP and door-to-door air or sea freight. We work with DHL, FedEx, Maersk and Hapag-Lloyd for direct relationships and competitive rates." },
-      { q: "What are typical lead times?", a: "25–45 days for knits and sportswear, 45–60 days for trachten and leather. Air freight adds 5–7 days; sea freight 25–35 days depending on destination." },
-      { q: "Which countries do you regularly export to?", a: "USA, Germany, UK, France, Italy, Netherlands, UAE, KSA, Canada, Australia and 20+ others. We handle export documentation, customs and certificates of origin in-house." },
+      {
+        q: "What private-label options are available?",
+        a: "Depending on the program, options may include woven or printed labels, care labels, hangtags, packaging, embroidery, printing, trims and other buyer branding. Availability and MOQ are confirmed for the exact request.",
+      },
+      {
+        q: "Can you match my colors, fabric or trims?",
+        a: "Color, material and trim matching can be reviewed against references or specifications. Approval samples, swatches or alternatives may be required before bulk production.",
+      },
+      {
+        q: "Can we discuss confidentiality or an NDA?",
+        a: "Yes. Tell the team about confidentiality, design ownership or exclusivity requirements before sharing sensitive files so the appropriate commercial terms can be discussed.",
+      },
     ],
   },
   {
-    group: "Payment",
+    group: "Quality & Documentation",
     items: [
-      { q: "What payment terms do you accept?", a: "30% deposit on PO, 70% balance against B/L copy or before dispatch. For repeat clients we offer 30/70 net 30 and L/C at sight options." },
-      { q: "Which payment methods do you accept?", a: "T/T (bank wire), Letter of Credit, Wise, PayPal (for samples & small balances). We do not accept crypto." },
-      { q: "Do you offer credit terms for established buyers?", a: "Yes. After 3 successful production cycles, we extend net-30 or net-45 terms based on order volume and credit reference." },
+      {
+        q: "How is product quality agreed?",
+        a: "Quality is judged against the approved specification, sample, measurements, materials, artwork, trims and packaging requirements. The inspection plan should be agreed before production.",
+      },
+      {
+        q: "Do all products carry the same certifications?",
+        a: "No blanket certification claim is made for every product. Material, testing and compliance documents are confirmed according to the exact fabric or leather, supplier, destination and buyer requirement.",
+      },
+      {
+        q: "Can third-party inspection be arranged?",
+        a: "Third-party inspection requirements can be discussed and included in the order plan before production. The inspection scope, timing, cost and responsible party must be agreed in writing.",
+      },
     ],
   },
   {
-    group: "Quality & Compliance",
+    group: "Production, Shipping & Payment",
     items: [
-      { q: "What QC standards do you follow?", a: "AQL 2.5 (general level II) is our default. 7-point inspection covering measurement, stitching, seams, trims, wash, packaging and shade. Third-party inspections (SGS, Intertek, Bureau Veritas) welcomed on buyer's account." },
-      { q: "Are your fabrics certified?", a: "Yes — certified fabrics on request is standard. organic, sustainable cotton programs, wool and bamboo options, vetted leather and recycled polyester options on request." },
-      { q: "What is your defect policy?", a: "Any garment failing your approved AQL is replaced or credited in full. We document and resolve defects within 14 days of buyer notification." },
+      {
+        q: "How long will production take?",
+        a: "Timing is confirmed after the product, quantity, material availability, sample approval and customization are reviewed. A date shown before that review would not be reliable.",
+      },
+      {
+        q: "Which shipping terms are available?",
+        a: "The team can review suitable Incoterms and shipping options based on destination, shipment size and buyer preference. The quotation states what is included and which destination costs remain with the buyer.",
+      },
+      {
+        q: "What payment terms do you accept?",
+        a: "Payment method and milestones are stated on the approved quotation or proforma invoice. Do not send payment against an informal message that does not match the confirmed company and order documents.",
+      },
     ],
   },
 ];
@@ -58,67 +112,69 @@ export default function FAQ() {
   return (
     <>
       <SEO
-        title="FAQ — MOQ, Samples, Shipping & Pricing | Irha Apparels"
-        description="Common questions about ordering apparel from Irha Apparels — MOQs, sampling, customization, shipping, payment terms and quality standards for B2B buyers."
+        title="B2B Buyer FAQ — Quotes, Samples, MOQ & Verification"
+        description="Buyer-safe answers about Irha Apparels verification, custom quotations, MOQ, samples, private label, quality documents, production, shipping and payment."
         path="/faq"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          mainEntity: FAQS.flatMap((g) =>
-            g.items.map((item) => ({
+          mainEntity: FAQS.flatMap((group) =>
+            group.items.map((item) => ({
               "@type": "Question",
               name: item.q,
               acceptedAnswer: { "@type": "Answer", text: item.a },
-            }))
+            })),
           ),
         }}
       />
 
-      <section className="pt-40 pb-20 border-b border-border/60">
+      <section className="pt-36 md:pt-44 pb-20 border-b border-border/60">
         <div className="container-luxe">
-          <p className="eyebrow mb-6">Buyer Resource</p>
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-5xl">
-            Everything you need to <span className="text-gold italic">place an order</span>.
+          <p className="eyebrow mb-5">B2B Buyer FAQ</p>
+          <h1 className="font-display text-5xl md:text-7xl leading-[0.96] max-w-5xl">
+            Clear answers before you <span className="text-gold italic">request a quote.</span>
           </h1>
-          <p className="mt-8 max-w-2xl text-lg text-foreground/75">
-            Direct answers on MOQs, sampling, lead times, payment and compliance — written for sourcing managers,
-            buyers and emerging brand founders.
+          <p className="mt-7 max-w-3xl text-base md:text-lg text-foreground/70 leading-relaxed">
+            These answers explain the working approach. Exact MOQ, price, sample cost, production timing, documents and shipping are confirmed only after the specific program is reviewed.
           </p>
         </div>
       </section>
 
       <section className="py-20 md:py-28">
-        <div className="container-luxe grid lg:grid-cols-12 gap-16">
+        <div className="container-luxe grid lg:grid-cols-12 gap-14">
           <aside className="lg:col-span-3 hidden lg:block">
             <div className="sticky top-32 space-y-3">
               <p className="eyebrow mb-4">Browse</p>
-              {FAQS.map((g) => (
+              {FAQS.map((group) => (
                 <a
-                  key={g.group}
-                  href={`#${g.group.toLowerCase().replace(/[^a-z]+/g, "-")}`}
-                  className="block text-sm text-foreground/70 hover:text-primary hover-gold-underline w-fit"
+                  key={group.group}
+                  href={`#${group.group.toLowerCase().replace(/[^a-z]+/g, "-")}`}
+                  className="block text-sm text-foreground/68 hover:text-gold w-fit"
                 >
-                  {g.group}
+                  {group.group}
                 </a>
               ))}
+              <Link to="/buyer-trust" className="mt-7 inline-flex text-[10px] uppercase tracking-[0.2em] text-gold hover:underline">
+                Open Buyer Trust Center
+              </Link>
             </div>
           </aside>
 
-          <div className="lg:col-span-9 space-y-16">
-            {FAQS.map((g) => (
-              <div key={g.group} id={g.group.toLowerCase().replace(/[^a-z]+/g, "-")} className="scroll-mt-32">
-                <p className="eyebrow mb-6">{g.group}</p>
+          <div className="lg:col-span-9 space-y-14">
+            {FAQS.map((group) => (
+              <div key={group.group} id={group.group.toLowerCase().replace(/[^a-z]+/g, "-")} className="scroll-mt-32">
+                <p className="eyebrow mb-5">{group.group}</p>
                 <Accordion type="single" collapsible className="space-y-3">
-                  {g.items.map((item, idx) => (
+                  {group.items.map((item, index) => (
                     <AccordionItem
                       key={item.q}
-                      value={`${g.group}-${idx}`}
-                      className="border border-border/60 bg-card/40 px-6 data-[state=open]:border-primary/40 transition-colors"
+                      value={`${group.group}-${index}`}
+                      className="border border-border/60 bg-card/35 px-6 data-[state=open]:border-gold/45 transition-colors"
                     >
                       <AccordionTrigger className="font-display text-lg md:text-xl text-left hover:no-underline py-6">
                         {item.q}
                       </AccordionTrigger>
-                      <AccordionContent className="text-foreground/75 leading-relaxed text-sm md:text-base pb-6">
+                      <AccordionContent className="text-foreground/70 leading-relaxed text-sm md:text-base pb-6">
                         {item.a}
                       </AccordionContent>
                     </AccordionItem>
@@ -130,20 +186,23 @@ export default function FAQ() {
         </div>
       </section>
 
-      <section className="py-24 md:py-28 border-t border-border/60 bg-secondary/40">
-        <div className="container-luxe text-center max-w-3xl">
-          <h2 className="font-display text-3xl md:text-4xl leading-[1.05]">
-            Question we didn't <span className="text-gold italic">answer?</span>
+      <section className="py-24 border-t border-border/60 bg-secondary/35">
+        <div className="container-luxe text-center max-w-4xl">
+          <h2 className="font-display text-3xl md:text-5xl leading-[1.04]">
+            Need an answer for your <span className="text-gold italic">exact program?</span>
           </h2>
-          <div className="mt-10 flex flex-wrap gap-3 justify-center">
-            <Link to="/inquiry" className="bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all">
-              Send an Inquiry
+          <div className="mt-9 flex flex-wrap gap-3 justify-center">
+            <Link to="/inquiry" className="bg-gradient-gold text-primary-foreground px-8 py-4 text-[10px] uppercase tracking-[0.24em]">
+              Send an inquiry
+            </Link>
+            <Link to="/factory-video-call" className="border border-foreground/25 hover:border-gold hover:text-gold px-8 py-4 text-[10px] uppercase tracking-[0.24em]">
+              Request factory call
             </Link>
             <a
-              href={whatsappLink("Hi Irha Apparels, I have a question about your B2B program.")}
+              href={whatsappLink("Hi Irha Apparels, I have a question about a B2B manufacturing program.")}
               target="_blank"
-              rel="noreferrer"
-              className="border border-foreground/30 hover:border-primary hover:text-primary px-8 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+              rel="noreferrer noopener"
+              className="border border-foreground/25 hover:border-emerald-400 hover:text-emerald-300 px-8 py-4 text-[10px] uppercase tracking-[0.24em]"
             >
               Ask on WhatsApp
             </a>
