@@ -62,6 +62,11 @@
       {"source":"https://drive.google.com/uc?export=download&id=1xlRLKC_x5OLSrPEmCZKwN28eg5fvbyeA","fallback":"https://drive.google.com/thumbnail?id=1xlRLKC_x5OLSrPEmCZKwN28eg5fvbyeA&sz=w1600","file":"03-angle-back.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=1ka1wIQikJxVxBVBStLPqDUgKkTiHc_O9","fallback":"https://drive.google.com/thumbnail?id=1ka1wIQikJxVxBVBStLPqDUgKkTiHc_O9&sz=w1600","file":"04-detail-front-scroll-embroidery.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=1KvU7mlfmln0FiCCJzkpSVLjI91XyfFE-","fallback":"https://drive.google.com/thumbnail?id=1KvU7mlfmln0FiCCJzkpSVLjI91XyfFE-&sz=w1600","file":"05-detail-front-construction.webp"}
+    ],
+    "sand-brown-floral-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1rUqsRLSpopQ2_orZlYRmwOeixLgUcnVq","fallback":"https://drive.google.com/thumbnail?id=1rUqsRLSpopQ2_orZlYRmwOeixLgUcnVq&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1XBBXrgY_6tXv8hOOZN2BIm7VovCDQdzk","fallback":"https://drive.google.com/thumbnail?id=1XBBXrgY_6tXv8hOOZN2BIm7VovCDQdzk&sz=w1600","file":"04-detail-leg-embroidery-buttons.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1BPEQzbgbTafXw6kct135SMXEvqi2bMZp","fallback":"https://drive.google.com/thumbnail?id=1BPEQzbgbTafXw6kct135SMXEvqi2bMZp&sz=w1600","file":"05-detail-suspender-front-flap.webp"}
     ]
   }
 }
