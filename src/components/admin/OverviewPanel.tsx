@@ -13,12 +13,19 @@ type Counts = {
   views: number;
 };
 
-type Inquiry = { id: string; name: string; email: string; company: string | null; created_at: string; status: string };
-type PageView = { path: string };
+type InquiryRow = { id: string; name: string; email: string; company: string | null; created_at: string; status: string };
+type PageViewRow = { path: string };
+
+function normalizeTrafficPath(value: string) {
+  const raw = (value || "/").split("?")[0].split("#")[0];
+  if (!raw || raw === "/") return "/";
+  const normalized = raw.replace(/\/{2,}/g, "/").replace(/\/$/, "");
+  return normalized || "/";
+}
 
 export default function OverviewPanel({ go }: { go: (view: AdminView) => void }) {
   const [counts, setCounts] = useState<Counts | null>(null);
-  const [recent, setRecent] = useState<Inquiry[]>([]);
+  const [recent, setRecent] = useState<InquiryRow[]>([]);
   const [topPaths, setTopPaths] = useState<[string, number][]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,9 +51,13 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
         chat: chat.count ?? 0,
         views: views.count ?? 0,
       });
-      setRecent((recentQuery.data as Inquiry[]) ?? []);
+      setRecent((recentQuery.data as InquiryRow[]) ?? []);
       const tally: Record<string, number> = {};
-      ((viewsQuery.data as PageView[]) ?? []).forEach((row) => { tally[row.path] = (tally[row.path] ?? 0) + 1; });
+      ((viewsQuery.data as PageViewRow[]) ?? []).forEach((row) => {
+        const path = normalizeTrafficPath(row.path);
+        if (path.startsWith("/admin") || path.startsWith("/auth")) return;
+        tally[path] = (tally[path] ?? 0) + 1;
+      });
       setTopPaths(Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, 8));
       setLoading(false);
     })();
@@ -76,7 +87,7 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
           <button
             key={stat.label}
             onClick={() => go(stat.view)}
-            className="text-left border border-border/60 bg-card/30 p-5 hover:border-primary/60 transition-colors"
+            className="text-left border border-border/60 bg-card/30 p-4 sm:p-5 hover:border-primary/60 transition-colors min-h-32"
           >
             <div className="flex items-center justify-between mb-3">
               <stat.icon size={16} className="text-gold" />
@@ -84,7 +95,7 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
             <p className="font-display text-3xl tabular-nums">
               {loading ? "—" : (stat.value ?? 0).toLocaleString()}
             </p>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-1">{stat.label}</p>
+            <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-muted-foreground mt-1 leading-relaxed">{stat.label}</p>
           </button>
         ))}
       </div>
@@ -97,7 +108,11 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
           {loading ? (
             <p className="text-xs text-muted-foreground">Loading…</p>
           ) : recent.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No inquiries yet.</p>
+            <div className="py-6 text-center border border-dashed border-border/50">
+              <Inbox size={20} className="mx-auto text-gold/70 mb-2" />
+              <p className="text-sm">No buyer inquiry has been received yet.</p>
+              <p className="text-xs text-muted-foreground mt-2">New RFQ, sample, catalogue and repeat-order requests will appear here.</p>
+            </div>
           ) : (
             <ul className="space-y-3">
               {recent.map((row) => (
@@ -114,7 +129,8 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
         </div>
 
         <div className="border border-border/60 bg-card/30 p-5">
-          <p className="eyebrow mb-4">Top viewed pages · last 500 views</p>
+          <p className="eyebrow mb-1">Top viewed pages</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground mb-4">Last 500 consented views · query strings combined</p>
           {loading ? (
             <p className="text-xs text-muted-foreground">Loading…</p>
           ) : topPaths.length === 0 ? (
@@ -149,7 +165,7 @@ function QuickAction({ label, icon, onClick }: { label: string; icon: React.Reac
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] border border-gold/50 text-gold px-3 py-2 hover:bg-gold hover:text-background transition-colors"
+      className="inline-flex min-h-11 items-center gap-2 text-[10px] uppercase tracking-[0.2em] border border-gold/50 text-gold px-3 py-2 hover:bg-gold hover:text-background transition-colors"
     >
       {icon} {label}
     </button>
