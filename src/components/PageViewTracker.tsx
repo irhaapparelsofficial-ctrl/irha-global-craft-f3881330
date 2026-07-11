@@ -1,21 +1,8 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { ANALYTICS_CONSENT_EVENT } from "@/components/CookieConsent";
 
 const CONSENT_KEY = "irha_cookie_consent_v1";
-
-function getSessionId(): string {
-  try {
-    let sessionId = sessionStorage.getItem("irha:sid");
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      sessionStorage.setItem("irha:sid", sessionId);
-    }
-    return sessionId;
-  } catch {
-    return "anon";
-  }
-}
 
 function hasAnalyticsConsent(): boolean {
   try {
@@ -40,24 +27,20 @@ export default function PageViewTracker() {
   useEffect(() => {
     const pagePath = normalizePath(pathname);
     if (pagePath.startsWith("/admin") || pagePath.startsWith("/auth")) return;
-    if (!hasAnalyticsConsent()) return;
 
-    const pageLocation = `${window.location.origin}${pagePath}`;
+    const trackPageView = () => {
+      if (!hasAnalyticsConsent() || typeof window.gtag !== "function") return;
 
-    if (typeof window.gtag === "function") {
       window.gtag("event", "page_view", {
-        page_location: pageLocation,
+        page_location: `${window.location.origin}${pagePath}`,
         page_path: pagePath,
         send_to: "G-RV39YH4CPF",
       });
-    }
+    };
 
-    void supabase.from("page_views").insert({
-      path: pagePath,
-      referrer: document.referrer || null,
-      user_agent: navigator.userAgent,
-      session_id: getSessionId(),
-    });
+    trackPageView();
+    window.addEventListener(ANALYTICS_CONSENT_EVENT, trackPageView);
+    return () => window.removeEventListener(ANALYTICS_CONSENT_EVENT, trackPageView);
   }, [pathname]);
 
   return null;
