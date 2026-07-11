@@ -1,6 +1,6 @@
 const BASE = process.env.IRHA_BASE_URL || "https://www.irhaapparels.com";
-const EXPECTED_RELEASE = "frontend-live-2026-07-12-r9";
-const EXPECTED_RELEASE_TEXT = "IRHA_FRONTEND_LIVE_2026_07_12_R9";
+const EXPECTED_RELEASE = "frontend-live-2026-07-12-r10";
+const EXPECTED_RELEASE_TEXT = "IRHA_FRONTEND_LIVE_2026_07_12_R10";
 
 const forbidden = [
   "Since 2014",
@@ -68,7 +68,7 @@ async function main() {
     const home = await fetchText("/", userAgent);
     assert(home.status === 200, `${name} homepage did not return HTTP 200`);
     assert(home.text.includes('id="root"'), `${name} homepage is missing the application root`);
-    assert(home.text.includes(EXPECTED_RELEASE), `${name} homepage is missing release r9`);
+    assert(home.text.includes(EXPECTED_RELEASE), `${name} homepage is missing release r10`);
     for (const term of forbidden) {
       assert(
         !home.text.toLowerCase().includes(term.toLowerCase()),
@@ -79,14 +79,20 @@ async function main() {
 
   const essentialRoutes = [
     "/products",
+    "/products/all",
     "/products/bavarian-trachten-wear",
+    "/products/bavarian-trachten-wear/men",
+    "/products/bavarian-trachten-wear/women/dirndl-dresses",
+    "/products/bavarian-trachten-wear/kids/girls-dirndl",
+    "/products/sportswear/team-club/football-kits",
+    "/products/streetwear-activewear/unisex/hoodies-sweatshirts",
+    "/products/leisure-nightwear/family-hospitality/robes-bathrobes",
+    "/intl/de/products/bavarian-trachten-wear/men/short-lederhosen",
+    "/intl/fr/products/bavarian-trachten-wear/women/dirndl-dresses",
+    "/intl/es/products/sportswear/team-club/football-kits",
     "/products/bavarian-trachten-wear/mens-trachten/short-lederhosen",
     "/products/bavarian-trachten-wear/womens-trachten/dirndl-dresses",
-    "/products/bavarian-trachten-wear/womens-trachten/dirndl-blouses",
-    "/products/bavarian-trachten-wear/womens-trachten/dirndl-aprons",
     "/products/bavarian-trachten-wear/traditional-dirndl-dress",
-    "/products/bavarian-trachten-wear/dirndl-blouse",
-    "/products/bavarian-trachten-wear/dirndl-apron",
     "/catalogue",
     "/buyer-trust",
     "/factory-video-call",
@@ -105,15 +111,19 @@ async function main() {
   }
 
   const sitemap = (await fetchText("/sitemap.xml")).text;
-  for (const routePath of ["/de", "/sustainability", "/shipping-returns", "/blog", "/journal", "/seo-indexing"]) {
-    assert(!sitemap.includes(`<loc>${BASE}${routePath}</loc>`), `sitemap contains quarantined route ${routePath}`);
+  for (const routePath of ["/de", "/sustainability", "/shipping-returns", "/blog", "/journal", "/seo-indexing", "/products/all"]) {
+    assert(!sitemap.includes(`<loc>${BASE}${routePath}</loc>`), `sitemap contains quarantined or duplicate route ${routePath}`);
   }
   for (const routePath of [
     "/products",
     "/products/bavarian-trachten-wear",
-    "/products/bavarian-trachten-wear/womens-trachten/dirndl-dresses",
-    "/products/bavarian-trachten-wear/womens-trachten/dirndl-blouses",
-    "/products/bavarian-trachten-wear/womens-trachten/dirndl-aprons",
+    "/products/bavarian-trachten-wear/men",
+    "/products/bavarian-trachten-wear/women/dirndl-dresses",
+    "/products/bavarian-trachten-wear/kids/girls-dirndl",
+    "/products/sportswear/team-club/football-kits",
+    "/intl/de/products/bavarian-trachten-wear/men/short-lederhosen",
+    "/intl/fr/products/bavarian-trachten-wear/women/dirndl-dresses",
+    "/intl/es/products/sportswear/team-club/football-kits",
     "/buyer-trust",
     "/factory-video-call",
     "/resources",

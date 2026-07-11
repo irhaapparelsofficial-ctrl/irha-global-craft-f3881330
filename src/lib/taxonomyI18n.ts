@@ -1,0 +1,379 @@
+export type TaxonomyLocale = "en" | "de" | "fr" | "es";
+
+export const TAXONOMY_LOCALES: Array<{
+  code: TaxonomyLocale;
+  label: string;
+  hreflang: string;
+  htmlLang: string;
+  direction: "ltr" | "rtl";
+}> = [
+  { code: "en", label: "English", hreflang: "en", htmlLang: "en-US", direction: "ltr" },
+  { code: "de", label: "Deutsch", hreflang: "de", htmlLang: "de-DE", direction: "ltr" },
+  { code: "fr", label: "Français", hreflang: "fr", htmlLang: "fr-FR", direction: "ltr" },
+  { code: "es", label: "Español", hreflang: "es", htmlLang: "es-ES", direction: "ltr" },
+];
+
+export function isTaxonomyLocale(value?: string): value is TaxonomyLocale {
+  return Boolean(value && TAXONOMY_LOCALES.some((locale) => locale.code === value));
+}
+
+const UI = {
+  en: {
+    home: "Home",
+    collections: "Collections",
+    audiences: "Shop by buyer program",
+    productCategories: "Product categories",
+    products: "Products",
+    styles: "styles",
+    viewCollection: "View collection",
+    requestQuote: "Request a quote",
+    viewProduct: "View product",
+    otherLanguages: "Language",
+    programNote: "Materials, branding, sampling, packaging and commercial terms are confirmed against the approved buyer brief.",
+    empty: "This program is available by buyer specification. Send your reference or requirements for review.",
+  },
+  de: {
+    home: "Startseite",
+    collections: "Kollektionen",
+    audiences: "Nach Käuferprogramm",
+    productCategories: "Produktkategorien",
+    products: "Produkte",
+    styles: "Modelle",
+    viewCollection: "Kollektion ansehen",
+    requestQuote: "Angebot anfragen",
+    viewProduct: "Produkt ansehen",
+    otherLanguages: "Sprache",
+    programNote: "Materialien, Branding, Muster, Verpackung und Konditionen werden anhand des freigegebenen Käuferbriefings bestätigt.",
+    empty: "Dieses Programm ist nach Käuferspezifikation verfügbar. Senden Sie Ihre Referenz oder Anforderungen zur Prüfung.",
+  },
+  fr: {
+    home: "Accueil",
+    collections: "Collections",
+    audiences: "Par programme acheteur",
+    productCategories: "Catégories de produits",
+    products: "Produits",
+    styles: "modèles",
+    viewCollection: "Voir la collection",
+    requestQuote: "Demander un devis",
+    viewProduct: "Voir le produit",
+    otherLanguages: "Langue",
+    programNote: "Les matières, le marquage, les échantillons, l’emballage et les conditions commerciales sont confirmés selon le cahier des charges approuvé.",
+    empty: "Ce programme est disponible sur spécification acheteur. Envoyez votre référence ou vos besoins pour examen.",
+  },
+  es: {
+    home: "Inicio",
+    collections: "Colecciones",
+    audiences: "Por programa de comprador",
+    productCategories: "Categorías de producto",
+    products: "Productos",
+    styles: "modelos",
+    viewCollection: "Ver colección",
+    requestQuote: "Solicitar cotización",
+    viewProduct: "Ver producto",
+    otherLanguages: "Idioma",
+    programNote: "Los materiales, el branding, las muestras, el embalaje y las condiciones comerciales se confirman según el briefing aprobado del comprador.",
+    empty: "Este programa está disponible según las especificaciones del comprador. Envíe su referencia o requisitos para revisión.",
+  },
+} as const;
+
+export function taxonomyUi(locale: TaxonomyLocale) {
+  return UI[locale];
+}
+
+const TOP_NAMES: Record<TaxonomyLocale, Record<string, string>> = {
+  en: {
+    "bavarian-trachten-wear": "Bavarian & Trachten Wear",
+    "premium-leather-apparel": "Premium Leather Apparel",
+    sportswear: "Custom Sportswear & Teamwear",
+    "streetwear-activewear": "Streetwear & Activewear",
+    "leisure-nightwear": "Leisurewear & Nightwear",
+  },
+  de: {
+    "bavarian-trachten-wear": "Bayerische Trachtenmode",
+    "premium-leather-apparel": "Premium-Lederbekleidung",
+    sportswear: "Individuelle Sport- & Teambekleidung",
+    "streetwear-activewear": "Streetwear & Activewear",
+    "leisure-nightwear": "Freizeit- & Nachtwäsche",
+  },
+  fr: {
+    "bavarian-trachten-wear": "Vêtements Bavarois & Trachten",
+    "premium-leather-apparel": "Vêtements en Cuir Premium",
+    sportswear: "Vêtements de Sport & Tenues d’Équipe",
+    "streetwear-activewear": "Streetwear & Vêtements Actifs",
+    "leisure-nightwear": "Vêtements Décontractés & de Nuit",
+  },
+  es: {
+    "bavarian-trachten-wear": "Ropa Bávara & Trachten",
+    "premium-leather-apparel": "Prendas de Cuero Premium",
+    sportswear: "Ropa Deportiva & Uniformes de Equipo",
+    "streetwear-activewear": "Streetwear & Ropa Activa",
+    "leisure-nightwear": "Ropa Casual & de Noche",
+  },
+};
+
+const AUDIENCE_NAMES: Record<TaxonomyLocale, Record<string, string>> = {
+  en: {
+    men: "Men",
+    women: "Women",
+    kids: "Kids & Youth",
+    unisex: "Unisex",
+    "team-club": "Teams & Clubs",
+    "family-hospitality": "Family & Hospitality",
+    accessories: "Accessories",
+  },
+  de: {
+    men: "Herren",
+    women: "Damen",
+    kids: "Kinder & Jugend",
+    unisex: "Unisex",
+    "team-club": "Teams & Vereine",
+    "family-hospitality": "Familie & Hotellerie",
+    accessories: "Accessoires",
+  },
+  fr: {
+    men: "Homme",
+    women: "Femme",
+    kids: "Enfant & Junior",
+    unisex: "Unisexe",
+    "team-club": "Équipes & Clubs",
+    "family-hospitality": "Famille & Hôtellerie",
+    accessories: "Accessoires",
+  },
+  es: {
+    men: "Hombre",
+    women: "Mujer",
+    kids: "Niños & Jóvenes",
+    unisex: "Unisex",
+    "team-club": "Equipos & Clubes",
+    "family-hospitality": "Familia & Hostelería",
+    accessories: "Accesorios",
+  },
+};
+
+const COLLECTION_NAMES: Record<Exclude<TaxonomyLocale, "en">, Record<string, string>> = {
+  de: {
+    "short-lederhosen": "Kurze Lederhosen",
+    "knee-length-lederhosen-bundhosen": "Kniebundhosen & Bundhosen",
+    "long-leather-pants": "Lange Lederhosen",
+    "trachten-shirts": "Trachtenhemden",
+    "trachten-vests-jankers": "Trachtenwesten & Janker",
+    "dirndl-dresses": "Dirndlkleider",
+    "dirndl-blouses": "Dirndlblusen",
+    "dirndl-aprons": "Dirndlschürzen",
+    "womens-trachten-jackets-vests": "Damen-Trachtenjacken & Westen",
+    "boys-lederhosen": "Lederhosen für Jungen",
+    "girls-dirndl": "Dirndl für Mädchen",
+    "kids-trachten-shirts": "Trachtenhemden für Kinder",
+    "suspenders-belts": "Hosenträger & Gürtel",
+    "hats-headwear": "Trachtenhüte & Kopfbedeckung",
+    "socks-footwear": "Trachtensocken & Schuhe",
+    "scarves-other-accessories": "Tücher & Trachtenaccessoires",
+    "biker-jackets": "Biker-Lederjacken",
+    "bomber-jackets": "Leder-Bomberjacken",
+    "leather-jackets": "Lederjacken",
+    "leather-coats-outerwear": "Ledermäntel & Oberbekleidung",
+    "leather-vests-waistcoats": "Lederwesten",
+    "leather-pants-trousers": "Lederhosen & Lederhosen-Hosen",
+    "leather-skirts": "Lederröcke",
+    "leather-belts": "Ledergürtel",
+    "leather-gloves": "Lederhandschuhe",
+    "leather-bags-accessories": "Ledertaschen & Accessoires",
+    "football-kits": "Fußballtrikots & Sets",
+    "basketball-uniforms": "Basketballuniformen",
+    "cricket-uniforms": "Cricket-Uniformen",
+    "rugby-kits": "Rugby-Sets",
+    "baseball-uniforms": "Baseballuniformen",
+    "hockey-uniforms": "Hockeyuniformen",
+    tracksuits: "Trainingsanzüge",
+    "training-wear": "Trainingsbekleidung",
+    "gym-fitness-wear": "Fitness- & Gym-Bekleidung",
+    "combat-wrestling-wear": "Kampfsport- & Wrestlingbekleidung",
+    "other-teamwear": "Weitere Teambekleidung",
+    "hoodies-sweatshirts": "Hoodies & Sweatshirts",
+    "t-shirts-tops": "T-Shirts & Oberteile",
+    "joggers-sweatpants": "Jogginghosen & Sweatpants",
+    "cargo-pants": "Cargohosen",
+    "jackets-bombers": "Jacken & Bomberjacken",
+    "activewear-sets": "Activewear-Sets",
+    "leggings-performance-bottoms": "Leggings & Performance-Hosen",
+    "sports-bras-crop-tops": "Sport-BHs & Crop-Tops",
+    "t-shirts-polos": "T-Shirts & Poloshirts",
+    "shirts-henleys": "Hemden & Henley-Shirts",
+    "shorts-casual-bottoms": "Shorts & Freizeithosen",
+    "pajama-sets": "Pyjama-Sets",
+    "nightshirts-nightdresses": "Nachthemden & Nachtkleider",
+    "robes-bathrobes": "Morgenmäntel & Bademäntel",
+    "lounge-sets": "Loungewear-Sets",
+    "sleep-pants-shorts": "Schlafhosen & Shorts",
+    "family-matching-sets": "Passende Familien-Sets",
+    "hotel-hospitality-programs": "Hotel- & Hospitality-Programme",
+  },
+  fr: {
+    "short-lederhosen": "Lederhosen Courts",
+    "knee-length-lederhosen-bundhosen": "Lederhosen Mi-Longs & Bundhosen",
+    "long-leather-pants": "Pantalons Bavarois Longs en Cuir",
+    "trachten-shirts": "Chemises Trachten",
+    "trachten-vests-jankers": "Gilets Trachten & Jankers",
+    "dirndl-dresses": "Robes Dirndl",
+    "dirndl-blouses": "Blouses Dirndl",
+    "dirndl-aprons": "Tabliers Dirndl",
+    "womens-trachten-jackets-vests": "Vestes & Gilets Trachten Femme",
+    "boys-lederhosen": "Lederhosen Garçon",
+    "girls-dirndl": "Dirndl Fille",
+    "kids-trachten-shirts": "Chemises Trachten Enfant",
+    "suspenders-belts": "Bretelles & Ceintures",
+    "hats-headwear": "Chapeaux Bavarois",
+    "socks-footwear": "Chaussettes & Chaussures Trachten",
+    "scarves-other-accessories": "Foulards & Accessoires Trachten",
+    "biker-jackets": "Blousons Biker en Cuir",
+    "bomber-jackets": "Bombers en Cuir",
+    "leather-jackets": "Vestes en Cuir",
+    "leather-coats-outerwear": "Manteaux & Vêtements d’Extérieur en Cuir",
+    "leather-vests-waistcoats": "Gilets en Cuir",
+    "leather-pants-trousers": "Pantalons en Cuir",
+    "leather-skirts": "Jupes en Cuir",
+    "leather-belts": "Ceintures en Cuir",
+    "leather-gloves": "Gants en Cuir",
+    "leather-bags-accessories": "Sacs & Accessoires en Cuir",
+    "football-kits": "Tenues de Football",
+    "basketball-uniforms": "Tenues de Basketball",
+    "cricket-uniforms": "Tenues de Cricket",
+    "rugby-kits": "Tenues de Rugby",
+    "baseball-uniforms": "Tenues de Baseball",
+    "hockey-uniforms": "Tenues de Hockey",
+    tracksuits: "Survêtements",
+    "training-wear": "Vêtements d’Entraînement",
+    "gym-fitness-wear": "Vêtements de Fitness",
+    "combat-wrestling-wear": "Vêtements de Combat & Lutte",
+    "other-teamwear": "Autres Tenues d’Équipe",
+    "hoodies-sweatshirts": "Sweats à Capuche & Sweatshirts",
+    "t-shirts-tops": "T-Shirts & Hauts",
+    "joggers-sweatpants": "Joggers & Pantalons de Survêtement",
+    "cargo-pants": "Pantalons Cargo",
+    "jackets-bombers": "Vestes & Bombers",
+    "activewear-sets": "Ensembles Activewear",
+    "leggings-performance-bottoms": "Leggings & Bas Performance",
+    "sports-bras-crop-tops": "Brassières de Sport & Crop Tops",
+    "t-shirts-polos": "T-Shirts & Polos",
+    "shirts-henleys": "Chemises & Henleys",
+    "shorts-casual-bottoms": "Shorts & Bas Décontractés",
+    "pajama-sets": "Ensembles Pyjama",
+    "nightshirts-nightdresses": "Chemises de Nuit & Nuisettes",
+    "robes-bathrobes": "Peignoirs & Robes de Chambre",
+    "lounge-sets": "Ensembles Loungewear",
+    "sleep-pants-shorts": "Pantalons & Shorts de Nuit",
+    "family-matching-sets": "Ensembles Familiaux Assortis",
+    "hotel-hospitality-programs": "Programmes Hôtellerie",
+  },
+  es: {
+    "short-lederhosen": "Lederhosen Cortos",
+    "knee-length-lederhosen-bundhosen": "Lederhosen a la Rodilla & Bundhosen",
+    "long-leather-pants": "Pantalones Bávaros Largos de Cuero",
+    "trachten-shirts": "Camisas Trachten",
+    "trachten-vests-jankers": "Chalecos Trachten & Jankers",
+    "dirndl-dresses": "Vestidos Dirndl",
+    "dirndl-blouses": "Blusas Dirndl",
+    "dirndl-aprons": "Delantales Dirndl",
+    "womens-trachten-jackets-vests": "Chaquetas & Chalecos Trachten para Mujer",
+    "boys-lederhosen": "Lederhosen para Niño",
+    "girls-dirndl": "Dirndl para Niña",
+    "kids-trachten-shirts": "Camisas Trachten Infantiles",
+    "suspenders-belts": "Tirantes & Cinturones",
+    "hats-headwear": "Sombreros Bávaros",
+    "socks-footwear": "Calcetines & Calzado Trachten",
+    "scarves-other-accessories": "Pañuelos & Accesorios Trachten",
+    "biker-jackets": "Chaquetas Biker de Cuero",
+    "bomber-jackets": "Chaquetas Bomber de Cuero",
+    "leather-jackets": "Chaquetas de Cuero",
+    "leather-coats-outerwear": "Abrigos & Prendas Exteriores de Cuero",
+    "leather-vests-waistcoats": "Chalecos de Cuero",
+    "leather-pants-trousers": "Pantalones de Cuero",
+    "leather-skirts": "Faldas de Cuero",
+    "leather-belts": "Cinturones de Cuero",
+    "leather-gloves": "Guantes de Cuero",
+    "leather-bags-accessories": "Bolsos & Accesorios de Cuero",
+    "football-kits": "Uniformes de Fútbol",
+    "basketball-uniforms": "Uniformes de Baloncesto",
+    "cricket-uniforms": "Uniformes de Críquet",
+    "rugby-kits": "Uniformes de Rugby",
+    "baseball-uniforms": "Uniformes de Béisbol",
+    "hockey-uniforms": "Uniformes de Hockey",
+    tracksuits: "Chándales",
+    "training-wear": "Ropa de Entrenamiento",
+    "gym-fitness-wear": "Ropa de Gimnasio & Fitness",
+    "combat-wrestling-wear": "Ropa de Combate & Lucha",
+    "other-teamwear": "Otros Uniformes de Equipo",
+    "hoodies-sweatshirts": "Sudaderas con & sin Capucha",
+    "t-shirts-tops": "Camisetas & Tops",
+    "joggers-sweatpants": "Joggers & Pantalones de Felpa",
+    "cargo-pants": "Pantalones Cargo",
+    "jackets-bombers": "Chaquetas & Bombers",
+    "activewear-sets": "Conjuntos Activewear",
+    "leggings-performance-bottoms": "Leggings & Prendas de Rendimiento",
+    "sports-bras-crop-tops": "Sujetadores Deportivos & Crop Tops",
+    "t-shirts-polos": "Camisetas & Polos",
+    "shirts-henleys": "Camisas & Henleys",
+    "shorts-casual-bottoms": "Shorts & Pantalones Casuales",
+    "pajama-sets": "Conjuntos de Pijama",
+    "nightshirts-nightdresses": "Camisones & Vestidos de Noche",
+    "robes-bathrobes": "Batas & Albornoces",
+    "lounge-sets": "Conjuntos Loungewear",
+    "sleep-pants-shorts": "Pantalones & Shorts de Dormir",
+    "family-matching-sets": "Conjuntos Familiares a Juego",
+    "hotel-hospitality-programs": "Programas de Hotelería",
+  },
+};
+
+export function localizedTopName(locale: TaxonomyLocale, slug: string, fallback: string) {
+  return TOP_NAMES[locale][slug] ?? fallback;
+}
+
+export function localizedAudienceName(locale: TaxonomyLocale, slug: string, fallback: string) {
+  return AUDIENCE_NAMES[locale][slug] ?? fallback;
+}
+
+export function localizedCollectionName(locale: TaxonomyLocale, slug: string, fallback: string) {
+  if (locale === "en") return fallback;
+  return COLLECTION_NAMES[locale][slug] ?? fallback;
+}
+
+export function localizedTaxonomySeo(args: {
+  locale: TaxonomyLocale;
+  topName: string;
+  audienceName?: string;
+  collectionName?: string;
+}) {
+  const { locale, topName, audienceName, collectionName } = args;
+  const subject = collectionName ?? (audienceName ? `${audienceName} ${topName}` : topName);
+
+  if (locale === "de") {
+    return {
+      title: `${subject} Hersteller | Großhandel & Private Label | Irha Apparels`,
+      h1: `${subject} Hersteller für Großhandel & Private Label`,
+      description: `${subject} für Großhändler, Importeure und Private-Label-Käufer. Produktdetails und Konditionen werden nach Prüfung der Anforderungen bestätigt.`,
+      intro: `${subject} Programme für B2B-Käufer mit kundenspezifischer Entwicklung, Branding und Verpackung nach freigegebenem Briefing.`,
+    };
+  }
+  if (locale === "fr") {
+    return {
+      title: `Fabricant ${subject} | Grossiste & Marque Privée | Irha Apparels`,
+      h1: `Fabricant ${subject} pour Grossistes & Marques Privées`,
+      description: `${subject} pour grossistes, importateurs et marques privées. Les détails produit et conditions sont confirmés après examen des besoins.`,
+      intro: `Programmes ${subject} pour acheteurs B2B avec développement, marquage et emballage selon le cahier des charges approuvé.`,
+    };
+  }
+  if (locale === "es") {
+    return {
+      title: `Fabricante de ${subject} | Mayorista & Marca Privada | Irha Apparels`,
+      h1: `Fabricante de ${subject} para Mayoristas & Marcas Privadas`,
+      description: `${subject} para mayoristas, importadores y compradores de marca privada. Los detalles y condiciones se confirman tras revisar los requisitos.`,
+      intro: `Programas de ${subject} para compradores B2B con desarrollo, branding y embalaje según el briefing aprobado.`,
+    };
+  }
+  return {
+    title: `${subject} Manufacturer | Wholesale & Private Label | Irha Apparels`,
+    h1: `${subject} Manufacturer for Wholesale & Private Label`,
+    description: `${subject} programs for wholesalers, importers and private-label buyers. Product details and commercial terms are confirmed after requirement review.`,
+    intro: `${subject} programs for B2B buyers with custom development, branding and packaging against an approved buyer brief.`,
+  };
+}
