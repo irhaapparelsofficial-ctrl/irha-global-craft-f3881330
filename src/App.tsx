@@ -14,6 +14,7 @@ const About = lazy(() => import("./pages/About"));
 const Products = lazy(() => import("./pages/Products"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const BavarianMensCollection = lazy(() => import("./pages/BavarianMensCollection"));
+const BavarianWomensCollection = lazy(() => import("./pages/BavarianWomensCollection"));
 const Manufacturing = lazy(() => import("./pages/Manufacturing"));
 const Inquiry = lazy(() => import("./pages/Inquiry"));
 const RepeatOrder = lazy(() => import("./pages/RepeatOrder"));
@@ -111,6 +112,14 @@ const App = () => (
                       <Route
                         path="/products/bavarian-trachten-wear/mens-trachten/:collectionSlug"
                         element={<BavarianMensCollection />}
+                      />
+                      <Route
+                        path="/products/bavarian-trachten-wear/womens-trachten"
+                        element={<Navigate to="/products/bavarian-trachten-wear?subcategory=women" replace />}
+                      />
+                      <Route
+                        path="/products/bavarian-trachten-wear/womens-trachten/:collectionSlug"
+                        element={<BavarianWomensCollection />}
                       />
                       <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
                       <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
