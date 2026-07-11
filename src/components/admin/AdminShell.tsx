@@ -13,6 +13,9 @@ import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
 import GoogleSearchCenter from "@/components/admin/GoogleSearchCenter";
+import AIOperationsPlaybook from "@/components/admin/AIOperationsPlaybook";
+import OutreachTemplateLibrary from "@/components/admin/OutreachTemplateLibrary";
+import SocialContentPlaybook from "@/components/admin/SocialContentPlaybook";
 
 export type AdminView =
   | "overview"
@@ -134,7 +137,13 @@ export function AdminShell({
           ? <GoogleSearchCenter />
           : view === "system"
             ? <ProductionHealthPanel />
-            : children;
+            : view === "ai"
+              ? <><AIOperationsPlaybook />{children}</>
+              : view === "mailing"
+                ? <><OutreachTemplateLibrary />{children}</>
+                : view === "social"
+                  ? <><SocialContentPlaybook />{children}</>
+                  : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
