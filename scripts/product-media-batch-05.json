@@ -1,0 +1,30 @@
+{
+  "products": {
+    "black-contrast-piped-long-leather-pants": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1BAZEBqBaLEr9T0J1fA7wR82rjBM3ZCou",
+        "fallback": "https://drive.google.com/thumbnail?id=1BAZEBqBaLEr9T0J1fA7wR82rjBM3ZCou&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1pjsJSekTp_BLn4Qa-7U2iJVDrrkNt7yJ",
+        "fallback": "https://drive.google.com/thumbnail?id=1pjsJSekTp_BLn4Qa-7U2iJVDrrkNt7yJ&sz=w1600",
+        "file": "04-multi-view-reference.webp"
+      }
+    ],
+    "golden-tan-contrast-piped-long-leather-pants": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1Uqbv6XjbA5OvPF8v3h4jqp0lJBdHPbCL",
+        "fallback": "https://drive.google.com/thumbnail?id=1Uqbv6XjbA5OvPF8v3h4jqp0lJBdHPbCL&sz=w1600",
+        "file": "01-multi-view-reference.webp"
+      }
+    ],
+    "dark-brown-contrast-piped-knee-panel-long-leather-pants": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1S627WoAvt0oZaJH3IAAxOrbXTB8ynfBU",
+        "fallback": "https://drive.google.com/thumbnail?id=1S627WoAvt0oZaJH3IAAxOrbXTB8ynfBU&sz=w1600",
+        "file": "01-multi-view-reference.webp"
+      }
+    ]
+  }
+}
