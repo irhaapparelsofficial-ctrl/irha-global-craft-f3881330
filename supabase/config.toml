@@ -33,5 +33,8 @@ verify_jwt = false
 [functions.process-email-queue]
 verify_jwt = true
 
+[functions.social-calendar]
+verify_jwt = true
+
 [functions.social-multi-sync]
 verify_jwt = true
