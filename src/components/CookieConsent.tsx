@@ -3,7 +3,12 @@ import { Link } from "react-router-dom";
 
 const STORAGE_KEY = "irha_cookie_consent_v1";
 const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
+const GOOGLE_ANALYTICS_ID = "G-RV39YH4CPF";
+const GOOGLE_ADS_ID = "AW-18279003993";
+const GOOGLE_TAG_SCRIPT_ID = "irha-google-tag-loader";
+
 export const OPEN_COOKIE_SETTINGS_EVENT = "irha:open-cookie-settings";
+export const ANALYTICS_CONSENT_EVENT = "irha:analytics-consent-changed";
 
 type Categories = { analytics: boolean; ads: boolean };
 type Consent = { categories: Categories; ts: number };
@@ -12,6 +17,9 @@ declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
+    __irhaGtagBootstrapped?: boolean;
+    __irhaGoogleAnalyticsConfigured?: boolean;
+    __irhaGoogleAdsConfigured?: boolean;
   }
 }
 
@@ -23,6 +31,41 @@ const applyConsent = (categories: Categories) => {
     ad_user_data: categories.ads ? "granted" : "denied",
     ad_personalization: categories.ads ? "granted" : "denied",
   });
+};
+
+const ensureGoogleTags = (categories: Categories) => {
+  if ((!categories.analytics && !categories.ads) || typeof window.gtag !== "function") return;
+
+  if (!window.__irhaGtagBootstrapped) {
+    window.gtag("js", new Date());
+    window.__irhaGtagBootstrapped = true;
+  }
+
+  if (categories.analytics && !window.__irhaGoogleAnalyticsConfigured) {
+    window.gtag("config", GOOGLE_ANALYTICS_ID, { send_page_view: false });
+    window.__irhaGoogleAnalyticsConfigured = true;
+  }
+
+  if (categories.ads && !window.__irhaGoogleAdsConfigured) {
+    window.gtag("config", GOOGLE_ADS_ID);
+    window.__irhaGoogleAdsConfigured = true;
+  }
+
+  if (!document.getElementById(GOOGLE_TAG_SCRIPT_ID)) {
+    const script = document.createElement("script");
+    script.id = GOOGLE_TAG_SCRIPT_ID;
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${
+      categories.analytics ? GOOGLE_ANALYTICS_ID : GOOGLE_ADS_ID
+    }`;
+    document.head.appendChild(script);
+  }
+};
+
+const applyAndLoad = (categories: Categories) => {
+  applyConsent(categories);
+  ensureGoogleTags(categories);
+  window.dispatchEvent(new Event(ANALYTICS_CONSENT_EVENT));
 };
 
 const readStored = (): Consent | null => {
@@ -69,7 +112,7 @@ export default function CookieConsent() {
   useEffect(() => {
     const stored = readStored();
     if (stored) {
-      applyConsent(stored.categories);
+      applyAndLoad(stored.categories);
       return;
     }
     applyConsent({ analytics: false, ads: false });
@@ -79,7 +122,7 @@ export default function CookieConsent() {
   const acceptAll = useCallback(() => {
     const categories = { analytics: true, ads: true };
     save(categories);
-    applyConsent(categories);
+    applyAndLoad(categories);
     setVisible(false);
     setCustomizing(false);
   }, []);
@@ -88,6 +131,7 @@ export default function CookieConsent() {
     const categories = { analytics: false, ads: false };
     save(categories);
     applyConsent(categories);
+    window.dispatchEvent(new Event(ANALYTICS_CONSENT_EVENT));
     setVisible(false);
     setCustomizing(false);
   }, []);
@@ -95,7 +139,7 @@ export default function CookieConsent() {
   const savePrefs = useCallback(() => {
     const categories = { analytics, ads };
     save(categories);
-    applyConsent(categories);
+    applyAndLoad(categories);
     setVisible(false);
     setCustomizing(false);
   }, [analytics, ads]);
