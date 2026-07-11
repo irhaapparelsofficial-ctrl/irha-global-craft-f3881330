@@ -43,7 +43,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build application
         run: npm run build
@@ -55,6 +55,6 @@ jobs:
           git rm .github/workflows/complete-short-lederhosen-final-batch.yml
           git rm scripts/patch_complete_short_lederhosen.py
           git add scripts/product-media-manifest.json scripts/product-media-batch-02.json scripts/product-media-batch-03.json
-          git add src/lib/productRealMedia.ts src/lib/supplementalCatalogBatch02.ts src/lib/supplementalCatalogBatch03.ts src/hooks/usePublicCatalog.ts
+          git add src/lib/productRealMedia.ts src/lib/supplementalCatalogBatch02.ts src/lib/supplementalCatalogBatch03.ts src/hooks/usePublicCatalog.ts package-lock.json
           git commit -m "Complete Short Lederhosen product range"
           git push origin HEAD:complete-short-lederhosen-final-batch
