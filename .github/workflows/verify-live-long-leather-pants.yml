@@ -7,6 +7,12 @@ on:
     paths:
       - "scripts/verify-live-long-leather-pants.mjs"
       - ".github/workflows/verify-live-long-leather-pants.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/verify-live-long-leather-pants.mjs"
+      - ".github/workflows/verify-live-long-leather-pants.yml"
 
 permissions:
   contents: read
