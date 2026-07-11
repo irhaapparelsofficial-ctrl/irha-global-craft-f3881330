@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const SITE_URL = "https://www.irhaapparels.com";
+const PRIVATE_UPLOAD_BUCKET = "inquiry-uploads";
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_UPLOADS: Record<string, string[]> = {
   pdf: ["application/pdf"],
@@ -30,9 +31,7 @@ Deno.serve(async (req) => {
 
     const payload = isRecord(body.payload) ? body.payload : body;
     const honeypot = text(payload.website, 300);
-    if (honeypot) {
-      return json({ ok: true, reference: "received" }, 200, headers);
-    }
+    if (honeypot) return json({ ok: true, reference: "received" }, 200, headers);
 
     const service = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -189,15 +188,14 @@ async function createUpload(
     return json({ error: "File must be between 1 byte and 10 MB" }, 400, headers);
   }
 
-  const bucket = purpose === "mockup" ? "mockup-uploads" : "inquiry-uploads";
   const month = new Date().toISOString().slice(0, 7);
-  const path = `requests/${month}/${crypto.randomUUID()}.${extension}`;
-  const { data, error } = await service.storage.from(bucket).createSignedUploadUrl(path);
+  const path = `requests/${purpose}/${month}/${crypto.randomUUID()}.${extension}`;
+  const { data, error } = await service.storage.from(PRIVATE_UPLOAD_BUCKET).createSignedUploadUrl(path);
   if (error || !data?.token) throw new Error(`Signed upload could not be created: ${error?.message ?? "missing token"}`);
 
   return json({
     ok: true,
-    bucket,
+    bucket: PRIVATE_UPLOAD_BUCKET,
     path,
     token: data.token,
     max_size: MAX_UPLOAD_BYTES,
@@ -249,8 +247,11 @@ function safePublicUrl(value: unknown): string | null {
   if (!raw) return null;
   try {
     const url = new URL(raw, SITE_URL);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-    return url.toString().slice(0, 1000);
+    if (url.protocol !== "https:") return null;
+    const allowedHost = url.hostname === "irhaapparels.com" ||
+      url.hostname === "www.irhaapparels.com" ||
+      url.hostname.endsWith(".lovable.app");
+    return allowedHost ? url.toString().slice(0, 1000) : null;
   } catch {
     return null;
   }
