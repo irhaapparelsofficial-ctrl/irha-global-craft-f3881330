@@ -67,6 +67,34 @@
       {"source":"https://drive.google.com/uc?export=download&id=1rUqsRLSpopQ2_orZlYRmwOeixLgUcnVq","fallback":"https://drive.google.com/thumbnail?id=1rUqsRLSpopQ2_orZlYRmwOeixLgUcnVq&sz=w1600","file":"01-hero-front.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=1XBBXrgY_6tXv8hOOZN2BIm7VovCDQdzk","fallback":"https://drive.google.com/thumbnail?id=1XBBXrgY_6tXv8hOOZN2BIm7VovCDQdzk&sz=w1600","file":"04-detail-leg-embroidery-buttons.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=1BPEQzbgbTafXw6kct135SMXEvqi2bMZp","fallback":"https://drive.google.com/thumbnail?id=1BPEQzbgbTafXw6kct135SMXEvqi2bMZp&sz=w1600","file":"05-detail-suspender-front-flap.webp"}
+    ],
+    "dark-brown-ivory-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1IFdrilOl3OZTuoLX1maMqVVqTuL9_nVW","fallback":"https://drive.google.com/thumbnail?id=1IFdrilOl3OZTuoLX1maMqVVqTuL9_nVW&sz=w1600","file":"01-hero-front-with-suspenders.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1sjRVYA66r-syQCXAxh84lXNNLkU0mcmQ","fallback":"https://drive.google.com/thumbnail?id=1sjRVYA66r-syQCXAxh84lXNNLkU0mcmQ&sz=w1600","file":"04-detail-suspender-embroidery.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1YbZz3zG6oK_micM07xbq5f1h_MiJjDwr","fallback":"https://drive.google.com/thumbnail?id=1YbZz3zG6oK_micM07xbq5f1h_MiJjDwr&sz=w1600","file":"07-extra-front-view.webp"}
+    ],
+    "crackle-brown-green-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1P1d0gz5Mphj45TNcIInwjxZD2-SJhKeV","fallback":"https://drive.google.com/thumbnail?id=1P1d0gz5Mphj45TNcIInwjxZD2-SJhKeV&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1S3T8sQt2QKNeLYh6tG68OEldr9jie8KN","fallback":"https://drive.google.com/thumbnail?id=1S3T8sQt2QKNeLYh6tG68OEldr9jie8KN&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1CPRXNgqVTMiZt4A1KuM753Eei4wHaB8K","fallback":"https://drive.google.com/thumbnail?id=1CPRXNgqVTMiZt4A1KuM753Eei4wHaB8K&sz=w1600","file":"04-detail-front-flap.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1xFhbC5GMfFNinsHDnKB301hwqxCP0fKU","fallback":"https://drive.google.com/thumbnail?id=1xFhbC5GMfFNinsHDnKB301hwqxCP0fKU&sz=w1600","file":"05-detail-leg-embroidery.webp"}
+    ],
+    "vintage-taupe-side-tie-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=10QoydcCLdj0yu8mpNoWO12QF5FUBLV2O","fallback":"https://drive.google.com/thumbnail?id=10QoydcCLdj0yu8mpNoWO12QF5FUBLV2O&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1_YiG_dkBjvkLxOZKDvMS5fBjOeT01JAU","fallback":"https://drive.google.com/thumbnail?id=1_YiG_dkBjvkLxOZKDvMS5fBjOeT01JAU&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=14B7qodmSPHDzf5rALoapBZ_ba7nuG4gK","fallback":"https://drive.google.com/thumbnail?id=14B7qodmSPHDzf5rALoapBZ_ba7nuG4gK&sz=w1600","file":"04-detail-upper-construction.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1VEk_Z6_BluiOGYoZGSsU4t8CWZWVobPH","fallback":"https://drive.google.com/thumbnail?id=1VEk_Z6_BluiOGYoZGSsU4t8CWZWVobPH&sz=w1600","file":"05-detail-leg-embroidery-side-tie.webp"}
+    ],
+    "olive-brown-ornamental-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1dikOZOR0rR_3KGnEM0JyG1reSJd15oz-","fallback":"https://drive.google.com/thumbnail?id=1dikOZOR0rR_3KGnEM0JyG1reSJd15oz-&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1vAUFWXx_sj978P1EbjnPkbn_z3U2E0At","fallback":"https://drive.google.com/thumbnail?id=1vAUFWXx_sj978P1EbjnPkbn_z3U2E0At&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1ECkeSoY2Ez27WluKDGWqkRnjO13HbzAB","fallback":"https://drive.google.com/thumbnail?id=1ECkeSoY2Ez27WluKDGWqkRnjO13HbzAB&sz=w1600","file":"04-detail-front-flap.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1qDeqAd2066dyAql5HdRt6Aafm1b_lCrk","fallback":"https://drive.google.com/thumbnail?id=1qDeqAd2066dyAql5HdRt6Aafm1b_lCrk&sz=w1600","file":"05-detail-leg-embroidery-buttons.webp"}
+    ],
+    "light-tan-ornamental-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1P4Y46YhX0gcNMu65jqiTMyw3Zzmdy-Lb","fallback":"https://drive.google.com/thumbnail?id=1P4Y46YhX0gcNMu65jqiTMyw3Zzmdy-Lb&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1CN14N-pROui4CGlp4WfHyIsrbQJ_0ure","fallback":"https://drive.google.com/thumbnail?id=1CN14N-pROui4CGlp4WfHyIsrbQJ_0ure&sz=w1600","file":"04-detail-front-flap.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1j2V12MInwP7b72a0gCPaEJzN7f1zlUEl","fallback":"https://drive.google.com/thumbnail?id=1j2V12MInwP7b72a0gCPaEJzN7f1zlUEl&sz=w1600","file":"05-detail-leg-embroidery-buttons.webp"}
     ]
   }
 }
