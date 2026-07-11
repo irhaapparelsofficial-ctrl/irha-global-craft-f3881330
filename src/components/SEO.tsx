@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import defaultSocialImage from "@/assets/banners/products-flatlay.jpg";
 import { SITE_URL } from "@/lib/seoSchema";
@@ -51,6 +52,12 @@ export default function SEO({
     : [{ locale: "en", href: url }];
   const xDefault = absoluteUrl(xDefaultPath || path);
 
+  useEffect(() => {
+    document
+      .querySelectorAll('meta[data-irha-fallback-seo="true"]')
+      .forEach((element) => element.remove());
+  }, []);
+
   return (
     <Helmet htmlAttributes={{ lang: locale, dir: direction }}>
       <title>{title}</title>
@@ -78,8 +85,8 @@ export default function SEO({
       <meta name="twitter:image:alt" content={`${title} — Irha Apparels`} />
 
       {jsonLd &&
-        (Array.isArray(jsonLd) ? jsonLd : [jsonLd]).map((schema, i) => (
-          <script key={i} type="application/ld+json">
+        (Array.isArray(jsonLd) ? jsonLd : [jsonLd]).map((schema, index) => (
+          <script key={index} type="application/ld+json">
             {JSON.stringify(schema)}
           </script>
         ))}
