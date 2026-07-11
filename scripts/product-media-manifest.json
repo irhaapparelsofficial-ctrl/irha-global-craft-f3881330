@@ -35,6 +35,12 @@
     "black-skeleton-embroidered-short-lederhosen": [
       {"source":"https://drive.google.com/uc?export=download&id=11-i5SKOH6AOORvzx-mhMoDTL3zsno-F_","fallback":"https://drive.google.com/thumbnail?id=11-i5SKOH6AOORvzx-mhMoDTL3zsno-F_&sz=w1600","file":"01-hero-front-three-quarter.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=1sndsfATN0rEEgGwnITJwH_AaNHcdmjyY","fallback":"https://drive.google.com/thumbnail?id=1sndsfATN0rEEgGwnITJwH_AaNHcdmjyY&sz=w1600","file":"04-detail-skeleton-embroidery.webp"}
+    ],
+    "brown-floral-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=17GvpTc2-6nWmzwQn3DILU9_1cFs-gQCi","fallback":"https://drive.google.com/thumbnail?id=17GvpTc2-6nWmzwQn3DILU9_1cFs-gQCi&sz=w1600","file":"01-hero-front-with-suspenders.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1nhE3RIsquR_rGXP1rwiWchvU_LhU01gv","fallback":"https://drive.google.com/thumbnail?id=1nhE3RIsquR_rGXP1rwiWchvU_LhU01gv&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1skJgiAL8T7JxQG9R5-USKmR4yoGZOCyM","fallback":"https://drive.google.com/thumbnail?id=1skJgiAL8T7JxQG9R5-USKmR4yoGZOCyM&sz=w1600","file":"07-extra-front-without-suspenders.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1i4-BWqBOzd7uya86GcTxk6Adb2zdKie3","fallback":"https://drive.google.com/thumbnail?id=1i4-BWqBOzd7uya86GcTxk6Adb2zdKie3&sz=w1600","file":"04-detail-floral-embroidery.webp"}
     ]
   }
 }
