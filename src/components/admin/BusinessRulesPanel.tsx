@@ -1,4 +1,5 @@
-import { ChangeEvent, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import {
   AlertTriangle,
   Bot,
@@ -30,7 +31,9 @@ const AUTHORITY_LABELS: Array<{ key: keyof BusinessRulesMaster["authority"]; lab
   { key: "qualificationQuestions", label: "Buyer qualification questions", risk: "Low" },
   { key: "followUpReminder", label: "Follow-up reminder", risk: "Low" },
   { key: "socialDraft", label: "Social content draft", risk: "Medium" },
+  { key: "socialPublish", label: "Publish social content", risk: "High" },
   { key: "listingDraft", label: "Directory/listing draft", risk: "Medium" },
+  { key: "listingUpdate", label: "Update external listing", risk: "High" },
   { key: "seoDraft", label: "Localized SEO draft", risk: "Medium" },
   { key: "finalQuotation", label: "Final quotation", risk: "High" },
   { key: "discount", label: "Discount or concession", risk: "High" },
@@ -96,7 +99,7 @@ export default function BusinessRulesPanel() {
     try {
       const parsed = JSON.parse(await file.text()) as BusinessRulesMaster;
       if (!parsed.company?.legalName || !parsed.commercial || !parsed.authority) throw new Error("Invalid rules file");
-      setRules({ ...parsed, status: "draft", updatedAt: new Date().toISOString() });
+      setRules({ ...DEFAULT_BUSINESS_RULES, ...parsed, authority: { ...DEFAULT_BUSINESS_RULES.authority, ...parsed.authority }, status: "draft", updatedAt: new Date().toISOString() });
       toast({ title: "Business rules imported", description: "Review and save before approval." });
     } catch (error) {
       toast({ title: "Import failed", description: error instanceof Error ? error.message : "Invalid JSON", variant: "destructive" });
@@ -154,7 +157,7 @@ export default function BusinessRulesPanel() {
 
         <RuleSection title="Commercial policy" icon={<LockKeyhole size={16} />}>
           <BooleanRow label="Quote-only B2B website" value={rules.commercial.quoteOnly} onChange={(value) => updateCommercial("quoteOnly", value)} locked />
-          <BooleanRow label="Public prices allowed" value={rules.commercial.publicPricingAllowed} onChange={(value) => updateCommercial("publicPricingAllowed", value)} />
+          <BooleanRow label="Public prices allowed" value={rules.commercial.publicPricingAllowed} onChange={(value) => updateCommercial("publicPricingAllowed", value)} locked />
           <ListArea label="Currencies" values={rules.commercial.supportedCurrencies} onChange={(value) => updateCommercial("supportedCurrencies", value)} />
           <ListArea label="Approved Incoterms" values={rules.commercial.incoterms} onChange={(value) => updateCommercial("incoterms", value)} placeholder="FOB\nCIF\nDDP" />
           <ListArea label="Approved payment terms" values={rules.commercial.paymentTerms} onChange={(value) => updateCommercial("paymentTerms", value)} placeholder="Enter only terms approved by the owner" />
