@@ -7,6 +7,7 @@ import {
   BarChart3, ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ListingsPanel from "@/components/admin/ListingsPanel";
 
 export type AdminView =
   | "overview"
@@ -195,7 +196,7 @@ export function AdminShell({
         </header>
 
         <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
-          {children}
+          {view === "listings" ? <ListingsPanel /> : children}
         </main>
       </div>
     </div>
