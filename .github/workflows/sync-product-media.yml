@@ -5,12 +5,14 @@ on:
     branches: [main]
     paths:
       - "scripts/product-media-manifest.json"
+      - "scripts/product-media-batch-*.json"
       - "scripts/sync_product_media.py"
       - ".github/workflows/sync-product-media.yml"
   pull_request:
     branches: [main]
     paths:
       - "scripts/product-media-manifest.json"
+      - "scripts/product-media-batch-*.json"
       - "scripts/sync_product_media.py"
       - ".github/workflows/sync-product-media.yml"
   workflow_dispatch:
