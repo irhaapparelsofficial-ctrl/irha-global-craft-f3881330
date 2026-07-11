@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, Check, Loader2, RotateCw, Upload, X, File as FileIcon } from "lucide-react";
 import type { UploadedFileRef } from "@/lib/inquiryDraft";
+import { uploadPublicLeadFile } from "@/lib/publicLeadGateway";
 
 const ALLOWED_MIME = new Set([
   "application/pdf",
@@ -57,6 +57,7 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
   const [globalError, setGlobalError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<UploadedFileRef[]>(value);
+  const startedAtRef = useRef(Date.now());
 
   useEffect(() => {
     valueRef.current = value;
@@ -73,33 +74,18 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
     )));
 
     try {
-      const ext = extOf(row.file.name) || "bin";
-      const safeExt = ext.replace(/[^a-z0-9]/g, "").slice(0, 6) || "bin";
-      const path = `${sessionId}/${Date.now()}-${rid()}.${safeExt}`;
-      const { error } = await supabase.storage
-        .from("inquiry-uploads")
-        .upload(path, row.file, { contentType: row.file.type, upsert: false });
-      if (error) throw error;
-
+      const ref = await uploadPublicLeadFile(row.file, "inquiry", startedAtRef.current);
       setRows((current) => current.map((item) => (
-        item.id === row.id ? { ...item, status: "done", progress: 100, path } : item
+        item.id === row.id ? { ...item, status: "done", progress: 100, path: ref.path } : item
       )));
-
-      const ref: UploadedFileRef = {
-        path,
-        name: row.file.name,
-        size: row.file.size,
-        mime: row.file.type,
-      };
-      const next = [...valueRef.current.filter((item) => item.path !== path), ref];
-      publishValue(next);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Upload failed";
+      publishValue([...valueRef.current.filter((item) => item.path !== ref.path), ref]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
       setRows((current) => current.map((item) => (
         item.id === row.id ? { ...item, status: "error", progress: 0, error: message } : item
       )));
     }
-  }, [publishValue, sessionId]);
+  }, [publishValue]);
 
   const acceptFiles = useCallback((incoming: FileList | File[]) => {
     setGlobalError(null);
@@ -135,28 +121,21 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
     for (const row of newRows) void uploadOne(row);
   }, [rows, uploadOne]);
 
-  const removeRow = useCallback(async (row: UploadRow) => {
+  const removeRow = useCallback((row: UploadRow) => {
     setRows((current) => current.filter((item) => item.id !== row.id));
-    if (!row.path) return;
-
-    publishValue(valueRef.current.filter((item) => item.path !== row.path));
-    try {
-      await supabase.storage.from("inquiry-uploads").remove([row.path]);
-    } catch {
-      // Bucket policy may intentionally reserve deletion for admins.
-    }
+    if (row.path) publishValue(valueRef.current.filter((item) => item.path !== row.path));
   }, [publishValue]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-upload-session={sessionId}>
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
+        onDrop={(event) => {
+          event.preventDefault();
           setDragOver(false);
           if (disabled) return;
-          if (e.dataTransfer.files) acceptFiles(e.dataTransfer.files);
+          if (event.dataTransfer.files) acceptFiles(event.dataTransfer.files);
         }}
         className={`border-2 border-dashed p-6 text-center transition-colors ${dragOver ? "border-primary bg-primary/5" : "border-border/60"}`}
       >
@@ -181,9 +160,9 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
           multiple
           accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
           className="hidden"
-          onChange={(e) => {
-            if (e.target.files) acceptFiles(e.target.files);
-            e.target.value = "";
+          onChange={(event) => {
+            if (event.target.files) acceptFiles(event.target.files);
+            event.target.value = "";
           }}
         />
       </div>
@@ -217,7 +196,7 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
                   <RotateCw size={16} />
                 </button>
               )}
-              <button type="button" onClick={() => void removeRow(row)} aria-label={`Remove ${row.file.name}`} className="text-foreground/60 hover:text-destructive">
+              <button type="button" onClick={() => removeRow(row)} aria-label={`Remove ${row.file.name}`} className="text-foreground/60 hover:text-destructive">
                 <X size={16} />
               </button>
             </li>
