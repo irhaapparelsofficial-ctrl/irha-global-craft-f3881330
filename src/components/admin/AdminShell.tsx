@@ -4,7 +4,7 @@ import {
   Home, Package, Layers, BookOpen, Search,
   Users, MessageSquare, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
-  BarChart3, ListChecks, UserSearch, BookKey,
+  BarChart3, ListChecks, UserSearch, BookKey, Factory,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
@@ -14,6 +14,7 @@ import LeadCampaignBlueprints from "@/components/admin/LeadCampaignBlueprints";
 import BuyerQualificationOverview from "@/components/admin/BuyerQualificationOverview";
 import BuyerReplyStudio from "@/components/admin/BuyerReplyStudio";
 import QuotationReadinessPanel from "@/components/admin/QuotationReadinessPanel";
+import ProductionWorkflowPanel from "@/components/admin/ProductionWorkflowPanel";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import SeoReleaseReadiness from "@/components/admin/SeoReleaseReadiness";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
@@ -30,7 +31,7 @@ export type AdminView =
   | "seo"
   | "lead_engine" | "leads" | "chat" | "mailing"
   | "rules" | "ai"
-  | "studio" | "pi" | "directory"
+  | "studio" | "pi" | "production" | "directory"
   | "social" | "devops" | "listings"
   | "traffic" | "gsc" | "macro"
   | "system";
@@ -63,6 +64,7 @@ const NAV: NavGroup[] = [
   { title: "Operations", items: [
     { key: "studio", label: "Studio & FOB", icon: Cpu },
     { key: "pi", label: "PI Generator", icon: ScrollText },
+    { key: "production", label: "Samples & Production", icon: Factory },
     { key: "directory", label: "Export Directory", icon: MapPin },
   ]},
   { title: "Growth", items: [
@@ -157,21 +159,23 @@ export function AdminShell({
         ? <><BuyerQualificationOverview /><BuyerReplyStudio />{children}</>
         : view === "pi"
           ? <><QuotationReadinessPanel />{children}</>
-          : view === "seo"
-            ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
-            : view === "gsc"
-              ? <GoogleSearchCenter />
-              : view === "system"
-                ? <ProductionHealthPanel />
-                : view === "rules"
-                  ? <BusinessRulesPanel />
-                  : view === "ai"
-                    ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
-                    : view === "mailing"
-                      ? <><OutreachTemplateLibrary />{children}</>
-                      : view === "social"
-                        ? <><SocialContentPlaybook />{children}</>
-                        : children;
+          : view === "production"
+            ? <ProductionWorkflowPanel />
+            : view === "seo"
+              ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
+              : view === "gsc"
+                ? <GoogleSearchCenter />
+                : view === "system"
+                  ? <ProductionHealthPanel />
+                  : view === "rules"
+                    ? <BusinessRulesPanel />
+                    : view === "ai"
+                      ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
+                      : view === "mailing"
+                        ? <><OutreachTemplateLibrary />{children}</>
+                        : view === "social"
+                          ? <><SocialContentPlaybook />{children}</>
+                          : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
