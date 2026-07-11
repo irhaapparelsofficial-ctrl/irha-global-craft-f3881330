@@ -1,6 +1,9 @@
 name: Production Smoke
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
   schedule:
     - cron: "17 */6 * * *"
@@ -21,5 +24,5 @@ jobs:
         with:
           node-version: 24
 
-      - name: Verify production identity, crawler parity and legacy-claim absence
+      - name: Verify production pages, crawler controls and lead gateway
         run: node scripts/production-smoke-v2.mjs
