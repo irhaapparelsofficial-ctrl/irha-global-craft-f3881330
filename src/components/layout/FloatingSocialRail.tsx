@@ -10,7 +10,7 @@ export default function FloatingSocialRail() {
   return (
     <aside
       aria-label="Social media"
-      className="fixed left-3 top-1/2 -translate-y-1/2 z-30 hidden lg:flex flex-col items-center gap-2 p-2 border border-border/60 bg-background/70 backdrop-blur-md"
+      className="fixed left-3 top-1/2 -translate-y-1/2 z-30 hidden lg:flex flex-col items-center gap-1 p-2 border border-border/60 bg-background/70 backdrop-blur-md"
     >
       <span className="text-[9px] font-mono tracking-[0.3em] uppercase text-muted-foreground [writing-mode:vertical-rl] rotate-180 py-2">
         Follow
@@ -22,7 +22,7 @@ export default function FloatingSocialRail() {
           target="_blank"
           rel="noreferrer noopener"
           aria-label={`Irha Apparels on ${name}`}
-          className="p-2 text-foreground/60 hover:text-gold hover:bg-foreground/5 transition-colors"
+          className="min-h-11 min-w-11 inline-flex items-center justify-center text-foreground/60 hover:text-gold hover:bg-foreground/5 transition-colors"
         >
           <Icon size={16} strokeWidth={1.5} />
         </a>
