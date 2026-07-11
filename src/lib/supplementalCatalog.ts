@@ -200,6 +200,29 @@ const SUPPLEMENTAL_PRODUCTS: SupplementalProductDefinition[] = [
       "Black gold-embroidered short Lederhosen for wholesale, OEM, ODM and private-label programs.",
     sortOrder: 1006,
   },
+  {
+    id: "00000000-0000-0000-0000-000000000073",
+    topCategorySlug: "bavarian-trachten-wear",
+    subcategorySlugs: ["men"],
+    subcategoryNames: ["menstrachten"],
+    slug: "tan-alpine-embroidered-short-lederhosen",
+    name: "Tan Alpine Embroidered Short Lederhosen",
+    description:
+      "Short-cut Bavarian-style Lederhosen in a tan colourway with alpine-inspired embroidery, a traditional front flap and matching suspenders, prepared for wholesale and private-label buyer programs.",
+    specs: [
+      "Alpine-inspired decorative embroidery",
+      "Tan visual finish",
+      "Traditional front-flap construction",
+      "Matching suspenders",
+      "Private-label customization available",
+    ],
+    seoTitle: "Tan Alpine Embroidered Lederhosen Manufacturer | Irha Apparels",
+    seoDescription:
+      "Tan alpine embroidered short Lederhosen for wholesale and private-label programs from Irha Apparels, a B2B apparel manufacturer in Sialkot, Pakistan.",
+    shortDescription:
+      "Tan alpine embroidered short Lederhosen for wholesale, OEM, ODM and private-label programs.",
+    sortOrder: 1007,
+  },
 ];
 
 function matchesSubcategory(
