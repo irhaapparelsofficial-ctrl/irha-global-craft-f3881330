@@ -1,0 +1,44 @@
+name: Verify Live Short Lederhosen
+
+on:
+  push:
+    branches:
+      - verify-live-short-lederhosen-post-publish
+    paths:
+      - "scripts/verify-live-short-lederhosen.mjs"
+      - ".github/workflows/verify-live-short-lederhosen.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  live-browser-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: verify-live-short-lederhosen-post-publish
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --legacy-peer-deps --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Verify live published routes
+        run: node scripts/verify-live-short-lederhosen.mjs
+
+      - name: Upload live report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-short-lederhosen-verification
+          path: artifacts/live-short-lederhosen
+          if-no-files-found: error
+          retention-days: 7
