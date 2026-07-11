@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { BAVARIAN_MENS_COLLECTIONS } from "@/lib/bavarianMensCollections";
 
 export type CategoryHeroSlide = {
   image: string;
@@ -25,11 +26,13 @@ type Props = {
  * - smooth fade transition
  */
 export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
+  const { pathname } = useLocation();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [loaded, setLoaded] = useState<Set<number>>(() => new Set([0]));
   const touchStartX = useRef<number | null>(null);
   const count = slides.length;
+  const showBavarianMensNav = pathname === "/products/bavarian-trachten-wear";
 
   const go = useCallback(
     (next: number) => {
@@ -65,96 +68,130 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
   if (count === 0) return null;
 
   return (
-    <section
-      className="relative w-full overflow-hidden bg-card border-b border-border/60 h-[50vh] min-h-[380px] md:h-[70vh] md:min-h-[520px]"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
-      onTouchStart={(e) => {
-        touchStartX.current = e.touches[0].clientX;
-      }}
-      onTouchEnd={(e) => {
-        if (touchStartX.current == null) return;
-        const dx = e.changedTouches[0].clientX - touchStartX.current;
-        if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
-        touchStartX.current = null;
-      }}
-      aria-roledescription="carousel"
-    >
-      {slides.map((s, i) => {
-        const shouldLoad = loaded.has(i);
-        return (
-          <img
-            key={`img-${i}`}
-            src={shouldLoad ? s.image : undefined}
-            alt={s.title}
-            loading={i === 0 ? "eager" : "lazy"}
-            decoding="async"
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1000ms] ease-in-out ${
-              i === index ? "opacity-100" : "opacity-0"
-            }`}
-            aria-hidden={i !== index}
-          />
-        );
-      })}
+    <>
+      <section
+        className="relative w-full overflow-hidden bg-card border-b border-border/60 h-[50vh] min-h-[380px] md:h-[70vh] md:min-h-[520px]"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocus={() => setPaused(true)}
+        onBlur={() => setPaused(false)}
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (touchStartX.current == null) return;
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
+          touchStartX.current = null;
+        }}
+        aria-roledescription="carousel"
+      >
+        {slides.map((s, i) => {
+          const shouldLoad = loaded.has(i);
+          return (
+            <img
+              key={`img-${i}`}
+              src={shouldLoad ? s.image : undefined}
+              alt={s.title}
+              loading={i === 0 ? "eager" : "lazy"}
+              decoding="async"
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1000ms] ease-in-out ${
+                i === index ? "opacity-100" : "opacity-0"
+              }`}
+              aria-hidden={i !== index}
+            />
+          );
+        })}
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20" />
 
-      {slides.map((s, i) => {
-        const active = i === index;
-        return (
-          <div
-            key={`content-${i}`}
-            className={`absolute inset-0 z-10 transition-opacity duration-[900ms] ${
-              active ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-            aria-hidden={!active}
-          >
-            <div className="container-luxe relative h-full flex items-center">
-              <div className="max-w-2xl py-12">
-                <div className="h-px w-16 bg-gold mb-5" />
-                {s.eyebrow && <p className="eyebrow mb-4 text-gold">{s.eyebrow}</p>}
-                <h2 className="font-display text-white text-3xl md:text-5xl lg:text-6xl leading-[1.02]">{s.title}</h2>
-                {s.subtitle && <p className="mt-5 text-sm md:text-base text-white/80 max-w-xl leading-relaxed">{s.subtitle}</p>}
-                {s.ctaHref && (
-                  <Link
-                    to={s.ctaHref}
-                    tabIndex={active ? 0 : -1}
-                    className="group mt-8 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-3.5 text-[11px] uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
-                  >
-                    {s.ctaLabel ?? "View Collection"}
-                    <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                  </Link>
-                )}
+        {slides.map((s, i) => {
+          const active = i === index;
+          return (
+            <div
+              key={`content-${i}`}
+              className={`absolute inset-0 z-10 transition-opacity duration-[900ms] ${
+                active ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+              aria-hidden={!active}
+            >
+              <div className="container-luxe relative h-full flex items-center">
+                <div className="max-w-2xl py-12">
+                  <div className="h-px w-16 bg-gold mb-5" />
+                  {s.eyebrow && <p className="eyebrow mb-4 text-gold">{s.eyebrow}</p>}
+                  <h2 className="font-display text-white text-3xl md:text-5xl lg:text-6xl leading-[1.02]">{s.title}</h2>
+                  {s.subtitle && <p className="mt-5 text-sm md:text-base text-white/80 max-w-xl leading-relaxed">{s.subtitle}</p>}
+                  {s.ctaHref && (
+                    <Link
+                      to={s.ctaHref}
+                      tabIndex={active ? 0 : -1}
+                      className="group mt-8 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-3.5 text-[11px] uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
+                    >
+                      {s.ctaLabel ?? "View Collection"}
+                      <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
 
-      {count > 1 && (
-        <>
-          <button type="button" onClick={() => go(index - 1)} aria-label="Previous slide" className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
-            <ChevronLeft size={18} />
-          </button>
-          <button type="button" onClick={() => go(index + 1)} aria-label="Next slide" className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
-            <ChevronRight size={18} />
-          </button>
+        {count > 1 && (
+          <>
+            <button type="button" onClick={() => go(index - 1)} aria-label="Previous slide" className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
+              <ChevronLeft size={18} />
+            </button>
+            <button type="button" onClick={() => go(index + 1)} aria-label="Next slide" className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
+              <ChevronRight size={18} />
+            </button>
 
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => go(i)}
-                aria-label={`Go to slide ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${i === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"}`}
-              />
-            ))}
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => go(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${i === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+
+      {showBavarianMensNav && (
+        <section className="border-b border-border/60 bg-background" aria-labelledby="mens-trachten-collections-heading">
+          <div className="container-luxe py-6">
+            <div className="mb-4 flex items-end justify-between gap-4">
+              <div>
+                <p className="eyebrow mb-1">Men's Trachten</p>
+                <h2 id="mens-trachten-collections-heading" className="font-display text-2xl md:text-3xl">
+                  Browse buyer-ready collections
+                </h2>
+              </div>
+              <Link
+                to="/products/bavarian-trachten-wear?subcategory=men"
+                className="hidden text-[10px] uppercase tracking-[0.22em] text-primary hover:underline sm:inline-flex"
+              >
+                View all men's styles
+              </Link>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {BAVARIAN_MENS_COLLECTIONS.map((collection) => (
+                <Link
+                  key={collection.slug}
+                  to={`/products/bavarian-trachten-wear/mens-trachten/${collection.slug}`}
+                  className="whitespace-nowrap border border-border/60 px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-foreground/70 transition-colors hover:border-primary hover:text-primary"
+                >
+                  {collection.shortName}
+                </Link>
+              ))}
+            </div>
           </div>
-        </>
+        </section>
       )}
-    </section>
+    </>
   );
 }
