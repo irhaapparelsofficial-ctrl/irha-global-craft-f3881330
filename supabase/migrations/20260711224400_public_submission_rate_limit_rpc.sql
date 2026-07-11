@@ -1,4 +1,20 @@
--- Atomic rate-limit token consumption for the public lead gateway.
+-- Atomic rate-limit token consumption for public submissions.
+CREATE TABLE IF NOT EXISTS public.public_submission_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  fingerprint_hash TEXT NOT NULL,
+  action TEXT NOT NULL CHECK (action IN ('submit_inquiry','submit_catalogue','create_upload')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS public_submission_events_lookup_idx
+  ON public.public_submission_events (fingerprint_hash, action, created_at DESC);
+CREATE INDEX IF NOT EXISTS public_submission_events_created_idx
+  ON public.public_submission_events (created_at DESC);
+
+ALTER TABLE public.public_submission_events ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.public_submission_events FROM anon, authenticated;
+GRANT ALL ON public.public_submission_events TO service_role;
+
 CREATE OR REPLACE FUNCTION public.consume_public_submission_limit(
   _fingerprint_hash TEXT,
   _action TEXT,
