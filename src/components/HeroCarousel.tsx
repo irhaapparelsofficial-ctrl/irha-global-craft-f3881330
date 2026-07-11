@@ -80,8 +80,8 @@ export default function HeroCarousel() {
   useEffect(() => {
     if (paused) return;
     const id = window.setInterval(() => {
-      setIndex((i) => {
-        const next = (i + 1) % count;
+      setIndex((current) => {
+        const next = (current + 1) % count;
         setLoaded((prev) => {
           if (prev.has(next)) return prev;
           const copy = new Set(prev);
@@ -99,55 +99,58 @@ export default function HeroCarousel() {
       className="relative h-[70vh] min-h-[480px] md:min-h-[560px] w-full overflow-hidden bg-background"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
-      onTouchEnd={(e) => {
+      onTouchStart={(event) => { touchStartX.current = event.touches[0].clientX; }}
+      onTouchEnd={(event) => {
         if (touchStartX.current == null) return;
-        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        const dx = event.changedTouches[0].clientX - touchStartX.current;
         if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
         touchStartX.current = null;
       }}
       aria-roledescription="carousel"
+      aria-label="Irha Apparels manufacturing programs"
     >
-      {SLIDES.map((s, i) => {
-        const shouldLoad = loaded.has(i);
+      <h1 className="sr-only">Custom Apparel Manufacturer for Global B2B Buyers</h1>
+
+      {SLIDES.map((slide, slideIndex) => {
+        const shouldLoad = loaded.has(slideIndex);
         return (
           <img
-            key={s.src}
-            src={shouldLoad ? s.src : undefined}
-            srcSet={shouldLoad ? s.srcSet : undefined}
+            key={slide.src}
+            src={shouldLoad ? slide.src : undefined}
+            srcSet={shouldLoad ? slide.srcSet : undefined}
             sizes="100vw"
-            alt={s.alt}
+            alt={slide.alt}
             width={1920}
             height={1280}
-            loading={i === 0 ? "eager" : "lazy"}
+            loading={slideIndex === 0 ? "eager" : "lazy"}
             decoding="async"
-            className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[1200ms] ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`}
+            className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[1200ms] ease-in-out ${slideIndex === index ? "opacity-100" : "opacity-0"}`}
           />
         );
       })}
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20" />
 
-      {SLIDES.map((s, i) => (
+      {SLIDES.map((slide, slideIndex) => (
         <div
-          key={`content-${i}`}
-          className={`absolute inset-0 z-10 flex items-center transition-opacity duration-[1000ms] ${i === index ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-          aria-hidden={i !== index}
+          key={`content-${slideIndex}`}
+          className={`absolute inset-0 z-10 flex items-center transition-opacity duration-[1000ms] ${slideIndex === index ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          aria-hidden={slideIndex !== index}
         >
           <div className="container-luxe">
             <div className="max-w-2xl">
               <div className="h-px w-16 bg-gold mb-6" />
-              <p className="mb-4 text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold">{s.eyebrow}</p>
-              <h1 className="font-display text-white text-4xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
-                {s.title} <span className="text-gold italic font-normal">— {s.highlight}</span>
-              </h1>
-              <p className="mt-6 max-w-xl text-sm md:text-base text-white/80 leading-relaxed">{s.subtitle}</p>
+              <p className="mb-4 text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold">{slide.eyebrow}</p>
+              <h2 className="font-display text-white text-4xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
+                {slide.title} <span className="text-gold italic font-normal">— {slide.highlight}</span>
+              </h2>
+              <p className="mt-6 max-w-xl text-sm md:text-base text-white/80 leading-relaxed">{slide.subtitle}</p>
               <Link
-                to={s.ctaHref}
-                tabIndex={i === index ? 0 : -1}
+                to={slide.ctaHref}
+                tabIndex={slideIndex === index ? 0 : -1}
                 className="group mt-9 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
               >
-                {s.ctaLabel}
+                {slide.ctaLabel}
                 <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
               </Link>
             </div>
@@ -163,13 +166,13 @@ export default function HeroCarousel() {
       </button>
 
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-        {SLIDES.map((_, i) => (
+        {SLIDES.map((_, slideIndex) => (
           <button
-            key={i}
+            key={slideIndex}
             type="button"
-            onClick={() => go(i)}
-            aria-label={`Go to slide ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all ${i === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"}`}
+            onClick={() => go(slideIndex)}
+            aria-label={`Go to slide ${slideIndex + 1}`}
+            className={`h-1.5 rounded-full transition-all ${slideIndex === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"}`}
           />
         ))}
       </div>
