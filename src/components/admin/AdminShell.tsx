@@ -12,6 +12,7 @@ import ListingLaunchKit from "@/components/admin/ListingLaunchKit";
 import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 import LeadCampaignBlueprints from "@/components/admin/LeadCampaignBlueprints";
 import BuyerQualificationOverview from "@/components/admin/BuyerQualificationOverview";
+import BuyerReplyStudio from "@/components/admin/BuyerReplyStudio";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import SeoReleaseReadiness from "@/components/admin/SeoReleaseReadiness";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
@@ -152,7 +153,7 @@ export function AdminShell({
     : view === "lead_engine"
       ? <><LeadCampaignBlueprints /><LeadAcquisitionPanel /></>
       : view === "leads"
-        ? <><BuyerQualificationOverview />{children}</>
+        ? <><BuyerQualificationOverview /><BuyerReplyStudio />{children}</>
         : view === "seo"
           ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
           : view === "gsc"
