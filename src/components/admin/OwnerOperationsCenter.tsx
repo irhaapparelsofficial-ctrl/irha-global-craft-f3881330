@@ -3,6 +3,8 @@ import {
   AlertTriangle,
   Bot,
   CheckCircle2,
+  Copy,
+  Factory,
   FileSearch,
   Globe2,
   ListChecks,
@@ -13,6 +15,7 @@ import {
   UserSearch,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import {
   businessRulesApproved,
   businessRulesReadiness,
@@ -20,12 +23,13 @@ import {
 } from "@/lib/businessRules";
 import {
   operationQueueState,
+  ownerDailyBriefText,
   summarizeOperationQueues,
   type OperationQueueResult,
 } from "@/lib/ownerOperations";
 import type { AdminView } from "./AdminShell";
 
-type QueueKey = "ai" | "leads" | "outreach" | "email" | "social" | "listings" | "seo";
+type QueueKey = "ai" | "leads" | "outreach" | "email" | "social" | "listings" | "seo" | "production";
 
 type QueueDefinition = {
   key: QueueKey;
@@ -43,8 +47,10 @@ const QUEUES: QueueDefinition[] = [
   { key: "social", label: "Social attention", description: "Draft, failed or manual-required calendar items.", view: "social", icon: Share2 },
   { key: "listings", label: "Listing attention", description: "Profiles in progress, pending verification or needing attention.", view: "listings", icon: ListChecks },
   { key: "seo", label: "SEO review", description: "Localized pages awaiting review, approval or publish decision.", view: "seo", icon: Globe2 },
+  { key: "production", label: "Production risk", description: "Overdue, on-hold, QC-attention or shipping-exception jobs.", view: "production", icon: Factory },
 ];
 
+const LABELS = Object.fromEntries(QUEUES.map((queue) => [queue.key, queue.label]));
 const emptyQueues = Object.fromEntries(
   QUEUES.map((queue) => [queue.key, { count: null, error: null, checked: false }]),
 ) as Record<QueueKey, OperationQueueResult>;
@@ -62,6 +68,22 @@ async function countQuery(table: string, configure: (query: any) => any): Promis
   }
 }
 
+async function countProductionAttention(): Promise<OperationQueueResult> {
+  try {
+    const { data, error } = await db.from("production_jobs").select("internal_target_date,stage,qc_status,shipping_status");
+    if (error) return { count: null, error: error.message || "Source unavailable", checked: true };
+    const now = Date.now();
+    const count = (data ?? []).filter((row: { internal_target_date: string | null; stage: string; qc_status: string; shipping_status: string }) => {
+      if (["completed", "cancelled"].includes(row.stage)) return false;
+      const overdue = row.internal_target_date ? new Date(row.internal_target_date).getTime() < now : false;
+      return overdue || row.stage === "on_hold" || ["failed", "rework"].includes(row.qc_status) || row.shipping_status === "exception";
+    }).length;
+    return { count, error: null, checked: true };
+  } catch (error) {
+    return { count: null, error: error instanceof Error ? error.message : "Source unavailable", checked: true };
+  }
+}
+
 export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) => void }) {
   const [queues, setQueues] = useState<Record<QueueKey, OperationQueueResult>>(emptyQueues);
   const [loading, setLoading] = useState(true);
@@ -72,7 +94,7 @@ export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) =>
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [ai, leads, outreach, email, social, listings, seo] = await Promise.all([
+    const [ai, leads, outreach, email, social, listings, seo, production] = await Promise.all([
       countQuery("ai_actions", (query) => query.in("status", ["proposed", "failed"]).eq("requires_approval", true)),
       countQuery("lead_candidates", (query) => query.in("verification_status", ["unverified", "needs_review"])),
       countQuery("outreach_messages", (query) => query.in("status", ["draft", "approved", "failed"])),
@@ -80,8 +102,9 @@ export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) =>
       countQuery("social_calendar_items", (query) => query.in("status", ["draft", "failed", "manual_required"])),
       countQuery("business_listings", (query) => query.in("status", ["in_progress", "pending_verification", "needs_attention"])),
       countQuery("seo_localized_pages", (query) => query.in("status", ["draft", "ai_reviewed", "approved"])),
+      countProductionAttention(),
     ]);
-    setQueues({ ai, leads, outreach, email, social, listings, seo });
+    setQueues({ ai, leads, outreach, email, social, listings, seo, production });
     setLastChecked(new Date());
     setLoading(false);
   }, []);
@@ -89,6 +112,18 @@ export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) =>
   useEffect(() => { void load(); }, [load]);
 
   const summary = summarizeOperationQueues(queues);
+
+  const copyBrief = async () => {
+    const generatedAt = lastChecked ?? new Date();
+    await navigator.clipboard.writeText(ownerDailyBriefText({
+      generatedAt,
+      rulesScore: rulesReadiness.score,
+      rulesApproved,
+      queues,
+      labels: LABELS,
+    }));
+    toast({ title: "Owner daily brief copied", description: "The brief reports pending backends separately from real zero counts." });
+  };
 
   return (
     <section className="border border-border/60 bg-card/25">
@@ -103,9 +138,14 @@ export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) =>
             </p>
           </div>
         </div>
-        <button type="button" onClick={() => void load()} disabled={loading} className="min-h-11 inline-flex items-center justify-center gap-2 border border-border/60 px-4 py-2 text-[10px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold disabled:opacity-50">
-          <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh all
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => void copyBrief()} disabled={loading} className="min-h-11 inline-flex items-center justify-center gap-2 border border-border/60 px-4 py-2 text-[10px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold disabled:opacity-50">
+            <Copy size={13} /> Copy daily brief
+          </button>
+          <button type="button" onClick={() => void load()} disabled={loading} className="min-h-11 inline-flex items-center justify-center gap-2 border border-border/60 px-4 py-2 text-[10px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold disabled:opacity-50">
+            <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh all
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 border-b border-border/60">
