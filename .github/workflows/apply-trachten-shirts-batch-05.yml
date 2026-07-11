@@ -1,0 +1,39 @@
+name: Apply Trachten Shirts Batch 05
+
+on:
+  push:
+    branches:
+      - trachten-shirts-batch-05
+    paths:
+      - "scripts/patch_add_batch10_catalog.py"
+      - ".github/workflows/apply-trachten-shirts-batch-05.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out working branch
+        uses: actions/checkout@v4
+        with:
+          ref: trachten-shirts-batch-05
+          fetch-depth: 0
+
+      - name: Apply Batch 10 catalog registration
+        run: python scripts/patch_add_batch10_catalog.py
+
+      - name: Validate Batch 10 media manifest
+        run: python -m json.tool scripts/product-media-batch-10.json >/dev/null
+
+      - name: Commit registration and remove one-time files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-trachten-shirts-batch-05.yml
+          git rm scripts/patch_add_batch10_catalog.py
+          git add src/hooks/usePublicCatalog.ts
+          git commit -m "Register Trachten Shirts batch 05"
+          git push origin HEAD:trachten-shirts-batch-05
