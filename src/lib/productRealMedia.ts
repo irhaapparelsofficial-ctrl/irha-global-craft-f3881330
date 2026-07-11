@@ -98,4 +98,11 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/antique-brown-scroll-embroidered-short-lederhosen/05-detail-front-construction.webp",
     ],
   },
+  "sand-brown-floral-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/sand-brown-floral-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/sand-brown-floral-embroidered-short-lederhosen/04-detail-leg-embroidery-buttons.webp",
+      "/product-media/sand-brown-floral-embroidered-short-lederhosen/05-detail-suspender-front-flap.webp",
+    ],
+  },
 };
