@@ -46,6 +46,11 @@
       {"source":"https://drive.google.com/uc?export=download&id=1YYy-s9RARjyPlYhAZutPBvomhZwnHJj3","fallback":"https://drive.google.com/thumbnail?id=1YYy-s9RARjyPlYhAZutPBvomhZwnHJj3&sz=w1600","file":"01-hero-front.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=106Jh7MJUVO58Px68SmEpHnmasLv3ETtj","fallback":"https://drive.google.com/thumbnail?id=106Jh7MJUVO58Px68SmEpHnmasLv3ETtj&sz=w1600","file":"03-angle-back.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=16NdFMKZ0WsCFNS4Yh6PFqnDWEn9oL3tF","fallback":"https://drive.google.com/thumbnail?id=16NdFMKZ0WsCFNS4Yh6PFqnDWEn9oL3tF&sz=w1600","file":"04-detail-scroll-embroidery.webp"}
+    ],
+    "black-gold-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1AhQ06c5e6d7mYil_aLwADJaS7Q_al_5b","fallback":"https://drive.google.com/thumbnail?id=1AhQ06c5e6d7mYil_aLwADJaS7Q_al_5b&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1ETgMo8Xvodk_339GqF8Pb9YN0iXqPspe","fallback":"https://drive.google.com/thumbnail?id=1ETgMo8Xvodk_339GqF8Pb9YN0iXqPspe&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1syvWKtfjKhiovJwRIsosHmJmFiB5mksA","fallback":"https://drive.google.com/thumbnail?id=1syvWKtfjKhiovJwRIsosHmJmFiB5mksA&sz=w1600","file":"04-detail-gold-embroidery.webp"}
     ]
   }
 }
