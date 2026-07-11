@@ -1,0 +1,39 @@
+{
+  "products": {
+    "red-large-gingham-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1P1_OEzifhNZ4L72A5luGUfVK_wU3cRAn",
+        "fallback": "https://drive.google.com/thumbnail?id=1P1_OEzifhNZ4L72A5luGUfVK_wU3cRAn&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ],
+    "red-micro-check-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1A57xVbx8iyTSp6xAlOmHwVVNuN_5vLsa",
+        "fallback": "https://drive.google.com/thumbnail?id=1A57xVbx8iyTSp6xAlOmHwVVNuN_5vLsa&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ],
+    "rose-micro-gingham-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1HHWBpyl1lvY6jlFb6iUTbIAj5gx1aEss",
+        "fallback": "https://drive.google.com/thumbnail?id=1HHWBpyl1lvY6jlFb6iUTbIAj5gx1aEss&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ],
+    "light-blue-micro-gingham-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1b_gY5EcyPCum90Ho3wQkba500P6o82bp",
+        "fallback": "https://drive.google.com/thumbnail?id=1b_gY5EcyPCum90Ho3wQkba500P6o82bp&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ],
+    "burgundy-micro-gingham-pocket-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1efNFsXQIAczqfysOj6RQCYjgbm26zxxe",
+        "fallback": "https://drive.google.com/thumbnail?id=1efNFsXQIAczqfysOj6RQCYjgbm26zxxe&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ]
+  }
+}
