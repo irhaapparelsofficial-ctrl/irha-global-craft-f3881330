@@ -85,30 +85,32 @@ export function AdminShell({
   };
 
   const nav = (
-    <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-6">
+    <nav className="flex-1 overflow-y-auto overscroll-contain py-4 px-2 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-6">
       {NAV.map((group) => (
         <div key={group.title}>
           {!collapsed && (
-            <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
+            <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
               {group.title}
             </p>
           )}
-          <ul className="space-y-0.5">
+          <ul className="space-y-1">
             {group.items.map((item) => {
               const Icon = item.icon;
               const isActive = item.key === view;
               return (
                 <li key={item.key}>
                   <button
+                    type="button"
                     onClick={() => { setView(item.key); setMobileOpen(false); }}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors",
+                      "min-h-11 w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-sm transition-colors",
                       isActive
                         ? "bg-primary/10 text-primary border-l-2 border-primary"
                         : "text-foreground/70 hover:text-foreground hover:bg-muted/40 border-l-2 border-transparent",
                       collapsed && "justify-center px-2",
                     )}
                     title={collapsed ? item.label : undefined}
+                    aria-current={isActive ? "page" : undefined}
                   >
                     <Icon size={16} className="shrink-0" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
@@ -138,22 +140,23 @@ export function AdminShell({
     <div className="min-h-screen flex bg-background text-foreground">
       <aside
         className={cn(
-          "hidden md:flex flex-col border-r border-border/60 bg-card/30 transition-[width] duration-200",
+          "hidden md:flex sticky top-0 h-screen flex-col border-r border-border/60 bg-card/30 transition-[width] duration-200",
           collapsed ? "w-16" : "w-64",
         )}
       >
-        <div className={cn("h-14 flex items-center border-b border-border/60 px-4", collapsed && "justify-center px-0")}>
+        <div className={cn("min-h-14 flex items-center border-b border-border/60 px-4", collapsed && "justify-center px-0")}>
           {!collapsed ? (
-            <div className="flex-1">
-              <p className="font-display text-sm tracking-wide text-gold">IRHA ADMIN</p>
-              <p className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">Control Core</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-display text-sm tracking-wide text-gold truncate">IRHA ADMIN</p>
+              <p className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground truncate">Control Core</p>
             </div>
           ) : (
             <p className="font-display text-gold text-sm">IA</p>
           )}
           <button
+            type="button"
             onClick={() => setCollapsed((value) => !value)}
-            className="text-muted-foreground hover:text-primary p-1"
+            className="min-h-11 min-w-11 inline-flex items-center justify-center text-muted-foreground hover:text-primary"
             aria-label="Toggle sidebar"
           >
             <Menu size={16} />
@@ -163,12 +166,15 @@ export function AdminShell({
       </aside>
 
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-72 max-w-[85%] bg-card border-r border-border/60 flex flex-col">
-            <div className="h-14 flex items-center justify-between px-4 border-b border-border/60">
-              <p className="font-display text-sm text-gold">IRHA ADMIN</p>
-              <button onClick={() => setMobileOpen(false)} className="p-1 text-muted-foreground"><X size={18} /></button>
+        <div className="md:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Admin navigation">
+          <button type="button" aria-label="Close menu" className="absolute inset-0 bg-background/85 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="relative h-[100dvh] w-[min(19rem,88vw)] bg-card border-r border-border/60 flex flex-col shadow-2xl">
+            <div className="min-h-16 flex items-center justify-between px-4 border-b border-border/60 pt-[env(safe-area-inset-top)]">
+              <div className="min-w-0">
+                <p className="font-display text-sm text-gold truncate">IRHA ADMIN</p>
+                <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground truncate">{userEmail || "Control Core"}</p>
+              </div>
+              <button type="button" onClick={() => setMobileOpen(false)} className="min-h-11 min-w-11 inline-flex items-center justify-center text-muted-foreground" aria-label="Close menu"><X size={20} /></button>
             </div>
             {nav}
           </aside>
@@ -176,41 +182,44 @@ export function AdminShell({
       )}
 
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="h-14 border-b border-border/60 bg-card/20 backdrop-blur flex items-center gap-3 px-4 md:px-6 sticky top-0 z-30">
+        <header className="min-h-14 border-b border-border/60 bg-card/90 backdrop-blur flex items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-6 sticky top-0 z-30 pt-[env(safe-area-inset-top)]">
           <button
-            className="md:hidden p-2 -ml-2 text-foreground/80"
+            type="button"
+            className="md:hidden min-h-11 min-w-11 -ml-2 inline-flex items-center justify-center text-foreground/80"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
           >
             <Menu size={20} />
           </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground truncate">
+          <div className="flex-1 min-w-0 py-2">
+            <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-muted-foreground truncate">
               {NAV.find((group) => group.items.some((item) => item.key === view))?.title ?? "Admin"}
             </p>
             <h1 className="font-display text-base md:text-lg truncate leading-tight">{active?.label ?? "Dashboard"}</h1>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="hidden lg:flex items-center gap-2 text-[9px] uppercase tracking-[0.16em] text-muted-foreground max-w-56 truncate">
             {userEmail}
           </div>
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] border border-gold/60 text-gold px-3 py-2 hover:bg-gold hover:text-background transition-colors"
+            className="hidden sm:inline-flex min-h-11 items-center gap-2 text-[10px] uppercase tracking-[0.18em] border border-gold/60 text-gold px-3 py-2 hover:bg-gold hover:text-background transition-colors"
             title="Open live website"
           >
-            <ExternalLink size={12} /> <span className="hidden lg:inline">Live Site</span>
+            <ExternalLink size={12} /> <span className="hidden xl:inline">Live Site</span>
           </a>
           <button
+            type="button"
             onClick={signOut}
-            className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] border border-border/60 px-3 py-2 hover:border-primary hover:text-primary"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center sm:gap-2 text-[10px] uppercase tracking-[0.18em] border border-border/60 px-2 sm:px-3 py-2 hover:border-primary hover:text-primary"
+            aria-label="Sign out"
           >
-            <LogOut size={12} /> <span className="hidden sm:inline">Sign out</span>
+            <LogOut size={13} /> <span className="hidden xl:inline">Sign out</span>
           </button>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
           {content}
         </main>
       </div>
