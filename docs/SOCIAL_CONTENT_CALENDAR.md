@@ -10,10 +10,11 @@ Create platform-native B2B social content from verified Irha Apparels product/bu
 2. Choose target markets, language, platforms, content types and posts per platform.
 3. Lovable AI creates separate Facebook, Instagram, LinkedIn and TikTok drafts.
 4. Review captions, hashtags, CTAs, carousel outlines, reel scripts and risk flags.
-5. Attach a public final image or video URL where required.
-6. Approve immediately or approve with a scheduled date/time.
-7. Use `Publish due now` or explicitly select approved items for delivery.
-8. Store exact connector/API response, external post ID/URL, failure and attempt history.
+5. Text and single-image items may be prepared for delivery when their required public asset is present.
+6. Carousel and reel items remain copyable creative handoff drafts in v1.
+7. Approve a supported item immediately or approve it with a scheduled date/time.
+8. Use `Publish due now` or explicitly select approved items for delivery.
+9. Store exact connector/API response, external post ID/URL, failure and attempt history.
 
 Generation never approves, schedules or publishes content.
 
@@ -21,11 +22,11 @@ Generation never approves, schedules or publishes content.
 
 ### Facebook
 
-The worker can attempt Page delivery when Meta Page credentials are available. Exact Graph API response decides whether the item is published or failed.
+The worker can attempt Page text/link or single-image delivery when Meta Page credentials are available. Exact Graph API response decides whether the item is published or failed.
 
 ### Instagram
 
-V1 supports approved single-image posts with a public image URL. Carousel and reel assets are not claimed as automatically rendered or delivered.
+V1 supports approved single-image posts with a public image URL. Carousel and reel assets are not automatically rendered, approved or delivered.
 
 ### LinkedIn
 
@@ -71,12 +72,13 @@ All tables use admin-only RLS.
 ## Approval and scheduling
 
 - AI generation creates drafts only.
-- Editing a draft and saving it as draft clears approval.
-- A final public asset is required before approving Instagram image content or reel content.
-- Approved items may have a future `scheduled_at` time.
+- Editing a supported item and saving it as draft clears approval.
+- A final public image is required before approving Instagram single-image content.
+- V1 database rules prevent carousel and reel items from entering automatic approval/delivery states.
+- Approved text or single-image items may have a future `scheduled_at` time.
 - `Publish due now` processes only approved items whose scheduled time has arrived.
 - V1 does not claim an unattended cron. Calendar scheduling is stored and can be processed from admin.
-- Failed items can be retried only while their original approval remains present.
+- Failed supported items can be retried only while their original approval remains present.
 
 ## Delivery limits
 
