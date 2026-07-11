@@ -39,7 +39,9 @@ export type BusinessRulesMaster = {
     qualificationQuestions: ApprovalMode;
     followUpReminder: ApprovalMode;
     socialDraft: ApprovalMode;
+    socialPublish: ApprovalMode;
     listingDraft: ApprovalMode;
+    listingUpdate: ApprovalMode;
     seoDraft: ApprovalMode;
     finalQuotation: ApprovalMode;
     discount: ApprovalMode;
@@ -92,7 +94,9 @@ export const DEFAULT_BUSINESS_RULES: BusinessRulesMaster = {
     qualificationQuestions: "auto",
     followUpReminder: "auto",
     socialDraft: "draft",
+    socialPublish: "owner",
     listingDraft: "draft",
+    listingUpdate: "owner",
     seoDraft: "draft",
     finalQuotation: "owner",
     discount: "owner",
@@ -126,6 +130,8 @@ export const REQUIRED_RULE_PATHS: Array<{ label: string; value: (rules: Business
   { label: "Escalation rules", value: (rules) => rules.escalationNotes },
 ];
 
+const HIGH_RISK_PATTERN = /\b(price|pricing|quotation|quote|discount|payment terms?|deposit|production date|production timeline|delivery date|lead time|capacity|complaint settlement|refund|compensation|contract|incoterm|fob|cif|ddp)\b/i;
+
 function hasValue(value: unknown) {
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === "string") return value.trim().length > 0;
@@ -143,6 +149,15 @@ export function businessRulesReadiness(rules: BusinessRulesMaster) {
   };
 }
 
+export function businessRulesApproved(rules: BusinessRulesMaster) {
+  return rules.status === "approved" && businessRulesReadiness(rules).score === 100;
+}
+
+export function containsHighRiskBusinessTerms(value: unknown) {
+  const text = typeof value === "string" ? value : JSON.stringify(value ?? {});
+  return HIGH_RISK_PATTERN.test(text);
+}
+
 export function parseList(value: string) {
   return value
     .split(/\n|,/)
@@ -155,12 +170,24 @@ export function listText(values: string[]) {
   return values.join("\n");
 }
 
+function mergeRules(value: Partial<BusinessRulesMaster>): BusinessRulesMaster {
+  return {
+    ...DEFAULT_BUSINESS_RULES,
+    ...value,
+    company: { ...DEFAULT_BUSINESS_RULES.company, ...(value.company ?? {}) },
+    commercial: { ...DEFAULT_BUSINESS_RULES.commercial, ...(value.commercial ?? {}) },
+    manufacturing: { ...DEFAULT_BUSINESS_RULES.manufacturing, ...(value.manufacturing ?? {}) },
+    authority: { ...DEFAULT_BUSINESS_RULES.authority, ...(value.authority ?? {}) },
+    prohibitedClaims: Array.isArray(value.prohibitedClaims) ? value.prohibitedClaims : DEFAULT_BUSINESS_RULES.prohibitedClaims,
+  };
+}
+
 export function loadBusinessRules(): BusinessRulesMaster {
   if (typeof window === "undefined") return DEFAULT_BUSINESS_RULES;
   try {
     const stored = window.localStorage.getItem(BUSINESS_RULES_STORAGE_KEY);
     if (!stored) return DEFAULT_BUSINESS_RULES;
-    return { ...DEFAULT_BUSINESS_RULES, ...JSON.parse(stored) } as BusinessRulesMaster;
+    return mergeRules(JSON.parse(stored) as Partial<BusinessRulesMaster>);
   } catch {
     return DEFAULT_BUSINESS_RULES;
   }
