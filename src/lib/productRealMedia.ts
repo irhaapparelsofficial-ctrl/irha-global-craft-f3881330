@@ -61,4 +61,12 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/black-skeleton-embroidered-short-lederhosen/04-detail-skeleton-embroidery.webp",
     ],
   },
+  "brown-floral-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/brown-floral-embroidered-short-lederhosen/01-hero-front-with-suspenders.webp",
+      "/product-media/brown-floral-embroidered-short-lederhosen/03-angle-back.webp",
+      "/product-media/brown-floral-embroidered-short-lederhosen/04-detail-floral-embroidery.webp",
+      "/product-media/brown-floral-embroidered-short-lederhosen/07-extra-front-without-suspenders.webp",
+    ],
+  },
 };
