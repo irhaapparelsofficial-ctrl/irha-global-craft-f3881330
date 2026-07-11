@@ -99,16 +99,17 @@ export default function LiveChat() {
   const [mode, setMode] = useState<GuideMode>("ai");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
   const sessionIdRef = useRef<string>("");
 
   if (!sessionIdRef.current) {
     try {
-      let s = sessionStorage.getItem("irha:chat-sid");
-      if (!s) {
-        s = crypto.randomUUID();
-        sessionStorage.setItem("irha:chat-sid", s);
+      let sessionId = sessionStorage.getItem("irha:chat-sid");
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        sessionStorage.setItem("irha:chat-sid", sessionId);
       }
-      sessionIdRef.current = s;
+      sessionIdRef.current = sessionId;
     } catch {
       sessionIdRef.current = crypto.randomUUID();
     }
@@ -123,13 +124,29 @@ export default function LiveChat() {
   }, [open]);
 
   useEffect(() => {
-    if (!open || !window.matchMedia("(max-width: 639px)").matches) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        window.setTimeout(() => launcherRef.current?.focus(), 0);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    const previousOverflow = document.body.style.overflow;
+    if (isMobile) document.body.style.overflow = "hidden";
+
     return () => {
-      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKeyDown);
+      if (isMobile) document.body.style.overflow = previousOverflow;
     };
   }, [open]);
+
+  const closeChat = () => {
+    setOpen(false);
+    window.setTimeout(() => launcherRef.current?.focus(), 0);
+  };
 
   const logAssistant = (content: string) => {
     void supabase.from("chat_messages").insert({
@@ -168,25 +185,25 @@ export default function LiveChat() {
     }
 
     try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(`${supabaseUrl}/functions/v1/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Authorization: `Bearer ${supabaseKey}`,
         },
         body: JSON.stringify({
-          messages: next.map((m) => ({ role: m.role, content: m.content })),
+          messages: next.map((message) => ({ role: message.role, content: message.content })),
         }),
       });
 
-      if (!res.ok || !res.body) throw new Error("guide-unavailable");
+      if (!response.ok || !response.body) throw new Error("guide-unavailable");
 
-      const reader = res.body.getReader();
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let acc = "";
+      let accumulated = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -203,10 +220,10 @@ export default function LiveChat() {
             const json = JSON.parse(data);
             const delta = json.choices?.[0]?.delta?.content;
             if (delta) {
-              acc += delta;
-              setMessages((prev) => {
-                const copy = [...prev];
-                copy[copy.length - 1] = { role: "assistant", content: acc };
+              accumulated += delta;
+              setMessages((previous) => {
+                const copy = [...previous];
+                copy[copy.length - 1] = { role: "assistant", content: accumulated };
                 return copy;
               });
             }
@@ -216,10 +233,10 @@ export default function LiveChat() {
         }
       }
 
-      if (!acc) {
+      if (!accumulated) {
         useBackup(next, userMsg.content);
       } else {
-        logAssistant(acc);
+        logAssistant(accumulated);
       }
     } catch {
       useBackup(next, userMsg.content);
@@ -232,9 +249,12 @@ export default function LiveChat() {
     <>
       {!open && (
         <button
+          ref={launcherRef}
+          type="button"
           onClick={() => setOpen(true)}
           aria-label="Open Irha Guide"
-          className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] sm:right-6 sm:bottom-6 z-[60] group flex items-center gap-2 bg-gradient-gold text-primary-foreground rounded-full pl-3 pr-4 py-3 shadow-gold hover:scale-105 transition-transform"
+          aria-haspopup="dialog"
+          className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:right-[11.5rem] md:bottom-6 z-[60] group min-h-11 inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground rounded-full pl-3 pr-4 py-3 shadow-gold hover:scale-105 transition-transform"
         >
           <Sparkles size={20} />
           <span className="text-[11px] font-medium uppercase tracking-[0.2em] hidden sm:inline">Irha Guide</span>
@@ -242,18 +262,23 @@ export default function LiveChat() {
       )}
 
       {open && (
-        <div className="fixed z-[80] inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(5.25rem+env(safe-area-inset-bottom))] sm:inset-auto sm:right-6 sm:bottom-6 sm:w-[400px] sm:h-[min(680px,calc(100vh-3rem))] flex flex-col bg-background border border-border shadow-elegant rounded-sm overflow-hidden animate-fade-in">
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="irha-guide-title"
+          className="fixed z-[80] inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(5.25rem+env(safe-area-inset-bottom))] md:inset-auto md:right-6 md:bottom-6 md:w-[400px] md:h-[min(680px,calc(100vh-3rem))] flex flex-col bg-background border border-border shadow-elegant rounded-sm overflow-hidden animate-fade-in"
+        >
           <div className="shrink-0 bg-gradient-to-r from-card to-background border-b border-border/60 px-3 py-3 sm:p-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center shrink-0" aria-hidden="true">
                   <Sparkles size={15} className="text-primary-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-display text-base leading-tight">Irha Guide</p>
+                  <p id="irha-guide-title" className="font-display text-base leading-tight">Irha Guide</p>
                   <p className="text-[9px] uppercase tracking-[0.18em] text-foreground/55 flex items-center gap-1.5 whitespace-nowrap">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                    Online · {mode === "backup" ? "Smart backup" : "Smart guide"}
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true" />
+                    Available · {mode === "backup" ? "Smart backup" : "Smart guide"}
                   </p>
                 </div>
               </div>
@@ -264,15 +289,15 @@ export default function LiveChat() {
                   target="_blank"
                   rel="noreferrer noopener"
                   aria-label="Chat on WhatsApp"
-                  className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] bg-[#25D366] text-white px-2.5 py-2 rounded-full"
+                  className="min-h-10 flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] bg-[#25D366] text-white px-2.5 py-2 rounded-full"
                 >
                   <MessageCircle size={12} /> <span className="hidden xs:inline">WhatsApp</span>
                 </a>
                 <button
                   type="button"
-                  onClick={() => setOpen(false)}
+                  onClick={closeChat}
                   aria-label="Close Irha Guide"
-                  className="w-9 h-9 inline-flex items-center justify-center border border-border/60 text-foreground/70 hover:text-foreground hover:border-gold transition-colors"
+                  className="min-w-11 min-h-11 inline-flex items-center justify-center border border-border/60 text-foreground/70 hover:text-foreground hover:border-gold transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -280,15 +305,25 @@ export default function LiveChat() {
             </div>
           </div>
 
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-background overscroll-contain">
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[88%] px-3.5 py-2.5 text-[13px] sm:text-sm leading-relaxed whitespace-pre-wrap rounded-sm ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border/60 text-foreground/90"}`}>
-                  {m.content || (loading && i === messages.length - 1 ? (
-                    <span className="inline-flex gap-1 py-1">
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse" />
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse [animation-delay:0.2s]" />
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse [animation-delay:0.4s]" />
+          <div
+            ref={scrollRef}
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-busy={loading}
+            className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-background"
+          >
+            {messages.map((message, index) => (
+              <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  aria-label={message.role === "user" ? "Your message" : "Irha Guide response"}
+                  className={`max-w-[88%] px-3.5 py-2.5 text-[13px] sm:text-sm leading-relaxed whitespace-pre-wrap break-words rounded-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border/60 text-foreground/90"}`}
+                >
+                  {message.content || (loading && index === messages.length - 1 ? (
+                    <span className="inline-flex gap-1 py-1" aria-label="Irha Guide is responding">
+                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse" aria-hidden="true" />
+                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse [animation-delay:0.2s]" aria-hidden="true" />
+                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse [animation-delay:0.4s]" aria-hidden="true" />
                     </span>
                   ) : null)}
                 </div>
@@ -299,9 +334,14 @@ export default function LiveChat() {
               <div className="pt-1 space-y-2">
                 <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/50">Quick questions</p>
                 <div className="flex flex-wrap gap-2">
-                  {QUICK_PROMPTS.map((q) => (
-                    <button key={q} onClick={() => send(q)} className="text-[11px] px-3 py-1.5 border border-border/60 hover:border-primary hover:text-primary transition-colors rounded-sm">
-                      {q}
+                  {QUICK_PROMPTS.map((question) => (
+                    <button
+                      key={question}
+                      type="button"
+                      onClick={() => void send(question)}
+                      className="min-h-10 text-[11px] px-3 py-1.5 border border-border/60 hover:border-primary hover:text-primary transition-colors rounded-sm"
+                    >
+                      {question}
                     </button>
                   ))}
                 </div>
@@ -310,31 +350,38 @@ export default function LiveChat() {
 
             {mode === "backup" && (
               <div className="grid grid-cols-3 gap-2 pt-1">
-                <Link to="/products" onClick={() => setOpen(false)} className="text-center text-[9px] uppercase tracking-[0.15em] border border-border/60 px-2 py-2.5 hover:border-gold hover:text-gold">Products</Link>
-                <Link to="/inquiry?intent=rfq" onClick={() => setOpen(false)} className="text-center text-[9px] uppercase tracking-[0.15em] border border-gold/60 text-gold px-2 py-2.5">Get Quote</Link>
-                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="text-center text-[9px] uppercase tracking-[0.15em] border border-[#25D366]/60 text-[#25D366] px-2 py-2.5">WhatsApp</a>
+                <Link to="/products" onClick={closeChat} className="min-h-11 inline-flex items-center justify-center text-center text-[9px] uppercase tracking-[0.15em] border border-border/60 px-2 py-2.5 hover:border-gold hover:text-gold">Products</Link>
+                <Link to="/inquiry?intent=rfq" onClick={closeChat} className="min-h-11 inline-flex items-center justify-center text-center text-[9px] uppercase tracking-[0.15em] border border-gold/60 text-gold px-2 py-2.5">Get Quote</Link>
+                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="min-h-11 inline-flex items-center justify-center text-center text-[9px] uppercase tracking-[0.15em] border border-[#25D366]/60 text-[#25D366] px-2 py-2.5">WhatsApp</a>
               </div>
             )}
           </div>
 
-          <form onSubmit={(e) => { e.preventDefault(); void send(input); }} className="shrink-0 border-t border-border/60 p-3 bg-card">
+          <form onSubmit={(event) => { event.preventDefault(); void send(input); }} className="shrink-0 border-t border-border/60 p-3 bg-card">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
                     void send(input);
                   }
                 }}
                 rows={1}
+                maxLength={2000}
+                aria-label="Message Irha Guide"
                 placeholder="Ask about products or manufacturing… (EN / DE)"
                 disabled={loading}
-                className="min-w-0 flex-1 resize-none bg-background border border-border/60 focus:border-primary outline-none text-sm px-3 py-2.5 rounded-sm max-h-24"
+                className="min-h-11 min-w-0 flex-1 resize-none bg-background border border-border/60 focus:border-primary outline-none text-sm px-3 py-2.5 rounded-sm max-h-24"
               />
-              <button type="submit" disabled={loading || !input.trim()} aria-label="Send" className="shrink-0 bg-gradient-gold text-primary-foreground p-2.5 rounded-sm disabled:opacity-40 hover:shadow-gold transition-all">
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                aria-label="Send message"
+                className="min-h-11 min-w-11 shrink-0 inline-flex items-center justify-center bg-gradient-gold text-primary-foreground rounded-sm disabled:opacity-40 hover:shadow-gold transition-all"
+              >
                 <Send size={16} />
               </button>
             </div>
@@ -342,7 +389,7 @@ export default function LiveChat() {
               Guide answers are non-binding · Final details confirmed after review
             </p>
           </form>
-        </div>
+        </section>
       )}
     </>
   );
