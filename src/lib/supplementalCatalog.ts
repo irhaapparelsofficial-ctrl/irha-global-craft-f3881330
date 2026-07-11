@@ -223,6 +223,29 @@ const SUPPLEMENTAL_PRODUCTS: SupplementalProductDefinition[] = [
       "Tan alpine embroidered short Lederhosen for wholesale, OEM, ODM and private-label programs.",
     sortOrder: 1007,
   },
+  {
+    id: "00000000-0000-0000-0000-000000000074",
+    topCategorySlug: "bavarian-trachten-wear",
+    subcategorySlugs: ["men"],
+    subcategoryNames: ["menstrachten"],
+    slug: "antique-brown-scroll-embroidered-short-lederhosen",
+    name: "Antique Brown Scroll-Embroidered Short Lederhosen",
+    description:
+      "Short-cut Bavarian-style Lederhosen in an antique brown colourway with ornamental scroll embroidery, contrast piping and matching suspenders, prepared for wholesale and private-label buyer programs.",
+    specs: [
+      "Ornamental scroll embroidery",
+      "Antique brown visual finish",
+      "Contrast-piping accents",
+      "Matching suspenders",
+      "Private-label customization available",
+    ],
+    seoTitle: "Antique Brown Scroll-Embroidered Lederhosen Manufacturer | Irha Apparels",
+    seoDescription:
+      "Antique brown scroll-embroidered short Lederhosen for wholesale and private-label programs from Irha Apparels, a B2B apparel manufacturer in Sialkot, Pakistan.",
+    shortDescription:
+      "Antique brown scroll-embroidered short Lederhosen for wholesale, OEM, ODM and private-label programs.",
+    sortOrder: 1008,
+  },
 ];
 
 function matchesSubcategory(
