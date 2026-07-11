@@ -18,6 +18,7 @@ const Inquiry = lazy(() => import("./pages/Inquiry"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
+const LocalizedSeoPage = lazy(() => import("./pages/LocalizedSeoPage"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
@@ -115,6 +116,7 @@ const App = () => (
                       <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/seo-indexing" element={<SeoIndexing />} />
+                      <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
                       <Route path="/studio" element={<Studio />} />
                       <Route path="/shortlist" element={<Shortlist />} />
                       <Route path="/compare" element={<Compare />} />
