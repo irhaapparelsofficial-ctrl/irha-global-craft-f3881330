@@ -15,6 +15,7 @@ const Products = lazy(() => import("./pages/Products"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const Manufacturing = lazy(() => import("./pages/Manufacturing"));
 const Inquiry = lazy(() => import("./pages/Inquiry"));
+const RepeatOrder = lazy(() => import("./pages/RepeatOrder"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
@@ -113,6 +114,7 @@ const App = () => (
                       <Route path="/sustainability" element={<Navigate to="/inquiry?intent=rfq" replace />} />
                       <Route path="/shipping-returns" element={<Navigate to="/resources#shipping-questions" replace />} />
                       <Route path="/inquiry" element={<Inquiry />} />
+                      <Route path="/repeat-order" element={<RepeatOrder />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                       <Route path="/terms-of-service" element={<TermsOfService />} />
