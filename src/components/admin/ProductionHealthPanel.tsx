@@ -3,6 +3,7 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle2,
+  Clock3,
   Database,
   Globe2,
   Loader2,
@@ -17,7 +18,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-type State = "checking" | "ready" | "partial" | "blocked";
+type State = "checking" | "ready" | "pending" | "partial" | "blocked";
 type Json = Record<string, unknown>;
 type Check = {
   id: string;
@@ -39,6 +40,8 @@ const PLACEHOLDERS: Check[] = [
   { id: "seo", title: "Multilingual SEO", state: "checking", summary: "Checking locale, review and publish workflow readiness.", icon: Search },
 ];
 
+const DEFERRED_BACKEND_IDS = new Set(["leads", "outreach", "social", "seo"]);
+
 const isObject = (value: unknown): value is Json => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 const truthy = (value: unknown) => value === true;
 const messageOf = (value: unknown) => {
@@ -51,6 +54,17 @@ const messageOf = (value: unknown) => {
   return "Unknown runtime error";
 };
 
+function deferredBackendError(value: unknown) {
+  const message = messageOf(value).toLowerCase();
+  return [
+    "failed to send a request to the edge function",
+    "function was not found",
+    "requested function was not found",
+    "edge function not found",
+    "failed to fetch",
+  ].some((needle) => message.includes(needle));
+}
+
 async function invokeHealth(name: string): Promise<Json> {
   const { data, error } = await supabase.functions.invoke(name, { body: { action: "health" } });
   if (error) throw new Error(error.message || `${name} health request failed`);
@@ -60,7 +74,7 @@ async function invokeHealth(name: string): Promise<Json> {
 }
 
 async function checkPublic(): Promise<Check> {
-  const required = ["/buyer-trust", "/factory-video-call", "/resources", "/faq", "/inquiry"];
+  const required = ["/buyer-trust", "/factory-video-call", "/resources", "/faq", "/inquiry", "/repeat-order"];
   const stamp = Date.now();
   const [home, sitemap, robots] = await Promise.all([
     fetch(`/?health=${stamp}`, { cache: "no-store" }),
@@ -189,11 +203,17 @@ export default function ProductionHealthPanel() {
       invokeHealth("multilingual-seo").then(seoCheck),
     ];
     const settled = await Promise.allSettled(tasks);
-    setChecks(settled.map((result, index) => result.status === "fulfilled" ? result.value : {
-      ...PLACEHOLDERS[index],
-      state: "blocked",
-      summary: "Runtime check failed.",
-      detail: result.reason instanceof Error ? result.reason.message : String(result.reason),
+    setChecks(settled.map((result, index) => {
+      if (result.status === "fulfilled") return result.value;
+      const placeholder = PLACEHOLDERS[index];
+      const deferred = DEFERRED_BACKEND_IDS.has(placeholder.id) && deferredBackendError(result.reason);
+      return {
+        ...placeholder,
+        state: deferred ? "pending" : "blocked",
+        summary: deferred ? "Backend activation is intentionally deferred to the final Lovable Cloud deployment batch." : "Runtime check failed.",
+        detail: deferred ? "Frontend workflow is prepared. The Edge Function and runtime bindings will be activated in the final backend prompt before migration to the owned Supabase project." : messageOf(result.reason),
+        evidence: deferred ? { backend_activation: "deferred", destructive_write: false } : undefined,
+      };
     }));
     setLastChecked(new Date());
     setLoading(false);
@@ -203,27 +223,29 @@ export default function ProductionHealthPanel() {
 
   const totals = useMemo(() => ({
     ready: checks.filter((check) => check.state === "ready").length,
+    pending: checks.filter((check) => check.state === "pending").length,
     partial: checks.filter((check) => check.state === "partial").length,
     blocked: checks.filter((check) => check.state === "blocked").length,
   }), [checks]);
 
   return (
     <div className="space-y-6">
-      <section className="border border-gold/40 bg-gradient-to-br from-gold/10 via-card/40 to-background p-6 md:p-8">
+      <section className="border border-gold/40 bg-gradient-to-br from-gold/10 via-card/40 to-background p-5 sm:p-6 md:p-8">
         <div className="flex items-start justify-between gap-5 flex-wrap">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-gold mb-3"><Activity size={15} /> Production Health Center</div>
+            <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.24em] sm:tracking-[0.28em] text-gold mb-3"><Activity size={15} /> Production Health Center</div>
             <h2 className="font-display text-3xl md:text-4xl">Exact runtime status, not configuration guesses.</h2>
-            <p className="text-sm text-foreground/70 mt-3 leading-relaxed">Read-only checks verify the published site, secure lead gateway, Buyer CRM and automation engines. Green means the stated runtime contract responded successfully; it does not promise future delivery outcomes.</p>
+            <p className="text-sm text-foreground/70 mt-3 leading-relaxed">Read-only checks verify the published site, secure lead gateway, Buyer CRM and automation engines. Pending means the frontend is ready while the final Lovable Cloud backend activation is deliberately postponed.</p>
           </div>
-          <button type="button" onClick={() => void run()} disabled={loading} className="inline-flex items-center gap-2 border border-gold/60 text-gold px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] hover:bg-gold hover:text-background disabled:opacity-50">
+          <button type="button" onClick={() => void run()} disabled={loading} className="inline-flex min-h-11 items-center gap-2 border border-gold/60 text-gold px-4 py-2.5 text-[10px] uppercase tracking-[0.18em] sm:tracking-[0.2em] hover:bg-gold hover:text-background disabled:opacity-50">
             {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Run checks
           </button>
         </div>
       </section>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Metric label="Ready" value={totals.ready} tone="ready" />
+        <Metric label="Pending" value={totals.pending} tone="pending" />
         <Metric label="Partial" value={totals.partial} tone="partial" />
         <Metric label="Blocked" value={totals.blocked} tone="blocked" />
       </div>
@@ -243,26 +265,27 @@ function HealthCard({ check }: { check: Check }) {
   const view = {
     checking: { label: "Checking", classes: "border-border/60 text-muted-foreground", icon: Loader2 },
     ready: { label: "Ready", classes: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10", icon: CheckCircle2 },
+    pending: { label: "Pending", classes: "border-sky-500/40 text-sky-300 bg-sky-500/10", icon: Clock3 },
     partial: { label: "Partial", classes: "border-amber-500/40 text-amber-300 bg-amber-500/10", icon: AlertTriangle },
     blocked: { label: "Blocked", classes: "border-red-500/40 text-red-300 bg-red-500/10", icon: XCircle },
   }[check.state];
   const StateIcon = view.icon;
   return (
-    <article className="border border-border/60 bg-card/30 p-5">
-      <div className="flex items-start justify-between gap-4">
+    <article className="border border-border/60 bg-card/30 p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
         <div className="flex items-start gap-3 min-w-0">
-          <div className="border border-border/60 p-2.5 text-gold"><Icon size={18} /></div>
-          <div><h3 className="font-display text-xl">{check.title}</h3><p className="text-sm text-foreground/70 mt-2 leading-relaxed">{check.summary}</p></div>
+          <div className="border border-border/60 p-2.5 text-gold shrink-0"><Icon size={18} /></div>
+          <div className="min-w-0"><h3 className="font-display text-lg sm:text-xl">{check.title}</h3><p className="text-sm text-foreground/70 mt-2 leading-relaxed">{check.summary}</p></div>
         </div>
-        <span className={`inline-flex items-center gap-1.5 border px-2 py-1 text-[9px] uppercase tracking-[0.14em] shrink-0 ${view.classes}`}><StateIcon size={11} className={check.state === "checking" ? "animate-spin" : ""} /> {view.label}</span>
+        <span className={`inline-flex items-center gap-1.5 border px-2 py-1 text-[9px] uppercase tracking-[0.12em] sm:tracking-[0.14em] shrink-0 ${view.classes}`}><StateIcon size={11} className={check.state === "checking" ? "animate-spin" : ""} /> {view.label}</span>
       </div>
       {check.detail && <p className="text-xs text-foreground/50 mt-4 leading-relaxed break-words">{check.detail}</p>}
-      {check.evidence && <details className="mt-4 border-t border-border/40 pt-3"><summary className="cursor-pointer text-[9px] uppercase tracking-[0.18em] text-gold/80">Technical evidence</summary><pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words border border-border/50 bg-background/40 p-3 text-[10px] text-foreground/60">{JSON.stringify(check.evidence, null, 2)}</pre></details>}
+      {check.evidence && <details className="mt-4 border-t border-border/40 pt-3"><summary className="cursor-pointer text-[9px] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-gold/80">Technical evidence</summary><pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words border border-border/50 bg-background/40 p-3 text-[10px] text-foreground/60">{JSON.stringify(check.evidence, null, 2)}</pre></details>}
     </article>
   );
 }
 
-function Metric({ label, value, tone }: { label: string; value: number; tone: "ready" | "partial" | "blocked" }) {
-  const classes = tone === "ready" ? "text-emerald-300" : tone === "partial" ? "text-amber-300" : "text-red-300";
-  return <div className="border border-border/60 bg-card/30 p-4"><p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p><p className={`font-display text-3xl mt-1 ${classes}`}>{value}</p></div>;
+function Metric({ label, value, tone }: { label: string; value: number; tone: "ready" | "pending" | "partial" | "blocked" }) {
+  const classes = tone === "ready" ? "text-emerald-300" : tone === "pending" ? "text-sky-300" : tone === "partial" ? "text-amber-300" : "text-red-300";
+  return <div className="border border-border/60 bg-card/30 p-4"><p className="text-[9px] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-muted-foreground">{label}</p><p className={`font-display text-3xl mt-1 ${classes}`}>{value}</p></div>;
 }

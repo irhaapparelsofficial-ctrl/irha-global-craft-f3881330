@@ -1,7 +1,7 @@
 const BASE = process.env.IRHA_BASE_URL || "https://www.irhaapparels.com";
 const FUNCTIONS_BASE = process.env.IRHA_FUNCTIONS_URL || "https://mlefxgyaqoisvdmoiapq.supabase.co/functions/v1";
-const RELEASE = "gate4-2026-07-06-r6";
-const RELEASE_TXT = "IRHA_GATE4_RELEASE_2026_07_06_R6";
+const RELEASE = "frontend-finalization-2026-07-11-r7";
+const RELEASE_TXT = "IRHA_FRONTEND_FINALIZATION_2026_07_11_R7";
 const forbidden = [
   "Since 2014",
   "MOQ 50",
@@ -102,7 +102,7 @@ async function main() {
   for (const path of ["/de", "/sustainability", "/shipping-returns", "/blog", "/journal"]) {
     assert(!sitemap.includes(`<loc>${BASE}${path}</loc>`), `sitemap contains quarantined route ${path}`);
   }
-  for (const path of ["/buyer-trust", "/factory-video-call", "/resources", "/faq"]) {
+  for (const path of ["/buyer-trust", "/factory-video-call", "/resources", "/faq", "/inquiry", "/repeat-order"]) {
     assert(sitemap.includes(`<loc>${BASE}${path}</loc>`), `sitemap is missing live buyer route ${path}`);
   }
 
@@ -119,6 +119,7 @@ async function main() {
     "/resources",
     "/faq",
     "/inquiry",
+    "/repeat-order",
     "/contact",
     "/admin",
   ]) {

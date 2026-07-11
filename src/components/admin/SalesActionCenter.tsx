@@ -251,7 +251,7 @@ export default function SalesActionCenter({ go }: { go: (view: AdminView) => voi
 
   return (
     <section className="border border-border/60 bg-card/25">
-      <div className="p-5 md:p-6 border-b border-border/60 flex items-start justify-between gap-4 flex-wrap">
+      <div className="p-4 sm:p-5 md:p-6 border-b border-border/60 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="eyebrow mb-2">Sales Action Center</p>
           <h2 className="font-display text-2xl md:text-3xl">What needs attention next</h2>
@@ -259,19 +259,19 @@ export default function SalesActionCenter({ go }: { go: (view: AdminView) => voi
             Read-only action queue built from existing Buyer CRM status, priority, follow-up, quotation and sample fields.
           </p>
         </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-2 border border-border/60 px-3 py-2 text-[10px] uppercase tracking-[0.18em] hover:border-gold hover:text-gold disabled:opacity-50">
+        <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+          <button type="button" onClick={() => void load()} disabled={loading} className="min-h-11 inline-flex items-center justify-center gap-2 border border-border/60 px-3 py-2 text-[10px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold disabled:opacity-50">
             <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh
           </button>
-          <button type="button" onClick={() => go("leads")} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-4 py-2 text-[10px] uppercase tracking-[0.18em]">
+          <button type="button" onClick={() => go("leads")} className="min-h-11 inline-flex flex-1 sm:flex-none items-center justify-center gap-2 bg-gradient-gold text-primary-foreground px-4 py-2 text-[10px] uppercase tracking-[0.16em]">
             <UserRoundCheck size={12} /> Open Buyer Inbox
           </button>
         </div>
       </div>
 
-      <div className="p-4 md:p-5 border-b border-border/60 flex gap-2 overflow-x-auto">
+      <div className="p-4 md:p-5 border-b border-border/60 flex gap-2 overflow-x-auto overscroll-x-contain">
         {filters.map((item) => (
-          <button key={item.key} type="button" onClick={() => setFilter(item.key)} className={`shrink-0 border px-3 py-2 text-[10px] uppercase tracking-[0.16em] ${filter === item.key ? "border-gold text-gold bg-gold/10" : "border-border/60 text-foreground/60 hover:border-foreground/30"}`}>
+          <button key={item.key} type="button" onClick={() => setFilter(item.key)} className={`min-h-11 shrink-0 border px-3 py-2 text-[10px] uppercase tracking-[0.14em] ${filter === item.key ? "border-gold text-gold bg-gold/10" : "border-border/60 text-foreground/60 hover:border-foreground/30"}`}>
             {item.label} <span className="ml-1 tabular-nums">{item.value}</span>
           </button>
         ))}
@@ -287,11 +287,17 @@ export default function SalesActionCenter({ go }: { go: (view: AdminView) => voi
       <div className="p-4 md:p-5">
         {loading ? (
           <p className="text-sm text-muted-foreground py-8 text-center">Building sales action queue…</p>
+        ) : buyers.length === 0 && !error ? (
+          <div className="py-10 px-4 text-center border border-dashed border-border/50">
+            <UserRoundCheck size={28} className="mx-auto text-gold mb-3" />
+            <p className="font-display text-xl">Buyer CRM is ready</p>
+            <p className="text-xs text-muted-foreground mt-2 max-w-xl mx-auto">There are no inquiry, catalogue or imported prospect records yet. New buyer records will automatically create review and follow-up actions here.</p>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="py-10 text-center">
             <CheckCircle2 size={28} className="mx-auto text-emerald-300 mb-3" />
             <p className="font-display text-xl">No matching action</p>
-            <p className="text-xs text-muted-foreground mt-2">This does not mean the pipeline is complete; it means no record matches the selected CRM rule.</p>
+            <p className="text-xs text-muted-foreground mt-2">CRM records exist, but none match the selected action rule.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -301,7 +307,7 @@ export default function SalesActionCenter({ go }: { go: (view: AdminView) => voi
         )}
       </div>
 
-      <div className="border-t border-border/60 px-5 py-3 text-[10px] uppercase tracking-[0.14em] text-foreground/45 flex justify-between gap-3 flex-wrap">
+      <div className="border-t border-border/60 px-4 sm:px-5 py-3 text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.14em] text-foreground/45 flex justify-between gap-3 flex-wrap">
         <span>{buyers.length} CRM records reviewed</span>
         <span>{lastLoaded ? `Updated ${lastLoaded.toLocaleString()}` : "Not loaded"}</span>
       </div>
@@ -321,12 +327,12 @@ function ActionRow({ action }: { action: Action }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-display text-lg">{action.title}</h3>
-            <span className="border border-border/60 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-foreground/55">{sourceLabel(action.buyer.source)}</span>
-            <span className={`border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] ${action.buyer.priority === "urgent" ? "border-red-500/40 text-red-300" : action.buyer.priority === "high" ? "border-amber-500/40 text-amber-300" : "border-border/60 text-foreground/50"}`}>{action.buyer.priority}</span>
+            <span className="border border-border/60 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] sm:tracking-[0.14em] text-foreground/55">{sourceLabel(action.buyer.source)}</span>
+            <span className={`border px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] sm:tracking-[0.14em] ${action.buyer.priority === "urgent" ? "border-red-500/40 text-red-300" : action.buyer.priority === "high" ? "border-amber-500/40 text-amber-300" : "border-border/60 text-foreground/50"}`}>{action.buyer.priority}</span>
           </div>
-          <p className="text-sm mt-1 truncate">{action.buyer.name} <span className="text-foreground/45">· {contactLabel(action.buyer)}</span></p>
+          <p className="text-sm mt-1 break-words">{action.buyer.name} <span className="text-foreground/45">· {contactLabel(action.buyer)}</span></p>
           <p className="text-xs text-foreground/55 mt-2 leading-relaxed">{action.detail}</p>
-          <p className="text-[10px] uppercase tracking-[0.14em] text-foreground/40 mt-2">Status: {statusLabel(action.buyer.status)}{action.buyer.country ? ` · ${action.buyer.country}` : ""}</p>
+          <p className="text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.14em] text-foreground/40 mt-2">Status: {statusLabel(action.buyer.status)}{action.buyer.country ? ` · ${action.buyer.country}` : ""}</p>
         </div>
       </div>
       <div className="md:text-right shrink-0">

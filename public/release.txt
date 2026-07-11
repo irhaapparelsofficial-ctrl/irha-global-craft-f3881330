@@ -1,3 +1,3 @@
-IRHA_GATE4_RELEASE_2026_07_06_R6
-Source: GitHub main
-Catalogue paths: repaired
+IRHA_FRONTEND_FINALIZATION_2026_07_11_R7
+Source: GitHub main after merge
+Scope: admin mobile UX, truthful backend pending states, traffic normalization, repeat-order sitemap and smoke coverage
