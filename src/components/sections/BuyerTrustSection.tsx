@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, FileCheck2, ShieldCheck, Video, Workflow } from "lucide-react";
+import { ArrowRight, FileCheck2, RotateCcw, ShieldCheck, Video, Workflow } from "lucide-react";
 
 const ITEMS = [
   {
@@ -44,6 +44,9 @@ export default function BuyerTrustSection() {
             </Link>
             <Link to="/factory-video-call" className="inline-flex items-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-3.5 text-[10px] uppercase tracking-[0.22em]">
               Factory Call
+            </Link>
+            <Link to="/repeat-order" className="inline-flex items-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-3.5 text-[10px] uppercase tracking-[0.22em]">
+              <RotateCcw size={13} /> Repeat Order
             </Link>
           </div>
         </div>
