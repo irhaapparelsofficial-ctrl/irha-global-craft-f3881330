@@ -1,0 +1,41 @@
+{
+  "products": {
+    "olive-green-micro-gingham-pocket-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1RidEa2t5G7A6lJMvxg7H-BEN5X5HHVEF",
+        "fallback": "https://drive.google.com/thumbnail?id=1RidEa2t5G7A6lJMvxg7H-BEN5X5HHVEF&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "lime-green-micro-gingham-pocket-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1VuSL9GMGLDPlAJHOtw4IDzedxYEc0KHw",
+        "fallback": "https://drive.google.com/thumbnail?id=1VuSL9GMGLDPlAJHOtw4IDzedxYEc0KHw&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "black-white-micro-gingham-pocket-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1tmnD_rGrgXUtX-jJ5ItJ8iOafTVUCoVi",
+        "fallback": "https://drive.google.com/thumbnail?id=1tmnD_rGrgXUtX-jJ5ItJ8iOafTVUCoVi&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "sky-blue-micro-gingham-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1u_zUlchmh3Mow81fBLjyIFUjiBdVz8Q3",
+        "fallback": "https://drive.google.com/thumbnail?id=1u_zUlchmh3Mow81fBLjyIFUjiBdVz8Q3&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "white-band-collar-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1tNi9omtKSjc_kSTaOQd8uZfeUWx8niK3",
+        "fallback": "https://drive.google.com/thumbnail?id=1tNi9omtKSjc_kSTaOQd8uZfeUWx8niK3&sz=w1600",
+        "file": "01-hero-folded-front.webp",
+        "min_source_bytes": 4000,
+        "min_optimized_bytes": 1500
+      }
+    ]
+  }
+}
