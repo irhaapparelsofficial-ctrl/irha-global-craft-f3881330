@@ -55,6 +55,10 @@ const COMPANY = [
   { to: "/catalogue", label: "Catalogue" },
   { to: "/about", label: "About" },
   { to: "/manufacturing", label: "Manufacturing" },
+  { to: "/buyer-trust", label: "Buyer Trust Center" },
+  { to: "/factory-video-call", label: "Factory Video Call" },
+  { to: "/resources", label: "Buyer Resources" },
+  { to: "/faq", label: "Buyer FAQ" },
   { to: "/compliance", label: "Compliance" },
   { to: "/contact", label: "Contact" },
 ];
@@ -63,7 +67,7 @@ const BUYER_READINESS = [
   { label: "Requirement-led review", note: "Scope confirmed before commitment" },
   { label: "Private-label options", note: "Labels, tags and packaging by program" },
   { label: "Order documentation", note: "Requirements confirmed before dispatch" },
-  { label: "Live factory view", note: "Available by video call" },
+  { label: "Live factory view", note: "Available by scheduled video call" },
 ];
 
 export default function Footer() {
@@ -88,9 +92,9 @@ export default function Footer() {
             <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
           </summary>
           <ul className="space-y-3 text-sm pt-3 md:pt-0">
-            {COLLECTIONS.map((c) => (
-              <li key={c.slug}>
-                <Link to={`/products/${c.slug}`} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{c.label}</Link>
+            {COLLECTIONS.map((category) => (
+              <li key={category.slug}>
+                <Link to={`/products/${category.slug}`} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{category.label}</Link>
               </li>
             ))}
           </ul>
@@ -98,12 +102,12 @@ export default function Footer() {
 
         <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
           <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden">
-            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Company</span>
+            <span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Company & Buyer</span>
             <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
           </summary>
-          <ul className="space-y-3 text-sm pt-3 md:pt-0">
-            {COMPANY.map((l) => (
-              <li key={l.to}><Link to={l.to} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{l.label}</Link></li>
+          <ul className="space-y-2.5 text-sm pt-3 md:pt-0">
+            {COMPANY.map((link) => (
+              <li key={link.to}><Link to={link.to} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{link.label}</Link></li>
             ))}
           </ul>
         </details>
@@ -115,9 +119,9 @@ export default function Footer() {
           </summary>
           <div className="pt-3 md:pt-0">
             <div className="flex items-center gap-3 mb-5">
-              {SOCIALS.map((s) => (
-                <a key={s.name} href={s.href} target="_blank" rel="noreferrer noopener" aria-label={`Irha Apparels on ${s.name}`} className="inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold transition-colors">
-                  <s.Icon size={18} />
+              {SOCIALS.map((social) => (
+                <a key={social.name} href={social.href} target="_blank" rel="noreferrer noopener" aria-label={`Irha Apparels on ${social.name}`} className="inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold transition-colors">
+                  <social.Icon size={18} />
                 </a>
               ))}
             </div>
@@ -154,6 +158,9 @@ export default function Footer() {
               </li>
             ))}
           </ul>
+          <Link to="/factory-video-call" className="mt-5 inline-flex text-[10px] uppercase tracking-[0.2em] text-gold hover:underline">
+            Request live factory call →
+          </Link>
         </details>
       </div>
 
