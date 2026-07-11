@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
 import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
+import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 
 export type AdminView =
   | "overview"
@@ -36,7 +37,7 @@ const NAV: NavGroup[] = [
   { title: "Content & SEO", items: [
     { key: "blog", label: "Blog", icon: FileText },
     { key: "faqs", label: "FAQs", icon: FileText },
-    { key: "seo", label: "SEO", icon: Search },
+    { key: "seo", label: "Multilingual SEO", icon: Search },
     { key: "links", label: "Internal Links", icon: Link2 },
   ]},
   { title: "Leads & Communication", items: [
@@ -125,7 +126,9 @@ export function AdminShell({
     ? <ListingsPanel />
     : view === "lead_engine"
       ? <LeadAcquisitionPanel />
-      : children;
+      : view === "seo"
+        ? <MultilingualSeoPanel />
+        : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
