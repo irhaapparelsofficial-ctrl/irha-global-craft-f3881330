@@ -6,6 +6,7 @@ import { writeFileSync } from "fs";
 import { resolve } from "path";
 import { CATALOG } from "../src/lib/catalog";
 import { BAVARIAN_MENS_COLLECTIONS } from "../src/lib/bavarianMensCollections";
+import { BAVARIAN_WOMENS_COLLECTIONS } from "../src/lib/bavarianWomensCollections";
 import { createSupplementalProductsForSubcategory } from "../src/lib/supplementalCatalog";
 import { createSupplementalBatch02ProductsForSubcategory } from "../src/lib/supplementalCatalogBatch02";
 import { createSupplementalBatch03ProductsForSubcategory } from "../src/lib/supplementalCatalogBatch03";
@@ -135,6 +136,14 @@ function catalogEntries(): SitemapEntry[] {
   for (const collection of BAVARIAN_MENS_COLLECTIONS) {
     entries.push({
       path: `/products/bavarian-trachten-wear/mens-trachten/${collection.slug}`,
+      changefreq: "weekly",
+      priority: "0.82",
+    });
+  }
+
+  for (const collection of BAVARIAN_WOMENS_COLLECTIONS) {
+    entries.push({
+      path: `/products/bavarian-trachten-wear/womens-trachten/${collection.slug}`,
       changefreq: "weekly",
       priority: "0.82",
     });
