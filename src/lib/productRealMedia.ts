@@ -105,4 +105,42 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/sand-brown-floral-embroidered-short-lederhosen/05-detail-suspender-front-flap.webp",
     ],
   },
+  "dark-brown-ivory-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/dark-brown-ivory-embroidered-short-lederhosen/01-hero-front-with-suspenders.webp",
+      "/product-media/dark-brown-ivory-embroidered-short-lederhosen/04-detail-suspender-embroidery.webp",
+      "/product-media/dark-brown-ivory-embroidered-short-lederhosen/07-extra-front-view.webp",
+    ],
+  },
+  "crackle-brown-green-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/crackle-brown-green-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/crackle-brown-green-embroidered-short-lederhosen/03-angle-back.webp",
+      "/product-media/crackle-brown-green-embroidered-short-lederhosen/04-detail-front-flap.webp",
+      "/product-media/crackle-brown-green-embroidered-short-lederhosen/05-detail-leg-embroidery.webp",
+    ],
+  },
+  "vintage-taupe-side-tie-short-lederhosen": {
+    gallery: [
+      "/product-media/vintage-taupe-side-tie-short-lederhosen/01-hero-front.webp",
+      "/product-media/vintage-taupe-side-tie-short-lederhosen/03-angle-back.webp",
+      "/product-media/vintage-taupe-side-tie-short-lederhosen/04-detail-upper-construction.webp",
+      "/product-media/vintage-taupe-side-tie-short-lederhosen/05-detail-leg-embroidery-side-tie.webp",
+    ],
+  },
+  "olive-brown-ornamental-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/olive-brown-ornamental-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/olive-brown-ornamental-embroidered-short-lederhosen/03-angle-back.webp",
+      "/product-media/olive-brown-ornamental-embroidered-short-lederhosen/04-detail-front-flap.webp",
+      "/product-media/olive-brown-ornamental-embroidered-short-lederhosen/05-detail-leg-embroidery-buttons.webp",
+    ],
+  },
+  "light-tan-ornamental-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/light-tan-ornamental-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/light-tan-ornamental-embroidered-short-lederhosen/04-detail-front-flap.webp",
+      "/product-media/light-tan-ornamental-embroidered-short-lederhosen/05-detail-leg-embroidery-buttons.webp",
+    ],
+  },
 };
