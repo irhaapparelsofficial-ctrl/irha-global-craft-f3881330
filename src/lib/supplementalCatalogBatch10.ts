@@ -1,6 +1,6 @@
 import type { DbProduct } from "@/hooks/useCatalog";
 
-// Verified first-party Drive media: Men's → Shirts → Shirts, batch 05.
+// Verified first-party media: Men's Trachten shirts plus curated Bavarian accessories.
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 type BatchProduct = {
@@ -67,6 +67,44 @@ const PRODUCTS: BatchProduct[] = [
     sortOrder: 1053,
     gallery: [
       "/product-media/white-burgundy-trim-button-down-trachten-shirt/01-hero-folded-front.webp",
+    ],
+  },
+  {
+    idSuffix: 120,
+    slug: "alpine-trachten-hat",
+    name: "Alpine Trachten Hat",
+    description: "Traditional-inspired Alpine Trachten hat presented as a coordinated accessory option for Bavarian wholesale, retail and private-label programs. Colour, decorative trim, labels and packing are confirmed against the buyer specification.",
+    specs: [
+      "Traditional Alpine silhouette",
+      "Decorative band and trim options",
+      "Coordinated Bavarian accessory program",
+      "Private-label customization available",
+    ],
+    shortDescription: "Alpine Trachten hat for coordinated wholesale and private-label Bavarian programs.",
+    sortOrder: 1060,
+    gallery: [
+      "/__l5e/assets-v1/1afd0194-b039-43b6-b816-f11ad2738b6a/irha-fix-0004.jpg",
+      "/__l5e/assets-v1/f2789635-41de-4cc5-972c-54cd92f0fedc/irha-fix-0005.jpg",
+      "/__l5e/assets-v1/c7479406-8b89-411a-b730-c80fbf87e74a/irha-fix-0006.jpg",
+      "/__l5e/assets-v1/5cd2526d-175e-460b-b1e8-1cc97017c4f7/irha-fix-0008.jpg",
+    ],
+  },
+  {
+    idSuffix: 121,
+    slug: "bavarian-leather-belt",
+    name: "Bavarian Leather Belt",
+    description: "Bavarian-style leather belt with decorative traditional-inspired detailing for coordinated Lederhosen, wholesale and private-label buyer programs. Material, buckle, dimensions, branding and packaging are confirmed per buyer brief.",
+    specs: [
+      "Bavarian-inspired decorative styling",
+      "Coordinated Lederhosen accessory",
+      "Custom buckle and branding options",
+      "Private-label customization available",
+    ],
+    shortDescription: "Bavarian leather belt for wholesale, OEM and private-label Trachten programs.",
+    sortOrder: 1061,
+    gallery: [
+      "/__l5e/assets-v1/fb4b4db8-9592-4768-83a2-7857a016cfd7/irha-0457.jpg",
+      "/__l5e/assets-v1/7805af78-7df1-410a-9b67-da900cf442d2/irha-0456.jpg",
     ],
   },
 ];
