@@ -1,0 +1,39 @@
+{
+  "products": {
+    "classic-blue-micro-check-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1qCjp5pravBFQM8-ZwpaxsEK9vqPDZeSO",
+        "fallback": "https://drive.google.com/thumbnail?id=1qCjp5pravBFQM8-ZwpaxsEK9vqPDZeSO&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ],
+    "blue-dual-check-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1n5HyFB5tA6l0pDkaK35O1VYd1Ji0E0X5",
+        "fallback": "https://drive.google.com/thumbnail?id=1n5HyFB5tA6l0pDkaK35O1VYd1Ji0E0X5&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ],
+    "navy-large-gingham-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=19bWO95EDRsln1zsY9NKLUtrDmxD9UPc8",
+        "fallback": "https://drive.google.com/thumbnail?id=19bWO95EDRsln1zsY9NKLUtrDmxD9UPc8&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ],
+    "bright-green-micro-check-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1djlET6sI-j8fwbB3RAB_dVI4k1LFWYy7",
+        "fallback": "https://drive.google.com/thumbnail?id=1djlET6sI-j8fwbB3RAB_dVI4k1LFWYy7&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ],
+    "forest-green-gingham-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1PIxPL0W29I--HCInDQT-ZhTMnP9rIPh5",
+        "fallback": "https://drive.google.com/thumbnail?id=1PIxPL0W29I--HCInDQT-ZhTMnP9rIPh5&sz=w1600",
+        "file": "01-hero-front.webp"
+      }
+    ]
+  }
+}
