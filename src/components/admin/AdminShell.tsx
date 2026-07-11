@@ -11,6 +11,7 @@ import ListingsPanel from "@/components/admin/ListingsPanel";
 import ListingLaunchKit from "@/components/admin/ListingLaunchKit";
 import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 import LeadCampaignBlueprints from "@/components/admin/LeadCampaignBlueprints";
+import BuyerQualificationOverview from "@/components/admin/BuyerQualificationOverview";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import SeoReleaseReadiness from "@/components/admin/SeoReleaseReadiness";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
@@ -150,21 +151,23 @@ export function AdminShell({
     ? <><ListingLaunchKit /><ListingsPanel /></>
     : view === "lead_engine"
       ? <><LeadCampaignBlueprints /><LeadAcquisitionPanel /></>
-      : view === "seo"
-        ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
-        : view === "gsc"
-          ? <GoogleSearchCenter />
-          : view === "system"
-            ? <ProductionHealthPanel />
-            : view === "rules"
-              ? <BusinessRulesPanel />
-              : view === "ai"
-                ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
-                : view === "mailing"
-                  ? <><OutreachTemplateLibrary />{children}</>
-                  : view === "social"
-                    ? <><SocialContentPlaybook />{children}</>
-                    : children;
+      : view === "leads"
+        ? <><BuyerQualificationOverview />{children}</>
+        : view === "seo"
+          ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
+          : view === "gsc"
+            ? <GoogleSearchCenter />
+            : view === "system"
+              ? <ProductionHealthPanel />
+              : view === "rules"
+                ? <BusinessRulesPanel />
+                : view === "ai"
+                  ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
+                  : view === "mailing"
+                    ? <><OutreachTemplateLibrary />{children}</>
+                    : view === "social"
+                      ? <><SocialContentPlaybook />{children}</>
+                      : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
