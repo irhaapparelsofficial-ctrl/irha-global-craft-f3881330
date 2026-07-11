@@ -95,7 +95,7 @@ export const BAVARIAN_MENS_COLLECTIONS: BavarianMensCollection[] = [
     seoTitle: "Trachten Vests & Jankers Manufacturer | Irha Apparels",
     seoDescription:
       "B2B Trachten vest, waistcoat and Janker manufacturing for wholesale and private-label programs, with custom trims, embroidery, labels and packaging.",
-    hero: "/assets/lederhosen/cat-herren-westen.jpg",
+    hero: "/__l5e/assets-v1/13fccae5-9e9d-46c5-a4d6-c9dbe76bb519/irha-0054.jpg",
     matches: (slug, name) => {
       const value = text(slug, name);
       return value.includes("vest") || value.includes("waistcoat") || value.includes("janker");
@@ -112,7 +112,7 @@ export const BAVARIAN_MENS_COLLECTIONS: BavarianMensCollection[] = [
     seoTitle: "Bavarian Accessories Manufacturer & Wholesale Supplier | Irha Apparels",
     seoDescription:
       "Bavarian accessories for wholesale and private-label programs, including suspenders, belts, hats, socks and coordinated Trachten accessories by buyer specification.",
-    hero: "/assets/lederhosen/cat-accessories.jpg",
+    hero: "/__l5e/assets-v1/1afd0194-b039-43b6-b816-f11ad2738b6a/irha-fix-0004.jpg",
     matches: (slug, name) => {
       const value = text(slug, name);
       return ["suspender", "belt", "hat", "sock", "shoe", "accessor"].some((term) => value.includes(term));
