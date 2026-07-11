@@ -4,16 +4,17 @@ import {
   Home, Package, Layers, BookOpen, FileText, Search, Link2,
   Users, MessageSquare, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
-  BarChart3, ListChecks,
+  BarChart3, ListChecks, UserSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
+import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 
 export type AdminView =
   | "overview"
   | "products" | "categories" | "catalogues"
   | "blog" | "faqs" | "seo" | "links"
-  | "leads" | "inquiries" | "chat" | "mailing"
+  | "lead_engine" | "leads" | "inquiries" | "chat" | "mailing"
   | "ai"
   | "studio" | "pi" | "directory"
   | "social" | "devops" | "listings"
@@ -39,6 +40,7 @@ const NAV: NavGroup[] = [
     { key: "links", label: "Internal Links", icon: Link2 },
   ]},
   { title: "Leads & Communication", items: [
+    { key: "lead_engine", label: "Lead Acquisition", icon: UserSearch },
     { key: "leads", label: "Buyer Inbox", icon: Users },
     { key: "chat", label: "Live Chat", icon: MessageSquare },
     { key: "mailing", label: "Mailing", icon: Send },
@@ -119,6 +121,12 @@ export function AdminShell({
     </nav>
   );
 
+  const content = view === "listings"
+    ? <ListingsPanel />
+    : view === "lead_engine"
+      ? <LeadAcquisitionPanel />
+      : children;
+
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <aside
@@ -196,7 +204,7 @@ export function AdminShell({
         </header>
 
         <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
-          {view === "listings" ? <ListingsPanel /> : children}
+          {content}
         </main>
       </div>
     </div>
