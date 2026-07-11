@@ -3,6 +3,9 @@ project_id = "mlefxgyaqoisvdmoiapq"
 [functions.chat]
 verify_jwt = false
 
+[functions.public-lead-gateway]
+verify_jwt = false
+
 [functions.gsc-inspect]
 verify_jwt = true
 
