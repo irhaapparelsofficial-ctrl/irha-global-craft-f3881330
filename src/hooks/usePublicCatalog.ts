@@ -8,6 +8,7 @@ import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
 import type { Product as LegacyProduct } from "@/lib/categories";
 import { createSupplementalProductsForSubcategory } from "@/lib/supplementalCatalog";
 import { createSupplementalBatch02ProductsForSubcategory } from "@/lib/supplementalCatalogBatch02";
+import { createSupplementalBatch03ProductsForSubcategory } from "@/lib/supplementalCatalogBatch03";
 
 export type PublicSubCategory = DbCategory & { products: DbProduct[] };
 export type PublicTopCategory = DbCategory & {
@@ -72,6 +73,7 @@ function productsForSubcategory(top: DbCategory, sub: DbCategory, dbProducts: Db
   const supplemental = [
     ...createSupplementalProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
     ...createSupplementalBatch02ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
+    ...createSupplementalBatch03ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
   ];
 
   for (const product of supplemental) {
