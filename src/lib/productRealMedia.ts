@@ -90,4 +90,12 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/tan-alpine-embroidered-short-lederhosen/04-detail-alpine-embroidery.webp",
     ],
   },
+  "antique-brown-scroll-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/antique-brown-scroll-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/antique-brown-scroll-embroidered-short-lederhosen/03-angle-back.webp",
+      "/product-media/antique-brown-scroll-embroidered-short-lederhosen/04-detail-front-scroll-embroidery.webp",
+      "/product-media/antique-brown-scroll-embroidered-short-lederhosen/05-detail-front-construction.webp",
+    ],
+  },
 };
