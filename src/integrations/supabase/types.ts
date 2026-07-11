@@ -433,7 +433,7 @@ export type Database = {
           company: string | null
           country: string | null
           created_at: string
-          email: string
+          email: string | null
           id: string
           inquiry_ref: string | null
           intent: string | null
@@ -450,7 +450,7 @@ export type Database = {
           company?: string | null
           country?: string | null
           created_at?: string
-          email: string
+          email?: string | null
           id?: string
           inquiry_ref?: string | null
           intent?: string | null
@@ -467,7 +467,7 @@ export type Database = {
           company?: string | null
           country?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           id?: string
           inquiry_ref?: string | null
           intent?: string | null
@@ -705,6 +705,27 @@ export type Database = {
           },
         ]
       }
+      public_submission_events: {
+        Row: {
+          action: string
+          created_at: string
+          fingerprint_hash: string
+          id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          fingerprint_hash: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          fingerprint_hash?: string
+          id?: string
+        }
+        Relationships: []
+      }
       seo_page_overrides: {
         Row: {
           canonical_url: string | null
@@ -848,6 +869,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_public_submission_limit: {
+        Args: {
+          _action: string
+          _fingerprint_hash: string
+          _max_count: number
+          _window_seconds: number
+        }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
