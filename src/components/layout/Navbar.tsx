@@ -15,9 +15,13 @@ const mainLinks = [
 ];
 
 const moreLinks = [
-  { to: "/shortlist", label: "Shortlist" },
+  { to: "/buyer-trust", label: "Buyer Trust" },
+  { to: "/factory-video-call", label: "Factory Video Call" },
+  { to: "/resources", label: "Buyer Resources" },
+  { to: "/faq", label: "Buyer FAQ" },
   { to: "/catalogue", label: "Catalogue" },
   { to: "/compliance", label: "Compliance" },
+  { to: "/shortlist", label: "Shortlist" },
 ];
 
 const tailLinks = [
@@ -65,13 +69,12 @@ export default function Navbar() {
           />
         </Link>
 
-
         <nav className="hidden lg:flex items-center gap-8">
-          {mainLinks.map((l) => (
+          {mainLinks.map((link) => (
             <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.to === "/"}
+              key={link.to}
+              to={link.to}
+              end={link.to === "/"}
               className={({ isActive }) =>
                 cn(
                   "text-[11px] uppercase tracking-[0.25em] hover-gold-underline transition-colors",
@@ -79,11 +82,10 @@ export default function Navbar() {
                 )
               }
             >
-              {l.label}
+              {link.label}
             </NavLink>
           ))}
 
-          {/* Secondary navigation */}
           <div
             className="relative"
             onMouseEnter={() => setMoreOpen(true)}
@@ -94,11 +96,11 @@ export default function Navbar() {
             </button>
             {moreOpen && (
               <div className="absolute top-full left-1/2 -translate-x-1/2 pt-5 animate-fade-in">
-                <div className="bg-background border border-border/60 shadow-elegant min-w-[200px] py-2">
-                  {moreLinks.map((l) => (
+                <div className="bg-background border border-border/60 shadow-elegant min-w-[240px] py-2">
+                  {moreLinks.map((link) => (
                     <NavLink
-                      key={l.to}
-                      to={l.to}
+                      key={link.to}
+                      to={link.to}
                       className={({ isActive }) =>
                         cn(
                           "block px-5 py-3 text-[11px] uppercase tracking-[0.25em] transition-colors",
@@ -106,7 +108,7 @@ export default function Navbar() {
                         )
                       }
                     >
-                      {l.label}
+                      {link.label}
                     </NavLink>
                   ))}
                 </div>
@@ -114,10 +116,10 @@ export default function Navbar() {
             )}
           </div>
 
-          {tailLinks.map((l) => (
+          {tailLinks.map((link) => (
             <NavLink
-              key={l.to}
-              to={l.to}
+              key={link.to}
+              to={link.to}
               className={({ isActive }) =>
                 cn(
                   "text-[11px] uppercase tracking-[0.25em] hover-gold-underline transition-colors",
@@ -125,7 +127,7 @@ export default function Navbar() {
                 )
               }
             >
-              {l.label}
+              {link.label}
             </NavLink>
           ))}
         </nav>
@@ -153,7 +155,7 @@ export default function Navbar() {
         </div>
 
         <button
-          onClick={() => setOpen((s) => !s)}
+          onClick={() => setOpen((value) => !value)}
           className="lg:hidden text-foreground p-2"
           aria-label="Toggle menu"
         >
@@ -163,11 +165,11 @@ export default function Navbar() {
 
       {open && (
         <div className="lg:hidden container-luxe pt-6 pb-4 flex flex-col gap-5 animate-fade-in max-h-[calc(100vh-80px)] overflow-y-auto">
-          {[...mainLinks, ...moreLinks, ...tailLinks].map((l) => (
+          {[...mainLinks, ...moreLinks, ...tailLinks].map((link) => (
             <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.to === "/"}
+              key={link.to}
+              to={link.to}
+              end={link.to === "/"}
               className={({ isActive }) =>
                 cn(
                   "text-sm uppercase tracking-[0.25em]",
@@ -175,7 +177,7 @@ export default function Navbar() {
                 )
               }
             >
-              {l.label}
+              {link.label}
             </NavLink>
           ))}
           <MockupRequestButton variant="navMobile">Mockup Design</MockupRequestButton>
