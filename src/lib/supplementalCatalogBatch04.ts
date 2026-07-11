@@ -1,5 +1,6 @@
 import type { DbProduct } from "@/hooks/useCatalog";
 
+// Verified first-party Drive media: Men's → Leather Pants, batch 01.
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 type BatchProduct = {
