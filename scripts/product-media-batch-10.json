@@ -1,0 +1,25 @@
+{
+  "products": {
+    "white-blue-trim-button-down-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1xjusk4lKeGpXmjohOB8KnW5RAAJoF7WH",
+        "fallback": "https://drive.google.com/thumbnail?id=1xjusk4lKeGpXmjohOB8KnW5RAAJoF7WH&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "white-olive-trim-button-down-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1DGWTk0Ebp_o3dEPO4BxYO4cOt7t5x8S_",
+        "fallback": "https://drive.google.com/thumbnail?id=1DGWTk0Ebp_o3dEPO4BxYO4cOt7t5x8S_&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ],
+    "white-burgundy-trim-button-down-trachten-shirt": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1wMRqAPzwjmuzQzK-k1LwuFXT_d5rEZM8",
+        "fallback": "https://drive.google.com/thumbnail?id=1wMRqAPzwjmuzQzK-k1LwuFXT_d5rEZM8&sz=w1600",
+        "file": "01-hero-folded-front.webp"
+      }
+    ]
+  }
+}
