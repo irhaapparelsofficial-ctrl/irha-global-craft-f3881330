@@ -2,19 +2,29 @@
 
 ## Purpose
 
-Create evidence-based one-to-one B2B outreach from verified Buyer CRM records, keep every send behind explicit owner confirmation, store exact Gmail results and detect replies in the original thread.
+Create evidence-based one-to-one B2B outreach from verified or qualified Buyer CRM records, keep approval and Gmail sending as separate actions, store exact Gmail results and detect replies in the original thread.
+
+## Eligibility
+
+A Buyer CRM lead is eligible only when it has a valid business email, has not opted out, and either:
+
+- has a verification score of 70 or higher, or
+- has a qualified workflow status such as qualified, contacted, replied, sample requested, quote requested, quotation sent, negotiation or follow-up.
+
+The backend enforces this rule even if a frontend request is manipulated.
 
 ## Workflow
 
 1. Select eligible Buyer CRM leads with valid business emails.
 2. Enter a campaign objective, product focus, target market, language mode and call to action.
-3. Generate drafts. This step does not send anything.
-4. Review and edit each subject/body/language.
-5. Approve drafts individually or select a maximum of 10 for an explicit approve-and-send action.
-6. Gmail returns its message ID, thread ID and history ID; the exact connector response is stored.
-7. Sync replies by reading the same Gmail thread and checking for a message from the recipient.
-8. Generate follow-up drafts for sent initial messages older than five days with no detected reply.
-9. Every follow-up remains a draft until explicitly approved and sent.
+3. Generate drafts. This step does not approve or send anything.
+4. Review and edit each subject, body and language.
+5. Explicitly approve each draft for sending.
+6. In a separate action, select already-approved messages and send a maximum of 10.
+7. Gmail returns its message ID, thread ID and history ID; the exact connector response is stored.
+8. Sync replies by reading the same Gmail thread and checking for a message from the recipient.
+9. Generate follow-up drafts for sent initial messages older than five days with no detected reply.
+10. Every follow-up remains a draft until explicitly approved and then separately sent.
 
 ## Gmail transport
 
@@ -33,6 +43,12 @@ The UI distinguishes:
 - verified Gmail profile
 - ready to generate AI drafts
 - ready to send
+
+## Approval and retry policy
+
+Only messages with an existing approval timestamp and approving admin can be sent.
+
+A failed message can be retried only when it was approved before the failed send. Saving an approved message back as a draft clears its approval.
 
 ## Duplicate-send protection
 
@@ -106,11 +122,12 @@ Buyer CRM also gains:
 
 ## Limits
 
-- up to 50 leads per AI generation request
-- up to 10 irreversible Gmail sends per explicit confirmation
+- up to 50 eligible leads per AI generation request
+- AI generation is processed in indexed batches so drafts remain mapped to the correct lead
+- up to 10 irreversible Gmail sends per separate confirmation
 - up to 30 sent threads per reply-sync request
 - up to 20 first follow-up drafts per request
 
 ## Current boundary
 
-This release does not automatically send on a schedule. It prepares drafts and follow-ups automatically, but an owner confirmation is still required for every irreversible Gmail send batch.
+This release does not automatically send on a schedule. It prepares drafts and follow-ups automatically, but every irreversible Gmail send requires prior message approval and a separate owner confirmation.
