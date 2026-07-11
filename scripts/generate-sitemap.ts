@@ -4,9 +4,12 @@
 
 import { writeFileSync } from "fs";
 import { resolve } from "path";
+import { CATEGORIES } from "../src/lib/categories";
 import { CATALOG } from "../src/lib/catalog";
 import { BAVARIAN_MENS_COLLECTIONS } from "../src/lib/bavarianMensCollections";
 import { BAVARIAN_WOMENS_COLLECTIONS } from "../src/lib/bavarianWomensCollections";
+import { buildCategoryTaxonomy, taxonomyAudiencePath, taxonomyCollectionPath } from "../src/lib/globalCategoryTaxonomy";
+import { TAXONOMY_LOCALES } from "../src/lib/taxonomyI18n";
 import { createSupplementalProductsForSubcategory } from "../src/lib/supplementalCatalog";
 import { createSupplementalBatch02ProductsForSubcategory } from "../src/lib/supplementalCatalogBatch02";
 import { createSupplementalBatch03ProductsForSubcategory } from "../src/lib/supplementalCatalogBatch03";
@@ -77,7 +80,15 @@ const TOP_SLUG_BY_LEGACY_GROUP: Record<string, string> = {
   nightwear: "leisure-nightwear",
 };
 
-const TOP_CATEGORY_SLUGS = Array.from(new Set(Object.values(TOP_SLUG_BY_LEGACY_GROUP)));
+const TOP_CONFIG = [
+  { slug: "bavarian-trachten-wear", name: "Bavarian Trachten Wear", sources: ["bavarian"] },
+  { slug: "premium-leather-apparel", name: "Premium Leather Apparel", sources: ["leatherwear"] },
+  { slug: "sportswear", name: "Sportswear", sources: ["sportswear"] },
+  { slug: "streetwear-activewear", name: "Streetwear & Activewear", sources: ["streetwear"] },
+  { slug: "leisure-nightwear", name: "Leisurewear & Nightwear", sources: ["leisurewear", "nightwear"] },
+] as const;
+
+const TOP_CATEGORY_SLUGS = TOP_CONFIG.map((config) => config.slug);
 
 const supplementalFactories = [
   createSupplementalProductsForSubcategory,
@@ -94,6 +105,112 @@ const supplementalFactories = [
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function canonicalSubSlug(sourceSlug: string, subSlug: string, mergedTop: boolean): string {
+  if (!mergedTop) return subSlug;
+  if (sourceSlug === "nightwear") return `leisure-nightwear-${subSlug}`;
+  return `${sourceSlug}-${subSlug}`;
+}
+
+function taxonomySnapshots() {
+  return TOP_CONFIG.map((config, topIndex) => {
+    const sourceCategories = config.sources
+      .map((source) => CATEGORIES.find((category) => category.slug === source))
+      .filter(Boolean) as Array<(typeof CATEGORIES)[number]>;
+    const sourceGroups = config.sources
+      .map((source) => CATALOG.find((group) => group.slug === source))
+      .filter(Boolean) as Array<(typeof CATALOG)[number]>;
+    const mergedTop = config.sources.length > 1;
+    const image = sourceCategories[0]?.image ?? "";
+    const subs = sourceGroups.flatMap((group, sourceOrder) =>
+      group.subs.map((sub, subOrder) => {
+        const subSlug = canonicalSubSlug(group.slug, sub.slug, mergedTop);
+        const subId = `sitemap-${config.slug}-${subSlug}`;
+        const products = sub.products.map((product, productIndex) => ({
+          ...product,
+          id: `sitemap-product-${subId}-${productIndex}`,
+          slug: slugify(product.name),
+          sku: null,
+          created_at: undefined,
+        }));
+        const seen = new Set(products.map((product) => product.slug));
+        for (const factory of supplementalFactories) {
+          for (const supplemental of factory(config.slug, subSlug, sub.name, subId)) {
+            if (seen.has(supplemental.slug)) continue;
+            products.push({
+              name: supplemental.name,
+              slug: supplemental.slug,
+              id: supplemental.id,
+              sku: supplemental.sku,
+              image: supplemental.image_url ?? supplemental.gallery?.[0] ?? "",
+              gallery: supplemental.gallery ?? [],
+              description: supplemental.description ?? "",
+              specs: supplemental.specs ?? [],
+              details: Array.isArray(supplemental.details) ? supplemental.details : [],
+              created_at: supplemental.created_at,
+            });
+            seen.add(supplemental.slug);
+          }
+        }
+        return {
+          slug: subSlug,
+          name: mergedTop ? `${group.name}: ${sub.name}` : sub.name,
+          short: sub.short,
+          products,
+          sort_order: sourceOrder * 100 + subOrder,
+        };
+      }),
+    );
+    return {
+      slug: config.slug,
+      name: config.name,
+      short: sourceCategories[0]?.short ?? "",
+      description: sourceCategories[0]?.description ?? "",
+      image,
+      details: [],
+      subs,
+      productCount: subs.reduce((total, sub) => total + sub.products.length, 0),
+      sort_order: topIndex,
+    };
+  });
+}
+
+function taxonomyEntries(): SitemapEntry[] {
+  const entries: SitemapEntry[] = [];
+  for (const category of taxonomySnapshots()) {
+    const taxonomy = buildCategoryTaxonomy(category as never);
+    for (const locale of TAXONOMY_LOCALES) {
+      if (locale.code !== "en") {
+        entries.push({
+          path: `/intl/${locale.code}/products/${category.slug}`,
+          changefreq: "weekly",
+          priority: "0.84",
+        });
+      }
+    }
+    for (const audience of taxonomy.audiences) {
+      if (audience.productCount === 0) continue;
+      for (const locale of TAXONOMY_LOCALES) {
+        entries.push({
+          path: taxonomyAudiencePath(category.slug, audience.slug, locale.code),
+          changefreq: "weekly",
+          priority: locale.code === "en" ? "0.87" : "0.79",
+        });
+      }
+      for (const collection of audience.collections) {
+        if (collection.products.length === 0) continue;
+        for (const locale of TAXONOMY_LOCALES) {
+          entries.push({
+            path: taxonomyCollectionPath(category.slug, audience.slug, collection.slug, locale.code),
+            changefreq: "weekly",
+            priority: locale.code === "en" ? "0.82" : "0.76",
+          });
+        }
+      }
+    }
+  }
+  return entries;
 }
 
 function catalogEntries(): SitemapEntry[] {
@@ -113,12 +230,9 @@ function catalogEntries(): SitemapEntry[] {
 
     for (const sub of group.subs) {
       for (const product of sub.products) productSlugs.add(slugify(product.name));
-
-      if (group.slug === "bavarian") {
-        for (const factory of supplementalFactories) {
-          const supplemental = factory(topSlug, sub.slug, sub.name, `sitemap-${sub.slug}`);
-          for (const product of supplemental) productSlugs.add(product.slug);
-        }
+      for (const factory of supplementalFactories) {
+        const supplemental = factory(topSlug, sub.slug, sub.name, `sitemap-${sub.slug}`);
+        for (const product of supplemental) productSlugs.add(product.slug);
       }
     }
   }
@@ -156,7 +270,7 @@ function main() {
   const today = new Date().toISOString().slice(0, 10);
   const unique = new Map<string, SitemapEntry>();
 
-  for (const entry of [...staticEntries, ...catalogEntries()]) {
+  for (const entry of [...staticEntries, ...catalogEntries(), ...taxonomyEntries()]) {
     if (!safePath(entry.path)) continue;
     unique.set(entry.path, { ...unique.get(entry.path), ...entry });
   }
@@ -187,7 +301,7 @@ function main() {
 
   writeFileSync(resolve("public/sitemap.xml"), xml);
   console.log(
-    `sitemap.xml written (${ordered.length} canonical URLs) — committed Lovable catalog; no external database dependency`,
+    `sitemap.xml written (${ordered.length} canonical URLs) — committed Lovable catalog and multilingual taxonomy; no external database dependency`,
   );
 }
 
