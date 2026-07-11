@@ -16,6 +16,7 @@ import SeoReleaseReadiness from "@/components/admin/SeoReleaseReadiness";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
 import GoogleSearchCenter from "@/components/admin/GoogleSearchCenter";
 import AIOperationsPlaybook from "@/components/admin/AIOperationsPlaybook";
+import AIRulesEnforcementStatus from "@/components/admin/AIRulesEnforcementStatus";
 import BusinessRulesPanel from "@/components/admin/BusinessRulesPanel";
 import OutreachTemplateLibrary from "@/components/admin/OutreachTemplateLibrary";
 import SocialContentPlaybook from "@/components/admin/SocialContentPlaybook";
@@ -158,7 +159,7 @@ export function AdminShell({
             : view === "rules"
               ? <BusinessRulesPanel />
               : view === "ai"
-                ? <><AIOperationsPlaybook />{children}</>
+                ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
                 : view === "mailing"
                   ? <><OutreachTemplateLibrary />{children}</>
                   : view === "social"
