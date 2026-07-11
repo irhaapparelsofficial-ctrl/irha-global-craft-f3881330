@@ -31,6 +31,10 @@ const Catalogue = lazy(() => import("./pages/Catalogue"));
 const CatalogueCategory = lazy(() => import("./pages/CatalogueCategory"));
 const Shortlist = lazy(() => import("./pages/Shortlist"));
 const Compare = lazy(() => import("./pages/Compare"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const BuyerTrust = lazy(() => import("./pages/BuyerTrust"));
+const BuyerResources = lazy(() => import("./pages/BuyerResources"));
+const FactoryVideoCall = lazy(() => import("./pages/FactoryVideoCall"));
 
 const queryClient = new QueryClient();
 
@@ -102,9 +106,12 @@ const App = () => (
                       <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
                       <Route path="/manufacturing" element={<Manufacturing />} />
                       <Route path="/compliance" element={<Compliance />} />
+                      <Route path="/buyer-trust" element={<BuyerTrust />} />
+                      <Route path="/factory-video-call" element={<FactoryVideoCall />} />
+                      <Route path="/resources" element={<BuyerResources />} />
+                      <Route path="/faq" element={<FAQ />} />
                       <Route path="/sustainability" element={<Navigate to="/inquiry?intent=rfq" replace />} />
-                      <Route path="/faq" element={<Navigate to="/inquiry?intent=rfq" replace />} />
-                      <Route path="/shipping-returns" element={<Navigate to="/inquiry?intent=rfq" replace />} />
+                      <Route path="/shipping-returns" element={<Navigate to="/resources#shipping-questions" replace />} />
                       <Route path="/inquiry" element={<Inquiry />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -120,10 +127,10 @@ const App = () => (
                       <Route path="/studio" element={<Studio />} />
                       <Route path="/shortlist" element={<Shortlist />} />
                       <Route path="/compare" element={<Compare />} />
-                      <Route path="/blog" element={<Navigate to="/" replace />} />
-                      <Route path="/blog/:slug" element={<Navigate to="/" replace />} />
-                      <Route path="/journal" element={<Navigate to="/" replace />} />
-                      <Route path="/journal/:slug" element={<Navigate to="/" replace />} />
+                      <Route path="/blog" element={<Navigate to="/resources" replace />} />
+                      <Route path="/blog/:slug" element={<Navigate to="/resources" replace />} />
+                      <Route path="/journal" element={<Navigate to="/resources" replace />} />
+                      <Route path="/journal/:slug" element={<Navigate to="/resources" replace />} />
                       {LEGACY_REDIRECTS.map(([from, to]) => (
                         <Route key={from} path={from} element={<Navigate to={to} replace />} />
                       ))}
