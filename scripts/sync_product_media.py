@@ -5,7 +5,9 @@ from urllib.request import Request, urlopen
 
 from PIL import Image, ImageOps
 
-MANIFEST = Path("scripts/product-media-manifest.json")
+MANIFEST_ROOT = Path("scripts")
+BASE_MANIFEST = MANIFEST_ROOT / "product-media-manifest.json"
+BATCH_MANIFEST_GLOB = "product-media-batch-*.json"
 OUTPUT_ROOT = Path("public/product-media")
 
 
@@ -19,6 +21,20 @@ def fetch_image(url: str) -> bytes:
     if len(payload) < 10_000:
         raise RuntimeError(f"Image payload too small ({len(payload)} bytes) from {url}")
     return payload
+
+
+def load_products() -> dict[str, list[dict]]:
+    manifest_paths = [BASE_MANIFEST, *sorted(MANIFEST_ROOT.glob(BATCH_MANIFEST_GLOB))]
+    products: dict[str, list[dict]] = {}
+
+    for path in manifest_paths:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        for slug, items in manifest.get("products", {}).items():
+            if slug in products:
+                raise RuntimeError(f"Duplicate product slug {slug!r} found in {path}")
+            products[slug] = items
+
+    return products
 
 
 def sync_item(slug: str, item: dict) -> None:
@@ -53,8 +69,7 @@ def sync_item(slug: str, item: dict) -> None:
 
 
 def main() -> None:
-    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    for slug, items in manifest.get("products", {}).items():
+    for slug, items in load_products().items():
         for item in items:
             sync_item(slug, item)
 
