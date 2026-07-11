@@ -16,10 +16,8 @@ import {
   Save,
   Search,
   Send,
-  ShieldCheck,
   Sparkles,
   UserCheck,
-  Users,
   XCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +76,8 @@ type OutreachMessage = {
   body_text: string;
   personalization_evidence: Record<string, unknown>;
   status: MessageStatus;
+  approved_by: string | null;
+  approved_at: string | null;
   gmail_message_id: string | null;
   gmail_thread_id: string | null;
   connector_response: Record<string, unknown>;
@@ -99,6 +99,7 @@ type Health = {
   ready_to_generate?: boolean;
   ready_to_send?: boolean;
   limits?: { generate_per_request?: number; send_per_request?: number; reply_sync_per_request?: number };
+  approval_policy?: string;
   error?: string;
 };
 
@@ -112,6 +113,17 @@ type CampaignDraft = {
 };
 
 type MessageEdit = { subject: string; body_text: string; language: string };
+
+const ELIGIBLE_CRM_STATUSES = new Set([
+  "qualified",
+  "contacted",
+  "replied",
+  "sample_requested",
+  "quote_requested",
+  "quotation_sent",
+  "negotiation",
+  "follow_up",
+]);
 
 const emptyCampaign: CampaignDraft = {
   name: "",
@@ -176,12 +188,17 @@ export default function MailingPanel() {
   const load = async (campaignId = selectedCampaignId) => {
     setLoading(true);
     const [leadResult, campaignResult, messageResult] = await Promise.all([
-      db.from("b2b_leads").select("id,company_name,country,email,phone,website,apparel_segment,buyer_type,crm_status,priority,verification_score,outreach_opt_out,last_outreach_at,last_outreach_status").not("email", "is", null).order("updated_at", { ascending: false }).limit(1500),
+      db.from("b2b_leads")
+        .select("id,company_name,country,email,phone,website,apparel_segment,buyer_type,crm_status,priority,verification_score,outreach_opt_out,last_outreach_at,last_outreach_status")
+        .not("email", "is", null)
+        .order("updated_at", { ascending: false })
+        .limit(1500),
       db.from("outreach_campaigns").select("*").order("created_at", { ascending: false }).limit(100),
       campaignId
         ? db.from("outreach_messages").select("*").eq("campaign_id", campaignId).order("created_at", { ascending: false }).limit(1000)
         : Promise.resolve({ data: [], error: null }),
     ]);
+
     const migrationError = [campaignResult.error, messageResult.error].find(isMigrationError);
     if (migrationError) {
       setMigrationReady(false);
@@ -195,7 +212,11 @@ export default function MailingPanel() {
       const nextMessages = ((messageResult.data ?? []) as OutreachMessage[]).map(normalizeMessage);
       setCampaigns(nextCampaigns);
       setMessages(nextMessages);
-      setMessageEdits(Object.fromEntries(nextMessages.map((message) => [message.id, { subject: message.subject, body_text: message.body_text, language: message.language }])));
+      setMessageEdits(Object.fromEntries(nextMessages.map((message) => [message.id, {
+        subject: message.subject,
+        body_text: message.body_text,
+        language: message.language,
+      }])));
       if (!campaignId && nextCampaigns[0]?.id) {
         setSelectedCampaignId(nextCampaigns[0].id);
         setLoading(false);
@@ -203,8 +224,9 @@ export default function MailingPanel() {
         return;
       }
     }
+
     if (leadResult.error) toast({ title: "Buyer leads could not load", description: leadResult.error.message, variant: "destructive" });
-    setLeads(((leadResult.data ?? []) as Lead[]).filter((lead) => validEmail(lead.email)));
+    setLeads(((leadResult.data ?? []) as Lead[]).filter((lead) => validEmail(lead.email) && isEligibleLead(lead) && !lead.outreach_opt_out));
     setLoading(false);
   };
 
@@ -212,11 +234,15 @@ export default function MailingPanel() {
     void Promise.all([load(), loadHealth()]);
   }, []);
 
-  const activeCampaign = useMemo(() => campaigns.find((campaign) => campaign.id === selectedCampaignId) ?? null, [campaigns, selectedCampaignId]);
+  const activeCampaign = useMemo(
+    () => campaigns.find((campaign) => campaign.id === selectedCampaignId) ?? null,
+    [campaigns, selectedCampaignId],
+  );
+
   const filteredLeads = useMemo(() => {
     const needle = leadQuery.trim().toLowerCase();
     return leads.filter((lead) => {
-      if (lead.outreach_opt_out) return false;
+      if (!isEligibleLead(lead) || lead.outreach_opt_out) return false;
       if (!needle) return true;
       return [lead.company_name, lead.country, lead.email, lead.website, lead.apparel_segment, lead.buyer_type, lead.crm_status]
         .filter(Boolean)
@@ -225,6 +251,7 @@ export default function MailingPanel() {
         .includes(needle);
     });
   }, [leadQuery, leads]);
+
   const filteredMessages = useMemo(() => {
     const needle = messageQuery.trim().toLowerCase();
     return messages.filter((message) => {
@@ -236,6 +263,7 @@ export default function MailingPanel() {
         .includes(needle);
     });
   }, [messageQuery, messageStatusFilter, messages]);
+
   const messageStats = useMemo(() => ({
     total: messages.length,
     drafts: messages.filter((message) => message.status === "draft").length,
@@ -248,7 +276,7 @@ export default function MailingPanel() {
   const generateCampaign = async () => {
     const leadIds = [...selectedLeadIds].slice(0, health?.limits?.generate_per_request ?? 50);
     if (leadIds.length === 0) {
-      toast({ title: "Select at least one buyer lead", variant: "destructive" });
+      toast({ title: "Select at least one verified or qualified buyer", variant: "destructive" });
       return;
     }
     if (!health?.ready_to_generate) {
@@ -259,7 +287,8 @@ export default function MailingPanel() {
       toast({ title: "Campaign objective is required", variant: "destructive" });
       return;
     }
-    if (!window.confirm(`Generate ${leadIds.length} personalized outreach draft${leadIds.length === 1 ? "" : "s"}? Nothing will be sent.`)) return;
+    if (!window.confirm(`Generate ${leadIds.length} personalized draft${leadIds.length === 1 ? "" : "s"}? Nothing will be approved or sent.`)) return;
+
     setBusy("generate");
     const { data, error } = await supabase.functions.invoke("outreach-engine", {
       body: {
@@ -283,7 +312,10 @@ export default function MailingPanel() {
     setDraft(emptyCampaign);
     setSelectedLeadIds(new Set());
     setSelectedCampaignId(data.campaign_id);
-    toast({ title: "Personalized drafts created", description: `${data.created ?? 0} created · ${data.suppressed ?? 0} suppressed. Nothing was sent.` });
+    toast({
+      title: "Personalized drafts created",
+      description: `${data.created ?? 0} created · ${data.suppressed ?? 0} suppressed · ${data.skipped ?? 0} skipped. Nothing was sent.`,
+    });
     await load(data.campaign_id);
   };
 
@@ -295,7 +327,14 @@ export default function MailingPanel() {
     }
     setBusy(`save:${message.id}`);
     const { data, error } = await supabase.functions.invoke("outreach-engine", {
-      body: { action: "update", message_id: message.id, subject: edit.subject, body_text: edit.body_text, language: edit.language, status },
+      body: {
+        action: "update",
+        message_id: message.id,
+        subject: edit.subject,
+        body_text: edit.body_text,
+        language: edit.language,
+        status,
+      },
     });
     setBusy(null);
     if (error || !data?.ok) {
@@ -303,33 +342,40 @@ export default function MailingPanel() {
       return;
     }
     setEditingMessageId(null);
-    toast({ title: status === "approved" ? "Draft approved" : status === "rejected" ? "Draft rejected" : "Draft saved" });
+    toast({ title: status === "approved" ? "Draft approved for sending" : status === "rejected" ? "Draft rejected" : "Draft saved and approval cleared" });
     await load(selectedCampaignId);
   };
 
   const sendSelected = async () => {
     const maxSend = health?.limits?.send_per_request ?? 10;
     const ids = [...selectedMessageIds].filter((id) => {
-      const status = messages.find((message) => message.id === id)?.status;
-      return status === "draft" || status === "approved" || status === "failed";
+      const message = messages.find((item) => item.id === id);
+      return message?.status === "approved" || (message?.status === "failed" && Boolean(message.approved_at && message.approved_by));
     }).slice(0, maxSend);
     if (ids.length === 0) {
-      toast({ title: "Select draft, approved or failed messages", variant: "destructive" });
+      toast({ title: "Select approved messages or approved failed retries", variant: "destructive" });
       return;
     }
     if (!health?.ready_to_send) {
       toast({ title: "Gmail sending is not ready", description: health?.gmail_error || "Check Gmail connector runtime health.", variant: "destructive" });
       return;
     }
-    if (!window.confirm(`Approve and send ${ids.length} one-to-one Gmail message${ids.length === 1 ? "" : "s"}? Sending is irreversible.`)) return;
+    if (!window.confirm(`Send ${ids.length} already-approved one-to-one Gmail message${ids.length === 1 ? "" : "s"}? Sending is irreversible.`)) return;
+
     setBusy("send");
-    const { data, error } = await supabase.functions.invoke("outreach-engine", { body: { action: "send", message_ids: ids } });
+    const { data, error } = await supabase.functions.invoke("outreach-engine", {
+      body: { action: "send", message_ids: ids },
+    });
     setBusy(null);
     if (error) {
       toast({ title: "Gmail send request failed", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: data?.ok ? "Gmail send completed" : "No message was sent", description: summarizeObject(data?.summary) || data?.error || "Exact outcomes saved." , variant: data?.ok ? "default" : "destructive" });
+    toast({
+      title: data?.ok ? "Gmail send completed" : "No approved message was sent",
+      description: summarizeObject(data?.summary) || data?.error || "Exact outcomes saved.",
+      variant: data?.ok ? "default" : "destructive",
+    });
     setSelectedMessageIds(new Set());
     await Promise.all([load(selectedCampaignId), loadHealth()]);
   };
@@ -341,7 +387,9 @@ export default function MailingPanel() {
       return;
     }
     setBusy("sync");
-    const { data, error } = await supabase.functions.invoke("outreach-engine", { body: { action: "sync_replies", campaign_id: selectedCampaignId } });
+    const { data, error } = await supabase.functions.invoke("outreach-engine", {
+      body: { action: "sync_replies", campaign_id: selectedCampaignId },
+    });
     setBusy(null);
     if (error || !data?.ok) {
       toast({ title: "Reply sync failed", description: data?.error || error?.message || "Unknown error", variant: "destructive" });
@@ -357,9 +405,11 @@ export default function MailingPanel() {
       toast({ title: "AI follow-up generation is not ready", variant: "destructive" });
       return;
     }
-    if (!window.confirm("Generate first follow-up drafts for sent messages older than 5 days with no detected reply? Nothing will be sent.")) return;
+    if (!window.confirm("Generate first follow-up drafts for sent messages older than 5 days with no detected reply? Nothing will be approved or sent.")) return;
     setBusy("followup");
-    const { data, error } = await supabase.functions.invoke("outreach-engine", { body: { action: "generate_followups", campaign_id: selectedCampaignId, minimum_days: 5 } });
+    const { data, error } = await supabase.functions.invoke("outreach-engine", {
+      body: { action: "generate_followups", campaign_id: selectedCampaignId, minimum_days: 5 },
+    });
     setBusy(null);
     if (error || !data?.ok) {
       toast({ title: "Follow-up generation failed", description: data?.error || error?.message || "Unknown error", variant: "destructive" });
@@ -388,7 +438,7 @@ export default function MailingPanel() {
             <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-gold mb-3"><Mail size={15} /> AI Outreach & Follow-ups</div>
             <h2 className="font-display text-3xl md:text-4xl">Buyer Outreach Workspace</h2>
             <p className="text-sm text-foreground/70 mt-3 leading-relaxed">
-              Creates evidence-based one-to-one drafts from Buyer CRM, keeps sending behind explicit approval, records exact Gmail message/thread IDs, detects replies in the same thread, and suppresses opt-outs before future sends.
+              Drafts only for verified or qualified CRM buyers. Every message must be reviewed and approved first; sending is a separate action with exact Gmail IDs, reply sync and opt-out protection.
             </p>
           </div>
           <button type="button" onClick={() => void Promise.all([load(selectedCampaignId), loadHealth()])} className="inline-flex items-center gap-2 border border-border/60 px-4 py-2.5 text-[10px] uppercase tracking-[0.18em] hover:border-gold hover:text-gold"><RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh</button>
@@ -412,17 +462,17 @@ export default function MailingPanel() {
           </div>
 
           <div className="border border-border/60 bg-card/30 p-5">
-            <div className="flex items-center justify-between gap-3 mb-3"><p className="eyebrow">Select CRM buyers</p><span className="text-[10px] text-gold">{selectedLeadIds.size} selected</span></div>
-            <div className="flex items-center gap-2 border border-border/60 bg-background/30 px-3 py-2 mb-3"><Search size={12} className="text-muted-foreground" /><input value={leadQuery} onChange={(event) => setLeadQuery(event.target.value)} placeholder="Search verified buyers…" className="bg-transparent outline-none text-xs w-full" /></div>
+            <div className="flex items-center justify-between gap-3 mb-3"><p className="eyebrow">Verified / qualified buyers</p><span className="text-[10px] text-gold">{selectedLeadIds.size} selected</span></div>
+            <div className="flex items-center gap-2 border border-border/60 bg-background/30 px-3 py-2 mb-3"><Search size={12} className="text-muted-foreground" /><input value={leadQuery} onChange={(event) => setLeadQuery(event.target.value)} placeholder="Search eligible CRM buyers…" className="bg-transparent outline-none text-xs w-full" /></div>
             <div className="flex gap-2 mb-3">
               <button type="button" onClick={() => setSelectedLeadIds(new Set(filteredLeads.slice(0, health?.limits?.generate_per_request ?? 50).map((lead) => lead.id)))} className="text-[9px] uppercase tracking-[0.14em] text-gold">Select visible</button>
               <button type="button" onClick={() => setSelectedLeadIds(new Set())} className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Clear</button>
             </div>
             <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-              {filteredLeads.length === 0 && <p className="text-xs text-muted-foreground py-5 text-center">No eligible buyer emails found.</p>}
+              {filteredLeads.length === 0 && <p className="text-xs text-muted-foreground py-5 text-center">No eligible buyer emails. Verify leads or mark them qualified in Buyer Inbox first.</p>}
               {filteredLeads.map((lead) => (
                 <label key={lead.id} className={`block border p-3 cursor-pointer ${selectedLeadIds.has(lead.id) ? "border-gold/70 bg-gold/5" : "border-border/50 bg-background/20"}`}>
-                  <div className="flex items-start gap-3"><input type="checkbox" checked={selectedLeadIds.has(lead.id)} onChange={() => toggleLead(lead.id)} className="mt-1" /><div className="min-w-0"><p className="text-sm font-medium truncate">{lead.company_name}</p><p className="text-[10px] text-gold truncate mt-1">{lead.email}</p><p className="text-[9px] text-muted-foreground mt-1">{lead.country} · {lead.buyer_type || lead.apparel_segment || "Buyer type not set"} · score {lead.verification_score ?? "—"}</p>{lead.last_outreach_status && <p className="text-[9px] text-cyan-300 mt-1">Last outreach: {lead.last_outreach_status}</p>}</div></div>
+                  <div className="flex items-start gap-3"><input type="checkbox" checked={selectedLeadIds.has(lead.id)} onChange={() => toggleLead(lead.id)} className="mt-1" /><div className="min-w-0"><p className="text-sm font-medium truncate">{lead.company_name}</p><p className="text-[10px] text-gold truncate mt-1">{lead.email}</p><p className="text-[9px] text-muted-foreground mt-1">{lead.country} · {lead.buyer_type || lead.apparel_segment || "Buyer type not set"} · score {lead.verification_score ?? "—"} · {lead.crm_status || "no status"}</p>{lead.last_outreach_status && <p className="text-[9px] text-cyan-300 mt-1">Last outreach: {lead.last_outreach_status}</p>}</div></div>
                 </label>
               ))}
             </div>
@@ -457,7 +507,7 @@ export default function MailingPanel() {
 
               <div className="flex flex-wrap items-center gap-3"><div className="flex items-center gap-2 border border-border/60 bg-card/30 px-3 py-2.5 flex-1 min-w-[240px]"><Search size={13} className="text-muted-foreground" /><input value={messageQuery} onChange={(event) => setMessageQuery(event.target.value)} placeholder="Search company, email, subject or message…" className="bg-transparent outline-none text-xs w-full" /></div><select value={messageStatusFilter} onChange={(event) => setMessageStatusFilter(event.target.value)} className="border border-border/60 bg-card/30 px-3 py-2.5 text-xs"><option value="">All statuses</option>{Object.keys(messageStyles).map((status) => <option key={status} value={status}>{status}</option>)}</select></div>
 
-              {selectedMessageIds.size > 0 && <div className="border border-gold/40 bg-gold/5 p-3 flex items-center justify-between gap-3 flex-wrap"><span className="text-xs text-gold">{selectedMessageIds.size} selected</span><button type="button" onClick={() => void sendSelected()} disabled={busy !== null || !health?.ready_to_send} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[10px] uppercase tracking-[0.18em] disabled:opacity-40">{busy === "send" ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Approve & send selected</button></div>}
+              {selectedMessageIds.size > 0 && <div className="border border-gold/40 bg-gold/5 p-3 flex items-center justify-between gap-3 flex-wrap"><span className="text-xs text-gold">{selectedMessageIds.size} approved message{selectedMessageIds.size === 1 ? "" : "s"} selected</span><button type="button" onClick={() => void sendSelected()} disabled={busy !== null || !health?.ready_to_send} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[10px] uppercase tracking-[0.18em] disabled:opacity-40">{busy === "send" ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Send approved selected</button></div>}
 
               <div className="space-y-3">
                 {loading && <p className="text-sm text-muted-foreground py-10 text-center">Loading outreach messages…</p>}
@@ -466,12 +516,12 @@ export default function MailingPanel() {
                   const edit = messageEdits[message.id] || { subject: message.subject, body_text: message.body_text, language: message.language };
                   const editable = ["draft", "approved", "failed", "rejected"].includes(message.status);
                   const isEditing = editingMessageId === message.id;
-                  const selectable = ["draft", "approved", "failed"].includes(message.status);
+                  const selectable = message.status === "approved" || (message.status === "failed" && Boolean(message.approved_at && message.approved_by));
                   return (
                     <article key={message.id} className={`border p-5 ${selectedMessageIds.has(message.id) ? "border-gold/70 bg-gold/5" : "border-border/60 bg-card/30"}`}>
-                      <div className="flex items-start gap-3"><input type="checkbox" checked={selectedMessageIds.has(message.id)} onChange={() => toggleMessage(message.id)} disabled={!selectable} className="mt-1" /><div className="flex-1 min-w-0"><div className="flex items-start justify-between gap-4 flex-wrap"><div><div className="flex flex-wrap items-center gap-2"><Badge className={messageStyles[message.status]}>{message.status}</Badge><span className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{message.sequence_number === 0 ? "Initial" : `Follow-up ${message.sequence_number}`}</span><span className="inline-flex items-center gap-1 text-[9px] text-muted-foreground"><Languages size={10} /> {message.language}</span></div><h4 className="font-display text-xl mt-2">{message.recipient_company}</h4><p className="text-[10px] text-gold mt-1">{message.recipient_email}</p></div><div className="flex gap-2">{editable && <button type="button" onClick={() => setEditingMessageId(isEditing ? null : message.id)} className="p-2 text-muted-foreground hover:text-gold" aria-label="Edit draft"><Pencil size={13} /></button>}<button type="button" onClick={() => void copyText(`${edit.subject}\n\n${edit.body_text}`)} className="p-2 text-muted-foreground hover:text-gold" aria-label="Copy draft"><Copy size={13} /></button><button type="button" onClick={() => setExpandedMessageId((current) => current === message.id ? null : message.id)} className="p-2 text-muted-foreground hover:text-gold" aria-label="Toggle evidence">{expandedMessageId === message.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}</button></div></div>
+                      <div className="flex items-start gap-3"><input type="checkbox" checked={selectedMessageIds.has(message.id)} onChange={() => toggleMessage(message.id)} disabled={!selectable} className="mt-1" /><div className="flex-1 min-w-0"><div className="flex items-start justify-between gap-4 flex-wrap"><div><div className="flex flex-wrap items-center gap-2"><Badge className={messageStyles[message.status]}>{message.status}</Badge><span className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{message.sequence_number === 0 ? "Initial" : `Follow-up ${message.sequence_number}`}</span><span className="inline-flex items-center gap-1 text-[9px] text-muted-foreground"><Languages size={10} /> {message.language}</span>{message.approved_at && <span className="text-[9px] text-emerald-300">Approved {new Date(message.approved_at).toLocaleString()}</span>}</div><h4 className="font-display text-xl mt-2">{message.recipient_company}</h4><p className="text-[10px] text-gold mt-1">{message.recipient_email}</p></div><div className="flex gap-2">{editable && <button type="button" onClick={() => setEditingMessageId(isEditing ? null : message.id)} className="p-2 text-muted-foreground hover:text-gold" aria-label="Edit draft"><Pencil size={13} /></button>}<button type="button" onClick={() => void copyText(`${edit.subject}\n\n${edit.body_text}`)} className="p-2 text-muted-foreground hover:text-gold" aria-label="Copy draft"><Copy size={13} /></button><button type="button" onClick={() => setExpandedMessageId((current) => current === message.id ? null : message.id)} className="p-2 text-muted-foreground hover:text-gold" aria-label="Toggle evidence">{expandedMessageId === message.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}</button></div></div>
 
-                        {isEditing ? <div className="mt-4 space-y-3"><Field label="Language"><input className="outreach-input" value={edit.language} onChange={(event) => updateEdit(setMessageEdits, message.id, { language: event.target.value })} /></Field><Field label="Subject"><input className="outreach-input" value={edit.subject} onChange={(event) => updateEdit(setMessageEdits, message.id, { subject: event.target.value })} /></Field><Field label="Body"><textarea rows={8} className="outreach-input resize-y" value={edit.body_text} onChange={(event) => updateEdit(setMessageEdits, message.id, { body_text: event.target.value })} /></Field><div className="flex gap-2 flex-wrap"><button type="button" onClick={() => void saveMessage(message, "draft")} disabled={busy !== null} className="inline-flex items-center gap-2 border border-border/60 px-4 py-2 text-[9px] uppercase tracking-[0.16em]"><Save size={11} /> Save draft</button><button type="button" onClick={() => void saveMessage(message, "approved")} disabled={busy !== null} className="inline-flex items-center gap-2 border border-emerald-500/50 text-emerald-300 px-4 py-2 text-[9px] uppercase tracking-[0.16em]"><UserCheck size={11} /> Approve</button><button type="button" onClick={() => void saveMessage(message, "rejected")} disabled={busy !== null} className="inline-flex items-center gap-2 border border-red-500/50 text-red-300 px-4 py-2 text-[9px] uppercase tracking-[0.16em]"><XCircle size={11} /> Reject</button></div></div> : <><p className="text-sm font-medium mt-4">{message.subject}</p><p className="text-sm text-foreground/75 whitespace-pre-wrap leading-relaxed mt-3">{message.body_text}</p></>}
+                        {isEditing ? <div className="mt-4 space-y-3"><Field label="Language"><input className="outreach-input" value={edit.language} onChange={(event) => updateEdit(setMessageEdits, message.id, { language: event.target.value })} /></Field><Field label="Subject"><input className="outreach-input" value={edit.subject} onChange={(event) => updateEdit(setMessageEdits, message.id, { subject: event.target.value })} /></Field><Field label="Body"><textarea rows={8} className="outreach-input resize-y" value={edit.body_text} onChange={(event) => updateEdit(setMessageEdits, message.id, { body_text: event.target.value })} /></Field><div className="flex gap-2 flex-wrap"><button type="button" onClick={() => void saveMessage(message, "draft")} disabled={busy !== null} className="inline-flex items-center gap-2 border border-border/60 px-4 py-2 text-[9px] uppercase tracking-[0.16em]"><Save size={11} /> Save draft</button><button type="button" onClick={() => void saveMessage(message, "approved")} disabled={busy !== null} className="inline-flex items-center gap-2 border border-emerald-500/50 text-emerald-300 px-4 py-2 text-[9px] uppercase tracking-[0.16em]"><UserCheck size={11} /> Approve for send</button><button type="button" onClick={() => void saveMessage(message, "rejected")} disabled={busy !== null} className="inline-flex items-center gap-2 border border-red-500/50 text-red-300 px-4 py-2 text-[9px] uppercase tracking-[0.16em]"><XCircle size={11} /> Reject</button></div></div> : <><p className="text-sm font-medium mt-4">{message.subject}</p><p className="text-sm text-foreground/75 whitespace-pre-wrap leading-relaxed mt-3">{message.body_text}</p></>}
 
                         {(message.gmail_message_id || message.gmail_thread_id || message.sent_at || message.replied_at) && <div className="flex flex-wrap gap-3 mt-4 text-[10px] text-muted-foreground">{message.sent_at && <span>Sent {new Date(message.sent_at).toLocaleString()}</span>}{message.replied_at && <span className="text-emerald-300">Reply {new Date(message.replied_at).toLocaleString()}</span>}{message.gmail_message_id && <span>Gmail msg {message.gmail_message_id}</span>}{message.gmail_thread_id && <a href={`https://mail.google.com/mail/u/0/#all/${message.gmail_thread_id}`} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-cyan-300 hover:underline">Open Gmail thread <ExternalLink size={9} /></a>}</div>}
                         {message.error && <p className="text-xs text-destructive mt-3">{message.error}</p>}
@@ -495,7 +545,7 @@ function HealthBanner({ health, migrationReady }: { health: Health | null; migra
   if (!migrationReady) return <div className="border border-amber-500/40 bg-amber-500/10 p-5 flex items-start gap-3"><AlertTriangle size={18} className="text-amber-300 shrink-0" /><div><p className="font-medium">Outreach database migration pending</p><p className="text-xs text-foreground/65 mt-1">Publish/apply the latest migration before creating outreach campaigns.</p></div></div>;
   if (!health) return <div className="border border-border/60 bg-card/30 p-4 text-xs text-muted-foreground">Checking AI and Gmail runtime…</div>;
   if (health.error) return <div className="border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{health.error}</div>;
-  return <div className={`border p-4 flex items-start gap-3 ${health.ready_to_send ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/10"}`}>{health.ready_to_send ? <CheckCircle2 size={17} className="text-emerald-300 shrink-0" /> : <AlertTriangle size={17} className="text-amber-300 shrink-0" />}<div className="flex-1"><p className="font-medium text-sm">{health.ready_to_send ? `Gmail outreach ready${health.gmail_profile?.emailAddress ? ` · ${health.gmail_profile.emailAddress}` : ""}` : health.ready_to_generate ? "AI drafts ready; Gmail sending not verified" : "Outreach needs configuration"}</p><p className="text-xs text-foreground/65 mt-1">{health.gmail_error || "Sending remains behind an explicit owner confirmation and is capped per request."}</p><div className="flex flex-wrap gap-2 mt-3"><HealthFlag label="Database" active={Boolean(health.database_ready)} /><HealthFlag label="AI Gateway" active={Boolean(health.ai_gateway_configured)} /><HealthFlag label="Gmail configured" active={Boolean(health.gmail_configured)} /><HealthFlag label="Gmail verified" active={Boolean(health.gmail_verified)} /></div></div></div>;
+  return <div className={`border p-4 flex items-start gap-3 ${health.ready_to_send ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/10"}`}>{health.ready_to_send ? <CheckCircle2 size={17} className="text-emerald-300 shrink-0" /> : <AlertTriangle size={17} className="text-amber-300 shrink-0" />}<div className="flex-1"><p className="font-medium text-sm">{health.ready_to_send ? `Gmail outreach ready${health.gmail_profile?.emailAddress ? ` · ${health.gmail_profile.emailAddress}` : ""}` : health.ready_to_generate ? "AI drafts ready; Gmail sending not verified" : "Outreach needs configuration"}</p><p className="text-xs text-foreground/65 mt-1">{health.gmail_error || health.approval_policy || "Draft approval and sending are separate actions."}</p><div className="flex flex-wrap gap-2 mt-3"><HealthFlag label="Database" active={Boolean(health.database_ready)} /><HealthFlag label="AI Gateway" active={Boolean(health.ai_gateway_configured)} /><HealthFlag label="Gmail configured" active={Boolean(health.gmail_configured)} /><HealthFlag label="Gmail verified" active={Boolean(health.gmail_verified)} /></div></div></div>;
 }
 
 function HealthFlag({ label, active }: { label: string; active: boolean }) { return <span className={`border px-2 py-1 text-[9px] uppercase tracking-[0.14em] ${active ? "border-emerald-500/40 text-emerald-300" : "border-border/60 text-muted-foreground"}`}>{label}</span>; }
@@ -507,6 +557,7 @@ function EmptyState({ icon, title, body }: { icon: ReactNode; title: string; bod
 function normalizeMessage(message: OutreachMessage): OutreachMessage { return { ...message, personalization_evidence: message.personalization_evidence && typeof message.personalization_evidence === "object" ? message.personalization_evidence : {}, connector_response: message.connector_response && typeof message.connector_response === "object" ? message.connector_response : {} }; }
 function splitList(value: string) { return [...new Set(value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean))]; }
 function validEmail(value: string | null) { return Boolean(value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)); }
+function isEligibleLead(lead: Lead) { return (typeof lead.verification_score === "number" && lead.verification_score >= 70) || ELIGIBLE_CRM_STATUSES.has(lead.crm_status || ""); }
 function toggleSet(current: Set<string>, id: string) { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; }
 function updateEdit(setter: React.Dispatch<React.SetStateAction<Record<string, MessageEdit>>>, id: string, patch: Partial<MessageEdit>) { setter((current) => ({ ...current, [id]: { ...current[id], ...patch } })); }
 function isMigrationError(error: any) { const text = `${error?.code || ""} ${error?.message || ""}`.toLowerCase(); return text.includes("42p01") || text.includes("outreach_campaigns") || text.includes("outreach_messages"); }
