@@ -151,7 +151,7 @@ function parseHistory(value: unknown): CrmHistoryEntry[] {
   if (!Array.isArray(value)) return [];
   return value
     .filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && !Array.isArray(item))
-    .map((item) => ({ id: typeof item.id === "string" ? item.id : historyId(), at: typeof item.at === "string" ? item.at : new Date(0).toISOString(), type: item.type === "note" ? "note" : "update", summary: typeof item.summary === "string" ? item.summary : "CRM activity", actor: typeof item.actor === "string" ? item.actor : null }))
+    .map((item): CrmHistoryEntry => ({ id: typeof item.id === "string" ? item.id : historyId(), at: typeof item.at === "string" ? item.at : new Date(0).toISOString(), type: item.type === "note" ? "note" : "update", summary: typeof item.summary === "string" ? item.summary : "CRM activity", actor: typeof item.actor === "string" ? item.actor : null }))
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 }
 function normalizePriority(value?: string | null): Priority { return PRIORITIES.includes(value as Priority) ? (value as Priority) : "normal"; }
