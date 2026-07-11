@@ -7,6 +7,7 @@ import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
 import { CATEGORIES, type Product as LegacyProduct } from "@/lib/categories";
 import { CATALOG, type CategoryGroup, type SubCategory } from "@/lib/catalog";
 import { CATEGORY_SEO } from "@/lib/categorySeo";
+import { PRODUCT_SEO_OVERRIDES } from "@/lib/productSeoOverrides";
 import { createSupplementalProductsForSubcategory } from "@/lib/supplementalCatalog";
 import { createSupplementalBatch02ProductsForSubcategory } from "@/lib/supplementalCatalogBatch02";
 import { createSupplementalBatch03ProductsForSubcategory } from "@/lib/supplementalCatalogBatch03";
@@ -94,24 +95,28 @@ function sanitizePublicProduct(product: DbProduct): DbProduct {
 function legacyProductToDb(product: LegacyProduct, categoryId: string, sortOrder: number): DbProduct {
   const productSlug = slugify(product.name);
   const gallery = uniqueStrings([product.image, ...(product.gallery ?? [])].filter(Boolean));
+  const override = PRODUCT_SEO_OVERRIDES[productSlug];
+
   return sanitizePublicProduct({
     id: `local-product-${categoryId}-${productSlug}`,
     category_id: categoryId,
     slug: productSlug,
     name: product.name,
-    description: product.description ?? null,
+    description: override?.description ?? product.description ?? null,
     image_url: gallery[0] ?? null,
     gallery,
-    specs: product.specs ?? [],
-    details: Array.isArray(product.details) ? product.details : [],
+    specs: override?.specs ?? product.specs ?? [],
+    details: override ? [] : Array.isArray(product.details) ? product.details : [],
     material_specifications: null,
-    seo_title: `${product.name} Manufacturer | Irha Apparels`,
-    seo_description: `${product.name} for wholesale, OEM and private-label buyer programs from Irha Apparels, an experienced B2B garment manufacturer in Sialkot, Pakistan.`,
+    seo_title: override?.seoTitle ?? `${product.name} Manufacturer | Irha Apparels`,
+    seo_description:
+      override?.seoDescription ??
+      `${product.name} for wholesale, OEM and private-label buyer programs from Irha Apparels, an experienced B2B garment manufacturer in Sialkot, Pakistan.`,
     sort_order: sortOrder,
     is_published: true,
     sku: null,
     is_featured: false,
-    short_description: product.description ?? null,
+    short_description: override?.shortDescription ?? product.description ?? null,
     moq_display: null,
     moq_min: null,
     sample_available: null,
