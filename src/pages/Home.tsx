@@ -5,6 +5,7 @@ import HeroCarousel from "@/components/HeroCarousel";
 import CapabilityStrip from "@/components/sections/CapabilityStrip";
 import FiveCategories from "@/components/sections/FiveCategories";
 import WhyB2B from "@/components/sections/WhyB2B";
+import BuyerTrustSection from "@/components/sections/BuyerTrustSection";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
@@ -50,7 +51,7 @@ const HUBS: HubDef[] = [
 
 export default function Home() {
   const { data: tree = [] } = usePublicCatalogTree();
-  const allCats = tree.flatMap((t) => [t, ...t.subs]);
+  const allCats = tree.flatMap((item) => [item, ...item.subs]);
 
   const jsonLd = [
     organizationSchema,
@@ -96,8 +97,8 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-5 lg:gap-7">
             {HUBS.map((hub) => {
               const children = hub.childSlugs
-                .map((s) => allCats.find((c) => c.slug === s && c.is_published))
-                .filter((c): c is NonNullable<typeof c> => !!c);
+                .map((slug) => allCats.find((category) => category.slug === slug && category.is_published))
+                .filter((category): category is NonNullable<typeof category> => Boolean(category));
               const cover = children[0]?.image_url;
               const src = cover ? resolveAsset(cover) : resolveAsset(hub.fallbackImg);
               return (
@@ -128,14 +129,14 @@ export default function Home() {
                       {children.length === 0 && (
                         <li className="text-white/50 text-sm">Loading categories…</li>
                       )}
-                      {children.map((c) => (
-                        <li key={c.slug}>
+                      {children.map((category) => (
+                        <li key={category.slug}>
                           <Link
-                            to={`/products/${c.slug}`}
+                            to={`/products/${category.slug}`}
                             className="group/link inline-flex items-baseline gap-3 text-white/95 hover:text-gold transition-colors"
                           >
                             <span className="font-display text-base md:text-lg leading-tight">
-                              {c.name}
+                              {category.name}
                             </span>
                             <span className="text-[10px] uppercase tracking-[0.25em] text-white/50 group-hover/link:text-gold/80">
                               View Collection →
@@ -162,6 +163,7 @@ export default function Home() {
 
       <FiveCategories />
       <WhyB2B />
+      <BuyerTrustSection />
       <ProcessTimeline />
       <StartProgramCTA />
     </>

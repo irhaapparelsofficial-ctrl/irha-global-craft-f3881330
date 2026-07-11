@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Home, Package, Layers, BookOpen, FileText, Search, Link2,
+  Home, Package, Layers, BookOpen, Search,
   Users, MessageSquare, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
   BarChart3, ListChecks, UserSearch,
@@ -35,10 +35,7 @@ const NAV: NavGroup[] = [
     { key: "catalogues", label: "Catalogues", icon: BookOpen },
   ]},
   { title: "Content & SEO", items: [
-    { key: "blog", label: "Blog", icon: FileText },
-    { key: "faqs", label: "FAQs", icon: FileText },
     { key: "seo", label: "Multilingual SEO", icon: Search },
-    { key: "links", label: "Internal Links", icon: Link2 },
   ]},
   { title: "Leads & Communication", items: [
     { key: "lead_engine", label: "Lead Acquisition", icon: UserSearch },
@@ -71,13 +68,13 @@ export function AdminShell({
   view, setView, userEmail, children,
 }: {
   view: AdminView;
-  setView: (v: AdminView) => void;
+  setView: (view: AdminView) => void;
   userEmail: string | null | undefined;
   children: ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const active = NAV.flatMap((g) => g.items).find((i) => i.key === view);
+  const active = NAV.flatMap((group) => group.items).find((item) => item.key === view);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -106,7 +103,7 @@ export function AdminShell({
                       isActive
                         ? "bg-primary/10 text-primary border-l-2 border-primary"
                         : "text-foreground/70 hover:text-foreground hover:bg-muted/40 border-l-2 border-transparent",
-                      collapsed && "justify-center px-2"
+                      collapsed && "justify-center px-2",
                     )}
                     title={collapsed ? item.label : undefined}
                   >
@@ -135,7 +132,7 @@ export function AdminShell({
       <aside
         className={cn(
           "hidden md:flex flex-col border-r border-border/60 bg-card/30 transition-[width] duration-200",
-          collapsed ? "w-16" : "w-64"
+          collapsed ? "w-16" : "w-64",
         )}
       >
         <div className={cn("h-14 flex items-center border-b border-border/60 px-4", collapsed && "justify-center px-0")}>
@@ -148,7 +145,7 @@ export function AdminShell({
             <p className="font-display text-gold text-sm">IA</p>
           )}
           <button
-            onClick={() => setCollapsed((v) => !v)}
+            onClick={() => setCollapsed((value) => !value)}
             className="text-muted-foreground hover:text-primary p-1"
             aria-label="Toggle sidebar"
           >
@@ -182,7 +179,7 @@ export function AdminShell({
           </button>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground truncate">
-              {NAV.find((g) => g.items.some((i) => i.key === view))?.title ?? "Admin"}
+              {NAV.find((group) => group.items.some((item) => item.key === view))?.title ?? "Admin"}
             </p>
             <h1 className="font-display text-base md:text-lg truncate leading-tight">{active?.label ?? "Dashboard"}</h1>
           </div>
