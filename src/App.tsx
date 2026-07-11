@@ -12,7 +12,10 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const About = lazy(() => import("./pages/About"));
 const Products = lazy(() => import("./pages/Products"));
+const GlobalCollectionsPage = lazy(() => import("./pages/GlobalCollectionsPage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
+const CategoryTaxonomyPage = lazy(() => import("./pages/CategoryTaxonomyPage"));
+const CategoryOrProductPage = lazy(() => import("./pages/CategoryOrProductPage"));
 const BavarianMensCollection = lazy(() => import("./pages/BavarianMensCollection"));
 const BavarianWomensCollection = lazy(() => import("./pages/BavarianWomensCollection"));
 const Manufacturing = lazy(() => import("./pages/Manufacturing"));
@@ -23,7 +26,6 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LocalizedSeoPage = lazy(() => import("./pages/LocalizedSeoPage"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
-const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
 const Compliance = lazy(() => import("./pages/Compliance"));
@@ -103,11 +105,13 @@ const App = () => (
                   <Layout>
                     <Routes>
                       <Route path="/about" element={<About />} />
-                      <Route path="/products" element={<Products />} />
-                      <Route path="/products/:slug" element={<CategoryPage />} />
+                      <Route path="/products" element={<GlobalCollectionsPage />} />
+                      <Route path="/products/all" element={<Products />} />
+                      <Route path="/products/:categorySlug/all-products" element={<CategoryPage />} />
+                      <Route path="/products/:categorySlug" element={<CategoryTaxonomyPage />} />
                       <Route
                         path="/products/bavarian-trachten-wear/mens-trachten"
-                        element={<Navigate to="/products/bavarian-trachten-wear?subcategory=men" replace />}
+                        element={<Navigate to="/products/bavarian-trachten-wear/men" replace />}
                       />
                       <Route
                         path="/products/bavarian-trachten-wear/mens-trachten/:collectionSlug"
@@ -115,14 +119,20 @@ const App = () => (
                       />
                       <Route
                         path="/products/bavarian-trachten-wear/womens-trachten"
-                        element={<Navigate to="/products/bavarian-trachten-wear?subcategory=women" replace />}
+                        element={<Navigate to="/products/bavarian-trachten-wear/women" replace />}
                       />
                       <Route
                         path="/products/bavarian-trachten-wear/womens-trachten/:collectionSlug"
                         element={<BavarianWomensCollection />}
                       />
-                      <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
+                      <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
                       <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
+                      <Route path="/products/:categorySlug/:productSlug" element={<CategoryOrProductPage />} />
+
+                      <Route path="/intl/:locale/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
+                      <Route path="/intl/:locale/products/:categorySlug/:audienceSlug" element={<CategoryTaxonomyPage />} />
+                      <Route path="/intl/:locale/products/:categorySlug" element={<CategoryTaxonomyPage />} />
+
                       <Route path="/manufacturing" element={<Manufacturing />} />
                       <Route path="/compliance" element={<Compliance />} />
                       <Route path="/buyer-trust" element={<BuyerTrust />} />
