@@ -1,5 +1,5 @@
-// Resolves DB-stored asset paths (e.g. "cat-bavarian.jpg", "products/bavarian-1.jpg")
-// to actual bundled Vite URLs. Also supports full http(s) URLs for uploaded media.
+// Resolves catalog and legacy asset paths to production-safe Vite URLs.
+// Full remote URLs and public-root assets remain unchanged.
 const assets = import.meta.glob("/src/assets/**/*.{jpg,jpeg,png,webp,svg}", {
   eager: true,
   import: "default",
@@ -7,10 +7,17 @@ const assets = import.meta.glob("/src/assets/**/*.{jpg,jpeg,png,webp,svg}", {
 
 const PLACEHOLDER = "/placeholder.svg";
 
-export function resolveAsset(path?: string | null): string {
-  if (!path) return PLACEHOLDER;
-  if (/^https?:\/\//i.test(path) || path.startsWith("/")) return path;
-  const key = `/src/assets/${path}`;
+export function resolveAsset(assetPath?: string | null): string {
+  if (!assetPath) return PLACEHOLDER;
+  if (/^https?:\/\//i.test(assetPath)) return assetPath;
+
+  if (assetPath.startsWith("/src/assets/")) {
+    return assets[assetPath] ?? PLACEHOLDER;
+  }
+
+  if (assetPath.startsWith("/")) return assetPath;
+
+  const key = `/src/assets/${assetPath}`;
   return assets[key] ?? PLACEHOLDER;
 }
 
