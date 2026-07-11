@@ -9,6 +9,7 @@ MANIFEST_ROOT = Path("scripts")
 BASE_MANIFEST = MANIFEST_ROOT / "product-media-manifest.json"
 BATCH_MANIFEST_GLOB = "product-media-batch-*.json"
 OUTPUT_ROOT = Path("public/product-media")
+MIN_OPTIMIZED_BYTES = 8_000
 
 
 def fetch_image(url: str) -> bytes:
@@ -38,6 +39,14 @@ def load_products() -> dict[str, list[dict]]:
 
 
 def sync_item(slug: str, item: dict) -> None:
+    output_dir = OUTPUT_ROOT / slug
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / item["file"]
+
+    if output_path.exists() and output_path.stat().st_size >= MIN_OPTIMIZED_BYTES and not item.get("refresh"):
+        print(f"Kept existing {slug}/{item['file']} ({output_path.stat().st_size} bytes)")
+        return
+
     payload = None
     last_error = None
     for url in (item.get("source"), item.get("fallback")):
@@ -51,10 +60,6 @@ def sync_item(slug: str, item: dict) -> None:
     if payload is None:
         raise RuntimeError(f"Unable to fetch {slug}/{item['file']}: {last_error}")
 
-    output_dir = OUTPUT_ROOT / slug
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / item["file"]
-
     with Image.open(io.BytesIO(payload)) as image:
         image = ImageOps.exif_transpose(image)
         if image.mode not in ("RGB", "RGBA"):
@@ -63,7 +68,7 @@ def sync_item(slug: str, item: dict) -> None:
         image.save(output_path, "WEBP", quality=82, method=5)
 
     size = output_path.stat().st_size
-    if size < 8_000:
+    if size < MIN_OPTIMIZED_BYTES:
         raise RuntimeError(f"Optimized file too small: {output_path} ({size} bytes)")
     print(f"Synced {slug}/{item['file']} ({size} bytes)")
 
