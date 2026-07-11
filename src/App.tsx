@@ -19,7 +19,6 @@ const Inquiry = lazy(() => import("./pages/Inquiry"));
 const RepeatOrder = lazy(() => import("./pages/RepeatOrder"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const LocalizedSeoPage = lazy(() => import("./pages/LocalizedSeoPage"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -73,8 +72,9 @@ function ScrollToTop() {
 }
 
 const PageFallback = () => (
-  <div className="min-h-[60vh] flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-live="polite" aria-busy="true">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+    <span className="sr-only">Loading page…</span>
   </div>
 );
 
@@ -133,7 +133,7 @@ const App = () => (
                       <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
-                      <Route path="/seo-indexing" element={<SeoIndexing />} />
+                      <Route path="/seo-indexing" element={<Navigate to="/admin" replace />} />
                       <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
                       <Route path="/studio" element={<Studio />} />
                       <Route path="/shortlist" element={<Shortlist />} />
