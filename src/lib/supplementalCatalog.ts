@@ -108,6 +108,29 @@ const SUPPLEMENTAL_PRODUCTS: SupplementalProductDefinition[] = [
       "Contrast-piped brown short Lederhosen for wholesale, OEM, ODM and private-label programs.",
     sortOrder: 1002,
   },
+  {
+    id: "00000000-0000-0000-0000-000000000069",
+    topCategorySlug: "bavarian-trachten-wear",
+    subcategorySlugs: ["men"],
+    subcategoryNames: ["menstrachten"],
+    slug: "black-skeleton-embroidered-short-lederhosen",
+    name: "Black Skeleton Embroidered Short Lederhosen",
+    description:
+      "Short-cut Bavarian-style Lederhosen in a black and charcoal colourway with a statement skeleton embroidery panel, light contrast piping and decorative side lacing, prepared for wholesale and private-label buyer programs.",
+    specs: [
+      "Statement skeleton embroidery",
+      "Black and charcoal visual finish",
+      "Light contrast-piping accents",
+      "Decorative side-lacing detail",
+      "Private-label customization available",
+    ],
+    seoTitle: "Black Skeleton Embroidered Lederhosen Manufacturer | Irha Apparels",
+    seoDescription:
+      "Black skeleton embroidered short Lederhosen for wholesale and private-label programs from Irha Apparels, a B2B apparel manufacturer in Sialkot, Pakistan.",
+    shortDescription:
+      "Black skeleton embroidered short Lederhosen for wholesale, OEM, ODM and private-label programs.",
+    sortOrder: 1003,
+  },
 ];
 
 function matchesSubcategory(

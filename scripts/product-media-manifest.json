@@ -1,124 +1,40 @@
 {
   "products": {
     "traditional-lederhosen": [
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1b3JbWuFsHtcm9VlQza_U1NsUDXxOVQop",
-        "fallback": "https://drive.google.com/thumbnail?id=1b3JbWuFsHtcm9VlQza_U1NsUDXxOVQop&sz=w1600",
-        "file": "01-hero-front.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1fyqWGirqQNlqWfkPjbzdrLVEmRLjOtY0",
-        "fallback": "https://drive.google.com/thumbnail?id=1fyqWGirqQNlqWfkPjbzdrLVEmRLjOtY0&sz=w1600",
-        "file": "02-angle-front-three-quarter.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1NZPGDRKWYxWvpjoKlbjzJk5DFXvKohTk",
-        "fallback": "https://drive.google.com/thumbnail?id=1NZPGDRKWYxWvpjoKlbjzJk5DFXvKohTk&sz=w1600",
-        "file": "03-angle-back.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1XZWP235ZeF6r9zI_DJmgoLozUqEu5Zg8",
-        "fallback": "https://drive.google.com/thumbnail?id=1XZWP235ZeF6r9zI_DJmgoLozUqEu5Zg8&sz=w1600",
-        "file": "04-detail-front-embroidery.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1OkyBotSuuijbAGJTQa3QO644tm5xwAKf",
-        "fallback": "https://drive.google.com/thumbnail?id=1OkyBotSuuijbAGJTQa3QO644tm5xwAKf&sz=w1600",
-        "file": "05-detail-leg-embroidery-tie.webp"
-      }
+      {"source":"https://drive.google.com/uc?export=download&id=1b3JbWuFsHtcm9VlQza_U1NsUDXxOVQop","fallback":"https://drive.google.com/thumbnail?id=1b3JbWuFsHtcm9VlQza_U1NsUDXxOVQop&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1fyqWGirqQNlqWfkPjbzdrLVEmRLjOtY0","fallback":"https://drive.google.com/thumbnail?id=1fyqWGirqQNlqWfkPjbzdrLVEmRLjOtY0&sz=w1600","file":"02-angle-front-three-quarter.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1NZPGDRKWYxWvpjoKlbjzJk5DFXvKohTk","fallback":"https://drive.google.com/thumbnail?id=1NZPGDRKWYxWvpjoKlbjzJk5DFXvKohTk&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1XZWP235ZeF6r9zI_DJmgoLozUqEu5Zg8","fallback":"https://drive.google.com/thumbnail?id=1XZWP235ZeF6r9zI_DJmgoLozUqEu5Zg8&sz=w1600","file":"04-detail-front-embroidery.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1OkyBotSuuijbAGJTQa3QO644tm5xwAKf","fallback":"https://drive.google.com/thumbnail?id=1OkyBotSuuijbAGJTQa3QO644tm5xwAKf&sz=w1600","file":"05-detail-leg-embroidery-tie.webp"}
     ],
     "white-embroidered-lederhosen": [
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1IeRwCaX_mF8T39Sa8DwKE4GYQLEdI9RN",
-        "fallback": "https://drive.google.com/thumbnail?id=1IeRwCaX_mF8T39Sa8DwKE4GYQLEdI9RN&sz=w1600",
-        "file": "01-hero-front.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1d3jNHposJc1wuPeE1-zRn2Yy2FoA7bP-",
-        "fallback": "https://drive.google.com/thumbnail?id=1d3jNHposJc1wuPeE1-zRn2Yy2FoA7bP-&sz=w1600",
-        "file": "04-detail-embroidery.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=187WD7f76NpoguhrAujqbgFv1V9bODlG2",
-        "fallback": "https://drive.google.com/thumbnail?id=187WD7f76NpoguhrAujqbgFv1V9bODlG2&sz=w1600",
-        "file": "06-b2b-bulk-proof.webp"
-      }
+      {"source":"https://drive.google.com/uc?export=download&id=1IeRwCaX_mF8T39Sa8DwKE4GYQLEdI9RN","fallback":"https://drive.google.com/thumbnail?id=1IeRwCaX_mF8T39Sa8DwKE4GYQLEdI9RN&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1d3jNHposJc1wuPeE1-zRn2Yy2FoA7bP-","fallback":"https://drive.google.com/thumbnail?id=1d3jNHposJc1wuPeE1-zRn2Yy2FoA7bP-&sz=w1600","file":"04-detail-embroidery.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=187WD7f76NpoguhrAujqbgFv1V9bODlG2","fallback":"https://drive.google.com/thumbnail?id=187WD7f76NpoguhrAujqbgFv1V9bODlG2&sz=w1600","file":"06-b2b-bulk-proof.webp"}
     ],
     "brown-short-lederhosen": [
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1qkpGFFXqMIRUhFCpbFV-mDx7VgxoCjng",
-        "fallback": "https://drive.google.com/thumbnail?id=1qkpGFFXqMIRUhFCpbFV-mDx7VgxoCjng&sz=w1600",
-        "file": "01-hero-front.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1tV5BSih96LKDKvkWxR385LpG8uC9neXv",
-        "fallback": "https://drive.google.com/thumbnail?id=1tV5BSih96LKDKvkWxR385LpG8uC9neXv&sz=w1600",
-        "file": "03-angle-back.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1df1Tl8smDjZdmrFx0WIHUW2mtm3AtzuF",
-        "fallback": "https://drive.google.com/thumbnail?id=1df1Tl8smDjZdmrFx0WIHUW2mtm3AtzuF&sz=w1600",
-        "file": "04-detail-side-construction.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1dL2y4PctUL3VBGAAanstRZj4QS3XI1Tp",
-        "fallback": "https://drive.google.com/thumbnail?id=1dL2y4PctUL3VBGAAanstRZj4QS3XI1Tp&sz=w1600",
-        "file": "05-detail-embroidery-buttons.webp"
-      }
+      {"source":"https://drive.google.com/uc?export=download&id=1qkpGFFXqMIRUhFCpbFV-mDx7VgxoCjng","fallback":"https://drive.google.com/thumbnail?id=1qkpGFFXqMIRUhFCpbFV-mDx7VgxoCjng&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1tV5BSih96LKDKvkWxR385LpG8uC9neXv","fallback":"https://drive.google.com/thumbnail?id=1tV5BSih96LKDKvkWxR385LpG8uC9neXv&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1df1Tl8smDjZdmrFx0WIHUW2mtm3AtzuF","fallback":"https://drive.google.com/thumbnail?id=1df1Tl8smDjZdmrFx0WIHUW2mtm3AtzuF&sz=w1600","file":"04-detail-side-construction.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1dL2y4PctUL3VBGAAanstRZj4QS3XI1Tp","fallback":"https://drive.google.com/thumbnail?id=1dL2y4PctUL3VBGAAanstRZj4QS3XI1Tp&sz=w1600","file":"05-detail-embroidery-buttons.webp"}
     ],
     "distressed-brown-short-lederhosen": [
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1FxOf4X6OHjxkeHXBGiwdoP7QUHZz6Bu2",
-        "fallback": "https://drive.google.com/thumbnail?id=1FxOf4X6OHjxkeHXBGiwdoP7QUHZz6Bu2&sz=w1600",
-        "file": "01-hero-front.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1NCgnz_nEPurcF52wUxTqbqr1xw4SjDdt",
-        "fallback": "https://drive.google.com/thumbnail?id=1NCgnz_nEPurcF52wUxTqbqr1xw4SjDdt&sz=w1600",
-        "file": "03-angle-back.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1XjiYI6rJg9-IJ25ftMOEgAvflgDRqQPc",
-        "fallback": "https://drive.google.com/thumbnail?id=1XjiYI6rJg9-IJ25ftMOEgAvflgDRqQPc&sz=w1600",
-        "file": "04-detail-front-flap.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1s7ez9tua0grhOJlbKodyvUDtObkvi6iW",
-        "fallback": "https://drive.google.com/thumbnail?id=1s7ez9tua0grhOJlbKodyvUDtObkvi6iW&sz=w1600",
-        "file": "05-detail-side-leg.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1TbszrSdefvakJS_UAl8_hloW3Oob3ISx",
-        "fallback": "https://drive.google.com/thumbnail?id=1TbszrSdefvakJS_UAl8_hloW3Oob3ISx&sz=w1600",
-        "file": "07-extra-front-without-suspenders.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1568Fh79vxi3yjqkjjml-xwFBfYcpdZ13",
-        "fallback": "https://drive.google.com/thumbnail?id=1568Fh79vxi3yjqkjjml-xwFBfYcpdZ13&sz=w1600",
-        "file": "08-extra-rear-pocket.webp"
-      }
+      {"source":"https://drive.google.com/uc?export=download&id=1FxOf4X6OHjxkeHXBGiwdoP7QUHZz6Bu2","fallback":"https://drive.google.com/thumbnail?id=1FxOf4X6OHjxkeHXBGiwdoP7QUHZz6Bu2&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1NCgnz_nEPurcF52wUxTqbqr1xw4SjDdt","fallback":"https://drive.google.com/thumbnail?id=1NCgnz_nEPurcF52wUxTqbqr1xw4SjDdt&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1XjiYI6rJg9-IJ25ftMOEgAvflgDRqQPc","fallback":"https://drive.google.com/thumbnail?id=1XjiYI6rJg9-IJ25ftMOEgAvflgDRqQPc&sz=w1600","file":"04-detail-front-flap.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1s7ez9tua0grhOJlbKodyvUDtObkvi6iW","fallback":"https://drive.google.com/thumbnail?id=1s7ez9tua0grhOJlbKodyvUDtObkvi6iW&sz=w1600","file":"05-detail-side-leg.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1TbszrSdefvakJS_UAl8_hloW3Oob3ISx","fallback":"https://drive.google.com/thumbnail?id=1TbszrSdefvakJS_UAl8_hloW3Oob3ISx&sz=w1600","file":"07-extra-front-without-suspenders.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1568Fh79vxi3yjqkjjml-xwFBfYcpdZ13","fallback":"https://drive.google.com/thumbnail?id=1568Fh79vxi3yjqkjjml-xwFBfYcpdZ13&sz=w1600","file":"08-extra-rear-pocket.webp"}
     ],
     "contrast-piped-brown-short-lederhosen": [
-      {
-        "source": "https://drive.google.com/uc?export=download&id=143M2sVlO8yrjTRETyV84si1POCkYfLzp",
-        "fallback": "https://drive.google.com/thumbnail?id=143M2sVlO8yrjTRETyV84si1POCkYfLzp&sz=w1600",
-        "file": "01-hero-front.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1Wa4aLkSgWlYq9BjnixB4X2YrRmwZDxSE",
-        "fallback": "https://drive.google.com/thumbnail?id=1Wa4aLkSgWlYq9BjnixB4X2YrRmwZDxSE&sz=w1600",
-        "file": "03-angle-back.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1YAAv99bsQMyQ05RtVUT-Dg_OqbNn6dXx",
-        "fallback": "https://drive.google.com/thumbnail?id=1YAAv99bsQMyQ05RtVUT-Dg_OqbNn6dXx&sz=w1600",
-        "file": "04-detail-front-flap.webp"
-      },
-      {
-        "source": "https://drive.google.com/uc?export=download&id=1Esz7xmunvlZaKBI8em5sK2ZtIjbOU9Oo",
-        "fallback": "https://drive.google.com/thumbnail?id=1Esz7xmunvlZaKBI8em5sK2ZtIjbOU9Oo&sz=w1600",
-        "file": "05-detail-leg-embroidery-buttons.webp"
-      }
+      {"source":"https://drive.google.com/uc?export=download&id=143M2sVlO8yrjTRETyV84si1POCkYfLzp","fallback":"https://drive.google.com/thumbnail?id=143M2sVlO8yrjTRETyV84si1POCkYfLzp&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1Wa4aLkSgWlYq9BjnixB4X2YrRmwZDxSE","fallback":"https://drive.google.com/thumbnail?id=1Wa4aLkSgWlYq9BjnixB4X2YrRmwZDxSE&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1YAAv99bsQMyQ05RtVUT-Dg_OqbNn6dXx","fallback":"https://drive.google.com/thumbnail?id=1YAAv99bsQMyQ05RtVUT-Dg_OqbNn6dXx&sz=w1600","file":"04-detail-front-flap.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1Esz7xmunvlZaKBI8em5sK2ZtIjbOU9Oo","fallback":"https://drive.google.com/thumbnail?id=1Esz7xmunvlZaKBI8em5sK2ZtIjbOU9Oo&sz=w1600","file":"05-detail-leg-embroidery-buttons.webp"}
+    ],
+    "black-skeleton-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=11-i5SKOH6AOORvzx-mhMoDTL3zsno-F_","fallback":"https://drive.google.com/thumbnail?id=11-i5SKOH6AOORvzx-mhMoDTL3zsno-F_&sz=w1600","file":"01-hero-front-three-quarter.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1sndsfATN0rEEgGwnITJwH_AaNHcdmjyY","fallback":"https://drive.google.com/thumbnail?id=1sndsfATN0rEEgGwnITJwH_AaNHcdmjyY&sz=w1600","file":"04-detail-skeleton-embroidery.webp"}
     ]
   }
 }
