@@ -1,16 +1,21 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { WHATSAPP_NUMBER, BRAND } from "@/lib/constants";
 import { toast } from "@/hooks/use-toast";
 import { Upload, Send, Sparkles } from "lucide-react";
 import { z } from "zod";
+import { submitPublicInquiry, uploadPublicLeadFile } from "@/lib/publicLeadGateway";
+import type { UploadedFileRef } from "@/lib/inquiryDraft";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name required").max(100),
-  email: z.string().trim().email("Valid email required").max(255),
+  email: z.string().trim().email("Valid email required").max(254),
   message: z.string().trim().min(5, "Tell us a bit about the mockup").max(2000),
+  website: z.string().max(300),
 });
+
+const ALLOWED_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const MAX_SIZE = 10 * 1024 * 1024;
 
 interface Props {
   open: boolean;
@@ -18,63 +23,68 @@ interface Props {
 }
 
 export default function MockupRequestModal({ open, onOpenChange }: Props) {
-  const [data, setData] = useState({ name: "", email: "", message: "" });
+  const [data, setData] = useState({ name: "", email: "", message: "", website: "" });
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const startedAtRef = useRef(Date.now());
 
-  const update = (k: keyof typeof data, v: string) => setData((d) => ({ ...d, [k]: v }));
+  const update = (key: keyof typeof data, value: string) => setData((current) => ({ ...current, [key]: value }));
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
     const parsed = schema.safeParse(data);
     if (!parsed.success) {
       toast({ title: parsed.error.errors[0].message, variant: "destructive" });
       return;
     }
-    if (file && file.size > 10 * 1024 * 1024) {
-      toast({ title: "File must be under 10 MB", variant: "destructive" });
+    if (file && (file.size > MAX_SIZE || !ALLOWED_TYPES.has(file.type))) {
+      toast({ title: "File must be PDF, JPG, PNG or WEBP and under 10 MB", variant: "destructive" });
       return;
     }
 
     setBusy(true);
-    let attachmentUrl: string | null = null;
-
     try {
-      if (file) {
-        const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
-        const path = `requests/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("mockup-uploads")
-          .upload(path, file, { contentType: file.type, upsert: false });
-        if (upErr) throw upErr;
-        const { data: signed } = await supabase.storage
-          .from("mockup-uploads")
-          .createSignedUrl(path, 60 * 60 * 24 * 30); // 30 days
-        attachmentUrl = signed?.signedUrl ?? null;
-      }
+      let uploaded: UploadedFileRef | null = null;
+      if (file) uploaded = await uploadPublicLeadFile(file, "mockup", startedAtRef.current);
 
-      void supabase.from("inquiries").insert({
+      const { reference } = await submitPublicInquiry({
+        kind: "mockup",
         name: data.name,
         email: data.email,
-        country: "—",
         category: "Mockup Request",
-        message: `${data.message}${attachmentUrl ? `\n\nAttachment: ${attachmentUrl}` : ""}`,
+        message: data.message,
         source: "mockup-modal",
+        intent: "reference",
+        website: data.website,
+        form_started_at: startedAtRef.current,
+        files: uploaded ? [uploaded] : [],
+        lead_context: {
+          conversion_type: "mockup-request",
+          source_page: window.location.pathname + window.location.search,
+          secure_file_uploaded: Boolean(uploaded),
+        },
       });
 
-      const wa = `New Mockup Request — ${BRAND.name}
+      const whatsapp = `New Mockup Request — ${BRAND.name}
 ━━━━━━━━━━━━━━━━━━
+Reference: ${reference}
 Name: ${data.name}
 Email: ${data.email}
-Requirements: ${data.message}${attachmentUrl ? `\n\nSketch/Logo: ${attachmentUrl}` : ""}`;
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(wa)}`, "_blank");
+Requirements: ${data.message}
+Secure file uploaded: ${uploaded ? "Yes" : "No"}`;
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsapp)}`, "_blank");
 
-      toast({ title: "Mockup request sent", description: "We'll respond within 4 working hours." });
-      setData({ name: "", email: "", message: "" });
+      toast({ title: "Mockup request saved", description: "The team will review the requirement and confirm the next step." });
+      setData({ name: "", email: "", message: "", website: "" });
       setFile(null);
+      startedAtRef.current = Date.now();
       onOpenChange(false);
-    } catch (err: any) {
-      toast({ title: "Upload failed", description: err.message ?? "Please try again", variant: "destructive" });
+    } catch (error) {
+      toast({
+        title: "Request could not be saved",
+        description: error instanceof Error ? error.message : "Please try again or use WhatsApp.",
+        variant: "destructive",
+      });
     } finally {
       setBusy(false);
     }
@@ -94,16 +104,25 @@ Requirements: ${data.message}${attachmentUrl ? `\n\nSketch/Logo: ${attachmentUrl
             Request a custom <span className="text-gold italic">mockup</span>
           </DialogTitle>
           <DialogDescription className="text-foreground/70 text-sm">
-            Send your sketch, tech-pack or logo. Our design team will return a digital mockup + FOB quote within 24 h.
+            Send a reference image, PDF or logo with your product requirements. Feasibility, mockup scope and quotation details are confirmed after review.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-3 pt-2">
           <input
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute -left-[10000px] h-px w-px opacity-0"
+            name="website"
+            value={data.website}
+            onChange={(event) => update("website", event.target.value)}
+          />
+          <input
             className={input}
             placeholder="Your name *"
             value={data.name}
-            onChange={(e) => update("name", e.target.value)}
+            onChange={(event) => update("name", event.target.value)}
             maxLength={100}
             required
           />
@@ -112,15 +131,15 @@ Requirements: ${data.message}${attachmentUrl ? `\n\nSketch/Logo: ${attachmentUrl
             type="email"
             placeholder="Email *"
             value={data.email}
-            onChange={(e) => update("email", e.target.value)}
-            maxLength={255}
+            onChange={(event) => update("email", event.target.value)}
+            maxLength={254}
             required
           />
           <textarea
             className={`${input} min-h-[110px] resize-y`}
             placeholder="Describe your product, fabric, quantity, deadline… *"
             value={data.message}
-            onChange={(e) => update("message", e.target.value)}
+            onChange={(event) => update("message", event.target.value)}
             maxLength={2000}
             required
           />
@@ -128,13 +147,13 @@ Requirements: ${data.message}${attachmentUrl ? `\n\nSketch/Logo: ${attachmentUrl
           <label className="flex items-center gap-3 border border-dashed border-border hover:border-gold/60 px-4 py-3 cursor-pointer transition-colors">
             <Upload size={16} className="text-gold shrink-0" />
             <span className="text-sm text-foreground/75 truncate">
-              {file ? file.name : "Upload sketch / logo / tech-pack (optional, max 10 MB)"}
+              {file ? file.name : "Upload PDF / JPG / PNG / WEBP (optional, max 10 MB)"}
             </span>
             <input
               type="file"
-              accept="image/*,.pdf,.ai,.psd,.zip"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
               className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
             />
           </label>
 
@@ -144,10 +163,10 @@ Requirements: ${data.message}${attachmentUrl ? `\n\nSketch/Logo: ${attachmentUrl
             className="w-full inline-flex items-center justify-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-3.5 text-xs uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all disabled:opacity-60"
           >
             <Send size={14} />
-            {busy ? "Sending…" : "Send Mockup Request"}
+            {busy ? "Saving…" : "Save & Open WhatsApp"}
           </button>
           <p className="text-[10px] text-muted-foreground text-center pt-1">
-            We never share your files. Response time: under 4 working hours.
+            Files are uploaded to a private request bucket using a short-lived signed upload token.
           </p>
         </form>
       </DialogContent>
