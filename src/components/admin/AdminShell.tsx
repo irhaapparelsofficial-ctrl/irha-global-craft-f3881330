@@ -10,7 +10,9 @@ import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
 import ListingLaunchKit from "@/components/admin/ListingLaunchKit";
 import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
+import LeadCampaignBlueprints from "@/components/admin/LeadCampaignBlueprints";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
+import SeoReleaseReadiness from "@/components/admin/SeoReleaseReadiness";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
 import GoogleSearchCenter from "@/components/admin/GoogleSearchCenter";
 import AIOperationsPlaybook from "@/components/admin/AIOperationsPlaybook";
@@ -130,9 +132,9 @@ export function AdminShell({
   const content = view === "listings"
     ? <><ListingLaunchKit /><ListingsPanel /></>
     : view === "lead_engine"
-      ? <LeadAcquisitionPanel />
+      ? <><LeadCampaignBlueprints /><LeadAcquisitionPanel /></>
       : view === "seo"
-        ? <MultilingualSeoPanel />
+        ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
         : view === "gsc"
           ? <GoogleSearchCenter />
           : view === "system"
