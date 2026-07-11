@@ -55,7 +55,7 @@ const NAV: NavGroup[] = [
   ]},
   { title: "Growth", items: [
     { key: "listings", label: "B2B Listings", icon: ListChecks },
-    { key: "social", label: "Social", icon: Share2 },
+    { key: "social", label: "Social Calendar", icon: Share2 },
     { key: "devops", label: "Social Sync / DevOps", icon: Activity },
     { key: "traffic", label: "Traffic", icon: BarChart3 },
     { key: "gsc", label: "Google Search", icon: Search },
