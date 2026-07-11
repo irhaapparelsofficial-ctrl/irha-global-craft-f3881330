@@ -4,7 +4,7 @@ import {
   Home, Package, Layers, BookOpen, Search,
   Users, MessageSquare, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
-  BarChart3, ListChecks, UserSearch,
+  BarChart3, ListChecks, UserSearch, BookKey,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
@@ -16,6 +16,7 @@ import SeoReleaseReadiness from "@/components/admin/SeoReleaseReadiness";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
 import GoogleSearchCenter from "@/components/admin/GoogleSearchCenter";
 import AIOperationsPlaybook from "@/components/admin/AIOperationsPlaybook";
+import BusinessRulesPanel from "@/components/admin/BusinessRulesPanel";
 import OutreachTemplateLibrary from "@/components/admin/OutreachTemplateLibrary";
 import SocialContentPlaybook from "@/components/admin/SocialContentPlaybook";
 
@@ -24,7 +25,7 @@ export type AdminView =
   | "products" | "categories" | "catalogues"
   | "seo"
   | "lead_engine" | "leads" | "chat" | "mailing"
-  | "ai"
+  | "rules" | "ai"
   | "studio" | "pi" | "directory"
   | "social" | "devops" | "listings"
   | "traffic" | "gsc" | "macro"
@@ -52,6 +53,7 @@ const NAV: NavGroup[] = [
     { key: "mailing", label: "Mailing", icon: Send },
   ]},
   { title: "AI", items: [
+    { key: "rules", label: "Business Rules", icon: BookKey },
     { key: "ai", label: "AI Command Center", icon: Sparkles },
   ]},
   { title: "Operations", items: [
@@ -153,13 +155,15 @@ export function AdminShell({
           ? <GoogleSearchCenter />
           : view === "system"
             ? <ProductionHealthPanel />
-            : view === "ai"
-              ? <><AIOperationsPlaybook />{children}</>
-              : view === "mailing"
-                ? <><OutreachTemplateLibrary />{children}</>
-                : view === "social"
-                  ? <><SocialContentPlaybook />{children}</>
-                  : children;
+            : view === "rules"
+              ? <BusinessRulesPanel />
+              : view === "ai"
+                ? <><AIOperationsPlaybook />{children}</>
+                : view === "mailing"
+                  ? <><OutreachTemplateLibrary />{children}</>
+                  : view === "social"
+                    ? <><SocialContentPlaybook />{children}</>
+                    : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
