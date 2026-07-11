@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Send, MessageCircle, Mail, Instagram, Facebook, Linkedin, Music2 } from "lucide-react";
 import SEO from "@/components/SEO";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { BRAND } from "@/lib/constants";
+import { submitPublicInquiry } from "@/lib/publicLeadGateway";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -20,53 +20,61 @@ const SOCIALS = [
 ];
 
 export default function Connect() {
-  const [data, setData] = useState({ name: "", company: "", email: "", whatsapp: "", source: "", message: "" });
+  const [data, setData] = useState({ name: "", company: "", email: "", whatsapp: "", source: "", message: "", website: "" });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const startedAtRef = useRef(Date.now());
 
-  const update = (k: keyof typeof data, v: string) => setData((d) => ({ ...d, [k]: v }));
+  const update = (key: keyof typeof data, value: string) => setData((current) => ({ ...current, [key]: value }));
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!data.name.trim() || (!data.email.trim() && !data.whatsapp.trim())) {
       toast({ title: "Please add your name and either email or WhatsApp", variant: "destructive" });
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.from("inquiries").insert({
-      name: data.name.trim(),
-      email: data.email.trim() || `${data.whatsapp.trim()}@whatsapp.local`,
-      company: data.company.trim() || null,
-      country: null,
-      phone: data.whatsapp.trim() || null,
-      category: data.source || "social-form",
-      message: data.message.trim() || null,
-      source: data.source ? `connect:${data.source}` : "connect-universal-form",
-    });
+    try {
+      await submitPublicInquiry({
+        kind: "connect",
+        name: data.name,
+        email: data.email,
+        phone: data.whatsapp,
+        company: data.company,
+        category: data.source || "social-form",
+        message: data.message,
+        source: data.source ? `connect:${data.source}` : "connect-universal-form",
+        website: data.website,
+        form_started_at: startedAtRef.current,
+        lead_context: {
+          conversion_type: "connect",
+          source_channel: data.source || null,
+          source_page: window.location.pathname + window.location.search,
+          referrer: document.referrer || null,
+        },
+      });
 
-    if (error) {
-      setLoading(false);
+      try {
+        (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
+          "event",
+          "conversion",
+          { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
+        );
+      } catch {
+        // Analytics must never block a successfully saved buyer request.
+      }
+
+      setSent(true);
+    } catch (error) {
       toast({
         title: "Message could not be saved",
-        description: "Please try again or contact us directly on WhatsApp.",
+        description: error instanceof Error ? error.message : "Please try again or contact us directly on WhatsApp.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    try {
-      (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
-        "event",
-        "conversion",
-        { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
-      );
-    } catch {
-      // Analytics must never block a successfully saved buyer request.
-    }
-
-    setSent(true);
-    setLoading(false);
   };
 
   const input = "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors";
@@ -109,15 +117,15 @@ export default function Connect() {
           </p>
 
           <div className="flex flex-wrap gap-2 mt-6">
-            {SOCIALS.map((s) => (
+            {SOCIALS.map((social) => (
               <a
-                key={s.label}
-                href={s.href}
+                key={social.label}
+                href={social.href}
                 target="_blank"
                 rel="noreferrer noopener"
                 className="inline-flex items-center gap-2 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold px-3 py-2 text-xs uppercase tracking-[0.18em] transition-colors"
               >
-                <s.Icon size={14} /> {s.label}
+                <social.Icon size={14} /> {social.label}
               </a>
             ))}
           </div>
@@ -134,13 +142,22 @@ export default function Connect() {
             </div>
           ) : (
             <form onSubmit={submit} className="mt-10 border border-border bg-card/40 p-6 md:p-8 space-y-4">
-              <input className={input} placeholder="Full name *" value={data.name} onChange={(e) => update("name", e.target.value)} required aria-label="Full name" />
-              <input className={input} placeholder="Company / brand" value={data.company} onChange={(e) => update("company", e.target.value)} aria-label="Company" />
+              <input
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="absolute -left-[10000px] h-px w-px opacity-0"
+                name="website"
+                value={data.website}
+                onChange={(event) => update("website", event.target.value)}
+              />
+              <input className={input} placeholder="Full name *" value={data.name} onChange={(event) => update("name", event.target.value)} required aria-label="Full name" maxLength={100} />
+              <input className={input} placeholder="Company / brand" value={data.company} onChange={(event) => update("company", event.target.value)} aria-label="Company" maxLength={160} />
               <div className="grid sm:grid-cols-2 gap-3">
-                <input type="email" className={input} placeholder="Email" value={data.email} onChange={(e) => update("email", e.target.value)} aria-label="Email" />
-                <input className={input} placeholder="WhatsApp number" value={data.whatsapp} onChange={(e) => update("whatsapp", e.target.value)} aria-label="WhatsApp number" />
+                <input type="email" className={input} placeholder="Email" value={data.email} onChange={(event) => update("email", event.target.value)} aria-label="Email" maxLength={254} />
+                <input className={input} placeholder="WhatsApp number" value={data.whatsapp} onChange={(event) => update("whatsapp", event.target.value)} aria-label="WhatsApp number" maxLength={40} />
               </div>
-              <select className={input} value={data.source} onChange={(e) => update("source", e.target.value)} aria-label="Where did you find us">
+              <select className={input} value={data.source} onChange={(event) => update("source", event.target.value)} aria-label="Where did you find us">
                 <option value="">Found us via…</option>
                 <option value="Instagram">Instagram</option>
                 <option value="Facebook">Facebook</option>
@@ -150,7 +167,7 @@ export default function Connect() {
                 <option value="Google">Google search</option>
                 <option value="Referral">Referral</option>
               </select>
-              <textarea className={input} rows={3} placeholder="What can we help you with? (product, MOQ, deadline…)" value={data.message} onChange={(e) => update("message", e.target.value)} aria-label="Message" />
+              <textarea className={input} rows={3} placeholder="What can we help you with? (product, MOQ, deadline…)" value={data.message} onChange={(event) => update("message", event.target.value)} aria-label="Message" maxLength={6000} />
               <p className="text-[10px] text-muted-foreground">
                 * Either email or WhatsApp is required so the team can reply to your saved request.
               </p>

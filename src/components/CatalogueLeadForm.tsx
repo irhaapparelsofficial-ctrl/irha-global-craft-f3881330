@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X, Send, MessageCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { submitPublicCatalogueLead } from "@/lib/publicLeadGateway";
 
 interface Props {
   onClose: () => void;
@@ -18,55 +18,56 @@ export default function CatalogueLeadForm({ onClose, catalogueUrl, source, categ
     company_name: "",
     country: "",
     message: "",
+    website: "",
   });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const startedAtRef = useRef(Date.now());
 
-  const update = (k: keyof typeof data, v: string) => setData((d) => ({ ...d, [k]: v }));
+  const update = (key: keyof typeof data, value: string) => setData((current) => ({ ...current, [key]: value }));
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!data.name.trim() || (!data.email.trim() && !data.whatsapp.trim())) {
       toast({ title: "Please add your name and either email or WhatsApp", variant: "destructive" });
       return;
     }
     setLoading(true);
 
-    const params = new URLSearchParams(window.location.search);
-    const { error } = await supabase.from("catalogue_leads").insert({
-      name: data.name,
-      whatsapp: data.whatsapp || null,
-      email: data.email || null,
-      company_name: data.company_name || null,
-      country: data.country || null,
-      category_interest: categoryInterest || null,
-      message: data.message || null,
-      catalogue_url: catalogueUrl,
-      source,
-      utm_source: params.get("utm_source"),
-      utm_medium: params.get("utm_medium"),
-      utm_campaign: params.get("utm_campaign"),
-      language: document.documentElement.lang || "en",
-    });
-
-    if (error) {
-      toast({ title: "Could not send", description: error.message, variant: "destructive" });
-      setLoading(false);
-      return;
-    }
-
     try {
-      (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
-        "event",
-        "conversion",
-        { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
-      );
-    } catch {
-      // Analytics failure must never block lead submission.
-    }
+      const params = new URLSearchParams(window.location.search);
+      await submitPublicCatalogueLead({
+        ...data,
+        category_interest: categoryInterest || null,
+        catalogue_url: catalogueUrl,
+        source,
+        utm_source: params.get("utm_source"),
+        utm_medium: params.get("utm_medium"),
+        utm_campaign: params.get("utm_campaign"),
+        language: document.documentElement.lang || "en",
+        form_started_at: startedAtRef.current,
+      });
 
-    setSent(true);
-    setLoading(false);
+      try {
+        (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
+          "event",
+          "conversion",
+          { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
+        );
+      } catch {
+        // Analytics failure must never block lead submission.
+      }
+
+      setSent(true);
+    } catch (error) {
+      toast({
+        title: "Could not send",
+        description: error instanceof Error ? error.message : "Please try again or use WhatsApp.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const input =
@@ -74,7 +75,7 @@ export default function CatalogueLeadForm({ onClose, catalogueUrl, source, categ
 
   return (
     <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-card border border-border max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h3 className="font-display text-xl">Request Catalogue</h3>
           <button onClick={onClose} aria-label="Close" className="text-foreground/60 hover:text-gold">
@@ -102,19 +103,28 @@ export default function CatalogueLeadForm({ onClose, catalogueUrl, source, categ
           </div>
         ) : (
           <form onSubmit={submit} className="p-6 space-y-3">
+            <input
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="absolute -left-[10000px] h-px w-px opacity-0"
+              value={data.website}
+              onChange={(event) => update("website", event.target.value)}
+              name="website"
+            />
             {categoryInterest && (
               <p className="text-[10px] uppercase tracking-[0.25em] text-gold/80">Interest: {categoryInterest}</p>
             )}
-            <input className={input} placeholder="Full name *" value={data.name} onChange={(e) => update("name", e.target.value)} required />
+            <input className={input} placeholder="Full name *" value={data.name} onChange={(event) => update("name", event.target.value)} required maxLength={100} />
             <div className="grid sm:grid-cols-2 gap-3">
-              <input type="email" className={input} placeholder="Email" value={data.email} onChange={(e) => update("email", e.target.value)} />
-              <input className={input} placeholder="WhatsApp" value={data.whatsapp} onChange={(e) => update("whatsapp", e.target.value)} />
+              <input type="email" className={input} placeholder="Email" value={data.email} onChange={(event) => update("email", event.target.value)} maxLength={254} />
+              <input className={input} placeholder="WhatsApp" value={data.whatsapp} onChange={(event) => update("whatsapp", event.target.value)} maxLength={40} />
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
-              <input className={input} placeholder="Company" value={data.company_name} onChange={(e) => update("company_name", e.target.value)} />
-              <input className={input} placeholder="Country" value={data.country} onChange={(e) => update("country", e.target.value)} />
+              <input className={input} placeholder="Company" value={data.company_name} onChange={(event) => update("company_name", event.target.value)} maxLength={160} />
+              <input className={input} placeholder="Country" value={data.country} onChange={(event) => update("country", event.target.value)} maxLength={80} />
             </div>
-            <textarea className={input} rows={3} placeholder="Notes (optional)" value={data.message} onChange={(e) => update("message", e.target.value)} />
+            <textarea className={input} rows={3} placeholder="Notes (optional)" value={data.message} onChange={(event) => update("message", event.target.value)} maxLength={6000} />
             <p className="text-[10px] text-muted-foreground">* Either email or WhatsApp is required.</p>
             <button
               type="submit"

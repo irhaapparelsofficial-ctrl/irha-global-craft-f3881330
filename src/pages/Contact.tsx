@@ -1,6 +1,7 @@
+import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
 import { BRAND, whatsappLink } from "@/lib/constants";
-import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Calendar, Mail, MapPin, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 
 function InstagramIcon({ className, size = 24 }: { className?: string; size?: number }) {
   return (
@@ -78,18 +79,32 @@ export default function Contact() {
           </div>
           <div className="bg-card/40 border border-border p-10 md:p-12">
             <p className="eyebrow mb-6">Business Enquiries</p>
-            <h3 className="font-display text-3xl mb-6">Share your requirements.</h3>
+            <h2 className="font-display text-3xl mb-6">Share your requirements.</h2>
             <p className="text-foreground/70 leading-relaxed">
-              Our team reviews business enquiries and follows up using the contact details you provide. Response timing depends on the request and working schedule.
+              The team reviews business enquiries and follows up using the contact details you provide. Price, MOQ, sample timing, production timing and shipping scope are confirmed after the exact program is reviewed.
             </p>
-            <ul className="space-y-4 text-foreground/75 mt-8">
-              <li className="flex justify-between border-b border-border/60 pb-3"><span>Monday – Friday</span><span>9:00 — 19:00 PKT</span></li>
-              <li className="flex justify-between border-b border-border/60 pb-3"><span>Saturday</span><span>10:00 — 16:00 PKT</span></li>
-              <li className="flex justify-between"><span>Sunday</span><span className="text-muted-foreground">Closed</span></li>
-            </ul>
-            <a href={whatsappLink()} target="_blank" rel="noreferrer" className="mt-10 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all">
-              <MessageCircle size={16}/> Start a Conversation
-            </a>
+            <div className="space-y-4 text-foreground/75 mt-8">
+              <div className="flex gap-3 border-b border-border/60 pb-4">
+                <ShieldCheck size={18} className="text-gold shrink-0 mt-0.5" />
+                <span>Use the Buyer Trust Center to review the verification process before ordering.</span>
+              </div>
+              <div className="flex gap-3 border-b border-border/60 pb-4">
+                <Calendar size={18} className="text-gold shrink-0 mt-0.5" />
+                <span>Factory video calls are scheduled after the category and preferred time window are reviewed.</span>
+              </div>
+              <div className="flex gap-3">
+                <MessageCircle size={18} className="text-gold shrink-0 mt-0.5" />
+                <span>WhatsApp is the fastest direct channel for urgent product or meeting context.</span>
+              </div>
+            </div>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all">
+                <MessageCircle size={16} /> Start Conversation
+              </a>
+              <Link to="/factory-video-call" className="inline-flex items-center gap-3 border border-foreground/25 hover:border-gold hover:text-gold px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
+                <Calendar size={16} /> Factory Call
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -98,18 +113,18 @@ export default function Contact() {
         <div className="container-luxe pt-16">
           <p className="eyebrow mb-8">Social</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
-            {SOCIALS.map((s) => (
+            {SOCIALS.map((social) => (
               <a
-                key={s.name}
-                href={s.href}
+                key={social.name}
+                href={social.href}
                 target="_blank"
                 rel="noreferrer noopener"
-                aria-label={`Irha Apparels on ${s.name}`}
+                aria-label={`Irha Apparels on ${social.name}`}
                 className="flex flex-col items-center gap-3 border border-border/60 p-6 hover:border-gold transition-colors group"
               >
-                <s.Icon className="text-foreground/60 group-hover:text-gold transition-colors" size={28} />
-                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground">{s.name}</span>
-                <span className="text-[9px] uppercase tracking-[0.15em] text-gold/80">{s.handle}</span>
+                <social.Icon className="text-foreground/60 group-hover:text-gold transition-colors" size={28} />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground">{social.name}</span>
+                <span className="text-[9px] uppercase tracking-[0.15em] text-gold/80">{social.handle}</span>
               </a>
             ))}
           </div>
@@ -119,16 +134,16 @@ export default function Contact() {
   );
 }
 
-function ContactRow({ Icon, label, value, href, cta }: { Icon: any; label: string; value: string; href?: string; cta?: string }) {
+function ContactRow({ Icon, label, value, href, cta }: { Icon: typeof Mail; label: string; value: string; href?: string; cta?: string }) {
   return (
     <div className="border-b border-border pb-8">
       <div className="flex items-center gap-3 mb-3">
-        <Icon className="text-primary" size={18}/>
+        <Icon className="text-primary" size={18} />
         <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">{label}</p>
       </div>
       <p className="font-display text-3xl md:text-4xl">{value}</p>
       {href && cta && (
-        <a href={href} target="_blank" rel="noreferrer" className="mt-4 inline-block text-xs uppercase tracking-[0.3em] text-primary hover-gold-underline">
+        <a href={href} target="_blank" rel="noreferrer noopener" className="mt-4 inline-block text-xs uppercase tracking-[0.3em] text-primary hover-gold-underline">
           {cta} →
         </a>
       )}
