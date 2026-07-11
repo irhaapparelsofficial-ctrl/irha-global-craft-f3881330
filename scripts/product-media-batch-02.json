@@ -1,33 +1,114 @@
 {
   "products": {
     "dark-brown-red-embroidered-short-lederhosen": [
-      {"source":"https://drive.google.com/uc?export=download&id=157-z0ADymPbLYtKSkveaWN_bvH9_nb_N","fallback":"https://drive.google.com/thumbnail?id=157-z0ADymPbLYtKSkveaWN_bvH9_nb_N&sz=w1600","file":"01-hero-front.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1fwtLmHZIm2vXsongyTpl61CDONT_BMTs","fallback":"https://drive.google.com/thumbnail?id=1fwtLmHZIm2vXsongyTpl61CDONT_BMTs&sz=w1600","file":"03-angle-back.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=18w2nCaPIMYLJamgN_D-m7OyBo8MDhqKz","fallback":"https://drive.google.com/thumbnail?id=18w2nCaPIMYLJamgN_D-m7OyBo8MDhqKz&sz=w1600","file":"04-detail-front-flap.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1bDKBrkekNtpTbavJ4yUSivbDSgQMDnJb","fallback":"https://drive.google.com/thumbnail?id=1bDKBrkekNtpTbavJ4yUSivbDSgQMDnJb&sz=w1600","file":"05-detail-red-embroidery-side-tie.webp"}
+      {
+        "source": "https://drive.google.com/uc?export=download&id=157-z0ADymPbLYtKSkveaWN_bvH9_nb_N",
+        "fallback": "https://drive.google.com/thumbnail?id=157-z0ADymPbLYtKSkveaWN_bvH9_nb_N&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1fwtLmHZIm2vXsongyTpl61CDONT_BMTs",
+        "fallback": "https://drive.google.com/thumbnail?id=1fwtLmHZIm2vXsongyTpl61CDONT_BMTs&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=18w2nCaPIMYLJamgN_D-m7OyBo8MDhqKz",
+        "fallback": "https://drive.google.com/thumbnail?id=18w2nCaPIMYLJamgN_D-m7OyBo8MDhqKz&sz=w1600",
+        "file": "04-detail-front-flap.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1bDKBrkekNtpTbavJ4yUSivbDSgQMDnJb",
+        "fallback": "https://drive.google.com/thumbnail?id=1bDKBrkekNtpTbavJ4yUSivbDSgQMDnJb&sz=w1600",
+        "file": "05-detail-red-embroidery-side-tie.webp"
+      }
     ],
     "brown-ornamental-side-tie-short-lederhosen": [
-      {"source":"https://drive.google.com/uc?export=download&id=1hsbFttOiSW2pEvezfq0EWPM9k-QGUiJ2","fallback":"https://drive.google.com/thumbnail?id=1hsbFttOiSW2pEvezfq0EWPM9k-QGUiJ2&sz=w1600","file":"01-hero-front.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1rfs9kK0r9UjkGojdy8f2impLlE_y8aTH","fallback":"https://drive.google.com/thumbnail?id=1rfs9kK0r9UjkGojdy8f2impLlE_y8aTH&sz=w1600","file":"03-angle-back.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1FZcgfjJMbH1ugO3DdK5fdZO41oYLyRHb","fallback":"https://drive.google.com/thumbnail?id=1FZcgfjJMbH1ugO3DdK5fdZO41oYLyRHb&sz=w1600","file":"04-detail-front-flap.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1a8q8LJz4cKOWWsL84dNHeJSCKE6rmUeR","fallback":"https://drive.google.com/thumbnail?id=1a8q8LJz4cKOWWsL84dNHeJSCKE6rmUeR&sz=w1600","file":"05-detail-side-embroidery.webp"}
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1hsbFttOiSW2pEvezfq0EWPM9k-QGUiJ2",
+        "fallback": "https://drive.google.com/thumbnail?id=1hsbFttOiSW2pEvezfq0EWPM9k-QGUiJ2&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1rfs9kK0r9UjkGojdy8f2impLlE_y8aTH",
+        "fallback": "https://drive.google.com/thumbnail?id=1rfs9kK0r9UjkGojdy8f2impLlE_y8aTH&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1FZcgfjJMbH1ugO3DdK5fdZO41oYLyRHb",
+        "fallback": "https://drive.google.com/thumbnail?id=1FZcgfjJMbH1ugO3DdK5fdZO41oYLyRHb&sz=w1600",
+        "file": "04-detail-front-flap.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1a8q8LJz4cKOWWsL84dNHeJSCKE6rmUeR",
+        "fallback": "https://drive.google.com/thumbnail?id=1a8q8LJz4cKOWWsL84dNHeJSCKE6rmUeR&sz=w1600",
+        "file": "05-detail-side-embroidery.webp"
+      }
     ],
     "dark-brown-ivory-floral-short-lederhosen": [
-      {"source":"https://drive.google.com/uc?export=download&id=1XJA8g3e5DGuVRnyJTglNp7zLAF3gYNpj","fallback":"https://drive.google.com/thumbnail?id=1XJA8g3e5DGuVRnyJTglNp7zLAF3gYNpj&sz=w1600","file":"01-hero-front.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=10E0DaEvtd7yjIysT0_0wREkLETMWQgIJ","fallback":"https://drive.google.com/thumbnail?id=10E0DaEvtd7yjIysT0_0wREkLETMWQgIJ&sz=w1600","file":"03-angle-back.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1JR3hEI-eC2fPK1WKIP3RqmJlZRiGA34T","fallback":"https://drive.google.com/thumbnail?id=1JR3hEI-eC2fPK1WKIP3RqmJlZRiGA34T&sz=w1600","file":"04-detail-front-ivory-embroidery.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=16kkBqDS_3SNNUyKtyfVCajrgOuw4b0c3","fallback":"https://drive.google.com/thumbnail?id=16kkBqDS_3SNNUyKtyfVCajrgOuw4b0c3&sz=w1600","file":"05-detail-leg-ivory-embroidery.webp"}
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1XJA8g3e5DGuVRnyJTglNp7zLAF3gYNpj",
+        "fallback": "https://drive.google.com/thumbnail?id=1XJA8g3e5DGuVRnyJTglNp7zLAF3gYNpj&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=10E0DaEvtd7yjIysT0_0wREkLETMWQgIJ",
+        "fallback": "https://drive.google.com/thumbnail?id=10E0DaEvtd7yjIysT0_0wREkLETMWQgIJ&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1JR3hEI-eC2fPK1WKIP3RqmJlZRiGA34T",
+        "fallback": "https://drive.google.com/thumbnail?id=1JR3hEI-eC2fPK1WKIP3RqmJlZRiGA34T&sz=w1600",
+        "file": "04-detail-front-ivory-embroidery.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=16kkBqDS_3SNNUyKtyfVCajrgOuw4b0c3",
+        "fallback": "https://drive.google.com/thumbnail?id=16kkBqDS_3SNNUyKtyfVCajrgOuw4b0c3&sz=w1600",
+        "file": "05-detail-leg-ivory-embroidery.webp"
+      }
     ],
     "dark-brown-minimal-side-embroidered-short-lederhosen": [
-      {"source":"https://drive.google.com/uc?export=download&id=19YnjW4TpOfUvVpcVq8nuZY_3IW5mU0qv","fallback":"https://drive.google.com/thumbnail?id=19YnjW4TpOfUvVpcVq8nuZY_3IW5mU0qv&sz=w1600","file":"01-hero-front.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1bNYPsryBDghmAyYPv_WjUEbzSqfRF5E9","fallback":"https://drive.google.com/thumbnail?id=1bNYPsryBDghmAyYPv_WjUEbzSqfRF5E9&sz=w1600","file":"04-detail-upper-construction.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1jxHaBz7W65fLWv0hLT05GxrhCfJkXlkC","fallback":"https://drive.google.com/thumbnail?id=1jxHaBz7W65fLWv0hLT05GxrhCfJkXlkC&sz=w1600","file":"05-detail-side-embroidery.webp"}
+      {
+        "source": "https://drive.google.com/uc?export=download&id=19YnjW4TpOfUvVpcVq8nuZY_3IW5mU0qv",
+        "fallback": "https://drive.google.com/thumbnail?id=19YnjW4TpOfUvVpcVq8nuZY_3IW5mU0qv&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1zsEC27VyLcUu_KdcY7sSrPLiAIJqhkDu",
+        "fallback": "https://drive.google.com/thumbnail?id=1zsEC27VyLcUu_KdcY7sSrPLiAIJqhkDu&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1bNYPsryBDghmAyYPv_WjUEbzSqfRF5E9",
+        "fallback": "https://drive.google.com/thumbnail?id=1bNYPsryBDghmAyYPv_WjUEbzSqfRF5E9&sz=w1600",
+        "file": "04-detail-upper-construction.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1jxHaBz7W65fLWv0hLT05GxrhCfJkXlkC",
+        "fallback": "https://drive.google.com/thumbnail?id=1jxHaBz7W65fLWv0hLT05GxrhCfJkXlkC&sz=w1600",
+        "file": "05-detail-side-embroidery.webp"
+      }
     ],
     "brown-green-floral-embroidered-short-lederhosen": [
-      {"source":"https://drive.google.com/uc?export=download&id=1lBdnc_AhEyAUlHjhTycTWlqhkut2U14G","fallback":"https://drive.google.com/thumbnail?id=1lBdnc_AhEyAUlHjhTycTWlqhkut2U14G&sz=w1600","file":"01-hero-front.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1CEgePgmQY3sRM9Y-SIfVbykuBSmpnlBn","fallback":"https://drive.google.com/thumbnail?id=1CEgePgmQY3sRM9Y-SIfVbykuBSmpnlBn&sz=w1600","file":"03-angle-back.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=1lIhnyoeZ-8Iin2S1Rj-5lFdxnZaAj4X9","fallback":"https://drive.google.com/thumbnail?id=1lIhnyoeZ-8Iin2S1Rj-5lFdxnZaAj4X9&sz=w1600","file":"04-detail-front-green-embroidery.webp"},
-      {"source":"https://drive.google.com/uc?export=download&id=12C2quNl3FItoK0PT-cSfIXk4FgL_KrEB","fallback":"https://drive.google.com/thumbnail?id=12C2quNl3FItoK0PT-cSfIXk4FgL_KrEB&sz=w1600","file":"05-detail-leg-green-embroidery.webp"}
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1lBdnc_AhEyAUlHjhTycTWlqhkut2U14G",
+        "fallback": "https://drive.google.com/thumbnail?id=1lBdnc_AhEyAUlHjhTycTWlqhkut2U14G&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1CEgePgmQY3sRM9Y-SIfVbykuBSmpnlBn",
+        "fallback": "https://drive.google.com/thumbnail?id=1CEgePgmQY3sRM9Y-SIfVbykuBSmpnlBn&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1lIhnyoeZ-8Iin2S1Rj-5lFdxnZaAj4X9",
+        "fallback": "https://drive.google.com/thumbnail?id=1lIhnyoeZ-8Iin2S1Rj-5lFdxnZaAj4X9&sz=w1600",
+        "file": "04-detail-front-green-embroidery.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=12C2quNl3FItoK0PT-cSfIXk4FgL_KrEB",
+        "fallback": "https://drive.google.com/thumbnail?id=12C2quNl3FItoK0PT-cSfIXk4FgL_KrEB&sz=w1600",
+        "file": "05-detail-leg-green-embroidery.webp"
+      }
     ]
   }
 }

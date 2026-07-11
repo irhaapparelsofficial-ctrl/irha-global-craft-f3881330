@@ -1,0 +1,70 @@
+{
+  "products": {
+    "vintage-brown-minimal-side-embroidered-short-lederhosen": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1fzaFzv8wlniJcv9XB6DyI3N0csBUKSUY",
+        "fallback": "https://drive.google.com/thumbnail?id=1fzaFzv8wlniJcv9XB6DyI3N0csBUKSUY&sz=w1600",
+        "file": "01-hero-front.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1GCDtySy20BYFqRd2MSdXBAACyKAtWsnQ",
+        "fallback": "https://drive.google.com/thumbnail?id=1GCDtySy20BYFqRd2MSdXBAACyKAtWsnQ&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1E7IYdmAXSz6fy5Qz-3HA9vawoWTanVYu",
+        "fallback": "https://drive.google.com/thumbnail?id=1E7IYdmAXSz6fy5Qz-3HA9vawoWTanVYu&sz=w1600",
+        "file": "04-detail-waist-construction.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1IH9TdCTuBipFzSL9gKfmp8vfSXvNT6Sd",
+        "fallback": "https://drive.google.com/thumbnail?id=1IH9TdCTuBipFzSL9gKfmp8vfSXvNT6Sd&sz=w1600",
+        "file": "05-detail-side-embroidery.webp"
+      }
+    ],
+    "dark-brown-eagle-embroidered-suspender-short-lederhosen": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1BjAuaZ-b55mVWHS0eUg40_soPID6OtnI",
+        "fallback": "https://drive.google.com/thumbnail?id=1BjAuaZ-b55mVWHS0eUg40_soPID6OtnI&sz=w1600",
+        "file": "01-hero-front-with-suspenders.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1CH1nrkJ__h4cF19CtPSKQwPGwPdSXAF6",
+        "fallback": "https://drive.google.com/thumbnail?id=1CH1nrkJ__h4cF19CtPSKQwPGwPdSXAF6&sz=w1600",
+        "file": "03-angle-back.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1NeBMeG0SDiA3IO-cG31lTOwaFSb1FYpi",
+        "fallback": "https://drive.google.com/thumbnail?id=1NeBMeG0SDiA3IO-cG31lTOwaFSb1FYpi&sz=w1600",
+        "file": "04-detail-eagle-embroidery.webp"
+      }
+    ],
+    "dark-brown-floral-ornamental-suspender-short-lederhosen": [
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1pqi3Dml4xltVx0YjHkiWmTSEK_lOIUlM",
+        "fallback": "https://drive.google.com/thumbnail?id=1pqi3Dml4xltVx0YjHkiWmTSEK_lOIUlM&sz=w1600",
+        "file": "01-hero-front-with-suspenders.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1PCGG6_oaIUg7K4OggWNGqCGPrck68XRb",
+        "fallback": "https://drive.google.com/thumbnail?id=1PCGG6_oaIUg7K4OggWNGqCGPrck68XRb&sz=w1600",
+        "file": "03-angle-back-with-suspenders.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1i-1YtT85RprJRENPTn8DGIfqXic_FbBp",
+        "fallback": "https://drive.google.com/thumbnail?id=1i-1YtT85RprJRENPTn8DGIfqXic_FbBp&sz=w1600",
+        "file": "04-front-embroidery-detail.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1XaFIZiDHuC1j5cXPQvvLKXhdy-UCvjUJ",
+        "fallback": "https://drive.google.com/thumbnail?id=1XaFIZiDHuC1j5cXPQvvLKXhdy-UCvjUJ&sz=w1600",
+        "file": "05-detail-suspender-panel.webp"
+      },
+      {
+        "source": "https://drive.google.com/uc?export=download&id=1KvU7mlfmln0FiCCJzkpSVLjI91XyfFE-",
+        "fallback": "https://drive.google.com/thumbnail?id=1KvU7mlfmln0FiCCJzkpSVLjI91XyfFE-&sz=w1600",
+        "file": "06-front-without-suspender-panel.webp"
+      }
+    ]
+  }
+}

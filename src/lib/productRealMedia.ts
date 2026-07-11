@@ -95,7 +95,6 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/antique-brown-scroll-embroidered-short-lederhosen/01-hero-front.webp",
       "/product-media/antique-brown-scroll-embroidered-short-lederhosen/03-angle-back.webp",
       "/product-media/antique-brown-scroll-embroidered-short-lederhosen/04-detail-front-scroll-embroidery.webp",
-      "/product-media/antique-brown-scroll-embroidered-short-lederhosen/05-detail-front-construction.webp",
     ],
   },
   "sand-brown-floral-embroidered-short-lederhosen": {
@@ -108,6 +107,7 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
   "dark-brown-ivory-embroidered-short-lederhosen": {
     gallery: [
       "/product-media/dark-brown-ivory-embroidered-short-lederhosen/01-hero-front-with-suspenders.webp",
+      "/product-media/dark-brown-ivory-embroidered-short-lederhosen/03-angle-back.webp",
       "/product-media/dark-brown-ivory-embroidered-short-lederhosen/04-detail-suspender-embroidery.webp",
       "/product-media/dark-brown-ivory-embroidered-short-lederhosen/07-extra-front-view.webp",
     ],
@@ -139,6 +139,7 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
   "light-tan-ornamental-embroidered-short-lederhosen": {
     gallery: [
       "/product-media/light-tan-ornamental-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/light-tan-ornamental-embroidered-short-lederhosen/03-angle-back.webp",
       "/product-media/light-tan-ornamental-embroidered-short-lederhosen/04-detail-front-flap.webp",
       "/product-media/light-tan-ornamental-embroidered-short-lederhosen/05-detail-leg-embroidery-buttons.webp",
     ],

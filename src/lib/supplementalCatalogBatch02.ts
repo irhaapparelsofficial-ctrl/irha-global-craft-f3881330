@@ -69,6 +69,7 @@ const PRODUCTS: BatchProduct[] = [
     sortOrder: 1018,
     gallery: [
       "/product-media/dark-brown-minimal-side-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/dark-brown-minimal-side-embroidered-short-lederhosen/03-angle-back.webp",
       "/product-media/dark-brown-minimal-side-embroidered-short-lederhosen/04-detail-upper-construction.webp",
       "/product-media/dark-brown-minimal-side-embroidered-short-lederhosen/05-detail-side-embroidery.webp",
     ],
