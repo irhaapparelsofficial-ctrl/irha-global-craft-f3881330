@@ -12,6 +12,7 @@ import ListingLaunchKit from "@/components/admin/ListingLaunchKit";
 import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
+import GoogleSearchCenter from "@/components/admin/GoogleSearchCenter";
 
 export type AdminView =
   | "overview"
@@ -127,9 +128,11 @@ export function AdminShell({
       ? <LeadAcquisitionPanel />
       : view === "seo"
         ? <MultilingualSeoPanel />
-        : view === "system"
-          ? <ProductionHealthPanel />
-          : children;
+        : view === "gsc"
+          ? <GoogleSearchCenter />
+          : view === "system"
+            ? <ProductionHealthPanel />
+            : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
