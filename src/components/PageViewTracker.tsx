@@ -6,12 +6,12 @@ const CONSENT_KEY = "irha_cookie_consent_v1";
 
 function getSessionId(): string {
   try {
-    let s = sessionStorage.getItem("irha:sid");
-    if (!s) {
-      s = crypto.randomUUID();
-      sessionStorage.setItem("irha:sid", s);
+    let sessionId = sessionStorage.getItem("irha:sid");
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      sessionStorage.setItem("irha:sid", sessionId);
     }
-    return s;
+    return sessionId;
   } catch {
     return "anon";
   }
@@ -28,15 +28,21 @@ function hasAnalyticsConsent(): boolean {
   }
 }
 
+function normalizePath(pathname: string) {
+  if (!pathname || pathname === "/") return "/";
+  const normalized = pathname.replace(/\/{2,}/g, "/").replace(/\/$/, "");
+  return normalized || "/";
+}
+
 export default function PageViewTracker() {
-  const { pathname, search } = useLocation();
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
+    const pagePath = normalizePath(pathname);
+    if (pagePath.startsWith("/admin") || pagePath.startsWith("/auth")) return;
     if (!hasAnalyticsConsent()) return;
 
-    const pageLocation = window.location.href;
-    const pagePath = pathname + search;
+    const pageLocation = `${window.location.origin}${pagePath}`;
 
     if (typeof window.gtag === "function") {
       window.gtag("event", "page_view", {
@@ -52,7 +58,7 @@ export default function PageViewTracker() {
       user_agent: navigator.userAgent,
       session_id: getSessionId(),
     });
-  }, [pathname, search]);
+  }, [pathname]);
 
   return null;
 }
