@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
+import ListingLaunchKit from "@/components/admin/ListingLaunchKit";
 import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
@@ -121,7 +122,7 @@ export function AdminShell({
   );
 
   const content = view === "listings"
-    ? <ListingsPanel />
+    ? <><ListingLaunchKit /><ListingsPanel /></>
     : view === "lead_engine"
       ? <LeadAcquisitionPanel />
       : view === "seo"
