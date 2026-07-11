@@ -4,7 +4,7 @@ import {
   Home, Package, Layers, BookOpen, FileText, Search, Link2,
   Users, MessageSquare, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
-  BarChart3,
+  BarChart3, ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ export type AdminView =
   | "leads" | "inquiries" | "chat" | "mailing"
   | "ai"
   | "studio" | "pi" | "directory"
-  | "social" | "devops"
+  | "social" | "devops" | "listings"
   | "traffic" | "gsc" | "macro"
   | "system";
 
@@ -43,7 +43,7 @@ const NAV: NavGroup[] = [
     { key: "mailing", label: "Mailing", icon: Send },
   ]},
   { title: "AI", items: [
-    { key: "ai", label: "AI Assistant", icon: Sparkles },
+    { key: "ai", label: "AI Command Center", icon: Sparkles },
   ]},
   { title: "Operations", items: [
     { key: "studio", label: "Studio & FOB", icon: Cpu },
@@ -51,6 +51,7 @@ const NAV: NavGroup[] = [
     { key: "directory", label: "Export Directory", icon: MapPin },
   ]},
   { title: "Growth", items: [
+    { key: "listings", label: "B2B Listings", icon: ListChecks },
     { key: "social", label: "Social", icon: Share2 },
     { key: "devops", label: "Social Sync / DevOps", icon: Activity },
     { key: "traffic", label: "Traffic", icon: BarChart3 },
