@@ -76,4 +76,11 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/dark-brown-scroll-embroidered-short-lederhosen/04-detail-scroll-embroidery.webp",
     ],
   },
+  "black-gold-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/black-gold-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/black-gold-embroidered-short-lederhosen/03-angle-back.webp",
+      "/product-media/black-gold-embroidered-short-lederhosen/04-detail-gold-embroidery.webp",
+    ],
+  },
 };
