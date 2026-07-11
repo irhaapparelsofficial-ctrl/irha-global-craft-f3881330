@@ -177,6 +177,29 @@ const SUPPLEMENTAL_PRODUCTS: SupplementalProductDefinition[] = [
       "Dark brown scroll-embroidered short Lederhosen for wholesale, OEM, ODM and private-label programs.",
     sortOrder: 1005,
   },
+  {
+    id: "00000000-0000-0000-0000-000000000072",
+    topCategorySlug: "bavarian-trachten-wear",
+    subcategorySlugs: ["men"],
+    subcategoryNames: ["menstrachten"],
+    slug: "black-gold-embroidered-short-lederhosen",
+    name: "Black Gold-Embroidered Short Lederhosen",
+    description:
+      "Short-cut Bavarian-style Lederhosen in a black colourway with gold-tone embroidery, a traditional front flap and matching suspenders, prepared for wholesale and private-label buyer programs.",
+    specs: [
+      "Gold-tone decorative embroidery",
+      "Black visual finish",
+      "Traditional front-flap construction",
+      "Matching suspenders",
+      "Private-label customization available",
+    ],
+    seoTitle: "Black Gold-Embroidered Lederhosen Manufacturer | Irha Apparels",
+    seoDescription:
+      "Black gold-embroidered short Lederhosen for wholesale and private-label programs from Irha Apparels, a B2B apparel manufacturer in Sialkot, Pakistan.",
+    shortDescription:
+      "Black gold-embroidered short Lederhosen for wholesale, OEM, ODM and private-label programs.",
+    sortOrder: 1006,
+  },
 ];
 
 function matchesSubcategory(
