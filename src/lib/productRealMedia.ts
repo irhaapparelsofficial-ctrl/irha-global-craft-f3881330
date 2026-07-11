@@ -55,4 +55,10 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/contrast-piped-brown-short-lederhosen/05-detail-leg-embroidery-buttons.webp",
     ],
   },
+  "black-skeleton-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/black-skeleton-embroidered-short-lederhosen/01-hero-front-three-quarter.webp",
+      "/product-media/black-skeleton-embroidered-short-lederhosen/04-detail-skeleton-embroidery.webp",
+    ],
+  },
 };
