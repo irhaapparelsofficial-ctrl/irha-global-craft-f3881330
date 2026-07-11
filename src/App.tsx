@@ -72,8 +72,9 @@ function ScrollToTop() {
 }
 
 const PageFallback = () => (
-  <div className="min-h-[60vh] flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-live="polite" aria-busy="true">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+    <span className="sr-only">Loading page…</span>
   </div>
 );
 
