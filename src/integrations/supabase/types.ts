@@ -17,40 +17,64 @@ export type Database = {
       b2b_leads: {
         Row: {
           apparel_segment: string | null
+          assignee: string | null
           company_name: string
           country: string
           created_at: string
+          crm_history: Json
+          crm_status: string
           email: string | null
+          follow_up_at: string | null
           id: string
           lead_status: Database["public"]["Enums"]["lead_status"]
           notes: string | null
           phone: string | null
+          pi_url: string | null
+          priority: string
+          quotation_url: string | null
+          sample_status: string
           updated_at: string
           website: string | null
         }
         Insert: {
           apparel_segment?: string | null
+          assignee?: string | null
           company_name: string
           country: string
           created_at?: string
+          crm_history?: Json
+          crm_status?: string
           email?: string | null
+          follow_up_at?: string | null
           id?: string
           lead_status?: Database["public"]["Enums"]["lead_status"]
           notes?: string | null
           phone?: string | null
+          pi_url?: string | null
+          priority?: string
+          quotation_url?: string | null
+          sample_status?: string
           updated_at?: string
           website?: string | null
         }
         Update: {
           apparel_segment?: string | null
+          assignee?: string | null
           company_name?: string
           country?: string
           created_at?: string
+          crm_history?: Json
+          crm_status?: string
           email?: string | null
+          follow_up_at?: string | null
           id?: string
           lead_status?: Database["public"]["Enums"]["lead_status"]
           notes?: string | null
           phone?: string | null
+          pi_url?: string | null
+          priority?: string
+          quotation_url?: string | null
+          sample_status?: string
           updated_at?: string
           website?: string | null
         }
@@ -158,16 +182,23 @@ export type Database = {
       catalogue_leads: {
         Row: {
           admin_notes: string | null
+          assignee: string | null
           catalogue_url: string | null
           category_interest: string | null
           company_name: string | null
           country: string | null
           created_at: string
+          crm_history: Json
           email: string | null
+          follow_up_at: string | null
           id: string
           language: string | null
           message: string | null
           name: string
+          pi_url: string | null
+          priority: string
+          quotation_url: string | null
+          sample_status: string
           source: string | null
           status: string
           updated_at: string
@@ -178,16 +209,23 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          assignee?: string | null
           catalogue_url?: string | null
           category_interest?: string | null
           company_name?: string | null
           country?: string | null
           created_at?: string
+          crm_history?: Json
           email?: string | null
+          follow_up_at?: string | null
           id?: string
           language?: string | null
           message?: string | null
           name: string
+          pi_url?: string | null
+          priority?: string
+          quotation_url?: string | null
+          sample_status?: string
           source?: string | null
           status?: string
           updated_at?: string
@@ -198,16 +236,23 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          assignee?: string | null
           catalogue_url?: string | null
           category_interest?: string | null
           company_name?: string | null
           country?: string | null
           created_at?: string
+          crm_history?: Json
           email?: string | null
+          follow_up_at?: string | null
           id?: string
           language?: string | null
           message?: string | null
           name?: string
+          pi_url?: string | null
+          priority?: string
+          quotation_url?: string | null
+          sample_status?: string
           source?: string | null
           status?: string
           updated_at?: string
@@ -429,11 +474,15 @@ export type Database = {
       }
       inquiries: {
         Row: {
+          admin_notes: string | null
+          assignee: string | null
           category: string | null
           company: string | null
           country: string | null
           created_at: string
+          crm_history: Json
           email: string | null
+          follow_up_at: string | null
           id: string
           inquiry_ref: string | null
           intent: string | null
@@ -441,16 +490,25 @@ export type Database = {
           message: string | null
           name: string
           phone: string | null
+          pi_url: string | null
+          priority: string
           quantity: string | null
+          quotation_url: string | null
+          sample_status: string
           source: string | null
           status: string
+          updated_at: string
         }
         Insert: {
+          admin_notes?: string | null
+          assignee?: string | null
           category?: string | null
           company?: string | null
           country?: string | null
           created_at?: string
+          crm_history?: Json
           email?: string | null
+          follow_up_at?: string | null
           id?: string
           inquiry_ref?: string | null
           intent?: string | null
@@ -458,16 +516,25 @@ export type Database = {
           message?: string | null
           name: string
           phone?: string | null
+          pi_url?: string | null
+          priority?: string
           quantity?: string | null
+          quotation_url?: string | null
+          sample_status?: string
           source?: string | null
           status?: string
+          updated_at?: string
         }
         Update: {
+          admin_notes?: string | null
+          assignee?: string | null
           category?: string | null
           company?: string | null
           country?: string | null
           created_at?: string
+          crm_history?: Json
           email?: string | null
+          follow_up_at?: string | null
           id?: string
           inquiry_ref?: string | null
           intent?: string | null
@@ -475,9 +542,14 @@ export type Database = {
           message?: string | null
           name?: string
           phone?: string | null
+          pi_url?: string | null
+          priority?: string
           quantity?: string | null
+          quotation_url?: string | null
+          sample_status?: string
           source?: string | null
           status?: string
+          updated_at?: string
         }
         Relationships: []
       }
