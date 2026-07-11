@@ -1,3 +1,3 @@
-IRHA_FRONTEND_QA_2026_07_12_R8
-Source: GitHub main after merge
-Scope: public/admin accessibility, overlay collision fixes, dead admin cleanup, truthful analytics errors and final release verification
+IRHA_FRONTEND_LIVE_2026_07_12_R9
+Source: GitHub main and Lovable Cloud publish
+Scope: Women's Trachten navigation and sitemap, local related products, consent-gated analytics, unique route metadata, production-safe asset resolution and single homepage H1
