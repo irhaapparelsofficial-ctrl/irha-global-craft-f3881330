@@ -1,7 +1,16 @@
 const BASE = process.env.IRHA_BASE_URL || "https://www.irhaapparels.com";
+const FUNCTIONS_BASE = process.env.IRHA_FUNCTIONS_URL || "https://mlefxgyaqoisvdmoiapq.supabase.co/functions/v1";
 const RELEASE = "gate4-2026-07-06-r6";
 const RELEASE_TXT = "IRHA_GATE4_RELEASE_2026_07_06_R6";
-const forbidden = ["Since 2014", "MOQ 50", "45-day delivery", "45-Day Production", "reply within 12 hours"];
+const forbidden = [
+  "Since 2014",
+  "MOQ 50",
+  "45-day delivery",
+  "45-Day Production",
+  "reply within 12 hours",
+  "respond within 4 working hours",
+  "within 24 h",
+];
 const agents = [
   ["browser", "Mozilla/5.0 Chrome/126 Safari/537.36"],
   ["googlebot", "Mozilla/5.0 (compatible; Googlebot/2.1)"],
@@ -23,7 +32,7 @@ async function fetchText(path, userAgent = agents[0][1]) {
         signal: AbortSignal.timeout(25000),
       });
       const text = await response.text();
-      if (response.ok) return { text, url: response.url };
+      if (response.ok) return { text, url: response.url, status: response.status };
       last = `HTTP ${response.status}`;
       if (response.status < 500 && response.status !== 429) break;
     } catch (error) {
@@ -37,6 +46,24 @@ async function fetchText(path, userAgent = agents[0][1]) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+async function verifyLeadGateway() {
+  const url = `${FUNCTIONS_BASE}/public-lead-gateway`;
+  const response = await fetch(url, {
+    method: "POST",
+    redirect: "follow",
+    headers: {
+      "content-type": "application/json",
+      origin: BASE,
+      "cache-control": "no-cache",
+    },
+    body: JSON.stringify({ action: "production_smoke_invalid_action", payload: {} }),
+    signal: AbortSignal.timeout(25000),
+  });
+  const text = await response.text();
+  assert(response.status === 400, `public-lead-gateway expected HTTP 400, received ${response.status}: ${text.slice(0, 300)}`);
+  assert(text.toLowerCase().includes("unsupported action"), "public-lead-gateway response did not prove the expected function version");
 }
 
 async function main() {
@@ -55,14 +82,33 @@ async function main() {
   }
 
   const sitemap = (await fetchText("/sitemap.xml")).text;
-  for (const path of ["/de", "/faq", "/sustainability", "/shipping-returns", "/blog", "/journal"]) {
-    assert(!sitemap.includes(`<loc>${BASE}${path}`), `sitemap contains quarantined route ${path}`);
+  for (const path of ["/de", "/sustainability", "/shipping-returns", "/blog", "/journal"]) {
+    assert(!sitemap.includes(`<loc>${BASE}${path}</loc>`), `sitemap contains quarantined route ${path}`);
+  }
+  for (const path of ["/buyer-trust", "/factory-video-call", "/resources", "/faq"]) {
+    assert(sitemap.includes(`<loc>${BASE}${path}</loc>`), `sitemap is missing live buyer route ${path}`);
   }
 
-  for (const path of ["/products", "/catalogue", "/inquiry", "/contact", "/admin"]) {
+  const robots = (await fetchText("/robots.txt")).text;
+  assert(robots.includes(`Sitemap: ${BASE}/sitemap.xml`), "robots.txt sitemap declaration missing");
+  assert(robots.includes("Disallow: /admin"), "robots.txt must block admin crawling");
+  assert(robots.includes("Disallow: /auth"), "robots.txt must block auth crawling");
+
+  for (const path of [
+    "/products",
+    "/catalogue",
+    "/buyer-trust",
+    "/factory-video-call",
+    "/resources",
+    "/faq",
+    "/inquiry",
+    "/contact",
+    "/admin",
+  ]) {
     await fetchText(path);
   }
 
+  await verifyLeadGateway();
   console.log(`PASS production smoke for ${BASE}`);
 }
 

@@ -34,7 +34,8 @@ BEGIN
     NEW.inquiry_ref := 'IRQ-' || upper(to_hex((extract(epoch FROM clock_timestamp()) * 1000)::bigint)) || '-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6));
   END IF;
 
-  IF auth.role() = 'service_role' THEN
+  -- The role claim comes from the signed request JWT. Browser users cannot set service_role.
+  IF COALESCE(auth.jwt()->>'role', '') = 'service_role' THEN
     RETURN NEW;
   END IF;
 
@@ -54,3 +55,5 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+REVOKE ALL ON FUNCTION public.validate_public_inquiry_insert() FROM PUBLIC, anon, authenticated;

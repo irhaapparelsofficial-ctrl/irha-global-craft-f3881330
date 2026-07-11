@@ -45,7 +45,14 @@ export default function MockupRequestModal({ open, onOpenChange }: Props) {
     setBusy(true);
     try {
       let uploaded: UploadedFileRef | null = null;
-      if (file) uploaded = await uploadPublicLeadFile(file, "mockup", startedAtRef.current);
+      let uploadWarning: string | null = null;
+      if (file) {
+        try {
+          uploaded = await uploadPublicLeadFile(file, "mockup", startedAtRef.current);
+        } catch (error) {
+          uploadWarning = error instanceof Error ? error.message : "The file could not be uploaded.";
+        }
+      }
 
       const { reference } = await submitPublicInquiry({
         kind: "mockup",
@@ -62,6 +69,7 @@ export default function MockupRequestModal({ open, onOpenChange }: Props) {
           conversion_type: "mockup-request",
           source_page: window.location.pathname + window.location.search,
           secure_file_uploaded: Boolean(uploaded),
+          file_upload_warning: uploadWarning,
         },
       });
 
@@ -71,10 +79,15 @@ Reference: ${reference}
 Name: ${data.name}
 Email: ${data.email}
 Requirements: ${data.message}
-Secure file uploaded: ${uploaded ? "Yes" : "No"}`;
+Secure file uploaded: ${uploaded ? "Yes" : "No"}${file && !uploaded ? "\nPlease send the selected file in this WhatsApp chat." : ""}`;
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsapp)}`, "_blank");
 
-      toast({ title: "Mockup request saved", description: "The team will review the requirement and confirm the next step." });
+      toast({
+        title: "Mockup request saved",
+        description: uploadWarning
+          ? "The request was saved. Please attach the selected file in the WhatsApp chat that opened."
+          : "The team will review the requirement and confirm the next step.",
+      });
       setData({ name: "", email: "", message: "", website: "" });
       setFile(null);
       startedAtRef.current = Date.now();
@@ -166,7 +179,7 @@ Secure file uploaded: ${uploaded ? "Yes" : "No"}`;
             {busy ? "Saving…" : "Save & Open WhatsApp"}
           </button>
           <p className="text-[10px] text-muted-foreground text-center pt-1">
-            Files are uploaded to a private request bucket using a short-lived signed upload token.
+            Secure file upload is preferred. If it is temporarily unavailable, the request is still saved and the file can be shared in WhatsApp.
           </p>
         </form>
       </DialogContent>
