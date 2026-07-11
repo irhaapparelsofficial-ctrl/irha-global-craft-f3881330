@@ -46,6 +46,15 @@ jobs:
             exit 1
           fi
 
+      - name: Verify repository project ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "project_id = \"${SUPABASE_PROJECT_REF}\"" supabase/config.toml || {
+            echo "::error::supabase/config.toml does not target the approved Lovable Cloud project ${SUPABASE_PROJECT_REF}."
+            exit 1
+          }
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
@@ -60,6 +69,27 @@ jobs:
           set -euo pipefail
           supabase link \
             --project-ref "${SUPABASE_PROJECT_REF}" \
+            --password "${SUPABASE_DB_PASSWORD}"
+
+      - name: Show migration state
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          supabase migration list --linked --password "${SUPABASE_DB_PASSWORD}"
+
+      - name: Dry-run repository migrations
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          supabase db push \
+            --include-all \
+            --dry-run \
             --password "${SUPABASE_DB_PASSWORD}"
 
       - name: Apply repository migrations
