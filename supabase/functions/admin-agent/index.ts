@@ -18,6 +18,7 @@ const ALLOWED_ACTION_TYPES = new Set([
   "buyer_reply_draft",
   "seo_localization_plan",
   "weekly_growth_plan",
+  "outreach_campaign_plan",
 ]);
 
 const APPROVAL_REQUIRED = new Set(["social_publish", "listing_task"]);
@@ -173,14 +174,15 @@ Deno.serve(async (req) => {
 });
 
 async function buildBusinessContext(service: ReturnType<typeof createClient>) {
-  const [products, categories, inquiries, catalogueLeads, prospects, socialPosts, listings] = await Promise.all([
+  const [products, categories, inquiries, catalogueLeads, prospects, socialPosts, listings, outreachCampaigns] = await Promise.all([
     service.from("products").select("id,name,slug,description,is_published,category_id").eq("is_published", true).order("sort_order").limit(40),
     service.from("categories").select("id,name,slug,parent_id,is_published").eq("is_published", true).order("sort_order").limit(80),
     service.from("inquiries").select("id,name,company,country,category,status,source,message,created_at").order("created_at", { ascending: false }).limit(12),
     service.from("catalogue_leads").select("id,name,company_name,country,category_interest,status,source,created_at").order("created_at", { ascending: false }).limit(12),
-    service.from("b2b_leads").select("id,company_name,country,apparel_segment,lead_status,crm_status,priority,updated_at").order("updated_at", { ascending: false }).limit(20),
+    service.from("b2b_leads").select("id,company_name,country,email,apparel_segment,buyer_type,lead_status,crm_status,priority,verification_score,outreach_opt_out,last_outreach_at,last_outreach_status,updated_at").order("updated_at", { ascending: false }).limit(30),
     service.from("social_posts").select("id,channels,status,caption,error,created_at").order("created_at", { ascending: false }).limit(12),
     service.from("business_listings").select("id,platform,account_name,profile_url,status,verification_level,next_action,last_verified_at").order("updated_at", { ascending: false }).limit(40),
+    service.from("outreach_campaigns").select("id,name,target_market,product_focus,status,selected_lead_count,draft_count,sent_count,replied_count,failed_count,created_at").order("created_at", { ascending: false }).limit(10),
   ]);
 
   const safe = <T>(result: { data: T | null; error: { message?: string } | null }, fallback: T): T => result.error ? fallback : (result.data ?? fallback);
@@ -213,7 +215,20 @@ async function buildBusinessContext(service: ReturnType<typeof createClient>) {
       created_at: row.created_at,
     })),
     recent_catalogue_requests: safe(catalogueLeads, []),
-    recent_prospects: safe(prospects, []),
+    recent_prospects: safe(prospects, []).map((row: Record<string, unknown>) => ({
+      id: row.id,
+      company_name: row.company_name,
+      country: row.country,
+      email_available: typeof row.email === "string" && row.email.length > 3,
+      apparel_segment: row.apparel_segment,
+      buyer_type: row.buyer_type,
+      crm_status: row.crm_status,
+      priority: row.priority,
+      verification_score: row.verification_score,
+      outreach_opt_out: row.outreach_opt_out,
+      last_outreach_at: row.last_outreach_at,
+      last_outreach_status: row.last_outreach_status,
+    })),
     recent_social_results: safe(socialPosts, []).map((row: Record<string, unknown>) => ({
       channels: row.channels,
       status: row.status,
@@ -221,6 +236,7 @@ async function buildBusinessContext(service: ReturnType<typeof createClient>) {
       created_at: row.created_at,
     })),
     listings: safe(listings, []),
+    recent_outreach_campaigns: safe(outreachCampaigns, []),
   };
 }
 
@@ -238,6 +254,7 @@ IRHA RULES:
 - Social content must target wholesalers, importers, retailers, distributors and private-label brands, not retail consumers.
 - For multilingual SEO, do not propose hidden keyword stuffing, machine-generated doorway pages or hreflang for untranslated pages. Propose useful localized pages, native-quality review and published-locale-only sitemaps.
 - External writes require approval. Do not claim a post, message, listing or outreach was sent.
+- For outreach, propose a campaign brief only. The owner selects CRM leads and reviews drafts in Leads & Communication → Mailing before any Gmail send.
 
 ALLOWED ACTION TYPES AND PAYLOADS:
 1. social_content_pack
@@ -256,6 +273,9 @@ ALLOWED ACTION TYPES AND PAYLOADS:
    payload: { languages: string[], page_types: string[], keyword_clusters: object, hreflang_strategy: string, sitemap_strategy: string, quality_gates: string[] }
 7. weekly_growth_plan
    payload: { focus: string, days: object[], targets: object, dependencies: string[] }
+8. outreach_campaign_plan
+   payload: { name: string, product_focus: string[], target_market: string, objective: string, language_mode: string, call_to_action: string, lead_selection_rules: string[], max_initial_batch: number, follow_up_after_days: number, compliance_checks: string[] }
+   This is a plan/brief only. Never include invented lead IDs and never claim drafts or emails were created or sent.
 
 Return strict JSON only:
 {
