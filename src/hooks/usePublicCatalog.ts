@@ -13,6 +13,7 @@ import { createSupplementalBatch04ProductsForSubcategory } from "@/lib/supplemen
 import { createSupplementalBatch05ProductsForSubcategory } from "@/lib/supplementalCatalogBatch05";
 import { createSupplementalBatch06ProductsForSubcategory } from "@/lib/supplementalCatalogBatch06";
 import { createSupplementalBatch07ProductsForSubcategory } from "@/lib/supplementalCatalogBatch07";
+import { createSupplementalBatch08ProductsForSubcategory } from "@/lib/supplementalCatalogBatch08";
 
 export type PublicSubCategory = DbCategory & { products: DbProduct[] };
 export type PublicTopCategory = DbCategory & {
@@ -82,6 +83,7 @@ function productsForSubcategory(top: DbCategory, sub: DbCategory, dbProducts: Db
     ...createSupplementalBatch05ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
     ...createSupplementalBatch06ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
     ...createSupplementalBatch07ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
+    ...createSupplementalBatch08ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
   ];
 
   for (const product of supplemental) {
