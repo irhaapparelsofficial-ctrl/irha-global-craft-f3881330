@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
   Bot,
@@ -18,14 +18,14 @@ import {
   businessRulesReadiness,
   loadBusinessRules,
 } from "@/lib/businessRules";
+import {
+  operationQueueState,
+  summarizeOperationQueues,
+  type OperationQueueResult,
+} from "@/lib/ownerOperations";
 import type { AdminView } from "./AdminShell";
 
 type QueueKey = "ai" | "leads" | "outreach" | "email" | "social" | "listings" | "seo";
-type QueueResult = {
-  count: number | null;
-  error: string | null;
-  checked: boolean;
-};
 
 type QueueDefinition = {
   key: QueueKey;
@@ -47,11 +47,11 @@ const QUEUES: QueueDefinition[] = [
 
 const emptyQueues = Object.fromEntries(
   QUEUES.map((queue) => [queue.key, { count: null, error: null, checked: false }]),
-) as Record<QueueKey, QueueResult>;
+) as Record<QueueKey, OperationQueueResult>;
 
 const db = supabase as any;
 
-async function countQuery(table: string, configure: (query: any) => any): Promise<QueueResult> {
+async function countQuery(table: string, configure: (query: any) => any): Promise<OperationQueueResult> {
   try {
     const query = configure(db.from(table).select("*", { count: "exact", head: true }));
     const { count, error } = await query;
@@ -63,7 +63,7 @@ async function countQuery(table: string, configure: (query: any) => any): Promis
 }
 
 export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) => void }) {
-  const [queues, setQueues] = useState<Record<QueueKey, QueueResult>>(emptyQueues);
+  const [queues, setQueues] = useState<Record<QueueKey, OperationQueueResult>>(emptyQueues);
   const [loading, setLoading] = useState(true);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const rules = loadBusinessRules();
@@ -88,12 +88,7 @@ export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) =>
 
   useEffect(() => { void load(); }, [load]);
 
-  const summary = useMemo(() => {
-    const available = Object.values(queues).filter((queue) => queue.count !== null);
-    const attention = available.reduce((total, queue) => total + (queue.count ?? 0), 0);
-    const pendingSources = Object.values(queues).filter((queue) => queue.error).length;
-    return { attention, available: available.length, pendingSources };
-  }, [queues]);
+  const summary = summarizeOperationQueues(queues);
 
   return (
     <section className="border border-border/60 bg-card/25">
@@ -115,7 +110,7 @@ export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) =>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 border-b border-border/60">
         <Summary label="Attention items" value={summary.attention} tone={summary.attention > 0 ? "attention" : "clear"} />
-        <Summary label="Readable systems" value={`${summary.available}/${QUEUES.length}`} tone={summary.available === QUEUES.length ? "clear" : "pending"} />
+        <Summary label="Readable systems" value={`${summary.available}/${summary.total}`} tone={summary.available === summary.total ? "clear" : "pending"} />
         <Summary label="Backend pending" value={summary.pendingSources} tone={summary.pendingSources > 0 ? "pending" : "clear"} />
         <Summary label="Business rules" value={`${rulesReadiness.score}%`} tone={rulesApproved ? "clear" : "attention"} />
       </div>
@@ -132,7 +127,7 @@ export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) =>
 
       <div className="p-4 md:p-5 grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {QUEUES.map((definition) => (
-          <QueueCard key={definition.key} definition={definition} result={queues[definition.key]} loading={loading} onOpen={() => go(definition.view)} />
+          <QueueCard key={definition.key} definition={definition} result={queues[definition.key]} onOpen={() => go(definition.view)} />
         ))}
       </div>
 
@@ -144,10 +139,11 @@ export default function OwnerOperationsCenter({ go }: { go: (view: AdminView) =>
   );
 }
 
-function QueueCard({ definition, result, loading, onOpen }: { definition: QueueDefinition; result: QueueResult; loading: boolean; onOpen: () => void }) {
+function QueueCard({ definition, result, onOpen }: { definition: QueueDefinition; result: OperationQueueResult; onOpen: () => void }) {
   const Icon = definition.icon;
-  const pending = result.error !== null;
-  const attention = (result.count ?? 0) > 0;
+  const state = operationQueueState(result);
+  const pending = state === "pending";
+  const attention = state === "attention";
   const tone = pending
     ? "border-amber-500/30 bg-amber-500/[0.04]"
     : attention
@@ -158,9 +154,9 @@ function QueueCard({ definition, result, loading, onOpen }: { definition: QueueD
     <button type="button" onClick={onOpen} className={`min-h-44 text-left border p-4 hover:border-gold transition-colors ${tone}`}>
       <div className="flex items-start justify-between gap-3">
         <span className={pending ? "text-amber-300" : attention ? "text-gold" : "text-emerald-300"}><Icon size={17} /></span>
-        {pending ? <AlertTriangle size={14} className="text-amber-300" /> : attention ? <span className="text-[9px] uppercase tracking-[0.14em] text-gold">Review</span> : <CheckCircle2 size={14} className="text-emerald-300" />}
+        {pending ? <AlertTriangle size={14} className="text-amber-300" /> : attention ? <span className="text-[9px] uppercase tracking-[0.14em] text-gold">Review</span> : state === "clear" ? <CheckCircle2 size={14} className="text-emerald-300" /> : null}
       </div>
-      <p className="font-display text-3xl mt-4 tabular-nums">{loading && !result.checked ? "—" : pending ? "Pending" : result.count ?? 0}</p>
+      <p className="font-display text-3xl mt-4 tabular-nums">{state === "loading" ? "—" : pending ? "Pending" : result.count ?? 0}</p>
       <h3 className="text-[10px] uppercase tracking-[0.18em] mt-2 text-foreground/75">{definition.label}</h3>
       <p className="text-xs text-foreground/50 mt-2 leading-relaxed">{pending ? "Database/runtime activation or permission is still required." : definition.description}</p>
     </button>
