@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Layers, Users, Inbox, MessageSquare, BarChart3, Sparkles, Plus, ExternalLink, Activity } from "lucide-react";
 import type { AdminView } from "./AdminShell";
+import OwnerOperationsCenter from "./OwnerOperationsCenter";
 import SalesActionCenter from "./SalesActionCenter";
 
 type Counts = {
@@ -100,6 +101,7 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
         ))}
       </div>
 
+      <OwnerOperationsCenter go={go} />
       <SalesActionCenter go={go} />
 
       <div className="grid lg:grid-cols-2 gap-6">
