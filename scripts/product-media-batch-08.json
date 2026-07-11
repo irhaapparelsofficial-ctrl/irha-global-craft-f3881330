@@ -32,7 +32,9 @@
       {
         "source": "https://drive.google.com/uc?export=download&id=1tNi9omtKSjc_kSTaOQd8uZfeUWx8niK3",
         "fallback": "https://drive.google.com/thumbnail?id=1tNi9omtKSjc_kSTaOQd8uZfeUWx8niK3&sz=w1600",
-        "file": "01-hero-folded-front.webp"
+        "file": "01-hero-folded-front.webp",
+        "min_source_bytes": 4000,
+        "min_optimized_bytes": 3000
       }
     ]
   }
