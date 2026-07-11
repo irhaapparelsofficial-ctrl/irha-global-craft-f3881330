@@ -83,4 +83,11 @@ export const PRODUCT_REAL_MEDIA: Record<string, ProductRealMedia> = {
       "/product-media/black-gold-embroidered-short-lederhosen/04-detail-gold-embroidery.webp",
     ],
   },
+  "tan-alpine-embroidered-short-lederhosen": {
+    gallery: [
+      "/product-media/tan-alpine-embroidered-short-lederhosen/01-hero-front.webp",
+      "/product-media/tan-alpine-embroidered-short-lederhosen/03-angle-back.webp",
+      "/product-media/tan-alpine-embroidered-short-lederhosen/04-detail-alpine-embroidery.webp",
+    ],
+  },
 };
