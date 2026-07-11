@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
 import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
+import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
 
 export type AdminView =
   | "overview"
@@ -60,7 +61,7 @@ const NAV: NavGroup[] = [
   ]},
   { title: "System", items: [
     { key: "macro", label: "Macro Gateway", icon: Layers },
-    { key: "system", label: "System Status", icon: Settings },
+    { key: "system", label: "Production Health", icon: Settings },
   ]},
 ];
 
@@ -125,7 +126,9 @@ export function AdminShell({
       ? <LeadAcquisitionPanel />
       : view === "seo"
         ? <MultilingualSeoPanel />
-        : children;
+        : view === "system"
+          ? <ProductionHealthPanel />
+          : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">

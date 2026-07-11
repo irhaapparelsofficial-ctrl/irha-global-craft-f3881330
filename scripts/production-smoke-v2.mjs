@@ -48,9 +48,8 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function verifyLeadGateway() {
-  const url = `${FUNCTIONS_BASE}/public-lead-gateway`;
-  const response = await fetch(url, {
+async function postGateway(payload) {
+  const response = await fetch(`${FUNCTIONS_BASE}/public-lead-gateway`, {
     method: "POST",
     redirect: "follow",
     headers: {
@@ -58,12 +57,30 @@ async function verifyLeadGateway() {
       origin: BASE,
       "cache-control": "no-cache",
     },
-    body: JSON.stringify({ action: "production_smoke_invalid_action", payload: {} }),
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(25000),
   });
-  const text = await response.text();
-  assert(response.status === 400, `public-lead-gateway expected HTTP 400, received ${response.status}: ${text.slice(0, 300)}`);
-  assert(text.toLowerCase().includes("unsupported action"), "public-lead-gateway response did not prove the expected function version");
+  return { response, text: await response.text() };
+}
+
+async function verifyLeadGateway() {
+  const invalidAction = await postGateway({ action: "production_smoke_invalid_action", payload: {} });
+  assert(invalidAction.response.status === 400, `public-lead-gateway expected HTTP 400, received ${invalidAction.response.status}: ${invalidAction.text.slice(0, 300)}`);
+  assert(invalidAction.text.toLowerCase().includes("unsupported action"), "public-lead-gateway response did not prove the expected function version");
+
+  const invalidUpload = await postGateway({
+    action: "create_upload",
+    payload: {
+      filename: "production-smoke.exe",
+      mime: "application/octet-stream",
+      size: 128,
+      purpose: "inquiry",
+      form_started_at: Date.now() - 2000,
+      website: "",
+    },
+  });
+  assert(invalidUpload.response.status === 400, `invalid upload metadata expected HTTP 400, received ${invalidUpload.response.status}: ${invalidUpload.text.slice(0, 300)}`);
+  assert(invalidUpload.text.toLowerCase().includes("only pdf"), "invalid upload metadata was not rejected by the expected file policy");
 }
 
 async function main() {

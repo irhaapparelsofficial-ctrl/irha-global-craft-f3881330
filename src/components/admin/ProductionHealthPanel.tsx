@@ -1,0 +1,268 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Database,
+  Globe2,
+  Loader2,
+  Mail,
+  RefreshCw,
+  Search,
+  Share2,
+  ShieldCheck,
+  UserSearch,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+type State = "checking" | "ready" | "partial" | "blocked";
+type Json = Record<string, unknown>;
+type Check = {
+  id: string;
+  title: string;
+  state: State;
+  summary: string;
+  detail?: string;
+  evidence?: Json;
+  icon: LucideIcon;
+};
+
+const PLACEHOLDERS: Check[] = [
+  { id: "public", title: "Public site & SEO routes", state: "checking", summary: "Checking published buyer routes and crawler controls.", icon: Globe2 },
+  { id: "gateway", title: "Secure lead gateway", state: "checking", summary: "Checking the deployed public form Edge Function.", icon: ShieldCheck },
+  { id: "crm", title: "Buyer CRM database", state: "checking", summary: "Checking workflow fields across all buyer sources.", icon: Database },
+  { id: "leads", title: "Lead acquisition", state: "checking", summary: "Checking discovery, AI and CRM-import readiness.", icon: UserSearch },
+  { id: "outreach", title: "AI outreach & Gmail", state: "checking", summary: "Checking draft generation and authenticated delivery readiness.", icon: Mail },
+  { id: "social", title: "Social calendar", state: "checking", summary: "Checking calendar, AI and platform delivery readiness.", icon: Share2 },
+  { id: "seo", title: "Multilingual SEO", state: "checking", summary: "Checking locale, review and publish workflow readiness.", icon: Search },
+];
+
+const isObject = (value: unknown): value is Json => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const truthy = (value: unknown) => value === true;
+const messageOf = (value: unknown) => {
+  if (typeof value === "string") return value;
+  if (isObject(value)) {
+    for (const key of ["error", "message", "details", "hint"]) {
+      if (typeof value[key] === "string") return String(value[key]);
+    }
+  }
+  return "Unknown runtime error";
+};
+
+async function invokeHealth(name: string): Promise<Json> {
+  const { data, error } = await supabase.functions.invoke(name, { body: { action: "health" } });
+  if (error) throw new Error(error.message || `${name} health request failed`);
+  if (!isObject(data)) throw new Error(`${name} returned an invalid response`);
+  if (typeof data.error === "string" && data.error) throw new Error(data.error);
+  return data;
+}
+
+async function checkPublic(): Promise<Check> {
+  const required = ["/buyer-trust", "/factory-video-call", "/resources", "/faq", "/inquiry"];
+  const stamp = Date.now();
+  const [home, sitemap, robots] = await Promise.all([
+    fetch(`/?health=${stamp}`, { cache: "no-store" }),
+    fetch(`/sitemap.xml?health=${stamp}`, { cache: "no-store" }),
+    fetch(`/robots.txt?health=${stamp}`, { cache: "no-store" }),
+  ]);
+  if (!home.ok || !sitemap.ok || !robots.ok) {
+    throw new Error(`HTTP status — home ${home.status}, sitemap ${sitemap.status}, robots ${robots.status}`);
+  }
+  const [sitemapText, robotsText] = await Promise.all([sitemap.text(), robots.text()]);
+  const missing = required.filter((path) => !sitemapText.includes(path));
+  const crawlerReady = robotsText.includes("Disallow: /admin") && robotsText.includes("Disallow: /auth") && robotsText.includes("Sitemap:");
+  const ready = missing.length === 0 && crawlerReady;
+  return {
+    id: "public",
+    title: "Public site & SEO routes",
+    state: ready ? "ready" : "partial",
+    summary: ready ? "Buyer routes, sitemap and crawler controls are published." : "A published route or crawler control needs review.",
+    detail: [missing.length ? `Missing sitemap routes: ${missing.join(", ")}` : null, !crawlerReady ? "robots.txt admin/auth/sitemap controls incomplete" : null].filter(Boolean).join(" · ") || undefined,
+    evidence: { home_status: home.status, sitemap_status: sitemap.status, robots_status: robots.status, missing_routes: missing },
+    icon: Globe2,
+  };
+}
+
+async function checkGateway(): Promise<Check> {
+  const base = String(import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
+  if (!base) throw new Error("VITE_SUPABASE_URL is missing");
+  const response = await fetch(`${base}/functions/v1/public-lead-gateway`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ""),
+    },
+    body: JSON.stringify({ action: "production_health_invalid_action", payload: {} }),
+  });
+  const text = await response.text();
+  const ready = response.status === 400 && text.toLowerCase().includes("unsupported action");
+  return {
+    id: "gateway",
+    title: "Secure lead gateway",
+    state: ready ? "ready" : "blocked",
+    summary: ready ? "The deployed Edge Function returned the expected validation contract." : "The secure form gateway did not return the expected contract.",
+    detail: ready ? "Read-only invalid-action probe; no lead or file was created." : `HTTP ${response.status}: ${text.slice(0, 300)}`,
+    evidence: { http_status: response.status, response: text.slice(0, 500), destructive_write: false },
+    icon: ShieldCheck,
+  };
+}
+
+async function checkCrm(): Promise<Check> {
+  const results = await Promise.all([
+    supabase.from("inquiries").select("id,inquiry_ref,priority,assignee,follow_up_at,quotation_url,pi_url,sample_status,crm_history").limit(1),
+    supabase.from("catalogue_leads").select("id,priority,assignee,follow_up_at,quotation_url,pi_url,sample_status,crm_history").limit(1),
+    supabase.from("b2b_leads").select("id,crm_status,priority,assignee,follow_up_at,quotation_url,pi_url,sample_status,crm_history").limit(1),
+  ]);
+  const errors = results.map((result) => result.error).filter(Boolean);
+  return {
+    id: "crm",
+    title: "Buyer CRM database",
+    state: errors.length ? "blocked" : "ready",
+    summary: errors.length ? "One or more Buyer CRM sources are missing fields or permissions." : "Inquiry, catalogue and imported-prospect workflow fields are readable.",
+    detail: errors.length ? errors.map(messageOf).join(" · ") : "Status, priority, assignee, follow-up, sample, quotation, PI and timeline fields verified.",
+    evidence: { sources_checked: ["inquiries", "catalogue_leads", "b2b_leads"], error_count: errors.length },
+    icon: Database,
+  };
+}
+
+function leadCheck(data: Json): Check {
+  const ready = truthy(data.discovery_ready);
+  const partial = truthy(data.database_ready) && truthy(data.ai_gateway_configured);
+  return {
+    id: "leads", title: "Lead acquisition", state: ready ? "ready" : partial ? "partial" : "blocked",
+    summary: ready ? "Public-web discovery, AI classification and CRM import are ready." : partial ? "Database and AI are ready; discovery remains missing or unverified." : "Lead acquisition database or AI runtime is not ready.",
+    detail: typeof data.note === "string" ? data.note : undefined, evidence: data, icon: UserSearch,
+  };
+}
+
+function outreachCheck(data: Json): Check {
+  const sendReady = truthy(data.ready_to_send) && truthy(data.gmail_verified);
+  const draftReady = truthy(data.ready_to_generate);
+  return {
+    id: "outreach", title: "AI outreach & Gmail", state: sendReady ? "ready" : draftReady ? "partial" : "blocked",
+    summary: sendReady ? "AI drafts and authenticated Gmail delivery are ready." : draftReady ? "AI drafting is ready; Gmail identity or delivery still needs verification." : "Outreach database or AI runtime is not ready.",
+    detail: typeof data.gmail_error === "string" ? data.gmail_error : typeof data.note === "string" ? data.note : undefined,
+    evidence: data, icon: Mail,
+  };
+}
+
+function socialCheck(data: Json): Check {
+  const channels = isObject(data.channels) ? data.channels : {};
+  const capable = Object.entries(channels).filter(([, value]) => isObject(value) && value.publish_capable === true).map(([name]) => name);
+  const generateReady = truthy(data.ready_to_generate);
+  return {
+    id: "social", title: "Social calendar", state: generateReady && capable.length ? "ready" : generateReady ? "partial" : "blocked",
+    summary: generateReady && capable.length ? `AI calendar ready; verified delivery available for ${capable.join(", ")}.` : generateReady ? "AI calendar is ready, but no platform is verified as publish-capable." : "Social calendar database or AI runtime is not ready.",
+    detail: isObject(data.scheduling) && typeof data.scheduling.note === "string" ? data.scheduling.note : undefined,
+    evidence: data, icon: Share2,
+  };
+}
+
+function seoCheck(data: Json): Check {
+  const ready = truthy(data.ready_to_generate);
+  const active = Number(data.active_locale_count || 0);
+  const published = Number(data.published_page_count || 0);
+  return {
+    id: "seo", title: "Multilingual SEO", state: ready ? "ready" : "blocked",
+    summary: ready ? `${active} active locale${active === 1 ? "" : "s"}; ${published} reviewed page${published === 1 ? "" : "s"} published.` : "Localized SEO database or AI runtime is not ready.",
+    detail: typeof data.note === "string" ? data.note : undefined, evidence: data, icon: Search,
+  };
+}
+
+export default function ProductionHealthPanel() {
+  const [checks, setChecks] = useState<Check[]>(PLACEHOLDERS);
+  const [loading, setLoading] = useState(true);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+
+  const run = useCallback(async () => {
+    setLoading(true);
+    setChecks(PLACEHOLDERS);
+    const tasks: Promise<Check>[] = [
+      checkPublic(),
+      checkGateway(),
+      checkCrm(),
+      invokeHealth("lead-research").then(leadCheck),
+      invokeHealth("outreach-engine").then(outreachCheck),
+      invokeHealth("social-calendar").then(socialCheck),
+      invokeHealth("multilingual-seo").then(seoCheck),
+    ];
+    const settled = await Promise.allSettled(tasks);
+    setChecks(settled.map((result, index) => result.status === "fulfilled" ? result.value : {
+      ...PLACEHOLDERS[index],
+      state: "blocked",
+      summary: "Runtime check failed.",
+      detail: result.reason instanceof Error ? result.reason.message : String(result.reason),
+    }));
+    setLastChecked(new Date());
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { void run(); }, [run]);
+
+  const totals = useMemo(() => ({
+    ready: checks.filter((check) => check.state === "ready").length,
+    partial: checks.filter((check) => check.state === "partial").length,
+    blocked: checks.filter((check) => check.state === "blocked").length,
+  }), [checks]);
+
+  return (
+    <div className="space-y-6">
+      <section className="border border-gold/40 bg-gradient-to-br from-gold/10 via-card/40 to-background p-6 md:p-8">
+        <div className="flex items-start justify-between gap-5 flex-wrap">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-gold mb-3"><Activity size={15} /> Production Health Center</div>
+            <h2 className="font-display text-3xl md:text-4xl">Exact runtime status, not configuration guesses.</h2>
+            <p className="text-sm text-foreground/70 mt-3 leading-relaxed">Read-only checks verify the published site, secure lead gateway, Buyer CRM and automation engines. Green means the stated runtime contract responded successfully; it does not promise future delivery outcomes.</p>
+          </div>
+          <button type="button" onClick={() => void run()} disabled={loading} className="inline-flex items-center gap-2 border border-gold/60 text-gold px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] hover:bg-gold hover:text-background disabled:opacity-50">
+            {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Run checks
+          </button>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-3 gap-3">
+        <Metric label="Ready" value={totals.ready} tone="ready" />
+        <Metric label="Partial" value={totals.partial} tone="partial" />
+        <Metric label="Blocked" value={totals.blocked} tone="blocked" />
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-4">{checks.map((check) => <HealthCard key={check.id} check={check} />)}</div>
+
+      <div className="border border-border/60 bg-card/25 px-4 py-3 text-xs text-foreground/55 flex items-center justify-between gap-4 flex-wrap">
+        <span>No buyer lead, email, post, localized page or file is created by these checks.</span>
+        <span>{lastChecked ? `Last checked ${lastChecked.toLocaleString()}` : "Checks have not completed yet."}</span>
+      </div>
+    </div>
+  );
+}
+
+function HealthCard({ check }: { check: Check }) {
+  const Icon = check.icon;
+  const view = {
+    checking: { label: "Checking", classes: "border-border/60 text-muted-foreground", icon: Loader2 },
+    ready: { label: "Ready", classes: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10", icon: CheckCircle2 },
+    partial: { label: "Partial", classes: "border-amber-500/40 text-amber-300 bg-amber-500/10", icon: AlertTriangle },
+    blocked: { label: "Blocked", classes: "border-red-500/40 text-red-300 bg-red-500/10", icon: XCircle },
+  }[check.state];
+  const StateIcon = view.icon;
+  return (
+    <article className="border border-border/60 bg-card/30 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="border border-border/60 p-2.5 text-gold"><Icon size={18} /></div>
+          <div><h3 className="font-display text-xl">{check.title}</h3><p className="text-sm text-foreground/70 mt-2 leading-relaxed">{check.summary}</p></div>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 border px-2 py-1 text-[9px] uppercase tracking-[0.14em] shrink-0 ${view.classes}`}><StateIcon size={11} className={check.state === "checking" ? "animate-spin" : ""} /> {view.label}</span>
+      </div>
+      {check.detail && <p className="text-xs text-foreground/50 mt-4 leading-relaxed break-words">{check.detail}</p>}
+      {check.evidence && <details className="mt-4 border-t border-border/40 pt-3"><summary className="cursor-pointer text-[9px] uppercase tracking-[0.18em] text-gold/80">Technical evidence</summary><pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words border border-border/50 bg-background/40 p-3 text-[10px] text-foreground/60">{JSON.stringify(check.evidence, null, 2)}</pre></details>}
+    </article>
+  );
+}
+
+function Metric({ label, value, tone }: { label: string; value: number; tone: "ready" | "partial" | "blocked" }) {
+  const classes = tone === "ready" ? "text-emerald-300" : tone === "partial" ? "text-amber-300" : "text-red-300";
+  return <div className="border border-border/60 bg-card/30 p-4"><p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p><p className={`font-display text-3xl mt-1 ${classes}`}>{value}</p></div>;
+}
