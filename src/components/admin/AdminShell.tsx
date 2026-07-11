@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Home, Package, Layers, BookOpen, Search,
@@ -22,8 +22,8 @@ import SocialContentPlaybook from "@/components/admin/SocialContentPlaybook";
 export type AdminView =
   | "overview"
   | "products" | "categories" | "catalogues"
-  | "blog" | "faqs" | "seo" | "links"
-  | "lead_engine" | "leads" | "inquiries" | "chat" | "mailing"
+  | "seo"
+  | "lead_engine" | "leads" | "chat" | "mailing"
   | "ai"
   | "studio" | "pi" | "directory"
   | "social" | "devops" | "listings"
@@ -84,13 +84,27 @@ export function AdminShell({
   const [collapsed, setCollapsed] = useState(false);
   const active = NAV.flatMap((group) => group.items).find((item) => item.key === view);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileOpen]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
 
   const nav = (
-    <nav className="flex-1 overflow-y-auto overscroll-contain py-4 px-2 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-6">
+    <nav className="flex-1 overflow-y-auto overscroll-contain py-4 px-2 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-6" aria-label="Admin sections">
       {NAV.map((group) => (
         <div key={group.title}>
           {!collapsed && (
@@ -150,6 +164,7 @@ export function AdminShell({
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <aside
+        id="admin-desktop-navigation"
         className={cn(
           "hidden md:flex sticky top-0 h-screen flex-col border-r border-border/60 bg-card/30 transition-[width] duration-200",
           collapsed ? "w-16" : "w-64",
@@ -168,7 +183,9 @@ export function AdminShell({
             type="button"
             onClick={() => setCollapsed((value) => !value)}
             className="min-h-11 min-w-11 inline-flex items-center justify-center text-muted-foreground hover:text-primary"
-            aria-label="Toggle sidebar"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            aria-controls="admin-desktop-navigation"
           >
             <Menu size={16} />
           </button>
@@ -179,7 +196,7 @@ export function AdminShell({
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Admin navigation">
           <button type="button" aria-label="Close menu" className="absolute inset-0 bg-background/85 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="relative h-[100dvh] w-[min(19rem,88vw)] bg-card border-r border-border/60 flex flex-col shadow-2xl">
+          <aside id="admin-mobile-navigation" className="relative h-[100dvh] w-[min(19rem,88vw)] bg-card border-r border-border/60 flex flex-col shadow-2xl">
             <div className="min-h-16 flex items-center justify-between px-4 border-b border-border/60 pt-[env(safe-area-inset-top)]">
               <div className="min-w-0">
                 <p className="font-display text-sm text-gold truncate">IRHA ADMIN</p>
@@ -199,6 +216,8 @@ export function AdminShell({
             className="md:hidden min-h-11 min-w-11 -ml-2 inline-flex items-center justify-center text-foreground/80"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
+            aria-expanded={mobileOpen}
+            aria-controls="admin-mobile-navigation"
           >
             <Menu size={20} />
           </button>
@@ -230,7 +249,7 @@ export function AdminShell({
           </button>
         </header>
 
-        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
+        <main id="admin-main" className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
           {content}
         </main>
       </div>
