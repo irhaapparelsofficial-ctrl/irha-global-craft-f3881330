@@ -56,6 +56,12 @@
       {"source":"https://drive.google.com/uc?export=download&id=1DSnIDxDyroI_xP2dLRfLK2bOrCb14hMI","fallback":"https://drive.google.com/thumbnail?id=1DSnIDxDyroI_xP2dLRfLK2bOrCb14hMI&sz=w1600","file":"01-hero-front.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=1fWv2Ee-5t3XQn-9pgwBn9HKVGhURTeFO","fallback":"https://drive.google.com/thumbnail?id=1fWv2Ee-5t3XQn-9pgwBn9HKVGhURTeFO&sz=w1600","file":"03-angle-back.webp"},
       {"source":"https://drive.google.com/uc?export=download&id=1ETgMo8Xvodk_339GqF8Pb9YN0iXqPspe","fallback":"https://drive.google.com/thumbnail?id=1ETgMo8Xvodk_339GqF8Pb9YN0iXqPspe&sz=w1600","file":"04-detail-alpine-embroidery.webp"}
+    ],
+    "antique-brown-scroll-embroidered-short-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1FhR4vpHurJ421NWv30WyQjDedW1ZAG7d","fallback":"https://drive.google.com/thumbnail?id=1FhR4vpHurJ421NWv30WyQjDedW1ZAG7d&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1xlRLKC_x5OLSrPEmCZKwN28eg5fvbyeA","fallback":"https://drive.google.com/thumbnail?id=1xlRLKC_x5OLSrPEmCZKwN28eg5fvbyeA&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1ka1wIQikJxVxBVBStLPqDUgKkTiHc_O9","fallback":"https://drive.google.com/thumbnail?id=1ka1wIQikJxVxBVBStLPqDUgKkTiHc_O9&sz=w1600","file":"04-detail-front-scroll-embroidery.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1KvU7mlfmln0FiCCJzkpSVLjI91XyfFE-","fallback":"https://drive.google.com/thumbnail?id=1KvU7mlfmln0FiCCJzkpSVLjI91XyfFE-&sz=w1600","file":"05-detail-front-construction.webp"}
     ]
   }
 }
