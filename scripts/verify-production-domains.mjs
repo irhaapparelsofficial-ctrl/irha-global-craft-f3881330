@@ -11,19 +11,15 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function marker(name, value) {
-  return new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`, "i");
-}
-
-async function fetchHtml(origin) {
-  const url = new URL("/", origin);
+async function fetchText(origin, path) {
+  const url = new URL(path, origin);
   url.searchParams.set("__irha_domain_probe", `${Date.now()}-${Math.random().toString(16).slice(2)}`);
   const response = await fetch(url, {
     redirect: "follow",
     headers: {
       "cache-control": "no-cache, no-store, max-age=0",
       pragma: "no-cache",
-      "user-agent": "Irha-Domain-Consistency/1.0",
+      "user-agent": "Irha-Domain-Consistency/2.0",
     },
     signal: AbortSignal.timeout(30_000),
   });
@@ -34,13 +30,26 @@ async function fetchHtml(origin) {
   };
 }
 
-function inspectSource(body) {
+function parseJson(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function inspectBuild(build) {
   return {
-    release: marker("x-irha-release", EXPECTED_RELEASE).test(body),
-    project: marker("x-irha-project-id", EXPECTED_PROJECT_ID).test(body),
-    repository: marker("x-irha-repository", EXPECTED_REPOSITORY).test(body),
-    policy: marker("x-irha-deployment-policy", "latest-main-only").test(body),
+    release: build?.release === EXPECTED_RELEASE,
+    project: build?.lovable_project_id === EXPECTED_PROJECT_ID,
+    repository: build?.repository === EXPECTED_REPOSITORY,
+    branch: build?.source_branch === "main",
+    policy: build?.deployment_policy === "latest-main-only",
   };
+}
+
+function buildIdentityOk(source) {
+  return Object.values(source).every(Boolean);
 }
 
 function canonicalOrigin(body) {
@@ -53,41 +62,72 @@ function canonicalOrigin(body) {
   }
 }
 
+async function inspectOrigin(origin) {
+  const [home, buildResponse] = await Promise.all([
+    fetchText(origin, "/"),
+    fetchText(origin, "/build.json"),
+  ]);
+  const build = parseJson(buildResponse.body);
+  return {
+    origin,
+    home,
+    buildResponse,
+    build,
+    source: inspectBuild(build),
+  };
+}
+
 async function verifyPrimary() {
-  const result = await fetchHtml(PRIMARY);
-  const source = inspectSource(result.body);
-  assert(result.status === 200, `Primary domain ${PRIMARY} returned HTTP ${result.status}`);
-  assert(Object.values(source).every(Boolean), `Primary domain ${PRIMARY} is not serving the approved release/project/repository identity: ${JSON.stringify(source)}`);
+  const result = await inspectOrigin(PRIMARY);
+  assert(result.home.status === 200, `Primary domain ${PRIMARY} returned HTTP ${result.home.status}`);
+  assert(result.home.body.includes('id="root"'), `Primary domain ${PRIMARY} is missing the application root`);
+  assert(result.buildResponse.status === 200, `Primary build identity returned HTTP ${result.buildResponse.status}`);
+  assert(
+    buildIdentityOk(result.source),
+    `Primary domain ${PRIMARY} is not serving the approved build identity: ${JSON.stringify(result.source)}`,
+  );
   return result;
 }
 
-async function verifyAlias(alias) {
-  const result = await fetchHtml(alias);
-  const source = inspectSource(result.body);
-  const finalOrigin = new URL(result.finalUrl).origin;
+async function verifyAlias(alias, primary) {
+  const result = await inspectOrigin(alias);
+  const finalOrigin = new URL(result.home.finalUrl).origin;
   const primaryOrigin = new URL(PRIMARY).origin;
   const redirectedToPrimary = finalOrigin === primaryOrigin;
-  const canonicalToPrimary = canonicalOrigin(result.body) === primaryOrigin;
+  const canonicalToPrimary = canonicalOrigin(result.home.body) === primaryOrigin;
+  const servesApprovedBuild = buildIdentityOk(result.source);
 
-  assert(result.status === 200, `Domain alias ${alias} returned HTTP ${result.status}`);
+  assert(result.home.status === 200, `Domain alias ${alias} returned HTTP ${result.home.status}`);
   assert(
-    redirectedToPrimary || Object.values(source).every(Boolean),
-    `DOMAIN DEPLOYMENT MISMATCH: ${alias} is not redirecting to ${PRIMARY} and is not serving the approved source identity. final=${result.finalUrl} source=${JSON.stringify(source)}`,
+    redirectedToPrimary || servesApprovedBuild,
+    `DOMAIN DEPLOYMENT MISMATCH: ${alias} neither redirects to ${PRIMARY} nor serves the approved build identity. final=${result.home.finalUrl} source=${JSON.stringify(result.source)}`,
   );
-  assert(
-    redirectedToPrimary || canonicalToPrimary,
-    `DOMAIN SEO MISMATCH: ${alias} neither redirects to ${PRIMARY} nor declares a canonical on ${primaryOrigin}`,
-  );
+
+  if (!redirectedToPrimary && !canonicalToPrimary) {
+    console.warn(
+      `WARN ${alias} serves the approved deployment but raw HTML has no static canonical. Rendered SEO audit remains authoritative for canonical verification.`,
+    );
+  }
+
+  if (servesApprovedBuild) {
+    assert(
+      result.build?.release === primary.build?.release &&
+        result.build?.lovable_project_id === primary.build?.lovable_project_id &&
+        result.build?.repository === primary.build?.repository,
+      `DOMAIN BUILD MISMATCH: ${alias} and ${PRIMARY} do not expose the same deployment identity`,
+    );
+  }
 
   console.log(
-    `PASS alias ${alias}: final=${result.finalUrl} redirectedToPrimary=${redirectedToPrimary} canonicalToPrimary=${canonicalToPrimary}`,
+    `PASS alias ${alias}: final=${result.home.finalUrl} redirectedToPrimary=${redirectedToPrimary} ` +
+      `approvedBuild=${servesApprovedBuild} canonicalToPrimary=${canonicalToPrimary}`,
   );
 }
 
 async function main() {
   const primary = await verifyPrimary();
-  console.log(`PASS primary ${PRIMARY}: final=${primary.finalUrl}`);
-  for (const alias of ALIASES) await verifyAlias(alias);
+  console.log(`PASS primary ${PRIMARY}: final=${primary.home.finalUrl}`);
+  for (const alias of ALIASES) await verifyAlias(alias, primary);
   console.log(`PASS production domain consistency: primary=${PRIMARY} aliases=${ALIASES.join(",")}`);
 }
 
