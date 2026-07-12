@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { BRAND, whatsappLink } from "@/lib/constants";
 import { Mail, MapPin, MessageCircle, ChevronDown } from "lucide-react";
 import irhaLogo from "@/assets/irha-logo.png.asset.json";
+import { useGlobalSettings } from "@/hooks/useSiteConfiguration";
+import { globalWhatsappLink } from "@/lib/siteConfiguration";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -29,6 +30,16 @@ function TikTokIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+function LinkedInIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect width="4" height="12" x="2" y="9" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  );
+}
+
 function WhatsAppIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -36,12 +47,6 @@ function WhatsAppIcon({ size = 20 }: { size?: number }) {
     </svg>
   );
 }
-
-const SOCIALS = [
-  { name: "Instagram", href: "https://www.instagram.com/irhaapparels", Icon: InstagramIcon },
-  { name: "Facebook", href: "https://web.facebook.com/profile.php?id=61590950402472", Icon: FacebookIcon },
-  { name: "TikTok", href: "https://www.tiktok.com/@irhaapparels", Icon: TikTokIcon },
-];
 
 const COLLECTIONS = [
   { slug: "bavarian-trachten-wear", label: "Bavarian & Trachten" },
@@ -51,7 +56,7 @@ const COLLECTIONS = [
   { slug: "leisure-nightwear", label: "Leisure & Nightwear" },
 ];
 
-const COMPANY = [
+const BASE_COMPANY = [
   { to: "/catalogue", label: "Catalogue" },
   { to: "/about", label: "About" },
   { to: "/manufacturing", label: "Manufacturing" },
@@ -63,26 +68,32 @@ const COMPANY = [
   { to: "/contact", label: "Contact" },
 ];
 
-const BUYER_READINESS = [
-  { label: "Requirement-led review", note: "Scope confirmed before commitment" },
-  { label: "Private-label options", note: "Labels, tags and packaging by program" },
-  { label: "Order documentation", note: "Requirements confirmed before dispatch" },
-  { label: "Live factory view", note: "Available by scheduled video call" },
-];
-
 export default function Footer() {
+  const { data: settings } = useGlobalSettings();
+  const companyLinks = settings.footer.showBlogLink
+    ? [...BASE_COMPANY.slice(0, 6), { to: "/blog", label: "Buyer Journal" }, ...BASE_COMPANY.slice(6)]
+    : BASE_COMPANY;
+  const socialLinks = [
+    { name: "Instagram", href: settings.social.instagram, Icon: InstagramIcon },
+    { name: "Facebook", href: settings.social.facebook, Icon: FacebookIcon },
+    { name: "TikTok", href: settings.social.tiktok, Icon: TikTokIcon },
+    { name: "LinkedIn", href: settings.social.linkedin, Icon: LinkedInIcon },
+  ].filter((item) => Boolean(item.href));
+  const whatsApp = globalWhatsappLink(settings);
+
   return (
     <footer className="relative bg-[#0A0A0A] border-t border-border/60 pt-16 pb-8 text-foreground/80">
       <div className="container-luxe grid gap-12 md:grid-cols-3 lg:grid-cols-5">
         <div>
-          <Link to="/" className="inline-flex items-center" aria-label="Irha Apparels home">
-            <img src={irhaLogo.url} alt="Irha Apparels" className="h-10 w-auto" />
+          <Link to="/" className="inline-flex items-center" aria-label={`${settings.company.name} home`}>
+            <img src={irhaLogo.url} alt={settings.company.name} className="h-10 w-auto" />
           </Link>
-          <p className="mt-5 text-sm font-medium text-foreground/90">B2B Custom Apparel Manufacturer</p>
-          <p className="mt-2 text-sm text-foreground/60 leading-relaxed">Sialkot, Pakistan</p>
+          <p className="mt-5 text-sm font-medium text-foreground/90">{settings.company.tagline}</p>
+          <p className="mt-2 text-sm text-foreground/60 leading-relaxed">{settings.company.locationLabel}</p>
+          <p className="mt-4 text-xs text-foreground/50 leading-relaxed">{settings.footer.companyBlurb}</p>
           <p className="mt-5 flex items-start gap-2 text-xs text-foreground/55 leading-relaxed">
             <MapPin size={14} className="text-gold mt-0.5 shrink-0" />
-            {BRAND.address}
+            {settings.company.address}
           </p>
         </div>
 
@@ -106,7 +117,7 @@ export default function Footer() {
             <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
           </summary>
           <ul className="space-y-2.5 text-sm pt-3 md:pt-0">
-            {COMPANY.map((link) => (
+            {companyLinks.map((link) => (
               <li key={link.to}><Link to={link.to} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{link.label}</Link></li>
             ))}
           </ul>
@@ -118,27 +129,29 @@ export default function Footer() {
             <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
           </summary>
           <div className="pt-3 md:pt-0">
-            <div className="flex items-center gap-3 mb-5">
-              {SOCIALS.map((social) => (
-                <a key={social.name} href={social.href} target="_blank" rel="noreferrer noopener" aria-label={`Irha Apparels on ${social.name}`} className="inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold transition-colors">
-                  <social.Icon size={18} />
-                </a>
-              ))}
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex items-center gap-3 mb-5">
+                {socialLinks.map((social) => (
+                  <a key={social.name} href={social.href} target="_blank" rel="noreferrer noopener" aria-label={`${settings.company.name} on ${social.name}`} className="inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 border border-foreground/20 text-foreground/70 hover:border-gold hover:text-gold transition-colors">
+                    <social.Icon size={18} />
+                  </a>
+                ))}
+              </div>
+            )}
             <ul className="space-y-3 text-sm">
               <li>
-                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors">
-                  <WhatsAppIcon size={15} /> +92 320 4110066
+                <a href={whatsApp} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors">
+                  <WhatsAppIcon size={15} /> {settings.contact.phoneDisplay}
                 </a>
               </li>
               <li>
-                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 py-1 text-foreground/55 hover:text-gold transition-colors text-xs">
+                <a href={whatsApp} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 py-1 text-foreground/55 hover:text-gold transition-colors text-xs">
                   <MessageCircle size={13} /> Chat on WhatsApp
                 </a>
               </li>
               <li>
-                <a href={`mailto:${BRAND.email}`} className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors break-all">
-                  <Mail size={15} /> {BRAND.email}
+                <a href={`mailto:${settings.contact.email}`} className="inline-flex items-center gap-2 py-1 text-foreground/75 hover:text-gold transition-colors break-all">
+                  <Mail size={15} /> {settings.contact.email}
                 </a>
               </li>
             </ul>
@@ -151,8 +164,8 @@ export default function Footer() {
             <ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" />
           </summary>
           <ul className="space-y-2.5 text-sm pt-3 md:pt-0">
-            {BUYER_READINESS.map((item) => (
-              <li key={item.label} className="leading-snug">
+            {settings.footer.buyerReadiness.map((item) => (
+              <li key={`${item.label}-${item.note}`} className="leading-snug">
                 <span className="text-foreground/75 font-medium">{item.label}</span>
                 <span className="text-foreground/45"> — {item.note}</span>
               </li>
@@ -171,10 +184,11 @@ export default function Footer() {
       </div>
 
       <div className="container-luxe mt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/45">© {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/45">© {new Date().getFullYear()} {settings.company.name}. All rights reserved.</p>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] uppercase tracking-[0.25em]">
-          <Link to="/privacy-policy" className="text-foreground/45 hover:text-gold transition-colors">Privacy Policy</Link>
-          <Link to="/terms-of-service" className="text-foreground/45 hover:text-gold transition-colors">Terms of Service</Link>
+          {settings.footer.legalLinks.map((link) => (
+            <Link key={`${link.label}-${link.href}`} to={link.href} className="text-foreground/45 hover:text-gold transition-colors">{link.label}</Link>
+          ))}
           <button type="button" onClick={() => window.dispatchEvent(new Event("irha:open-cookie-settings"))} className="text-foreground/45 hover:text-gold transition-colors">Cookie Settings</button>
         </div>
       </div>
