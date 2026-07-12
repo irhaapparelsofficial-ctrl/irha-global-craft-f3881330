@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import { useLocation } from "react-router-dom";
 import defaultSocialImage from "@/assets/banners/products-flatlay.jpg";
 import { SITE_URL } from "@/lib/seoSchema";
+import { usePublicPageTools } from "@/hooks/usePublicContent";
 
 type Alternate = { locale: string; href: string };
 
@@ -29,10 +31,14 @@ function ogLocale(locale: string) {
   return locale.replace("-", "_");
 }
 
+function safeJson(value: object) {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 export default function SEO({
   title,
   description,
-  path = "/",
+  path,
   image,
   jsonLd,
   noindex,
@@ -42,15 +48,25 @@ export default function SEO({
   alternates = [],
   xDefaultPath,
 }: Props) {
-  const url = absoluteUrl(path);
-  const ogImage = absoluteUrl(image || defaultSocialImage);
-  const robots = noindex
+  const location = useLocation();
+  const effectivePath = path || location.pathname || "/";
+  const cmsLocale = locale === "en-US" ? "en" : locale;
+  const { data: pageTools } = usePublicPageTools(effectivePath, cmsLocale);
+  const override = pageTools.seo;
+
+  const effectiveTitle = override?.seo_title || title;
+  const effectiveDescription = override?.seo_description || description;
+  const canonicalValue = override?.canonical_url || effectivePath;
+  const url = absoluteUrl(canonicalValue);
+  const ogImage = absoluteUrl(override?.og_image_url || image || defaultSocialImage);
+  const effectiveJsonLd = override?.json_ld || jsonLd;
+  const robots = noindex || override?.noindex
     ? "noindex,follow,max-image-preview:large"
     : "index,follow,max-image-preview:large";
   const normalizedAlternates = alternates.length > 0
     ? alternates
     : [{ locale: "en", href: url }];
-  const xDefault = absoluteUrl(xDefaultPath || path);
+  const xDefault = absoluteUrl(xDefaultPath || effectivePath);
 
   useEffect(() => {
     document
@@ -60,8 +76,8 @@ export default function SEO({
 
   return (
     <Helmet htmlAttributes={{ lang: locale, dir: direction }}>
-      <title>{title}</title>
-      <meta name="description" content={description} />
+      <title>{effectiveTitle}</title>
+      <meta name="description" content={effectiveDescription} />
       <meta name="robots" content={robots} />
       <link rel="canonical" href={url} />
       {normalizedAlternates.map((alternate) => (
@@ -69,25 +85,25 @@ export default function SEO({
       ))}
       <link rel="alternate" hrefLang="x-default" href={xDefault} />
 
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
+      <meta property="og:title" content={effectiveTitle} />
+      <meta property="og:description" content={effectiveDescription} />
       <meta property="og:url" content={url} />
       <meta property="og:type" content={type} />
       <meta property="og:locale" content={ogLocale(locale)} />
       <meta property="og:site_name" content="Irha Apparels" />
       <meta property="og:image" content={ogImage} />
-      <meta property="og:image:alt" content={`${title} — Irha Apparels`} />
+      <meta property="og:image:alt" content={`${effectiveTitle} — Irha Apparels`} />
 
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:title" content={effectiveTitle} />
+      <meta name="twitter:description" content={effectiveDescription} />
       <meta name="twitter:image" content={ogImage} />
-      <meta name="twitter:image:alt" content={`${title} — Irha Apparels`} />
+      <meta name="twitter:image:alt" content={`${effectiveTitle} — Irha Apparels`} />
 
-      {jsonLd &&
-        (Array.isArray(jsonLd) ? jsonLd : [jsonLd]).map((schema, index) => (
+      {effectiveJsonLd &&
+        (Array.isArray(effectiveJsonLd) ? effectiveJsonLd : [effectiveJsonLd]).map((schema, index) => (
           <script key={index} type="application/ld+json">
-            {JSON.stringify(schema)}
+            {safeJson(schema)}
           </script>
         ))}
     </Helmet>
