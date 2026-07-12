@@ -14,71 +14,261 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_actions: {
+        Row: {
+          action_type: string
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          description: string | null
+          error: string | null
+          executed_at: string | null
+          id: string
+          payload: Json
+          requires_approval: boolean
+          result: Json
+          risk_level: string
+          run_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string | null
+          error?: string | null
+          executed_at?: string | null
+          id?: string
+          payload?: Json
+          requires_approval?: boolean
+          result?: Json
+          risk_level?: string
+          run_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string | null
+          error?: string | null
+          executed_at?: string | null
+          id?: string
+          payload?: Json
+          requires_approval?: boolean
+          result?: Json
+          risk_level?: string
+          run_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_actions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_business_rules: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          rules: Json
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          rules?: Json
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          rules?: Json
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      ai_runs: {
+        Row: {
+          command: string
+          context_snapshot: Json
+          created_at: string
+          id: string
+          mode: string
+          reply: string | null
+          requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          command: string
+          context_snapshot?: Json
+          created_at?: string
+          id?: string
+          mode?: string
+          reply?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          command?: string
+          context_snapshot?: Json
+          created_at?: string
+          id?: string
+          mode?: string
+          reply?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       b2b_leads: {
         Row: {
           apparel_segment: string | null
           assignee: string | null
+          buyer_type: string | null
           company_name: string
           country: string
           created_at: string
           crm_history: Json
           crm_status: string
           email: string | null
+          facebook_url: string | null
           follow_up_at: string | null
           id: string
+          instagram_url: string | null
+          last_gmail_thread_id: string | null
+          last_outreach_at: string | null
+          last_outreach_status: string | null
+          last_reply_at: string | null
+          lead_campaign_id: string | null
           lead_status: Database["public"]["Enums"]["lead_status"]
+          linkedin_url: string | null
           notes: string | null
+          outreach_opt_out: boolean
           phone: string | null
           pi_url: string | null
           priority: string
           quotation_url: string | null
           sample_status: string
+          source_provider: string | null
+          source_url: string | null
           updated_at: string
+          verification_evidence: Json
+          verification_score: number | null
           website: string | null
+          website_domain: string | null
+          whatsapp: string | null
         }
         Insert: {
           apparel_segment?: string | null
           assignee?: string | null
+          buyer_type?: string | null
           company_name: string
           country: string
           created_at?: string
           crm_history?: Json
           crm_status?: string
           email?: string | null
+          facebook_url?: string | null
           follow_up_at?: string | null
           id?: string
+          instagram_url?: string | null
+          last_gmail_thread_id?: string | null
+          last_outreach_at?: string | null
+          last_outreach_status?: string | null
+          last_reply_at?: string | null
+          lead_campaign_id?: string | null
           lead_status?: Database["public"]["Enums"]["lead_status"]
+          linkedin_url?: string | null
           notes?: string | null
+          outreach_opt_out?: boolean
           phone?: string | null
           pi_url?: string | null
           priority?: string
           quotation_url?: string | null
           sample_status?: string
+          source_provider?: string | null
+          source_url?: string | null
           updated_at?: string
+          verification_evidence?: Json
+          verification_score?: number | null
           website?: string | null
+          website_domain?: string | null
+          whatsapp?: string | null
         }
         Update: {
           apparel_segment?: string | null
           assignee?: string | null
+          buyer_type?: string | null
           company_name?: string
           country?: string
           created_at?: string
           crm_history?: Json
           crm_status?: string
           email?: string | null
+          facebook_url?: string | null
           follow_up_at?: string | null
           id?: string
+          instagram_url?: string | null
+          last_gmail_thread_id?: string | null
+          last_outreach_at?: string | null
+          last_outreach_status?: string | null
+          last_reply_at?: string | null
+          lead_campaign_id?: string | null
           lead_status?: Database["public"]["Enums"]["lead_status"]
+          linkedin_url?: string | null
           notes?: string | null
+          outreach_opt_out?: boolean
           phone?: string | null
           pi_url?: string | null
           priority?: string
           quotation_url?: string | null
           sample_status?: string
+          source_provider?: string | null
+          source_url?: string | null
           updated_at?: string
+          verification_evidence?: Json
+          verification_score?: number | null
           website?: string | null
+          website_domain?: string | null
+          whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "b2b_leads_lead_campaign_id_fkey"
+            columns: ["lead_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lead_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blog_posts: {
         Row: {
@@ -140,6 +330,54 @@ export type Database = {
           tags?: string[]
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      business_listings: {
+        Row: {
+          account_name: string | null
+          created_at: string
+          id: string
+          last_verified_at: string | null
+          next_action: string | null
+          notes: string | null
+          owner: string | null
+          platform: string
+          profile_url: string | null
+          source: string
+          status: string
+          updated_at: string
+          verification_level: string
+        }
+        Insert: {
+          account_name?: string | null
+          created_at?: string
+          id?: string
+          last_verified_at?: string | null
+          next_action?: string | null
+          notes?: string | null
+          owner?: string | null
+          platform: string
+          profile_url?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          verification_level?: string
+        }
+        Update: {
+          account_name?: string | null
+          created_at?: string
+          id?: string
+          last_verified_at?: string | null
+          next_action?: string | null
+          notes?: string | null
+          owner?: string | null
+          platform?: string
+          profile_url?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          verification_level?: string
         }
         Relationships: []
       }
@@ -589,6 +827,233 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_campaigns: {
+        Row: {
+          buyer_types: string[]
+          created_at: string
+          discovered_count: number
+          error: string | null
+          id: string
+          imported_count: number
+          last_run_at: string | null
+          market: string
+          name: string
+          product_focus: string[]
+          requested_by: string | null
+          reviewed_count: number
+          search_queries: string[]
+          source_providers: string[]
+          status: string
+          target_count: number
+          updated_at: string
+          verified_count: number
+        }
+        Insert: {
+          buyer_types?: string[]
+          created_at?: string
+          discovered_count?: number
+          error?: string | null
+          id?: string
+          imported_count?: number
+          last_run_at?: string | null
+          market: string
+          name: string
+          product_focus?: string[]
+          requested_by?: string | null
+          reviewed_count?: number
+          search_queries?: string[]
+          source_providers?: string[]
+          status?: string
+          target_count?: number
+          updated_at?: string
+          verified_count?: number
+        }
+        Update: {
+          buyer_types?: string[]
+          created_at?: string
+          discovered_count?: number
+          error?: string | null
+          id?: string
+          imported_count?: number
+          last_run_at?: string | null
+          market?: string
+          name?: string
+          product_focus?: string[]
+          requested_by?: string | null
+          reviewed_count?: number
+          search_queries?: string[]
+          source_providers?: string[]
+          status?: string
+          target_count?: number
+          updated_at?: string
+          verified_count?: number
+        }
+        Relationships: []
+      }
+      lead_candidates: {
+        Row: {
+          buyer_type: string | null
+          campaign_id: string
+          city: string | null
+          company_name: string
+          country: string | null
+          created_at: string
+          duplicate_of: string | null
+          duplicate_reason: string | null
+          email: string | null
+          evidence: Json
+          facebook_url: string | null
+          id: string
+          imported_lead_id: string | null
+          instagram_url: string | null
+          linkedin_url: string | null
+          phone: string | null
+          product_fit: string[]
+          raw_data: Json
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_excerpt: string | null
+          source_provider: string
+          source_query: string | null
+          source_title: string | null
+          source_url: string
+          updated_at: string
+          verification_score: number
+          verification_status: string
+          website: string | null
+          website_domain: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          buyer_type?: string | null
+          campaign_id: string
+          city?: string | null
+          company_name: string
+          country?: string | null
+          created_at?: string
+          duplicate_of?: string | null
+          duplicate_reason?: string | null
+          email?: string | null
+          evidence?: Json
+          facebook_url?: string | null
+          id?: string
+          imported_lead_id?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          phone?: string | null
+          product_fit?: string[]
+          raw_data?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_excerpt?: string | null
+          source_provider?: string
+          source_query?: string | null
+          source_title?: string | null
+          source_url: string
+          updated_at?: string
+          verification_score?: number
+          verification_status?: string
+          website?: string | null
+          website_domain?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          buyer_type?: string | null
+          campaign_id?: string
+          city?: string | null
+          company_name?: string
+          country?: string | null
+          created_at?: string
+          duplicate_of?: string | null
+          duplicate_reason?: string | null
+          email?: string | null
+          evidence?: Json
+          facebook_url?: string | null
+          id?: string
+          imported_lead_id?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          phone?: string | null
+          product_fit?: string[]
+          raw_data?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_excerpt?: string | null
+          source_provider?: string
+          source_query?: string | null
+          source_title?: string | null
+          source_url?: string
+          updated_at?: string
+          verification_score?: number
+          verification_status?: string
+          website?: string | null
+          website_domain?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_candidates_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lead_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_candidates_imported_lead_id_fkey"
+            columns: ["imported_lead_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_search_runs: {
+        Row: {
+          campaign_id: string
+          completed_at: string | null
+          error: string | null
+          id: string
+          provider: string
+          query: string
+          response_meta: Json
+          result_count: number
+          started_at: string
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          provider?: string
+          query: string
+          response_meta?: Json
+          result_count?: number
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          provider?: string
+          query?: string
+          response_meta?: Json
+          result_count?: number
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_search_runs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lead_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       master_cartons: {
         Row: {
           carton_number: string | null
@@ -615,6 +1080,230 @@ export type Database = {
           units_per_carton?: number
         }
         Relationships: []
+      }
+      outreach_campaigns: {
+        Row: {
+          approved_count: number
+          call_to_action: string
+          created_at: string
+          draft_count: number
+          error: string | null
+          failed_count: number
+          id: string
+          language_mode: string
+          name: string
+          objective: string
+          product_focus: string[]
+          replied_count: number
+          requested_by: string | null
+          selected_lead_count: number
+          sent_count: number
+          status: string
+          target_market: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_count?: number
+          call_to_action?: string
+          created_at?: string
+          draft_count?: number
+          error?: string | null
+          failed_count?: number
+          id?: string
+          language_mode?: string
+          name: string
+          objective: string
+          product_focus?: string[]
+          replied_count?: number
+          requested_by?: string | null
+          selected_lead_count?: number
+          sent_count?: number
+          status?: string
+          target_market?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_count?: number
+          call_to_action?: string
+          created_at?: string
+          draft_count?: number
+          error?: string | null
+          failed_count?: number
+          id?: string
+          language_mode?: string
+          name?: string
+          objective?: string
+          product_focus?: string[]
+          replied_count?: number
+          requested_by?: string | null
+          selected_lead_count?: number
+          sent_count?: number
+          status?: string
+          target_market?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      outreach_events: {
+        Row: {
+          actor: string | null
+          campaign_id: string
+          created_at: string
+          detail: Json
+          event_type: string
+          id: string
+          lead_id: string | null
+          message_id: string | null
+        }
+        Insert: {
+          actor?: string | null
+          campaign_id: string
+          created_at?: string
+          detail?: Json
+          event_type: string
+          id?: string
+          lead_id?: string | null
+          message_id?: string | null
+        }
+        Update: {
+          actor?: string | null
+          campaign_id?: string
+          created_at?: string
+          detail?: Json
+          event_type?: string
+          id?: string
+          lead_id?: string | null
+          message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_messages: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          body_text: string
+          campaign_id: string
+          connector_response: Json
+          created_at: string
+          error: string | null
+          gmail_history_id: string | null
+          gmail_message_id: string | null
+          gmail_thread_id: string | null
+          id: string
+          idempotency_key: string
+          language: string
+          lead_id: string
+          parent_message_id: string | null
+          personalization_evidence: Json
+          recipient_company: string
+          recipient_email: string
+          replied_at: string | null
+          sent_at: string | null
+          sequence_number: number
+          status: string
+          subject: string
+          unsubscribe_token: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body_text: string
+          campaign_id: string
+          connector_response?: Json
+          created_at?: string
+          error?: string | null
+          gmail_history_id?: string | null
+          gmail_message_id?: string | null
+          gmail_thread_id?: string | null
+          id?: string
+          idempotency_key: string
+          language?: string
+          lead_id: string
+          parent_message_id?: string | null
+          personalization_evidence?: Json
+          recipient_company: string
+          recipient_email: string
+          replied_at?: string | null
+          sent_at?: string | null
+          sequence_number?: number
+          status?: string
+          subject: string
+          unsubscribe_token?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body_text?: string
+          campaign_id?: string
+          connector_response?: Json
+          created_at?: string
+          error?: string | null
+          gmail_history_id?: string | null
+          gmail_message_id?: string | null
+          gmail_thread_id?: string | null
+          id?: string
+          idempotency_key?: string
+          language?: string
+          lead_id?: string
+          parent_message_id?: string | null
+          personalization_evidence?: Json
+          recipient_company?: string
+          recipient_email?: string
+          replied_at?: string | null
+          sent_at?: string | null
+          sequence_number?: number
+          status?: string
+          subject?: string
+          unsubscribe_token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       page_views: {
         Row: {
@@ -649,6 +1338,149 @@ export type Database = {
           region?: string | null
           session_id?: string | null
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      production_job_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_type: string
+          evidence: Json
+          from_value: string | null
+          id: string
+          note: string | null
+          production_job_id: string
+          to_value: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_type: string
+          evidence?: Json
+          from_value?: string | null
+          id?: string
+          note?: string | null
+          production_job_id: string
+          to_value?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_type?: string
+          evidence?: Json
+          from_value?: string | null
+          id?: string
+          note?: string | null
+          production_job_id?: string
+          to_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_job_events_production_job_id_fkey"
+            columns: ["production_job_id"]
+            isOneToOne: false
+            referencedRelation: "production_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_jobs: {
+        Row: {
+          assigned_to: string | null
+          buyer_approval_status: string
+          buyer_name: string
+          buyer_notification_status: string
+          buyer_target_text: string | null
+          company_name: string | null
+          courier_name: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          internal_target_date: string | null
+          job_number: string
+          job_type: string
+          metadata: Json
+          notes: string | null
+          owner_approval_required: boolean
+          owner_approved_at: string | null
+          owner_approved_by: string | null
+          priority: string
+          product_name: string
+          qc_status: string
+          quantity_text: string
+          sample_status: string
+          shipping_status: string
+          source_id: string | null
+          source_type: string | null
+          specification_reference: string
+          stage: string
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          buyer_approval_status?: string
+          buyer_name: string
+          buyer_notification_status?: string
+          buyer_target_text?: string | null
+          company_name?: string | null
+          courier_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          internal_target_date?: string | null
+          job_number: string
+          job_type: string
+          metadata?: Json
+          notes?: string | null
+          owner_approval_required?: boolean
+          owner_approved_at?: string | null
+          owner_approved_by?: string | null
+          priority?: string
+          product_name: string
+          qc_status?: string
+          quantity_text: string
+          sample_status?: string
+          shipping_status?: string
+          source_id?: string | null
+          source_type?: string | null
+          specification_reference: string
+          stage?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          buyer_approval_status?: string
+          buyer_name?: string
+          buyer_notification_status?: string
+          buyer_target_text?: string | null
+          company_name?: string | null
+          courier_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          internal_target_date?: string | null
+          job_number?: string
+          job_type?: string
+          metadata?: Json
+          notes?: string | null
+          owner_approval_required?: boolean
+          owner_approved_at?: string | null
+          owner_approved_by?: string | null
+          priority?: string
+          product_name?: string
+          qc_status?: string
+          quantity_text?: string
+          sample_status?: string
+          shipping_status?: string
+          source_id?: string | null
+          source_type?: string | null
+          specification_reference?: string
+          stage?: string
+          tracking_number?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -798,6 +1630,229 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_keyword_clusters: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          cluster_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          locale: string
+          market: string | null
+          negative_keywords: Json
+          primary_keywords: Json
+          product_focus: string[]
+          questions: Json
+          search_intent: string
+          seed_keywords: string[]
+          source_notes: Json
+          status: string
+          supporting_keywords: Json
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cluster_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          locale: string
+          market?: string | null
+          negative_keywords?: Json
+          primary_keywords?: Json
+          product_focus?: string[]
+          questions?: Json
+          search_intent: string
+          seed_keywords?: string[]
+          source_notes?: Json
+          status?: string
+          supporting_keywords?: Json
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cluster_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          locale?: string
+          market?: string | null
+          negative_keywords?: Json
+          primary_keywords?: Json
+          product_focus?: string[]
+          questions?: Json
+          search_intent?: string
+          seed_keywords?: string[]
+          source_notes?: Json
+          status?: string
+          supporting_keywords?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_keyword_clusters_locale_fkey"
+            columns: ["locale"]
+            isOneToOne: false
+            referencedRelation: "seo_locales"
+            referencedColumns: ["locale"]
+          },
+        ]
+      }
+      seo_locales: {
+        Row: {
+          created_at: string
+          direction: string
+          language_name: string
+          locale: string
+          native_name: string
+          notes: string | null
+          priority: number
+          requires_native_review: boolean
+          status: string
+          target_markets: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          direction?: string
+          language_name: string
+          locale: string
+          native_name: string
+          notes?: string | null
+          priority?: number
+          requires_native_review?: boolean
+          status?: string
+          target_markets?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          language_name?: string
+          locale?: string
+          native_name?: string
+          notes?: string | null
+          priority?: number
+          requires_native_review?: boolean
+          status?: string
+          target_markets?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      seo_localized_pages: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          base_route: string
+          created_at: string
+          cta: Json
+          eyebrow: string | null
+          faqs: Json
+          h1: string
+          id: string
+          internal_links: Json
+          intro: string
+          json_ld: Json
+          keyword_cluster_ids: string[]
+          locale: string
+          native_review_status: string
+          noindex: boolean
+          page_type: string
+          path: string
+          published_at: string | null
+          quality_report: Json
+          quality_score: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sections: Json
+          seo_description: string
+          seo_title: string
+          slug: string
+          source_summary: string | null
+          source_title: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          base_route: string
+          created_at?: string
+          cta?: Json
+          eyebrow?: string | null
+          faqs?: Json
+          h1: string
+          id?: string
+          internal_links?: Json
+          intro: string
+          json_ld?: Json
+          keyword_cluster_ids?: string[]
+          locale: string
+          native_review_status?: string
+          noindex?: boolean
+          page_type?: string
+          path: string
+          published_at?: string | null
+          quality_report?: Json
+          quality_score?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sections?: Json
+          seo_description: string
+          seo_title: string
+          slug: string
+          source_summary?: string | null
+          source_title?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          base_route?: string
+          created_at?: string
+          cta?: Json
+          eyebrow?: string | null
+          faqs?: Json
+          h1?: string
+          id?: string
+          internal_links?: Json
+          intro?: string
+          json_ld?: Json
+          keyword_cluster_ids?: string[]
+          locale?: string
+          native_review_status?: string
+          noindex?: boolean
+          page_type?: string
+          path?: string
+          published_at?: string | null
+          quality_report?: Json
+          quality_score?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sections?: Json
+          seo_description?: string
+          seo_title?: string
+          slug?: string
+          source_summary?: string | null
+          source_title?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_localized_pages_locale_fkey"
+            columns: ["locale"]
+            isOneToOne: false
+            referencedRelation: "seo_locales"
+            referencedColumns: ["locale"]
+          },
+        ]
+      }
       seo_page_overrides: {
         Row: {
           canonical_url: string | null
@@ -845,6 +1900,254 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      social_calendar_items: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          call_to_action: string | null
+          campaign_id: string
+          caption: string
+          carousel_outline: Json
+          connector_result: Json
+          content_type: string
+          created_at: string
+          creative_brief: Json
+          creative_status: string
+          error: string | null
+          external_post_id: string | null
+          external_post_url: string | null
+          hashtags: string[]
+          id: string
+          idempotency_key: string
+          image_url: string | null
+          language: string
+          platform: string
+          product_id: string | null
+          product_url: string | null
+          publish_attempts: number
+          published_at: string | null
+          reel_script: string | null
+          risk_flags: string[]
+          scheduled_at: string | null
+          status: string
+          timezone: string
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          call_to_action?: string | null
+          campaign_id: string
+          caption: string
+          carousel_outline?: Json
+          connector_result?: Json
+          content_type?: string
+          created_at?: string
+          creative_brief?: Json
+          creative_status?: string
+          error?: string | null
+          external_post_id?: string | null
+          external_post_url?: string | null
+          hashtags?: string[]
+          id?: string
+          idempotency_key: string
+          image_url?: string | null
+          language?: string
+          platform: string
+          product_id?: string | null
+          product_url?: string | null
+          publish_attempts?: number
+          published_at?: string | null
+          reel_script?: string | null
+          risk_flags?: string[]
+          scheduled_at?: string | null
+          status?: string
+          timezone?: string
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          call_to_action?: string | null
+          campaign_id?: string
+          caption?: string
+          carousel_outline?: Json
+          connector_result?: Json
+          content_type?: string
+          created_at?: string
+          creative_brief?: Json
+          creative_status?: string
+          error?: string | null
+          external_post_id?: string | null
+          external_post_url?: string | null
+          hashtags?: string[]
+          id?: string
+          idempotency_key?: string
+          image_url?: string | null
+          language?: string
+          platform?: string
+          product_id?: string | null
+          product_url?: string | null
+          publish_attempts?: number
+          published_at?: string | null
+          reel_script?: string | null
+          risk_flags?: string[]
+          scheduled_at?: string | null
+          status?: string
+          timezone?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_calendar_items_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "social_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_calendar_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_campaigns: {
+        Row: {
+          approved_count: number
+          brief: Json
+          created_at: string
+          error: string | null
+          failed_count: number
+          id: string
+          item_count: number
+          language: string
+          name: string
+          objective: string
+          platforms: string[]
+          product_focus: string[]
+          product_id: string | null
+          published_count: number
+          requested_by: string | null
+          status: string
+          target_markets: string[]
+          updated_at: string
+        }
+        Insert: {
+          approved_count?: number
+          brief?: Json
+          created_at?: string
+          error?: string | null
+          failed_count?: number
+          id?: string
+          item_count?: number
+          language?: string
+          name: string
+          objective: string
+          platforms?: string[]
+          product_focus?: string[]
+          product_id?: string | null
+          published_count?: number
+          requested_by?: string | null
+          status?: string
+          target_markets?: string[]
+          updated_at?: string
+        }
+        Update: {
+          approved_count?: number
+          brief?: Json
+          created_at?: string
+          error?: string | null
+          failed_count?: number
+          id?: string
+          item_count?: number
+          language?: string
+          name?: string
+          objective?: string
+          platforms?: string[]
+          product_focus?: string[]
+          product_id?: string | null
+          published_count?: number
+          requested_by?: string | null
+          status?: string
+          target_markets?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_campaigns_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_delivery_attempts: {
+        Row: {
+          actor: string | null
+          attempt_number: number
+          campaign_id: string
+          created_at: string
+          error: string | null
+          id: string
+          item_id: string
+          platform: string
+          request_snapshot: Json
+          response_snapshot: Json
+          status: string
+        }
+        Insert: {
+          actor?: string | null
+          attempt_number: number
+          campaign_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          item_id: string
+          platform: string
+          request_snapshot?: Json
+          response_snapshot?: Json
+          status: string
+        }
+        Update: {
+          actor?: string | null
+          attempt_number?: number
+          campaign_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          item_id?: string
+          platform?: string
+          request_snapshot?: Json
+          response_snapshot?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_delivery_attempts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "social_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_delivery_attempts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "social_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_posts: {
         Row: {
