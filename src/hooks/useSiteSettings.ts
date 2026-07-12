@@ -22,7 +22,7 @@ async function fetchSiteSettings(): Promise<GlobalSiteSettings> {
 }
 
 export function useSiteSettings() {
-  return useQuery({
+  const query = useQuery({
     queryKey: ["cms", GLOBAL_SITE_SETTINGS_KEY, "published"],
     queryFn: fetchSiteSettings,
     staleTime: 5 * 60 * 1000,
@@ -30,4 +30,5 @@ export function useSiteSettings() {
     placeholderData: DEFAULT_GLOBAL_SITE_SETTINGS,
     retry: false,
   });
+  return { ...query, data: query.data ?? DEFAULT_GLOBAL_SITE_SETTINGS };
 }
