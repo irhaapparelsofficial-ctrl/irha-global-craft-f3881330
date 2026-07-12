@@ -1,25 +1,52 @@
 name: Production Smoke
 
+run-name: Post-publish production smoke · ${{ github.ref_name }} · #${{ github.run_number }}
+
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17 */6 * * *"
+    inputs:
+      base_url:
+        description: Production URL to verify
+        required: true
+        default: https://www.irhaapparels.com
+        type: string
+      propagation_minutes:
+        description: Minutes to wait for Lovable/CDN propagation
+        required: true
+        default: "15"
+        type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: production-smoke
+  cancel-in-progress: true
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
-      - name: Checkout
+      - name: Checkout latest main
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
+      - name: Wait for published release propagation
+        env:
+          IRHA_BASE_URL: ${{ inputs.base_url }}
+          IRHA_EXPECTED_RELEASE: frontend-live-2026-07-12-r10
+          IRHA_EXPECTED_RELEASE_TEXT: IRHA_FRONTEND_LIVE_2026_07_12_R10
+          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes }}
+        run: node scripts/wait-for-production-release.mjs
+
       - name: Verify production pages, crawler controls and lead gateway
+        env:
+          IRHA_BASE_URL: ${{ inputs.base_url }}
         run: node scripts/production-smoke-v2.mjs
