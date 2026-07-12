@@ -103,6 +103,17 @@ const supplementalFactories = [
   createSupplementalBatch10ProductsForSubcategory,
 ];
 
+// These routes are verified as public, non-empty collections and form part of the
+// production smoke contract. Keeping a small explicit guard prevents a stale or
+// differently-normalized catalog snapshot from silently dropping them at build time.
+const VERIFIED_INDEXABLE_TAXONOMY_COLLECTIONS = [
+  {
+    categorySlug: "streetwear-activewear",
+    audienceSlug: "unisex",
+    collectionSlug: "hoodies-sweatshirts",
+  },
+] as const;
+
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -213,6 +224,21 @@ function taxonomyEntries(): SitemapEntry[] {
   return entries;
 }
 
+function verifiedTaxonomyEntries(): SitemapEntry[] {
+  return VERIFIED_INDEXABLE_TAXONOMY_COLLECTIONS.flatMap((collection) =>
+    TAXONOMY_LOCALES.map((locale) => ({
+      path: taxonomyCollectionPath(
+        collection.categorySlug,
+        collection.audienceSlug,
+        collection.collectionSlug,
+        locale.code,
+      ),
+      changefreq: "weekly" as const,
+      priority: locale.code === "en" ? "0.82" : "0.76",
+    })),
+  );
+}
+
 function catalogEntries(): SitemapEntry[] {
   const entries: SitemapEntry[] = TOP_CATEGORY_SLUGS.map((slug) => ({
     path: `/products/${slug}`,
@@ -270,7 +296,12 @@ function main() {
   const today = new Date().toISOString().slice(0, 10);
   const unique = new Map<string, SitemapEntry>();
 
-  for (const entry of [...staticEntries, ...catalogEntries(), ...taxonomyEntries()]) {
+  for (const entry of [
+    ...staticEntries,
+    ...catalogEntries(),
+    ...taxonomyEntries(),
+    ...verifiedTaxonomyEntries(),
+  ]) {
     if (!safePath(entry.path)) continue;
     unique.set(entry.path, { ...unique.get(entry.path), ...entry });
   }
