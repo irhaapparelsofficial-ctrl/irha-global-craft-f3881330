@@ -1,7 +1,8 @@
 const BASE = (process.env.IRHA_BASE_URL || "https://www.irhaapparels.com").replace(/\/$/, "");
-const EXPECTED_RELEASE = process.env.IRHA_EXPECTED_RELEASE || "frontend-live-2026-07-12-r10";
-const EXPECTED_RELEASE_TEXT = process.env.IRHA_EXPECTED_RELEASE_TEXT || "IRHA_FRONTEND_LIVE_2026_07_12_R10";
+const EXPECTED_RELEASE = process.env.IRHA_EXPECTED_RELEASE || "frontend-live-2026-07-13-r11";
+const EXPECTED_RELEASE_TEXT = process.env.IRHA_EXPECTED_RELEASE_TEXT || "IRHA_FRONTEND_LIVE_2026_07_13_R11";
 const EXPECTED_PROJECT_ID = process.env.IRHA_EXPECTED_PROJECT_ID || "da72a40a-7df3-44c3-a72d-f180d9ffcd25";
+const EXPECTED_SUPABASE_PROJECT_ID = process.env.IRHA_EXPECTED_SUPABASE_PROJECT_ID || "pvzjiozismyxqrzmtfbi";
 const EXPECTED_REPOSITORY = process.env.IRHA_EXPECTED_REPOSITORY || "irhaapparelsofficial-ctrl/irha-global-craft-f3881330";
 const EXPECTED_ORIGIN = (process.env.IRHA_EXPECTED_ORIGIN || "https://www.irhaapparels.com").replace(/\/$/, "");
 const TIMEOUT_MINUTES = Number(process.env.IRHA_PROPAGATION_MINUTES || "20");
@@ -18,7 +19,7 @@ async function fetchText(path) {
       headers: {
         "cache-control": "no-cache, no-store, max-age=0",
         pragma: "no-cache",
-        "user-agent": "Irha-Deployment-Source-Lock/2.0",
+        "user-agent": "Irha-Deployment-Source-Lock/3.0",
       },
       signal: AbortSignal.timeout(30_000),
     });
@@ -57,11 +58,19 @@ async function probe() {
   const parsedBuild = parseJson(build.text);
   const buildReleaseOk = build.ok && parsedBuild?.release === EXPECTED_RELEASE;
   const buildProjectOk = build.ok && parsedBuild?.lovable_project_id === EXPECTED_PROJECT_ID;
+  const buildSupabaseOk = build.ok && parsedBuild?.supabase_project_id === EXPECTED_SUPABASE_PROJECT_ID;
   const buildRepositoryOk = build.ok && parsedBuild?.repository === EXPECTED_REPOSITORY;
   const buildOriginOk = build.ok && String(parsedBuild?.expected_origin || "").replace(/\/$/, "") === EXPECTED_ORIGIN;
   const buildPolicyOk = build.ok && parsedBuild?.deployment_policy === "latest-main-only";
   const buildBranchOk = build.ok && parsedBuild?.source_branch === "main";
-  const buildOk = buildReleaseOk && buildProjectOk && buildRepositoryOk && buildOriginOk && buildPolicyOk && buildBranchOk;
+  const buildOk =
+    buildReleaseOk &&
+    buildProjectOk &&
+    buildSupabaseOk &&
+    buildRepositoryOk &&
+    buildOriginOk &&
+    buildPolicyOk &&
+    buildBranchOk;
 
   const releaseOk =
     release.ok &&
@@ -69,6 +78,7 @@ async function probe() {
     release.text.includes(`Lovable Project: ${EXPECTED_PROJECT_ID}`) &&
     release.text.includes(`Repository: ${EXPECTED_REPOSITORY}`) &&
     release.text.includes(`Production Origin: ${EXPECTED_ORIGIN}`) &&
+    release.text.includes(`Supabase Project: ${EXPECTED_SUPABASE_PROJECT_ID}`) &&
     release.text.includes("Deployment Policy: latest-main-only");
 
   const homeReachable =
@@ -80,6 +90,7 @@ async function probe() {
   const homeLegacyMetaPresent =
     home.text.includes(`name="x-irha-release" content="${EXPECTED_RELEASE}"`) &&
     home.text.includes(`name="x-irha-project-id" content="${EXPECTED_PROJECT_ID}"`) &&
+    home.text.includes(`name="x-irha-supabase-project-id" content="${EXPECTED_SUPABASE_PROJECT_ID}"`) &&
     home.text.includes(`name="x-irha-repository" content="${EXPECTED_REPOSITORY}"`);
 
   return {
@@ -87,6 +98,7 @@ async function probe() {
     buildOk,
     buildReleaseOk,
     buildProjectOk,
+    buildSupabaseOk,
     buildRepositoryOk,
     buildOriginOk,
     buildPolicyOk,
@@ -99,6 +111,7 @@ async function probe() {
     homeStatus: home.status,
     buildRelease: parsedBuild?.release || null,
     buildProjectId: parsedBuild?.lovable_project_id || null,
+    buildSupabaseProjectId: parsedBuild?.supabase_project_id || null,
     buildRepository: parsedBuild?.repository || null,
     buildOrigin: parsedBuild?.expected_origin || null,
     homeUrl: home.url,
@@ -109,6 +122,9 @@ async function probe() {
 function diagnosis(result) {
   if (!result.buildProjectOk) {
     return `CUSTOM DOMAIN TARGET MISMATCH: ${BASE} is not serving Lovable project ${EXPECTED_PROJECT_ID}.`;
+  }
+  if (!result.buildSupabaseOk) {
+    return `RUNTIME BACKEND MISMATCH: production is not declaring owner Supabase project ${EXPECTED_SUPABASE_PROJECT_ID}.`;
   }
   if (!result.buildRepositoryOk) {
     return `SOURCE REPOSITORY MISMATCH: production is not serving ${EXPECTED_REPOSITORY}.`;
@@ -135,9 +151,10 @@ async function main() {
     latest = await probe();
     console.log(
       `source-lock probe ${attempt}: build=${latest.buildOk} homepage=${latest.homeReachable} ` +
-      `releaseAdvisory=${latest.releaseOk} legacyHtmlMeta=${latest.homeLegacyMetaPresent} ` +
-      `statuses=${latest.buildStatus}/${latest.releaseStatus}/${latest.homeStatus} ` +
-      `buildRelease=${latest.buildRelease || "missing"} buildProject=${latest.buildProjectId || "missing"}`,
+        `releaseAdvisory=${latest.releaseOk} htmlMeta=${latest.homeLegacyMetaPresent} ` +
+        `statuses=${latest.buildStatus}/${latest.releaseStatus}/${latest.homeStatus} ` +
+        `buildRelease=${latest.buildRelease || "missing"} ` +
+        `lovable=${latest.buildProjectId || "missing"} supabase=${latest.buildSupabaseProjectId || "missing"}`,
     );
 
     if (latest.ready) {
@@ -148,7 +165,7 @@ async function main() {
         console.warn("WARN Lovable did not expose custom x-irha HTML meta tags; build.json identity was verified instead.");
       }
       console.log(
-        `PASS production source lock for ${BASE}: release=${EXPECTED_RELEASE} project=${EXPECTED_PROJECT_ID} repository=${EXPECTED_REPOSITORY}`,
+        `PASS production source lock for ${BASE}: release=${EXPECTED_RELEASE} lovable=${EXPECTED_PROJECT_ID} supabase=${EXPECTED_SUPABASE_PROJECT_ID} repository=${EXPECTED_REPOSITORY}`,
       );
       return;
     }
