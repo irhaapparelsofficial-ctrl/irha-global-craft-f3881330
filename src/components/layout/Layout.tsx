@@ -6,6 +6,7 @@ import FloatingSocialRail from "./FloatingSocialRail";
 import LiveChat from "@/components/LiveChat";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import OccasionBanner from "@/components/OccasionBanner";
+import InternalLinksBlock from "@/components/content/InternalLinksBlock";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
@@ -25,6 +26,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
+      <InternalLinksBlock />
       <Footer />
       <FloatingActions />
       <FloatingSocialRail />
