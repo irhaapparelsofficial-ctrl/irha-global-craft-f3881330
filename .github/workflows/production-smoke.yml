@@ -19,6 +19,10 @@ on:
     branches: [main]
     paths:
       - docs/POST_PUBLISH_VERIFY.md
+  pull_request:
+    branches: [main]
+    paths:
+      - docs/POST_PUBLISH_VERIFY.md
 
 permissions:
   contents: read
