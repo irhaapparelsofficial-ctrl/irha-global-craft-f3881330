@@ -13,8 +13,12 @@ on:
       propagation_minutes:
         description: Minutes to wait for Lovable/CDN propagation
         required: true
-        default: "15"
+        default: "20"
         type: string
+  push:
+    branches: [main]
+    paths:
+      - docs/POST_PUBLISH_VERIFY.md
 
 permissions:
   contents: read
@@ -29,11 +33,13 @@ env:
   IRHA_EXPECTED_PROJECT_ID: da72a40a-7df3-44c3-a72d-f180d9ffcd25
   IRHA_EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
   IRHA_EXPECTED_ORIGIN: https://www.irhaapparels.com
+  IRHA_PRIMARY_URL: https://www.irhaapparels.com
+  IRHA_DOMAIN_ALIASES: https://irhaapparels.com
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout latest main
         uses: actions/checkout@v4
@@ -47,11 +53,14 @@ jobs:
 
       - name: Wait for published release and source identity
         env:
-          IRHA_BASE_URL: ${{ inputs.base_url }}
-          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes }}
+          IRHA_BASE_URL: ${{ inputs.base_url || 'https://www.irhaapparels.com' }}
+          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes || '20' }}
         run: node scripts/wait-for-production-release.mjs
+
+      - name: Verify apex and www domain consistency
+        run: node scripts/verify-production-domains.mjs
 
       - name: Verify production pages, source identity, crawler controls and lead gateway
         env:
-          IRHA_BASE_URL: ${{ inputs.base_url }}
+          IRHA_BASE_URL: ${{ inputs.base_url || 'https://www.irhaapparels.com' }}
         run: node scripts/production-smoke-v2.mjs
