@@ -121,6 +121,7 @@ async function main() {
     "/products/bavarian-trachten-wear/women/dirndl-dresses",
     "/products/bavarian-trachten-wear/kids/girls-dirndl",
     "/products/sportswear/team-club/football-kits",
+    "/products/streetwear-activewear/unisex/hoodies-sweatshirts",
     "/intl/de/products/bavarian-trachten-wear/men/short-lederhosen",
     "/intl/fr/products/bavarian-trachten-wear/women/dirndl-dresses",
     "/intl/es/products/sportswear/team-club/football-kits",

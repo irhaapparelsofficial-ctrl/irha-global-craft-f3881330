@@ -11,7 +11,7 @@ import PageViewTracker from "@/components/PageViewTracker";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const About = lazy(() => import("./pages/About"));
-const Products = lazy(() => import("./pages/Products"));
+const AllProductsPage = lazy(() => import("./pages/AllProductsPage"));
 const GlobalCollectionsPage = lazy(() => import("./pages/GlobalCollectionsPage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const CategoryTaxonomyPage = lazy(() => import("./pages/CategoryTaxonomyPage"));
@@ -106,7 +106,7 @@ const App = () => (
                     <Routes>
                       <Route path="/about" element={<About />} />
                       <Route path="/products" element={<GlobalCollectionsPage />} />
-                      <Route path="/products/all" element={<Products />} />
+                      <Route path="/products/all" element={<AllProductsPage />} />
                       <Route path="/products/:categorySlug/all-products" element={<CategoryPage />} />
                       <Route path="/products/:categorySlug" element={<CategoryTaxonomyPage />} />
                       <Route

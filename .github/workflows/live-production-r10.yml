@@ -1,0 +1,42 @@
+name: Live Production R10 Audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-production-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --legacy-peer-deps playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Verify published R10 website
+        env:
+          IRHA_BASE_URL: https://www.irhaapparels.com
+          IRHA_LIVE_REPORT_DIR: live-production-r10-report
+        run: node scripts/live-production-r10.mjs
+
+      - name: Upload report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-production-r10-report
+          path: live-production-r10-report
+          if-no-files-found: warn
+          retention-days: 14
