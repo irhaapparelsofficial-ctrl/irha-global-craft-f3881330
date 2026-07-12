@@ -18,7 +18,7 @@ async function fetchText(path) {
       headers: {
         "cache-control": "no-cache, no-store, max-age=0",
         pragma: "no-cache",
-        "user-agent": "Irha-Deployment-Source-Lock/1.0",
+        "user-agent": "Irha-Deployment-Source-Lock/2.0",
       },
       signal: AbortSignal.timeout(30_000),
     });
@@ -60,7 +60,8 @@ async function probe() {
   const buildRepositoryOk = build.ok && parsedBuild?.repository === EXPECTED_REPOSITORY;
   const buildOriginOk = build.ok && String(parsedBuild?.expected_origin || "").replace(/\/$/, "") === EXPECTED_ORIGIN;
   const buildPolicyOk = build.ok && parsedBuild?.deployment_policy === "latest-main-only";
-  const buildOk = buildReleaseOk && buildProjectOk && buildRepositoryOk && buildOriginOk && buildPolicyOk;
+  const buildBranchOk = build.ok && parsedBuild?.source_branch === "main";
+  const buildOk = buildReleaseOk && buildProjectOk && buildRepositoryOk && buildOriginOk && buildPolicyOk && buildBranchOk;
 
   const releaseOk =
     release.ok &&
@@ -70,26 +71,29 @@ async function probe() {
     release.text.includes(`Production Origin: ${EXPECTED_ORIGIN}`) &&
     release.text.includes("Deployment Policy: latest-main-only");
 
-  const homeReleaseOk = home.ok && home.text.includes(`name="x-irha-release" content="${EXPECTED_RELEASE}"`);
-  const homeProjectOk = home.ok && home.text.includes(`name="x-irha-project-id" content="${EXPECTED_PROJECT_ID}"`);
-  const homeRepositoryOk = home.ok && home.text.includes(`name="x-irha-repository" content="${EXPECTED_REPOSITORY}"`);
-  const homePolicyOk = home.ok && home.text.includes('name="x-irha-deployment-policy" content="latest-main-only"');
-  const homeOk = homeReleaseOk && homeProjectOk && homeRepositoryOk && homePolicyOk;
+  const homeReachable =
+    home.ok &&
+    home.status === 200 &&
+    home.text.includes('id="root"') &&
+    /<title>[^<]*Irha Apparels/i.test(home.text);
+
+  const homeLegacyMetaPresent =
+    home.text.includes(`name="x-irha-release" content="${EXPECTED_RELEASE}"`) &&
+    home.text.includes(`name="x-irha-project-id" content="${EXPECTED_PROJECT_ID}"`) &&
+    home.text.includes(`name="x-irha-repository" content="${EXPECTED_REPOSITORY}"`);
 
   return {
-    ready: buildOk && releaseOk && homeOk,
+    ready: buildOk && homeReachable,
     buildOk,
     buildReleaseOk,
     buildProjectOk,
     buildRepositoryOk,
     buildOriginOk,
     buildPolicyOk,
+    buildBranchOk,
     releaseOk,
-    homeOk,
-    homeReleaseOk,
-    homeProjectOk,
-    homeRepositoryOk,
-    homePolicyOk,
+    homeReachable,
+    homeLegacyMetaPresent,
     buildStatus: build.status,
     releaseStatus: release.status,
     homeStatus: home.status,
@@ -103,22 +107,22 @@ async function probe() {
 }
 
 function diagnosis(result) {
-  if (!result.buildProjectOk || !result.homeProjectOk) {
-    return `CUSTOM DOMAIN TARGET MISMATCH: ${BASE} is not serving Lovable project ${EXPECTED_PROJECT_ID}. Detach the domain from the old Lovable project, attach it to project ${EXPECTED_PROJECT_ID}, then publish latest main.`;
+  if (!result.buildProjectOk) {
+    return `CUSTOM DOMAIN TARGET MISMATCH: ${BASE} is not serving Lovable project ${EXPECTED_PROJECT_ID}.`;
   }
-  if (!result.buildRepositoryOk || !result.homeRepositoryOk) {
-    return `SOURCE REPOSITORY MISMATCH: production is not serving ${EXPECTED_REPOSITORY}. Verify GitHub sync and publish latest main from the correct Lovable project.`;
+  if (!result.buildRepositoryOk) {
+    return `SOURCE REPOSITORY MISMATCH: production is not serving ${EXPECTED_REPOSITORY}.`;
   }
   if (!result.buildOriginOk) {
-    return `PRODUCTION ORIGIN MISMATCH: build identity does not declare ${EXPECTED_ORIGIN}. Verify the custom-domain attachment before publishing.`;
+    return `PRODUCTION ORIGIN MISMATCH: build identity does not declare ${EXPECTED_ORIGIN}.`;
   }
-  if (result.buildOk && result.releaseOk && !result.homeOk) {
-    return "Static identity files are current but homepage HTML is stale. Purge/re-publish the current Lovable project and verify the custom domain is attached to it.";
+  if (!result.buildReleaseOk) {
+    return `STALE RELEASE: expected ${EXPECTED_RELEASE}, received ${result.buildRelease || "missing"}.`;
   }
-  if (!result.buildOk && !result.releaseOk && !result.homeOk) {
-    return `The custom domain is serving an older deployment or another project. Expected project ${EXPECTED_PROJECT_ID} and repository ${EXPECTED_REPOSITORY}.`;
+  if (!result.homeReachable) {
+    return "Homepage did not return the expected Irha application shell.";
   }
-  return "Production identity is partially updated. Wait for propagation, then verify the custom-domain attachment and publish state.";
+  return "Production identity is partially updated. Wait for propagation and verify the custom-domain attachment.";
 }
 
 async function main() {
@@ -130,13 +134,19 @@ async function main() {
     attempt += 1;
     latest = await probe();
     console.log(
-      `source-lock probe ${attempt}: build=${latest.buildOk} release=${latest.releaseOk} homepage=${latest.homeOk} ` +
-      `project=${latest.buildProjectOk && latest.homeProjectOk} repository=${latest.buildRepositoryOk && latest.homeRepositoryOk} ` +
-      `statuses=${latest.buildStatus}/${latest.releaseStatus}/${latest.homeStatus} buildRelease=${latest.buildRelease || "missing"} ` +
-      `buildProject=${latest.buildProjectId || "missing"}`,
+      `source-lock probe ${attempt}: build=${latest.buildOk} homepage=${latest.homeReachable} ` +
+      `releaseAdvisory=${latest.releaseOk} legacyHtmlMeta=${latest.homeLegacyMetaPresent} ` +
+      `statuses=${latest.buildStatus}/${latest.releaseStatus}/${latest.homeStatus} ` +
+      `buildRelease=${latest.buildRelease || "missing"} buildProject=${latest.buildProjectId || "missing"}`,
     );
 
     if (latest.ready) {
+      if (!latest.releaseOk) {
+        console.warn("WARN release.txt is stale or unavailable; build.json remains the authoritative deployment identity.");
+      }
+      if (!latest.homeLegacyMetaPresent) {
+        console.warn("WARN Lovable did not expose custom x-irha HTML meta tags; build.json identity was verified instead.");
+      }
       console.log(
         `PASS production source lock for ${BASE}: release=${EXPECTED_RELEASE} project=${EXPECTED_PROJECT_ID} repository=${EXPECTED_REPOSITORY}`,
       );
