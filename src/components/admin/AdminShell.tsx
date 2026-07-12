@@ -13,6 +13,7 @@ import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 import LeadCampaignBlueprints from "@/components/admin/LeadCampaignBlueprints";
 import BuyerQualificationOverview from "@/components/admin/BuyerQualificationOverview";
 import BuyerReplyStudio from "@/components/admin/BuyerReplyStudio";
+import SalesPipelinePanel from "@/components/admin/SalesPipelinePanel";
 import WhatsAppInboxPanel from "@/components/admin/WhatsAppInboxPanel";
 import QuotationReadinessPanel from "@/components/admin/QuotationReadinessPanel";
 import ProductionWorkflowPanel from "@/components/admin/ProductionWorkflowPanel";
@@ -33,7 +34,7 @@ export type AdminView =
   | "overview"
   | "products" | "categories" | "catalogues"
   | "website" | "content" | "seo"
-  | "lead_engine" | "leads" | "chat" | "whatsapp" | "mailing"
+  | "lead_engine" | "pipeline" | "leads" | "chat" | "whatsapp" | "mailing"
   | "rules" | "ai"
   | "studio" | "pi" | "production" | "directory"
   | "social" | "devops" | "listings"
@@ -57,9 +58,10 @@ const NAV: NavGroup[] = [
     { key: "content", label: "Content Library", icon: FileText },
     { key: "seo", label: "Multilingual SEO", icon: Search },
   ]},
-  { title: "Leads & Communication", items: [
-    { key: "lead_engine", label: "Lead Acquisition", icon: UserSearch },
+  { title: "Sales & Communication", items: [
+    { key: "pipeline", label: "Sales Pipeline", icon: ListChecks },
     { key: "leads", label: "Buyer Inbox", icon: Users },
+    { key: "lead_engine", label: "Lead Acquisition", icon: UserSearch },
     { key: "chat", label: "Live Chat", icon: MessageSquare },
     { key: "whatsapp", label: "WhatsApp Business", icon: MessageCircle },
     { key: "mailing", label: "Mailing", icon: Send },
@@ -162,35 +164,37 @@ export function AdminShell({
     ? <><ListingLaunchKit /><ListingsPanel /></>
     : view === "lead_engine"
       ? <><LeadCampaignBlueprints /><LeadAcquisitionPanel /></>
-      : view === "leads"
-        ? <><BuyerQualificationOverview /><BuyerReplyStudio />{children}</>
-        : view === "whatsapp"
-          ? <WhatsAppInboxPanel />
-          : view === "pi"
-            ? <><QuotationReadinessPanel />{children}</>
-            : view === "production"
-              ? <ProductionWorkflowPanel />
-              : view === "products" || view === "categories"
-                ? <><CatalogReleaseStatus />{children}</>
-                : view === "website"
-                  ? <WebsiteEditorPanel />
-                  : view === "content"
-                    ? <ContentCmsPanel />
-                    : view === "seo"
-                      ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
-                      : view === "gsc"
-                        ? <GoogleSearchCenter />
-                        : view === "system"
-                          ? <ProductionHealthPanel />
-                          : view === "rules"
-                            ? <BusinessRulesPanel />
-                            : view === "ai"
-                              ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
-                              : view === "mailing"
-                                ? <><OutreachTemplateLibrary />{children}</>
-                                : view === "social"
-                                  ? <><SocialContentPlaybook />{children}</>
-                                  : children;
+      : view === "pipeline"
+        ? <SalesPipelinePanel />
+        : view === "leads"
+          ? <><BuyerQualificationOverview /><BuyerReplyStudio />{children}</>
+          : view === "whatsapp"
+            ? <WhatsAppInboxPanel />
+            : view === "pi"
+              ? <><QuotationReadinessPanel />{children}</>
+              : view === "production"
+                ? <ProductionWorkflowPanel />
+                : view === "products" || view === "categories"
+                  ? <><CatalogReleaseStatus />{children}</>
+                  : view === "website"
+                    ? <WebsiteEditorPanel />
+                    : view === "content"
+                      ? <ContentCmsPanel />
+                      : view === "seo"
+                        ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
+                        : view === "gsc"
+                          ? <GoogleSearchCenter />
+                          : view === "system"
+                            ? <ProductionHealthPanel />
+                            : view === "rules"
+                              ? <BusinessRulesPanel />
+                              : view === "ai"
+                                ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
+                                : view === "mailing"
+                                  ? <><OutreachTemplateLibrary />{children}</>
+                                  : view === "social"
+                                    ? <><SocialContentPlaybook />{children}</>
+                                    : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
