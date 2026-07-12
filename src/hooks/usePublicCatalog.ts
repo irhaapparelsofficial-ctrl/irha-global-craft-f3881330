@@ -1,8 +1,10 @@
 // Public catalog data layer for the live buyer-facing website.
-// The committed Lovable/GitHub catalog and verified local media are the source of truth.
-// No external Supabase project is required for public category or product rendering.
+// Verified committed media/catalog data remains a resilient fallback, while the
+// audited database release overlays owner-approved edits, new records and
+// unpublish controls from Admin.
 
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
 import { CATEGORIES, type Product as LegacyProduct } from "@/lib/categories";
 import { CATALOG, type CategoryGroup, type SubCategory } from "@/lib/catalog";
@@ -25,9 +27,34 @@ export type PublicTopCategory = DbCategory & {
   directProducts: DbProduct[];
 };
 
+type ReleaseCategory = DbCategory & {
+  parent_slug?: string | null;
+  updated_at?: string;
+};
+
+type ReleaseProduct = DbProduct & {
+  category_slug: string;
+  parent_slug?: string | null;
+  updated_at?: string;
+};
+
+type HiddenProduct = {
+  category_slug: string;
+  parent_slug?: string | null;
+  product_slug: string;
+};
+
+type CatalogRelease = {
+  categories: ReleaseCategory[];
+  products: ReleaseProduct[];
+  hiddenCategorySlugs: string[];
+  hiddenProducts: HiddenProduct[];
+  releasedAt: string | null;
+};
+
 const K = {
-  tree: ["public-catalog", "local-tree"] as const,
-  product: (category: string, product: string) => ["public-catalog", "local-product", category, product] as const,
+  tree: ["public-catalog", "release-tree-v1"] as const,
+  product: (category: string, product: string) => ["public-catalog", "release-product-v1", category, product] as const,
 };
 
 const BLOCKED_PUBLIC_TERMS = [
@@ -232,12 +259,127 @@ function buildLocalTree(): PublicTopCategory[] {
 
 const LOCAL_TREE = buildLocalTree();
 
+function cloneLocalTree(): PublicTopCategory[] {
+  return LOCAL_TREE.map((top) => ({
+    ...top,
+    details: [...(top.details ?? [])],
+    directProducts: top.directProducts.map((product) => ({ ...product })),
+    subs: top.subs.map((sub) => ({
+      ...sub,
+      details: [...(sub.details ?? [])],
+      products: sub.products.map((product) => ({ ...product })),
+    })),
+  }));
+}
+
+function categoryMatches(local: PublicSubCategory, released: ReleaseCategory) {
+  if (local.slug === released.slug) return true;
+  if (released.slug.endsWith(`-${local.slug}`)) return true;
+  return slugify(local.name) === slugify(released.name);
+}
+
+function normalizeRelease(value: unknown): CatalogRelease | null {
+  if (!value || typeof value !== "object") return null;
+  const release = value as Partial<CatalogRelease>;
+  if (!Array.isArray(release.categories) || !Array.isArray(release.products)) return null;
+  return {
+    categories: release.categories,
+    products: release.products,
+    hiddenCategorySlugs: Array.isArray(release.hiddenCategorySlugs) ? release.hiddenCategorySlugs : [],
+    hiddenProducts: Array.isArray(release.hiddenProducts) ? release.hiddenProducts : [],
+    releasedAt: typeof release.releasedAt === "string" ? release.releasedAt : null,
+  };
+}
+
+function mergeRelease(release: CatalogRelease): PublicTopCategory[] {
+  const tree = cloneLocalTree();
+  const hiddenCategories = new Set(release.hiddenCategorySlugs);
+  const hiddenProducts = new Set(
+    release.hiddenProducts.map((item) => `${item.category_slug}:${item.product_slug}`),
+  );
+  const releasedTop = release.categories.filter((category) => !category.parent_id);
+  const releasedSubs = release.categories.filter((category) => Boolean(category.parent_id));
+
+  return tree
+    .filter((top) => !hiddenCategories.has(top.slug))
+    .map((localTop) => {
+      const topOverride = releasedTop.find((category) => category.slug === localTop.slug);
+      const top: PublicTopCategory = {
+        ...localTop,
+        ...(topOverride || {}),
+        parent_id: null,
+        subs: [],
+        directProducts: [],
+      };
+
+      const topReleasedSubs = releasedSubs.filter((category) => category.parent_slug === top.slug);
+      const matchedReleasedIds = new Set<string>();
+
+      for (const localSub of localTop.subs) {
+        const releasedSub = topReleasedSubs.find((category) => categoryMatches(localSub, category));
+        if (releasedSub && hiddenCategories.has(releasedSub.slug)) continue;
+        if (releasedSub) matchedReleasedIds.add(releasedSub.id);
+
+        const categorySlug = releasedSub?.slug ?? localSub.slug;
+        const databaseProducts = release.products.filter((product) => product.category_slug === categorySlug);
+        const databaseBySlug = new Map(databaseProducts.map((product) => [product.slug, product]));
+        const products = localSub.products
+          .filter((product) => !hiddenProducts.has(`${categorySlug}:${product.slug}`))
+          .map((product) => {
+            const override = databaseBySlug.get(product.slug);
+            if (!override) return sanitizePublicProduct(product);
+            databaseBySlug.delete(product.slug);
+            return sanitizePublicProduct({ ...product, ...override });
+          });
+
+        for (const product of databaseBySlug.values()) {
+          products.push(sanitizePublicProduct(product));
+        }
+
+        products.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+        top.subs.push({
+          ...localSub,
+          ...(releasedSub || {}),
+          parent_id: top.id,
+          products,
+        });
+      }
+
+      for (const releasedSub of topReleasedSubs) {
+        if (matchedReleasedIds.has(releasedSub.id) || hiddenCategories.has(releasedSub.slug)) continue;
+        const products = release.products
+          .filter((product) => product.category_slug === releasedSub.slug)
+          .map(sanitizePublicProduct)
+          .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+        top.subs.push({ ...releasedSub, parent_id: top.id, products });
+      }
+
+      top.directProducts = release.products
+        .filter((product) => product.category_slug === top.slug)
+        .map(sanitizePublicProduct)
+        .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+      top.subs.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+      return top;
+    })
+    .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+}
+
 async function fetchTree(): Promise<PublicTopCategory[]> {
-  return LOCAL_TREE;
+  const db = supabase as any;
+  const { data, error } = await db.rpc("catalog_get_public_release");
+  if (error) return cloneLocalTree();
+  const release = normalizeRelease(data);
+  return release ? mergeRelease(release) : cloneLocalTree();
 }
 
 export function usePublicCatalogTree() {
-  return useQuery({ queryKey: K.tree, queryFn: fetchTree, staleTime: Infinity, gcTime: Infinity });
+  return useQuery({
+    queryKey: K.tree,
+    queryFn: fetchTree,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+  });
 }
 
 export function usePublicTopCategory(slug?: string) {
@@ -250,11 +392,14 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
   return useQuery({
     queryKey: K.product(categorySlug ?? "", productSlug ?? ""),
     enabled: Boolean(categorySlug && productSlug),
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
     queryFn: async () => {
-      const top = LOCAL_TREE.find((category) => category.slug === categorySlug) ?? null;
+      const tree = await fetchTree();
+      const top = tree.find((category) => category.slug === categorySlug) ?? null;
       if (!top) return null;
+      const directProduct = top.directProducts.find((candidate) => candidate.slug === productSlug);
+      if (directProduct) return { product: directProduct, subCategory: null, topCategory: top };
       for (const sub of top.subs) {
         const product = sub.products.find((candidate) => candidate.slug === productSlug);
         if (product) return { product, subCategory: sub, topCategory: top };
