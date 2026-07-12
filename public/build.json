@@ -1,3 +1,9 @@
 {
-  "release": "frontend-live-2026-07-12-r10"
+  "release": "frontend-live-2026-07-12-r10",
+  "release_text": "IRHA_FRONTEND_LIVE_2026_07_12_R10",
+  "lovable_project_id": "da72a40a-7df3-44c3-a72d-f180d9ffcd25",
+  "repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330",
+  "source_branch": "main",
+  "expected_origin": "https://www.irhaapparels.com",
+  "deployment_policy": "latest-main-only"
 }

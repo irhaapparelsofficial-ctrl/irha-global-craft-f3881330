@@ -23,6 +23,13 @@ concurrency:
   group: production-smoke
   cancel-in-progress: true
 
+env:
+  IRHA_EXPECTED_RELEASE: frontend-live-2026-07-12-r10
+  IRHA_EXPECTED_RELEASE_TEXT: IRHA_FRONTEND_LIVE_2026_07_12_R10
+  IRHA_EXPECTED_PROJECT_ID: da72a40a-7df3-44c3-a72d-f180d9ffcd25
+  IRHA_EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
+  IRHA_EXPECTED_ORIGIN: https://www.irhaapparels.com
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -38,15 +45,13 @@ jobs:
         with:
           node-version: 24
 
-      - name: Wait for published release propagation
+      - name: Wait for published release and source identity
         env:
           IRHA_BASE_URL: ${{ inputs.base_url }}
-          IRHA_EXPECTED_RELEASE: frontend-live-2026-07-12-r10
-          IRHA_EXPECTED_RELEASE_TEXT: IRHA_FRONTEND_LIVE_2026_07_12_R10
           IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes }}
         run: node scripts/wait-for-production-release.mjs
 
-      - name: Verify production pages, crawler controls and lead gateway
+      - name: Verify production pages, source identity, crawler controls and lead gateway
         env:
           IRHA_BASE_URL: ${{ inputs.base_url }}
         run: node scripts/production-smoke-v2.mjs

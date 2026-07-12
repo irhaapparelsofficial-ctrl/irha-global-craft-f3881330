@@ -11,8 +11,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "verify:deployment-source": "node scripts/verify-deployment-source.mjs",
     "predev": "npx tsx scripts/generate-sitemap.ts",
-    "prebuild": "npx tsx scripts/generate-sitemap.ts",
+    "prebuild": "node scripts/verify-deployment-source.mjs && npx tsx scripts/generate-sitemap.ts",
     "postbuild": "node scripts/ping-search-engines.mjs"
   },
   "dependencies": {
@@ -91,7 +92,6 @@
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
     "sharp": "^0.35.1",
-    "tailwindcss": "^3.4.17",
     "tsx": "^4.22.4",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
