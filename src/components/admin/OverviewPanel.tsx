@@ -4,6 +4,7 @@ import { Package, Layers, Users, Inbox, MessageSquare, BarChart3, Sparkles, Plus
 import type { AdminView } from "./AdminShell";
 import OwnerOperationsCenter from "./OwnerOperationsCenter";
 import SalesActionCenter from "./SalesActionCenter";
+import AutomationControlCenter from "./AutomationControlCenter";
 
 type Counts = {
   products: number;
@@ -103,6 +104,7 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
 
       <OwnerOperationsCenter go={go} />
       <SalesActionCenter go={go} />
+      <AutomationControlCenter />
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="border border-border/60 bg-card/30 p-5">
