@@ -37,6 +37,7 @@ env:
   IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release }}
   IRHA_EXPECTED_RELEASE_TEXT: ${{ inputs.expected_release_text }}
   IRHA_EXPECTED_PROJECT_ID: da72a40a-7df3-44c3-a72d-f180d9ffcd25
+  IRHA_EXPECTED_SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
   IRHA_EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
   IRHA_EXPECTED_ORIGIN: https://www.irhaapparels.com
   IRHA_PRIMARY_URL: https://www.irhaapparels.com
@@ -66,7 +67,7 @@ jobs:
       - name: Verify apex and www domain consistency
         run: node scripts/verify-production-domains.mjs
 
-      - name: Verify production pages, crawler controls and public lead gateway
+      - name: Verify production pages, crawler controls and owner backend
         env:
           IRHA_BASE_URL: ${{ inputs.base_url }}
         run: node scripts/production-smoke-v2.mjs
