@@ -1,6 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { usePublishedCmsDocument } from "@/hooks/usePublishedCmsDocument";
+import {
+  DEFAULT_HERO_CONTENT,
+  HOME_HERO_DOCUMENT_KEY,
+  normalizeHeroContent,
+  type HeroCmsContent,
+} from "@/lib/cms";
 
 import bavarian from "@/assets/og/og-bavarian-hero.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import bavarianFb from "@/assets/og/og-bavarian-hero.jpg?w=1600&format=webp&quality=74";
@@ -21,50 +28,44 @@ type Slide = {
   ctaHref: string;
 };
 
-const SLIDES: Slide[] = [
+const BASE_SLIDES: Slide[] = [
   {
     src: bavarianFb,
     srcSet: bavarian,
     alt: "Bavarian lederhosen with decorative embroidery — Irha Apparels",
-    eyebrow: "Sialkot · Custom B2B Manufacturing",
-    title: "Bavarian Wear",
-    highlight: "Program-Based",
-    subtitle: "Custom lederhosen, dirndl and Trachten programs for wholesalers, retailers and private-label buyers.",
-    ctaLabel: "View Collection",
-    ctaHref: "/products/bavarian-trachten-wear",
+    ...DEFAULT_HERO_CONTENT.slides[0],
   },
   {
     src: sportswearFb,
     srcSet: sportswear,
     alt: "Custom sportswear and streetwear apparel",
-    eyebrow: "OEM · ODM · Private Label",
-    title: "Streetwear & Sportswear",
-    highlight: "Made to Requirement",
-    subtitle: "Custom sportswear, tracksuits and streetwear programs developed around buyer specifications.",
-    ctaLabel: "View Collection",
-    ctaHref: "/products/sportswear",
+    ...DEFAULT_HERO_CONTENT.slides[1],
   },
   {
     src: leatherFb,
     srcSet: leather,
     alt: "Custom leather jacket production concept",
-    eyebrow: "Custom Leather Programs",
-    title: "Leather Apparel",
-    highlight: "Requirement-Led",
-    subtitle: "Custom leather jackets and apparel programs reviewed against material, construction and branding requirements.",
-    ctaLabel: "View Collection",
-    ctaHref: "/products/premium-leather-apparel",
+    ...DEFAULT_HERO_CONTENT.slides[2],
   },
 ];
 
 const INTERVAL = 5000;
 
 export default function HeroCarousel() {
+  const { data: publishedContent } = usePublishedCmsDocument<HeroCmsContent>(
+    HOME_HERO_DOCUMENT_KEY,
+    DEFAULT_HERO_CONTENT,
+  );
+  const slides = useMemo(() => {
+    const content = normalizeHeroContent(publishedContent);
+    return BASE_SLIDES.map((slide, index) => ({ ...slide, ...content.slides[index] }));
+  }, [publishedContent]);
+
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [loaded, setLoaded] = useState<Set<number>>(() => new Set([0]));
   const touchStartX = useRef<number | null>(null);
-  const count = SLIDES.length;
+  const count = slides.length;
 
   const go = useCallback((next: number) => {
     const n = ((next % count) + count) % count;
@@ -111,7 +112,7 @@ export default function HeroCarousel() {
     >
       <h1 className="sr-only">Custom Apparel Manufacturer for Global B2B Buyers</h1>
 
-      {SLIDES.map((slide, slideIndex) => {
+      {slides.map((slide, slideIndex) => {
         const shouldLoad = loaded.has(slideIndex);
         return (
           <img
@@ -131,7 +132,7 @@ export default function HeroCarousel() {
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20" />
 
-      {SLIDES.map((slide, slideIndex) => (
+      {slides.map((slide, slideIndex) => (
         <div
           key={`content-${slideIndex}`}
           className={`absolute inset-0 z-10 flex items-center transition-opacity duration-[1000ms] ${slideIndex === index ? "opacity-100" : "opacity-0 pointer-events-none"}`}
@@ -166,7 +167,7 @@ export default function HeroCarousel() {
       </button>
 
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-        {SLIDES.map((_, slideIndex) => (
+        {slides.map((_, slideIndex) => (
           <button
             key={slideIndex}
             type="button"
