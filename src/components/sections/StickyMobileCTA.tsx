@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { MessageCircle, Send } from "lucide-react";
-import { whatsappLink } from "@/lib/constants";
+import { useGlobalSettings } from "@/hooks/useSiteConfiguration";
+import { globalWhatsappLink } from "@/lib/siteConfiguration";
 
 export default function StickyMobileCTA() {
+  const { data: settings } = useGlobalSettings();
+
   return (
     <div
       className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-2 border-t border-border/60 bg-background/95 backdrop-blur"
@@ -16,9 +19,9 @@ export default function StickyMobileCTA() {
         <Send size={14} /> Get Quote
       </Link>
       <a
-        href={whatsappLink()}
+        href={globalWhatsappLink(settings)}
         target="_blank"
-        rel="noreferrer"
+        rel="noreferrer noopener"
         aria-label="Chat on WhatsApp"
         className="flex items-center justify-center gap-2 bg-card border-l border-border/60 py-3.5 text-[11px] uppercase tracking-[0.25em] font-medium text-foreground min-h-11"
       >
