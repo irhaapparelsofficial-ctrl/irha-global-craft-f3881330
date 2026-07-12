@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Home, Package, Layers, BookOpen, Search,
-  Users, MessageSquare, Send, Sparkles, Cpu, ScrollText,
+  Users, MessageSquare, MessageCircle, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
   BarChart3, ListChecks, UserSearch, BookKey, Factory,
 } from "lucide-react";
@@ -13,6 +13,7 @@ import LeadAcquisitionPanel from "@/components/admin/LeadAcquisitionPanel";
 import LeadCampaignBlueprints from "@/components/admin/LeadCampaignBlueprints";
 import BuyerQualificationOverview from "@/components/admin/BuyerQualificationOverview";
 import BuyerReplyStudio from "@/components/admin/BuyerReplyStudio";
+import WhatsAppInboxPanel from "@/components/admin/WhatsAppInboxPanel";
 import QuotationReadinessPanel from "@/components/admin/QuotationReadinessPanel";
 import ProductionWorkflowPanel from "@/components/admin/ProductionWorkflowPanel";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
@@ -29,7 +30,7 @@ export type AdminView =
   | "overview"
   | "products" | "categories" | "catalogues"
   | "seo"
-  | "lead_engine" | "leads" | "chat" | "mailing"
+  | "lead_engine" | "leads" | "chat" | "whatsapp" | "mailing"
   | "rules" | "ai"
   | "studio" | "pi" | "production" | "directory"
   | "social" | "devops" | "listings"
@@ -55,6 +56,7 @@ const NAV: NavGroup[] = [
     { key: "lead_engine", label: "Lead Acquisition", icon: UserSearch },
     { key: "leads", label: "Buyer Inbox", icon: Users },
     { key: "chat", label: "Live Chat", icon: MessageSquare },
+    { key: "whatsapp", label: "WhatsApp Business", icon: MessageCircle },
     { key: "mailing", label: "Mailing", icon: Send },
   ]},
   { title: "AI", items: [
@@ -157,25 +159,27 @@ export function AdminShell({
       ? <><LeadCampaignBlueprints /><LeadAcquisitionPanel /></>
       : view === "leads"
         ? <><BuyerQualificationOverview /><BuyerReplyStudio />{children}</>
-        : view === "pi"
-          ? <><QuotationReadinessPanel />{children}</>
-          : view === "production"
-            ? <ProductionWorkflowPanel />
-            : view === "seo"
-              ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
-              : view === "gsc"
-                ? <GoogleSearchCenter />
-                : view === "system"
-                  ? <ProductionHealthPanel />
-                  : view === "rules"
-                    ? <BusinessRulesPanel />
-                    : view === "ai"
-                      ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
-                      : view === "mailing"
-                        ? <><OutreachTemplateLibrary />{children}</>
-                        : view === "social"
-                          ? <><SocialContentPlaybook />{children}</>
-                          : children;
+        : view === "whatsapp"
+          ? <WhatsAppInboxPanel />
+          : view === "pi"
+            ? <><QuotationReadinessPanel />{children}</>
+            : view === "production"
+              ? <ProductionWorkflowPanel />
+              : view === "seo"
+                ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
+                : view === "gsc"
+                  ? <GoogleSearchCenter />
+                  : view === "system"
+                    ? <ProductionHealthPanel />
+                    : view === "rules"
+                      ? <BusinessRulesPanel />
+                      : view === "ai"
+                        ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
+                        : view === "mailing"
+                          ? <><OutreachTemplateLibrary />{children}</>
+                          : view === "social"
+                            ? <><SocialContentPlaybook />{children}</>
+                            : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
