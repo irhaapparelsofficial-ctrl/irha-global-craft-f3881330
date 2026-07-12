@@ -28,6 +28,12 @@ concurrency:
   group: live-production-r10-audit
   cancel-in-progress: true
 
+env:
+  IRHA_EXPECTED_RELEASE_TEXT: IRHA_FRONTEND_LIVE_2026_07_12_R10
+  IRHA_EXPECTED_PROJECT_ID: da72a40a-7df3-44c3-a72d-f180d9ffcd25
+  IRHA_EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
+  IRHA_EXPECTED_ORIGIN: https://www.irhaapparels.com
+
 jobs:
   live-production-audit:
     runs-on: ubuntu-latest
@@ -43,11 +49,10 @@ jobs:
         with:
           node-version: 24
 
-      - name: Wait for published release propagation
+      - name: Wait for published release and source identity
         env:
           IRHA_BASE_URL: ${{ inputs.base_url }}
           IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release }}
-          IRHA_EXPECTED_RELEASE_TEXT: IRHA_FRONTEND_LIVE_2026_07_12_R10
           IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes }}
         run: node scripts/wait-for-production-release.mjs
 
@@ -60,7 +65,6 @@ jobs:
         env:
           IRHA_BASE_URL: ${{ inputs.base_url }}
           IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release }}
-          IRHA_EXPECTED_RELEASE_TEXT: IRHA_FRONTEND_LIVE_2026_07_12_R10
           IRHA_LIVE_REPORT_DIR: live-production-r10-report
         run: node scripts/live-production-r10.mjs
 
