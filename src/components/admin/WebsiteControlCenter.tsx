@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Image, LayoutTemplate, Settings2 } from "lucide-react";
-import WebsiteEditorPanel from "@/components/admin/WebsiteEditorPanel";
+import HeroWebsiteEditorPanel from "@/components/admin/HeroWebsiteEditorPanel";
 import GlobalSiteSettingsPanel from "@/components/admin/GlobalSiteSettingsPanel";
 import MediaLibraryPanel from "@/components/admin/MediaLibraryPanel";
 
@@ -23,7 +23,7 @@ export default function WebsiteControlCenter() {
         })}
       </div>
       {tab === "global" && <GlobalSiteSettingsPanel />}
-      {tab === "homepage" && <WebsiteEditorPanel />}
+      {tab === "homepage" && <HeroWebsiteEditorPanel />}
       {tab === "media" && <MediaLibraryPanel />}
     </div>
   );
