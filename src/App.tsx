@@ -39,6 +39,8 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const BuyerTrust = lazy(() => import("./pages/BuyerTrust"));
 const BuyerResources = lazy(() => import("./pages/BuyerResources"));
 const FactoryVideoCall = lazy(() => import("./pages/FactoryVideoCall"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 const queryClient = new QueryClient();
 
@@ -139,6 +141,8 @@ const App = () => (
                       <Route path="/factory-video-call" element={<FactoryVideoCall />} />
                       <Route path="/resources" element={<BuyerResources />} />
                       <Route path="/faq" element={<FAQ />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:slug" element={<BlogPost />} />
                       <Route path="/sustainability" element={<Navigate to="/inquiry?intent=rfq" replace />} />
                       <Route path="/shipping-returns" element={<Navigate to="/resources#shipping-questions" replace />} />
                       <Route path="/inquiry" element={<Inquiry />} />
@@ -157,10 +161,8 @@ const App = () => (
                       <Route path="/studio" element={<Studio />} />
                       <Route path="/shortlist" element={<Shortlist />} />
                       <Route path="/compare" element={<Compare />} />
-                      <Route path="/blog" element={<Navigate to="/resources" replace />} />
-                      <Route path="/blog/:slug" element={<Navigate to="/resources" replace />} />
-                      <Route path="/journal" element={<Navigate to="/resources" replace />} />
-                      <Route path="/journal/:slug" element={<Navigate to="/resources" replace />} />
+                      <Route path="/journal" element={<Navigate to="/blog" replace />} />
+                      <Route path="/journal/:slug" element={<Navigate to="/blog" replace />} />
                       {LEGACY_REDIRECTS.map(([from, to]) => (
                         <Route key={from} path={from} element={<Navigate to={to} replace />} />
                       ))}

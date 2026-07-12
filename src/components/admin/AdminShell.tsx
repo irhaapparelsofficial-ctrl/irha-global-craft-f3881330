@@ -4,7 +4,7 @@ import {
   Home, Package, Layers, BookOpen, Search,
   Users, MessageSquare, MessageCircle, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
-  BarChart3, ListChecks, UserSearch, BookKey, Factory, LayoutTemplate,
+  BarChart3, ListChecks, UserSearch, BookKey, Factory, LayoutTemplate, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
@@ -17,6 +17,7 @@ import WhatsAppInboxPanel from "@/components/admin/WhatsAppInboxPanel";
 import QuotationReadinessPanel from "@/components/admin/QuotationReadinessPanel";
 import ProductionWorkflowPanel from "@/components/admin/ProductionWorkflowPanel";
 import WebsiteEditorPanel from "@/components/admin/WebsiteEditorPanel";
+import ContentCmsPanel from "@/components/admin/ContentCmsPanel";
 import CatalogReleaseStatus from "@/components/admin/CatalogReleaseStatus";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import SeoReleaseReadiness from "@/components/admin/SeoReleaseReadiness";
@@ -31,7 +32,7 @@ import SocialContentPlaybook from "@/components/admin/SocialContentPlaybook";
 export type AdminView =
   | "overview"
   | "products" | "categories" | "catalogues"
-  | "website" | "seo"
+  | "website" | "content" | "seo"
   | "lead_engine" | "leads" | "chat" | "whatsapp" | "mailing"
   | "rules" | "ai"
   | "studio" | "pi" | "production" | "directory"
@@ -53,6 +54,7 @@ const NAV: NavGroup[] = [
   ]},
   { title: "Content & SEO", items: [
     { key: "website", label: "Website Editor", icon: LayoutTemplate },
+    { key: "content", label: "Content Library", icon: FileText },
     { key: "seo", label: "Multilingual SEO", icon: Search },
   ]},
   { title: "Leads & Communication", items: [
@@ -172,21 +174,23 @@ export function AdminShell({
                 ? <><CatalogReleaseStatus />{children}</>
                 : view === "website"
                   ? <WebsiteEditorPanel />
-                  : view === "seo"
-                    ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
-                    : view === "gsc"
-                      ? <GoogleSearchCenter />
-                      : view === "system"
-                        ? <ProductionHealthPanel />
-                        : view === "rules"
-                          ? <BusinessRulesPanel />
-                          : view === "ai"
-                            ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
-                            : view === "mailing"
-                              ? <><OutreachTemplateLibrary />{children}</>
-                              : view === "social"
-                                ? <><SocialContentPlaybook />{children}</>
-                                : children;
+                  : view === "content"
+                    ? <ContentCmsPanel />
+                    : view === "seo"
+                      ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
+                      : view === "gsc"
+                        ? <GoogleSearchCenter />
+                        : view === "system"
+                          ? <ProductionHealthPanel />
+                          : view === "rules"
+                            ? <BusinessRulesPanel />
+                            : view === "ai"
+                              ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
+                              : view === "mailing"
+                                ? <><OutreachTemplateLibrary />{children}</>
+                                : view === "social"
+                                  ? <><SocialContentPlaybook />{children}</>
+                                  : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
