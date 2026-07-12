@@ -14,6 +14,7 @@ import LeadCampaignBlueprints from "@/components/admin/LeadCampaignBlueprints";
 import BuyerQualificationOverview from "@/components/admin/BuyerQualificationOverview";
 import BuyerReplyStudio from "@/components/admin/BuyerReplyStudio";
 import SalesPipelinePanel from "@/components/admin/SalesPipelinePanel";
+import Buyer360Panel from "@/components/admin/Buyer360Panel";
 import WhatsAppInboxPanel from "@/components/admin/WhatsAppInboxPanel";
 import QuotationReadinessPanel from "@/components/admin/QuotationReadinessPanel";
 import ProductionWorkflowPanel from "@/components/admin/ProductionWorkflowPanel";
@@ -34,7 +35,7 @@ export type AdminView =
   | "overview"
   | "products" | "categories" | "catalogues"
   | "website" | "content" | "seo"
-  | "lead_engine" | "pipeline" | "leads" | "chat" | "whatsapp" | "mailing"
+  | "lead_engine" | "pipeline" | "buyer360" | "leads" | "chat" | "whatsapp" | "mailing"
   | "rules" | "ai"
   | "studio" | "pi" | "production" | "directory"
   | "social" | "devops" | "listings"
@@ -60,6 +61,7 @@ const NAV: NavGroup[] = [
   ]},
   { title: "Sales & Communication", items: [
     { key: "pipeline", label: "Sales Pipeline", icon: ListChecks },
+    { key: "buyer360", label: "Buyer 360", icon: Users },
     { key: "leads", label: "Buyer Inbox", icon: Users },
     { key: "lead_engine", label: "Lead Acquisition", icon: UserSearch },
     { key: "chat", label: "Live Chat", icon: MessageSquare },
@@ -166,35 +168,37 @@ export function AdminShell({
       ? <><LeadCampaignBlueprints /><LeadAcquisitionPanel /></>
       : view === "pipeline"
         ? <SalesPipelinePanel />
-        : view === "leads"
-          ? <><BuyerQualificationOverview /><BuyerReplyStudio />{children}</>
-          : view === "whatsapp"
-            ? <WhatsAppInboxPanel />
-            : view === "pi"
-              ? <><QuotationReadinessPanel />{children}</>
-              : view === "production"
-                ? <ProductionWorkflowPanel />
-                : view === "products" || view === "categories"
-                  ? <><CatalogReleaseStatus />{children}</>
-                  : view === "website"
-                    ? <WebsiteEditorPanel />
-                    : view === "content"
-                      ? <ContentCmsPanel />
-                      : view === "seo"
-                        ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
-                        : view === "gsc"
-                          ? <GoogleSearchCenter />
-                          : view === "system"
-                            ? <ProductionHealthPanel />
-                            : view === "rules"
-                              ? <BusinessRulesPanel />
-                              : view === "ai"
-                                ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
-                                : view === "mailing"
-                                  ? <><OutreachTemplateLibrary />{children}</>
-                                  : view === "social"
-                                    ? <><SocialContentPlaybook />{children}</>
-                                    : children;
+        : view === "buyer360"
+          ? <Buyer360Panel />
+          : view === "leads"
+            ? <><BuyerQualificationOverview /><BuyerReplyStudio />{children}</>
+            : view === "whatsapp"
+              ? <WhatsAppInboxPanel />
+              : view === "pi"
+                ? <><QuotationReadinessPanel />{children}</>
+                : view === "production"
+                  ? <ProductionWorkflowPanel />
+                  : view === "products" || view === "categories"
+                    ? <><CatalogReleaseStatus />{children}</>
+                    : view === "website"
+                      ? <WebsiteEditorPanel />
+                      : view === "content"
+                        ? <ContentCmsPanel />
+                        : view === "seo"
+                          ? <><SeoReleaseReadiness /><MultilingualSeoPanel /></>
+                          : view === "gsc"
+                            ? <GoogleSearchCenter />
+                            : view === "system"
+                              ? <ProductionHealthPanel />
+                              : view === "rules"
+                                ? <BusinessRulesPanel />
+                                : view === "ai"
+                                  ? <><AIRulesEnforcementStatus /><AIOperationsPlaybook />{children}</>
+                                  : view === "mailing"
+                                    ? <><OutreachTemplateLibrary />{children}</>
+                                    : view === "social"
+                                      ? <><SocialContentPlaybook />{children}</>
+                                      : children;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
