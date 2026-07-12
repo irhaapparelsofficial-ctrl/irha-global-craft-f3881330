@@ -11,6 +11,7 @@ type Props = {
   title: string;
   description: string;
   path?: string;
+  canonical?: string;
   image?: string;
   jsonLd?: object | object[];
   noindex?: boolean;
@@ -39,6 +40,7 @@ export default function SEO({
   title,
   description,
   path,
+  canonical,
   image,
   jsonLd,
   noindex,
@@ -56,7 +58,7 @@ export default function SEO({
 
   const effectiveTitle = override?.seo_title || title;
   const effectiveDescription = override?.seo_description || description;
-  const canonicalValue = override?.canonical_url || effectivePath;
+  const canonicalValue = override?.canonical_url || canonical || effectivePath;
   const url = absoluteUrl(canonicalValue);
   const ogImage = absoluteUrl(override?.og_image_url || image || defaultSocialImage);
   const effectiveJsonLd = override?.json_ld || jsonLd;
