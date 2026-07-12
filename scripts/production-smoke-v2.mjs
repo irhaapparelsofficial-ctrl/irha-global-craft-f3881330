@@ -1,6 +1,9 @@
-const BASE = process.env.IRHA_BASE_URL || "https://www.irhaapparels.com";
-const EXPECTED_RELEASE = "frontend-live-2026-07-12-r10";
-const EXPECTED_RELEASE_TEXT = "IRHA_FRONTEND_LIVE_2026_07_12_R10";
+const BASE = (process.env.IRHA_BASE_URL || "https://www.irhaapparels.com").replace(/\/$/, "");
+const EXPECTED_RELEASE = process.env.IRHA_EXPECTED_RELEASE || "frontend-live-2026-07-12-r10";
+const EXPECTED_RELEASE_TEXT = process.env.IRHA_EXPECTED_RELEASE_TEXT || "IRHA_FRONTEND_LIVE_2026_07_12_R10";
+const EXPECTED_PROJECT_ID = process.env.IRHA_EXPECTED_PROJECT_ID || "da72a40a-7df3-44c3-a72d-f180d9ffcd25";
+const EXPECTED_REPOSITORY = process.env.IRHA_EXPECTED_REPOSITORY || "irhaapparelsofficial-ctrl/irha-global-craft-f3881330";
+const EXPECTED_ORIGIN = (process.env.IRHA_EXPECTED_ORIGIN || "https://www.irhaapparels.com").replace(/\/$/, "");
 
 const forbidden = [
   "Since 2014",
@@ -22,7 +25,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchResponse(path, userAgent = agents[0][1]) {
   const url = new URL(path, BASE);
-  url.searchParams.set("__irha_smoke", Date.now().toString());
+  url.searchParams.set("__irha_smoke", `${Date.now()}-${Math.random().toString(16).slice(2)}`);
   let last = "unknown error";
 
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -31,7 +34,7 @@ async function fetchResponse(path, userAgent = agents[0][1]) {
         redirect: "follow",
         headers: {
           "user-agent": userAgent,
-          "cache-control": "no-cache",
+          "cache-control": "no-cache, no-store, max-age=0",
           pragma: "no-cache",
         },
         signal: AbortSignal.timeout(25_000),
@@ -60,15 +63,28 @@ function assert(condition, message) {
 async function main() {
   const build = JSON.parse((await fetchText("/build.json")).text);
   assert(build.release === EXPECTED_RELEASE, `live build release mismatch: ${build.release}`);
+  assert(build.release_text === EXPECTED_RELEASE_TEXT, `live build release text mismatch: ${build.release_text}`);
+  assert(build.lovable_project_id === EXPECTED_PROJECT_ID, `custom domain is attached to wrong Lovable project: ${build.lovable_project_id || "missing"}`);
+  assert(build.repository === EXPECTED_REPOSITORY, `production repository mismatch: ${build.repository || "missing"}`);
+  assert(String(build.expected_origin || "").replace(/\/$/, "") === EXPECTED_ORIGIN, `production origin mismatch: ${build.expected_origin || "missing"}`);
+  assert(build.source_branch === "main", `production source branch mismatch: ${build.source_branch || "missing"}`);
+  assert(build.deployment_policy === "latest-main-only", `deployment policy mismatch: ${build.deployment_policy || "missing"}`);
 
   const release = (await fetchText("/release.txt")).text;
   assert(release.includes(EXPECTED_RELEASE_TEXT), "live release text mismatch");
+  assert(release.includes(`Lovable Project: ${EXPECTED_PROJECT_ID}`), "release file Lovable project identity mismatch");
+  assert(release.includes(`Repository: ${EXPECTED_REPOSITORY}`), "release file repository identity mismatch");
+  assert(release.includes(`Production Origin: ${EXPECTED_ORIGIN}`), "release file production origin mismatch");
+  assert(release.includes("Deployment Policy: latest-main-only"), "release file deployment policy missing");
 
   for (const [name, userAgent] of agents) {
     const home = await fetchText("/", userAgent);
     assert(home.status === 200, `${name} homepage did not return HTTP 200`);
     assert(home.text.includes('id="root"'), `${name} homepage is missing the application root`);
-    assert(home.text.includes(EXPECTED_RELEASE), `${name} homepage is missing release r10`);
+    assert(home.text.includes(`name="x-irha-release" content="${EXPECTED_RELEASE}"`), `${name} homepage release identity mismatch`);
+    assert(home.text.includes(`name="x-irha-project-id" content="${EXPECTED_PROJECT_ID}"`), `${name} homepage Lovable project identity mismatch`);
+    assert(home.text.includes(`name="x-irha-repository" content="${EXPECTED_REPOSITORY}"`), `${name} homepage repository identity mismatch`);
+    assert(home.text.includes('name="x-irha-deployment-policy" content="latest-main-only"'), `${name} homepage deployment policy missing`);
     for (const term of forbidden) {
       assert(
         !home.text.toLowerCase().includes(term.toLowerCase()),
@@ -148,7 +164,9 @@ async function main() {
     "verified Lederhosen hero did not return an image content type",
   );
 
-  console.log(`PASS production smoke for ${BASE} (${EXPECTED_RELEASE})`);
+  console.log(
+    `PASS production smoke for ${BASE}: release=${EXPECTED_RELEASE} project=${EXPECTED_PROJECT_ID} repository=${EXPECTED_REPOSITORY}`,
+  );
 }
 
 main().catch((error) => {
