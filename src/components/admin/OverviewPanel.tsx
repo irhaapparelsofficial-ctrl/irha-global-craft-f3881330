@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Layers, Users, Inbox, MessageSquare, BarChart3, Sparkles, Plus, ExternalLink, Activity, UserSearch } from "lucide-react";
+import { Package, Layers, Users, Inbox, MessageSquare, BarChart3, Sparkles, Plus, ExternalLink, Activity, UserSearch, ListChecks } from "lucide-react";
 import type { AdminView } from "./AdminShell";
 import OwnerOperationsCenter from "./OwnerOperationsCenter";
 import SalesActionCenter from "./SalesActionCenter";
@@ -78,10 +78,11 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap gap-2">
+        <QuickAction label="Sales Pipeline" icon={<ListChecks size={12} />} onClick={() => go("pipeline")} />
+        <QuickAction label="Buyer Inbox" icon={<Users size={12} />} onClick={() => go("leads")} />
+        <QuickAction label="Lead Acquisition" icon={<UserSearch size={12} />} onClick={() => go("lead_engine")} />
         <QuickAction label="Add product" icon={<Plus size={12} />} onClick={() => go("products")} />
         <QuickAction label="Add category" icon={<Plus size={12} />} onClick={() => go("categories")} />
-        <QuickAction label="Lead Acquisition" icon={<UserSearch size={12} />} onClick={() => go("lead_engine")} />
-        <QuickAction label="Buyer Inbox" icon={<Users size={12} />} onClick={() => go("leads")} />
         <QuickAction label="AI Assistant" icon={<Sparkles size={12} />} onClick={() => go("ai")} />
         <QuickAction label="Production Health" icon={<Activity size={12} />} onClick={() => go("system")} />
       </div>
