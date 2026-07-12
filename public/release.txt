@@ -1,7 +1,8 @@
-IRHA_FRONTEND_LIVE_2026_07_12_R10
-Source: GitHub main and Lovable Cloud publish
+IRHA_FRONTEND_LIVE_2026_07_13_R11
+Source: GitHub main and explicit Lovable publish
 Lovable Project: da72a40a-7df3-44c3-a72d-f180d9ffcd25
 Repository: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
 Production Origin: https://www.irhaapparels.com
+Supabase Project: pvzjiozismyxqrzmtfbi
 Deployment Policy: latest-main-only
-Scope: Global audience-first product taxonomy, multilingual SEO, guarded AI operations, buyer CRM, quotation readiness, samples and production workflow, WhatsApp Business foundation, and deployment source locking.
+Scope: Owner Supabase cutover, secure owner-only authentication bootstrap, catalogue and operational data parity, private runtime buckets, guarded automation, and explicit post-publish production smoke verification.
