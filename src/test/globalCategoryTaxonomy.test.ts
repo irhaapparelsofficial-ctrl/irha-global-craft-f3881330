@@ -63,11 +63,28 @@ describe("global category taxonomy", () => {
     expect(result.audiences.find((item) => item.slug === "kids")?.productCount).toBe(1);
   });
 
+  it("keeps an oversized hoodie in the indexable Unisex hoodie collection", () => {
+    const input = category("streetwear-activewear", [
+      sub("tops", "Streetwear Tops", [product("Oversized Streetwear Hoodie")]),
+    ]);
+
+    const result = buildCategoryTaxonomy(input);
+    const unisex = result.audiences.find((item) => item.slug === "unisex");
+    const hoodies = unisex?.collections.find((item) => item.slug === "hoodies-sweatshirts");
+
+    expect(result.unassignedCount).toBe(0);
+    expect(unisex?.productCount).toBe(1);
+    expect(hoodies?.products.map((item) => item.slug)).toEqual(["oversized-streetwear-hoodie"]);
+  });
+
   it("builds stable English and localized hierarchy paths", () => {
     expect(taxonomyAudiencePath("sportswear", "kids")).toBe("/products/sportswear/kids");
     expect(taxonomyAudiencePath("sportswear", "kids", "de")).toBe("/intl/de/products/sportswear/kids");
     expect(taxonomyCollectionPath("sportswear", "kids", "football-kits", "fr")).toBe(
       "/intl/fr/products/sportswear/kids/football-kits",
+    );
+    expect(taxonomyCollectionPath("streetwear-activewear", "unisex", "hoodies-sweatshirts")).toBe(
+      "/products/streetwear-activewear/unisex/hoodies-sweatshirts",
     );
   });
 });
