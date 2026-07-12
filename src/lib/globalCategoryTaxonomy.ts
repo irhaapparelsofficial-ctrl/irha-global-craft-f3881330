@@ -279,6 +279,7 @@ export function buildCategoryTaxonomy(category: NormalizedCategory): CategoryTax
         name: `Other ${audienceRule.name} Styles`,
         keyword: `${audienceRule.keyword} product range`,
         description: "Additional buyer-ready styles that can be developed, branded and packed against an approved specification.",
+        terms: [],
         products: fallbackProducts,
       });
     }
