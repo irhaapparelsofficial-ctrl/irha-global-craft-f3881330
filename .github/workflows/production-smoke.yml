@@ -1,6 +1,6 @@
 name: Production Smoke
 
-run-name: Post-publish production smoke · ${{ github.ref_name }} · #${{ github.run_number }}
+run-name: Explicit post-publish production smoke · ${{ github.ref_name }} · #${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -11,29 +11,31 @@ on:
         default: https://www.irhaapparels.com
         type: string
       propagation_minutes:
-        description: Minutes to wait for Lovable/CDN propagation
+        description: Maximum minutes to wait for Lovable/CDN propagation
         required: true
         default: "20"
         type: string
-  push:
-    branches: [main]
-    paths:
-      - docs/POST_PUBLISH_VERIFY.md
-  pull_request:
-    branches: [main]
-    paths:
-      - docs/POST_PUBLISH_VERIFY.md
+      expected_release:
+        description: Release ID expected after the explicit Lovable publish
+        required: true
+        default: frontend-live-2026-07-13-r11
+        type: string
+      expected_release_text:
+        description: Plain-text release marker expected after publish
+        required: true
+        default: IRHA_FRONTEND_LIVE_2026_07_13_R11
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: production-smoke
+  group: explicit-production-smoke
   cancel-in-progress: true
 
 env:
-  IRHA_EXPECTED_RELEASE: frontend-live-2026-07-12-r10
-  IRHA_EXPECTED_RELEASE_TEXT: IRHA_FRONTEND_LIVE_2026_07_12_R10
+  IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release }}
+  IRHA_EXPECTED_RELEASE_TEXT: ${{ inputs.expected_release_text }}
   IRHA_EXPECTED_PROJECT_ID: da72a40a-7df3-44c3-a72d-f180d9ffcd25
   IRHA_EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
   IRHA_EXPECTED_ORIGIN: https://www.irhaapparels.com
@@ -45,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - name: Checkout latest main
+      - name: Checkout published source branch
         uses: actions/checkout@v4
         with:
           ref: main
@@ -55,16 +57,23 @@ jobs:
         with:
           node-version: 24
 
-      - name: Wait for published release and source identity
+      - name: Wait for explicitly published release and source identity
         env:
-          IRHA_BASE_URL: ${{ inputs.base_url || 'https://www.irhaapparels.com' }}
-          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes || '20' }}
+          IRHA_BASE_URL: ${{ inputs.base_url }}
+          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes }}
         run: node scripts/wait-for-production-release.mjs
 
       - name: Verify apex and www domain consistency
         run: node scripts/verify-production-domains.mjs
 
-      - name: Verify production pages, source identity, crawler controls and lead gateway
+      - name: Verify production pages, crawler controls and public lead gateway
         env:
-          IRHA_BASE_URL: ${{ inputs.base_url || 'https://www.irhaapparels.com' }}
+          IRHA_BASE_URL: ${{ inputs.base_url }}
         run: node scripts/production-smoke-v2.mjs
+
+      - name: Record verification contract
+        if: always()
+        run: |
+          echo "This workflow is intentionally manual and strict." >> "$GITHUB_STEP_SUMMARY"
+          echo "Pull requests are gated by deterministic typecheck, tests and build—not by an unpublished live domain." >> "$GITHUB_STEP_SUMMARY"
+          echo "Run this smoke only after the owner explicitly publishes Lovable." >> "$GITHUB_STEP_SUMMARY"
