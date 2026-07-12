@@ -26,6 +26,35 @@ Align the published custom domain with the latest GitHub `main` release and repl
 5. Verify canonical URLs, exactly one H1, unique meta-description output, JSON-LD validity, hreflang/x-default, release markers, images, overflow, console/network errors, tracking consent, sitemap and robots.
 6. Store screenshots, JSON evidence and a Markdown summary as a GitHub Actions artifact.
 7. Give `/products/all` a dedicated self-canonical, noindex SEO boundary so it remains a useful buyer search tool without competing with the main `/products` architecture page.
+8. Align the static HTML release marker with R10.
+9. Protect the verified Unisex Hoodies & Sweatshirts collection in taxonomy tests, sitemap generation and the production smoke contract.
+
+## First live audit result
+
+The first comprehensive custom-domain run checked 44 route/profile combinations.
+
+### Passed underlying page checks
+
+- All 44 tested routes returned HTTP 200.
+- Tested pages rendered exactly one H1.
+- Taxonomy canonicals were correct.
+- Route meta descriptions were present and singular.
+- EN/DE/FR/ES hreflang and x-default checks passed on tested taxonomy routes.
+- JSON-LD parsed without errors.
+- No rendered broken images were detected.
+- No horizontal overflow was detected on desktop or mobile.
+- No application console errors, page errors or non-tracking network failures were detected.
+- No analytics/advertising request fired after rejected consent.
+- `robots.txt` passed.
+- `/build.json` and `/release.txt` already reported R10.
+
+### Exact blockers found
+
+1. The live HTML meta release marker was still `gate4-2026-07-06-r6`, so every route failed the release-marker assertion despite the R10 build files.
+2. `/products/all` still inherited `/products` canonical/indexable SEO output on the published domain.
+3. The live sitemap omitted the verified, non-empty route `/products/streetwear-activewear/unisex/hoodies-sweatshirts`.
+
+The code fixes for all three blockers are included in this branch. The custom-domain workflow will remain red until this branch is published through Lovable and the live audit is rerun.
 
 ## Not included in this batch
 
@@ -41,9 +70,10 @@ Align the published custom domain with the latest GitHub `main` release and repl
 This batch is ready to publish only after:
 
 - the normal Quality Gate passes;
-- the R10 live workflow is expected to fail before Lovable publication if production is still behind;
 - the latest GitHub branch is published through Lovable;
 - the R10 live workflow is rerun and passes against `https://www.irhaapparels.com`;
+- `/products/all` is self-canonical and noindex on the custom domain;
+- the Unisex Hoodies & Sweatshirts route is present in the live sitemap;
 - the exact release marker, sitemap, robots and rollback point are recorded.
 
 ## Next large batch
