@@ -10,6 +10,8 @@ import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
+import bavarianHubImage from "@/assets/og/og-bavarian-hero.jpg";
+import performanceHubImage from "@/assets/og/og-sportswear.jpg";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -31,7 +33,7 @@ type HubDef = {
 const HUBS: HubDef[] = [
   {
     key: "heritage",
-    fallbackImg: "/src/assets/og/og-bavarian.jpg",
+    fallbackImg: bavarianHubImage,
     eyebrow: "Hub 01 · Heritage",
     title: "Bavarian & Leather",
     subtitle: "Trachten craft and full-grain leather construction for heritage programs.",
@@ -40,7 +42,7 @@ const HUBS: HubDef[] = [
   },
   {
     key: "performance",
-    fallbackImg: "/src/assets/og/og-sportswear.jpg",
+    fallbackImg: performanceHubImage,
     eyebrow: "Hub 02 · Performance",
     title: "Sportswear, Streetwear & Leisure",
     subtitle: "Sublimated performance, heavyweight streetwear and leisure & nightwear programs.",
@@ -100,7 +102,7 @@ export default function Home() {
                 .map((slug) => allCats.find((category) => category.slug === slug && category.is_published))
                 .filter((category): category is NonNullable<typeof category> => Boolean(category));
               const cover = children[0]?.image_url;
-              const src = cover ? resolveAsset(cover) : resolveAsset(hub.fallbackImg);
+              const src = cover ? resolveAsset(cover) : hub.fallbackImg;
               return (
                 <div
                   key={hub.key}
