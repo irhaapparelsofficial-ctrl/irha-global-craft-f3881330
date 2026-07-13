@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher";
 import "./index.css";
 
@@ -46,8 +47,8 @@ if (!rootElement) throw new Error("Irha application root is missing");
 rootElement.replaceChildren();
 
 createRoot(rootElement).render(
-  <>
+  <AppErrorBoundary>
     <App />
     <AdminBuyerActionsLauncher />
-  </>,
+  </AppErrorBoundary>,
 );
