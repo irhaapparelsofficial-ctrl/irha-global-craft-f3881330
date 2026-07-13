@@ -17,9 +17,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm run build
+      - name: Clean install
+        shell: bash
+        run: |
+          npm ci --loglevel=error > npm-ci.log 2>&1 || {
+            echo '--- npm ci error tail ---'
+            tail -n 80 npm-ci.log
+            exit 1
+          }
+      - name: Production build
+        run: npm run build
         env:
           CI: true
