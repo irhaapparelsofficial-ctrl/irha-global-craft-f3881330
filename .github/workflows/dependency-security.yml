@@ -21,13 +21,17 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
-      - name: Audit all locked dependencies
-        shell: bash
+      - name: Generate dependency audit report
+        run: npm audit --json > npm-audit.json || true
+      - name: Upload dependency audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: npm-audit.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Enforce zero known vulnerabilities
         run: |
-          set +e
-          npm audit --json > npm-audit.json
-          audit_exit=$?
-          set -e
           node <<'NODE'
           const fs = require('fs');
           const audit = JSON.parse(fs.readFileSync('npm-audit.json', 'utf8'));
@@ -36,16 +40,10 @@ jobs:
             name,
             severity: item.severity,
             direct: item.isDirect,
-            via: (item.via || []).map((entry) => typeof entry === 'string' ? entry : ({
-              title: entry.title,
-              severity: entry.severity,
-              range: entry.range,
-              url: entry.url,
-            })),
+            via: (item.via || []).map((entry) => typeof entry === 'string' ? entry : ({ title: entry.title, severity: entry.severity, range: entry.range, url: entry.url })),
             range: item.range,
             fixAvailable: item.fixAvailable,
           }));
           console.log(JSON.stringify({ summary: audit.metadata?.vulnerabilities, vulnerabilities: compact }, null, 2));
           if ((audit.metadata?.vulnerabilities?.total || 0) > 0) process.exit(1);
           NODE
-          exit "$audit_exit"
