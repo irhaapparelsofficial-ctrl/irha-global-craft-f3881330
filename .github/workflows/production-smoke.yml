@@ -33,8 +33,10 @@ permissions:
   contents: read
   issues: write
 
+# Every push has its own group so unrelated main updates cannot cancel an active smoke.
+# Re-runs of the same published commit remain mutually exclusive.
 concurrency:
-  group: explicit-production-smoke
+  group: production-smoke-${{ github.sha }}
   cancel-in-progress: true
 
 env:
@@ -94,6 +96,8 @@ jobs:
         run: |
           if [ "$SMOKE_STATUS" = "success" ]; then
             heading="✅ Production Smoke passed"
+          elif [ "$SMOKE_STATUS" = "cancelled" ]; then
+            heading="⚠️ Production Smoke cancelled"
           else
             heading="❌ Production Smoke failed"
           fi
