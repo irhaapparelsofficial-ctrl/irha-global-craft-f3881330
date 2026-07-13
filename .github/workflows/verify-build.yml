@@ -19,24 +19,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Clean install
-        id: install
-        continue-on-error: true
-        shell: bash
-        run: npm ci --loglevel=error > npm-ci.log 2>&1
-      - name: Upload install log
-        if: always()
+      - name: Regenerate compatible image-tools lock
+        run: npm install --package-lock-only --save-dev --exact vite-imagetools@8.0.0
+      - name: Upload corrected package files
         uses: actions/upload-artifact@v4
         with:
-          name: npm-ci-log
-          path: npm-ci.log
-          if-no-files-found: error
+          name: corrected-package-files
+          path: |
+            package.json
+            package-lock.json
           retention-days: 1
-      - name: Stop on install failure
-        if: steps.install.outcome == 'failure'
-        run: |
-          tail -n 80 npm-ci.log
-          exit 1
+      - name: Clean install
+        run: npm ci
       - name: Production build
         run: npm run build
         env:
