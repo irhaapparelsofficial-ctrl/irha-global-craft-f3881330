@@ -96,7 +96,7 @@ async function main() {
     }
   }
 
-  for (const source of [supabaseConfig, supabaseClient, ownerRuntime]) {
+  for (const source of [supabaseConfig, ownerRuntime]) {
     assert(source.includes(EXPECTED.supabaseProjectId), "runtime Supabase configuration is not locked to owner project");
     assert(!source.includes("mlefxgyaqoisvdmoiapq"), "immutable runtime source references Lovable Cloud");
   }
@@ -114,8 +114,14 @@ async function main() {
   );
   assert(
     !supabaseClient.includes("import.meta.env") &&
+      supabaseClient.includes("OWNER_SUPABASE_PROJECT_ID") &&
+      supabaseClient.includes("OWNER_SUPABASE_URL") &&
       supabaseClient.includes("OWNER_SUPABASE_PUBLISHABLE_KEY"),
-    "frontend client must ignore Lovable-managed Supabase environment values",
+    "frontend client must use only immutable owner runtime constants",
+  );
+  assert(
+    !supabaseClient.includes("mlefxgyaqoisvdmoiapq"),
+    "frontend client references Lovable Cloud",
   );
 
   const managedEnvAligned =
