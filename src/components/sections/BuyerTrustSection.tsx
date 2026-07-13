@@ -1,62 +1,65 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, FileCheck2, RotateCcw, ShieldCheck, Video, Workflow } from "lucide-react";
+import { ArrowRight, FileCheck2, ShieldCheck, Tags, Workflow } from "lucide-react";
 
 const ITEMS = [
   {
-    icon: Video,
-    title: "Live factory view",
-    text: "Request a scheduled video call to discuss the program and view relevant factory areas live.",
-  },
-  {
     icon: FileCheck2,
-    title: "Requirement-led quote",
-    text: "MOQ, pricing, timing and shipping are confirmed for the exact style, quantity and destination.",
+    title: "Commercial scope",
+    text: "MOQ, pricing, timeline and shipping terms are confirmed for the exact product, quantity and destination.",
   },
   {
     icon: Workflow,
-    title: "Approval checkpoints",
-    text: "Specifications, references, samples and requested changes are reviewed before bulk commitment.",
+    title: "Sampling route",
+    text: "The sample path, revisions and approval checkpoints are agreed before a bulk commitment.",
+  },
+  {
+    icon: Tags,
+    title: "Customization scope",
+    text: "Materials, colours, decoration, labels, packaging and branding are reviewed per order.",
   },
   {
     icon: ShieldCheck,
-    title: "Truthful documentation",
-    text: "Material, testing and export documents are confirmed per program instead of claimed universally.",
+    title: "Documentation review",
+    text: "Testing, material, packing and export documents are confirmed only where the actual program requires them.",
   },
 ];
 
 export default function BuyerTrustSection() {
   return (
-    <section className="py-20 md:py-28 border-y border-border/60 bg-secondary/30">
+    <section className="border-y border-border/60 bg-card/35 py-16 md:py-20">
       <div className="container-luxe">
-        <div className="grid lg:grid-cols-12 gap-10 items-end mb-12">
+        <div className="mb-10 grid gap-7 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-8">
-            <p className="eyebrow mb-4">Buyer verification</p>
-            <h2 className="font-display text-3xl md:text-5xl leading-[1.04] max-w-4xl">
-              Do not rely on a website alone. <span className="text-gold italic">Verify the program.</span>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Buyer decision essentials</p>
+            <h2 className="mt-4 max-w-4xl font-display text-4xl leading-[1.04] md:text-5xl">
+              Know what will be confirmed before you place the order.
             </h2>
-            <p className="text-sm md:text-base text-foreground/68 mt-5 max-w-3xl leading-relaxed">
-              Irha Apparels is an experienced manufacturer and the website is newly built. Buyers can use a live factory call, detailed requirements and documented approvals to evaluate the relationship before ordering.
+            <p className="mt-5 max-w-3xl text-sm leading-7 text-foreground/65 md:text-base">
+              Every manufacturing program is scoped around the actual style and destination. Broad website claims do not replace product-specific confirmation.
             </p>
           </div>
-          <div className="lg:col-span-4 flex lg:justify-end gap-3 flex-wrap">
-            <Link to="/buyer-trust" className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-3.5 text-[10px] uppercase tracking-[0.22em]">
-              Trust Center <ArrowRight size={13} />
+          <div className="flex flex-wrap gap-3 lg:col-span-4 lg:justify-end">
+            <Link
+              to="/buyer-trust"
+              className="inline-flex min-h-11 items-center gap-2 bg-gradient-gold px-5 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:shadow-gold"
+            >
+              Buyer trust center <ArrowRight size={13} />
             </Link>
-            <Link to="/factory-video-call" className="inline-flex items-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-3.5 text-[10px] uppercase tracking-[0.22em]">
-              Factory Call
-            </Link>
-            <Link to="/repeat-order" className="inline-flex items-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-3.5 text-[10px] uppercase tracking-[0.22em]">
-              <RotateCcw size={13} /> Repeat Order
+            <Link
+              to="/resources"
+              className="inline-flex min-h-11 items-center gap-2 border border-border/70 px-5 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              Buyer resources
             </Link>
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border/60 border border-border/60">
+        <div className="grid gap-px border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-4">
           {ITEMS.map(({ icon: Icon, title, text }) => (
             <article key={title} className="bg-background p-6 md:p-7">
-              <Icon className="text-gold" size={22} />
-              <h3 className="font-display text-xl mt-5">{title}</h3>
-              <p className="text-sm text-foreground/62 leading-relaxed mt-3">{text}</p>
+              <Icon className="text-primary" size={20} strokeWidth={1.6} />
+              <h3 className="mt-5 font-sans text-sm font-semibold text-foreground">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-foreground/62">{text}</p>
             </article>
           ))}
         </div>
