@@ -36,7 +36,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find recovery-input/assets -maxdepth 1 -name '*.b64' | wc -l)" -eq 42
+          test "$(find recovery-input/assets -maxdepth 1 -name '*.b64' | wc -l)" -eq 2
+          test "$(find recovery-input/bundles -maxdepth 1 -name 'bundle-*.txt' | wc -l)" -eq 8
           python - <<'PY'
           import base64
           import gzip
@@ -54,22 +55,24 @@ jobs:
           mapping = json.loads((package / 'recovery-map.json').read_text())
           records = manifest['records']
           items = mapping['items']
-          parts = sorted((package / 'assets').glob('*.b64'))
+          payloads = [path.read_text().strip() for path in sorted((package / 'assets').glob('*.b64'))]
+          for bundle in sorted((package / 'bundles').glob('bundle-*.txt')):
+              payloads.extend(line.strip() for line in bundle.read_text().splitlines() if line.strip())
 
           assert manifest['accepted_count'] == 42, manifest
           assert mapping['count'] == 42, mapping
-          assert len(records) == len(items) == len(parts) == 42
+          assert len(records) == len(items) == len(payloads) == 42
 
           manifest_path = Path('public/media/bavarian-drive/batches/authenticated-recovery.json')
           manifest_path.parent.mkdir(parents=True, exist_ok=True)
           manifest_path.write_bytes(manifest_bytes)
 
-          for index, (record, item, part) in enumerate(zip(records, items, parts)):
+          for index, (record, item, payload) in enumerate(zip(records, items, payloads)):
               assert item['i'] == index, item
               assert record['output_path'] == item['output_path'], (record, item)
-              data = base64.b64decode(part.read_text().strip(), validate=True)
-              assert len(data) == item['bytes'], (part, len(data), item)
-              assert hashlib.sha256(data).hexdigest() == item['sha256'], part
+              data = base64.b64decode(payload, validate=True)
+              assert len(data) == item['bytes'], (index, len(data), item)
+              assert hashlib.sha256(data).hexdigest() == item['sha256'], index
               target = Path('public') / record['output_path'].lstrip('/')
               target.parent.mkdir(parents=True, exist_ok=True)
               target.write_bytes(data)
@@ -77,7 +80,7 @@ jobs:
                   image.verify()
               with Image.open(target) as image:
                   assert image.size == (item['width'], item['height']), (target, image.size, item)
-          print(json.dumps({'reconstructed_assets': len(parts)}, indent=2))
+          print(json.dumps({'reconstructed_assets': len(payloads)}, indent=2))
           PY
 
       - name: Clear recovered public-download failures
