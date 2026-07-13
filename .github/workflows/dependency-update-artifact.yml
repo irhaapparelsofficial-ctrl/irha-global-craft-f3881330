@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Upgrade and lock secure build dependencies
+      - name: Prepare secure dependency versions
         run: |
           npm pkg set 'dependencies.@lovable.dev/mcp-js=^0.21.0'
           npm pkg set 'devDependencies.vite=8.1.4'
@@ -27,14 +27,36 @@ jobs:
           npm pkg set 'devDependencies.vite-imagetools=10.0.1'
           npm pkg set 'devDependencies.vitest=4.1.10'
           npm pkg set 'overrides.esbuild=0.28.1'
-          npm install --package-lock-only --ignore-scripts
-          npm audit --audit-level=low
-      - name: Upload secure dependency files
+      - name: Generate secure lockfile
+        id: lock
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm install --package-lock-only --ignore-scripts 2>&1 | tee dependency-upgrade.log
+      - name: Audit generated dependency tree
+        if: steps.lock.outcome == 'success'
+        id: audit
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm audit --audit-level=low 2>&1 | tee dependency-audit.log
+      - name: Upload dependency evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: secure-dependency-lock
           path: |
             package.json
             package-lock.json
-          if-no-files-found: error
+            dependency-upgrade.log
+            dependency-audit.log
+          if-no-files-found: warn
           retention-days: 7
+      - name: Enforce successful secure lock
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.lock.outcome }}" = "success"
+          test "${{ steps.audit.outcome }}" = "success"
