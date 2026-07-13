@@ -8,7 +8,7 @@ on:
       base_url:
         description: Production URL to verify
         required: true
-        default: https://www.irhaapparels.com
+        default: https://irhaapparels.com
         type: string
       propagation_minutes:
         description: Maximum minutes to wait for Lovable/CDN propagation
@@ -25,6 +25,9 @@ on:
         required: true
         default: IRHA_FRONTEND_LIVE_2026_07_13_R11
         type: string
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -34,17 +37,18 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release }}
-  IRHA_EXPECTED_RELEASE_TEXT: ${{ inputs.expected_release_text }}
+  IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release || 'frontend-live-2026-07-13-r11' }}
+  IRHA_EXPECTED_RELEASE_TEXT: ${{ inputs.expected_release_text || 'IRHA_FRONTEND_LIVE_2026_07_13_R11' }}
   IRHA_EXPECTED_PROJECT_ID: da72a40a-7df3-44c3-a72d-f180d9ffcd25
   IRHA_EXPECTED_SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
   IRHA_EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
-  IRHA_EXPECTED_ORIGIN: https://www.irhaapparels.com
-  IRHA_PRIMARY_URL: https://www.irhaapparels.com
-  IRHA_DOMAIN_ALIASES: https://irhaapparels.com
+  IRHA_EXPECTED_ORIGIN: https://irhaapparels.com
+  IRHA_PRIMARY_URL: https://irhaapparels.com
+  IRHA_DOMAIN_ALIASES: https://www.irhaapparels.com
 
 jobs:
   smoke:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[production-smoke]')
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -60,8 +64,8 @@ jobs:
 
       - name: Wait for explicitly published release and source identity
         env:
-          IRHA_BASE_URL: ${{ inputs.base_url }}
-          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes }}
+          IRHA_BASE_URL: ${{ inputs.base_url || 'https://irhaapparels.com' }}
+          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes || '20' }}
         run: node scripts/wait-for-production-release.mjs
 
       - name: Verify apex and www domain consistency
@@ -69,12 +73,12 @@ jobs:
 
       - name: Verify production pages, crawler controls and owner backend
         env:
-          IRHA_BASE_URL: ${{ inputs.base_url }}
+          IRHA_BASE_URL: ${{ inputs.base_url || 'https://irhaapparels.com' }}
         run: node scripts/production-smoke-v2.mjs
 
       - name: Record verification contract
         if: always()
         run: |
-          echo "This workflow is intentionally manual and strict." >> "$GITHUB_STEP_SUMMARY"
-          echo "Pull requests are gated by deterministic typecheck, tests and build—not by an unpublished live domain." >> "$GITHUB_STEP_SUMMARY"
-          echo "Run this smoke only after the owner explicitly publishes Lovable." >> "$GITHUB_STEP_SUMMARY"
+          echo "This workflow is explicit and strict." >> "$GITHUB_STEP_SUMMARY"
+          echo "It runs after manual dispatch or an approved [production-smoke] main commit marker." >> "$GITHUB_STEP_SUMMARY"
+          echo "Normal pull requests remain gated by deterministic typecheck, tests and build—not by the live domain." >> "$GITHUB_STEP_SUMMARY"

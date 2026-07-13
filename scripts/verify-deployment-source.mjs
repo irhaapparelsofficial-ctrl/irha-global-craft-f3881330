@@ -7,6 +7,7 @@ const EXPECTED = {
   supabaseProjectId: "pvzjiozismyxqrzmtfbi",
   repository: "irhaapparelsofficial-ctrl/irha-global-craft-f3881330",
   origin: "https://irhaapparels.com",
+  alias: "https://www.irhaapparels.com",
   branch: "main",
   policy: "latest-main-only",
 };
@@ -25,7 +26,9 @@ async function main() {
     release,
     index,
     headers,
+    workflow,
     waitScript,
+    domainScript,
     smokeScript,
     envFile,
     supabaseConfig,
@@ -36,7 +39,9 @@ async function main() {
     text("public/release.txt"),
     text("index.html"),
     text("public/_headers"),
+    text(".github/workflows/production-smoke.yml"),
     text("scripts/wait-for-production-release.mjs"),
+    text("scripts/verify-production-domains.mjs"),
     text("scripts/production-smoke-v2.mjs"),
     text(".env"),
     text("supabase/config.toml"),
@@ -95,6 +100,34 @@ async function main() {
       assert(source.includes(value), `production verifier missing source identity: ${value}`);
     }
   }
+
+  const requiredWorkflowLines = [
+    `default: ${EXPECTED.origin}`,
+    `IRHA_EXPECTED_ORIGIN: ${EXPECTED.origin}`,
+    `IRHA_PRIMARY_URL: ${EXPECTED.origin}`,
+    `IRHA_DOMAIN_ALIASES: ${EXPECTED.alias}`,
+    `default: ${EXPECTED.release}`,
+    `default: ${EXPECTED.releaseText}`,
+    "push:",
+    "- main",
+    "contains(github.event.head_commit.message, '[production-smoke]')",
+    `inputs.base_url || '${EXPECTED.origin}'`,
+    `inputs.expected_release || '${EXPECTED.release}'`,
+  ];
+  for (const line of requiredWorkflowLines) {
+    assert(workflow.includes(line), `production-smoke workflow missing or stale: ${line}`);
+  }
+  assert(
+    !workflow.includes(`IRHA_EXPECTED_ORIGIN: ${EXPECTED.alias}`) &&
+      !workflow.includes(`IRHA_PRIMARY_URL: ${EXPECTED.alias}`),
+    "production-smoke workflow incorrectly treats www as canonical primary",
+  );
+  assert(
+    domainScript.includes(`IRHA_PRIMARY_URL || "${EXPECTED.origin}"`) &&
+      domainScript.includes(`IRHA_DOMAIN_ALIASES || "${EXPECTED.alias}"`) &&
+      domainScript.includes(EXPECTED.release),
+    "domain verifier defaults are not aligned to apex R11 production",
+  );
 
   for (const source of [supabaseConfig, ownerRuntime]) {
     assert(source.includes(EXPECTED.supabaseProjectId), "runtime Supabase configuration is not locked to owner project");
