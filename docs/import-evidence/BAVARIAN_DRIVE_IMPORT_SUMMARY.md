@@ -19,10 +19,13 @@ Generated: 2026-07-13
 - Review-only assets: 266
 - Conservatively mapped product slugs: 13
 
-## Activation controls
+## Activation evidence
 
 - Static media and review evidence are merged into `main`.
-- Existing product and category records were not deleted.
-- Product gallery updates remain in a reviewable manual SQL file.
+- Combined latest-main Quality Gate passed source lock, Bavarian importer safety, typecheck, tests, production build, release identity and factual-text guards.
+- Lovable deployment `404b01fd-a464-420f-9b76-509ba3cea169` was initiated for the certified source.
+- Production manifest is available at `/media/bavarian-drive/manifest.json` on the apex domain.
+- Owner Supabase product galleries use the mapped production media paths for 13 verified product slugs.
+- Existing product and category records were not deleted, and prior gallery images were retained.
 - Banners, sizing references, process photos and ambiguous images remain review-only.
-- Deployment and database activation require a green combined Quality Gate and post-publish verification.
+- Final release completion requires the strict post-publish Production Smoke workflow to pass.
