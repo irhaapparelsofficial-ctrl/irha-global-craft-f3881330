@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
 
+# A locked install plus npm audit must remain clean before security changes merge.
 jobs:
   audit:
     runs-on: ubuntu-latest
