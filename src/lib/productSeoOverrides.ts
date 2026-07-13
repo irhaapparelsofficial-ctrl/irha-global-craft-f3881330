@@ -1,4 +1,5 @@
 export type ProductSeoOverride = {
+  name?: string;
   description: string;
   shortDescription: string;
   specs: string[];
@@ -54,5 +55,139 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
     seoTitle: "Dirndl Apron Manufacturer & Wholesale Supplier | Irha Apparels",
     seoDescription:
       "Custom Dirndl apron manufacturing for wholesale and private-label Trachten programs, with colour, finish, labels and packaging confirmed by specification.",
+  },
+  "bomber-leather-jacket": {
+    description:
+      "Bomber-style leather jacket prepared for wholesale, OEM and private-label outerwear programs. Leather or alternative material grade, collar and cuff construction, closure hardware, lining, colour, sizing and branding are confirmed against the buyer-approved sample.",
+    shortDescription:
+      "Custom bomber-style leather jacket for wholesale and private-label outerwear collections.",
+    specs: [
+      "Bomber-inspired outerwear silhouette",
+      "Rib, collar, pocket and closure configuration by buyer brief",
+      "Leather or alternative material grade confirmed by approved sample",
+      "Custom lining, hardware, colour and size grading available",
+      "Private-label labels, trims and packaging available",
+    ],
+    seoTitle: "Bomber Leather Jacket Manufacturer & Private Label Supplier | Irha Apparels",
+    seoDescription:
+      "Custom bomber leather jacket manufacturing for wholesalers and private-label brands, with material, lining, hardware, sizing and branding confirmed by specification.",
+  },
+  "classic-biker-leather-jacket": {
+    description:
+      "Biker-style leather jacket developed for wholesale, OEM and private-label outerwear programs. Panel layout, lapel and collar shape, pocket placement, closure hardware, lining, colour, sizing and branding are finalized from the approved buyer reference.",
+    shortDescription:
+      "Custom biker-style leather jacket for wholesale and private-label collections.",
+    specs: [
+      "Biker-inspired panelled silhouette",
+      "Lapel, pocket and closure layout by buyer brief",
+      "Leather or alternative material grade confirmed by approved sample",
+      "Custom lining, hardware, colour and size grading available",
+      "Private-label labels, trims and packaging available",
+    ],
+    seoTitle: "Biker Leather Jacket Manufacturer & OEM Supplier | Irha Apparels",
+    seoDescription:
+      "Biker leather jacket manufacturing for wholesale, OEM and private-label buyers, with panels, material, hardware, lining, sizing and branding developed by brief.",
+  },
+  "leather-vest-waistcoat": {
+    name: "Custom Leather Vest / Waistcoat",
+    description:
+      "Leather vest or waistcoat prepared for wholesale, OEM and private-label ranges. Front profile, pocket layout, closure style, lining, material grade, colour, sizing and branding are confirmed against the buyer-approved design and sample.",
+    shortDescription:
+      "Custom leather vest or waistcoat for wholesale and private-label buyer programs.",
+    specs: [
+      "Sleeveless vest and waistcoat program",
+      "Pocket and closure configuration by buyer brief",
+      "Leather or alternative material grade confirmed by approved sample",
+      "Custom lining, colour and size grading available",
+      "Private-label labels, trims and packaging available",
+    ],
+    seoTitle: "Leather Vest & Waistcoat Manufacturer | Irha Apparels",
+    seoDescription:
+      "Custom leather vest and waistcoat manufacturing for wholesalers and private-label brands, with material, closure, lining, sizing and branding by specification.",
+  },
+  "leather-trousers": {
+    name: "Custom Leather Trousers",
+    description:
+      "Leather trousers developed for wholesale, OEM and private-label apparel programs. Fit, rise, leg profile, waistband, pocket construction, closure hardware, material grade, colour and size grading are confirmed from the approved buyer sample.",
+    shortDescription:
+      "Custom leather trousers for wholesale, OEM and private-label apparel ranges.",
+    specs: [
+      "Buyer-specified trouser fit and leg profile",
+      "Waistband, pocket and closure construction by brief",
+      "Leather or alternative material grade confirmed by approved sample",
+      "Custom colour and size grading available",
+      "Private-label labels, trims and packaging available",
+    ],
+    seoTitle: "Leather Trousers Manufacturer & Private Label Supplier | Irha Apparels",
+    seoDescription:
+      "Custom leather trouser manufacturing for wholesale and private-label buyers, with fit, material, pockets, hardware, sizing and branding developed by specification.",
+  },
+  "full-grain-leather-belt": {
+    name: "Custom Leather Belt",
+    description:
+      "Custom leather belt prepared for wholesale, OEM and private-label accessory programs. Strap width, length grading, edge finish, buckle style, material grade, colour, embossing and packaging are confirmed against the buyer-approved reference.",
+    shortDescription:
+      "Custom leather belt for wholesale and private-label accessory collections.",
+    specs: [
+      "Buyer-specified strap width and length grading",
+      "Custom buckle, edge and hole configuration",
+      "Leather or alternative material grade confirmed by approved sample",
+      "Embossing and private-label branding available",
+      "Custom packaging developed by buyer brief",
+    ],
+    seoTitle: "Custom Leather Belt Manufacturer & Wholesale Supplier | Irha Apparels",
+    seoDescription:
+      "Custom leather belt manufacturing for wholesalers and private-label brands, with strap, buckle, material, embossing, sizing and packaging confirmed by specification.",
+  },
+  "leather-gloves": {
+    name: "Custom Leather Gloves",
+    description:
+      "Leather gloves developed for wholesale, OEM and private-label accessory ranges. Glove pattern, finger construction, cuff length, lining, material grade, colour, sizing and branding are confirmed from the buyer-approved sample.",
+    shortDescription:
+      "Custom leather gloves for wholesale and private-label accessory programs.",
+    specs: [
+      "Buyer-specified glove pattern and cuff profile",
+      "Finger, seam and lining construction by approved sample",
+      "Leather or alternative material grade confirmed by buyer brief",
+      "Custom colour and size grading available",
+      "Private-label branding and packaging available",
+    ],
+    seoTitle: "Leather Gloves Manufacturer & Private Label Supplier | Irha Apparels",
+    seoDescription:
+      "Custom leather glove manufacturing for wholesalers and private-label buyers, with pattern, material, lining, colour, sizing and branding developed by brief.",
+  },
+  "leather-wallet": {
+    name: "Custom Leather Wallet",
+    description:
+      "Leather wallet prepared for wholesale, OEM and private-label accessory programs. Fold format, card and note compartments, closure, edge finish, material grade, colour, branding and packaging are confirmed against the buyer-approved reference.",
+    shortDescription:
+      "Custom leather wallet for wholesale and private-label accessory collections.",
+    specs: [
+      "Buyer-specified wallet format and compartment layout",
+      "Custom edge, stitch and closure configuration",
+      "Leather or alternative material grade confirmed by approved sample",
+      "Embossing and private-label branding available",
+      "Custom presentation packaging available",
+    ],
+    seoTitle: "Leather Wallet Manufacturer & OEM Supplier | Irha Apparels",
+    seoDescription:
+      "Custom leather wallet manufacturing for wholesale and private-label buyers, with layout, material, finishing, branding and packaging confirmed by specification.",
+  },
+  "premium-leather-bag": {
+    name: "Custom Leather Bag",
+    description:
+      "Leather bag developed for wholesale, OEM and private-label accessory ranges. Bag silhouette, dimensions, handles and straps, compartment layout, closure hardware, lining, material grade, colour and branding are finalized from the approved buyer sample.",
+    shortDescription:
+      "Custom leather bag for wholesale, OEM and private-label accessory programs.",
+    specs: [
+      "Buyer-specified bag silhouette and dimensions",
+      "Handle, strap, pocket and closure layout by brief",
+      "Leather or alternative material grade confirmed by approved sample",
+      "Custom lining, hardware and colour available",
+      "Private-label branding and packaging available",
+    ],
+    seoTitle: "Custom Leather Bag Manufacturer & Private Label Supplier | Irha Apparels",
+    seoDescription:
+      "Custom leather bag manufacturing for wholesalers and private-label brands, with shape, material, hardware, lining, branding and packaging developed by specification.",
   },
 };
