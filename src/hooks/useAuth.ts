@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { isOwnerEmail } from "@/config/ownerIdentity";
 import { supabase } from "@/integrations/supabase/client";
-
-const OWNER_EMAIL = "irhaapparelsofficial@gmail.com";
+import { redactRuntimeMessage } from "@/lib/runtimeSafety";
 
 type BooleanRpcResult = {
   data: boolean | null;
@@ -11,6 +11,24 @@ type BooleanRpcResult = {
 
 const callOwnerClaimRpc = () =>
   (supabase.rpc as unknown as (name: string) => Promise<BooleanRpcResult>)("claim_owner_admin");
+
+function authorizationError(value: unknown): string {
+  const message = redactRuntimeMessage(value);
+  const normalized = message.toLowerCase();
+  if (normalized.includes("admin_already_initialized")) {
+    return "Owner role initialization is locked because an admin role already exists.";
+  }
+  if (normalized.includes("claim_owner_admin") && (normalized.includes("not find") || normalized.includes("does not exist"))) {
+    return "Owner role initialization is not active in this backend yet.";
+  }
+  if (normalized.includes("permission denied") || normalized.includes("row-level security")) {
+    return "The backend denied the admin-role check. Do not weaken security policies; verify the owner role during final activation.";
+  }
+  if (normalized.includes("jwt") || normalized.includes("session") || normalized.includes("token")) {
+    return "The owner session could not be verified. Sign out and authenticate again.";
+  }
+  return "Admin authorization could not be verified safely.";
+}
 
 export type AuthState = {
   session: Session | null;
@@ -22,16 +40,30 @@ export type AuthState = {
 
 export function useAuth(): AuthState {
   const [session, setSession] = useState<Session | null>(null);
+  const [verifiedUser, setVerifiedUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+    let resolutionId = 0;
 
-    const resolveAdmin = async (user: User) => {
+    const resolveAdmin = async (sessionUser: User, requestId: number) => {
       setAuthError(null);
 
+      const verified = await supabase.auth.getUser();
+      if (!active || requestId !== resolutionId) return;
+      if (verified.error || !verified.data.user || verified.data.user.id !== sessionUser.id) {
+        setVerifiedUser(null);
+        setIsAdmin(false);
+        setAuthError(authorizationError(verified.error?.message || "Session user could not be verified"));
+        setLoading(false);
+        return;
+      }
+
+      const user = verified.data.user;
+      setVerifiedUser(user);
       const readRole = () =>
         supabase
           .from("user_roles")
@@ -41,31 +73,36 @@ export function useAuth(): AuthState {
           .maybeSingle();
 
       let { data, error } = await readRole();
+      if (!active || requestId !== resolutionId) return;
 
-      if (!data && !error && user.email?.toLowerCase() === OWNER_EMAIL) {
+      if (!data && !error && isOwnerEmail(user.email)) {
         const claim = await callOwnerClaimRpc();
+        if (!active || requestId !== resolutionId) return;
         if (!claim.error && claim.data) {
           const refreshed = await readRole();
           data = refreshed.data;
           error = refreshed.error;
         } else if (claim.error && !claim.error.message.includes("admin_already_initialized")) {
-          setAuthError(claim.error.message);
+          setAuthError(authorizationError(claim.error.message));
         }
       }
 
-      if (!active) return;
+      if (!active || requestId !== resolutionId) return;
       setIsAdmin(!error && Boolean(data));
-      if (error) setAuthError(error.message);
+      if (error) setAuthError(authorizationError(error.message));
       setLoading(false);
     };
 
     const applySession = (nextSession: Session | null) => {
       if (!active) return;
+      resolutionId += 1;
+      const requestId = resolutionId;
       setSession(nextSession);
       if (nextSession?.user) {
         setLoading(true);
-        void resolveAdmin(nextSession.user);
+        void resolveAdmin(nextSession.user, requestId);
       } else {
+        setVerifiedUser(null);
         setIsAdmin(false);
         setAuthError(null);
         setLoading(false);
@@ -79,7 +116,8 @@ export function useAuth(): AuthState {
     void supabase.auth.getSession().then(({ data, error }) => {
       if (!active) return;
       if (error) {
-        setAuthError(error.message);
+        setVerifiedUser(null);
+        setAuthError(authorizationError(error.message));
         setLoading(false);
         return;
       }
@@ -88,13 +126,14 @@ export function useAuth(): AuthState {
 
     return () => {
       active = false;
+      resolutionId += 1;
       subscription.subscription.unsubscribe();
     };
   }, []);
 
   return {
     session,
-    user: session?.user ?? null,
+    user: verifiedUser,
     isAdmin,
     loading,
     authError,
