@@ -3,6 +3,7 @@
  * All local-storage backed, no login. Feeds Phase 7 RFQ context.
  */
 import { useEffect, useState, useCallback } from "react";
+import { thumbnailUrl } from "@/lib/imageThumbnails";
 
 const SHORTLIST_KEY = "irha_shortlist_v1";
 const RECENT_KEY = "irha_recent_v1";
@@ -20,10 +21,17 @@ export type ShortlistItem = {
   addedAt: number;
 };
 
+function normalizeStoredImage<T>(item: T): T {
+  if (!item || typeof item !== "object" || !("image" in item)) return item;
+  const value = item as T & { image?: unknown };
+  if (typeof value.image !== "string" || !value.image) return item;
+  return { ...value, image: thumbnailUrl(value.image) };
+}
+
 const read = <T,>(key: string): T[] => {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T[]) : [];
+    return raw ? (JSON.parse(raw) as T[]).map(normalizeStoredImage) : [];
   } catch {
     return [];
   }
@@ -57,8 +65,9 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
 
   const add = useCallback(
     (item: T) => {
-      const current = read<T>(key).filter((i) => i.slug !== item.slug);
-      current.unshift(item);
+      const normalized = normalizeStoredImage(item);
+      const current = read<T>(key).filter((i) => i.slug !== normalized.slug);
+      current.unshift(normalized);
       const trimmed = current.slice(0, max);
       write(key, trimmed);
     },
@@ -77,11 +86,12 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
   const has = useCallback((slug: string) => items.some((i) => i.slug === slug), [items]);
   const toggle = useCallback(
     (item: T) => {
+      const normalized = normalizeStoredImage(item);
       const current = read<T>(key);
-      if (current.some((i) => i.slug === item.slug)) {
-        write(key, current.filter((i) => i.slug !== item.slug));
+      if (current.some((i) => i.slug === normalized.slug)) {
+        write(key, current.filter((i) => i.slug !== normalized.slug));
       } else {
-        current.unshift(item);
+        current.unshift(normalized);
         write(key, current.slice(0, max));
       }
     },
@@ -98,7 +108,8 @@ export const useCompare = () => useLocalList<ShortlistItem>(COMPARE_KEY, MAX_COM
 /** Add to recently viewed without hook — safe to call from any effect. */
 export function pushRecentlyViewed(item: Omit<ShortlistItem, "addedAt">) {
   const now = Date.now();
-  const current = read<ShortlistItem>(RECENT_KEY).filter((i) => i.slug !== item.slug);
-  current.unshift({ ...item, addedAt: now });
+  const normalized = normalizeStoredImage(item);
+  const current = read<ShortlistItem>(RECENT_KEY).filter((i) => i.slug !== normalized.slug);
+  current.unshift({ ...normalized, addedAt: now });
   write(RECENT_KEY, current.slice(0, MAX_RECENT));
 }
