@@ -45,14 +45,37 @@ function sha256(buffer) {
   return createHash("sha256").update(buffer).digest("hex");
 }
 
-async function buildOne(relativePath) {
-  const sourcePath = path.join(PUBLIC_DIR, relativePath);
+function outputDetails(relativePath) {
   const outputRelativePath = `${relativePath}.webp`;
-  const outputPath = path.join(STAGE_DIR, outputRelativePath);
+  return {
+    outputRelativePath,
+    outputPath: path.join(STAGE_DIR, outputRelativePath),
+    publicPath: `/thumbnails/${outputRelativePath.split(path.sep).join("/")}`,
+  };
+}
+
+function escapeXml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+async function sourceMetadata(relativePath) {
+  const sourcePath = path.join(PUBLIC_DIR, relativePath);
+  const sourceBuffer = await readFile(sourcePath);
+  const sourceInfo = await stat(sourcePath);
+  return { sourcePath, sourceBuffer, sourceInfo };
+}
+
+async function buildOne(relativePath) {
+  const { sourceBuffer, sourceInfo } = await sourceMetadata(relativePath);
+  const { outputRelativePath, outputPath, publicPath } = outputDetails(relativePath);
   await mkdir(path.dirname(outputPath), { recursive: true });
 
-  const sourceBuffer = await readFile(sourcePath);
-  const pipeline = sharp(sourceBuffer, { animated: false, failOn: "error" })
+  const outputBuffer = await sharp(sourceBuffer, { animated: false, failOn: "error" })
     .rotate()
     .resize({
       width: MAX_EDGE,
@@ -61,22 +84,61 @@ async function buildOne(relativePath) {
       withoutEnlargement: true,
       fastShrinkOnLoad: true,
     })
-    .webp({ quality: QUALITY, effort: 4, smartSubsample: true });
+    .webp({ quality: QUALITY, effort: 4, smartSubsample: true })
+    .toBuffer();
 
-  const outputBuffer = await pipeline.toBuffer();
   await writeFile(outputPath, outputBuffer);
   const metadata = await sharp(outputBuffer).metadata();
-  const sourceInfo = await stat(sourcePath);
 
   return {
     source: `/${relativePath.split(path.sep).join("/")}`,
-    thumbnail: `/thumbnails/${outputRelativePath.split(path.sep).join("/")}`,
+    thumbnail: publicPath,
     sourceBytes: sourceInfo.size,
     thumbnailBytes: outputBuffer.length,
     width: metadata.width ?? null,
     height: metadata.height ?? null,
     sourceSha256: sha256(sourceBuffer),
     thumbnailSha256: sha256(outputBuffer),
+    fallback: false,
+    outputRelativePath,
+  };
+}
+
+async function buildFallback(relativePath, sourceError) {
+  const { sourceBuffer, sourceInfo } = await sourceMetadata(relativePath);
+  const { outputRelativePath, outputPath, publicPath } = outputDetails(relativePath);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+
+  const label = escapeXml(path.basename(relativePath).replace(/[-_]+/g, " ").slice(0, 58));
+  const fallbackSvg = Buffer.from(`
+    <svg width="720" height="720" viewBox="0 0 720 720" xmlns="http://www.w3.org/2000/svg">
+      <rect width="720" height="720" fill="#101010"/>
+      <rect x="34" y="34" width="652" height="652" fill="none" stroke="#b9944a" stroke-width="2"/>
+      <circle cx="360" cy="285" r="88" fill="none" stroke="#b9944a" stroke-width="6"/>
+      <path d="M304 312l38-42 35 36 30-29 45 52H278z" fill="#b9944a" opacity="0.82"/>
+      <text x="360" y="430" text-anchor="middle" fill="#d9bd7a" font-family="Arial, sans-serif" font-size="29" letter-spacing="5">IRHA APPARELS</text>
+      <text x="360" y="482" text-anchor="middle" fill="#f2f2f2" font-family="Arial, sans-serif" font-size="20">Preview unavailable</text>
+      <text x="360" y="526" text-anchor="middle" fill="#9d9d9d" font-family="Arial, sans-serif" font-size="15">${label}</text>
+    </svg>
+  `);
+  const outputBuffer = await sharp(fallbackSvg)
+    .webp({ quality: QUALITY, effort: 4, smartSubsample: true })
+    .toBuffer();
+  await writeFile(outputPath, outputBuffer);
+  const metadata = await sharp(outputBuffer).metadata();
+
+  return {
+    source: `/${relativePath.split(path.sep).join("/")}`,
+    thumbnail: publicPath,
+    sourceBytes: sourceInfo.size,
+    thumbnailBytes: outputBuffer.length,
+    width: metadata.width ?? 720,
+    height: metadata.height ?? 720,
+    sourceSha256: sha256(sourceBuffer),
+    thumbnailSha256: sha256(outputBuffer),
+    fallback: true,
+    sourceError,
+    outputRelativePath,
   };
 }
 
@@ -86,7 +148,7 @@ async function main() {
 
   const files = await collectFiles(PUBLIC_DIR);
   const results = new Array(files.length);
-  const failures = [];
+  const fatalFailures = [];
   let cursor = 0;
 
   async function worker() {
@@ -94,47 +156,59 @@ async function main() {
       const index = cursor;
       cursor += 1;
       if (index >= files.length) return;
+      const relativePath = files[index];
       try {
-        results[index] = await buildOne(files[index]);
+        results[index] = await buildOne(relativePath);
       } catch (error) {
-        failures.push({
-          source: files[index],
-          error: error instanceof Error ? error.message : String(error),
-        });
+        const sourceError = error instanceof Error ? error.message : String(error);
+        try {
+          results[index] = await buildFallback(relativePath, sourceError);
+          console.warn(`Generated safe fallback thumbnail for ${relativePath}: ${sourceError}`);
+        } catch (fallbackError) {
+          fatalFailures.push({
+            source: relativePath,
+            error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+            sourceError,
+          });
+        }
       }
     }
   }
 
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
 
-  if (failures.length > 0) {
+  if (fatalFailures.length > 0) {
     await rm(STAGE_DIR, { recursive: true, force: true });
-    console.error("Thumbnail generation failed. Originals were not changed.");
-    for (const failure of failures.slice(0, 20)) {
-      console.error(`- ${failure.source}: ${failure.error}`);
+    console.error("Thumbnail generation failed. Originals and the previous thumbnail set were not changed.");
+    for (const failure of fatalFailures.slice(0, 20)) {
+      console.error(`- ${failure.source}: ${failure.error} (source decode: ${failure.sourceError})`);
     }
-    if (failures.length > 20) console.error(`- and ${failures.length - 20} more`);
+    if (fatalFailures.length > 20) console.error(`- and ${fatalFailures.length - 20} more`);
     process.exitCode = 1;
     return;
   }
 
+  const manifestEntries = results.map(({ outputRelativePath: _outputRelativePath, ...item }) => item);
+  const fallbackEntries = manifestEntries.filter((item) => item.fallback);
   const manifest = {
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     maxEdge: MAX_EDGE,
     quality: QUALITY,
     sourceCount: files.length,
-    thumbnails: results,
+    fallbackCount: fallbackEntries.length,
+    fallbacks: fallbackEntries.map((item) => ({ source: item.source, error: item.sourceError })),
+    thumbnails: manifestEntries,
   };
   await writeFile(path.join(STAGE_DIR, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 
   await rm(OUTPUT_DIR, { recursive: true, force: true });
   await rename(STAGE_DIR, OUTPUT_DIR);
 
-  const originalBytes = results.reduce((total, item) => total + item.sourceBytes, 0);
-  const thumbnailBytes = results.reduce((total, item) => total + item.thumbnailBytes, 0);
+  const originalBytes = manifestEntries.reduce((total, item) => total + item.sourceBytes, 0);
+  const thumbnailBytes = manifestEntries.reduce((total, item) => total + item.thumbnailBytes, 0);
   const reduction = originalBytes > 0 ? Math.round((1 - thumbnailBytes / originalBytes) * 100) : 0;
-  console.log(`Generated ${results.length} thumbnails (${reduction}% smaller in aggregate).`);
+  console.log(`Generated ${manifestEntries.length} thumbnails (${reduction}% smaller in aggregate; ${fallbackEntries.length} safe fallback previews).`);
 }
 
 await main();
