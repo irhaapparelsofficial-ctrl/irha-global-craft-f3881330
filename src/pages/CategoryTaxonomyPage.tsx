@@ -2,6 +2,7 @@ import { ArrowRight, ChevronRight, Globe2, MessageCircle } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import SEO from "@/components/SEO";
 import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
+import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import { useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 import {
   buildCategoryTaxonomy,
@@ -92,6 +93,23 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   const products = collection?.products ?? [];
   const heroImage = products[0]?.image ?? audience?.collections[0]?.products[0]?.image ?? category.image;
   const heroLabel = collectionName ?? audienceName ?? topName;
+  const heroProducts = collection
+    ? products
+    : audience
+      ? audience.collections.flatMap((item) => item.products)
+      : category.subs.flatMap((item) => item.products);
+  const heroSlides = [heroImage, ...heroProducts.map((product) => product.image)]
+    .filter((src): src is string => Boolean(src))
+    .filter((src, index, items) => items.indexOf(src) === index)
+    .slice(0, 6)
+    .map((src, index) => ({
+      src,
+      alt: index === 0
+        ? `${heroLabel} custom manufacturing collection`
+        : `${heroLabel} product view ${index + 1}`,
+      fit: "contain" as const,
+      backgroundClassName: "bg-[#f4f0e7]",
+    }));
 
   const breadcrumbItems = [
     { name: ui.home, path: locale === "en" ? "/" : `/intl/${locale}/products/${category.slug}` },
@@ -212,18 +230,16 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
             </div>
           </div>
 
-          {heroImage && (
+          {heroSlides.length > 0 && (
             <div className="lg:col-span-5 relative aspect-[4/5] max-h-[640px] overflow-hidden border border-border/60 bg-card shadow-2xl">
-              <img
-                src={heroImage}
-                alt={`${heroLabel} custom manufacturing collection`}
-                loading="eager"
-                width={960}
-                height={1200}
-                className="absolute inset-0 h-full w-full object-cover"
+              <HeroMediaSlideshow
+                slides={heroSlides}
+                label={`${heroLabel} product slideshow`}
+                imageClassName="p-3 md:p-5"
+                controlsClassName="bottom-4 right-4"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
-              <div className="absolute left-5 right-5 bottom-5 border border-white/20 bg-black/45 backdrop-blur-sm p-4">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
+              <div className="pointer-events-none absolute left-5 right-5 bottom-5 border border-white/20 bg-black/45 backdrop-blur-sm p-4">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-gold">Featured program</p>
                 <p className="font-display text-xl text-white mt-2">{heroLabel}</p>
               </div>
