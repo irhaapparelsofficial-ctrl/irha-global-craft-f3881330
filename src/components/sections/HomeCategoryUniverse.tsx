@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import ResilientImage from "@/components/ResilientImage";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
+import { featuredProductRank } from "@/lib/homeFeaturedProducts";
 import { thumbnailUrl } from "@/lib/imageThumbnails";
 import bavarianImage from "@/assets/og/og-bavarian-hero.jpg";
 import leatherImage from "@/assets/og/og-leather.jpg";
@@ -74,7 +75,10 @@ export default function HomeCategoryUniverse() {
             ].filter(
               (product) => product.is_published && Boolean(product.image_url || product.gallery?.[0]),
             );
-            const featured = products[0];
+            const featured =
+              products.find((product) => featuredProductRank(category.slug, product.slug) === 0) ??
+              products.find((product) => product.is_featured) ??
+              products[0];
             const fallbackImage = FALLBACKS[category.slug] ?? bavarianImage;
             const originalImage = featured
               ? resolveAsset(featured.image_url || featured.gallery?.[0] || fallbackImage)
