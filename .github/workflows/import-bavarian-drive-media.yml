@@ -15,13 +15,13 @@ permissions:
 
 concurrency:
   group: bavarian-drive-media-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   import-media:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - name: Check out import branch
         uses: actions/checkout@v4
@@ -138,6 +138,10 @@ jobs:
           assert report['batch_count'] == 29, report
           assert report['inventory_count'] > 0, report
           assert report['accepted_count'] > 0, report
+          assert report['mapped_product_count'] > 0, report
+          assert report['missing_asset_count'] == 0, report
+          assert report['uncategorized_path_count'] == 0, report
+          assert report['materially_oversized_count'] == 0, report
           assert downloads['downloaded_count'] > 0, downloads
           assert downloads['downloaded_count'] <= downloads['inventory_count'], downloads
           print(json.dumps({'scan': report, 'downloads': downloads}, indent=2))
