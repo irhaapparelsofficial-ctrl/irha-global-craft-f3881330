@@ -52,7 +52,6 @@ describe("Premium Leather Apparel buyer-safe public copy", () => {
     for (const slug of expectedLeatherSlugs) {
       const override = PRODUCT_SEO_OVERRIDES[slug];
       const publicCopy = [
-        override.name ?? "",
         override.description,
         override.shortDescription,
         override.seoTitle,
@@ -77,10 +76,13 @@ describe("Premium Leather Apparel buyer-safe public copy", () => {
     }
   });
 
-  it("applies safe display-name overrides without changing legacy product slugs", () => {
+  it("keeps the catalogue engine unchanged while applying copy and SEO overrides", () => {
     const publicCatalogSource = readFileSync(resolve(root, "src/hooks/usePublicCatalog.ts"), "utf8");
-    expect(publicCatalogSource).toContain("name: override?.name ?? product.name");
-    expect(PRODUCT_SEO_OVERRIDES["full-grain-leather-belt"].name).toBe("Custom Leather Belt");
-    expect(PRODUCT_SEO_OVERRIDES["premium-leather-bag"].name).toBe("Custom Leather Bag");
+    expect(publicCatalogSource).toContain("description: override?.description ?? product.description ?? null");
+    expect(publicCatalogSource).toContain("specs: override?.specs ?? product.specs ?? []");
+    expect(publicCatalogSource).toContain("seo_title: override?.seoTitle");
+    expect(publicCatalogSource).toContain("short_description: override?.shortDescription");
+    expect(PRODUCT_SEO_OVERRIDES["full-grain-leather-belt"].seoTitle).toContain("Custom Leather Belt");
+    expect(PRODUCT_SEO_OVERRIDES["premium-leather-bag"].seoTitle).toContain("Custom Leather Bag");
   });
 });
