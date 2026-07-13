@@ -36,7 +36,16 @@ jobs:
         run: npm test -- --passWithNoTests
 
       - name: Build
-        run: npm run build
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! npm run build > build.log 2>&1; then
+            echo "BUILD_FAILED_TAIL_START"
+            tail -n 120 build.log
+            echo "BUILD_FAILED_TAIL_END"
+            exit 1
+          fi
+          cat build.log
 
       - name: Verify built release identity and canonical host
         shell: bash
