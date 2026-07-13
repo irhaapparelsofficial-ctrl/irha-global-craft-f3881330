@@ -40,19 +40,19 @@ Irha Apparels can explain that it is an experienced manufacturer while the websi
 
 ## Canonical public URLs
 
-- Home: https://www.irhaapparels.com/
-- Collections: https://www.irhaapparels.com/products
-- Catalogue: https://www.irhaapparels.com/catalogue
-- About: https://www.irhaapparels.com/about
-- Manufacturing: https://www.irhaapparels.com/manufacturing
-- Buyer Trust: https://www.irhaapparels.com/buyer-trust
-- Factory Video Call: https://www.irhaapparels.com/factory-video-call
-- Resources: https://www.irhaapparels.com/resources
-- FAQ: https://www.irhaapparels.com/faq
-- Inquiry: https://www.irhaapparels.com/inquiry
-- Contact: https://www.irhaapparels.com/contact
-- Privacy Policy: https://www.irhaapparels.com/privacy-policy
-- Terms of Service: https://www.irhaapparels.com/terms-of-service
+- Home: https://irhaapparels.com/
+- Collections: https://irhaapparels.com/products
+- Catalogue: https://irhaapparels.com/catalogue
+- About: https://irhaapparels.com/about
+- Manufacturing: https://irhaapparels.com/manufacturing
+- Buyer Trust: https://irhaapparels.com/buyer-trust
+- Factory Video Call: https://irhaapparels.com/factory-video-call
+- Resources: https://irhaapparels.com/resources
+- FAQ: https://irhaapparels.com/faq
+- Inquiry: https://irhaapparels.com/inquiry
+- Contact: https://irhaapparels.com/contact
+- Privacy Policy: https://irhaapparels.com/privacy-policy
+- Terms of Service: https://irhaapparels.com/terms-of-service
 
 ## Contact context
 

@@ -13,7 +13,8 @@ const [html, robots, sitemap, llms, llmsFull] = await Promise.all([
   read("llms-full.txt"),
 ]);
 
-const canonical = "https://www.irhaapparels.com";
+const canonical = "https://irhaapparels.com";
+const alternateHost = "https://www.irhaapparels.com";
 const forbidden = [
   "Since 2014",
   "MOQ 50",
@@ -33,11 +34,11 @@ assert(
 );
 assert(
   html.includes(`<link rel="canonical" href="${canonical}/"`),
-  "Built HTML canonical does not use the live www host",
+  "Built HTML canonical does not use the live apex host",
 );
 assert(
   html.includes(`property="og:url" content="${canonical}/"`),
-  "Built Open Graph URL does not use the live www host",
+  "Built Open Graph URL does not use the live apex host",
 );
 assert(
   html.includes('name="robots" content="index,follow,max-image-preview:large"'),
@@ -51,8 +52,8 @@ for (const term of forbidden) {
 for (const agent of ["Googlebot", "Bingbot", "OAI-SearchBot", "ChatGPT-User", "GPTBot", "ClaudeBot", "PerplexityBot"]) {
   assert(robots.includes(`User-agent: ${agent}`), `robots.txt is missing ${agent}`);
 }
-assert(robots.includes(`Sitemap: ${canonical}/sitemap.xml`), "robots.txt sitemap does not use the canonical www host");
-assert(!sitemap.includes("<loc>https://irhaapparels.com"), "sitemap still contains apex URLs");
+assert(robots.includes(`Sitemap: ${canonical}/sitemap.xml`), "robots.txt sitemap does not use the canonical apex host");
+assert(!sitemap.includes(`<loc>${alternateHost}`), "sitemap still contains www URLs");
 assert(sitemap.includes(`<loc>${canonical}/</loc>`), "sitemap is missing the canonical homepage");
 assert(llms.includes(`${canonical}/`), "llms.txt is missing absolute canonical URLs");
 assert(llmsFull.includes("Two production hubs"), "llms-full.txt is missing the current homepage structure");

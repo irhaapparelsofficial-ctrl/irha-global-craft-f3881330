@@ -8,14 +8,14 @@ The website does not publish fixed commercial commitments or unverified certific
 
 ## Primary public pages
 
-- [Home](https://www.irhaapparels.com/): Current B2B manufacturing overview and main buyer actions.
-- [Collections](https://www.irhaapparels.com/products): Published apparel categories and product programs.
-- [Catalogue](https://www.irhaapparels.com/catalogue): Buyer-friendly catalogue groups.
-- [Manufacturing](https://www.irhaapparels.com/manufacturing): Requirement-led manufacturing workflow.
-- [Buyer Trust](https://www.irhaapparels.com/buyer-trust): Verification, communication and buyer confidence information.
-- [Factory Video Call](https://www.irhaapparels.com/factory-video-call): Live factory-view request information.
-- [Inquiry](https://www.irhaapparels.com/inquiry): Quotes, samples, catalogue requests, references and meeting requests.
-- [Contact](https://www.irhaapparels.com/contact): Official email and WhatsApp contact options.
+- [Home](https://irhaapparels.com/): Current B2B manufacturing overview and main buyer actions.
+- [Collections](https://irhaapparels.com/products): Published apparel categories and product programs.
+- [Catalogue](https://irhaapparels.com/catalogue): Buyer-friendly catalogue groups.
+- [Manufacturing](https://irhaapparels.com/manufacturing): Requirement-led manufacturing workflow.
+- [Buyer Trust](https://irhaapparels.com/buyer-trust): Verification, communication and buyer confidence information.
+- [Factory Video Call](https://irhaapparels.com/factory-video-call): Live factory-view request information.
+- [Inquiry](https://irhaapparels.com/inquiry): Quotes, samples, catalogue requests, references and meeting requests.
+- [Contact](https://irhaapparels.com/contact): Official email and WhatsApp contact options.
 
 ## Two production hubs
 
@@ -24,4 +24,4 @@ The website does not publish fixed commercial commitments or unverified certific
 
 ## Additional machine-readable resource
 
-- [Expanded website summary](https://www.irhaapparels.com/llms-full.txt)
+- [Expanded website summary](https://irhaapparels.com/llms-full.txt)
