@@ -3,6 +3,7 @@ import { RefreshCw, Search, UsersRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import BuyerCoreActionsPanel from "@/components/admin/BuyerCoreActionsPanel";
 import BuyerProfileCommunicationsPanel from "@/components/admin/BuyerProfileCommunicationsPanel";
+import BuyerClosureActionsPanel from "@/components/admin/BuyerClosureActionsPanel";
 import {
   normalizePriority,
   normalizeStage,
@@ -240,6 +241,7 @@ export default function BuyerCoreActionsHub() {
             </div>
             <BuyerCoreActionsPanel card={selected} onChanged={() => void load()} />
             <BuyerProfileCommunicationsPanel card={selected} onChanged={() => void load()} />
+            <BuyerClosureActionsPanel card={selected} onChanged={() => void load()} />
           </div>
         )}
       </div>

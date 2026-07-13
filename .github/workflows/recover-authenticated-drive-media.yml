@@ -1,0 +1,129 @@
+name: Recover authenticated Drive media
+
+on:
+  push:
+    branches:
+      - fix/authenticated-drive-media-recovery
+    paths:
+      - recovery-input/READY
+
+permissions:
+  contents: write
+
+concurrency:
+  group: authenticated-drive-media-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover-media:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out recovery branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install image dependencies
+        run: python -m pip install --upgrade Pillow
+
+      - name: Verify and reconstruct recovery archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find recovery-input -maxdepth 1 -name 'recovery.tar.gz.part-*.b64' | wc -l)" -eq 5
+          sha256sum -c <<'SUMS'
+          4a7a6f24a21b1c4504557d555c52e64cb4941b31f179b1b961a9770d1e8b34c4  recovery-input/recovery.tar.gz.part-00.b64
+          ce7a001047b4fdc6b4222a2ca21b958b42e1515b4cd39b23fddca56648976932  recovery-input/recovery.tar.gz.part-01.b64
+          e4b6a7fb4893aa84585b04d4bf792fbdde07cfc92a16809f0215d6e3426b1dea  recovery-input/recovery.tar.gz.part-02.b64
+          6e02cc48e7d4a12b6cd26a5024bfcfc7163bc3d8fa6dc701f77c59ba1a9cea06  recovery-input/recovery.tar.gz.part-03.b64
+          0b72af47ba38a73d4badb0eb0b68fae3927bd58a30a43b70baabe2963775a742  recovery-input/recovery.tar.gz.part-04.b64
+          SUMS
+          cat recovery-input/recovery.tar.gz.part-*.b64 | base64 --decode > /tmp/authenticated-recovery.tar.gz
+          echo "42edafaeff0073bd64b9e8986363dc2a8491b7f2d58ea52e3cf55a6d489b4044  /tmp/authenticated-recovery.tar.gz" | sha256sum -c -
+          tar -tzf /tmp/authenticated-recovery.tar.gz | grep -q '^public/media/bavarian-drive/batches/authenticated-recovery.json$'
+          tar -xzf /tmp/authenticated-recovery.tar.gz
+
+      - name: Clear recovered public-download failures
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          targets = (
+              'copy-socks',
+              'women-dirndl-blouses',
+          )
+          for slug in targets:
+              for root in (
+                  Path('public/media/bavarian-drive/batches'),
+                  Path('docs/import-evidence/bavarian-drive-batches'),
+              ):
+                  path = root / f'{slug}.json'
+                  payload = json.loads(path.read_text(encoding='utf-8'))
+                  payload['download_failure_count'] = 0
+                  payload['download_failures'] = []
+                  path.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Finalize complete deduplicated library
+        run: |
+          python tools/finalize_bavarian_drive_media.py \
+            --expected-count 30 \
+            --sql-output supabase/manual/20260713_bavarian_drive_media_import.sql
+
+      - name: Verify recovered assets and final evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from PIL import Image
+
+          report = json.loads(Path('public/media/bavarian-drive/scan-report.json').read_text())
+          failures = json.loads(Path('docs/import-evidence/bavarian-drive-download-failures.json').read_text())
+          recovery = json.loads(Path('public/media/bavarian-drive/batches/authenticated-recovery.json').read_text())
+
+          assert report['batch_count'] == 30, report
+          assert report['inventory_count'] == 1516, report
+          assert report['download_failure_count'] == 0, report
+          assert report['missing_asset_count'] == 0, report
+          assert report['uncategorized_path_count'] == 0, report
+          assert report['materially_oversized_count'] == 0, report
+          assert report['accepted_count'] >= 1470, report
+          assert failures['failure_count'] == 0, failures
+          assert failures['downloaded_count'] == 1516, failures
+          assert recovery['accepted_count'] == 42, recovery
+
+          files = sorted(Path('public/media/bavarian-drive/assets/authenticated-recovery').rglob('*.webp'))
+          assert len(files) == recovery['finalized_record_count'], (len(files), recovery)
+          for path in files:
+              with Image.open(path) as image:
+                  image.verify()
+          print(json.dumps({
+              'accepted_unique': report['accepted_count'],
+              'recovered_final': recovery['finalized_record_count'],
+              'download_failures': failures['failure_count'],
+          }, indent=2))
+          PY
+
+      - name: Commit verified recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- \
+            public/media/bavarian-drive \
+            docs/import-evidence \
+            supabase/manual/20260713_bavarian_drive_media_import.sql
+          if git diff --cached --quiet; then
+            echo "No recovery changes to commit"
+            exit 0
+          fi
+          git commit -m "fix(media): recover all authenticated Drive images [skip ci]"
+          git push origin HEAD:fix/authenticated-drive-media-recovery

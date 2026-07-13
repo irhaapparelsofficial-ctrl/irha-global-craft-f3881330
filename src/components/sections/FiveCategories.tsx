@@ -2,6 +2,11 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
+import bavarianImage from "@/assets/og/og-bavarian-hero.jpg";
+import leatherImage from "@/assets/og/og-leather.jpg";
+import sportswearImage from "@/assets/og/og-sportswear.jpg";
+import streetwearImage from "@/assets/og/og-streetwear.jpg";
+import nightwearImage from "@/assets/og/og-nightwear.jpg";
 
 const ORDER = [
   "bavarian-trachten-wear",
@@ -10,6 +15,14 @@ const ORDER = [
   "streetwear-activewear",
   "leisure-nightwear",
 ];
+
+const CATEGORY_IMAGES: Record<string, string> = {
+  "bavarian-trachten-wear": bavarianImage,
+  "premium-leather-apparel": leatherImage,
+  sportswear: sportswearImage,
+  "streetwear-activewear": streetwearImage,
+  "leisure-nightwear": nightwearImage,
+};
 
 export default function FiveCategories() {
   const { data: tree = [] } = usePublicCatalogTree();
@@ -40,7 +53,7 @@ export default function FiveCategories() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {cats.map((c) => {
             const productCount = c.subs.reduce((n, s) => n + s.products.length, 0) + c.directProducts.length;
-            const img = c.image_url ? resolveAsset(c.image_url) : "/placeholder.svg";
+            const img = CATEGORY_IMAGES[c.slug] ?? (c.image_url ? resolveAsset(c.image_url) : "/placeholder.svg");
             return (
               <Link
                 key={c.slug}

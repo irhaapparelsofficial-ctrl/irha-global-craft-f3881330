@@ -1,0 +1,8 @@
+# Cloudflare Pages legacy buyer-route redirects.
+# SPA fallback is intentionally omitted because Pages handles React SPA routes
+# automatically when no top-level 404.html exists.
+/buyer-trust-center /buyer-trust 301
+/buyer-trust-centre /buyer-trust 301
+/buyer-resources /resources 301
+/buyer-faq /faq 301
+/shipping-returns /resources 301
