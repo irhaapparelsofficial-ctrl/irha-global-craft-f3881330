@@ -1,0 +1,191 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:12:51+00:00",
+  "batch_slug": "copy-bags",
+  "label": "COPY/Bags",
+  "folder_url": "https://drive.google.com/drive/folders/15gNUJJJCdKHSIaooD2u57VQDhbO-ICiM",
+  "inventory_count": 15,
+  "downloaded_count": 15,
+  "download_failure_count": 0,
+  "image_candidate_count": 15,
+  "accepted_count": 14,
+  "rejected_count": 1,
+  "records": [
+    {
+      "source_path": "COPY/Bags/14448309_719105834894815_4935296123255390208_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/14448309-719105834894815-4935296123255390208-n.webp",
+      "group": "COPY",
+      "width": 1080,
+      "height": 1080,
+      "original_bytes": 100275,
+      "optimized_bytes": 77214,
+      "quality_score": 7.7738,
+      "pixel_sha256": "a90e06c91e524a7ca68a0066702946207089d650c223db18ef9aa571b86a1803",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/14704955_1601858426784821_2027513086730043392_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/14704955-1601858426784821-2027513086730043392-n.webp",
+      "group": "COPY",
+      "width": 528,
+      "height": 528,
+      "original_bytes": 49808,
+      "optimized_bytes": 28084,
+      "quality_score": 4.5373,
+      "pixel_sha256": "6a1d7fdde322d76feef5a0f1664911b361b31d519265845ec2934e5ae024c38d",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/14726194_948822481889080_226593751458381824_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/14726194-948822481889080-226593751458381824-n.webp",
+      "group": "COPY",
+      "width": 396,
+      "height": 396,
+      "original_bytes": 31170,
+      "optimized_bytes": 14260,
+      "quality_score": 3.6446,
+      "pixel_sha256": "4959df5666118fb95eed5bdbfc75fbb96df602be4974a0f574ca48b5f19e4a88",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/14726258_707062429447296_8181532096058097664_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/14726258-707062429447296-8181532096058097664-n.webp",
+      "group": "COPY",
+      "width": 528,
+      "height": 528,
+      "original_bytes": 55187,
+      "optimized_bytes": 33784,
+      "quality_score": 5.2659,
+      "pixel_sha256": "f2787292b1e7c5f4f328e929b5846b200c84db7588c886e0a33bebbbab172567",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/15727134_1024095694361200_4919887798003373623_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/15727134-1024095694361200-4919887798003373623-n.webp",
+      "group": "COPY",
+      "width": 900,
+      "height": 600,
+      "original_bytes": 64366,
+      "optimized_bytes": 58568,
+      "quality_score": 5.8332,
+      "pixel_sha256": "dd73b0dda55fe538192f9a0d77ecc2faa6df938808bf2d7719395e191c81bd18",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/164746420_537133310590757_2601080926627056966_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/164746420-537133310590757-2601080926627056966-n.webp",
+      "group": "COPY",
+      "width": 640,
+      "height": 640,
+      "original_bytes": 43025,
+      "optimized_bytes": 25814,
+      "quality_score": 5.2862,
+      "pixel_sha256": "d255257cc783b35564b769dc9feb275d48ff36b1aaeb651b991ff22d14ab387f",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/165302302_253944709700847_2228288254387629619_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/165302302-253944709700847-2228288254387629619-n.webp",
+      "group": "COPY",
+      "width": 640,
+      "height": 640,
+      "original_bytes": 48985,
+      "optimized_bytes": 34464,
+      "quality_score": 5.6607,
+      "pixel_sha256": "dec180be1d388df63997501f80c06dccb14d6a5febbfa9ff663521344443325f",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/166256355_118519663593312_8733637425153429080_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/166256355-118519663593312-8733637425153429080-n.webp",
+      "group": "COPY",
+      "width": 640,
+      "height": 640,
+      "original_bytes": 34046,
+      "optimized_bytes": 22546,
+      "quality_score": 5.2801,
+      "pixel_sha256": "a5f9c5b476704b0c838a06979e4efad48412bebb98a36e0fb757ca47b3881514",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/166462495_755884595317443_3039762687384811745_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/166462495-755884595317443-3039762687384811745-n.webp",
+      "group": "COPY",
+      "width": 640,
+      "height": 640,
+      "original_bytes": 39005,
+      "optimized_bytes": 26226,
+      "quality_score": 5.8344,
+      "pixel_sha256": "fd9133dadca733bf264d71ded77aa7acb0f9bbdfadfc375500ca03cca28f0654",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/16804456_1062773250493444_454447153243099534_o.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/16804456-1062773250493444-454447153243099534-o.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 1080,
+      "original_bytes": 80816,
+      "optimized_bytes": 70332,
+      "quality_score": 5.9853,
+      "pixel_sha256": "d801764fea2076a7692fd1eb4fa474553505080e244aa162ff6c47c44375a75c",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/280095476_701610944595013_6736826236810360968_n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/280095476-701610944595013-6736826236810360968-n.webp",
+      "group": "COPY",
+      "width": 476,
+      "height": 476,
+      "original_bytes": 37026,
+      "optimized_bytes": 26230,
+      "quality_score": 5.0413,
+      "pixel_sha256": "7e6dec23701c8021b7d4907d5fe618a5f38b7666e6f3af9551bb548f1566a4f7",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/29468752_1397750020329097_1614652693907767296_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/29468752-1397750020329097-1614652693907767296-n.webp",
+      "group": "COPY",
+      "width": 768,
+      "height": 960,
+      "original_bytes": 40701,
+      "optimized_bytes": 36392,
+      "quality_score": 6.7804,
+      "pixel_sha256": "8d243498a1779f7656a3df5b4e7b49c034901ba4e38ab7057f1258a361e8c209",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/29497526_1397750076995758_8166059862921314304_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/29497526-1397750076995758-8166059862921314304-n.webp",
+      "group": "COPY",
+      "width": 500,
+      "height": 650,
+      "original_bytes": 21923,
+      "optimized_bytes": 22020,
+      "quality_score": 4.7861,
+      "pixel_sha256": "6957e9f8c7ec959fb1c271c9014c7bc5bd7d0657c97e04223ccc42169aaa8c03",
+      "product_slug": "premium-leather-bag"
+    },
+    {
+      "source_path": "COPY/Bags/29511921_1397749970329102_657485726954291200_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-bags/uncategorized/29511921-1397749970329102-657485726954291200-n.webp",
+      "group": "COPY",
+      "width": 456,
+      "height": 570,
+      "original_bytes": 12343,
+      "optimized_bytes": 8142,
+      "quality_score": 4.7373,
+      "pixel_sha256": "3903fc4bda1b5a21e6169bc03f44ad35f83430c8a2cbb5be7a5aaa28d22cabfb",
+      "product_slug": "premium-leather-bag"
+    }
+  ],
+  "rejected": [
+    {
+      "source_path": "COPY/Bags/29432914_1397750130329086_4346908474404241408_n.jpg",
+      "reason": "too small: 208x296",
+      "duplicate_of": null
+    }
+  ],
+  "download_failures": []
+}
