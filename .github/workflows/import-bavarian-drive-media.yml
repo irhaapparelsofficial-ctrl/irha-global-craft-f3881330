@@ -35,6 +35,9 @@ jobs:
       - name: Install image importer dependencies
         run: python -m pip install --upgrade gdown Pillow
 
+      - name: Align importer with current gdown API
+        run: sed -i '/remaining_ok=True,/d' tools/import_bavarian_drive_media.py
+
       - name: Validate importer syntax
         run: python -m py_compile tools/import_bavarian_drive_media.py
 
@@ -88,7 +91,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config http.postBuffer 524288000
-          git add docs/import-evidence public/media/bavarian-drive supabase/manual/20260713_bavarian_drive_media_import.sql
+          git add tools/import_bavarian_drive_media.py docs/import-evidence public/media/bavarian-drive supabase/manual/20260713_bavarian_drive_media_import.sql
           if git diff --cached --quiet; then
             echo "Generated media is already current."
             exit 0
