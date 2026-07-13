@@ -23,8 +23,10 @@ const RULES = [
   { id: "password-literal", pattern: /(?:OWNER_|ADMIN_)?PASSWORD\s*[:=]\s*["'](?!change-me|example|placeholder)[^"'\n]{8,}["']/gi },
 ];
 
-const ALLOWED_PATHS = new Set([
-  "src/integrations/supabase/ownerRuntime.ts",
+const PUBLIC_ENV_VALIDATORS = new Map([
+  ["VITE_SUPABASE_PROJECT_ID", /^[a-z0-9]{20}$/i],
+  ["VITE_SUPABASE_URL", /^https:\/\/[a-z0-9]{20}\.supabase\.co\/?$/i],
+  ["VITE_SUPABASE_PUBLISHABLE_KEY", /^sb_publishable_[A-Za-z0-9_-]{20,}$/],
 ]);
 
 async function walk(directory, output = []) {
@@ -45,6 +47,25 @@ function isTextCandidate(relative, info) {
   return TEXT_EXTENSIONS.has(path.extname(relative).toLowerCase());
 }
 
+function validateCommittedEnv(relative, text, findings) {
+  const lines = text.split(/\r?\n/);
+  for (const [index, rawLine] of lines.entries()) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const match = line.match(/^([A-Z0-9_]+)\s*=\s*(.*)$/);
+    if (!match) {
+      findings.push({ file: relative, rule: "invalid-env-line", line: index + 1 });
+      continue;
+    }
+    const [, name, rawValue] = match;
+    const value = rawValue.trim().replace(/^(["'])(.*)\1$/, "$2");
+    const validator = PUBLIC_ENV_VALIDATORS.get(name);
+    if (!validator || !validator.test(value)) {
+      findings.push({ file: relative, rule: "non-public-committed-env-value", line: index + 1 });
+    }
+  }
+}
+
 const findings = [];
 for (const absolute of await walk(ROOT)) {
   const relative = path.relative(ROOT, absolute).split(path.sep).join("/");
@@ -59,14 +80,12 @@ for (const absolute of await walk(ROOT)) {
   }
 
   if (path.basename(relative).startsWith(".env") && path.basename(relative) !== ".env.example") {
-    const active = text.split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("#") && !/=\s*$/.test(line));
-    if (active.length) findings.push({ file: relative, rule: "committed-env-values", line: 1 });
+    validateCommittedEnv(relative, text, findings);
   }
 
   for (const rule of RULES) {
     rule.pattern.lastIndex = 0;
     for (const match of text.matchAll(rule.pattern)) {
-      if (ALLOWED_PATHS.has(relative) && rule.id === "supabase-secret-key") continue;
       const line = text.slice(0, match.index ?? 0).split("\n").length;
       findings.push({ file: relative, rule: rule.id, line });
     }
@@ -80,4 +99,4 @@ if (findings.length) {
   process.exit(1);
 }
 
-console.log("Secret-safety verification passed: no high-risk credential literals found.");
+console.log("Secret-safety verification passed: only approved browser-public Supabase values are committed.");
