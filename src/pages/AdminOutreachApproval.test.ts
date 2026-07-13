@@ -29,6 +29,13 @@ describe("outreach approval copilot safety", () => {
     expect(backend).not.toContain("GMAIL_BASE");
   });
 
+  it("derives WhatsApp copy from the existing AI email without adding new claims", () => {
+    expect(backend).toContain('derivation_mode: "existing_ai_email_no_new_claims"');
+    expect(backend).toContain("deriveWhatsAppCopy(message.body_text)");
+    expect(backend).toContain("No new buyer facts or commercial claims added");
+    expect(backend).not.toContain("ai.gateway.lovable.dev");
+  });
+
   it("does not expose an email or WhatsApp send endpoint", () => {
     expect(page).not.toContain('action: "send"');
     expect(page).not.toContain('action: "send_approved"');
