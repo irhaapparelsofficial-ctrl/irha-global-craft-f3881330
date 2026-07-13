@@ -35,22 +35,6 @@ function retireLegacyCatalogueFiles(): Plugin {
   };
 }
 
-function vendorChunk(id: string): string | undefined {
-  const normalized = id.replace(/\\/g, "/");
-  if (
-    normalized.includes("/node_modules/react/") ||
-    normalized.includes("/node_modules/react-dom/") ||
-    normalized.includes("/node_modules/react-router-dom/")
-  ) return "react-vendor";
-  if (
-    normalized.includes("/node_modules/lucide-react/") ||
-    normalized.includes("/node_modules/@radix-ui/react-slot/") ||
-    normalized.includes("/node_modules/@radix-ui/react-dialog/")
-  ) return "ui-vendor";
-  if (normalized.includes("/node_modules/@tanstack/react-query/")) return "query-vendor";
-  return undefined;
-}
-
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -72,10 +56,5 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     sourcemap: false,
     minify: "oxc",
-    rolldownOptions: {
-      output: {
-        manualChunks: vendorChunk,
-      },
-    },
   },
 }));
