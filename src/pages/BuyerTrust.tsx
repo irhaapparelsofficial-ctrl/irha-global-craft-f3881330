@@ -8,8 +8,10 @@ import {
   Video,
 } from "lucide-react";
 import SEO from "@/components/SEO";
+import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import { whatsappLink } from "@/lib/constants";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
+import manufacturingImg from "@/assets/manufacturing.jpg";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -63,6 +65,19 @@ const VERIFICATION_STEPS = [
   },
 ];
 
+const HERO_SLIDES = [
+  {
+    src: factoryCinematic,
+    alt: "Irha Apparels factory environment for buyer verification",
+    fit: "cover" as const,
+  },
+  {
+    src: manufacturingImg,
+    alt: "Sialkot apparel manufacturing view for buyer verification",
+    fit: "cover" as const,
+  },
+];
+
 export default function BuyerTrust() {
   const pageUrl = `${SITE_URL}/buyer-trust`;
   const jsonLd = [
@@ -95,16 +110,13 @@ export default function BuyerTrust() {
       />
 
       <section className="relative pt-36 md:pt-44 pb-20 md:pb-24 border-b border-border/60 overflow-hidden">
-        <img
-          src={factoryCinematic}
-          alt="Irha Apparels factory environment for buyer verification"
-          loading="eager"
-          width={1920}
-          height={1080}
-          className="absolute inset-0 w-full h-full object-cover object-center"
+        <HeroMediaSlideshow
+          slides={HERO_SLIDES}
+          label="Buyer verification factory slideshow"
+          controlsClassName="bottom-5 right-5"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/92 via-black/72 to-black/35" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/92 via-black/72 to-black/35" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20" />
         <div className="container-luxe relative grid lg:grid-cols-12 gap-12 items-end">
           <div className="lg:col-span-8">
             <div className="h-px w-16 bg-gold mb-6" />
