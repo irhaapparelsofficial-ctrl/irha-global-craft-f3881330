@@ -1,9 +1,9 @@
-const PRIMARY = (process.env.IRHA_PRIMARY_URL || "https://www.irhaapparels.com").replace(/\/$/, "");
-const ALIASES = (process.env.IRHA_DOMAIN_ALIASES || "https://irhaapparels.com")
+const PRIMARY = (process.env.IRHA_PRIMARY_URL || "https://irhaapparels.com").replace(/\/$/, "");
+const ALIASES = (process.env.IRHA_DOMAIN_ALIASES || "https://www.irhaapparels.com")
   .split(",")
   .map((value) => value.trim().replace(/\/$/, ""))
   .filter(Boolean);
-const EXPECTED_RELEASE = process.env.IRHA_EXPECTED_RELEASE || "frontend-live-2026-07-12-r10";
+const EXPECTED_RELEASE = process.env.IRHA_EXPECTED_RELEASE || "frontend-live-2026-07-13-r11";
 const EXPECTED_PROJECT_ID = process.env.IRHA_EXPECTED_PROJECT_ID || "da72a40a-7df3-44c3-a72d-f180d9ffcd25";
 const EXPECTED_REPOSITORY = process.env.IRHA_EXPECTED_REPOSITORY || "irhaapparelsofficial-ctrl/irha-global-craft-f3881330";
 
