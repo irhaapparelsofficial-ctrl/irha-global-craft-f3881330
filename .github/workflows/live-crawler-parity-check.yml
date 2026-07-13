@@ -41,8 +41,22 @@ jobs:
           echo 'NS:'; dig +short NS irhaapparels.com || true
           echo 'A apex:'; dig +short A irhaapparels.com || true
           echo 'CNAME www:'; dig +short CNAME www.irhaapparels.com || true
-          echo '--- HTTP ---'
-          for agent in 'Mozilla/5.0' 'OAI-SearchBot/1.0' 'ChatGPT-User/1.0' 'GPTBot/1.0' 'Googlebot/2.1 (+http://www.google.com/bot.html)'; do
+          echo '--- Live browser release ---'
+          browser_code=$(curl -sSL -A 'Mozilla/5.0' -D browser.headers -o browser.html -w '%{http_code}' 'https://irhaapparels.com/' || true)
+          echo "browser HTTP $browser_code"
+          grep -o '<title>[^<]*</title>' browser.html | head -1 || true
+          grep -o 'name="x-irha-release" content="[^"]*"' browser.html | head -1 || true
+          grep -o 'name="x-irha-project-id" content="[^"]*"' browser.html | head -1 || true
+          grep -o 'name="x-irha-supabase-project-id" content="[^"]*"' browser.html | head -1 || true
+          grep -iE '^(content-security-policy|permissions-policy|x-frame-options|x-content-type-options|referrer-policy):' browser.headers || true
+          echo '--- Product raw HTML ---'
+          product_code=$(curl -sSL -A 'Mozilla/5.0' -o product.html -w '%{http_code}' 'https://irhaapparels.com/products/leisure-nightwear/plush-bathrobe-sleep-robe' || true)
+          echo "product HTTP $product_code"
+          grep -o '<title>[^<]*</title>' product.html | head -1 || true
+          grep -o 'irha-static-crawler-shell' product.html | head -1 || true
+          grep -o 'Loading product[^<]*' product.html | head -1 || true
+          echo '--- User-agent responses (spoof tests only) ---'
+          for agent in 'OAI-SearchBot/1.0' 'ChatGPT-User/1.0' 'GPTBot/1.0' 'Googlebot/2.1 (+http://www.google.com/bot.html)'; do
             code=$(curl -sSL -A "$agent" -o body.html -w '%{http_code}' 'https://irhaapparels.com/' || true)
             title=$(grep -o '<title>[^<]*</title>' body.html | head -1 || true)
             echo "$agent => HTTP $code $title"
