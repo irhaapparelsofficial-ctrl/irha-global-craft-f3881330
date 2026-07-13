@@ -5,10 +5,11 @@ export const CORS = {
 };
 
 export const PROVIDER = "public_search_no_api_key";
-const UA = "Mozilla/5.0 (compatible; IrhaBuyerResearch/4.2; +https://www.irhaapparels.com)";
+const UA = "Mozilla/5.0 (compatible; IrhaBuyerResearch/4.3; +https://www.irhaapparels.com)";
 export const BUYER = /\b(wholesale|wholesaler|großhandel|grosshandel|importer|importeur|distributor|vertrieb|retailer|retail|einzelhandel|shop|store|boutique|private[ -]?label|fashion brand|e-?commerce|webshop|sourcing|procurement|händler|haendler|dealer|stockist|reseller)\b/i;
 export const MAKER = /\b(manufacturer|manufacturing|factory|fabrik|producer|exporter|hersteller)\b/i;
 const BLOCKED = /(^|\.)(bing\.com|duckduckgo\.com|google\.|facebook\.com|instagram\.com|linkedin\.com|youtube\.com|pinterest\.|tiktok\.com|wikipedia\.org|amazon\.|ebay\.|etsy\.com|alibaba\.com|made-in-china\.com)/i;
+const PROVIDER_HOSTS = new Set(["www.bing.com", "lite.duckduckgo.com"]);
 
 export type SearchResult = { url: string; title: string; description: string; query: string; provider: string };
 
@@ -29,7 +30,8 @@ export function safeUrl(value: unknown): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
   try {
     const url = new URL(/^https?:\/\//i.test(value.trim()) ? value.trim() : `https://${value.trim()}`);
-    if (!["http:", "https:"].includes(url.protocol)) return null;
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return null;
+    if (url.port && !["80", "443"].includes(url.port)) return null;
     url.hash = "";
     return url.toString();
   } catch { return null; }
@@ -41,14 +43,64 @@ export function domain(value: unknown): string | null {
   try { return new URL(url).hostname.toLowerCase().replace(/^www\./, ""); } catch { return null; }
 }
 
+function normalizedHostname(hostname: string) {
+  return hostname.toLowerCase().replace(/^\[/, "").replace(/\]$/, "").replace(/\.$/, "");
+}
+
+function blockedIpv4(ip: string) {
+  const parts = ip.split(".").map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [a, b, c] = parts;
+  return a === 0 || a === 10 || a === 127 || a >= 224 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 0) ||
+    (a === 192 && b === 168) ||
+    (a === 192 && b === 0 && c === 2) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113);
+}
+
+function blockedIpv6(ip: string) {
+  const value = normalizedHostname(ip);
+  if (!value.includes(":")) return false;
+  if (value === "::" || value === "::1") return true;
+  if (/^(fc|fd)/i.test(value) || /^fe[89ab]/i.test(value) || /^ff/i.test(value) || /^2001:db8:/i.test(value)) return true;
+  const mapped = value.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/i)?.[1];
+  return mapped ? blockedIpv4(mapped) : false;
+}
+
+function blockedAddress(value: string) {
+  const address = normalizedHostname(value);
+  return blockedIpv4(address) || blockedIpv6(address);
+}
+
 export function isPublicUrl(value: string) {
-  const url = safeUrl(value);
-  if (!url) return false;
+  const normalized = safeUrl(value);
+  if (!normalized) return false;
   try {
-    const h = new URL(url).hostname.toLowerCase();
-    return !BLOCKED.test(h) && h.includes(".") && h !== "localhost" && !h.endsWith(".local") &&
-      !/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(h);
+    const url = new URL(normalized);
+    const host = normalizedHostname(url.hostname);
+    return !BLOCKED.test(host) && host.includes(".") && host !== "localhost" && !host.endsWith(".local") && !host.endsWith(".internal") && !blockedAddress(host);
   } catch { return false; }
+}
+
+async function assertPublicDestination(value: string) {
+  const normalized = safeUrl(value);
+  if (!normalized || !isPublicUrl(normalized)) throw new Error("Unsafe public URL");
+  const url = new URL(normalized);
+  const host = normalizedHostname(url.hostname);
+  if (blockedAddress(host)) throw new Error("Private network destination blocked");
+
+  const results = await Promise.allSettled([
+    Deno.resolveDns(host, "A"),
+    Deno.resolveDns(host, "AAAA"),
+  ]);
+  const addresses = results.flatMap((result) => result.status === "fulfilled" ? result.value : []);
+  if (!addresses.length || addresses.some(blockedAddress)) throw new Error("Private or unresolved destination blocked");
+  return url;
 }
 
 export function inferBuyer(text: string) {
@@ -85,15 +137,45 @@ export const phoneFrom = (text: string) => unique((text.match(/(?:\+|00)?\d[\d\s
 function tag(source: string, name: string) { return (source.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, "i"))?.[1] || "").replace(/^<!\[CDATA\[/, "").replace(/\]\]>$/, "").trim(); }
 function strip(source: string) { return source.replace(/<(script|style|svg|noscript)[^>]*>[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim(); }
 
-async function fetchTimed(url: string) {
+async function fetchWithTimeout(url: URL, redirect: RequestRedirect) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
-  try { return await fetch(url, { signal: controller.signal, redirect: "follow", headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml,application/xml,text/xml;q=0.9" } }); }
-  finally { clearTimeout(timer); }
+  try {
+    return await fetch(url, {
+      signal: controller.signal,
+      redirect,
+      headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml,application/xml,text/xml;q=0.9" },
+    });
+  } finally { clearTimeout(timer); }
+}
+
+async function fetchProvider(url: string) {
+  let current = new URL(url);
+  for (let hop = 0; hop <= 2; hop += 1) {
+    if (current.protocol !== "https:" || !PROVIDER_HOSTS.has(normalizedHostname(current.hostname))) throw new Error("Unexpected search provider redirect");
+    const res = await fetchWithTimeout(current, "manual");
+    if (res.status < 300 || res.status >= 400) return res;
+    const location = res.headers.get("location");
+    if (!location || hop === 2) throw new Error("Search provider redirect rejected");
+    current = new URL(location, current);
+  }
+  throw new Error("Search provider redirect limit reached");
+}
+
+async function fetchPublicPage(url: string) {
+  let current = await assertPublicDestination(url);
+  for (let hop = 0; hop <= 3; hop += 1) {
+    const res = await fetchWithTimeout(current, "manual");
+    if (res.status < 300 || res.status >= 400) return res;
+    const location = res.headers.get("location");
+    if (!location || hop === 3) throw new Error("Public page redirect rejected");
+    current = await assertPublicDestination(new URL(location, current).toString());
+  }
+  throw new Error("Public page redirect limit reached");
 }
 
 async function bing(query: string, limit: number): Promise<SearchResult[]> {
-  const res = await fetchTimed(`https://www.bing.com/search?format=rss&q=${encodeURIComponent(query)}`);
+  const res = await fetchProvider(`https://www.bing.com/search?format=rss&q=${encodeURIComponent(query)}`);
   if (!res.ok) throw new Error(`Bing ${res.status}`);
   const xml = await res.text();
   const out: SearchResult[] = [];
@@ -107,7 +189,7 @@ async function bing(query: string, limit: number): Promise<SearchResult[]> {
 }
 
 async function ddg(query: string, limit: number): Promise<SearchResult[]> {
-  const res = await fetchTimed(`https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`);
+  const res = await fetchProvider(`https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`);
   if (!res.ok) throw new Error(`DuckDuckGo ${res.status}`);
   const html = await res.text();
   const out: SearchResult[] = [];
@@ -134,14 +216,14 @@ export async function publicSearch(query: string, limit: number) {
 }
 
 export async function fetchPages(website: string) {
-  const origin = new URL(website).origin;
-  const urls = [website, "/contact", "/kontakt", "/impressum", "/about-us", "/shop"].map((x, i) => i === 0 ? x : new URL(x, origin).toString());
+  const safeWebsite = await assertPublicDestination(website);
+  const origin = safeWebsite.origin;
+  const urls = [safeWebsite.toString(), "/contact", "/kontakt", "/impressum", "/about-us", "/shop"].map((x, i) => i === 0 ? x : new URL(x, origin).toString());
   const pages: { url: string; title: string; html: string; text: string }[] = [];
   for (const url of urls) {
     if (pages.length >= 4) break;
     try {
-      if (!isPublicUrl(url)) continue;
-      const res = await fetchTimed(url);
+      const res = await fetchPublicPage(url);
       if (!res.ok || !/text\/html|text\/plain|xhtml/i.test(res.headers.get("content-type") || "")) continue;
       const finalUrl = safeUrl(res.url);
       if (!finalUrl || !isPublicUrl(finalUrl)) continue;
