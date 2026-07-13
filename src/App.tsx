@@ -29,6 +29,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminOutreachQuick = lazy(() => import("./pages/AdminOutreachQuick"));
 const AdminWhatsAppQuick = lazy(() => import("./pages/AdminWhatsAppQuick"));
+const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"));
 const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
 const Compliance = lazy(() => import("./pages/Compliance"));
@@ -109,6 +110,7 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/outreach-quick" element={<AdminOutreachQuick />} />
               <Route path="/admin/whatsapp-quick" element={<AdminWhatsAppQuick />} />
+              <Route path="/admin/lead-intake" element={<AdminLeadIntake />} />
 
               <Route
                 path="*"
