@@ -34,6 +34,8 @@ const BUYER_TYPES = [
   "Other",
 ];
 
+const FIELD_CLASS = "min-h-12 w-full border border-border/60 bg-background px-3 text-sm text-foreground outline-none focus:border-gold";
+
 function initialDraft(item: BuyerEmail): Draft {
   return {
     companyName: item.sender_name?.trim() || "",
@@ -86,9 +88,11 @@ export default function GmailBuyerLinkerPanel() {
   );
 
   const patchDraft = (id: string, patch: Partial<Draft>) => {
+    const item = items.find((row) => row.id === id);
+    if (!item) return;
     setDrafts((current) => ({
       ...current,
-      [id]: { ...(current[id] || initialDraft(items.find((item) => item.id === id)!)), ...patch },
+      [id]: { ...(current[id] || initialDraft(item)), ...patch },
     }));
   };
 
@@ -211,19 +215,19 @@ export default function GmailBuyerLinkerPanel() {
                 <div className="mt-5 border-t border-border/50 pt-5">
                   <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
                     <Field label="Company name" required>
-                      <input value={draft.companyName} onChange={(event) => patchDraft(item.id, { companyName: event.target.value })} className="field" placeholder="Buyer company" />
+                      <input value={draft.companyName} onChange={(event) => patchDraft(item.id, { companyName: event.target.value })} className={FIELD_CLASS} placeholder="Buyer company" />
                     </Field>
                     <Field label="Country" required>
-                      <input value={draft.country} onChange={(event) => patchDraft(item.id, { country: event.target.value })} className="field" placeholder="Germany, Azerbaijan…" />
+                      <input value={draft.country} onChange={(event) => patchDraft(item.id, { country: event.target.value })} className={FIELD_CLASS} placeholder="Germany, Azerbaijan…" />
                     </Field>
                     <Field label="Buyer type">
-                      <select value={draft.buyerType} onChange={(event) => patchDraft(item.id, { buyerType: event.target.value })} className="field">
+                      <select value={draft.buyerType} onChange={(event) => patchDraft(item.id, { buyerType: event.target.value })} className={FIELD_CLASS}>
                         <option value="">Not confirmed</option>
                         {BUYER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                       </select>
                     </Field>
                     <Field label="Priority">
-                      <select value={draft.priority} onChange={(event) => patchDraft(item.id, { priority: event.target.value as Draft["priority"] })} className="field">
+                      <select value={draft.priority} onChange={(event) => patchDraft(item.id, { priority: event.target.value as Draft["priority"] })} className={FIELD_CLASS}>
                         <option value="low">Low</option>
                         <option value="normal">Normal</option>
                         <option value="high">High</option>
