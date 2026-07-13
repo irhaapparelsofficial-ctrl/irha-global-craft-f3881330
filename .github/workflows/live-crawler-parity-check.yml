@@ -12,10 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Diagnose production crawler responses
+      - name: Diagnose DNS and production crawler responses
         shell: bash
         run: |
           set -u
+          echo '--- DNS ---'
+          echo 'NS:'; dig +short NS irhaapparels.com || true
+          echo 'A apex:'; dig +short A irhaapparels.com || true
+          echo 'AAAA apex:'; dig +short AAAA irhaapparels.com || true
+          echo 'CNAME www:'; dig +short CNAME www.irhaapparels.com || true
+          echo 'A www:'; dig +short A www.irhaapparels.com || true
+          echo 'TXT apex:'; dig +short TXT irhaapparels.com || true
+          echo '--- HTTP ---'
           fetch() {
             label="$1"; agent="$2"; url="$3"; output="$4"
             code=$(curl -sSL -A "$agent" -o "$output" -w '%{http_code}' "$url" || true)
@@ -24,20 +32,10 @@ jobs:
           fetch browser 'Mozilla/5.0' 'https://irhaapparels.com/' browser.html
           fetch oai 'OAI-SearchBot/1.0' 'https://irhaapparels.com/' ai.html
           fetch google 'Googlebot/2.1 (+http://www.google.com/bot.html)' 'https://irhaapparels.com/' google.html
-          fetch robots 'Mozilla/5.0' 'https://irhaapparels.com/robots.txt' robots.txt
-          fetch llms 'Mozilla/5.0' 'https://irhaapparels.com/llms.txt' llms.txt
-          fetch sitemap 'Mozilla/5.0' 'https://irhaapparels.com/sitemap.xml' sitemap.xml
-          echo '--- Browser title ---'
+          fetch lovable 'Mozilla/5.0' 'https://irha-global-craft-f3881330.lovable.app/' lovable.html
+          echo '--- Titles ---'
           grep -o '<title>[^<]*</title>' browser.html | head -1 || true
-          echo '--- OAI title/H1/canonical ---'
-          grep -o '<title>[^<]*</title>' ai.html | head -1 || true
-          grep -o '<h1[^>]*>[^<]*</h1>' ai.html | head -1 || true
-          grep -o '<link rel="canonical"[^>]*>' ai.html | head -1 || true
-          echo '--- Google title ---'
           grep -o '<title>[^<]*</title>' google.html | head -1 || true
-          echo '--- Crawler markers ---'
-          grep -E 'OAI-SearchBot|Sitemap:' robots.txt || true
-          grep -E 'Two production hubs|Bavarian & Leather' llms.txt || true
-          echo '--- Response previews ---'
-          head -c 300 browser.html || true; echo
-          head -c 300 ai.html || true; echo
+          grep -o '<title>[^<]*</title>' lovable.html | head -1 || true
+          echo '--- OAI response ---'
+          cat ai.html || true
