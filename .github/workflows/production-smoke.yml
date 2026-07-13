@@ -8,7 +8,7 @@ on:
       base_url:
         description: Production URL to verify
         required: true
-        default: https://www.irhaapparels.com
+        default: https://irhaapparels.com
         type: string
       propagation_minutes:
         description: Maximum minutes to wait for Lovable/CDN propagation
@@ -39,9 +39,9 @@ env:
   IRHA_EXPECTED_PROJECT_ID: da72a40a-7df3-44c3-a72d-f180d9ffcd25
   IRHA_EXPECTED_SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
   IRHA_EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
-  IRHA_EXPECTED_ORIGIN: https://www.irhaapparels.com
-  IRHA_PRIMARY_URL: https://www.irhaapparels.com
-  IRHA_DOMAIN_ALIASES: https://irhaapparels.com
+  IRHA_EXPECTED_ORIGIN: https://irhaapparels.com
+  IRHA_PRIMARY_URL: https://irhaapparels.com
+  IRHA_DOMAIN_ALIASES: https://www.irhaapparels.com
 
 jobs:
   smoke:
