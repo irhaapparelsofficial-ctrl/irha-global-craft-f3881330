@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import ResilientImage from "@/components/ResilientImage";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
 import { thumbnailUrl } from "@/lib/imageThumbnails";
@@ -74,9 +75,11 @@ export default function HomeCategoryUniverse() {
               (product) => product.is_published && Boolean(product.image_url || product.gallery?.[0]),
             );
             const featured = products[0];
-            const image = thumbnailUrl(featured
-              ? resolveAsset(featured.image_url || featured.gallery?.[0] || FALLBACKS[category.slug])
-              : FALLBACKS[category.slug]);
+            const fallbackImage = FALLBACKS[category.slug] ?? bavarianImage;
+            const originalImage = featured
+              ? resolveAsset(featured.image_url || featured.gallery?.[0] || fallbackImage)
+              : fallbackImage;
+            const previewImage = thumbnailUrl(originalImage);
             const usesProductMedia = Boolean(featured);
             const childNames = category.subs.slice(0, 3).map((subCategory) => subCategory.name);
             const featuredRow = index < 2;
@@ -88,8 +91,8 @@ export default function HomeCategoryUniverse() {
                 className={`group overflow-hidden border border-border/70 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:shadow-elegant ${LAYOUTS[index] ?? "lg:col-span-4"}`}
               >
                 <div className={`relative overflow-hidden ${featuredRow ? "aspect-[16/10]" : "aspect-[4/3]"} ${usesProductMedia ? "bg-[#eee8dc]" : "bg-black"}`}>
-                  <img
-                    src={image}
+                  <ResilientImage
+                    sources={[previewImage, originalImage, fallbackImage]}
                     alt={featured ? `${featured.name} — ${category.name}` : category.name}
                     loading={index === 0 ? "eager" : "lazy"}
                     decoding="async"
