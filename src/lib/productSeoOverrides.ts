@@ -1,5 +1,4 @@
 export type ProductSeoOverride = {
-  name?: string;
   description: string;
   shortDescription: string;
   specs: string[];
@@ -89,7 +88,6 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
       "Biker leather jacket manufacturing for wholesale, OEM and private-label buyers, with panels, material, hardware, lining, sizing and branding developed by brief.",
   },
   "leather-vest-waistcoat": {
-    name: "Custom Leather Vest / Waistcoat",
     description:
       "Leather vest or waistcoat prepared for wholesale, OEM and private-label ranges. Front profile, pocket layout, closure style, lining, material grade, colour, sizing and branding are confirmed against the buyer-approved design and sample.",
     shortDescription:
@@ -106,7 +104,6 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
       "Custom leather vest and waistcoat manufacturing for wholesalers and private-label brands, with material, closure, lining, sizing and branding by specification.",
   },
   "leather-trousers": {
-    name: "Custom Leather Trousers",
     description:
       "Leather trousers developed for wholesale, OEM and private-label apparel programs. Fit, rise, leg profile, waistband, pocket construction, closure hardware, material grade, colour and size grading are confirmed from the approved buyer sample.",
     shortDescription:
@@ -123,7 +120,6 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
       "Custom leather trouser manufacturing for wholesale and private-label buyers, with fit, material, pockets, hardware, sizing and branding developed by specification.",
   },
   "full-grain-leather-belt": {
-    name: "Custom Leather Belt",
     description:
       "Custom leather belt prepared for wholesale, OEM and private-label accessory programs. Strap width, length grading, edge finish, buckle style, material grade, colour, embossing and packaging are confirmed against the buyer-approved reference.",
     shortDescription:
@@ -140,7 +136,6 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
       "Custom leather belt manufacturing for wholesalers and private-label brands, with strap, buckle, material, embossing, sizing and packaging confirmed by specification.",
   },
   "leather-gloves": {
-    name: "Custom Leather Gloves",
     description:
       "Leather gloves developed for wholesale, OEM and private-label accessory ranges. Glove pattern, finger construction, cuff length, lining, material grade, colour, sizing and branding are confirmed from the buyer-approved sample.",
     shortDescription:
@@ -157,7 +152,6 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
       "Custom leather glove manufacturing for wholesalers and private-label buyers, with pattern, material, lining, colour, sizing and branding developed by brief.",
   },
   "leather-wallet": {
-    name: "Custom Leather Wallet",
     description:
       "Leather wallet prepared for wholesale, OEM and private-label accessory programs. Fold format, card and note compartments, closure, edge finish, material grade, colour, branding and packaging are confirmed against the buyer-approved reference.",
     shortDescription:
@@ -174,7 +168,6 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
       "Custom leather wallet manufacturing for wholesale and private-label buyers, with layout, material, finishing, branding and packaging confirmed by specification.",
   },
   "premium-leather-bag": {
-    name: "Custom Leather Bag",
     description:
       "Leather bag developed for wholesale, OEM and private-label accessory ranges. Bag silhouette, dimensions, handles and straps, compartment layout, closure hardware, lining, material grade, colour and branding are finalized from the approved buyer sample.",
     shortDescription:
