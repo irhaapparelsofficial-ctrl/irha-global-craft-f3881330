@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
 import CapabilityStrip from "@/components/sections/CapabilityStrip";
+import HomeProductShowcase from "@/components/sections/HomeProductShowcase";
 import FiveCategories from "@/components/sections/FiveCategories";
 import WhyB2B from "@/components/sections/WhyB2B";
 import BuyerTrustSection from "@/components/sections/BuyerTrustSection";
@@ -86,6 +87,7 @@ export default function Home() {
 
       <HeroCarousel />
       <CapabilityStrip />
+      <HomeProductShowcase />
 
       <section className="py-20 md:py-28">
         <div className="container-luxe">
