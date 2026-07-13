@@ -1,28 +1,11 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, FileCheck2, Tags, Video } from "lucide-react";
+import { ArrowRight, CheckCircle2, Video } from "lucide-react";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 
 const POINTS = [
-  {
-    icon: FileCheck2,
-    title: "Requirement-led development",
-    text: "The product brief, materials, construction, decoration and destination are reviewed before quotation.",
-  },
-  {
-    icon: CheckCircle2,
-    title: "Approval before bulk",
-    text: "Specifications, references, samples and requested changes are reviewed before a bulk commitment.",
-  },
-  {
-    icon: Tags,
-    title: "Private-label execution",
-    text: "Woven labels, care labels, hangtags, packaging and branding can be scoped for the order.",
-  },
-  {
-    icon: Video,
-    title: "Buyer verification",
-    text: "A scheduled live factory video call is available for buyers who want additional confidence.",
-  },
+  "Product briefs are translated into material, construction and branding requirements.",
+  "Samples and requested changes are reviewed before a bulk production commitment.",
+  "Buyers can request a scheduled live factory video call for additional verification.",
 ];
 
 export default function HomeManufacturingEditorial() {
@@ -44,34 +27,30 @@ export default function HomeManufacturingEditorial() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
               <div className="absolute inset-x-5 bottom-5 border border-white/20 bg-black/88 p-5 backdrop-blur-sm">
-                <p className="text-[8px] font-semibold uppercase tracking-[0.24em] text-primary">Factory verification</p>
-                <p className="mt-2 font-display text-2xl">Experienced manufacturer. Newly built website.</p>
-                <p className="mt-2 text-xs leading-6 text-white/65">
-                  Buyers can request a live video call to discuss the program and view relevant factory areas.
-                </p>
+                <p className="text-[8px] font-semibold uppercase tracking-[0.24em] text-primary">Sialkot manufacturing partner</p>
+                <p className="mt-2 font-display text-2xl">Factory view available by scheduled video call.</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="lg:col-span-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Why B2B buyers work with us</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Manufacturing proof</p>
           <h2 className="mt-4 max-w-3xl font-display text-4xl leading-[1.04] md:text-5xl lg:text-6xl">
-            Clear requirements. Documented approvals. Practical communication.
+            Review how the program is handled, not only the finished product.
           </h2>
           <p className="mt-6 max-w-2xl text-sm leading-7 text-white/68 md:text-base">
-            Irha Apparels manufactures custom apparel programs in Sialkot for brands, wholesalers and importers. Commercial terms are confirmed against the actual style, quantity, customization and destination.
+            Irha Apparels manufactures custom apparel in Sialkot for brands, wholesalers and importers. The factory discussion focuses on the actual product, quantity, customization and destination.
           </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {POINTS.map(({ icon: Icon, title, text }) => (
-              <article key={title} className="border border-white/12 bg-white/[0.04] p-5">
-                <Icon size={18} className="text-primary" strokeWidth={1.6} />
-                <h3 className="mt-4 font-sans text-sm font-semibold text-white">{title}</h3>
-                <p className="mt-2 text-xs leading-6 text-white/58">{text}</p>
-              </article>
+          <ul className="mt-8 space-y-4 border-y border-white/12 py-6">
+            {POINTS.map((point) => (
+              <li key={point} className="flex items-start gap-3 text-sm leading-7 text-white/68">
+                <CheckCircle2 size={17} className="mt-1 shrink-0 text-primary" strokeWidth={1.7} />
+                <span>{point}</span>
+              </li>
             ))}
-          </div>
+          </ul>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link

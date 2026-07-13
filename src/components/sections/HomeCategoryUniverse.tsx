@@ -11,8 +11,8 @@ import nightwearImage from "@/assets/og/og-nightwear.jpg";
 
 const ORDER = [
   "bavarian-trachten-wear",
-  "premium-leather-apparel",
   "sportswear",
+  "premium-leather-apparel",
   "streetwear-activewear",
   "leisure-nightwear",
 ] as const;
@@ -24,6 +24,14 @@ const FALLBACKS: Record<string, string> = {
   "streetwear-activewear": streetwearImage,
   "leisure-nightwear": nightwearImage,
 };
+
+const LAYOUTS = [
+  "lg:col-span-7",
+  "lg:col-span-5",
+  "lg:col-span-4",
+  "lg:col-span-4",
+  "lg:col-span-4",
+] as const;
 
 export default function HomeCategoryUniverse() {
   const { data: tree = [] } = usePublicCatalogTree();
@@ -39,25 +47,25 @@ export default function HomeCategoryUniverse() {
       <div className="container-luxe relative">
         <div className="mb-10 grid gap-6 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-8">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Product categories</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Manufacturing range</p>
             <h2 className="mt-4 max-w-4xl font-display text-4xl leading-[1.04] md:text-5xl lg:text-6xl">
-              Manufacturing programs organised for faster buyer decisions.
+              Start with the product family that matches your program.
             </h2>
           </div>
           <div className="lg:col-span-4">
             <p className="text-sm leading-7 text-foreground/65">
-              Browse the main category first, then move into buyer groups, product types and individual styles.
+              Each collection opens into buyer groups, product types and individual styles with quotation-led product pages.
             </p>
             <Link
               to="/products"
               className="mt-5 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary hover:text-foreground"
             >
-              View all categories <ArrowRight size={13} />
+              Browse all collections <ArrowRight size={13} />
             </Link>
           </div>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-12">
           {categories.map((category, index) => {
             const products = [
               ...category.directProducts,
@@ -71,67 +79,51 @@ export default function HomeCategoryUniverse() {
               : FALLBACKS[category.slug]);
             const usesProductMedia = Boolean(featured);
             const childNames = category.subs.slice(0, 3).map((subCategory) => subCategory.name);
+            const featuredRow = index < 2;
 
             return (
               <Link
                 key={category.slug}
                 to={`/products/${category.slug}`}
-                className={`group overflow-hidden border border-border/70 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:shadow-elegant ${
-                  index < 2 ? "lg:col-span-1" : ""
-                }`}
+                className={`group overflow-hidden border border-border/70 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:shadow-elegant ${LAYOUTS[index] ?? "lg:col-span-4"}`}
               >
-                <div className={`relative aspect-[4/3] overflow-hidden ${usesProductMedia ? "bg-[#eee8dc]" : "bg-black"}`}>
+                <div className={`relative overflow-hidden ${featuredRow ? "aspect-[16/10]" : "aspect-[4/3]"} ${usesProductMedia ? "bg-[#eee8dc]" : "bg-black"}`}>
                   <img
                     src={image}
                     alt={featured ? `${featured.name} — ${category.name}` : category.name}
                     loading={index === 0 ? "eager" : "lazy"}
                     decoding="async"
-                    width={900}
-                    height={675}
+                    width={1200}
+                    height={800}
                     className={`h-full w-full transition-transform duration-700 group-hover:scale-[1.035] ${
-                      usesProductMedia ? "object-contain p-6" : "object-cover"
+                      usesProductMedia ? "object-contain p-6 md:p-8" : "object-cover"
                     }`}
                   />
-                  <span className="absolute left-4 top-4 bg-black/85 px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.2em] text-primary backdrop-blur-sm">
-                    Category {String(index + 1).padStart(2, "0")}
+                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/65 to-transparent" />
+                  <span className="absolute bottom-4 left-4 text-[8px] font-semibold uppercase tracking-[0.2em] text-white/75">
+                    {products.length} published products
                   </span>
                 </div>
 
                 <div className="p-6">
                   <div className="flex items-start justify-between gap-4">
-                    <h3 className="font-display text-2xl leading-tight text-foreground transition-colors group-hover:text-primary">{category.name}</h3>
-                    <span className="min-w-max text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      {products.length} styles
-                    </span>
+                    <h3 className={`font-display leading-tight text-foreground transition-colors group-hover:text-primary ${featuredRow ? "text-3xl" : "text-2xl"}`}>
+                      {category.name}
+                    </h3>
+                    <ArrowRight size={16} className="mt-1 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
                   </div>
 
                   {childNames.length > 0 && (
                     <p className="mt-4 text-xs leading-6 text-foreground/58">{childNames.join(" · ")}</p>
                   )}
 
-                  <span className="mt-6 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary">
-                    Explore category <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
+                  <span className="mt-5 inline-flex text-[9px] font-semibold uppercase tracking-[0.2em] text-primary">
+                    Explore collection
                   </span>
                 </div>
               </Link>
             );
           })}
-
-          <div className="flex min-h-[260px] flex-col justify-between border border-primary/35 bg-card p-7 text-foreground sm:col-span-2 lg:col-span-1">
-            <div>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-primary">Custom development</p>
-              <h3 className="mt-4 font-display text-3xl leading-tight">Do not see your exact product?</h3>
-              <p className="mt-4 text-sm leading-7 text-foreground/62">
-                Share a reference, tech pack or product brief. The manufacturing route can be reviewed before quotation.
-              </p>
-            </div>
-            <Link
-              to="/inquiry?intent=reference"
-              className="mt-8 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary"
-            >
-              Upload reference <ArrowRight size={12} />
-            </Link>
-          </div>
         </div>
       </div>
     </section>

@@ -15,8 +15,15 @@ type ShowcaseProduct = {
   subcategoryName: string;
 };
 
-const AUTOPLAY_MS = 5000;
-const MAX_PRODUCTS = 16;
+const AUTOPLAY_MS = 5400;
+const MAX_PRODUCTS = 15;
+const CATEGORY_ORDER = [
+  "bavarian-trachten-wear",
+  "sportswear",
+  "premium-leather-apparel",
+  "streetwear-activewear",
+  "leisure-nightwear",
+] as const;
 
 function productsForCategory(category: PublicTopCategory): ShowcaseProduct[] {
   const nested = category.subs.flatMap((subCategory) =>
@@ -49,8 +56,13 @@ function productsForCategory(category: PublicTopCategory): ShowcaseProduct[] {
 }
 
 function balancedProducts(tree: PublicTopCategory[]): ShowcaseProduct[] {
-  const buckets = tree
+  const orderIndex = (slug: string) => {
+    const index = CATEGORY_ORDER.indexOf(slug as (typeof CATEGORY_ORDER)[number]);
+    return index === -1 ? CATEGORY_ORDER.length : index;
+  };
+  const buckets = [...tree]
     .filter((category) => category.is_published)
+    .sort((a, b) => orderIndex(a.slug) - orderIndex(b.slug))
     .map((category) => productsForCategory(category));
   const selected: ShowcaseProduct[] = [];
   const seen = new Set<string>();
@@ -74,13 +86,13 @@ function balancedProducts(tree: PublicTopCategory[]): ShowcaseProduct[] {
 }
 
 function useCardsPerView() {
-  const [count, setCount] = useState(4);
+  const [count, setCount] = useState(3);
 
   useEffect(() => {
     const update = () => {
       if (window.innerWidth < 640) setCount(1);
       else if (window.innerWidth < 1024) setCount(2);
-      else setCount(4);
+      else setCount(3);
     };
     update();
     window.addEventListener("resize", update);
@@ -141,12 +153,12 @@ export default function HomeProductShowcase() {
       <div className="container-luxe">
         <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Selected products</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Selected manufacturing styles</p>
             <h2 className="mt-4 font-display text-4xl leading-[1.04] md:text-5xl lg:text-6xl">
-              A practical view of our manufacturing range.
+              Representative products, arranged in a balanced category rotation.
             </h2>
             <p className="mt-5 max-w-2xl text-sm leading-7 text-foreground/65 md:text-base">
-              Browse representative products across Bavarian wear, leather apparel, sportswear, streetwear and leisure programs. Each product opens a buyer-ready detail page.
+              The showcase moves through Bavarian wear, sportswear, leather, streetwear and leisure products instead of repeating one category. Open any style for buyer-ready details.
             </p>
           </div>
 
@@ -177,7 +189,7 @@ export default function HomeProductShowcase() {
         </div>
 
         <div
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
           role="region"
           aria-roledescription="carousel"
           aria-label="Featured product programs"
@@ -211,17 +223,17 @@ export default function HomeProductShowcase() {
                   decoding="async"
                   width={900}
                   height={1125}
-                  className="h-full w-full object-contain p-5 transition-transform duration-700 group-hover:scale-[1.035] md:p-7"
+                  className="h-full w-full object-contain p-6 transition-transform duration-700 group-hover:scale-[1.035] md:p-8"
                 />
                 <span className="absolute left-3 top-3 bg-black/85 px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-primary backdrop-blur-sm">
                   {product.categoryName}
                 </span>
               </div>
-              <div className="p-5">
+              <div className="p-5 md:p-6">
                 <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   {product.subcategoryName}
                 </p>
-                <h3 className="mt-2 min-h-[3.25rem] font-display text-xl leading-tight text-foreground transition-colors group-hover:text-primary">
+                <h3 className="mt-2 min-h-[3.25rem] font-display text-2xl leading-tight text-foreground transition-colors group-hover:text-primary">
                   {product.name}
                 </h3>
                 <span className="mt-5 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary">
