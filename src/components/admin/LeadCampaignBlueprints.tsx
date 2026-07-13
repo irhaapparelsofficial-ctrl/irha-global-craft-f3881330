@@ -115,9 +115,9 @@ export default function LeadCampaignBlueprints() {
         <div className="flex items-start gap-3">
           <UserSearch size={21} className="text-sky-300 shrink-0 mt-0.5" />
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-sky-300">Lead discovery backend pending</p>
-            <h2 className="font-display text-3xl mt-1">Campaign strategy is ready before credits are used.</h2>
-            <p className="text-sm text-foreground/68 mt-3 max-w-4xl leading-relaxed">These blueprints define markets, buyer types, search intent and evidence rules now. Live discovery and enrichment will start only after the final `lead-research` activation and an explicit campaign confirmation.</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-sky-300">Zero-credit lead discovery active</p>
+            <h2 className="font-display text-3xl mt-1">Campaign strategy and live buyer research are ready.</h2>
+            <p className="text-sm text-foreground/68 mt-3 max-w-4xl leading-relaxed">The Lead Engine can now search public web sources, store evidence, remove duplicates and enrich buyer candidates without Firecrawl or paid AI credits. Discovery results remain unverified until the owner completes Enrich &amp; Verify or manual review, and only verified candidates can enter Buyer CRM.</p>
           </div>
         </div>
       </section>
