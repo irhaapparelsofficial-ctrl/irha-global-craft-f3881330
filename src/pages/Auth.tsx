@@ -9,11 +9,7 @@ import { supabase, supabaseProjectId } from "@/integrations/supabase/client";
 const OWNER_EMAIL = "irhaapparelsofficial@gmail.com";
 const MIN_PASSWORD_LENGTH = 8;
 
-type BusyAction = "password" | "initialize" | "magic" | "reset" | "update" | "signout" | null;
-type BooleanRpcResult = { data: boolean | null; error: { message: string } | null };
-
-const callBooleanRpc = (name: "owner_bootstrap_open" | "claim_owner_admin") =>
-  (supabase.rpc as unknown as (functionName: string) => Promise<BooleanRpcResult>)(name);
+type BusyAction = "password" | "magic" | "reset" | "update" | "signout" | null;
 
 export default function Auth() {
   const { session, isAdmin, loading, authError } = useAuth();
@@ -21,27 +17,15 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [bootstrapOpen, setBootstrapOpen] = useState<boolean | null>(null);
   const [recoveryMode, setRecoveryMode] = useState(
     () => new URLSearchParams(window.location.search).get("mode") === "recovery",
   );
 
   useEffect(() => {
-    let active = true;
-
-    void callBooleanRpc("owner_bootstrap_open").then(({ data, error }) => {
-      if (!active) return;
-      if (!error) setBootstrapOpen(Boolean(data));
-    });
-
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
     });
-
-    return () => {
-      active = false;
-      data.subscription.unsubscribe();
-    };
+    return () => data.subscription.unsubscribe();
   }, []);
 
   if (!loading && session && isAdmin && !recoveryMode) {
@@ -56,12 +40,7 @@ export default function Auth() {
     return true;
   };
 
-  const claimOwnerAndOpenAdmin = async () => {
-    const claim = await callBooleanRpc("claim_owner_admin");
-    if (claim.error) throw new Error(claim.error.message);
-    if (!claim.data) throw new Error("Owner admin permission was not confirmed.");
-    window.location.assign("/admin");
-  };
+  const openAdmin = () => window.location.assign("/admin");
 
   const signInWithPassword = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -71,57 +50,13 @@ export default function Auth() {
     }
 
     setBusy("password");
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email: OWNER_EMAIL, password });
-      if (error) throw error;
-      await claimOwnerAndOpenAdmin();
-    } catch (error) {
-      toast({
-        title: "Password sign-in failed",
-        description: error instanceof Error ? error.message : "Use Initialize Owner Account for the first login.",
-        variant: "destructive",
-      });
+    const { error } = await supabase.auth.signInWithPassword({ email: OWNER_EMAIL, password });
+    if (error) {
+      toast({ title: "Password sign-in failed", description: error.message, variant: "destructive" });
       setBusy(null);
-    }
-  };
-
-  const initializeOwnerAccount = async () => {
-    if (bootstrapOpen !== true) {
-      toast({
-        title: "Owner account already initialized",
-        description: "Use password sign-in, magic link, or password reset.",
-      });
       return;
     }
-    if (!validatePassword(password)) return;
-
-    setBusy("initialize");
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: OWNER_EMAIL,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth` },
-      });
-      if (error) throw error;
-
-      if (data.session) {
-        await claimOwnerAndOpenAdmin();
-        return;
-      }
-
-      toast({
-        title: "Owner confirmation email sent",
-        description: "Open the newest Supabase email, confirm the account, then sign in with the password you entered.",
-      });
-      setBusy(null);
-    } catch (error) {
-      toast({
-        title: "Owner initialization failed",
-        description: error instanceof Error ? error.message : "Please retry or use the magic link.",
-        variant: "destructive",
-      });
-      setBusy(null);
-    }
+    openAdmin();
   };
 
   const sendMagicLink = async () => {
@@ -130,7 +65,7 @@ export default function Auth() {
       email: OWNER_EMAIL,
       options: {
         emailRedirectTo: `${window.location.origin}/auth`,
-        shouldCreateUser: bootstrapOpen === true,
+        shouldCreateUser: false,
       },
     });
 
@@ -142,9 +77,7 @@ export default function Auth() {
 
     toast({
       title: "Magic link sent",
-      description: bootstrapOpen
-        ? "Open the email link to initialize and verify owner access."
-        : "Open the email link on this device to access the dashboard.",
+      description: "Open the newest email link on this device to access the owner dashboard.",
     });
     setBusy(null);
   };
@@ -162,8 +95,8 @@ export default function Auth() {
     }
 
     toast({
-      title: "Password setup email requested",
-      description: "This works after the owner account exists. Open the newest recovery email on this device.",
+      title: "Password reset email sent",
+      description: "Open the newest recovery email on this device.",
     });
     setBusy(null);
   };
@@ -185,18 +118,13 @@ export default function Auth() {
     }
 
     setBusy("update");
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
-      await claimOwnerAndOpenAdmin();
-    } catch (error) {
-      toast({
-        title: "Password could not be set",
-        description: error instanceof Error ? error.message : "Please request a fresh recovery email.",
-        variant: "destructive",
-      });
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast({ title: "Password could not be set", description: error.message, variant: "destructive" });
       setBusy(null);
+      return;
     }
+    openAdmin();
   };
 
   const signOut = async () => {
@@ -212,22 +140,20 @@ export default function Auth() {
         <section className="min-h-[100svh] flex items-center justify-center px-4 py-16 sm:py-24">
           <div className="w-full max-w-md mx-auto border border-border/60 bg-card/40 p-6 sm:p-9">
             <div className="text-center">
-              <p className="eyebrow mb-3">Secure Owner Setup</p>
+              <p className="eyebrow mb-3">Secure Owner Access</p>
               <h1 className="font-display text-4xl leading-tight"><span className="text-gold italic">Set</span> Password</h1>
               <p className="text-sm text-foreground/65 mt-5 leading-relaxed">
-                This form works only after opening the newest Supabase recovery email. The password goes directly to Supabase Auth and is never stored in website code.
+                This works only after opening the newest Supabase recovery email. The password is stored only by Supabase Auth.
               </p>
             </div>
 
             <form onSubmit={updatePassword} className="mt-7 space-y-3">
-              <label className="block">
-                <span className="block text-[10px] uppercase tracking-[0.22em] text-foreground/45 mb-1.5">New password</span>
+              <AuthField label="New password">
                 <input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Enter new owner password" className="w-full bg-background border border-border/60 px-4 py-3 text-sm outline-none focus:border-gold" />
-              </label>
-              <label className="block">
-                <span className="block text-[10px] uppercase tracking-[0.22em] text-foreground/45 mb-1.5">Confirm password</span>
+              </AuthField>
+              <AuthField label="Confirm password">
                 <input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-enter new password" className="w-full bg-background border border-border/60 px-4 py-3 text-sm outline-none focus:border-gold" />
-              </label>
+              </AuthField>
               <button type="submit" disabled={busy !== null || loading || !session} className="w-full inline-flex items-center justify-center gap-3 bg-gradient-gold text-primary-foreground px-6 py-4 text-xs uppercase tracking-[0.26em] hover:shadow-gold transition-all disabled:opacity-60">
                 <KeyRound size={16} /> {busy === "update" ? "Setting password…" : "Set owner password"}
               </button>
@@ -235,7 +161,7 @@ export default function Auth() {
 
             {!loading && !session && (
               <p className="mt-4 border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 leading-relaxed">
-                Recovery session not found. Request a fresh password setup email and open its link on this device.
+                Recovery session not found. Request a fresh password reset and open its newest link on this device.
               </p>
             )}
 
@@ -255,9 +181,9 @@ export default function Auth() {
         <div className="w-full max-w-md mx-auto border border-border/60 bg-card/40 p-6 sm:p-9">
           <div className="text-center">
             <p className="eyebrow mb-3">Private Owner Access</p>
-            <h1 className="font-display text-4xl leading-tight"><span className="text-gold italic">Atelier</span> Dashboard</h1>
+            <h1 className="font-display text-4xl leading-tight"><span className="text-gold italic">Irha</span> Dashboard</h1>
             <p className="text-sm text-foreground/65 mt-5 leading-relaxed">
-              Sign in with the authorised owner account. Access is approved by the owner Supabase Auth account and live admin role.
+              Owner registration is permanently closed. Only the existing verified owner account can sign in.
             </p>
           </div>
 
@@ -276,24 +202,16 @@ export default function Auth() {
           )}
 
           <form onSubmit={signInWithPassword} className="mt-7 space-y-3">
-            <label className="block">
-              <span className="block text-[10px] uppercase tracking-[0.22em] text-foreground/45 mb-1.5">Owner email</span>
+            <AuthField label="Owner email">
               <input type="email" autoComplete="username" value={OWNER_EMAIL} readOnly className="w-full bg-background border border-border/60 px-4 py-3 text-sm text-foreground/75 outline-none" />
-            </label>
-            <label className="block">
-              <span className="block text-[10px] uppercase tracking-[0.22em] text-foreground/45 mb-1.5">Password</span>
+            </AuthField>
+            <AuthField label="Password">
               <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter owner password" className="w-full bg-background border border-border/60 px-4 py-3 text-sm outline-none focus:border-gold" />
-            </label>
+            </AuthField>
             <button type="submit" disabled={busy !== null || Boolean(session)} className="w-full inline-flex items-center justify-center gap-3 bg-gradient-gold text-primary-foreground px-6 py-4 text-xs uppercase tracking-[0.26em] hover:shadow-gold transition-all disabled:opacity-60">
               <KeyRound size={16} /> {busy === "password" ? "Signing in…" : "Sign in with password"}
             </button>
           </form>
-
-          {bootstrapOpen === true && !session && (
-            <button type="button" onClick={() => void initializeOwnerAccount()} disabled={busy !== null} className="mt-3 w-full inline-flex items-center justify-center gap-3 border border-emerald-500/45 px-6 py-3.5 text-xs uppercase tracking-[0.2em] text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-60">
-              <ShieldCheck size={15} /> {busy === "initialize" ? "Initializing…" : "Initialize owner account"}
-            </button>
-          )}
 
           <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-foreground/35">
             <span className="h-px bg-border/60 flex-1" /> Or <span className="h-px bg-border/60 flex-1" />
@@ -301,17 +219,17 @@ export default function Auth() {
 
           <div className="grid gap-3">
             <button type="button" onClick={() => void sendMagicLink()} disabled={busy !== null || Boolean(session)} className="w-full inline-flex items-center justify-center gap-3 border border-border/60 px-6 py-3.5 text-xs uppercase tracking-[0.22em] hover:border-gold hover:text-gold transition-colors disabled:opacity-60">
-              <Mail size={15} /> {busy === "magic" ? "Sending…" : bootstrapOpen ? "Initialize with magic link" : "Send magic link"}
+              <Mail size={15} /> {busy === "magic" ? "Sending…" : "Send magic link"}
             </button>
             <button type="button" onClick={() => void sendPasswordReset()} disabled={busy !== null || Boolean(session)} className="w-full inline-flex items-center justify-center gap-3 border border-gold/40 px-6 py-3.5 text-xs uppercase tracking-[0.22em] text-gold hover:bg-gold hover:text-background transition-colors disabled:opacity-60">
-              <KeyRound size={15} /> {busy === "reset" ? "Sending setup email…" : "Set or reset password"}
+              <KeyRound size={15} /> {busy === "reset" ? "Sending reset email…" : "Reset password"}
             </button>
           </div>
 
           <div className="mt-6 flex items-start gap-3 border-t border-border/50 pt-5">
             <ShieldCheck size={16} className="text-gold shrink-0 mt-0.5" />
             <p className="text-xs text-foreground/55 leading-relaxed">
-              Only the exact owner email can be created in Auth. Passwords are never stored in website code, and admin access is verified in the live database.
+              New account creation is disabled. Admin permission is verified by Row Level Security in the owner database.
             </p>
           </div>
 
@@ -319,5 +237,14 @@ export default function Auth() {
         </div>
       </section>
     </>
+  );
+}
+
+function AuthField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-[10px] uppercase tracking-[0.22em] text-foreground/45 mb-1.5">{label}</span>
+      {children}
+    </label>
   );
 }
