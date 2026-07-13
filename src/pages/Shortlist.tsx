@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Bookmark, GitCompareArrows, MessageCircle, Trash2 } from "lucide-react";
 import SEO from "@/components/SEO";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import { useShortlist, useCompare } from "@/lib/shortlist";
 import { whatsappLink } from "@/lib/constants";
 
@@ -59,7 +60,7 @@ export default function Shortlist() {
                     <div key={p.slug} className="group flex flex-col">
                       <Link to={`/products/${p.categorySlug}/${p.slug}`} className="block relative aspect-[3/4] overflow-hidden bg-card mb-3">
                         {p.image && (
-                          <img src={p.image} alt={p.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+                          <ThumbnailImage src={p.image} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
                         )}
                       </Link>
                       <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/50">{p.categoryName}</p>
