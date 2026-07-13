@@ -1,0 +1,100 @@
+name: Final SEO Security Fallback Rebuild
+
+on:
+  push:
+    branches:
+      - fix/seo-security-fallbacks-final-20260713
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seo-security-final-20260713
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out latest secure main snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: fix/seo-security-fallbacks-final-20260713
+          fetch-depth: 0
+
+      - name: Copy reviewed fallback files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 73875523755d5bcf82116c2cf4b26260bf83e49c
+          git checkout FETCH_HEAD -- \
+            index.html \
+            scripts/generate-static-redirect-shells.ts \
+            scripts/normalize-sitemap-lastmod.mjs
+
+      - name: Preserve secure dependencies and extend current build scripts
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const file = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
+          pkg.scripts.build = 'vite build && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/verify-built-crawler-shell.mjs';
+          pkg.scripts['build:dev'] = 'vite build --mode development && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/verify-built-crawler-shell.mjs';
+          pkg.scripts.predev = 'npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs';
+          pkg.scripts.prebuild = 'node scripts/verify-deployment-source.mjs && npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs';
+          fs.writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);
+          NODE
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Enforce zero known vulnerabilities
+        run: npm audit --audit-level=low
+
+      - name: Verify deployment source lock
+        run: npm run verify:deployment-source
+
+      - name: Typecheck application
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+
+      - name: Generate normalized sitemap
+        run: |
+          npx tsx scripts/generate-sitemap.ts
+          node scripts/normalize-public-origin.mjs
+          node scripts/normalize-sitemap-lastmod.mjs
+
+      - name: Build production and static shells
+        run: |
+          npx vite build
+          npx tsx scripts/generate-static-route-shells.ts
+          npx tsx scripts/generate-static-redirect-shells.ts
+
+      - name: Verify built crawler shell
+        run: node scripts/verify-built-crawler-shell.mjs
+
+      - name: Commit verified final fallback snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/seo-security-final-bootstrap.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            index.html \
+            package.json \
+            scripts/generate-static-redirect-shells.ts \
+            scripts/normalize-sitemap-lastmod.mjs
+          git commit -m 'fix: add final verified SEO and hosting fallbacks'
+          git push origin HEAD:fix/seo-security-fallbacks-final-20260713
