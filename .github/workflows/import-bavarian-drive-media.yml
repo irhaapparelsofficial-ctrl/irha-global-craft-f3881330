@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: bavarian-drive-media-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   import-media:
