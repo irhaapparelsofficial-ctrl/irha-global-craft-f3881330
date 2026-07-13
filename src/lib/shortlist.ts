@@ -1,6 +1,6 @@
 /**
  * Guest shortlist + recently-viewed + compare utilities.
- * All local-storage backed, no login. Feeds Phase 7 RFQ context.
+ * All local-storage backed, no login. Feeds buyer RFQ context.
  */
 import { useEffect, useState, useCallback } from "react";
 import { thumbnailUrl } from "@/lib/imageThumbnails";
@@ -28,10 +28,21 @@ function normalizeStoredImage<T>(item: T): T {
   return { ...value, image: thumbnailUrl(value.image) };
 }
 
-const read = <T,>(key: string): T[] => {
+function hasStoredSlug<T extends { slug: string }>(value: unknown): value is T {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const slug = (value as { slug?: unknown }).slug;
+  return typeof slug === "string" && slug.trim().length > 0;
+}
+
+const read = <T extends { slug: string },>(key: string): T[] => {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T[]).map(normalizeStoredImage) : [];
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item): item is T => hasStoredSlug<T>(item))
+      .map(normalizeStoredImage);
   } catch {
     return [];
   }
@@ -42,17 +53,24 @@ const write = (key: string, value: unknown) => {
     localStorage.setItem(key, JSON.stringify(value));
     window.dispatchEvent(new CustomEvent("irha:storage", { detail: { key } }));
   } catch {
-    /* ignore quota */
+    /* Storage can be unavailable or full; the public page must remain usable. */
   }
 };
+
+export function shortlistProductPath(item: Pick<ShortlistItem, "slug" | "categorySlug">) {
+  const slug = item.slug.trim();
+  const categorySlug = item.categorySlug?.trim();
+  if (!slug || !categorySlug) return "/products";
+  return `/products/${encodeURIComponent(categorySlug)}/${encodeURIComponent(slug)}`;
+}
 
 function useLocalList<T extends { slug: string }>(key: string, max: number) {
   const [items, setItems] = useState<T[]>([]);
 
   useEffect(() => {
     setItems(read<T>(key));
-    const onChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { key?: string } | undefined;
+    const onChange = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { key?: string } | undefined;
       if (!detail || detail.key === key) setItems(read<T>(key));
     };
     window.addEventListener("irha:storage", onChange);
@@ -65,31 +83,33 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
 
   const add = useCallback(
     (item: T) => {
+      if (!hasStoredSlug<T>(item)) return;
       const normalized = normalizeStoredImage(item);
-      const current = read<T>(key).filter((i) => i.slug !== normalized.slug);
+      const current = read<T>(key).filter((stored) => stored.slug !== normalized.slug);
       current.unshift(normalized);
-      const trimmed = current.slice(0, max);
-      write(key, trimmed);
+      write(key, current.slice(0, max));
     },
     [key, max],
   );
 
   const remove = useCallback(
     (slug: string) => {
-      const current = read<T>(key).filter((i) => i.slug !== slug);
-      write(key, current);
+      const normalizedSlug = slug.trim();
+      if (!normalizedSlug) return;
+      write(key, read<T>(key).filter((item) => item.slug !== normalizedSlug));
     },
     [key],
   );
 
   const clear = useCallback(() => write(key, []), [key]);
-  const has = useCallback((slug: string) => items.some((i) => i.slug === slug), [items]);
+  const has = useCallback((slug: string) => items.some((item) => item.slug === slug), [items]);
   const toggle = useCallback(
     (item: T) => {
+      if (!hasStoredSlug<T>(item)) return;
       const normalized = normalizeStoredImage(item);
       const current = read<T>(key);
-      if (current.some((i) => i.slug === normalized.slug)) {
-        write(key, current.filter((i) => i.slug !== normalized.slug));
+      if (current.some((stored) => stored.slug === normalized.slug)) {
+        write(key, current.filter((stored) => stored.slug !== normalized.slug));
       } else {
         current.unshift(normalized);
         write(key, current.slice(0, max));
@@ -105,11 +125,12 @@ export const useShortlist = () => useLocalList<ShortlistItem>(SHORTLIST_KEY, MAX
 export const useRecentlyViewed = () => useLocalList<ShortlistItem>(RECENT_KEY, MAX_RECENT);
 export const useCompare = () => useLocalList<ShortlistItem>(COMPARE_KEY, MAX_COMPARE);
 
-/** Add to recently viewed without hook — safe to call from any effect. */
+/** Add to recently viewed without a hook — safe to call from any effect. */
 export function pushRecentlyViewed(item: Omit<ShortlistItem, "addedAt">) {
+  if (!hasStoredSlug<ShortlistItem>(item)) return;
   const now = Date.now();
   const normalized = normalizeStoredImage(item);
-  const current = read<ShortlistItem>(RECENT_KEY).filter((i) => i.slug !== normalized.slug);
+  const current = read<ShortlistItem>(RECENT_KEY).filter((stored) => stored.slug !== normalized.slug);
   current.unshift({ ...normalized, addedAt: now });
   write(RECENT_KEY, current.slice(0, MAX_RECENT));
 }
