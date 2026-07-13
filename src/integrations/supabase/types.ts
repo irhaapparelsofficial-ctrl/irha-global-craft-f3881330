@@ -148,6 +148,215 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_runs: {
+        Row: {
+          business_rules_version: number | null
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          external_execution: boolean
+          id: string
+          modules: Json
+          requested_by: string | null
+          started_at: string
+          status: string
+          summary: Json
+          trigger_source: string
+        }
+        Insert: {
+          business_rules_version?: number | null
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          external_execution?: boolean
+          id?: string
+          modules?: Json
+          requested_by?: string | null
+          started_at?: string
+          status?: string
+          summary?: Json
+          trigger_source?: string
+        }
+        Update: {
+          business_rules_version?: number | null
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          external_execution?: boolean
+          id?: string
+          modules?: Json
+          requested_by?: string | null
+          started_at?: string
+          status?: string
+          summary?: Json
+          trigger_source?: string
+        }
+        Relationships: []
+      }
+      automation_settings: {
+        Row: {
+          canva_handoff_enabled: boolean
+          created_at: string
+          daily_lead_candidate_limit: number
+          daily_listing_task_limit: number
+          daily_run_time: string
+          daily_seo_draft_limit: number
+          daily_social_draft_limit: number
+          enabled: boolean
+          external_listing_publish: boolean
+          id: string
+          last_run_at: string | null
+          lead_auto_import: boolean
+          lead_buyer_types: string[]
+          lead_markets: string[]
+          lead_product_focus: string[]
+          leads_enabled: boolean
+          listings_enabled: boolean
+          next_run_at: string | null
+          seo_auto_publish: boolean
+          seo_enabled: boolean
+          seo_locales: string[]
+          social_auto_publish: boolean
+          social_enabled: boolean
+          social_platforms: string[]
+          timezone: string
+          updated_at: string
+          updated_by: string | null
+          weekly_reel_target: number
+        }
+        Insert: {
+          canva_handoff_enabled?: boolean
+          created_at?: string
+          daily_lead_candidate_limit?: number
+          daily_listing_task_limit?: number
+          daily_run_time?: string
+          daily_seo_draft_limit?: number
+          daily_social_draft_limit?: number
+          enabled?: boolean
+          external_listing_publish?: boolean
+          id?: string
+          last_run_at?: string | null
+          lead_auto_import?: boolean
+          lead_buyer_types?: string[]
+          lead_markets?: string[]
+          lead_product_focus?: string[]
+          leads_enabled?: boolean
+          listings_enabled?: boolean
+          next_run_at?: string | null
+          seo_auto_publish?: boolean
+          seo_enabled?: boolean
+          seo_locales?: string[]
+          social_auto_publish?: boolean
+          social_enabled?: boolean
+          social_platforms?: string[]
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+          weekly_reel_target?: number
+        }
+        Update: {
+          canva_handoff_enabled?: boolean
+          created_at?: string
+          daily_lead_candidate_limit?: number
+          daily_listing_task_limit?: number
+          daily_run_time?: string
+          daily_seo_draft_limit?: number
+          daily_social_draft_limit?: number
+          enabled?: boolean
+          external_listing_publish?: boolean
+          id?: string
+          last_run_at?: string | null
+          lead_auto_import?: boolean
+          lead_buyer_types?: string[]
+          lead_markets?: string[]
+          lead_product_focus?: string[]
+          leads_enabled?: boolean
+          listings_enabled?: boolean
+          next_run_at?: string | null
+          seo_auto_publish?: boolean
+          seo_enabled?: boolean
+          seo_locales?: string[]
+          social_auto_publish?: boolean
+          social_enabled?: boolean
+          social_platforms?: string[]
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+          weekly_reel_target?: number
+        }
+        Relationships: []
+      }
+      automation_tasks: {
+        Row: {
+          action: string
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          error: string | null
+          executed_at: string | null
+          external_action: boolean
+          id: string
+          idempotency_key: string
+          module: string
+          payload: Json
+          requires_approval: boolean
+          result: Json
+          run_id: string | null
+          scheduled_for: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          error?: string | null
+          executed_at?: string | null
+          external_action?: boolean
+          id?: string
+          idempotency_key: string
+          module: string
+          payload?: Json
+          requires_approval?: boolean
+          result?: Json
+          run_id?: string | null
+          scheduled_for?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          error?: string | null
+          executed_at?: string | null
+          external_action?: boolean
+          id?: string
+          idempotency_key?: string
+          module?: string
+          payload?: Json
+          requires_approval?: boolean
+          result?: Json
+          run_id?: string | null
+          scheduled_for?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_tasks_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "automation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       b2b_leads: {
         Row: {
           apparel_segment: string | null
@@ -584,6 +793,98 @@ export type Database = {
           message?: string
           role?: string
           session_id?: string
+        }
+        Relationships: []
+      }
+      cms_document_revisions: {
+        Row: {
+          action: string
+          content: Json
+          created_at: string
+          created_by: string | null
+          document_id: string
+          id: string
+          version: number
+        }
+        Insert: {
+          action: string
+          content: Json
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          id?: string
+          version: number
+        }
+        Update: {
+          action?: string
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_document_revisions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "cms_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_key: string
+          document_type: string
+          draft_content: Json
+          id: string
+          published_at: string | null
+          published_by: string | null
+          published_content: Json | null
+          published_version: number | null
+          status: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_key: string
+          document_type: string
+          draft_content?: Json
+          id?: string
+          published_at?: string | null
+          published_by?: string | null
+          published_content?: Json | null
+          published_version?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_key?: string
+          document_type?: string
+          draft_content?: Json
+          id?: string
+          published_at?: string | null
+          published_by?: string | null
+          published_content?: Json | null
+          published_version?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
         }
         Relationships: []
       }
@@ -2239,11 +2540,257 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_contacts: {
+        Row: {
+          created_at: string
+          crm_lead_id: string | null
+          id: string
+          language_code: string | null
+          last_inbound_at: string | null
+          last_outbound_at: string | null
+          metadata: Json
+          opt_in_status: string
+          phone_e164: string | null
+          profile_name: string | null
+          updated_at: string
+          wa_id: string
+        }
+        Insert: {
+          created_at?: string
+          crm_lead_id?: string | null
+          id?: string
+          language_code?: string | null
+          last_inbound_at?: string | null
+          last_outbound_at?: string | null
+          metadata?: Json
+          opt_in_status?: string
+          phone_e164?: string | null
+          profile_name?: string | null
+          updated_at?: string
+          wa_id: string
+        }
+        Update: {
+          created_at?: string
+          crm_lead_id?: string | null
+          id?: string
+          language_code?: string | null
+          last_inbound_at?: string | null
+          last_outbound_at?: string | null
+          metadata?: Json
+          opt_in_status?: string
+          phone_e164?: string | null
+          profile_name?: string | null
+          updated_at?: string
+          wa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_contacts_crm_lead_id_fkey"
+            columns: ["crm_lead_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_conversations: {
+        Row: {
+          assigned_to: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          last_message_at: string | null
+          last_summary: string | null
+          qualification: Json
+          qualification_status: string
+          status: string
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_summary?: string | null
+          qualification?: Json
+          qualification_status?: string
+          status?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_summary?: string | null
+          qualification?: Json
+          qualification_status?: string
+          status?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          body: string | null
+          contact_id: string
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          direction: string
+          error: string | null
+          id: string
+          media_id: string | null
+          media_mime_type: string | null
+          message_type: string
+          raw_payload: Json
+          received_at: string | null
+          reply_to_wa_message_id: string | null
+          requires_owner_approval: boolean
+          sent_at: string | null
+          status: string
+          template_language: string | null
+          template_name: string | null
+          updated_at: string
+          wa_message_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string | null
+          contact_id: string
+          conversation_id: string
+          created_at?: string
+          created_by?: string | null
+          direction: string
+          error?: string | null
+          id?: string
+          media_id?: string | null
+          media_mime_type?: string | null
+          message_type?: string
+          raw_payload?: Json
+          received_at?: string | null
+          reply_to_wa_message_id?: string | null
+          requires_owner_approval?: boolean
+          sent_at?: string | null
+          status: string
+          template_language?: string | null
+          template_name?: string | null
+          updated_at?: string
+          wa_message_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string | null
+          contact_id?: string
+          conversation_id?: string
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          error?: string | null
+          id?: string
+          media_id?: string | null
+          media_mime_type?: string | null
+          message_type?: string
+          raw_payload?: Json
+          received_at?: string | null
+          reply_to_wa_message_id?: string | null
+          requires_owner_approval?: boolean
+          sent_at?: string | null
+          status?: string
+          template_language?: string | null
+          template_name?: string | null
+          updated_at?: string
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_webhook_events: {
+        Row: {
+          created_at: string
+          error: string | null
+          event_key: string
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event_key: string
+          event_type: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event_key?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      automation_today_key: { Args: { _timezone: string }; Returns: string }
+      cms_get_admin_document: { Args: { _key: string }; Returns: Json }
+      cms_get_published_document: { Args: { _key: string }; Returns: Json }
+      cms_publish_document: { Args: { _key: string }; Returns: Json }
+      cms_restore_revision: {
+        Args: { _key: string; _revision_id: string }
+        Returns: Json
+      }
+      cms_save_draft: {
+        Args: {
+          _content: Json
+          _document_type: string
+          _key: string
+          _title: string
+        }
+        Returns: Json
+      }
       consume_public_submission_limit: {
         Args: {
           _action: string
@@ -2252,6 +2799,10 @@ export type Database = {
           _window_seconds: number
         }
         Returns: boolean
+      }
+      create_automation_planning_cycle: {
+        Args: { _trigger_source?: string }
+        Returns: string
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
