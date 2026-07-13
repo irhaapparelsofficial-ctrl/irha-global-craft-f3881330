@@ -1,0 +1,89 @@
+name: Rebuild Security Remediation
+
+on:
+  push:
+    branches:
+      - security/lovable-scan-rebuild-20260713
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-rebuild-20260713
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out latest-main rebuild branch
+        uses: actions/checkout@v4
+        with:
+          ref: security/lovable-scan-rebuild-20260713
+          fetch-depth: 0
+
+      - name: Copy immutable verified security files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 2d952383d1c1953dd61f4699aaacd49233373ec4
+          git checkout FETCH_HEAD -- \
+            .github/workflows/dependency-security.yml \
+            package.json \
+            package-lock.json \
+            supabase/migrations/20260713162500_lovable_security_scan_hardening.sql \
+            supabase/migrations/20260713162600_restore_authenticated_admin_table_privileges.sql \
+            tsconfig.app.json \
+            vite.config.ts
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Enforce zero known vulnerabilities
+        run: npm audit --audit-level=low
+
+      - name: Verify deployment source lock
+        run: npm run verify:deployment-source
+
+      - name: Typecheck application
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+
+      - name: Generate build prerequisites
+        run: |
+          npx tsx scripts/generate-sitemap.ts
+          node scripts/normalize-public-origin.mjs
+
+      - name: Build production bundle
+        run: npx vite build
+
+      - name: Verify built crawler shell
+        run: node scripts/verify-built-crawler-shell.mjs
+
+      - name: Commit verified rebuilt branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/security-rebuild-bootstrap.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            .github/workflows/dependency-security.yml \
+            package.json \
+            package-lock.json \
+            supabase/migrations/20260713162500_lovable_security_scan_hardening.sql \
+            supabase/migrations/20260713162600_restore_authenticated_admin_table_privileges.sql \
+            tsconfig.app.json \
+            vite.config.ts
+          git commit -m 'security: rebuild verified remediation on latest main'
+          git push origin HEAD:security/lovable-scan-rebuild-20260713
