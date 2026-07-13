@@ -4,6 +4,7 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import ResilientImage from "@/components/ResilientImage";
 import { usePublicCatalogTree, type PublicTopCategory } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
+import { featuredProductRank } from "@/lib/homeFeaturedProducts";
 import { thumbnailUrl } from "@/lib/imageThumbnails";
 import bavarianImage from "@/assets/og/og-bavarian-hero.jpg";
 import leatherImage from "@/assets/og/og-leather.jpg";
@@ -21,6 +22,9 @@ type ShowcaseProduct = {
   categoryName: string;
   categorySlug: string;
   subcategoryName: string;
+  isFeatured: boolean;
+  featuredRank: number;
+  sortOrder: number;
 };
 
 const AUTOPLAY_MS = 3000;
@@ -48,6 +52,7 @@ function productRecord(
 ): ShowcaseProduct {
   const fallbackImage = CATEGORY_FALLBACKS[category.slug] ?? bavarianImage;
   const originalImage = resolveAsset(product.image_url || product.gallery?.[0] || fallbackImage);
+  const rank = featuredProductRank(category.slug, product.slug);
 
   return {
     id: product.id,
@@ -59,6 +64,9 @@ function productRecord(
     categoryName: category.name,
     categorySlug: category.slug,
     subcategoryName,
+    isFeatured: Boolean(product.is_featured) || rank !== Number.MAX_SAFE_INTEGER,
+    featuredRank: rank,
+    sortOrder: product.sort_order ?? Number.MAX_SAFE_INTEGER,
   };
 }
 
@@ -73,7 +81,12 @@ function productsForCategory(category: PublicTopCategory): ShowcaseProduct[] {
     .filter((product) => product.is_published && Boolean(product.image_url || product.gallery?.[0]))
     .map((product) => productRecord(category, product, category.name));
 
-  return [...direct, ...nested];
+  return [...direct, ...nested].sort((a, b) => {
+    if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
+    if (a.featuredRank !== b.featuredRank) return a.featuredRank - b.featuredRank;
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    return a.name.localeCompare(b.name);
+  });
 }
 
 function balancedProducts(tree: PublicTopCategory[]): ShowcaseProduct[] {
@@ -87,21 +100,26 @@ function balancedProducts(tree: PublicTopCategory[]): ShowcaseProduct[] {
     .map((category) => productsForCategory(category));
   const selected: ShowcaseProduct[] = [];
   const seen = new Set<string>();
-  let round = 0;
 
-  while (selected.length < MAX_PRODUCTS) {
-    let added = false;
-    for (const bucket of buckets) {
-      const product = bucket[round];
-      if (!product || seen.has(product.slug)) continue;
-      seen.add(product.slug);
-      selected.push(product);
-      added = true;
-      if (selected.length >= MAX_PRODUCTS) break;
+  const appendBalanced = (sourceBuckets: ShowcaseProduct[][]) => {
+    let round = 0;
+    while (selected.length < MAX_PRODUCTS) {
+      let added = false;
+      for (const bucket of sourceBuckets) {
+        const product = bucket[round];
+        if (!product || seen.has(product.slug)) continue;
+        seen.add(product.slug);
+        selected.push(product);
+        added = true;
+        if (selected.length >= MAX_PRODUCTS) break;
+      }
+      if (!added) break;
+      round += 1;
     }
-    if (!added) break;
-    round += 1;
-  }
+  };
+
+  appendBalanced(buckets.map((bucket) => bucket.filter((product) => product.isFeatured)));
+  appendBalanced(buckets.map((bucket) => bucket.filter((product) => !product.isFeatured)));
 
   return selected;
 }
