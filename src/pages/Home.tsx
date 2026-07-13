@@ -9,7 +9,6 @@ import BuyerTrustSection from "@/components/sections/BuyerTrustSection";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
-import bavarianHubImage from "@/assets/og/og-bavarian-hero.jpg";
 import performanceHubImage from "@/assets/og/og-sportswear.jpg";
 import {
   ORGANIZATION_ID,
@@ -19,6 +18,9 @@ import {
   websiteSchema,
 } from "@/lib/seoSchema";
 
+const BAVARIAN_PRODUCT_IMAGE =
+  "/product-media/distressed-brown-short-lederhosen/01-hero-front.webp";
+
 type HubDef = {
   key: "heritage" | "performance";
   fallbackImg: string;
@@ -27,12 +29,14 @@ type HubDef = {
   subtitle: string;
   href: string;
   childSlugs: readonly string[];
+  productSafe?: boolean;
 };
 
 const HUBS: HubDef[] = [
   {
     key: "heritage",
-    fallbackImg: bavarianHubImage,
+    fallbackImg: BAVARIAN_PRODUCT_IMAGE,
+    productSafe: true,
     eyebrow: "Hub 01 · Heritage",
     title: "Bavarian & Leather",
     subtitle: "Trachten craft and full-grain leather construction for heritage programs.",
@@ -107,9 +111,9 @@ export default function Home() {
                 >
                   <img
                     src={hub.fallbackImg}
-                    alt={hub.title}
+                    alt={hub.productSafe ? "Distressed brown short Lederhosen with suspenders — Irha Apparels" : hub.title}
                     loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] group-hover:scale-[1.04]"
+                    className={`absolute inset-0 h-full w-full transition-transform duration-[1400ms] group-hover:scale-[1.04] ${hub.productSafe ? "object-contain bg-[#f4f0e7] p-8 md:p-12" : "object-cover"}`}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/25" />
                   <div className="relative h-full flex flex-col justify-end p-7 md:p-10">
