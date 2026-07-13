@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-const SITE_URL = "https://www.irhaapparels.com";
+const SITE_URL = "https://irhaapparels.com";
 const PRIVATE_UPLOAD_BUCKET = "inquiry-uploads";
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_UPLOADS: Record<string, string[]> = {
