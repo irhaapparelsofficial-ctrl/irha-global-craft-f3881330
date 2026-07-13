@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCompareColumns, visibleCompareRows } from "@/pages/Compare";
+import { buildCompareColumns, visibleCompareRows } from "@/lib/compareProducts";
 import type { ShortlistItem } from "@/lib/shortlist";
 import type { DbProduct } from "@/hooks/useCatalog";
 
