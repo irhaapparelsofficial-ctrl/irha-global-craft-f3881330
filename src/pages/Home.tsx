@@ -9,7 +9,6 @@ import BuyerTrustSection from "@/components/sections/BuyerTrustSection";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
-import { resolveAsset } from "@/lib/assetResolver";
 import bavarianHubImage from "@/assets/og/og-bavarian-hero.jpg";
 import performanceHubImage from "@/assets/og/og-sportswear.jpg";
 import {
@@ -101,15 +100,13 @@ export default function Home() {
               const children = hub.childSlugs
                 .map((slug) => allCats.find((category) => category.slug === slug && category.is_published))
                 .filter((category): category is NonNullable<typeof category> => Boolean(category));
-              const cover = children[0]?.image_url;
-              const src = cover ? resolveAsset(cover) : hub.fallbackImg;
               return (
                 <div
                   key={hub.key}
                   className="group relative overflow-hidden border border-border/60 hover:border-gold/70 transition-all duration-500 min-h-[420px] md:min-h-[480px]"
                 >
                   <img
-                    src={src}
+                    src={hub.fallbackImg}
                     alt={hub.title}
                     loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] group-hover:scale-[1.04]"
