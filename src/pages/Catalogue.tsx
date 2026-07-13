@@ -3,6 +3,7 @@ import { ArrowUpRight, MessageCircle, Send, Share2 } from "lucide-react";
 import { useState } from "react";
 import SEO from "@/components/SEO";
 import CatalogueLeadForm from "@/components/CatalogueLeadForm";
+import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import { CATALOGUE_GROUPS } from "@/lib/catalogueGroups";
 import { whatsappLink } from "@/lib/constants";
 import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";
@@ -30,6 +31,14 @@ const GROUP_IMAGES: Record<string, string> = {
   leisurewear: streetwearHero,
   nightwear: nightwearHero,
 };
+
+const HERO_SLIDES = [
+  { src: bavarianHero, alt: "Bavarian garments catalogue", fit: "cover" as const },
+  { src: sportswearHero, alt: "Sportswear catalogue", fit: "cover" as const },
+  { src: leatherHero, alt: "Leather garments catalogue", fit: "cover" as const },
+  { src: streetwearHero, alt: "Streetwear and activewear catalogue", fit: "cover" as const },
+  { src: nightwearHero, alt: "Nightwear catalogue", fit: "cover" as const },
+];
 
 export default function Catalogue() {
   const [shareOpen, setShareOpen] = useState(false);
@@ -116,18 +125,16 @@ export default function Catalogue() {
             )}
           </div>
 
-          <div className="lg:col-span-5 grid grid-cols-2 grid-rows-2 gap-3 min-h-[390px] md:min-h-[500px]" aria-label="Catalogue category preview">
-            <div className="relative row-span-2 overflow-hidden border border-border/60 bg-card">
-              <img src={bavarianHero} alt="Bavarian garments catalogue" loading="eager" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            </div>
-            <div className="relative overflow-hidden border border-border/60 bg-card">
-              <img src={sportswearHero} alt="Sportswear catalogue" loading="eager" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-            </div>
-            <div className="relative overflow-hidden border border-border/60 bg-card">
-              <img src={leatherHero} alt="Leather garments catalogue" loading="eager" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+          <div className="lg:col-span-5 relative min-h-[390px] md:min-h-[500px] overflow-hidden border border-border/60 bg-card shadow-2xl" aria-label="Catalogue category preview">
+            <HeroMediaSlideshow
+              slides={HERO_SLIDES}
+              label="Catalogue category slideshow"
+              controlsClassName="bottom-4 right-4"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
+            <div className="pointer-events-none absolute left-5 right-5 bottom-5 border border-white/20 bg-black/50 p-4 backdrop-blur-sm">
+              <p className="text-[9px] uppercase tracking-[0.32em] text-gold">B2B programme catalogue</p>
+              <p className="mt-1 font-display text-xl text-white">Bavarian · Sportswear · Leather · More</p>
             </div>
           </div>
         </div>
