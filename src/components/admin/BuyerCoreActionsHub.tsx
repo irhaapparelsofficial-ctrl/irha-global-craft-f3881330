@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, Search, UsersRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import BuyerCoreActionsPanel from "@/components/admin/BuyerCoreActionsPanel";
+import BuyerProfileCommunicationsPanel from "@/components/admin/BuyerProfileCommunicationsPanel";
 import {
   normalizePriority,
   normalizeStage,
@@ -238,6 +239,7 @@ export default function BuyerCoreActionsHub() {
               <p className="text-sm text-muted-foreground mt-2">{selected.country || "Country missing"}{selected.productInterest ? ` · ${selected.productInterest}` : ""}</p>
             </div>
             <BuyerCoreActionsPanel card={selected} onChanged={() => void load()} />
+            <BuyerProfileCommunicationsPanel card={selected} onChanged={() => void load()} />
           </div>
         )}
       </div>
