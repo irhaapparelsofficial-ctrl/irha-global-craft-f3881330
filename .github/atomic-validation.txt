@@ -1,0 +1,3 @@
+Lovable final atomic snapshot validation marker.
+Source snapshot: 4e6d078a0fb43d9771523b8d786ca89a8d1bf726
+This file is validation-only and will not be moved to main.
