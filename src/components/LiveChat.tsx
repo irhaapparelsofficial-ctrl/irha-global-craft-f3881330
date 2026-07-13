@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  supabasePublishableKey,
+  supabaseRuntimeUrl,
+} from "@/integrations/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type GuideMode = "ai" | "backup";
@@ -82,8 +85,8 @@ function fallbackReply(text: string): string {
 
   if (/(category|categories|range|products|kollektion|kollektionen|produkte)/i.test(q)) {
     return de
-      ? "Unsere fünf Hauptkategorien sind: Bavarian & Trachten Wear, Premium Leather Apparel, Sportswear, Streetwear & Activewear sowie Leisure & Nightwear."
-      : "Our five main categories are Bavarian & Trachten Wear, Premium Leather Apparel, Sportswear, Streetwear & Activewear, and Leisure & Nightwear.";
+      ? "Unsere Hauptprogramme umfassen Bavarian & Trachten Wear, Premium Leather Apparel, Sportswear, Streetwear & Activewear sowie Leisure & Nightwear."
+      : "Our main programs include Bavarian & Trachten Wear, Premium Leather Apparel, Sportswear, Streetwear & Activewear, and Leisure & Nightwear.";
   }
 
   return de
@@ -148,19 +151,10 @@ export default function LiveChat() {
     window.setTimeout(() => launcherRef.current?.focus(), 0);
   };
 
-  const logAssistant = (content: string) => {
-    void supabase.from("chat_messages").insert({
-      session_id: sessionIdRef.current,
-      role: "assistant",
-      message: content,
-    });
-  };
-
   const useBackup = (next: Msg[], userText: string) => {
     const reply = fallbackReply(userText);
     setMode("backup");
     setMessages([...next, { role: "assistant", content: reply }]);
-    logAssistant(reply);
   };
 
   const send = async (text: string) => {
@@ -172,33 +166,24 @@ export default function LiveChat() {
     setInput("");
     setLoading(true);
 
-    void supabase.from("chat_messages").insert({
-      session_id: sessionIdRef.current,
-      role: "user",
-      message: userMsg.content,
-    });
-
-    if (mode === "backup") {
-      useBackup(next, userMsg.content);
-      setLoading(false);
-      return;
-    }
-
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const response = await fetch(`${supabaseUrl}/functions/v1/chat`, {
+      const response = await fetch(`${supabaseRuntimeUrl}/functions/v1/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${supabaseKey}`,
+          Authorization: `Bearer ${supabasePublishableKey}`,
+          apikey: supabasePublishableKey,
         },
         body: JSON.stringify({
+          sessionId: sessionIdRef.current,
           messages: next.map((message) => ({ role: message.role, content: message.content })),
         }),
       });
 
       if (!response.ok || !response.body) throw new Error("guide-unavailable");
+
+      const provider = response.headers.get("X-Irha-AI-Provider");
+      setMode(provider === "deterministic-backup" ? "backup" : "ai");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -233,11 +218,7 @@ export default function LiveChat() {
         }
       }
 
-      if (!accumulated) {
-        useBackup(next, userMsg.content);
-      } else {
-        logAssistant(accumulated);
-      }
+      if (!accumulated) useBackup(next, userMsg.content);
     } catch {
       useBackup(next, userMsg.content);
     } finally {
@@ -386,7 +367,7 @@ export default function LiveChat() {
               </button>
             </div>
             <p className="text-[8px] uppercase tracking-[0.16em] text-foreground/40 mt-2 text-center">
-              Guide answers are non-binding · Final details confirmed after review
+              Messages may be stored for service follow-up · Answers are non-binding
             </p>
           </form>
         </section>
