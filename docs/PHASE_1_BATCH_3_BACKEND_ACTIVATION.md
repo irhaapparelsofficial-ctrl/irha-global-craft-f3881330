@@ -37,7 +37,8 @@ The callback remains deliberately fail-closed until an approved renderer is conf
 
 ## Verified evidence
 
-- recorded migrations after activation: 109;
+- recorded migrations after final parity activation: 117;
+- latest recorded activation migration: `backend_activation_repairs`;
 - Auth users preserved: 1;
 - admin roles preserved: 1;
 - enabled social accounts: 0;
