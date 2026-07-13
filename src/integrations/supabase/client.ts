@@ -8,13 +8,14 @@ import {
 
 // Runtime identity is sourced only from the immutable owner file. Lovable-managed
 // VITE_SUPABASE_* values are deliberately ignored so an editor sync cannot reconnect
-// production to the retired Lovable Cloud database.
+// production to a retired or unintended database.
 export const supabaseProjectId = OWNER_SUPABASE_PROJECT_ID;
 export const supabaseRuntimeUrl = OWNER_SUPABASE_URL;
+export const supabasePublishableKey = OWNER_SUPABASE_PUBLISHABLE_KEY;
 
 export const supabase = createClient<Database>(
-  OWNER_SUPABASE_URL,
-  OWNER_SUPABASE_PUBLISHABLE_KEY,
+  supabaseRuntimeUrl,
+  supabasePublishableKey,
   {
     auth: {
       storage: localStorage,

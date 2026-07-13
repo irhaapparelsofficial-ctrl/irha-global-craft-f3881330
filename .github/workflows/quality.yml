@@ -29,6 +29,12 @@ jobs:
       - name: Verify deployment source lock
         run: npm run verify:deployment-source
 
+      - name: Verify secret safety
+        run: npm run verify:secrets
+
+      - name: Verify migration order
+        run: npm run verify:migrations
+
       - name: Typecheck
         run: npx tsc --noEmit
 
