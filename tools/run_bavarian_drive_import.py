@@ -54,7 +54,6 @@ def resilient_download_drive_folder(drive_url: str, destination: Path) -> list[s
                 output=str(target),
                 quiet=False,
                 use_cookies=False,
-                fuzzy=True,
             )
             if result and Path(result).is_file():
                 downloaded.append(str(result))
