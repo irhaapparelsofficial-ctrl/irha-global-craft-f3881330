@@ -49,6 +49,7 @@ describe("buyer-critical public platform contracts", () => {
   it("declares public buyer functions explicitly and keeps admin functions authenticated", () => {
     const config = source("supabase/config.toml");
 
+    expect(config).toMatch(/\[functions\.chat\]\s+verify_jwt = false/);
     expect(config).toMatch(/\[functions\.public-lead-gateway\]\s+verify_jwt = false/);
     expect(config).toMatch(/\[functions\.generate-mockup\]\s+verify_jwt = false/);
     expect(config).toMatch(/\[functions\.admin-agent\]\s+verify_jwt = true/);
@@ -68,6 +69,25 @@ describe("buyer-critical public platform contracts", () => {
     expect(client).toContain('supabase.functions.invoke<GatewayResponse>("public-lead-gateway"');
     expect(client).not.toContain('.from("inquiries")');
     expect(client).not.toContain('.from("catalogue_leads")');
+  });
+
+  it("keeps website chat on the owner runtime with server-side persistence", () => {
+    const liveChat = source("src/components/LiveChat.tsx");
+    const chatFunction = source("supabase/functions/chat/index.ts");
+
+    expect(liveChat).toContain("supabaseRuntimeUrl");
+    expect(liveChat).toContain("supabasePublishableKey");
+    expect(liveChat).toContain("sessionId: sessionIdRef.current");
+    expect(liveChat).toContain('response.headers.get("X-Irha-AI-Provider")');
+    expect(liveChat).not.toContain("import.meta.env.VITE_SUPABASE_URL");
+    expect(liveChat).not.toContain("import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY");
+    expect(liveChat).not.toContain('.from("chat_messages")');
+
+    expect(chatFunction).toContain("persistExchange(sessionId, latestUser, answer)");
+    expect(chatFunction).toContain('service().from("chat_messages").insert');
+    expect(chatFunction).toContain('provider: "deterministic-backup"');
+    expect(chatFunction).toContain("resolveSessionId(body.sessionId, req)");
+    expect(chatFunction).toContain("isAllowedOrigin(origin)");
   });
 
   it("keeps Custom Lab independent of the paid Lovable AI gateway", () => {
