@@ -1,0 +1,112 @@
+name: Build Lovable Batch A Runtime
+
+on:
+  push:
+    branches:
+      - repair/lovable-batch-a-runtime-20260713-v1
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lovable-batch-a-runtime-20260713-v1
+  cancel-in-progress: false
+
+jobs:
+  build-runtime-batch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out recovery branch
+        uses: actions/checkout@v4
+        with:
+          ref: repair/lovable-batch-a-runtime-20260713-v1
+          fetch-depth: 0
+
+      - name: Copy runtime-only files from verified main snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 28158592d33e90ea99a6f1298f9a75f416412fb8
+          paths=(
+            src
+            scripts
+            index.html
+            package.json
+            package-lock.json
+            vite.config.ts
+            tsconfig.json
+            tsconfig.app.json
+            tsconfig.node.json
+            tailwind.config.ts
+            postcss.config.js
+            components.json
+            eslint.config.js
+            vitest.config.ts
+            .env
+            .gitignore
+            .github/workflows/production-smoke.yml
+            public/build.json
+            public/release.txt
+            public/_headers
+            public/_redirects
+            public/robots.txt
+            public/sitemap.xml
+            public/llms.txt
+            public/llms-full.txt
+            supabase/config.toml
+          )
+          for path in "${paths[@]}"; do
+            if git cat-file -e "FETCH_HEAD:${path}" 2>/dev/null; then
+              git checkout FETCH_HEAD -- "$path"
+            fi
+          done
+
+      - name: Enforce one deterministic package manager and side-effect-free build
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f --ignore-unmatch bun.lock bun.lockb
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+          delete pkg.scripts.postbuild;
+          pkg.scripts['notify:search'] = 'node scripts/ping-search-engines.mjs';
+          pkg.packageManager = 'npm@11.4.2';
+          fs.writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
+          NODE
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Enforce zero known dependency vulnerabilities
+        run: npm audit --audit-level=low
+
+      - name: Typecheck application
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+
+      - name: Run exact Lovable production build command
+        run: npm run build
+
+      - name: Commit only verified runtime batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/lovable-batch-a-bootstrap.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'repair: prepare deterministic Lovable runtime batch A'
+          git push origin HEAD:repair/lovable-batch-a-runtime-20260713-v1
