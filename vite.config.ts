@@ -12,14 +12,14 @@ function verifiedReleaseMetadata(): Plugin {
     enforce: "post",
     transformIndexHtml(html) {
       return html
-        .replace(/<title>[\s\S]*?<\/title>/i, "<title>Irha Apparels — B2B Custom Apparel Manufacturer in Sialkot</title>")
-        .replace(/<meta name="description" content="[^"]*"\s*\/?>/i, '<meta name="description" content="Custom B2B apparel manufacturing in Sialkot, Pakistan for brands, wholesalers, importers and private-label buyers. Requirements are reviewed before commercial commitments." />')
+        .replace(/<title>[\s\S]*?<\/title>/i, "<title>Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers</title>")
+        .replace(/<meta data-irha-fallback-seo="true" name="description" content="[^"]*"\s*\/?>/i, '<meta data-irha-fallback-seo="true" name="description" content="OEM, ODM and private-label apparel manufacturer in Sialkot, Pakistan. Custom cut & sew, embroidery, printing, private label and export support for brands and importers worldwide." />')
         .replace(/\s*<meta name="keywords"[^>]*>/i, "")
         .replace(/\s*<link rel="alternate" hreflang="de"[^>]*>/gi, "")
-        .replace(/<meta property="og:title" content="[^"]*"\s*\/?>/i, '<meta property="og:title" content="Irha Apparels — B2B Custom Apparel Manufacturer" />')
-        .replace(/<meta property="og:description" content="[^"]*"\s*\/?>/i, '<meta property="og:description" content="Custom apparel programs for brands, wholesalers, importers and private-label buyers. Requirements are reviewed before commercial commitments." />')
-        .replace(/<meta name="twitter:title" content="[^"]*"\s*\/?>/i, '<meta name="twitter:title" content="Irha Apparels — B2B Custom Apparel Manufacturer" />')
-        .replace(/<meta name="twitter:description" content="[^"]*"\s*\/?>/i, '<meta name="twitter:description" content="Custom apparel manufacturing in Sialkot, Pakistan for B2B buyers." />')
+        .replace(/<meta data-irha-fallback-seo="true" property="og:title" content="[^"]*"\s*\/?>/i, '<meta data-irha-fallback-seo="true" property="og:title" content="Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers" />')
+        .replace(/<meta data-irha-fallback-seo="true" property="og:description" content="[^"]*"\s*\/?>/i, '<meta data-irha-fallback-seo="true" property="og:description" content="OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan for brands, wholesalers and importers worldwide." />')
+        .replace(/<meta data-irha-fallback-seo="true" name="twitter:title" content="[^"]*"\s*\/?>/i, '<meta data-irha-fallback-seo="true" name="twitter:title" content="Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers" />')
+        .replace(/<meta data-irha-fallback-seo="true" name="twitter:description" content="[^"]*"\s*\/?>/i, '<meta data-irha-fallback-seo="true" name="twitter:description" content="OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan for global B2B buyers." />')
         .replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, "");
     },
   };
@@ -46,9 +46,8 @@ export default defineConfig(({ mode }) => ({
     retireLegacyCatalogueFiles(),
     react(),
     imagetools(),
-    mcpPlugin(),
-    mode === "development" && componentTagger(),
-  ].filter(Boolean),
+    ...(mode === "development" ? [mcpPlugin(), componentTagger()] : []),
+  ],
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
@@ -56,15 +55,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     cssCodeSplit: true,
     sourcemap: false,
-    minify: "esbuild",
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          "ui-vendor": ["lucide-react", "@radix-ui/react-slot", "@radix-ui/react-dialog"],
-          "query-vendor": ["@tanstack/react-query"],
-        },
-      },
-    },
+    minify: "oxc",
   },
 }));

@@ -126,7 +126,8 @@ export default function SafeMarkdown({ markdown }: { markdown: string }) {
         if (block.type === "hr") return <hr key={key} className="border-border/60" />;
         if (block.type === "ul") return <ul key={key} className="list-disc pl-6 space-y-2">{block.items.map((item, itemIndex) => <li key={itemIndex}>{inline(item)}</li>)}</ul>;
         if (block.type === "ol") return <ol key={key} className="list-decimal pl-6 space-y-2">{block.items.map((item, itemIndex) => <li key={itemIndex}>{inline(item)}</li>)}</ol>;
-        return <p key={key}>{inline(block.text)}</p>;
+        if (block.type === "p") return <p key={key}>{inline(block.text)}</p>;
+        return null;
       })}
     </div>
   );

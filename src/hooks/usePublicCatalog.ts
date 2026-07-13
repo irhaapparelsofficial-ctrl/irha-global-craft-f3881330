@@ -376,6 +376,8 @@ export function usePublicCatalogTree() {
   return useQuery({
     queryKey: K.tree,
     queryFn: fetchTree,
+    initialData: cloneLocalTree,
+    initialDataUpdatedAt: 0,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     refetchOnWindowFocus: true,
@@ -389,9 +391,24 @@ export function usePublicTopCategory(slug?: string) {
 }
 
 export function usePublicProduct(categorySlug?: string, productSlug?: string) {
+  const localProduct = () => {
+    if (!categorySlug || !productSlug) return undefined;
+    const top = LOCAL_TREE.find((category) => category.slug === categorySlug) ?? null;
+    if (!top) return null;
+    const directProduct = top.directProducts.find((candidate) => candidate.slug === productSlug);
+    if (directProduct) return { product: directProduct, subCategory: null, topCategory: top };
+    for (const sub of top.subs) {
+      const product = sub.products.find((candidate) => candidate.slug === productSlug);
+      if (product) return { product, subCategory: sub, topCategory: top };
+    }
+    return null;
+  };
+
   return useQuery({
     queryKey: K.product(categorySlug ?? "", productSlug ?? ""),
     enabled: Boolean(categorySlug && productSlug),
+    initialData: localProduct,
+    initialDataUpdatedAt: 0,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     queryFn: async () => {

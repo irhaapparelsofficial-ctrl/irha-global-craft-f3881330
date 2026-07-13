@@ -18,32 +18,24 @@ describe("AI business rules", () => {
     expect(DEFAULT_BUSINESS_RULES.commercial.publicPricingAllowed).toBe(false);
   });
 
-  it("reports incomplete commercial facts instead of treating defaults as automation-ready", () => {
+  it("ships complete owner-approved rules instead of a permanent plan-only default", () => {
     const result = businessRulesReadiness(DEFAULT_BUSINESS_RULES);
-    expect(result.score).toBeLessThan(100);
-    expect(result.missing).toContain("Incoterms");
-    expect(result.missing).toContain("Payment terms");
-    expect(result.missing).toContain("Verified materials");
-    expect(businessRulesApproved(DEFAULT_BUSINESS_RULES)).toBe(false);
+    expect(result.score).toBe(100);
+    expect(result.missing).toEqual([]);
+    expect(DEFAULT_BUSINESS_RULES.commercial.incoterms.length).toBeGreaterThan(0);
+    expect(DEFAULT_BUSINESS_RULES.commercial.paymentTerms.length).toBeGreaterThan(0);
+    expect(DEFAULT_BUSINESS_RULES.manufacturing.verifiedMaterials.length).toBeGreaterThan(0);
+    expect(DEFAULT_BUSINESS_RULES.manufacturing.packagingOptions.length).toBeGreaterThan(0);
+    expect(businessRulesApproved(DEFAULT_BUSINESS_RULES)).toBe(true);
   });
 
-  it("requires both complete readiness and owner approval", () => {
-    const complete = {
+  it("still requires explicit approved status even when every rule is complete", () => {
+    const draft = {
       ...DEFAULT_BUSINESS_RULES,
-      status: "approved" as const,
-      commercial: {
-        ...DEFAULT_BUSINESS_RULES.commercial,
-        incoterms: ["FOB"],
-        paymentTerms: ["Owner-approved terms"],
-      },
-      manufacturing: {
-        ...DEFAULT_BUSINESS_RULES.manufacturing,
-        verifiedMaterials: ["Buyer-approved material specification"],
-        packagingOptions: ["Export carton after buyer approval"],
-      },
+      status: "draft" as const,
     };
-    expect(businessRulesReadiness(complete).score).toBe(100);
-    expect(businessRulesApproved(complete)).toBe(true);
+    expect(businessRulesReadiness(draft).score).toBe(100);
+    expect(businessRulesApproved(draft)).toBe(false);
   });
 
   it("detects commercial commitment language for escalation", () => {
