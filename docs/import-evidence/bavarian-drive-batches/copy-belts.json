@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:13:12+00:00",
+  "batch_slug": "copy-belts",
+  "label": "COPY/Belts",
+  "folder_url": "https://drive.google.com/drive/folders/1qAfw7-eo09Qxu33QH5aDp_9ZvPoId_2e",
+  "inventory_count": 12,
+  "downloaded_count": 12,
+  "download_failure_count": 0,
+  "image_candidate_count": 12,
+  "accepted_count": 12,
+  "rejected_count": 0,
+  "download_failures": []
+}

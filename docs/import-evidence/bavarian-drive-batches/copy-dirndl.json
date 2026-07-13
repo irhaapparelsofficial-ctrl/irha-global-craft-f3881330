@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:13:19+00:00",
+  "batch_slug": "copy-dirndl",
+  "label": "COPY/Drindl",
+  "folder_url": "https://drive.google.com/drive/folders/1vh780zSFumG9yuuie8SDQGN5C66OK3Tc",
+  "inventory_count": 96,
+  "downloaded_count": 96,
+  "download_failure_count": 0,
+  "image_candidate_count": 96,
+  "accepted_count": 94,
+  "rejected_count": 2,
+  "download_failures": []
+}

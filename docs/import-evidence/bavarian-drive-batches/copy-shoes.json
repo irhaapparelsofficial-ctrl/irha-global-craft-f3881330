@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:28:03+00:00",
+  "batch_slug": "copy-shoes",
+  "label": "COPY/Shoes",
+  "folder_url": "https://drive.google.com/drive/folders/1Aa9Bxy7JmJZbYFxEJ13qBokAcRf_UhCJ",
+  "inventory_count": 41,
+  "downloaded_count": 41,
+  "download_failure_count": 0,
+  "image_candidate_count": 41,
+  "accepted_count": 40,
+  "rejected_count": 1,
+  "download_failures": []
+}
