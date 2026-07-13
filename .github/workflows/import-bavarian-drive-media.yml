@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/import-bavarian-drive-media.yml"
       - "tools/import_bavarian_drive_media.py"
+      - "tools/run_bavarian_drive_import.py"
   workflow_dispatch:
 
 permissions:
@@ -39,7 +40,7 @@ jobs:
         run: sed -i '/remaining_ok=True,/d' tools/import_bavarian_drive_media.py
 
       - name: Validate importer syntax
-        run: python -m py_compile tools/import_bavarian_drive_media.py
+        run: python -m py_compile tools/import_bavarian_drive_media.py tools/run_bavarian_drive_import.py
 
       - name: Scan, deduplicate and optimize every Drive image
         id: import
@@ -48,7 +49,7 @@ jobs:
           set +e
           set -o pipefail
           mkdir -p docs/import-evidence
-          python tools/import_bavarian_drive_media.py \
+          python tools/run_bavarian_drive_import.py \
             --drive-url "https://drive.google.com/drive/folders/10pBXyaJyJgdt3nLe-opOcXW58ZE9ryug" \
             --output "public/media/bavarian-drive" \
             --sql-output "supabase/manual/20260713_bavarian_drive_media_import.sql" \
@@ -60,6 +61,7 @@ jobs:
       - name: Verify generated import evidence
         run: |
           test "$(cat docs/import-evidence/bavarian-drive-status.txt)" = "0"
+          test -s docs/import-evidence/bavarian-drive-download-failures.json
           test -s public/media/bavarian-drive/manifest.json
           test -s public/media/bavarian-drive/scan-report.json
           test -s public/media/bavarian-drive/index.html
@@ -68,9 +70,11 @@ jobs:
           import json
           from pathlib import Path
           report = json.loads(Path('public/media/bavarian-drive/scan-report.json').read_text())
+          downloads = json.loads(Path('docs/import-evidence/bavarian-drive-download-failures.json').read_text())
           assert report['image_candidate_count'] > 0, report
           assert report['accepted_count'] > 0, report
-          print(json.dumps(report, indent=2))
+          assert downloads['downloaded_count'] > 0, downloads
+          print(json.dumps({'scan': report, 'downloads': downloads}, indent=2))
           PY
 
       - name: Preserve generated media artifact
@@ -91,7 +95,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config http.postBuffer 524288000
-          git add tools/import_bavarian_drive_media.py docs/import-evidence public/media/bavarian-drive supabase/manual/20260713_bavarian_drive_media_import.sql
+          git add tools/import_bavarian_drive_media.py tools/run_bavarian_drive_import.py docs/import-evidence public/media/bavarian-drive supabase/manual/20260713_bavarian_drive_media_import.sql
           if git diff --cached --quiet; then
             echo "Generated media is already current."
             exit 0
