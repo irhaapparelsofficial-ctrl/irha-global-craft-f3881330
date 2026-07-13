@@ -1,5 +1,7 @@
 import { CalendarDays, CheckCircle2, Copy, Film, Linkedin, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import SocialRenderHealthPanel from "@/components/admin/SocialRenderHealthPanel";
+import SocialRenderPipelinePanel from "@/components/admin/SocialRenderPipelinePanel";
 
 const WEEK = [
   { day: "Monday", platform: "LinkedIn", pillar: "Manufacturing capability", brief: "Show one requirement-led production capability and explain which buyer inputs are needed before quotation." },
@@ -104,10 +106,13 @@ export default function SocialContentPlaybook() {
           <div>
             <p className="eyebrow mb-2">Social Content Operating System</p>
             <h2 className="font-display text-3xl">B2B content prepared for approval</h2>
-            <p className="text-sm text-foreground/68 mt-3 max-w-4xl leading-relaxed">The content plan and copy library work now. Automated generation, scheduling and platform delivery stay pending until the final social-calendar backend activation. No draft is treated as a published post.</p>
+            <p className="text-sm text-foreground/68 mt-3 max-w-4xl leading-relaxed">The content plan and copy library work now. Reel and carousel render jobs use Media Library assets, owner approval and verified output evidence. No draft or renderer queue item is treated as a published post.</p>
           </div>
         </div>
       </section>
+
+      <SocialRenderHealthPanel />
+      <SocialRenderPipelinePanel />
 
       <section className="border border-border/60 bg-card/25 p-5 md:p-6">
         <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-gold"><CalendarDays size={14} /> Weekly framework</div>
@@ -153,6 +158,7 @@ export default function SocialContentPlaybook() {
                 "Platform-specific preview reviewed",
                 "Links, phone and CTA checked",
                 "No unsupported commercial or certification claims",
+                "Render output must pass checksum, dimensions, type and duration verification",
                 "Publish result must return a real platform ID or URL",
                 "Failure remains failed; it is never shown as published",
               ].map((item) => <li key={item} className="flex gap-3 text-sm text-foreground/65"><CheckCircle2 size={15} className="text-gold shrink-0 mt-0.5" />{item}</li>)}
