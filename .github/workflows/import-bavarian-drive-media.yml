@@ -1,0 +1,156 @@
+name: Import Bavarian Drive media
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bavarian-drive-media-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  import-media:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Check out import branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install image importer dependencies
+        run: python -m pip install --upgrade gdown Pillow
+
+      - name: Align importer with current gdown API
+        run: sed -i '/remaining_ok=True,/d' tools/import_bavarian_drive_media.py
+
+      - name: Validate importer syntax
+        run: python -m py_compile tools/import_bavarian_drive_media.py tools/import_bavarian_drive_batch.py tools/finalize_bavarian_drive_media.py
+
+      - name: Configure resumable Git saves
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config http.postBuffer 524288000
+
+      - name: Import every Drive folder in resumable batches
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          branch="${{ github.ref_name }}"
+
+          run_batch() {
+            local slug="$1"
+            local label="$2"
+            local folder_id="$3"
+
+            echo "::group::Import ${label} (${slug})"
+            python tools/import_bavarian_drive_batch.py \
+              --slug "$slug" \
+              --label "$label" \
+              --folder-url "https://drive.google.com/drive/folders/${folder_id}" \
+              --skip-existing
+
+            git add -A -- public/media/bavarian-drive docs/import-evidence/bavarian-drive-batches
+            if ! git diff --cached --quiet; then
+              git commit -m "feat(media): import Bavarian batch ${slug} [skip ci]"
+              git push origin "HEAD:${branch}"
+            fi
+            echo "::endgroup::"
+          }
+
+          run_batch "banners" "BANNERS" "15KYT8Ott4d3TakEHPMxBTpLptz-1kOmj"
+          run_batch "children" "CHILDREN" "1EZGoJUYdkOobxiw67KpqCPAHYSWdI9x6"
+
+          run_batch "copy-bags" "COPY/Bags" "15gNUJJJCdKHSIaooD2u57VQDhbO-ICiM"
+          run_batch "copy-gloves" "COPY/Gloves" "1AD3Qo8ldOrQp4crYKEmClpm2iUI6gZoh"
+          run_batch "copy-belts" "COPY/Belts" "1qAfw7-eo09Qxu33QH5aDp_9ZvPoId_2e"
+          run_batch "copy-dirndl" "COPY/Drindl" "1vh780zSFumG9yuuie8SDQGN5C66OK3Tc"
+          run_batch "copy-jackets" "COPY/Jackets" "1MZnufAtU6XcFf2mfaukDMbhE5kQsIT28"
+          run_batch "copy-lederhosen" "COPY/Lederhosen" "1NsZ2oEmo3yDRrkSKIufVqjdK2aXEl81I"
+          run_batch "copy-shirts" "COPY/Shirts" "12CFlBYc4PPDfo9-Ymq5Sk9oB6NEJdqsX"
+          run_batch "copy-socks" "COPY/Socks" "1i-3faSTSV4Lfrt9_VhF3PGowIAUJNCjI"
+          run_batch "copy-shoes" "COPY/Shoes" "1Aa9Bxy7JmJZbYFxEJ13qBokAcRf_UhCJ"
+
+          run_batch "leather-process" "Leather" "1N9RW1dVG-ZuJOo4PTP52jmrevdml9HRD"
+          run_batch "jackets" "Jackets" "17M7ivGP3lKW8bZz3Qv_xuQ_g8f93W66t"
+
+          run_batch "men-accessories" "MEN'S/Accessories" "1f2jvT77s3OQbKRx4TuzYEJfWpnDJHRjo"
+          run_batch "men-lederhosen" "MEN'S/Lederhosen" "1R12xBDCpKTurj5DNojOpY5NIyJFggn9j"
+          run_batch "men-leather-pants" "MEN'S/Leather Pants" "1wB4PVmP-cpTMVfihnULoC2LANjktOWpE"
+          run_batch "men-shirts" "MEN'S/Shirts" "1S-nlg01PksVvmunG93IIZDvBSt3H19bR"
+          run_batch "men-shoes-socks" "MEN'S/Shoes, Socks" "1Nt_mmKJ1vi5KGla_k6PBKjRNjX_8IvKO"
+          run_batch "men-waistcoats-jackets" "MEN'S/Waistcoats, Jackets" "1JOhk947mRXpjPAN9xbKqFksj0ohF4pdC"
+
+          run_batch "women-accessories" "WOMEN'S/Accessories" "1dlmXgpRJ9Z9dsbq7diaZb0IVxrAXhD5b"
+          run_batch "women-dirndl-blouses" "WOMEN'S/Dirndl Blouses" "1GI1eh08QgYRaODBpWri8MUt8uR3uCkDL"
+          run_batch "women-janker" "WOMEN'S/Janker" "1aV7waENk8K29c1IetqfFN9IomW1uuMRo"
+          run_batch "women-pents" "WOMEN'S/Pents" "1yWgdjGbb4Ylik5r7t-BpkFD4usN29U1c"
+          run_batch "women-dirndl" "WOMEN'S/Dirndl" "1Z4NrX-1QpmNVBs3Pl8s-BJCGbViUw8fr"
+          run_batch "women-shirts" "WOMEN'S/Shirts" "1aWRoMu8buxK076sHo5NdQ8YbNNxYlRYf"
+          run_batch "women-lederhosen" "WOMEN'S/Lederhosen" "1MPQkvzqrzjIBk9vKJFl1px4LV4GDwOce"
+          run_batch "women-skirts" "WOMEN'S/Skirts" "12H_zDQyl6TSCNMl0uiUV2M-Q6BdRwV16"
+
+          run_batch "size-chart" "Size Chart" "1aOgIJTCwDhgfdfUQyMvKSd4f1rtb0gRS"
+          run_batch "sizing" "Sizing" "1FMthN81Ijf1WTgxSSU9X5kGvnMibxJZd"
+
+      - name: Finalize deduplicated media library and product mapping
+        run: |
+          python tools/finalize_bavarian_drive_media.py \
+            --expected-count 29 \
+            --sql-output "supabase/manual/20260713_bavarian_drive_media_import.sql"
+
+          git add -A -- public/media/bavarian-drive docs/import-evidence supabase/manual/20260713_bavarian_drive_media_import.sql
+          if ! git diff --cached --quiet; then
+            git commit -m "feat(media): finalize Bavarian Drive library and galleries [skip ci]"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
+
+      - name: Verify complete import evidence
+        run: |
+          test -s public/media/bavarian-drive/manifest.json
+          test -s public/media/bavarian-drive/scan-report.json
+          test -s public/media/bavarian-drive/index.html
+          test -s docs/import-evidence/bavarian-drive-download-failures.json
+          test -s supabase/manual/20260713_bavarian_drive_media_import.sql
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('public/media/bavarian-drive/scan-report.json').read_text())
+          downloads = json.loads(Path('docs/import-evidence/bavarian-drive-download-failures.json').read_text())
+          assert report['batch_count'] == 29, report
+          assert report['inventory_count'] > 0, report
+          assert report['accepted_count'] > 0, report
+          assert report['mapped_product_count'] > 0, report
+          assert report['missing_asset_count'] == 0, report
+          assert report['uncategorized_path_count'] == 0, report
+          assert report['materially_oversized_count'] == 0, report
+          assert downloads['downloaded_count'] > 0, downloads
+          assert downloads['downloaded_count'] <= downloads['inventory_count'], downloads
+          print(json.dumps({'scan': report, 'downloads': downloads}, indent=2))
+          PY
+
+      - name: Preserve scan reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bavarian-drive-media-reports
+          path: |
+            docs/import-evidence/
+            public/media/bavarian-drive/batches/
+            public/media/bavarian-drive/manifest.json
+            public/media/bavarian-drive/scan-report.json
+            public/media/bavarian-drive/README.md
+            supabase/manual/20260713_bavarian_drive_media_import.sql
+          if-no-files-found: warn
+          compression-level: 6
+          retention-days: 14

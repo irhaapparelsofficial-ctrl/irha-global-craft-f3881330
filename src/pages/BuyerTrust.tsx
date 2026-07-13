@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import { whatsappLink } from "@/lib/constants";
+import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -89,24 +90,36 @@ export default function BuyerTrust() {
         title="Buyer Trust Center — Verify Irha Apparels Before Ordering"
         description="Verify Irha Apparels through a live factory video call, requirement-led quotation, sample approval and program-specific documentation before placing a B2B order."
         path="/buyer-trust"
+        image={factoryCinematic}
         jsonLd={jsonLd}
       />
 
-      <section className="pt-36 md:pt-44 pb-20 border-b border-border/60">
-        <div className="container-luxe grid lg:grid-cols-12 gap-12 items-end">
+      <section className="relative pt-36 md:pt-44 pb-20 md:pb-24 border-b border-border/60 overflow-hidden">
+        <img
+          src={factoryCinematic}
+          alt="Irha Apparels factory environment for buyer verification"
+          loading="eager"
+          width={1920}
+          height={1080}
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/92 via-black/72 to-black/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20" />
+        <div className="container-luxe relative grid lg:grid-cols-12 gap-12 items-end">
           <div className="lg:col-span-8">
-            <p className="eyebrow mb-5">Buyer Trust Center</p>
-            <h1 className="font-display text-5xl md:text-7xl leading-[0.96] max-w-5xl">
+            <div className="h-px w-16 bg-gold mb-6" />
+            <p className="text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold mb-5">Buyer Trust Center</p>
+            <h1 className="font-display text-white text-5xl md:text-7xl leading-[0.96] max-w-5xl">
               Verify the supplier <span className="text-gold italic">before the order.</span>
             </h1>
-            <p className="mt-7 max-w-3xl text-base md:text-lg text-foreground/72 leading-relaxed">
+            <p className="mt-7 max-w-3xl text-base md:text-lg text-white/80 leading-relaxed">
               Irha Apparels is an experienced manufacturer in Sialkot. The website is newly built, so we do not expect buyers to rely on a website alone. Use live discussion, relevant evidence, clear specifications and documented approvals to evaluate the program.
             </p>
           </div>
-          <div className="lg:col-span-4 border border-gold/40 bg-gold/5 p-6">
+          <div className="lg:col-span-4 border border-white/20 bg-black/45 backdrop-blur-md p-6">
             <p className="text-[10px] uppercase tracking-[0.28em] text-gold">Direct verification</p>
-            <h2 className="font-display text-2xl mt-3">Request a live factory view</h2>
-            <p className="text-sm text-foreground/65 mt-3 leading-relaxed">
+            <h2 className="font-display text-white text-2xl mt-3">Request a live factory view</h2>
+            <p className="text-sm text-white/70 mt-3 leading-relaxed">
               Share your category and preferred time. Availability and the relevant viewing scope are confirmed before the call.
             </p>
             <Link

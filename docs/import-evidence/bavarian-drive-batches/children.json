@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:12:17+00:00",
+  "batch_slug": "children",
+  "label": "CHILDREN",
+  "folder_url": "https://drive.google.com/drive/folders/1EZGoJUYdkOobxiw67KpqCPAHYSWdI9x6",
+  "inventory_count": 79,
+  "downloaded_count": 79,
+  "download_failure_count": 0,
+  "image_candidate_count": 79,
+  "accepted_count": 78,
+  "rejected_count": 1,
+  "download_failures": []
+}

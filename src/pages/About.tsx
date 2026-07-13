@@ -1,5 +1,6 @@
 import SEO from "@/components/SEO";
 import manufacturingImg from "@/assets/manufacturing.jpg";
+import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 import { Link } from "react-router-dom";
 import { Factory, MessageCircle, PackageCheck } from "lucide-react";
 import {
@@ -50,25 +51,39 @@ export default function About() {
         title="About Irha Apparels — B2B Apparel Manufacturer in Sialkot"
         description={description}
         path="/about"
+        image={factoryCinematic}
         jsonLd={jsonLd}
       />
 
-      <section className="pt-40 pb-24 md:pb-32 border-b border-border/60">
-        <div className="container-luxe max-w-5xl">
-          <p className="eyebrow mb-6">About Irha</p>
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95]">
-            Built for serious <span className="text-gold italic">B2B programs</span>.
-          </h1>
-          <p className="mt-10 max-w-3xl text-lg text-foreground/75 leading-relaxed">
-            Irha Apparels is a Sialkot-based custom apparel manufacturer working with brands,
-            wholesalers, importers and private-label buyers who need requirement-led production.
-          </p>
+      <section className="relative min-h-[620px] md:min-h-[720px] flex items-end pt-36 pb-20 md:pb-28 border-b border-border/60 overflow-hidden">
+        <img
+          src={factoryCinematic}
+          alt="Irha Apparels manufacturing environment in Sialkot"
+          loading="eager"
+          width={1920}
+          height={1080}
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/68 to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25" />
+        <div className="container-luxe relative w-full">
+          <div className="max-w-4xl">
+            <div className="h-px w-16 bg-gold mb-6" />
+            <p className="text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold mb-6">About Irha</p>
+            <h1 className="font-display text-white text-5xl md:text-7xl lg:text-8xl leading-[0.95]">
+              Built for serious <span className="text-gold italic">B2B programs</span>.
+            </h1>
+            <p className="mt-9 max-w-3xl text-base md:text-lg text-white/80 leading-relaxed">
+              Irha Apparels is a Sialkot-based custom apparel manufacturer working with brands,
+              wholesalers, importers and private-label buyers who need requirement-led production.
+            </p>
+          </div>
         </div>
       </section>
 
       <section className="py-24 md:py-32">
         <div className="container-luxe grid lg:grid-cols-2 gap-16 items-center">
-          <div className="relative aspect-[4/5] overflow-hidden">
+          <div className="relative aspect-[4/5] overflow-hidden border border-border/60">
             <img
               src={manufacturingImg}
               alt="Apparel manufacturing in Sialkot"

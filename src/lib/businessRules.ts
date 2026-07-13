@@ -53,12 +53,14 @@ export type BusinessRulesMaster = {
   escalationNotes: string;
 };
 
-export const BUSINESS_RULES_STORAGE_KEY = "irha_business_rules_master_v1";
+export const BUSINESS_RULES_STORAGE_KEY = "irha_business_rules_master_v2";
+export const LEGACY_BUSINESS_RULES_STORAGE_KEY = "irha_business_rules_master_v1";
+export const CURRENT_BUSINESS_RULES_VERSION = 2;
 
 export const DEFAULT_BUSINESS_RULES: BusinessRulesMaster = {
-  version: 1,
-  status: "draft",
-  updatedAt: new Date(0).toISOString(),
+  version: CURRENT_BUSINESS_RULES_VERSION,
+  status: "approved",
+  updatedAt: "2026-07-13T15:14:50.347Z",
   company: {
     legalName: "Irha Apparels",
     tradingName: "Irha Apparels",
@@ -66,15 +68,15 @@ export const DEFAULT_BUSINESS_RULES: BusinessRulesMaster = {
     businessModel: "B2B custom apparel manufacturer for wholesale, OEM and private-label buyers",
     websiteState: "Experienced manufacturer; website newly built",
     trustPoints: ["Factory view available through a scheduled live video call"],
-    priorityMarkets: ["Germany", "Austria", "Switzerland", "United Kingdom", "United States", "Canada", "Australia", "United Arab Emirates"],
+    priorityMarkets: ["Germany", "Austria", "Switzerland", "Netherlands", "United Kingdom", "United States", "Canada", "Australia", "United Arab Emirates", "Azerbaijan"],
     supportedLanguages: ["English", "German", "French", "Spanish"],
   },
   commercial: {
     quoteOnly: true,
     publicPricingAllowed: false,
     supportedCurrencies: ["USD", "EUR", "GBP"],
-    incoterms: [],
-    paymentTerms: [],
+    incoterms: ["FOB", "CIF", "DDP subject to destination and shipping confirmation"],
+    paymentTerms: ["Payment terms are confirmed by the owner per quotation; AI cannot commit terms automatically"],
     moqPolicy: "Confirm after reviewing product, material, branding, quantity and destination.",
     samplePolicy: "Confirm after reviewing buyer requirements and the requested development path.",
     leadTimePolicy: "Do not promise a production or delivery date before factory review.",
@@ -83,9 +85,9 @@ export const DEFAULT_BUSINESS_RULES: BusinessRulesMaster = {
   },
   manufacturing: {
     categories: ["Bavarian & Trachten Wear", "Premium Leather Apparel", "Custom Sportswear & Teamwear", "Streetwear & Activewear", "Leisurewear & Nightwear"],
-    verifiedMaterials: [],
-    customizationOptions: ["Private label", "Embroidery", "Printing", "Labels", "Hang tags", "Custom packaging"],
-    packagingOptions: [],
+    verifiedMaterials: ["Cotton fabrics", "Polyester fabrics", "Cotton-polyester blends", "Polyester-elastane blends", "Leather", "Linen", "Wool", "Velvet"],
+    customizationOptions: ["Private label", "Embroidery", "DTF printing", "Woven labels", "Care labels", "Hang tags", "Custom packaging"],
+    packagingOptions: ["Individual polybag", "Export carton", "Woven labels", "Care labels", "Hang tags", "Custom packaging subject to quotation"],
     certifications: [],
   },
   authority: {
@@ -107,7 +109,7 @@ export const DEFAULT_BUSINESS_RULES: BusinessRulesMaster = {
   prohibitedClaims: [
     "Do not invent MOQ, price, production capacity or delivery dates.",
     "Do not claim certifications that are not verified.",
-    "Do not claim an email, listing or social post was sent/published without an API result.",
+    "Do not claim an email, listing or social post was sent or published without an API result.",
     "Do not expose or repeat API keys, passwords or private buyer files.",
   ],
   escalationNotes: "Escalate pricing, discounts, payment terms, production commitments, legal matters, complaints and high-value buyer decisions to the owner.",
@@ -171,7 +173,7 @@ export function listText(values: string[]) {
 }
 
 function mergeRules(value: Partial<BusinessRulesMaster>): BusinessRulesMaster {
-  return {
+  const merged: BusinessRulesMaster = {
     ...DEFAULT_BUSINESS_RULES,
     ...value,
     company: { ...DEFAULT_BUSINESS_RULES.company, ...(value.company ?? {}) },
@@ -180,15 +182,60 @@ function mergeRules(value: Partial<BusinessRulesMaster>): BusinessRulesMaster {
     authority: { ...DEFAULT_BUSINESS_RULES.authority, ...(value.authority ?? {}) },
     prohibitedClaims: Array.isArray(value.prohibitedClaims) ? value.prohibitedClaims : DEFAULT_BUSINESS_RULES.prohibitedClaims,
   };
+
+  const completed: BusinessRulesMaster = {
+    ...merged,
+    commercial: {
+      ...merged.commercial,
+      incoterms: merged.commercial.incoterms.length > 0 ? merged.commercial.incoterms : DEFAULT_BUSINESS_RULES.commercial.incoterms,
+      paymentTerms: merged.commercial.paymentTerms.length > 0 ? merged.commercial.paymentTerms : DEFAULT_BUSINESS_RULES.commercial.paymentTerms,
+    },
+    manufacturing: {
+      ...merged.manufacturing,
+      verifiedMaterials: merged.manufacturing.verifiedMaterials.length > 0 ? merged.manufacturing.verifiedMaterials : DEFAULT_BUSINESS_RULES.manufacturing.verifiedMaterials,
+      packagingOptions: merged.manufacturing.packagingOptions.length > 0 ? merged.manufacturing.packagingOptions : DEFAULT_BUSINESS_RULES.manufacturing.packagingOptions,
+    },
+  };
+
+  const legacyVersion = typeof value.version !== "number" || value.version < CURRENT_BUSINESS_RULES_VERSION;
+  return {
+    ...completed,
+    version: Math.max(completed.version || 1, CURRENT_BUSINESS_RULES_VERSION),
+    status: legacyVersion && businessRulesReadiness(completed).score === 100 ? "approved" : completed.status,
+  };
+}
+
+function parseStoredRules(stored: string, forceLegacyUpgrade = false) {
+  const parsed = JSON.parse(stored) as Partial<BusinessRulesMaster>;
+  return mergeRules(forceLegacyUpgrade ? { ...parsed, version: 1 } : parsed);
 }
 
 export function loadBusinessRules(): BusinessRulesMaster {
   if (typeof window === "undefined") return DEFAULT_BUSINESS_RULES;
   try {
-    const stored = window.localStorage.getItem(BUSINESS_RULES_STORAGE_KEY);
-    if (!stored) return DEFAULT_BUSINESS_RULES;
-    return mergeRules(JSON.parse(stored) as Partial<BusinessRulesMaster>);
+    const current = window.localStorage.getItem(BUSINESS_RULES_STORAGE_KEY);
+    if (current) {
+      const parsed = JSON.parse(current) as Partial<BusinessRulesMaster>;
+      const upgraded = mergeRules(parsed);
+      if (JSON.stringify(parsed) !== JSON.stringify(upgraded)) {
+        window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(upgraded));
+      }
+      return upgraded;
+    }
+
+    const legacy = window.localStorage.getItem(LEGACY_BUSINESS_RULES_STORAGE_KEY);
+    if (legacy) {
+      const upgraded = parseStoredRules(legacy, true);
+      window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(upgraded));
+      window.localStorage.removeItem(LEGACY_BUSINESS_RULES_STORAGE_KEY);
+      return upgraded;
+    }
+
+    window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(DEFAULT_BUSINESS_RULES));
+    return DEFAULT_BUSINESS_RULES;
   } catch {
+    window.localStorage.removeItem(LEGACY_BUSINESS_RULES_STORAGE_KEY);
+    window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(DEFAULT_BUSINESS_RULES));
     return DEFAULT_BUSINESS_RULES;
   }
 }
