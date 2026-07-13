@@ -46,6 +46,10 @@ const queryClient = new QueryClient();
 
 const LEGACY_REDIRECTS = [
   ["/catalogs/master-catalogue-2026.pdf", "/catalogue"],
+  ["/buyer-trust-center", "/buyer-trust"],
+  ["/buyer-trust-centre", "/buyer-trust"],
+  ["/buyer-resources", "/resources"],
+  ["/buyer-faq", "/faq"],
   ["/sportswear-manufacturer-pakistan", "/products/sportswear"],
   ["/sportswear-manufacturer-sialkot", "/products/sportswear"],
   ["/private-label-sportswear-manufacturer", "/products/sportswear"],

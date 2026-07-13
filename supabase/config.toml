@@ -51,6 +51,12 @@ verify_jwt = true
 [functions.social-render-callback]
 verify_jwt = false
 
+[functions.social-publish-scheduler]
+verify_jwt = false
+
+[functions.social-analytics]
+verify_jwt = true
+
 [functions.whatsapp-webhook]
 verify_jwt = false
 

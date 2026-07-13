@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import { whatsappLink } from "@/lib/constants";
+import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -60,11 +61,13 @@ export default function FactoryVideoCall() {
         title="Request a Live Factory Video Call | Irha Apparels"
         description="Schedule a live factory video call with Irha Apparels in Sialkot to discuss your apparel program, manufacturing requirements and verification questions."
         path="/factory-video-call"
+        image={factoryCinematic}
         jsonLd={jsonLd}
       />
 
-      <section className="pt-36 md:pt-44 pb-20 border-b border-border/60">
-        <div className="container-luxe grid lg:grid-cols-12 gap-12 items-center">
+      <section className="relative pt-36 md:pt-44 pb-20 border-b border-border/60 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--gold)/0.12),transparent_38%)]" />
+        <div className="container-luxe relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7">
             <p className="eyebrow mb-5">Live factory verification</p>
             <h1 className="font-display text-5xl md:text-7xl leading-[0.96]">
@@ -90,17 +93,29 @@ export default function FactoryVideoCall() {
               </a>
             </div>
           </div>
-          <aside className="lg:col-span-5 border border-gold/40 bg-gradient-to-br from-gold/10 via-card/40 to-background p-7 md:p-9">
-            <Video className="text-gold" size={30} />
-            <h2 className="font-display text-3xl mt-5">What happens next</h2>
-            <ol className="mt-6 space-y-4 text-sm text-foreground/70">
-              <li className="flex gap-3"><span className="font-mono text-gold">01</span><span>Submit your meeting topic, preferred time window and contact details.</span></li>
-              <li className="flex gap-3"><span className="font-mono text-gold">02</span><span>The team reviews the category and confirms availability and call scope.</span></li>
-              <li className="flex gap-3"><span className="font-mono text-gold">03</span><span>You receive a confirmed time and the agreed communication channel.</span></li>
-            </ol>
-            <p className="text-[11px] text-foreground/50 mt-6 leading-relaxed">
-              A requested time is not automatically booked. Availability is confirmed after review.
-            </p>
+
+          <aside className="lg:col-span-5 relative min-h-[500px] overflow-hidden border border-border/60 bg-card">
+            <img
+              src={factoryCinematic}
+              alt="Live factory video call view at Irha Apparels"
+              loading="eager"
+              width={1080}
+              height={1350}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/10" />
+            <div className="absolute inset-x-0 bottom-0 p-7 md:p-9">
+              <Video className="text-gold" size={30} />
+              <h2 className="font-display text-white text-3xl mt-5">What happens next</h2>
+              <ol className="mt-6 space-y-4 text-sm text-white/78">
+                <li className="flex gap-3"><span className="font-mono text-gold">01</span><span>Submit your meeting topic, preferred time window and contact details.</span></li>
+                <li className="flex gap-3"><span className="font-mono text-gold">02</span><span>The team reviews the category and confirms availability and call scope.</span></li>
+                <li className="flex gap-3"><span className="font-mono text-gold">03</span><span>You receive a confirmed time and the agreed communication channel.</span></li>
+              </ol>
+              <p className="text-[11px] text-white/55 mt-6 leading-relaxed">
+                A requested time is not automatically booked. Availability is confirmed after review.
+              </p>
+            </div>
           </aside>
         </div>
       </section>

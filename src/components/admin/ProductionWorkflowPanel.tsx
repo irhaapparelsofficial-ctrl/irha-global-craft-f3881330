@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
-  CheckCircle2,
   ClipboardList,
   Factory,
-  PackageCheck,
   Plus,
   RefreshCw,
   ShieldCheck,
@@ -12,8 +10,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import ProductionOperationsPanel from "@/components/admin/ProductionOperationsPanel";
 import {
-  PRODUCTION_STAGES,
   allowedStageChanges,
   dueState,
   productionJobReadiness,
@@ -79,6 +77,15 @@ const EMPTY_DRAFT: Draft = {
 };
 
 export default function ProductionWorkflowPanel() {
+  return (
+    <div className="space-y-6">
+      <ProductionOperationsPanel />
+      <FactoryWorkflow />
+    </div>
+  );
+}
+
+function FactoryWorkflow() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [backendError, setBackendError] = useState<string | null>(null);
@@ -128,6 +135,7 @@ export default function ProductionWorkflowPanel() {
       toast({ title: "Production brief incomplete", description: `Missing: ${readiness.missing.join(", ")}`, variant: "destructive" });
       return;
     }
+
     setCreating(true);
     const jobNumber = `${draft.jobType === "sample" ? "SMP" : "ORD"}-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Date.now().toString().slice(-5)}`;
     const { data, error } = await db.from("production_jobs").insert({
@@ -148,8 +156,8 @@ export default function ProductionWorkflowPanel() {
     }).select("*").single();
 
     if (error) {
-      toast({ title: "Job creation failed", description: error.message, variant: "destructive" });
       setCreating(false);
+      toast({ title: "Job creation failed", description: error.message, variant: "destructive" });
       return;
     }
 
@@ -158,11 +166,12 @@ export default function ProductionWorkflowPanel() {
       event_type: "created",
       to_value: "briefing",
       note: "Created from admin production workflow. No buyer notification sent.",
-      evidence: { job_number: jobNumber, specification_reference: draft.specificationReference.trim() },
+      evidence: { job_number: jobNumber, specification_reference: draft.specificationReference.trim(), buyer_notification_sent: false },
     });
-    toast({ title: `${jobNumber} created`, description: "Internal job created; buyer notification remains not prepared." });
+
     setDraft(EMPTY_DRAFT);
     setCreating(false);
+    toast({ title: `${jobNumber} created`, description: "Internal job created; buyer notification remains not prepared." });
     await load();
   };
 
@@ -179,40 +188,41 @@ export default function ProductionWorkflowPanel() {
       from_value: previous,
       to_value: value,
       note: "Internal status update. No automatic buyer notification.",
+      evidence: { buyer_notification_sent: false },
     });
     await load();
   };
 
   const changeStage = async (job: JobRow, next: ProductionStage) => {
     const ownerApproval = stageChangeRequiresOwnerApproval(job.stage, next);
-    if (ownerApproval) {
-      const confirmed = window.confirm(`${stageLabel(next)} may imply a buyer-facing commitment. Confirm owner approval for this internal stage change. No buyer message will be sent.`);
-      if (!confirmed) return;
-    }
+    if (ownerApproval && !window.confirm(`${stageLabel(next)} may imply a buyer-facing commitment. Confirm owner approval for this internal stage change. No buyer message will be sent.`)) return;
+
     const update: Record<string, unknown> = { stage: next };
     if (ownerApproval) {
+      const { data: auth } = await supabase.auth.getUser();
       update.owner_approval_required = false;
       update.owner_approved_at = new Date().toISOString();
+      update.owner_approved_by = auth.user?.id || null;
     }
+
     const { error } = await db.from("production_jobs").update(update).eq("id", job.id);
     if (error) {
       toast({ title: "Stage update failed", description: error.message, variant: "destructive" });
       return;
     }
+
     await db.from("production_job_events").insert({
       production_job_id: job.id,
       event_type: ownerApproval ? "owner_approved" : "stage_changed",
       from_value: job.stage,
       to_value: next,
       note: ownerApproval ? "Owner confirmed internal buyer-impacting stage. Buyer notification not sent." : "Internal stage updated.",
-      evidence: { owner_approval: ownerApproval },
+      evidence: { owner_approval: ownerApproval, buyer_notification_sent: false },
     });
     await load();
   };
 
-  if (loading && jobs.length === 0) {
-    return <div className="py-12 text-center text-sm text-muted-foreground" role="status">Loading production workflow…</div>;
-  }
+  if (loading && jobs.length === 0) return <div className="py-12 text-center text-sm text-muted-foreground" role="status">Loading production workflow…</div>;
 
   if (backendError) {
     return (
@@ -222,9 +232,7 @@ export default function ProductionWorkflowPanel() {
           <div>
             <p className="eyebrow mb-2">Samples & Production</p>
             <h2 className="font-display text-2xl md:text-3xl">Backend activation pending</h2>
-            <p className="text-sm text-foreground/65 mt-3 max-w-3xl leading-relaxed">
-              The workflow UI is code-ready, but the production tables are not available in the active backend. Apply the prepared migration during the single final Lovable/Supabase activation batch.
-            </p>
+            <p className="text-sm text-foreground/65 mt-3 max-w-3xl leading-relaxed">The workflow UI is code-ready, but the production tables are not available in the active backend. Apply the prepared migration during the single final Lovable/Supabase activation batch.</p>
             <code className="mt-4 block text-xs text-amber-200 break-all">{MIGRATION}</code>
             <p className="mt-3 text-xs text-foreground/45 break-all">Runtime evidence: {backendError}</p>
           </div>
@@ -242,14 +250,10 @@ export default function ProductionWorkflowPanel() {
             <div>
               <p className="eyebrow mb-2">Samples & Production</p>
               <h2 className="font-display text-2xl md:text-3xl">Internal factory workflow</h2>
-              <p className="text-sm text-foreground/60 mt-2 max-w-3xl leading-relaxed">
-                Track samples, orders, QC and shipment evidence. Internal target dates are not buyer promises. Buyer notifications and commitment stages require owner review.
-              </p>
+              <p className="text-sm text-foreground/60 mt-2 max-w-3xl leading-relaxed">Create factory jobs, move controlled stages, and update sample, QC, approval and shipping status. Internal targets are not buyer promises.</p>
             </div>
           </div>
-          <button type="button" onClick={() => void load()} className="min-h-11 inline-flex items-center justify-center gap-2 border border-border/60 px-4 text-[10px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold">
-            <RefreshCw size={13} /> Refresh
-          </button>
+          <button type="button" onClick={() => void load()} className="min-h-11 inline-flex items-center justify-center gap-2 border border-border/60 px-4 text-[10px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold"><RefreshCw size={13} /> Refresh</button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-5 border-b border-border/60">
@@ -261,10 +265,7 @@ export default function ProductionWorkflowPanel() {
         </div>
 
         <details className="border-b border-border/60 group">
-          <summary className="cursor-pointer list-none p-4 sm:p-5 flex items-center justify-between gap-3 hover:bg-card/30">
-            <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-gold"><Plus size={14} /> Create internal sample/order job</span>
-            <span className="text-xs text-muted-foreground group-open:hidden">Open</span>
-          </summary>
+          <summary className="cursor-pointer list-none p-4 sm:p-5 flex items-center justify-between gap-3 hover:bg-card/30"><span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-gold"><Plus size={14} /> Create internal sample/order job</span><span className="text-xs text-muted-foreground group-open:hidden">Open</span></summary>
           <div className="p-4 sm:p-5 pt-0 grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <Select label="Job type" value={draft.jobType} onChange={(value) => setDraft((current) => ({ ...current, jobType: value as ProductionJobType }))} options={["sample", "order"]} />
             <Field label="Buyer name *" value={draft.buyerName} onChange={(value) => setDraft((current) => ({ ...current, buyerName: value }))} />
@@ -275,32 +276,20 @@ export default function ProductionWorkflowPanel() {
             <Select label="Priority" value={draft.priority} onChange={(value) => setDraft((current) => ({ ...current, priority: value as Draft["priority"] }))} options={["low", "normal", "high", "urgent"]} />
             <Field label="Internal target date *" value={draft.targetDate} onChange={(value) => setDraft((current) => ({ ...current, targetDate: value }))} type="date" />
             <Field label="Buyer target (not promise)" value={draft.buyerTargetText} onChange={(value) => setDraft((current) => ({ ...current, buyerTargetText: value }))} />
-            <div className="sm:col-span-2 xl:col-span-3">
-              <Field label="Internal notes" value={draft.notes} onChange={(value) => setDraft((current) => ({ ...current, notes: value }))} />
-            </div>
-            <button type="button" onClick={() => void createJob()} disabled={creating} className="min-h-11 self-end bg-gold text-background px-4 text-[10px] uppercase tracking-[0.16em] disabled:opacity-50">
-              {creating ? "Creating…" : "Create internal job"}
-            </button>
+            <div className="sm:col-span-2 xl:col-span-3"><Field label="Internal notes" value={draft.notes} onChange={(value) => setDraft((current) => ({ ...current, notes: value }))} /></div>
+            <button type="button" onClick={() => void createJob()} disabled={creating} className="min-h-11 self-end bg-gold text-background px-4 text-[10px] uppercase tracking-[0.16em] disabled:opacity-50">{creating ? "Creating…" : "Create internal job"}</button>
           </div>
         </details>
 
         <div className="p-4 md:p-5 flex gap-2 overflow-x-auto">
-          {(["active", "sample", "order", "all"] as const).map((value) => (
-            <button key={value} type="button" onClick={() => setFilter(value)} className={`min-h-10 shrink-0 border px-3 text-[10px] uppercase tracking-[0.15em] ${filter === value ? "border-gold text-gold bg-gold/5" : "border-border/60 text-foreground/55"}`}>{value}</button>
-          ))}
+          {(["active", "sample", "order", "all"] as const).map((value) => <button key={value} type="button" onClick={() => setFilter(value)} className={`min-h-10 shrink-0 border px-3 text-[10px] uppercase tracking-[0.15em] ${filter === value ? "border-gold text-gold bg-gold/5" : "border-border/60 text-foreground/55"}`}>{value}</button>)}
         </div>
       </section>
 
       {visibleJobs.length === 0 ? (
-        <div className="border border-dashed border-border/50 p-10 text-center">
-          <ClipboardList size={26} className="mx-auto text-gold mb-3" />
-          <p className="font-display text-xl">No production jobs in this view</p>
-          <p className="text-xs text-muted-foreground mt-2">Create an internal sample or order job when an approved factory brief is ready.</p>
-        </div>
+        <div className="border border-dashed border-border/50 p-10 text-center"><ClipboardList size={26} className="mx-auto text-gold mb-3" /><p className="font-display text-xl">No production jobs in this view</p><p className="text-xs text-muted-foreground mt-2">Create an internal sample or order job when an approved factory brief is ready.</p></div>
       ) : (
-        <div className="grid xl:grid-cols-2 gap-4">
-          {visibleJobs.map((job) => <JobCard key={job.id} job={job} onStage={changeStage} onField={updateField} />)}
-        </div>
+        <div className="grid xl:grid-cols-2 gap-4">{visibleJobs.map((job) => <JobCard key={job.id} job={job} onStage={changeStage} onField={updateField} />)}</div>
       )}
     </div>
   );
@@ -313,41 +302,20 @@ function JobCard({ job, onStage, onField }: { job: JobRow; onStage: (job: JobRow
   return (
     <article className="border border-border/60 bg-card/25 p-4 sm:p-5">
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="border border-gold/40 text-gold px-2 py-1 text-[9px] uppercase tracking-[0.14em]">{job.job_type}</span>
-            <code className="text-[10px] text-foreground/45">{job.job_number}</code>
-            {due === "overdue" && <span className="border border-red-500/40 text-red-300 px-2 py-1 text-[9px] uppercase tracking-[0.14em]">Overdue</span>}
-            {due === "due_soon" && <span className="border border-amber-500/40 text-amber-300 px-2 py-1 text-[9px] uppercase tracking-[0.14em]">Due soon</span>}
-          </div>
-          <h3 className="font-display text-xl mt-3 truncate">{job.product_name}</h3>
-          <p className="text-xs text-foreground/55 mt-1 truncate">{job.company_name || job.buyer_name} · {job.quantity_text}</p>
-        </div>
+        <div className="min-w-0"><div className="flex flex-wrap gap-2 items-center"><span className="border border-gold/40 text-gold px-2 py-1 text-[9px] uppercase tracking-[0.14em]">{job.job_type}</span><code className="text-[10px] text-foreground/45">{job.job_number}</code>{due === "overdue" && <span className="border border-red-500/40 text-red-300 px-2 py-1 text-[9px] uppercase tracking-[0.14em]">Overdue</span>}{due === "due_soon" && <span className="border border-amber-500/40 text-amber-300 px-2 py-1 text-[9px] uppercase tracking-[0.14em]">Due soon</span>}</div><h3 className="font-display text-xl mt-3 truncate">{job.product_name}</h3><p className="text-xs text-foreground/55 mt-1 truncate">{job.company_name || job.buyer_name} · {job.quantity_text}</p></div>
         <span className="font-display text-2xl text-gold">{progress}%</span>
       </div>
-
       <div className="mt-4 h-1.5 bg-secondary/60 overflow-hidden"><div className="h-full bg-gradient-gold" style={{ width: `${progress}%` }} /></div>
-      <div className="mt-3 flex justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-        <span>{stageLabel(job.stage)}</span>
-        <span>{job.internal_target_date || "Unscheduled"}</span>
-      </div>
-
+      <div className="mt-3 flex justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-muted-foreground"><span>{stageLabel(job.stage)}</span><span>{job.internal_target_date || "Unscheduled"}</span></div>
       <div className="mt-5 grid sm:grid-cols-2 gap-3">
         <Select label="Next stage" value="" onChange={(value) => value && void onStage(job, value as ProductionStage)} options={changes} optionLabel={(value) => stageLabel(value as ProductionStage)} placeholder={changes.length ? "Choose stage" : "No next stage"} disabled={!changes.length} />
         <Select label="QC status" value={job.qc_status} onChange={(value) => void onField(job, "qc_status", value, "qc_updated")} options={["not_started", "pending", "passed", "failed", "rework"]} />
         <Select label="Sample status" value={job.sample_status} onChange={(value) => void onField(job, "sample_status", value, "sample_updated")} options={["not_required", "requested", "spec_pending", "in_development", "qc", "sent", "approved", "rejected", "cancelled"]} />
         <Select label="Buyer approval" value={job.buyer_approval_status} onChange={(value) => void onField(job, "buyer_approval_status", value, "buyer_approval_updated")} options={["not_requested", "pending", "approved", "changes_requested", "rejected"]} />
         <Select label="Shipping status" value={job.shipping_status} onChange={(value) => void onField(job, "shipping_status", value, "shipping_updated")} options={["not_ready", "ready", "booked", "shipped", "delivered", "exception"]} />
-        <div className="border border-border/50 p-3 text-xs text-foreground/55">
-          <p className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-gold"><ShieldCheck size={12} /> Buyer notification</p>
-          <p className="mt-2">{job.buyer_notification_status.replace(/_/g, " ")}</p>
-          <p className="mt-1 text-[10px] text-foreground/40">No automatic message from this panel.</p>
-        </div>
+        <div className="border border-border/50 p-3 text-xs text-foreground/55"><p className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-gold"><ShieldCheck size={12} /> Buyer notification</p><p className="mt-2">{job.buyer_notification_status.replace(/_/g, " ")}</p><p className="mt-1 text-[10px] text-foreground/40">No automatic message from this panel.</p></div>
       </div>
-
-      {(job.courier_name || job.tracking_number) && (
-        <div className="mt-4 border-t border-border/50 pt-3 text-xs text-foreground/55 inline-flex items-center gap-2"><Truck size={13} className="text-gold" /> {job.courier_name || "Courier"} · {job.tracking_number || "Tracking pending"}</div>
-      )}
+      {(job.courier_name || job.tracking_number) && <div className="mt-4 border-t border-border/50 pt-3 text-xs text-foreground/55 inline-flex items-center gap-2"><Truck size={13} className="text-gold" /> {job.courier_name || "Courier"} · {job.tracking_number || "Tracking pending"}</div>}
     </article>
   );
 }

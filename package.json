@@ -5,21 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "build": "vite build && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/verify-built-crawler-shell.mjs",
+    "build:dev": "vite build --mode development && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/verify-built-crawler-shell.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:deployment-source": "node scripts/verify-deployment-source.mjs",
-    "predev": "npx tsx scripts/generate-sitemap.ts",
-    "prebuild": "node scripts/verify-deployment-source.mjs && npx tsx scripts/generate-sitemap.ts",
-    "postbuild": "node scripts/ping-search-engines.mjs"
+    "predev": "npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs",
+    "prebuild": "node scripts/verify-deployment-source.mjs && npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs",
+    "notify:search": "node scripts/ping-search-engines.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@lovable.dev/cloud-auth-js": "^1.1.2",
-    "@lovable.dev/mcp-js": "^0.20.0",
+    "@lovable.dev/mcp-js": "^0.21.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -82,7 +82,7 @@
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react-swc": "^3.11.0",
+    "@vitejs/plugin-react-swc": "4.3.1",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -96,8 +96,12 @@
     "tsx": "^4.22.4",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
-    "vite": "^5.4.19",
-    "vite-imagetools": "^10.0.1",
-    "vitest": "^3.2.4"
-  }
+    "vite": "8.1.4",
+    "vite-imagetools": "10.0.1",
+    "vitest": "4.1.10"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
+  },
+  "packageManager": "npm@11.4.2"
 }

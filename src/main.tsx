@@ -4,7 +4,7 @@ import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLaunc
 import "./index.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
-const CACHE_HEAL_VERSION = "2026-07-06-v1";
+const CACHE_HEAL_VERSION = "2026-07-13-v2";
 
 async function healLegacyClientCacheOnce() {
   let alreadyHealed = false;
@@ -38,7 +38,14 @@ async function healLegacyClientCacheOnce() {
 
 void healLegacyClientCacheOnce();
 
-createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Irha application root is missing");
+
+// The build ships an honest progressive-enhancement shell for no-JS crawlers.
+// Remove it before React renders the same public experience interactively.
+rootElement.replaceChildren();
+
+createRoot(rootElement).render(
   <>
     <App />
     <AdminBuyerActionsLauncher />
