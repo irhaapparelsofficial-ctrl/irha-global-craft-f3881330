@@ -1,4 +1,5 @@
 import SEO from "@/components/SEO";
+import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 import { Link } from "react-router-dom";
@@ -28,6 +29,19 @@ const CAPABILITIES = [
   "Buyer-specified materials and trims",
 ];
 
+const HERO_SLIDES = [
+  {
+    src: factoryCinematic,
+    alt: "Apparel manufacturing environment",
+    fit: "cover" as const,
+  },
+  {
+    src: manufacturingImg,
+    alt: "Sialkot apparel manufacturing process",
+    fit: "cover" as const,
+  },
+];
+
 export default function Manufacturing() {
   const description = "How Irha Apparels reviews custom B2B apparel programs, from requirements and sampling to production planning, quality review and dispatch preparation.";
   const pageUrl = `${SITE_URL}/manufacturing`;
@@ -55,12 +69,18 @@ export default function Manufacturing() {
         title="Manufacturing Process — Irha Apparels Sialkot"
         description={description}
         path="/manufacturing"
+        image={factoryCinematic}
         jsonLd={jsonLd}
       />
 
       <section className="relative pt-40 pb-24 md:pb-32 overflow-hidden">
-        <img src={factoryCinematic} loading="eager" width={1920} height={1080} alt="Apparel manufacturing environment" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" />
+        <HeroMediaSlideshow
+          slides={HERO_SLIDES}
+          label="Manufacturing process slideshow"
+          imageClassName="opacity-35"
+          controlsClassName="bottom-5 right-5"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" />
         <div className="container-luxe relative">
           <p className="eyebrow mb-6">Manufacturing</p>
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-5xl">
