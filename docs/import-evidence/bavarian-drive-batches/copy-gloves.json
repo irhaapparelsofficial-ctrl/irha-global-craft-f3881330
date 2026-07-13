@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:12:59+00:00",
+  "batch_slug": "copy-gloves",
+  "label": "COPY/Gloves",
+  "folder_url": "https://drive.google.com/drive/folders/1AD3Qo8ldOrQp4crYKEmClpm2iUI6gZoh",
+  "inventory_count": 22,
+  "downloaded_count": 22,
+  "download_failure_count": 0,
+  "image_candidate_count": 22,
+  "accepted_count": 22,
+  "rejected_count": 0,
+  "download_failures": []
+}

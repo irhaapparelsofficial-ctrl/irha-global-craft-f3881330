@@ -1,0 +1,30 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:36:33+00:00",
+  "batch_slug": "size-chart",
+  "label": "Size Chart",
+  "folder_url": "https://drive.google.com/drive/folders/1aOgIJTCwDhgfdfUQyMvKSd4f1rtb0gRS",
+  "inventory_count": 1,
+  "downloaded_count": 1,
+  "download_failure_count": 0,
+  "image_candidate_count": 1,
+  "accepted_count": 1,
+  "rejected_count": 0,
+  "records": [
+    {
+      "source_path": "Size Chart/Sizing-Chart.jpg",
+      "output_path": "/media/bavarian-drive/assets/size-chart/review-only/sizing-chart.webp",
+      "group": "Size Chart",
+      "width": 1400,
+      "height": 1400,
+      "original_bytes": 688059,
+      "optimized_bytes": 65640,
+      "quality_score": 11.6459,
+      "pixel_sha256": "94d625982afa99290be014dd3b5ff6678a81804efebf22f1de3757da0464e247",
+      "product_slug": null
+    }
+  ],
+  "rejected": [],
+  "download_failures": [],
+  "finalized_record_count": 1
+}

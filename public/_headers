@@ -40,6 +40,20 @@
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
 
+# Search and AI crawler controls — always expose the current deployment
+/robots.txt
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+/sitemap.xml
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+/llms.txt
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+/llms-full.txt
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+
 # HTML — always revalidate so deploys go live immediately
 /
   Cache-Control: no-store, max-age=0, must-revalidate
@@ -48,9 +62,10 @@
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
 
-# Security headers (safe defaults)
+# Security headers (safe defaults for the public SPA and owner backend)
 /*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; upgrade-insecure-requests
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN
-  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()

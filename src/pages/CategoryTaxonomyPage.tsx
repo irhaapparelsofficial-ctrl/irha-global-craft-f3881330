@@ -91,6 +91,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   const currentLocale = TAXONOMY_LOCALES.find((candidate) => candidate.code === locale)!;
   const products = collection?.products ?? [];
   const heroImage = products[0]?.image ?? audience?.collections[0]?.products[0]?.image ?? category.image;
+  const heroLabel = collectionName ?? audienceName ?? topName;
 
   const breadcrumbItems = [
     { name: ui.home, path: locale === "en" ? "/" : `/intl/${locale}/products/${category.slug}` },
@@ -152,62 +153,82 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
         jsonLd={jsonLd}
       />
 
-      <section className="relative pt-36 pb-16 border-b border-border/60 overflow-hidden">
+      <section className="relative pt-32 pb-14 md:pt-40 md:pb-20 border-b border-border/60 overflow-hidden">
         {heroImage && (
-          <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-15" />
+          <img src={heroImage} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-[0.08] blur-sm scale-105" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/90 to-background" />
-        <div className="container-luxe relative">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-foreground/55 mb-7">
-            {breadcrumbItems.map((item, index) => (
-              <span key={`${item.path}-${index}`} className="inline-flex items-center gap-2">
-                {index > 0 && <ChevronRight size={11} aria-hidden="true" />}
-                {index === breadcrumbItems.length - 1 ? (
-                  <span className="text-foreground/85">{item.name}</span>
-                ) : (
-                  <Link to={item.path} className="hover:text-primary">{item.name}</Link>
-                )}
-              </span>
-            ))}
-          </nav>
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/75" />
+        <div className="container-luxe relative grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-7">
+            <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-foreground/55 mb-7">
+              {breadcrumbItems.map((item, index) => (
+                <span key={`${item.path}-${index}`} className="inline-flex items-center gap-2">
+                  {index > 0 && <ChevronRight size={11} aria-hidden="true" />}
+                  {index === breadcrumbItems.length - 1 ? (
+                    <span className="text-foreground/85">{item.name}</span>
+                  ) : (
+                    <Link to={item.path} className="hover:text-primary">{item.name}</Link>
+                  )}
+                </span>
+              ))}
+            </nav>
 
-          <p className="eyebrow mb-4">Irha Apparels · B2B Manufacturing</p>
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl leading-[0.98] max-w-5xl">{seo.h1}</h1>
-          <p className="mt-7 text-base md:text-lg text-foreground/70 leading-relaxed max-w-3xl">{seo.intro}</p>
-          <p className="mt-4 text-sm text-foreground/55 max-w-3xl">{ui.programNote}</p>
+            <p className="eyebrow mb-4">Irha Apparels · B2B Manufacturing</p>
+            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl leading-[0.98] max-w-5xl">{seo.h1}</h1>
+            <p className="mt-7 text-base md:text-lg text-foreground/70 leading-relaxed max-w-3xl">{seo.intro}</p>
+            <p className="mt-4 text-sm text-foreground/55 max-w-3xl">{ui.programNote}</p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a
-              href={whatsappLink(`Hello Irha Apparels — I need a B2B quote for ${collection?.name ?? audience?.name ?? category.name}.`)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
-            >
-              <MessageCircle size={15} aria-hidden="true" /> {ui.requestQuote}
-            </a>
-            <div className="inline-flex items-center gap-2 border border-border/60 px-4 py-2">
-              <Globe2 size={14} className="text-primary" aria-hidden="true" />
-              <span className="sr-only">{ui.otherLanguages}</span>
-              {TAXONOMY_LOCALES.map((candidate) => {
-                const href = collection
-                  ? taxonomyCollectionPath(category.slug, audience!.slug, collection.slug, candidate.code)
-                  : audience
-                    ? taxonomyAudiencePath(category.slug, audience.slug, candidate.code)
-                    : topPath(category.slug, candidate.code);
-                return (
-                  <Link
-                    key={candidate.code}
-                    to={href}
-                    lang={candidate.htmlLang}
-                    hrefLang={candidate.hreflang}
-                    className={`min-w-9 min-h-9 inline-flex items-center justify-center text-[10px] uppercase tracking-[0.15em] ${candidate.code === locale ? "text-primary" : "text-foreground/55 hover:text-primary"}`}
-                  >
-                    {candidate.code}
-                  </Link>
-                );
-              })}
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href={whatsappLink(`Hello Irha Apparels — I need a B2B quote for ${collection?.name ?? audience?.name ?? category.name}.`)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
+              >
+                <MessageCircle size={15} aria-hidden="true" /> {ui.requestQuote}
+              </a>
+              <div className="inline-flex items-center gap-2 border border-border/60 px-4 py-2 bg-background/70 backdrop-blur-sm">
+                <Globe2 size={14} className="text-primary" aria-hidden="true" />
+                <span className="sr-only">{ui.otherLanguages}</span>
+                {TAXONOMY_LOCALES.map((candidate) => {
+                  const href = collection
+                    ? taxonomyCollectionPath(category.slug, audience!.slug, collection.slug, candidate.code)
+                    : audience
+                      ? taxonomyAudiencePath(category.slug, audience.slug, candidate.code)
+                      : topPath(category.slug, candidate.code);
+                  return (
+                    <Link
+                      key={candidate.code}
+                      to={href}
+                      lang={candidate.htmlLang}
+                      hrefLang={candidate.hreflang}
+                      className={`min-w-9 min-h-9 inline-flex items-center justify-center text-[10px] uppercase tracking-[0.15em] ${candidate.code === locale ? "text-primary" : "text-foreground/55 hover:text-primary"}`}
+                    >
+                      {candidate.code}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
+
+          {heroImage && (
+            <div className="lg:col-span-5 relative aspect-[4/5] max-h-[640px] overflow-hidden border border-border/60 bg-card shadow-2xl">
+              <img
+                src={heroImage}
+                alt={`${heroLabel} custom manufacturing collection`}
+                loading="eager"
+                width={960}
+                height={1200}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
+              <div className="absolute left-5 right-5 bottom-5 border border-white/20 bg-black/45 backdrop-blur-sm p-4">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gold">Featured program</p>
+                <p className="font-display text-xl text-white mt-2">{heroLabel}</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

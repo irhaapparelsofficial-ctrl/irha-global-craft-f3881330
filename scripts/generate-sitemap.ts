@@ -341,7 +341,7 @@ function safePath(value: string) {
 }
 
 function absoluteUrl(path: string) {
-  return `${BASE_URL}${path === "/" ? "" : path}`;
+  return path === "/" ? `${BASE_URL}/` : `${BASE_URL}${path}`;
 }
 
 function xmlEscape(value: string) {

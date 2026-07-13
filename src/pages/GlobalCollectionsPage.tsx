@@ -5,12 +5,23 @@ import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
 import { usePublicCategories } from "@/hooks/usePublicCategoryData";
 import { buildCategoryTaxonomy } from "@/lib/globalCategoryTaxonomy";
 import { whatsappLink } from "@/lib/constants";
+import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";
+import sportswearHero from "@/assets/og/og-sportswear.jpg";
+import leatherHero from "@/assets/og/og-leather.jpg";
 
 const SITE = "https://irhaapparels.com";
+const FALLBACK_HERO_IMAGES = [bavarianHero, sportswearHero, leatherHero];
 
 export default function GlobalCollectionsPage() {
   const { categories, isLoading } = usePublicCategories();
   const totalProducts = categories.reduce((total, category) => total + category.productCount, 0);
+  const categoryHeroImages = categories
+    .map((category) => ({ src: category.image, alt: category.name }))
+    .filter((item): item is { src: string; alt: string } => Boolean(item.src))
+    .slice(0, 3);
+  const heroImages = FALLBACK_HERO_IMAGES.map((fallback, index) =>
+    categoryHeroImages[index] ?? { src: fallback, alt: ["Bavarian Trachten", "Custom sportswear", "Premium leather apparel"][index] },
+  );
 
   if (isLoading && categories.length === 0) {
     return <div className="pt-40 pb-24 container-luxe text-sm text-foreground/60">Loading collections…</div>;
@@ -37,33 +48,64 @@ export default function GlobalCollectionsPage() {
         title="Custom Apparel Manufacturing Categories | Wholesale & Private Label | Irha Apparels"
         description="Browse Irha Apparels by main category, Men, Women, Kids and relevant buyer program, then open product categories and individual products. B2B wholesale, OEM and private-label manufacturing."
         path="/products"
+        image={heroImages[0].src}
         jsonLd={jsonLd}
       />
 
-      <section className="pt-40 pb-16 border-b border-border/60">
-        <div className="container-luxe">
-          <p className="eyebrow mb-5">Global B2B Product Architecture</p>
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-6xl">
-            Main category to <span className="text-gold italic">buyer-ready product</span>.
-          </h1>
-          <p className="mt-8 text-lg text-foreground/70 max-w-3xl leading-relaxed">
-            Choose a manufacturing category, then browse Men, Women, Kids or the relevant buyer group. Each audience opens focused product categories and individual styles for quotation.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/products/all"
-              className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.25em]"
-            >
-              Search all {totalProducts || ""} products <ArrowRight size={14} aria-hidden="true" />
-            </Link>
-            <a
-              href={whatsappLink("Hello Irha Apparels — please help me choose the right product category for my B2B program.")}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
-            >
-              <MessageCircle size={15} aria-hidden="true" /> Discuss a buyer program
-            </a>
+      <section className="relative pt-36 md:pt-44 pb-16 md:pb-20 border-b border-border/60 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--gold)/0.12),transparent_38%)]" />
+        <div className="container-luxe relative grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-7">
+            <p className="eyebrow mb-5">Global B2B Product Architecture</p>
+            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-6xl">
+              Main category to <span className="text-gold italic">buyer-ready product</span>.
+            </h1>
+            <p className="mt-8 text-lg text-foreground/70 max-w-3xl leading-relaxed">
+              Choose a manufacturing category, then browse Men, Women, Kids or the relevant buyer group. Each audience opens focused product categories and individual styles for quotation.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/products/all"
+                className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.25em]"
+              >
+                Search all {totalProducts || ""} products <ArrowRight size={14} aria-hidden="true" />
+              </Link>
+              <a
+                href={whatsappLink("Hello Irha Apparels — please help me choose the right product category for my B2B program.")}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
+              >
+                <MessageCircle size={15} aria-hidden="true" /> Discuss a buyer program
+              </a>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 grid grid-cols-2 grid-rows-2 gap-3 min-h-[380px] md:min-h-[480px]" aria-label="Featured manufacturing categories">
+            <div className="relative row-span-2 overflow-hidden border border-border/60 bg-card">
+              <img
+                src={heroImages[0].src}
+                alt={heroImages[0].alt}
+                loading="eager"
+                width={900}
+                height={1200}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+            </div>
+            {heroImages.slice(1).map((image) => (
+              <div key={`${image.src}-${image.alt}`} className="relative overflow-hidden border border-border/60 bg-card">
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  loading="eager"
+                  width={720}
+                  height={480}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+              </div>
+            ))}
           </div>
         </div>
       </section>

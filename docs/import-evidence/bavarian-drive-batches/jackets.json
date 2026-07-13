@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:28:34+00:00",
+  "batch_slug": "jackets",
+  "label": "Jackets",
+  "folder_url": "https://drive.google.com/drive/folders/17M7ivGP3lKW8bZz3Qv_xuQ_g8f93W66t",
+  "inventory_count": 9,
+  "downloaded_count": 9,
+  "download_failure_count": 0,
+  "image_candidate_count": 9,
+  "accepted_count": 9,
+  "rejected_count": 0,
+  "download_failures": []
+}

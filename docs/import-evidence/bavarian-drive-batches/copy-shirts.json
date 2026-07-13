@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:24:49+00:00",
+  "batch_slug": "copy-shirts",
+  "label": "COPY/Shirts",
+  "folder_url": "https://drive.google.com/drive/folders/12CFlBYc4PPDfo9-Ymq5Sk9oB6NEJdqsX",
+  "inventory_count": 93,
+  "downloaded_count": 93,
+  "download_failure_count": 0,
+  "image_candidate_count": 93,
+  "accepted_count": 85,
+  "rejected_count": 8,
+  "download_failures": []
+}
