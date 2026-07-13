@@ -5,6 +5,7 @@ import { createSupplementalBatch12ProductsForSubcategory } from "@/lib/supplemen
 import { createSupplementalBatch13ProductsForSubcategory } from "@/lib/supplementalCatalogBatch13";
 import { createSupplementalBatch14ProductsForSubcategory } from "@/lib/supplementalCatalogBatch14";
 import { createSupplementalAccessories20260713ProductsForSubcategory } from "@/lib/supplementalCatalogAccessories20260713";
+import { createSupplementalBatch16ProductsForSubcategory } from "@/lib/supplementalCatalogBatch16";
 
 export function createSupplementalBatch10ProductsForSubcategory(
   topCategorySlug: string,
@@ -19,5 +20,6 @@ export function createSupplementalBatch10ProductsForSubcategory(
     ...createSupplementalBatch13ProductsForSubcategory(topCategorySlug, subSlug, subName, categoryId),
     ...createSupplementalBatch14ProductsForSubcategory(topCategorySlug, subSlug, subName, categoryId),
     ...createSupplementalAccessories20260713ProductsForSubcategory(topCategorySlug, subSlug, subName, categoryId),
+    ...createSupplementalBatch16ProductsForSubcategory(topCategorySlug, subSlug, subName, categoryId),
   ];
 }
