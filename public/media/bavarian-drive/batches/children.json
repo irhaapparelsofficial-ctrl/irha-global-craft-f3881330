@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "CHILDREN/01-1200x1200 (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/01-1200x1200-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/01-1200x1200-2.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -25,7 +25,7 @@
     },
     {
       "source_path": "CHILDREN/01-1200x1200 (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/01-1200x1200-4.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/01-1200x1200-4.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -37,7 +37,7 @@
     },
     {
       "source_path": "CHILDREN/02-1200x1200 (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/02-1200x1200-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/02-1200x1200-2.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "CHILDREN/03-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/03-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/03-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "CHILDREN/03-a-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/03-a-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/03-a-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "CHILDREN/03-b-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/03-b-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/03-b-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -85,7 +85,7 @@
     },
     {
       "source_path": "CHILDREN/03-c-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/03-c-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/03-c-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -97,7 +97,7 @@
     },
     {
       "source_path": "CHILDREN/03-d-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/03-d-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/03-d-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -109,7 +109,7 @@
     },
     {
       "source_path": "CHILDREN/04-1200x1200 (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/04-1200x1200-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/04-1200x1200-2.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -121,7 +121,7 @@
     },
     {
       "source_path": "CHILDREN/04-1200x1200 (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/04-1200x1200-3.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/04-1200x1200-3.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -133,7 +133,7 @@
     },
     {
       "source_path": "CHILDREN/04-a-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/04-a-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/04-a-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -145,7 +145,7 @@
     },
     {
       "source_path": "CHILDREN/04-b-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/04-b-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/04-b-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -157,7 +157,7 @@
     },
     {
       "source_path": "CHILDREN/04-c-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/04-c-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/04-c-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -169,7 +169,7 @@
     },
     {
       "source_path": "CHILDREN/04-d-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/04-d-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/04-d-1200x1200.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -181,7 +181,7 @@
     },
     {
       "source_path": "CHILDREN/05-1200x1200 (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/05-1200x1200-1.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/05-1200x1200-1.webp",
       "group": "CHILDREN",
       "width": 1200,
       "height": 1200,
@@ -193,7 +193,7 @@
     },
     {
       "source_path": "CHILDREN/dirndl-blouses (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/dirndl-blouses-1.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-dirndl/dirndl-blouses-1.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -205,7 +205,7 @@
     },
     {
       "source_path": "CHILDREN/dirndl-blouses (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/dirndl-blouses-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-dirndl/dirndl-blouses-2.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -217,7 +217,7 @@
     },
     {
       "source_path": "CHILDREN/dirndl-blouses (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/dirndl-blouses-3.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-dirndl/dirndl-blouses-3.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -229,7 +229,7 @@
     },
     {
       "source_path": "CHILDREN/dirndl-blouses.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/dirndl-blouses.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-dirndl/dirndl-blouses.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -241,7 +241,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (0).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-0.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-0.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -253,7 +253,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-1.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-1.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -265,7 +265,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (10).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-10.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-10.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -277,7 +277,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (11).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-11.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-11.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -289,7 +289,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (12).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-12.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-12.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -301,7 +301,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (13).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-13.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-13.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -313,7 +313,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (14).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-14.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-14.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -325,7 +325,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (15).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-15.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-15.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -337,7 +337,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (16).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-16.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-16.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -349,7 +349,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (17).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-17.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-17.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -361,7 +361,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (18).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-18.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-18.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -373,7 +373,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (19).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-19.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-19.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -385,7 +385,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-2.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -397,7 +397,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (20).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-20.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-20.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -409,7 +409,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (21).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-21.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-21.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -421,7 +421,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (22).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-22.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-22.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -433,7 +433,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (23).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-23.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-23.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -445,7 +445,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (24).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-24.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-24.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -457,7 +457,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (25).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-25.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-25.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -469,7 +469,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (26).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-26.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-26.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -481,7 +481,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-3.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-3.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -493,7 +493,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-4.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-4.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -505,7 +505,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-5.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-5.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -517,7 +517,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-6.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-6.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -529,7 +529,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-7.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-7.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -541,7 +541,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (8).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-8.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-8.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -553,7 +553,7 @@
     },
     {
       "source_path": "CHILDREN/lederhosen (9).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/lederhosen-9.webp",
+      "output_path": "/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-9.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -565,7 +565,7 @@
     },
     {
       "source_path": "CHILDREN/shirts (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shirts-1.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shirts-1.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -573,11 +573,11 @@
       "optimized_bytes": 62824,
       "quality_score": 6.8857,
       "pixel_sha256": "0237c371c7d652e1cd036cb200e9543fda4df8431aee9276b1512f8014ad9cc0",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shirts (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shirts-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shirts-2.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -585,11 +585,11 @@
       "optimized_bytes": 50716,
       "quality_score": 6.8715,
       "pixel_sha256": "ee34d8e6d2ca1c9c72252f7a491374c53456419c919bf4be0e0d690c8a02eda5",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shirts (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shirts-3.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shirts-3.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -597,11 +597,11 @@
       "optimized_bytes": 57874,
       "quality_score": 6.8521,
       "pixel_sha256": "b7463913bd34c7d944a1df38a06d02bdce76d52adfc5f0c3c8b193bf0edaa565",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shirts (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shirts-4.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shirts-4.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -609,11 +609,11 @@
       "optimized_bytes": 28540,
       "quality_score": 6.0749,
       "pixel_sha256": "b5669e4230fc28456c119c41b3101013cdab1e1f5d23b9d376d14228a8ce2f22",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shirts (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shirts-5.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shirts-5.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -621,11 +621,11 @@
       "optimized_bytes": 5156,
       "quality_score": 5.1033,
       "pixel_sha256": "81a180cf7ed59d492cbda9ecd7b9956df45f4c2d75f80e52f26d4e862a86a546",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shirts.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shirts.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shirts.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -633,11 +633,11 @@
       "optimized_bytes": 36838,
       "quality_score": 5.816,
       "pixel_sha256": "94e0188a3371d7ed715bd205ab5b47eade405d8fdb9dcaefb2e1f84d1b7d2432",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks-1.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks-1.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -645,11 +645,11 @@
       "optimized_bytes": 20118,
       "quality_score": 5.9933,
       "pixel_sha256": "7676acb442ac4c95ecd487dcdb010434fe1f7863c61b2a41af08570456ee986a",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks-2.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -657,11 +657,11 @@
       "optimized_bytes": 36824,
       "quality_score": 6.4128,
       "pixel_sha256": "252c6b3c4d7acbd6d0aeeb0246058f51436b09e2abc924b65d4048f7de37d2e5",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks-3.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks-3.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -669,11 +669,11 @@
       "optimized_bytes": 34290,
       "quality_score": 6.1586,
       "pixel_sha256": "0a3100402cb677e3b01bb56fb6e6636ffd58d21d86d23f51431a0e13871e886f",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks-4.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks-4.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -681,11 +681,11 @@
       "optimized_bytes": 27822,
       "quality_score": 5.6865,
       "pixel_sha256": "730e3ecf6112fa61eb590a310ddfa96f0262f611e692f45daa1b275f3bfc695b",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks-5.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks-5.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -693,11 +693,11 @@
       "optimized_bytes": 9390,
       "quality_score": 5.1861,
       "pixel_sha256": "55077e4db4b401fd017f99e131c6c94e48b0abae195c0feed8534c647d3d6f5c",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks-6.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks-6.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -705,11 +705,11 @@
       "optimized_bytes": 29636,
       "quality_score": 6.6803,
       "pixel_sha256": "d7ad4a07324dcbd7f7515c1b019307006372b9c2ec83d354b438b878d117db55",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks-7.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks-7.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -717,11 +717,11 @@
       "optimized_bytes": 41242,
       "quality_score": 6.789,
       "pixel_sha256": "e599e77ed7b14076d292ad911a7a28f5d2083f2798aeab0d685d9a9b343a3b32",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks (8).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks-8.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks-8.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -729,11 +729,11 @@
       "optimized_bytes": 14060,
       "quality_score": 5.2953,
       "pixel_sha256": "4661e1bcf742305cd5793acf1baa817bb790a74ea385b9ad3d4b541667fb69fc",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/shoes-socks.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/shoes-socks.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/shoes-socks.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -741,11 +741,11 @@
       "optimized_bytes": 39762,
       "quality_score": 6.8045,
       "pixel_sha256": "3a400e5b72cf220b131f3145cf082547cb3b31d4b862997a0c0bc6c794949241",
-      "product_slug": "haferl-leather-shoes"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/t-shirts (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/t-shirts-1.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/t-shirts-1.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -757,7 +757,7 @@
     },
     {
       "source_path": "CHILDREN/t-shirts (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/t-shirts-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/t-shirts-2.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -769,7 +769,7 @@
     },
     {
       "source_path": "CHILDREN/t-shirts (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/t-shirts-3.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/t-shirts-3.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -781,7 +781,7 @@
     },
     {
       "source_path": "CHILDREN/t-shirts (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/t-shirts-4.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/t-shirts-4.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -793,7 +793,7 @@
     },
     {
       "source_path": "CHILDREN/t-shirts (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/t-shirts-5.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/t-shirts-5.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -805,7 +805,7 @@
     },
     {
       "source_path": "CHILDREN/t-shirts.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/t-shirts.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/t-shirts.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -817,7 +817,7 @@
     },
     {
       "source_path": "CHILDREN/traditional-costumes-shirts (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/traditional-costumes-shirts-1.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/traditional-costumes-shirts-1.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -825,11 +825,11 @@
       "optimized_bytes": 54418,
       "quality_score": 6.8588,
       "pixel_sha256": "850ecc31e023ef1be81ae9c90eb0674d15763ab5f9c6e8e0a8c7fcecb370fb7c",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/traditional-costumes-shirts (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/traditional-costumes-shirts-3.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/traditional-costumes-shirts-3.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -837,11 +837,11 @@
       "optimized_bytes": 43326,
       "quality_score": 6.1411,
       "pixel_sha256": "ae61253726227e8242dc94c7d0a40a89018ba1e099a8d323603ca1de1cdbff59",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/traditional-costumes-shirts (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/traditional-costumes-shirts-4.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/traditional-costumes-shirts-4.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -849,11 +849,11 @@
       "optimized_bytes": 17682,
       "quality_score": 5.7758,
       "pixel_sha256": "55a1a71ee237a13226798a0612f0f17508573ef27e3b852f229231eadff450db",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/traditional-costumes-shirts (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/traditional-costumes-shirts-5.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/traditional-costumes-shirts-5.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -861,11 +861,11 @@
       "optimized_bytes": 18118,
       "quality_score": 5.9196,
       "pixel_sha256": "7c6978b4858934ab5abdb4af38acd2278dfd59a47f9bc68158c3cda4ddd04bb3",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/traditional-costumes-shirts.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/traditional-costumes-shirts.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/traditional-costumes-shirts.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -873,11 +873,11 @@
       "optimized_bytes": 6834,
       "quality_score": 5.1914,
       "pixel_sha256": "1ce6c5f8d54f081770120930651c7fa7621403829f76f20403d6c21eb3a2b876",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/waiscoats (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/waiscoats-1.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/waiscoats-1.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -885,11 +885,11 @@
       "optimized_bytes": 31552,
       "quality_score": 6.2316,
       "pixel_sha256": "fc09d4c0d714f11911bafd22ae6fd8a7696512022caf0101ae97d8cdba6425b3",
-      "product_slug": "bavarian-embroidered-vest"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/waiscoats (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/waiscoats-2.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/waiscoats-2.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -897,11 +897,11 @@
       "optimized_bytes": 14456,
       "quality_score": 5.5202,
       "pixel_sha256": "a783e3dd978a5eaa58d22ded0a903195fe2e51ce0c55d81960968a289f359cd3",
-      "product_slug": "bavarian-embroidered-vest"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/waiscoats (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/waiscoats-3.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/waiscoats-3.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -909,11 +909,11 @@
       "optimized_bytes": 44450,
       "quality_score": 5.9085,
       "pixel_sha256": "d95d10f38853d4709707758c14dc7576f96bd2bfe171f8293d3095b09261342a",
-      "product_slug": "bavarian-embroidered-vest"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/waiscoats (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/waiscoats-4.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/waiscoats-4.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -921,11 +921,11 @@
       "optimized_bytes": 17156,
       "quality_score": 5.5585,
       "pixel_sha256": "10b145aa6912c4117d2848c3e39f1378038f4def231429ef28e0fa029d9f6c2a",
-      "product_slug": "bavarian-embroidered-vest"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/waiscoats (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/waiscoats-5.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/waiscoats-5.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -933,11 +933,11 @@
       "optimized_bytes": 15522,
       "quality_score": 5.5155,
       "pixel_sha256": "c3f063e9a0b49626b0f46e5d9eae34ad2b4721e34ed3de79e52c580a92f01c77",
-      "product_slug": "bavarian-embroidered-vest"
+      "product_slug": null
     },
     {
       "source_path": "CHILDREN/waiscoats.jpg",
-      "output_path": "/media/bavarian-drive/assets/children/uncategorized/waiscoats.webp",
+      "output_path": "/media/bavarian-drive/assets/children/review-only/waiscoats.webp",
       "group": "CHILDREN",
       "width": 800,
       "height": 800,
@@ -945,7 +945,7 @@
       "optimized_bytes": 15332,
       "quality_score": 5.4899,
       "pixel_sha256": "e302c6aa0a68828cf84e2954d4814de3942ee8dc1bc135695ecce28f642a1ac2",
-      "product_slug": "bavarian-embroidered-vest"
+      "product_slug": null
     }
   ],
   "rejected": [
@@ -955,5 +955,6 @@
       "duplicate_of": "CHILDREN/01-1200x1200 (2).jpg"
     }
   ],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 78
 }

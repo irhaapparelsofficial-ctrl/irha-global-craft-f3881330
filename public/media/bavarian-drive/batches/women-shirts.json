@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-1.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-1.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -21,11 +21,11 @@
       "optimized_bytes": 12812,
       "quality_score": 5.3476,
       "pixel_sha256": "7e1c551fdd691a4f7f351210e65f98413b438793f10afbd1ca75bc0d9d417af9",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (10).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-10.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-10.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -33,11 +33,11 @@
       "optimized_bytes": 46810,
       "quality_score": 6.8315,
       "pixel_sha256": "166733495f8b9836931c999cd2bc2a57eb6068c8a83f02671e7254f0ead2eb1f",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (11).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-11.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-11.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -45,11 +45,11 @@
       "optimized_bytes": 60584,
       "quality_score": 6.8532,
       "pixel_sha256": "7d448f933661c008c70bc2491a8dab6090d731b5b586e22c501d324e4a8047fd",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (12).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-12.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-12.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -57,11 +57,11 @@
       "optimized_bytes": 55884,
       "quality_score": 6.8446,
       "pixel_sha256": "46b136618b4acad7ea3ddf8beb6bb7f0a628043419c6388eb1a36f062bcf0132",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (13).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-13.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-13.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -69,11 +69,11 @@
       "optimized_bytes": 138498,
       "quality_score": 6.9729,
       "pixel_sha256": "d4a01100af231718dc3658aacbc346e8a5f243b13bd84abc1a0a65a5780d889f",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (14).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-14.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-14.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -81,11 +81,11 @@
       "optimized_bytes": 37514,
       "quality_score": 6.5122,
       "pixel_sha256": "248cfb6ada25a7f5cd3bf6fd63a5865d3f6b62d42775e360ee1f54cf32cfda12",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (15).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-15.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-15.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -93,11 +93,11 @@
       "optimized_bytes": 41836,
       "quality_score": 6.5691,
       "pixel_sha256": "06965be15def8e754c552efb5bc6479e4ebd6ec6145f539de9abbefd58c7fc9c",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (16).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-16.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-16.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -105,11 +105,11 @@
       "optimized_bytes": 52838,
       "quality_score": 6.8389,
       "pixel_sha256": "4dd0c83c101cc2052cf4a6f55c6754b7d4831e134a34538fa74785a1706b0c3c",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (17).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-17.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-17.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -117,11 +117,11 @@
       "optimized_bytes": 47654,
       "quality_score": 6.8219,
       "pixel_sha256": "5bdebeb110df78493ddf906d3f85c5a04afac8889fcca77b35a7ed10129dc624",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (18).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-18.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-18.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -129,11 +129,11 @@
       "optimized_bytes": 47688,
       "quality_score": 6.7498,
       "pixel_sha256": "54bc090c020405f065be596f0b7f2cbf4a72a4df37772410c4b0e577821ecba9",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (19).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-19.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-19.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -141,11 +141,11 @@
       "optimized_bytes": 44204,
       "quality_score": 6.709,
       "pixel_sha256": "7ee882a319c30060e059b99452510bc5a3fbe00f351cce97c42f3b0c82d1e0c6",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-2.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-2.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -153,11 +153,11 @@
       "optimized_bytes": 6794,
       "quality_score": 5.1257,
       "pixel_sha256": "60fa5e3ee0f7a2b85683023ece1501458a72e7f5aaeff56dab71fbf33bdd1e3b",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (20).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-20.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-20.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -165,11 +165,11 @@
       "optimized_bytes": 63222,
       "quality_score": 6.8678,
       "pixel_sha256": "57ffd0caab96e4fb93a1f551dbff93456583d85bf3d2a8d8c291b059e5b6a2cf",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (21).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-21.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-21.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -177,11 +177,11 @@
       "optimized_bytes": 57646,
       "quality_score": 6.8629,
       "pixel_sha256": "56e47cf3699a4029c168cf7ffc331f9f9f7058896d13699effd0e0f68ecee465",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (22).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-22.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-22.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -189,11 +189,11 @@
       "optimized_bytes": 10556,
       "quality_score": 5.191,
       "pixel_sha256": "79dd7197d5efe031a690d3752e1a6a7c5bbf28fdb8e11d109e7eedd18a20825a",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-3.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-3.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -201,11 +201,11 @@
       "optimized_bytes": 10884,
       "quality_score": 5.3463,
       "pixel_sha256": "20ed1b6ae8e5b71366b2688beeeeccc04c10773f2d544aa9b2362d323b573d1e",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-4.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-4.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -213,11 +213,11 @@
       "optimized_bytes": 20932,
       "quality_score": 5.8711,
       "pixel_sha256": "5655974d4d56de98d746a41f8de86f02abce6caae187205a7a0682687ee32abc",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-5.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-5.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -225,11 +225,11 @@
       "optimized_bytes": 67696,
       "quality_score": 6.8778,
       "pixel_sha256": "78a159d380eaf99f9153b80c2742ca979d4ecf2c6b81497ff578c08aab6e9dc9",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-6.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-6.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -237,11 +237,11 @@
       "optimized_bytes": 91626,
       "quality_score": 6.931,
       "pixel_sha256": "f3a0b526488182e8f358953ff550ddf390aa6c78d0ace7ac4e9f8dfc4bd03cd1",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-7.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-7.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -249,11 +249,11 @@
       "optimized_bytes": 36402,
       "quality_score": 6.376,
       "pixel_sha256": "092028383669f8242220dedbf1153b40798ce64aa8781e7704797cc13b68bab4",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (8).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-8.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-8.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -261,11 +261,11 @@
       "optimized_bytes": 36236,
       "quality_score": 6.2145,
       "pixel_sha256": "a764b92383635187db12fa6f9606ecb726f6cf62b166148fa8424fa5475ae4d4",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts (9).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts-9.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts-9.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -273,11 +273,11 @@
       "optimized_bytes": 42902,
       "quality_score": 6.8195,
       "pixel_sha256": "bf0c64374d761b1e46360330191af832265557d2698444ff210baa5bfed79d50",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/Shirts/traditional-shirts.jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/shirts/traditional-shirts.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-shirts.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -285,11 +285,11 @@
       "optimized_bytes": 47934,
       "quality_score": 6.5279,
       "pixel_sha256": "5a7efa231f44e330fc396e49309b02abaca8938527146cb7c104498affb5b6b1",
-      "product_slug": "bavarian-men-s-checkered-shirt"
+      "product_slug": null
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-1.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-1.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -301,7 +301,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (10).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-10.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-10.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -313,7 +313,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (11).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-11.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-11.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -325,7 +325,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (12).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-12.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-12.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -337,7 +337,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (13).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-13.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-13.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -349,7 +349,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (14).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-14.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-14.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -361,7 +361,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-2.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-2.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -373,7 +373,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-3.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-3.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -385,7 +385,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-4.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-4.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -397,7 +397,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-5.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-5.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -409,7 +409,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-6.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-6.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -421,7 +421,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-7.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-7.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -433,7 +433,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (8).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-8.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-8.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -445,7 +445,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts (9).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts-9.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts-9.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -457,7 +457,7 @@
     },
     {
       "source_path": "WOMEN'S/Shirts/T-Shirts/traditional-t-shirts.jpg",
-      "output_path": "/media/bavarian-drive/assets/women-shirts/t-shirts/traditional-t-shirts.webp",
+      "output_path": "/media/bavarian-drive/assets/women-shirts/review-only/traditional-t-shirts.webp",
       "group": "WOMEN'S",
       "width": 800,
       "height": 800,
@@ -469,5 +469,6 @@
     }
   ],
   "rejected": [],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 38
 }

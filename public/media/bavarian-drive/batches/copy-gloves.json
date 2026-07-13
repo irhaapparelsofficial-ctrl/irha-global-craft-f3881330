@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "COPY/Gloves/12473511_782624078508364_5028619559974159898_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12473511-782624078508364-5028619559974159898-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12473511-782624078508364-5028619559974159898-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -25,7 +25,7 @@
     },
     {
       "source_path": "COPY/Gloves/12615417_783107908459981_4367496491763722657_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12615417-783107908459981-4367496491763722657-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12615417-783107908459981-4367496491763722657-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -37,7 +37,7 @@
     },
     {
       "source_path": "COPY/Gloves/12615705_783107988459973_1685124273695147432_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12615705-783107988459973-1685124273695147432-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12615705-783107988459973-1685124273695147432-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "COPY/Gloves/12622241_783108198459952_4863906298457818251_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12622241-783108198459952-4863906298457818251-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12622241-783108198459952-4863906298457818251-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "COPY/Gloves/12646805_783108071793298_7359736656948206458_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12646805-783108071793298-7359736656948206458-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12646805-783108071793298-7359736656948206458-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "COPY/Gloves/12646848_783107721793333_3039601342901795395_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12646848-783107721793333-3039601342901795395-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12646848-783107721793333-3039601342901795395-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -85,19 +85,19 @@
     },
     {
       "source_path": "COPY/Gloves/12697275_792508417519930_3530236860163687672_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12697275-792508417519930-3530236860163687672-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12697275-792508417519930-3530236860163687672-o.webp",
       "group": "COPY",
       "width": 960,
       "height": 1280,
       "original_bytes": 197188,
-      "optimized_bytes": 237554,
+      "optimized_bytes": 181304,
       "quality_score": 8.456,
       "pixel_sha256": "55cc517f1ec666de87459e8c426f83efffa3b5352ab1d35566cbf8a61641f252",
       "product_slug": "leather-gloves"
     },
     {
       "source_path": "COPY/Gloves/12710908_792508000853305_8297747266061058301_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12710908-792508000853305-8297747266061058301-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12710908-792508000853305-8297747266061058301-o.webp",
       "group": "COPY",
       "width": 960,
       "height": 1280,
@@ -109,7 +109,7 @@
     },
     {
       "source_path": "COPY/Gloves/12710965_790687977701974_7411011209356738919_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12710965-790687977701974-7411011209356738919-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12710965-790687977701974-7411011209356738919-o.webp",
       "group": "COPY",
       "width": 1280,
       "height": 960,
@@ -121,31 +121,31 @@
     },
     {
       "source_path": "COPY/Gloves/12711132_792508487519923_2450918027905890190_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12711132-792508487519923-2450918027905890190-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12711132-792508487519923-2450918027905890190-o.webp",
       "group": "COPY",
       "width": 990,
       "height": 543,
       "original_bytes": 78951,
-      "optimized_bytes": 84562,
+      "optimized_bytes": 71612,
       "quality_score": 5.9056,
       "pixel_sha256": "6476f3d6e6b9f8e5cd83137b6aced1f52f619b19e4ec50ac6d8450b5957a0c49",
       "product_slug": "leather-gloves"
     },
     {
       "source_path": "COPY/Gloves/12764408_792508354186603_7819155862384590059_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12764408-792508354186603-7819155862384590059-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12764408-792508354186603-7819155862384590059-o.webp",
       "group": "COPY",
       "width": 960,
       "height": 1280,
       "original_bytes": 255731,
-      "optimized_bytes": 333646,
+      "optimized_bytes": 254434,
       "quality_score": 8.7946,
       "pixel_sha256": "e819512d9eddce258c1259e4ce6e030096dcaadd6457b74b0a8b4bf91a21d4c4",
       "product_slug": "leather-gloves"
     },
     {
       "source_path": "COPY/Gloves/12828540_799599846810787_8966283619606859101_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/12828540-799599846810787-8966283619606859101-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/12828540-799599846810787-8966283619606859101-o.webp",
       "group": "COPY",
       "width": 1043,
       "height": 934,
@@ -157,7 +157,7 @@
     },
     {
       "source_path": "COPY/Gloves/14641902_967351313368972_1795945761687354489_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/14641902-967351313368972-1795945761687354489-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/14641902-967351313368972-1795945761687354489-n.webp",
       "group": "COPY",
       "width": 486,
       "height": 486,
@@ -169,7 +169,7 @@
     },
     {
       "source_path": "COPY/Gloves/14915177_967351280035642_3527104515423145756_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/14915177-967351280035642-3527104515423145756-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/14915177-967351280035642-3527104515423145756-n.webp",
       "group": "COPY",
       "width": 500,
       "height": 500,
@@ -181,7 +181,7 @@
     },
     {
       "source_path": "COPY/Gloves/14937232_967351346702302_2006003553991004219_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/14937232-967351346702302-2006003553991004219-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/14937232-967351346702302-2006003553991004219-n.webp",
       "group": "COPY",
       "width": 320,
       "height": 320,
@@ -193,7 +193,7 @@
     },
     {
       "source_path": "COPY/Gloves/14955904_967351290035641_8413783198834505585_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/14955904-967351290035641-8413783198834505585-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/14955904-967351290035641-8413783198834505585-n.webp",
       "group": "COPY",
       "width": 320,
       "height": 326,
@@ -205,7 +205,7 @@
     },
     {
       "source_path": "COPY/Gloves/15179065_993222584115178_653524370029974785_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/15179065-993222584115178-653524370029974785-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/15179065-993222584115178-653524370029974785-n.webp",
       "group": "COPY",
       "width": 675,
       "height": 675,
@@ -217,7 +217,7 @@
     },
     {
       "source_path": "COPY/Gloves/15267976_993223714115065_3158810407069796538_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/15267976-993223714115065-3158810407069796538-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/15267976-993223714115065-3158810407069796538-n.webp",
       "group": "COPY",
       "width": 540,
       "height": 540,
@@ -229,7 +229,7 @@
     },
     {
       "source_path": "COPY/Gloves/15965352_1033624003408369_3394688162316742789_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/15965352-1033624003408369-3394688162316742789-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/15965352-1033624003408369-3394688162316742789-n.webp",
       "group": "COPY",
       "width": 675,
       "height": 675,
@@ -241,19 +241,19 @@
     },
     {
       "source_path": "COPY/Gloves/16113913_1033625073408262_3467875553574868012_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/16113913-1033625073408262-3467875553574868012-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/16113913-1033625073408262-3467875553574868012-n.webp",
       "group": "COPY",
       "width": 540,
       "height": 540,
       "original_bytes": 59799,
-      "optimized_bytes": 62160,
+      "optimized_bytes": 51004,
       "quality_score": 5.4012,
       "pixel_sha256": "00cabc86634a7fa1352fb70efb3e8fd6ebf903e37d8335a8cd001fd9d7e583da",
       "product_slug": "leather-gloves"
     },
     {
       "source_path": "COPY/Gloves/16832221_1062772900493479_7956107237176160841_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/16832221-1062772900493479-7956107237176160841-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/16832221-1062772900493479-7956107237176160841-n.webp",
       "group": "COPY",
       "width": 632,
       "height": 632,
@@ -265,7 +265,7 @@
     },
     {
       "source_path": "COPY/Gloves/1959776_802516816519090_5238481614350140797_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-gloves/uncategorized/1959776-802516816519090-5238481614350140797-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-gloves/leather-gloves/1959776-802516816519090-5238481614350140797-n.webp",
       "group": "COPY",
       "width": 540,
       "height": 960,
@@ -277,5 +277,6 @@
     }
   ],
   "rejected": [],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 22
 }

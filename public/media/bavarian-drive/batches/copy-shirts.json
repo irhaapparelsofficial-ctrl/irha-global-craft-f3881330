@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "COPY/Shirts/10001342_386502514826309_1842548524_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/10001342-386502514826309-1842548524-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/10001342-386502514826309-1842548524-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
@@ -25,19 +25,19 @@
     },
     {
       "source_path": "COPY/Shirts/10090_365365640273330_414863769_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/10090-365365640273330-414863769-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/10090-365365640273330-414863769-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
       "original_bytes": 127669,
-      "optimized_bytes": 134652,
+      "optimized_bytes": 113024,
       "quality_score": 6.518,
       "pixel_sha256": "1a55aee6eee434a6a1aab73e3ecac334926007ca83e1bae13fbf833aa5fa3981",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/10152673_386502511492976_1892042370_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/10152673-386502511492976-1892042370-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/10152673-386502511492976-1892042370-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "COPY/Shirts/10153964_386502628159631_308022247_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/10153964-386502628159631-308022247-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/10153964-386502628159631-308022247-n.webp",
       "group": "COPY",
       "width": 960,
       "height": 960,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "COPY/Shirts/10171292_389236407886253_4536548394250531328_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/10171292-389236407886253-4536548394250531328-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/10171292-389236407886253-4536548394250531328-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "COPY/Shirts/102559315_2659035337673750_8411206369585882915_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/102559315-2659035337673750-8411206369585882915-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/102559315-2659035337673750-8411206369585882915-n.webp",
       "group": "COPY",
       "width": 552,
       "height": 690,
@@ -85,7 +85,7 @@
     },
     {
       "source_path": "COPY/Shirts/10257045_389236374552923_941364796764935270_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/10257045-389236374552923-941364796764935270-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/10257045-389236374552923-941364796764935270-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
@@ -97,31 +97,31 @@
     },
     {
       "source_path": "COPY/Shirts/1098148_377762865700274_597875302_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1098148-377762865700274-597875302-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1098148-377762865700274-597875302-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
       "original_bytes": 85705,
-      "optimized_bytes": 92476,
+      "optimized_bytes": 74742,
       "quality_score": 6.4603,
       "pixel_sha256": "2e5d03d9dc0c4a531ef07e9650c6bf3f4d581827633a0be5ad83b6d124f4c3fd",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/11081245_555137761296116_2316179344601928261_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/11081245-555137761296116-2316179344601928261-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/11081245-555137761296116-2316179344601928261-n.webp",
       "group": "COPY",
       "width": 370,
       "height": 493,
       "original_bytes": 42564,
-      "optimized_bytes": 49338,
+      "optimized_bytes": 41818,
       "quality_score": 4.739,
       "pixel_sha256": "eab3a0f1589131a21fe714ac11fb265f3ef35780134c2ee273c795984a784fc0",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1239157_362447907231770_500461621_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1239157-362447907231770-500461621-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1239157-362447907231770-500461621-o.webp",
       "group": "COPY",
       "width": 1000,
       "height": 1000,
@@ -133,7 +133,7 @@
     },
     {
       "source_path": "COPY/Shirts/13076577_828496640587774_7203347604338517607_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/13076577-828496640587774-7203347604338517607-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/13076577-828496640587774-7203347604338517607-n.webp",
       "group": "COPY",
       "width": 800,
       "height": 600,
@@ -145,7 +145,7 @@
     },
     {
       "source_path": "COPY/Shirts/1491704_389236391219588_6481696105092851775_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1491704-389236391219588-6481696105092851775-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1491704-389236391219588-6481696105092851775-n.webp",
       "group": "COPY",
       "width": 960,
       "height": 960,
@@ -157,7 +157,7 @@
     },
     {
       "source_path": "COPY/Shirts/1506247_358909914252236_885147116_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1506247-358909914252236-885147116-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1506247-358909914252236-885147116-o.webp",
       "group": "COPY",
       "width": 709,
       "height": 999,
@@ -169,7 +169,7 @@
     },
     {
       "source_path": "COPY/Shirts/1507959_358304047646156_1721627781_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1507959-358304047646156-1721627781-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1507959-358304047646156-1721627781-n.webp",
       "group": "COPY",
       "width": 700,
       "height": 700,
@@ -181,19 +181,19 @@
     },
     {
       "source_path": "COPY/Shirts/1514471_377762812366946_1730691417_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1514471-377762812366946-1730691417-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1514471-377762812366946-1730691417-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
       "original_bytes": 97438,
-      "optimized_bytes": 102416,
+      "optimized_bytes": 82460,
       "quality_score": 6.4789,
       "pixel_sha256": "722f1df177b3f0444c1b400ece8bae191b0f365a581b27b707e8f18a6064392f",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1522474_360921964051031_184212059_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1522474-360921964051031-184212059-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1522474-360921964051031-184212059-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
@@ -205,7 +205,7 @@
     },
     {
       "source_path": "COPY/Shirts/1532033_355900651219829_1065752710_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1532033-355900651219829-1065752710-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1532033-355900651219829-1065752710-n.webp",
       "group": "COPY",
       "width": 564,
       "height": 564,
@@ -217,19 +217,19 @@
     },
     {
       "source_path": "COPY/Shirts/1538891_356778677798693_154515234_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1538891-356778677798693-154515234-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1538891-356778677798693-154515234-n.webp",
       "group": "COPY",
       "width": 700,
       "height": 700,
       "original_bytes": 73753,
-      "optimized_bytes": 78588,
+      "optimized_bytes": 64972,
       "quality_score": 6.2476,
       "pixel_sha256": "f42683b550889f35e5192c923397e436cca1c1576df5c1f73f729b218e3e567c",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1559359_362447987231762_1498107126_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1559359-362447987231762-1498107126-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1559359-362447987231762-1498107126-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
@@ -241,7 +241,7 @@
     },
     {
       "source_path": "COPY/Shirts/159977434_2890851174492164_708066970889064219_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/159977434-2890851174492164-708066970889064219-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/159977434-2890851174492164-708066970889064219-n.webp",
       "group": "COPY",
       "width": 800,
       "height": 1000,
@@ -253,7 +253,7 @@
     },
     {
       "source_path": "COPY/Shirts/1602036_380218172121410_1421497973_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1602036-380218172121410-1421497973-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1602036-380218172121410-1421497973-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
@@ -265,7 +265,7 @@
     },
     {
       "source_path": "COPY/Shirts/1609811_355143121295582_1542521775_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1609811-355143121295582-1542521775-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1609811-355143121295582-1542521775-n.webp",
       "group": "COPY",
       "width": 700,
       "height": 700,
@@ -277,19 +277,19 @@
     },
     {
       "source_path": "COPY/Shirts/164763358_2904136093163672_1849058037582528044_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/164763358-2904136093163672-1849058037582528044-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/164763358-2904136093163672-1849058037582528044-n.webp",
       "group": "COPY",
       "width": 578,
       "height": 578,
       "original_bytes": 34482,
-      "optimized_bytes": 38418,
+      "optimized_bytes": 31994,
       "quality_score": 5.0169,
       "pixel_sha256": "7254eb28a9a12f48c293e9a62e29e3ba6245834684b71c366d34c4d0238a7b89",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/164833846_2904136099830338_9066568591476901404_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/164833846-2904136099830338-9066568591476901404-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/164833846-2904136099830338-9066568591476901404-n.webp",
       "group": "COPY",
       "width": 762,
       "height": 762,
@@ -301,7 +301,7 @@
     },
     {
       "source_path": "COPY/Shirts/165851092_2904136096497005_3989809349817796658_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/165851092-2904136096497005-3989809349817796658-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/165851092-2904136096497005-3989809349817796658-n.webp",
       "group": "COPY",
       "width": 557,
       "height": 557,
@@ -313,31 +313,31 @@
     },
     {
       "source_path": "COPY/Shirts/167499390_2904832596427355_669804985318054392_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/167499390-2904832596427355-669804985318054392-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/167499390-2904832596427355-669804985318054392-n.webp",
       "group": "COPY",
       "width": 800,
       "height": 800,
       "original_bytes": 134475,
-      "optimized_bytes": 140276,
+      "optimized_bytes": 119990,
       "quality_score": 6.9095,
       "pixel_sha256": "02b9977f56b96a4f07392682b65bd9492021e2406365ac37638c7a4cc7d9dc10",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/168666189_2904832599760688_8832389996519035745_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/168666189-2904832599760688-8832389996519035745-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/168666189-2904832599760688-8832389996519035745-n.webp",
       "group": "COPY",
       "width": 800,
       "height": 800,
       "original_bytes": 131515,
-      "optimized_bytes": 139142,
+      "optimized_bytes": 120392,
       "quality_score": 6.9063,
       "pixel_sha256": "024cbcc88f7c768de7d67628c7c67c69bb5a2de9f2e37b92ad4c961fccdfe0bd",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1779291_363328163810411_1492001701_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1779291-363328163810411-1492001701-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1779291-363328163810411-1492001701-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
@@ -349,7 +349,7 @@
     },
     {
       "source_path": "COPY/Shirts/1781025_373311319478762_119062554_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1781025-373311319478762-119062554-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1781025-373311319478762-119062554-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
@@ -361,7 +361,7 @@
     },
     {
       "source_path": "COPY/Shirts/1782178_357659594377268_1645310192_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1782178-357659594377268-1645310192-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1782178-357659594377268-1645310192-n.webp",
       "group": "COPY",
       "width": 700,
       "height": 700,
@@ -373,43 +373,43 @@
     },
     {
       "source_path": "COPY/Shirts/1782186_368397126636848_1606758273_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1782186-368397126636848-1606758273-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1782186-368397126636848-1606758273-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
       "original_bytes": 80153,
-      "optimized_bytes": 84368,
+      "optimized_bytes": 69602,
       "quality_score": 6.4506,
       "pixel_sha256": "31a78bf1aa9d9677c0ded7e928cb3ad17d17d0890f0ab579ce5cc3f521ba4bc7",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1796918_373311369478757_806196840_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1796918-373311369478757-806196840-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1796918-373311369478757-806196840-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
       "original_bytes": 160635,
-      "optimized_bytes": 177446,
+      "optimized_bytes": 148448,
       "quality_score": 7.7353,
       "pixel_sha256": "5d17e7ea923a6a213ed1babe861286bcdc9f2e1451a505c443ab7d875fdb21cb",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1799091_360184680791426_1258186082_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1799091-360184680791426-1258186082-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1799091-360184680791426-1258186082-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
       "original_bytes": 150341,
-      "optimized_bytes": 162030,
+      "optimized_bytes": 135520,
       "quality_score": 7.7257,
       "pixel_sha256": "70b9d8346fbb3bd432385dd453af6b8c106792eeef2ca2a90ac1f093db95bac0",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1799986_360184684124759_509800956_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1799986-360184684124759-509800956-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1799986-360184684124759-509800956-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
@@ -421,19 +421,19 @@
     },
     {
       "source_path": "COPY/Shirts/1801174_371126419697252_244269404_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1801174-371126419697252-244269404-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1801174-371126419697252-244269404-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
       "original_bytes": 170454,
-      "optimized_bytes": 197354,
+      "optimized_bytes": 163162,
       "quality_score": 7.7439,
       "pixel_sha256": "27943a46a6fb38b4bb44855014f2ec04da89ab39de532362ad17ae6687385660",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1888609_363328153810412_2005928661_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1888609-363328153810412-2005928661-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1888609-363328153810412-2005928661-n.webp",
       "group": "COPY",
       "width": 960,
       "height": 960,
@@ -445,43 +445,43 @@
     },
     {
       "source_path": "COPY/Shirts/1899462_366921423451085_105576312_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1899462-366921423451085-105576312-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1899462-366921423451085-105576312-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
       "original_bytes": 159022,
-      "optimized_bytes": 181032,
+      "optimized_bytes": 151302,
       "quality_score": 7.7338,
       "pixel_sha256": "b70229c07c8969ca785412cddb527a0f6f5136bb17354f0099c575782ba71212",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1904126_365365130273381_1771110470_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1904126-365365130273381-1771110470-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1904126-365365130273381-1771110470-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
       "original_bytes": 97385,
-      "optimized_bytes": 101710,
+      "optimized_bytes": 84948,
       "quality_score": 6.4788,
       "pixel_sha256": "12920453e976381e6f6427d78430a3e11fb76fcffedaad47c457062d73af29fe",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1909250_373311372812090_27944525_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1909250-373311372812090-27944525-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1909250-373311372812090-27944525-o.webp",
       "group": "COPY",
       "width": 1000,
       "height": 1000,
       "original_bytes": 200279,
-      "optimized_bytes": 204936,
+      "optimized_bytes": 169670,
       "quality_score": 8.2672,
       "pixel_sha256": "56e7e394c954b8ec201c099dd445e9f3248dc8e547cf9ed6ef2dfef4b3f590fe",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1911795_363328167143744_1778697037_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1911795-363328167143744-1778697037-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1911795-363328167143744-1778697037-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
@@ -493,7 +493,7 @@
     },
     {
       "source_path": "COPY/Shirts/1921208_371126393030588_2049248738_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1921208-371126393030588-2049248738-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1921208-371126393030588-2049248738-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
@@ -505,19 +505,19 @@
     },
     {
       "source_path": "COPY/Shirts/1922511_365365163606711_75398025_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1922511-365365163606711-75398025-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1922511-365365163606711-75398025-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
       "original_bytes": 103635,
-      "optimized_bytes": 119890,
+      "optimized_bytes": 98174,
       "quality_score": 6.4878,
       "pixel_sha256": "e42f74b8bb55e9caef2296d7a2184f6bb54024490d3c7abd8630887d0bea2b94",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1941389_366921390117755_995201024_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1941389-366921390117755-995201024-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1941389-366921390117755-995201024-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
@@ -529,7 +529,7 @@
     },
     {
       "source_path": "COPY/Shirts/1959987_368397123303515_235310253_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1959987-368397123303515-235310253-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1959987-368397123303515-235310253-n.webp",
       "group": "COPY",
       "width": 640,
       "height": 960,
@@ -541,19 +541,19 @@
     },
     {
       "source_path": "COPY/Shirts/1962196_371126409697253_1300614202_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1962196-371126409697253-1300614202-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1962196-371126409697253-1300614202-o.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
       "original_bytes": 161186,
-      "optimized_bytes": 171876,
+      "optimized_bytes": 144576,
       "quality_score": 7.7358,
       "pixel_sha256": "0c95c551da3959e951e4d6e8b0e9595e6e440b29ebf6b8540218195c887d4326",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/1962690_368397133303514_1296232875_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/1962690-368397133303514-1296232875-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/1962690-368397133303514-1296232875-n.webp",
       "group": "COPY",
       "width": 960,
       "height": 960,
@@ -565,7 +565,7 @@
     },
     {
       "source_path": "COPY/Shirts/20451981_966655220144366_1269117500190261364_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/20451981-966655220144366-1269117500190261364-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/20451981-966655220144366-1269117500190261364-o.webp",
       "group": "COPY",
       "width": 894,
       "height": 1400,
@@ -577,7 +577,7 @@
     },
     {
       "source_path": "COPY/Shirts/218840550_2983659751877972_4440017785359113494_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/218840550-2983659751877972-4440017785359113494-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/218840550-2983659751877972-4440017785359113494-n.webp",
       "group": "COPY",
       "width": 600,
       "height": 750,
@@ -589,7 +589,7 @@
     },
     {
       "source_path": "COPY/Shirts/22051156_994069627402925_4080287020522874251_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/22051156-994069627402925-4080287020522874251-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/22051156-994069627402925-4080287020522874251-o.webp",
       "group": "COPY",
       "width": 700,
       "height": 1050,
@@ -601,7 +601,7 @@
     },
     {
       "source_path": "COPY/Shirts/22308815_998642866945601_5138770442594674730_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/22308815-998642866945601-5138770442594674730-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/22308815-998642866945601-5138770442594674730-n.webp",
       "group": "COPY",
       "width": 400,
       "height": 600,
@@ -613,7 +613,7 @@
     },
     {
       "source_path": "COPY/Shirts/225272372_2987646271479320_462383165741164034_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/225272372-2987646271479320-462383165741164034-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/225272372-2987646271479320-462383165741164034-n.webp",
       "group": "COPY",
       "width": 800,
       "height": 1000,
@@ -625,7 +625,7 @@
     },
     {
       "source_path": "COPY/Shirts/273573704_2271538856322656_5632633983534493967_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/273573704-2271538856322656-5632633983534493967-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/273573704-2271538856322656-5632633983534493967-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -637,7 +637,7 @@
     },
     {
       "source_path": "COPY/Shirts/274544717_2295488703927671_4941963091538483573_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/274544717-2295488703927671-4941963091538483573-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/274544717-2295488703927671-4941963091538483573-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -649,7 +649,7 @@
     },
     {
       "source_path": "COPY/Shirts/275297940_2295488710594337_7306968908034742408_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/275297940-2295488710594337-7306968908034742408-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/275297940-2295488710594337-7306968908034742408-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -661,7 +661,7 @@
     },
     {
       "source_path": "COPY/Shirts/275303773_2295488717261003_6636658164489039601_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/275303773-2295488717261003-6636658164489039601-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/275303773-2295488717261003-6636658164489039601-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -673,7 +673,7 @@
     },
     {
       "source_path": "COPY/Shirts/275376826_2295488743927667_2315556463856245986_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/275376826-2295488743927667-2315556463856245986-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/275376826-2295488743927667-2315556463856245986-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -685,7 +685,7 @@
     },
     {
       "source_path": "COPY/Shirts/275606351_2295488790594329_1491498011113808972_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/275606351-2295488790594329-1491498011113808972-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/275606351-2295488790594329-1491498011113808972-n.webp",
       "group": "COPY",
       "width": 1875,
       "height": 1815,
@@ -697,7 +697,7 @@
     },
     {
       "source_path": "COPY/Shirts/29244077_1086512191492001_8895188753929207808_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/29244077-1086512191492001-8895188753929207808-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/29244077-1086512191492001-8895188753929207808-n.webp",
       "group": "COPY",
       "width": 400,
       "height": 600,
@@ -709,7 +709,7 @@
     },
     {
       "source_path": "COPY/Shirts/334976756_769069194634314_4442311895308096235_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/334976756-769069194634314-4442311895308096235-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/334976756-769069194634314-4442311895308096235-n.webp",
       "group": "COPY",
       "width": 1280,
       "height": 765,
@@ -721,7 +721,7 @@
     },
     {
       "source_path": "COPY/Shirts/36479507_1156931757783377_824747069313908736_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/36479507-1156931757783377-824747069313908736-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/36479507-1156931757783377-824747069313908736-n.webp",
       "group": "COPY",
       "width": 400,
       "height": 600,
@@ -733,7 +733,7 @@
     },
     {
       "source_path": "COPY/Shirts/41194473_1228529130623639_558183214032617472_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/41194473-1228529130623639-558183214032617472-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/41194473-1228529130623639-558183214032617472-n.webp",
       "group": "COPY",
       "width": 733,
       "height": 960,
@@ -745,7 +745,7 @@
     },
     {
       "source_path": "COPY/Shirts/42692938_1240768239399728_5273572012390875136_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/42692938-1240768239399728-5273572012390875136-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/42692938-1240768239399728-5273572012390875136-n.webp",
       "group": "COPY",
       "width": 843,
       "height": 562,
@@ -757,55 +757,55 @@
     },
     {
       "source_path": "COPY/Shirts/44178273_1251602481649637_5747678024673787904_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/44178273-1251602481649637-5747678024673787904-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/44178273-1251602481649637-5747678024673787904-n.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
       "original_bytes": 141739,
-      "optimized_bytes": 166380,
+      "optimized_bytes": 133912,
       "quality_score": 7.7172,
       "pixel_sha256": "72cbb54334c2a8e5e8bce8689f93142eb36f795fa7e9a5b872191fe7bf9c456f",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/44368301_1251602471649638_8529709293560135680_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/44368301-1251602471649638-8529709293560135680-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/44368301-1251602471649638-8529709293560135680-n.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
       "original_bytes": 149672,
-      "optimized_bytes": 178768,
+      "optimized_bytes": 143014,
       "quality_score": 7.725,
       "pixel_sha256": "2f8c92dd1acb565631285332bfb118657eabb8705bff7f01ab76ee6f6f129eb2",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/51533590_1328320427311175_4115755000980832256_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/51533590-1328320427311175-4115755000980832256-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/51533590-1328320427311175-4115755000980832256-n.webp",
       "group": "COPY",
       "width": 501,
       "height": 785,
       "original_bytes": 66384,
-      "optimized_bytes": 76732,
+      "optimized_bytes": 65264,
       "quality_score": 5.5926,
       "pixel_sha256": "5dee25676a1f2a0c6f8f021a4d3f38b1ac76c8bdceb1decbbaf875d466b17d3e",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/52532856_1337888589687692_614018901277147136_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/52532856-1337888589687692-614018901277147136-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/52532856-1337888589687692-614018901277147136-n.webp",
       "group": "COPY",
       "width": 501,
       "height": 784,
       "original_bytes": 97818,
-      "optimized_bytes": 98580,
+      "optimized_bytes": 83424,
       "quality_score": 5.6474,
       "pixel_sha256": "4085ef5425f952f667d8532f56e4f405183b87eb81b98fd701e03dd66fe23111",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/67122963_1443068442503039_3415754938951663616_n (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/67122963-1443068442503039-3415754938951663616-n-1.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/67122963-1443068442503039-3415754938951663616-n-1.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -817,7 +817,7 @@
     },
     {
       "source_path": "COPY/Shirts/67135021_1443068512503032_6853605126704201728_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/67135021-1443068512503032-6853605126704201728-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/67135021-1443068512503032-6853605126704201728-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -829,7 +829,7 @@
     },
     {
       "source_path": "COPY/Shirts/67209183_1443068752503008_5670490659136471040_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/67209183-1443068752503008-5670490659136471040-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/67209183-1443068752503008-5670490659136471040-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -841,7 +841,7 @@
     },
     {
       "source_path": "COPY/Shirts/67212319_1443068255836391_6662226937387155456_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/67212319-1443068255836391-6662226937387155456-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/67212319-1443068255836391-6662226937387155456-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -853,7 +853,7 @@
     },
     {
       "source_path": "COPY/Shirts/67217373_1443068342503049_8419165257791963136_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/67217373-1443068342503049-8419165257791963136-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/67217373-1443068342503049-8419165257791963136-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -865,7 +865,7 @@
     },
     {
       "source_path": "COPY/Shirts/67307282_1443068815836335_8490192721103814656_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/67307282-1443068815836335-8490192721103814656-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/67307282-1443068815836335-8490192721103814656-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -877,7 +877,7 @@
     },
     {
       "source_path": "COPY/Shirts/67577232_1443068622503021_2503342746698252288_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/67577232-1443068622503021-2503342746698252288-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/67577232-1443068622503021-2503342746698252288-n.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -889,7 +889,7 @@
     },
     {
       "source_path": "COPY/Shirts/67638027_1443068222503061_3501314144936656896_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/67638027-1443068222503061-3501314144936656896-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/67638027-1443068222503061-3501314144936656896-n.webp",
       "group": "COPY",
       "width": 676,
       "height": 800,
@@ -901,7 +901,7 @@
     },
     {
       "source_path": "COPY/Shirts/72998656_1521802154629667_3970167678504534016_n (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/72998656-1521802154629667-3970167678504534016-n-1.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/72998656-1521802154629667-3970167678504534016-n-1.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -913,7 +913,7 @@
     },
     {
       "source_path": "COPY/Shirts/73127684_1521802167962999_6955478370826059776_n (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/73127684-1521802167962999-6955478370826059776-n-1.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/73127684-1521802167962999-6955478370826059776-n-1.webp",
       "group": "COPY",
       "width": 676,
       "height": 800,
@@ -925,7 +925,7 @@
     },
     {
       "source_path": "COPY/Shirts/73346537_1521802254629657_6720748714358472704_n (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/73346537-1521802254629657-6720748714358472704-n-1.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/73346537-1521802254629657-6720748714358472704-n-1.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -937,7 +937,7 @@
     },
     {
       "source_path": "COPY/Shirts/741308_360921914051036_749264899_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/741308-360921914051036-749264899-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/741308-360921914051036-749264899-o.webp",
       "group": "COPY",
       "width": 1000,
       "height": 1000,
@@ -949,19 +949,19 @@
     },
     {
       "source_path": "COPY/Shirts/74348158_1552610321548850_4580747217215684608_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/74348158-1552610321548850-4580747217215684608-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/74348158-1552610321548850-4580747217215684608-n.webp",
       "group": "COPY",
       "width": 400,
       "height": 600,
       "original_bytes": 47080,
-      "optimized_bytes": 49424,
+      "optimized_bytes": 42266,
       "quality_score": 4.9576,
       "pixel_sha256": "f475eaed33e7e92dcc033262f1e8173f9581a5d2fa7a25bbcc60cbb1efccee3e",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/74580887_1521802284629654_4921051189908340736_n (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/74580887-1521802284629654-4921051189908340736-n-1.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/74580887-1521802284629654-4921051189908340736-n-1.webp",
       "group": "COPY",
       "width": 1140,
       "height": 760,
@@ -972,20 +972,8 @@
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
-      "source_path": "COPY/Shirts/76636723_1548206145322601_5224307105418182656_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/76636723-1548206145322601-5224307105418182656-n.webp",
-      "group": "COPY",
-      "width": 510,
-      "height": 799,
-      "original_bytes": 67776,
-      "optimized_bytes": 70470,
-      "quality_score": 5.6491,
-      "pixel_sha256": "e7d4dc0fc2523c0451e36a137000546ed48cee46e0bcad86d3325dae9635f32f",
-      "product_slug": "bavarian-men-s-checkered-shirt"
-    },
-    {
       "source_path": "COPY/Shirts/78435455_1572531606223388_1721433629655040000_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/78435455-1572531606223388-1721433629655040000-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/78435455-1572531606223388-1721433629655040000-n.webp",
       "group": "COPY",
       "width": 800,
       "height": 1200,
@@ -997,7 +985,7 @@
     },
     {
       "source_path": "COPY/Shirts/88261156_1654875444655670_3889295647639076864_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/88261156-1654875444655670-3889295647639076864-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/88261156-1654875444655670-3889295647639076864-n.webp",
       "group": "COPY",
       "width": 449,
       "height": 698,
@@ -1009,19 +997,19 @@
     },
     {
       "source_path": "COPY/Shirts/894002_360184667458094_968780809_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/894002-360184667458094-968780809-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/894002-360184667458094-968780809-o.webp",
       "group": "COPY",
       "width": 1000,
       "height": 1000,
       "original_bytes": 200826,
-      "optimized_bytes": 204526,
+      "optimized_bytes": 169654,
       "quality_score": 8.2676,
       "pixel_sha256": "0f82f03425cc23b0e84253e0eda11a590cd2f03abb0ed8de77be2bbb5c7b6cbd",
       "product_slug": "bavarian-men-s-checkered-shirt"
     },
     {
       "source_path": "COPY/Shirts/IMG-20190918-WA0012.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shirts/uncategorized/img-20190918-wa0012.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shirts/bavarian-men-s-checkered-shirt/img-20190918-wa0012.webp",
       "group": "COPY",
       "width": 1152,
       "height": 552,
@@ -1074,5 +1062,6 @@
       "duplicate_of": "COPY/Shirts/74580887_1521802284629654_4921051189908340736_n (1).jpg"
     }
   ],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 84
 }

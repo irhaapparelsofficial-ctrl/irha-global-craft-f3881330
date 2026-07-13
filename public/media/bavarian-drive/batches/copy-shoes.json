@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "COPY/Shoes/1014342_389236737886220_4039288426670886961_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/1014342-389236737886220-4039288426670886961-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/1014342-389236737886220-4039288426670886961-n.webp",
       "group": "COPY",
       "width": 600,
       "height": 600,
@@ -25,7 +25,7 @@
     },
     {
       "source_path": "COPY/Shoes/10154123_389236694552891_9120149695277523853_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/10154123-389236694552891-9120149695277523853-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/10154123-389236694552891-9120149695277523853-n.webp",
       "group": "COPY",
       "width": 600,
       "height": 600,
@@ -37,7 +37,7 @@
     },
     {
       "source_path": "COPY/Shoes/10171800_386562418153652_1743992668_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/10171800-386562418153652-1743992668-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/10171800-386562418153652-1743992668-n.webp",
       "group": "COPY",
       "width": 600,
       "height": 600,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "COPY/Shoes/10660127_798226813614757_2715975482426804819_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/10660127-798226813614757-2715975482426804819-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/10660127-798226813614757-2715975482426804819-n.webp",
       "group": "COPY",
       "width": 720,
       "height": 960,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "COPY/Shoes/11247601_581752461967979_823921137731642430_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/11247601-581752461967979-823921137731642430-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/11247601-581752461967979-823921137731642430-n.webp",
       "group": "COPY",
       "width": 531,
       "height": 276,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "COPY/Shoes/12496036_782631511840954_5110247144992466637_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12496036-782631511840954-5110247144992466637-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12496036-782631511840954-5110247144992466637-o.webp",
       "group": "COPY",
       "width": 1536,
       "height": 2048,
@@ -85,19 +85,19 @@
     },
     {
       "source_path": "COPY/Shoes/12512465_798225636948208_6749964313199119755_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12512465-798225636948208-6749964313199119755-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12512465-798225636948208-6749964313199119755-n.webp",
       "group": "COPY",
       "width": 720,
       "height": 960,
       "original_bytes": 84640,
-      "optimized_bytes": 85558,
+      "optimized_bytes": 57968,
       "quality_score": 6.1615,
       "pixel_sha256": "9bf1ad95dc7a73d29c17e6d6f8a2746ddc08eff6db6af14de1d4df9c12b360ba",
       "product_slug": "haferl-leather-shoes"
     },
     {
       "source_path": "COPY/Shoes/12513785_782631638507608_7580808216225331466_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12513785-782631638507608-7580808216225331466-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12513785-782631638507608-7580808216225331466-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -109,7 +109,7 @@
     },
     {
       "source_path": "COPY/Shoes/12514006_783105408460231_2706497313992684753_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12514006-783105408460231-2706497313992684753-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12514006-783105408460231-2706497313992684753-o.webp",
       "group": "COPY",
       "width": 1536,
       "height": 2048,
@@ -121,7 +121,7 @@
     },
     {
       "source_path": "COPY/Shoes/12605368_783105178460254_2334747645649545302_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12605368-783105178460254-2334747645649545302-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12605368-783105178460254-2334747645649545302-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -133,7 +133,7 @@
     },
     {
       "source_path": "COPY/Shoes/12615692_782631195174319_8558245294630023508_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12615692-782631195174319-8558245294630023508-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12615692-782631195174319-8558245294630023508-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -145,7 +145,7 @@
     },
     {
       "source_path": "COPY/Shoes/12628561_783105631793542_6118845029776741536_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12628561-783105631793542-6118845029776741536-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12628561-783105631793542-6118845029776741536-o.webp",
       "group": "COPY",
       "width": 1536,
       "height": 2048,
@@ -157,7 +157,7 @@
     },
     {
       "source_path": "COPY/Shoes/12628563_782631328507639_1432474018314206503_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12628563-782631328507639-1432474018314206503-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12628563-782631328507639-1432474018314206503-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -169,7 +169,7 @@
     },
     {
       "source_path": "COPY/Shoes/12640267_783109231793182_6216807690865184249_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12640267-783109231793182-6216807690865184249-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12640267-783109231793182-6216807690865184249-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -181,7 +181,7 @@
     },
     {
       "source_path": "COPY/Shoes/12640303_783106088460163_7227771707770014964_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12640303-783106088460163-7227771707770014964-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12640303-783106088460163-7227771707770014964-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -193,7 +193,7 @@
     },
     {
       "source_path": "COPY/Shoes/12646835_783106858460086_8876346072345996490_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12646835-783106858460086-8876346072345996490-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12646835-783106858460086-8876346072345996490-o.webp",
       "group": "COPY",
       "width": 1536,
       "height": 2048,
@@ -205,7 +205,7 @@
     },
     {
       "source_path": "COPY/Shoes/12764436_792506827520089_4163185013819581581_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12764436-792506827520089-4163185013819581581-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12764436-792506827520089-4163185013819581581-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -217,7 +217,7 @@
     },
     {
       "source_path": "COPY/Shoes/12790976_798225940281511_505183884712526291_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12790976-798225940281511-505183884712526291-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12790976-798225940281511-505183884712526291-n.webp",
       "group": "COPY",
       "width": 720,
       "height": 960,
@@ -229,7 +229,7 @@
     },
     {
       "source_path": "COPY/Shoes/12829031_799599760144129_4087660039147283184_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/12829031-799599760144129-4087660039147283184-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/12829031-799599760144129-4087660039147283184-o.webp",
       "group": "COPY",
       "width": 1072,
       "height": 804,
@@ -241,7 +241,7 @@
     },
     {
       "source_path": "COPY/Shoes/1396849_581752481967977_6521771607730983126_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/1396849-581752481967977-6521771607730983126-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/1396849-581752481967977-6521771607730983126-o.webp",
       "group": "COPY",
       "width": 1028,
       "height": 877,
@@ -253,7 +253,7 @@
     },
     {
       "source_path": "COPY/Shoes/1510926_386562388153655_885754733_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/1510926-386562388153655-885754733-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/1510926-386562388153655-885754733-n.webp",
       "group": "COPY",
       "width": 600,
       "height": 600,
@@ -265,7 +265,7 @@
     },
     {
       "source_path": "COPY/Shoes/1798592_386562404820320_1635734529_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/1798592-386562404820320-1635734529-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/1798592-386562404820320-1635734529-n.webp",
       "group": "COPY",
       "width": 600,
       "height": 600,
@@ -277,7 +277,7 @@
     },
     {
       "source_path": "COPY/Shoes/187407009_2938905173020097_4430853933530014811_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/187407009-2938905173020097-4430853933530014811-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/187407009-2938905173020097-4430853933530014811-n.webp",
       "group": "COPY",
       "width": 1080,
       "height": 1350,
@@ -289,7 +289,7 @@
     },
     {
       "source_path": "COPY/Shoes/219781016_2983658955211385_7707185130100455256_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/219781016-2983658955211385-7707185130100455256-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/219781016-2983658955211385-7707185130100455256-n.webp",
       "group": "COPY",
       "width": 1080,
       "height": 928,
@@ -301,43 +301,43 @@
     },
     {
       "source_path": "COPY/Shoes/22459146_1001371780006043_7993930483627799059_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/22459146-1001371780006043-7993930483627799059-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/22459146-1001371780006043-7993930483627799059-o.webp",
       "group": "COPY",
       "width": 1125,
       "height": 963,
       "original_bytes": 118312,
-      "optimized_bytes": 121134,
+      "optimized_bytes": 101842,
       "quality_score": 8.3254,
       "pixel_sha256": "7c06b15f84161977f1804c8942003536cb2c7ffde7af54ce0bc77c3a88ced4cf",
       "product_slug": "haferl-leather-shoes"
     },
     {
       "source_path": "COPY/Shoes/227085285_2989153864661894_5722690279952587900_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/227085285-2989153864661894-5722690279952587900-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/227085285-2989153864661894-5722690279952587900-n.webp",
       "group": "COPY",
       "width": 1080,
       "height": 1350,
       "original_bytes": 83178,
-      "optimized_bytes": 86664,
+      "optimized_bytes": 66188,
       "quality_score": 8.8416,
       "pixel_sha256": "4a8fcf8633cdce41c002d83f407a7d6326bfe06701ecc13617002bd5a3e26bee",
       "product_slug": "haferl-leather-shoes"
     },
     {
       "source_path": "COPY/Shoes/22852013_1010157065794181_8044976260023261908_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/22852013-1010157065794181-8044976260023261908-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/22852013-1010157065794181-8044976260023261908-n.webp",
       "group": "COPY",
       "width": 600,
       "height": 600,
       "original_bytes": 14855,
-      "optimized_bytes": 17278,
+      "optimized_bytes": 12906,
       "quality_score": 4.6282,
       "pixel_sha256": "7816251db6e0393c1e5e5218c91d11ff8508b276ff30b1a67539ea52370a9d96",
       "product_slug": "haferl-leather-shoes"
     },
     {
       "source_path": "COPY/Shoes/23116628_1011663405643547_4792564980195002017_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/23116628-1011663405643547-4792564980195002017-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/23116628-1011663405643547-4792564980195002017-o.webp",
       "group": "COPY",
       "width": 1050,
       "height": 728,
@@ -349,7 +349,7 @@
     },
     {
       "source_path": "COPY/Shoes/25790737_1039864026156818_1050502486493813888_o (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/25790737-1039864026156818-1050502486493813888-o-1.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/25790737-1039864026156818-1050502486493813888-o-1.webp",
       "group": "COPY",
       "width": 750,
       "height": 1175,
@@ -361,7 +361,7 @@
     },
     {
       "source_path": "COPY/Shoes/271528191_2247780395365169_3530776352392942245_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/271528191-2247780395365169-3530776352392942245-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/271528191-2247780395365169-3530776352392942245-n.webp",
       "group": "COPY",
       "width": 1200,
       "height": 1800,
@@ -373,7 +373,7 @@
     },
     {
       "source_path": "COPY/Shoes/271531753_2247780442031831_8825968598543469243_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/271531753-2247780442031831-8825968598543469243-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/271531753-2247780442031831-8825968598543469243-n.webp",
       "group": "COPY",
       "width": 1875,
       "height": 1888,
@@ -385,7 +385,7 @@
     },
     {
       "source_path": "COPY/Shoes/29340444_1086513138158573_1317416213717975040_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/29340444-1086513138158573-1317416213717975040-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/29340444-1086513138158573-1317416213717975040-n.webp",
       "group": "COPY",
       "width": 1500,
       "height": 1283,
@@ -397,7 +397,7 @@
     },
     {
       "source_path": "COPY/Shoes/334997022_257781173246423_9035846828320060154_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/334997022-257781173246423-9035846828320060154-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/334997022-257781173246423-9035846828320060154-n.webp",
       "group": "COPY",
       "width": 1440,
       "height": 1440,
@@ -409,7 +409,7 @@
     },
     {
       "source_path": "COPY/Shoes/335417876_753974319789025_5305773861890196993_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/335417876-753974319789025-5305773861890196993-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/335417876-753974319789025-5305773861890196993-n.webp",
       "group": "COPY",
       "width": 1080,
       "height": 1080,
@@ -421,7 +421,7 @@
     },
     {
       "source_path": "COPY/Shoes/335454411_231500765920446_2484360676133592345_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/335454411-231500765920446-2484360676133592345-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/335454411-231500765920446-2484360676133592345-n.webp",
       "group": "COPY",
       "width": 1080,
       "height": 1080,
@@ -433,7 +433,7 @@
     },
     {
       "source_path": "COPY/Shoes/335489885_733259235016091_3763092070740073377_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/335489885-733259235016091-3763092070740073377-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/335489885-733259235016091-3763092070740073377-n.webp",
       "group": "COPY",
       "width": 1080,
       "height": 1080,
@@ -445,7 +445,7 @@
     },
     {
       "source_path": "COPY/Shoes/336204482_537618388497237_5628235551767389852_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/336204482-537618388497237-5628235551767389852-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/336204482-537618388497237-5628235551767389852-n.webp",
       "group": "COPY",
       "width": 1080,
       "height": 1080,
@@ -457,7 +457,7 @@
     },
     {
       "source_path": "COPY/Shoes/336536003_741407994234006_1101386843669020376_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/336536003-741407994234006-1101386843669020376-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/336536003-741407994234006-1101386843669020376-n.webp",
       "group": "COPY",
       "width": 1440,
       "height": 1440,
@@ -469,7 +469,7 @@
     },
     {
       "source_path": "COPY/Shoes/36176771_1151879458288607_370775511527325696_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/36176771-1151879458288607-370775511527325696-n.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/36176771-1151879458288607-370775511527325696-n.webp",
       "group": "COPY",
       "width": 1200,
       "height": 898,
@@ -481,7 +481,7 @@
     },
     {
       "source_path": "COPY/Shoes/886310_782631828507589_1805892988127853940_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/copy-shoes/uncategorized/886310-782631828507589-1805892988127853940-o.webp",
+      "output_path": "/media/bavarian-drive/assets/copy-shoes/haferl-leather-shoes/886310-782631828507589-1805892988127853940-o.webp",
       "group": "COPY",
       "width": 2048,
       "height": 1536,
@@ -499,5 +499,6 @@
       "duplicate_of": "COPY/Shoes/25790737_1039864026156818_1050502486493813888_o (1).jpg"
     }
   ],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 40
 }

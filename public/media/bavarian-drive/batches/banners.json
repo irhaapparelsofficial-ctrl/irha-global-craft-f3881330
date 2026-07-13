@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "BANNERS/1621731_358710630938831_135878123_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/1621731-358710630938831-135878123-n.webp",
+      "output_path": "/media/bavarian-drive/assets/banners/review-only/1621731-358710630938831-135878123-n.webp",
       "group": "BANNERS",
       "width": 687,
       "height": 458,
@@ -25,7 +25,7 @@
     },
     {
       "source_path": "BANNERS/3.jpg",
-      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/3.webp",
+      "output_path": "/media/bavarian-drive/assets/banners/review-only/3.webp",
       "group": "BANNERS",
       "width": 870,
       "height": 465,
@@ -37,7 +37,7 @@
     },
     {
       "source_path": "BANNERS/4.jpg",
-      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/4.webp",
+      "output_path": "/media/bavarian-drive/assets/banners/review-only/4.webp",
       "group": "BANNERS",
       "width": 870,
       "height": 465,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "BANNERS/53145831_148227139523220_2153266379082432512_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/53145831-148227139523220-2153266379082432512-n.webp",
+      "output_path": "/media/bavarian-drive/assets/banners/review-only/53145831-148227139523220-2153266379082432512-n.webp",
       "group": "BANNERS",
       "width": 885,
       "height": 558,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "BANNERS/53866445_154134655599135_4647065712743940096_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/53866445-154134655599135-4647065712743940096-n.webp",
+      "output_path": "/media/bavarian-drive/assets/banners/review-only/53866445-154134655599135-4647065712743940096-n.webp",
       "group": "BANNERS",
       "width": 450,
       "height": 361,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "BANNERS/6.jpg",
-      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/6.webp",
+      "output_path": "/media/bavarian-drive/assets/banners/review-only/6.webp",
       "group": "BANNERS",
       "width": 870,
       "height": 465,
@@ -85,7 +85,7 @@
     },
     {
       "source_path": "BANNERS/7.jpg",
-      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/7.webp",
+      "output_path": "/media/bavarian-drive/assets/banners/review-only/7.webp",
       "group": "BANNERS",
       "width": 870,
       "height": 465,
@@ -97,7 +97,7 @@
     },
     {
       "source_path": "BANNERS/8.jpg",
-      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/8.webp",
+      "output_path": "/media/bavarian-drive/assets/banners/review-only/8.webp",
       "group": "BANNERS",
       "width": 870,
       "height": 465,
@@ -109,5 +109,6 @@
     }
   ],
   "rejected": [],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 8
 }

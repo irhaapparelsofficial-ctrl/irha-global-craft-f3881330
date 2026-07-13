@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "WOMEN'S/Pents/01-1200x1200 (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/01-1200x1200-1.webp",
+      "output_path": "/media/bavarian-drive/assets/women-pents/review-only/01-1200x1200-1.webp",
       "group": "WOMEN'S",
       "width": 1200,
       "height": 1200,
@@ -25,7 +25,7 @@
     },
     {
       "source_path": "WOMEN'S/Pents/01-a-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/01-a-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/women-pents/review-only/01-a-1200x1200.webp",
       "group": "WOMEN'S",
       "width": 1200,
       "height": 1200,
@@ -37,7 +37,7 @@
     },
     {
       "source_path": "WOMEN'S/Pents/01-b-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/01-b-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/women-pents/review-only/01-b-1200x1200.webp",
       "group": "WOMEN'S",
       "width": 1200,
       "height": 1200,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "WOMEN'S/Pents/01-c-1200x1200.jpg",
-      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/01-c-1200x1200.webp",
+      "output_path": "/media/bavarian-drive/assets/women-pents/review-only/01-c-1200x1200.webp",
       "group": "WOMEN'S",
       "width": 1200,
       "height": 1200,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "WOMEN'S/Pents/02-1200x1200 (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/02-1200x1200-1.webp",
+      "output_path": "/media/bavarian-drive/assets/women-pents/review-only/02-1200x1200-1.webp",
       "group": "WOMEN'S",
       "width": 1200,
       "height": 1200,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "WOMEN'S/Pents/04-1200x1200 (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/04-1200x1200-1.webp",
+      "output_path": "/media/bavarian-drive/assets/women-pents/review-only/04-1200x1200-1.webp",
       "group": "WOMEN'S",
       "width": 1200,
       "height": 1200,
@@ -85,5 +85,6 @@
     }
   ],
   "rejected": [],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 6
 }

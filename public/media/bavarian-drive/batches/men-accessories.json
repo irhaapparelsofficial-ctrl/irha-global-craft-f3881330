@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "MEN'S/Accessories/Belt/belt (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/belt/belt-1.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/bavarian-leather-belt/belt-1.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -25,7 +25,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Belt/belt (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/belt/belt-2.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/bavarian-leather-belt/belt-2.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -37,7 +37,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Belt/belt (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/belt/belt-3.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/bavarian-leather-belt/belt-3.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Belt/belt (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/belt/belt-4.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/bavarian-leather-belt/belt-4.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Belt/belt (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/belt/belt-5.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/bavarian-leather-belt/belt-5.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Belt/belt (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/belt/belt-6.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/bavarian-leather-belt/belt-6.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -85,7 +85,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Belt/belt (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/belt/belt-7.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/bavarian-leather-belt/belt-7.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -97,7 +97,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Belt/belt.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/belt/belt.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/bavarian-leather-belt/belt.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -109,7 +109,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats-1.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats-1.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -121,7 +121,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats-2.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats-2.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -133,7 +133,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats-3.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats-3.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -145,7 +145,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats-4.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats-4.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -157,7 +157,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats-5.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats-5.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -169,7 +169,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats-6.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats-6.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -181,7 +181,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats-7.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats-7.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -193,7 +193,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats (8).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats-8.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats-8.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -205,7 +205,7 @@
     },
     {
       "source_path": "MEN'S/Accessories/Hats/hats.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-accessories/hats/hats.webp",
+      "output_path": "/media/bavarian-drive/assets/men-accessories/review-only/hats.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -217,5 +217,6 @@
     }
   ],
   "rejected": [],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 17
 }

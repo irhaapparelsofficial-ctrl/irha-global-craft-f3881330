@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "Size Chart/Sizing-Chart.jpg",
-      "output_path": "/media/bavarian-drive/assets/size-chart/uncategorized/sizing-chart.webp",
+      "output_path": "/media/bavarian-drive/assets/size-chart/review-only/sizing-chart.webp",
       "group": "Size Chart",
       "width": 1400,
       "height": 1400,
@@ -25,5 +25,6 @@
     }
   ],
   "rejected": [],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 1
 }

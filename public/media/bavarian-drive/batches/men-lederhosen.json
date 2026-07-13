@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "MEN'S/Lederhosen/13312719_252242428469716_6248299081209855748_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13312719-252242428469716-6248299081209855748-n.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13312719-252242428469716-6248299081209855748-n.webp",
       "group": "MEN'S",
       "width": 667,
       "height": 500,
@@ -25,7 +25,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/13312723_252242468469712_4659036724457405978_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13312723-252242468469712-4659036724457405978-n.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13312723-252242468469712-4659036724457405978-n.webp",
       "group": "MEN'S",
       "width": 667,
       "height": 500,
@@ -37,7 +37,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/13320384_252244798469479_4229325873182822325_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13320384-252244798469479-4229325873182822325-o.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13320384-252244798469479-4229325873182822325-o.webp",
       "group": "MEN'S",
       "width": 794,
       "height": 1152,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/13323214_252244758469483_5066403997935068192_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13323214-252244758469483-5066403997935068192-o.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13323214-252244758469483-5066403997935068192-o.webp",
       "group": "MEN'S",
       "width": 864,
       "height": 1152,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/13325631_252242488469710_2428051360091677790_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13325631-252242488469710-2428051360091677790-n.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13325631-252242488469710-2428051360091677790-n.webp",
       "group": "MEN'S",
       "width": 667,
       "height": 500,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/13332831_252242421803050_9159410565701745880_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13332831-252242421803050-9159410565701745880-n.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13332831-252242421803050-9159410565701745880-n.webp",
       "group": "MEN'S",
       "width": 667,
       "height": 500,
@@ -85,7 +85,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/13340040_252244805136145_5375022165519858291_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13340040-252244805136145-5375022165519858291-o.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13340040-252244805136145-5375022165519858291-o.webp",
       "group": "MEN'S",
       "width": 864,
       "height": 1152,
@@ -97,7 +97,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/13340181_252244711802821_8227241767901484125_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13340181-252244711802821-8227241767901484125-o.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13340181-252244711802821-8227241767901484125-o.webp",
       "group": "MEN'S",
       "width": 1151,
       "height": 678,
@@ -109,7 +109,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/13350259_252244728469486_1973774731765459455_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/13350259-252244728469486-1973774731765459455-o.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/13350259-252244728469486-1973774731765459455-o.webp",
       "group": "MEN'S",
       "width": 864,
       "height": 1152,
@@ -121,7 +121,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/14712876_324575717903053_4770643041366577691_o.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/14712876-324575717903053-4770643041366577691-o.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/14712876-324575717903053-4770643041366577691-o.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 1103,
@@ -132,20 +132,8 @@
       "product_slug": "traditional-lederhosen"
     },
     {
-      "source_path": "MEN'S/Lederhosen/242414334_2161330277343515_6287444099161689817_n.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/242414334-2161330277343515-6287444099161689817-n.webp",
-      "group": "MEN'S",
-      "width": 720,
-      "height": 720,
-      "original_bytes": 140747,
-      "optimized_bytes": 59008,
-      "quality_score": 6.4521,
-      "pixel_sha256": "e1df5e443ac46678966c999d155e7116f2d35bc52ec258351542a71008400395",
-      "product_slug": "traditional-lederhosen"
-    },
-    {
       "source_path": "MEN'S/Lederhosen/Short-White-Bavarian-Lederhosen-pant (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-white-bavarian-lederhosen-pant-1.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-white-bavarian-lederhosen-pant-1.webp",
       "group": "MEN'S",
       "width": 1000,
       "height": 1000,
@@ -157,7 +145,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/Short-White-Bavarian-Lederhosen-pant (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-white-bavarian-lederhosen-pant-2.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-white-bavarian-lederhosen-pant-2.webp",
       "group": "MEN'S",
       "width": 1000,
       "height": 1000,
@@ -169,7 +157,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/Short-White-Bavarian-Lederhosen-pant.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-white-bavarian-lederhosen-pant.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-white-bavarian-lederhosen-pant.webp",
       "group": "MEN'S",
       "width": 1000,
       "height": 1000,
@@ -181,7 +169,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-1.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-1.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -193,7 +181,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (10).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-10.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-10.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -205,7 +193,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (11).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-11.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-11.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -217,7 +205,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (12).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-12.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-12.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -229,7 +217,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (13).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-13.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-13.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -241,7 +229,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (14).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-14.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-14.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -253,7 +241,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (15).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-15.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-15.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -265,7 +253,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (16).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-16.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-16.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -277,7 +265,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (17).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-17.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-17.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -289,7 +277,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (18).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-18.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-18.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -301,7 +289,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (19).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-19.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-19.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -313,7 +301,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-2.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-2.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -325,7 +313,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (20).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-20.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-20.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -337,7 +325,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (21).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-21.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-21.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -349,7 +337,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (22).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-22.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-22.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -361,7 +349,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (23).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-23.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-23.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -373,7 +361,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (24).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-24.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-24.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -385,7 +373,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (25).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-25.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-25.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -397,7 +385,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (26).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-26.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-26.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -409,7 +397,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (27).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-27.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-27.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -421,7 +409,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (28).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-28.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-28.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -433,7 +421,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (29).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-29.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-29.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -445,7 +433,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-3.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-3.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -457,7 +445,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (30).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-30.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-30.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -469,7 +457,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (31).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-31.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-31.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -481,7 +469,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (32).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-32.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-32.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -493,7 +481,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (33).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-33.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-33.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -505,7 +493,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (34).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-34.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-34.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -517,7 +505,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (35).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-35.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-35.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -529,7 +517,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (36).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-36.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-36.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -541,7 +529,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (37).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-37.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-37.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -553,7 +541,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (38).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-38.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-38.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -565,7 +553,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (39).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-39.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-39.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -577,7 +565,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-4.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-4.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -589,7 +577,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (40).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-40.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-40.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -601,7 +589,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (41).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-41.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-41.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -613,7 +601,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (42).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-42.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-42.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -625,7 +613,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (43).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-43.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-43.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -637,7 +625,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (44).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-44.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-44.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -649,7 +637,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (45).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-45.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-45.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -661,7 +649,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (46).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-46.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-46.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -673,7 +661,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (47).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-47.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-47.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -685,7 +673,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-5.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-5.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -697,7 +685,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-6.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-6.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -709,7 +697,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-7.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-7.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -721,7 +709,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (8).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-8.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-8.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -733,7 +721,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/kniebund-lederhosen (9).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/kniebund-lederhosen-9.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/kniebund-lederhosen-9.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -745,7 +733,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-1.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-1.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -757,7 +745,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (10).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-10.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-10.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -769,7 +757,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (11).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-11.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-11.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -781,7 +769,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (12).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-12.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-12.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -793,7 +781,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (13).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-13.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-13.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -805,7 +793,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (14).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-14.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-14.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -817,7 +805,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (15).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-15.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-15.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -829,7 +817,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (16).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-16.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-16.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -841,7 +829,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (17).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-17.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-17.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -853,7 +841,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (18).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-18.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-18.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -865,7 +853,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (19).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-19.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-19.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -877,7 +865,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-2.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-2.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -889,7 +877,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (20).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-20.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-20.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -901,7 +889,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (21).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-21.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-21.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -913,7 +901,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (22).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-22.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-22.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -925,7 +913,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (23).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-23.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-23.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -937,7 +925,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (24).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-24.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-24.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -949,7 +937,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (25).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-25.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-25.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -961,7 +949,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (26).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-26.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-26.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -973,7 +961,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (27).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-27.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-27.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -985,7 +973,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (28).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-28.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-28.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -997,7 +985,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (29).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-29.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-29.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1009,7 +997,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-3.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-3.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1021,7 +1009,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (30).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-30.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-30.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1033,7 +1021,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (31).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-31.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-31.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1045,7 +1033,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (32).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-32.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-32.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1057,7 +1045,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (33).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-33.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-33.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1069,7 +1057,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (34).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-34.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-34.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1081,7 +1069,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (35).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-35.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-35.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1093,7 +1081,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (36).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-36.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-36.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1105,7 +1093,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (37).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-37.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-37.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1117,7 +1105,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (38).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-38.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-38.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1129,7 +1117,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (39).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-39.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-39.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1141,7 +1129,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-4.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-4.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1153,7 +1141,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (40).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-40.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-40.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1165,7 +1153,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (41).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-41.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-41.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1177,7 +1165,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (42).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-42.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-42.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1189,7 +1177,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (43).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-43.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-43.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1201,7 +1189,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (44).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-44.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-44.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1213,7 +1201,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (45).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-45.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-45.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1225,7 +1213,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (46).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-46.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-46.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1237,7 +1225,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (47).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-47.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-47.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1249,7 +1237,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (48).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-48.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-48.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1261,7 +1249,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (49).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-49.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-49.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1273,7 +1261,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-5.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-5.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1285,7 +1273,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (50).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-50.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-50.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1297,7 +1285,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (51).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-51.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-51.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1309,7 +1297,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (52).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-52.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-52.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1321,7 +1309,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (53).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-53.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-53.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1333,7 +1321,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (54).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-54.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-54.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1345,7 +1333,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (55).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-55.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-55.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1357,7 +1345,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (56).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-56.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-56.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1369,7 +1357,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (57).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-57.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-57.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1381,7 +1369,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (58).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-58.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-58.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1393,7 +1381,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (59).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-59.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-59.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1405,7 +1393,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-6.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-6.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1417,7 +1405,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (60).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-60.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-60.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1429,7 +1417,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (61).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-61.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-61.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1441,7 +1429,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (62).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-62.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-62.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1453,7 +1441,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (63).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-63.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-63.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1465,7 +1453,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (64).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-64.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-64.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1477,7 +1465,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (65).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-65.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-65.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1489,7 +1477,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (66).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-66.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-66.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1501,7 +1489,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (67).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-67.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-67.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1513,7 +1501,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (68).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-68.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-68.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1525,7 +1513,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (69).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-69.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-69.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1537,7 +1525,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-7.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-7.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1549,7 +1537,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (70).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-70.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-70.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1561,7 +1549,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (71).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-71.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-71.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1573,7 +1561,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (72).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-72.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-72.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1585,7 +1573,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (73).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-73.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-73.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1597,7 +1585,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (74).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-74.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-74.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1609,7 +1597,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (75).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-75.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-75.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1621,7 +1609,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (76).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-76.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-76.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1633,7 +1621,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (77).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-77.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-77.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1645,7 +1633,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (78).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-78.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-78.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1657,7 +1645,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (79).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-79.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-79.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1669,7 +1657,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (8).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-8.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-8.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1681,7 +1669,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (80).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-80.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-80.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1693,7 +1681,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (81).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-81.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-81.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1705,7 +1693,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (82).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-82.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-82.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1717,7 +1705,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (83).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-83.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-83.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1729,7 +1717,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (84).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-84.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-84.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1741,7 +1729,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (85).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-85.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-85.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1753,7 +1741,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (86).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-86.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-86.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1765,7 +1753,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (87).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-87.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-87.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1777,7 +1765,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (88).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-88.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-88.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1789,7 +1777,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (89).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-89.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-89.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1801,7 +1789,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (9).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-9.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-9.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1813,7 +1801,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (90).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-90.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-90.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1825,7 +1813,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (91).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-91.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-91.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1837,7 +1825,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (92).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-92.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-92.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1849,7 +1837,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen (93).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen-93.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen-93.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1861,7 +1849,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/short-lederhosen.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/short-lederhosen.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/short-lederhosen.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1873,7 +1861,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/swimwear-bathes (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/swimwear-bathes-1.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/swimwear-bathes-1.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1885,7 +1873,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/swimwear-bathes (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/swimwear-bathes-2.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/swimwear-bathes-2.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1897,7 +1885,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/swimwear-bathes (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/swimwear-bathes-3.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/swimwear-bathes-3.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1909,7 +1897,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/swimwear-bathes (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/swimwear-bathes-4.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/swimwear-bathes-4.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1921,7 +1909,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/swimwear-bathes (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/swimwear-bathes-5.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/swimwear-bathes-5.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1933,7 +1921,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/swimwear-bathes (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/swimwear-bathes-6.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/swimwear-bathes-6.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1945,7 +1933,7 @@
     },
     {
       "source_path": "MEN'S/Lederhosen/swimwear-bathes.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-lederhosen/uncategorized/swimwear-bathes.webp",
+      "output_path": "/media/bavarian-drive/assets/men-lederhosen/traditional-lederhosen/swimwear-bathes.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -1957,5 +1945,6 @@
     }
   ],
   "rejected": [],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 161
 }

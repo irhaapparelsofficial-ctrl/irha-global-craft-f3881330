@@ -13,7 +13,7 @@
   "records": [
     {
       "source_path": "MEN'S/Leather Pants/01.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/01.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/01.webp",
       "group": "MEN'S",
       "width": 1200,
       "height": 1200,
@@ -25,7 +25,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/02.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/02.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/02.webp",
       "group": "MEN'S",
       "width": 1200,
       "height": 1200,
@@ -37,7 +37,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/03.jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/03.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/03.webp",
       "group": "MEN'S",
       "width": 1200,
       "height": 1200,
@@ -49,7 +49,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (0).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-0.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-0.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -61,7 +61,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (1).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-1.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-1.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -73,7 +73,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (10).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-10.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-10.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -85,7 +85,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (11).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-11.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-11.webp",
       "group": "MEN'S",
       "width": 1200,
       "height": 1200,
@@ -97,7 +97,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (2).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-2.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-2.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -109,7 +109,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (3).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-3.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-3.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -121,7 +121,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (4).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-4.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-4.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -133,7 +133,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (5).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-5.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-5.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -145,7 +145,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (6).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-6.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-6.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -157,7 +157,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (7).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-7.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-7.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -169,7 +169,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (8).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-8.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-8.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -181,7 +181,7 @@
     },
     {
       "source_path": "MEN'S/Leather Pants/long-leather-pants (9).jpg",
-      "output_path": "/media/bavarian-drive/assets/men-leather-pants/uncategorized/long-leather-pants-9.webp",
+      "output_path": "/media/bavarian-drive/assets/men-leather-pants/leather-trousers/long-leather-pants-9.webp",
       "group": "MEN'S",
       "width": 800,
       "height": 800,
@@ -193,5 +193,6 @@
     }
   ],
   "rejected": [],
-  "download_failures": []
+  "download_failures": [],
+  "finalized_record_count": 15
 }
