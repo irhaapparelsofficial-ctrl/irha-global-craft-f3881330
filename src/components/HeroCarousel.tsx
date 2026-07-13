@@ -9,12 +9,13 @@ import {
   type HeroCmsContent,
 } from "@/lib/cms";
 
-import bavarian from "@/assets/og/og-bavarian-hero.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
-import bavarianFb from "@/assets/og/og-bavarian-hero.jpg?w=1600&format=webp&quality=74";
 import sportswear from "@/assets/og/og-sportswear.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import sportswearFb from "@/assets/og/og-sportswear.jpg?w=1600&format=webp&quality=74";
 import leather from "@/assets/og/og-leather.jpg?w=1920;1280;800&format=webp&quality=72&as=srcset";
 import leatherFb from "@/assets/og/og-leather.jpg?w=1600&format=webp&quality=74";
+
+const BAVARIAN_PRODUCT_IMAGE =
+  "/product-media/distressed-brown-short-lederhosen/01-hero-front.webp";
 
 type Slide = {
   src: string;
@@ -26,25 +27,29 @@ type Slide = {
   subtitle: string;
   ctaLabel: string;
   ctaHref: string;
+  presentation?: "background" | "product-card";
 };
 
 const BASE_SLIDES: Slide[] = [
   {
-    src: bavarianFb,
-    srcSet: bavarian,
-    alt: "Bavarian lederhosen with decorative embroidery — Irha Apparels",
+    src: BAVARIAN_PRODUCT_IMAGE,
+    srcSet: BAVARIAN_PRODUCT_IMAGE,
+    alt: "Distressed brown short Lederhosen with suspenders — Irha Apparels",
+    presentation: "product-card",
     ...DEFAULT_HERO_CONTENT.slides[0],
   },
   {
     src: sportswearFb,
     srcSet: sportswear,
     alt: "Custom sportswear and streetwear apparel",
+    presentation: "background",
     ...DEFAULT_HERO_CONTENT.slides[1],
   },
   {
     src: leatherFb,
     srcSet: leather,
     alt: "Custom leather jacket production concept",
+    presentation: "background",
     ...DEFAULT_HERO_CONTENT.slides[2],
   },
 ];
@@ -97,7 +102,7 @@ export default function HeroCarousel() {
 
   return (
     <section
-      className="relative h-[70vh] min-h-[480px] md:min-h-[560px] w-full overflow-hidden bg-background"
+      className="relative h-[78vh] min-h-[700px] md:h-[70vh] md:min-h-[560px] w-full overflow-hidden bg-background"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={(event) => { touchStartX.current = event.touches[0].clientX; }}
@@ -114,6 +119,18 @@ export default function HeroCarousel() {
 
       {slides.map((slide, slideIndex) => {
         const shouldLoad = loaded.has(slideIndex);
+        const isProductCard = slide.presentation === "product-card";
+
+        if (isProductCard) {
+          return (
+            <div
+              key={`backdrop-${slide.src}`}
+              aria-hidden="true"
+              className={`absolute inset-0 bg-[radial-gradient(circle_at_78%_42%,hsl(var(--gold)/0.16),transparent_34%),linear-gradient(115deg,hsl(var(--background)),hsl(var(--card)))] transition-opacity duration-[1200ms] ease-in-out ${slideIndex === index ? "opacity-100" : "opacity-0"}`}
+            />
+          );
+        }
+
         return (
           <img
             key={slide.src}
@@ -130,34 +147,62 @@ export default function HeroCarousel() {
         );
       })}
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/76 via-black/48 to-black/16" />
 
-      {slides.map((slide, slideIndex) => (
-        <div
-          key={`content-${slideIndex}`}
-          className={`absolute inset-0 z-10 flex items-center transition-opacity duration-[1000ms] ${slideIndex === index ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-          aria-hidden={slideIndex !== index}
-        >
-          <div className="container-luxe">
-            <div className="max-w-2xl">
-              <div className="h-px w-16 bg-gold mb-6" />
-              <p className="mb-4 text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold">{slide.eyebrow}</p>
-              <h2 className="font-display text-white text-4xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
-                {slide.title} <span className="text-gold italic font-normal">— {slide.highlight}</span>
-              </h2>
-              <p className="mt-6 max-w-xl text-sm md:text-base text-white/80 leading-relaxed">{slide.subtitle}</p>
-              <Link
-                to={slide.ctaHref}
-                tabIndex={slideIndex === index ? 0 : -1}
-                className="group mt-9 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
-              >
-                {slide.ctaLabel}
-                <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </Link>
+      {slides.map((slide, slideIndex) => {
+        const isProductCard = slide.presentation === "product-card";
+
+        return (
+          <div
+            key={`content-${slideIndex}`}
+            className={`absolute inset-0 z-10 flex items-center transition-opacity duration-[1000ms] ${slideIndex === index ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            aria-hidden={slideIndex !== index}
+          >
+            <div className="container-luxe w-full">
+              <div className={isProductCard ? "grid grid-cols-1 items-center gap-8 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.78fr)] md:gap-12 lg:gap-16" : "max-w-2xl"}>
+                <div className="max-w-2xl">
+                  <div className="h-px w-16 bg-gold mb-6" />
+                  <p className="mb-4 text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] text-gold">{slide.eyebrow}</p>
+                  <h2 className="font-display text-white text-4xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
+                    {slide.title} <span className="text-gold italic font-normal">— {slide.highlight}</span>
+                  </h2>
+                  <p className="mt-6 max-w-xl text-sm md:text-base text-white/80 leading-relaxed">{slide.subtitle}</p>
+                  <Link
+                    to={slide.ctaHref}
+                    tabIndex={slideIndex === index ? 0 : -1}
+                    className="group mt-9 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
+                  >
+                    {slide.ctaLabel}
+                    <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                  </Link>
+                </div>
+
+                {isProductCard && (
+                  <div className="relative mx-auto w-full max-w-[280px] border border-gold/45 bg-black/45 p-2 shadow-[0_30px_80px_rgba(0,0,0,0.45)] md:max-w-[450px] md:p-3">
+                    <div className="relative aspect-square overflow-hidden bg-[#f4f0e7]">
+                      <img
+                        src={slide.src}
+                        srcSet={slide.srcSet}
+                        sizes="(min-width: 768px) 430px, 260px"
+                        alt={slide.alt}
+                        width={800}
+                        height={800}
+                        loading="eager"
+                        decoding="async"
+                        className="h-full w-full object-contain p-3 md:p-5"
+                      />
+                      <div className="absolute inset-x-3 bottom-3 border border-gold/35 bg-black/90 px-4 py-3 backdrop-blur-sm md:inset-x-4 md:bottom-4 md:px-5 md:py-4">
+                        <p className="text-[8px] uppercase tracking-[0.35em] text-gold md:text-[9px]">Featured Program</p>
+                        <p className="mt-1 font-display text-base text-white md:text-lg">Bavarian &amp; Trachten Wear</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       <button type="button" onClick={() => go(index - 1)} aria-label="Previous slide" className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/60 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
         <ChevronLeft size={18} />
