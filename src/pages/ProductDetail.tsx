@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import SEO from "@/components/SEO";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicProduct } from "@/hooks/usePublicCatalog";
 import { resolveGallery } from "@/lib/assetResolver";
 import { Bookmark, BookmarkCheck, ChevronRight, MessageCircle, Printer, Upload } from "lucide-react";
@@ -156,7 +157,7 @@ export default function ProductDetail() {
                 <div className="grid grid-cols-4 gap-3">
                   {gallery.map((image, index) => (
                     <button key={image} onClick={() => setActiveImg(index)} aria-label={`View ${product.name} image ${index + 1}`} className={`aspect-square overflow-hidden border ${index === activeImg ? "border-primary" : "border-border/60"}`}>
-                      <img src={image} alt="" loading="lazy" className="w-full h-full object-cover" />
+                      <ThumbnailImage src={image} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -254,7 +255,7 @@ export default function ProductDetail() {
                 {relatedProducts.map((relatedProduct) => (
                   <Link key={relatedProduct.id} to={`/products/${category.slug}/${relatedProduct.slug}`} className="group flex flex-col text-left">
                     <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
-                      <img src={relatedProduct.image_url ?? relatedProduct.gallery?.[0] ?? ""} alt={`${relatedProduct.name} wholesale manufacturing style`} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+                      <ThumbnailImage src={relatedProduct.image_url ?? relatedProduct.gallery?.[0] ?? ""} alt={`${relatedProduct.name} wholesale manufacturing style`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
                     </div>
                     <h3 className="font-display text-base leading-tight group-hover:text-primary transition-colors">{relatedProduct.name}</h3>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">MOQ confirmed after review</p>

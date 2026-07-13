@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
 import bavarianImage from "@/assets/og/og-bavarian-hero.jpg";
@@ -41,9 +42,6 @@ export default function FiveCategories() {
             <h2 className="font-display text-3xl md:text-5xl leading-[1.05]">
               Five categories, <span className="text-gold italic">one atelier</span>.
             </h2>
-            <p className="mt-5 text-sm md:text-base leading-relaxed text-foreground/70">
-              Each category now opens with real product media from the live buyer catalogue.
-            </p>
           </div>
           <Link
             to="/products"
@@ -55,44 +53,28 @@ export default function FiveCategories() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {cats.map((c) => {
-            const products = [...c.directProducts, ...c.subs.flatMap((sub) => sub.products)];
-            const productCount = products.length;
-            const featuredProduct = products.find(
-              (product) => product.is_published && Boolean(product.image_url || product.gallery?.[0]),
-            );
-            const productImage = featuredProduct?.image_url || featuredProduct?.gallery?.[0] || null;
-            const img = productImage
-              ? resolveAsset(productImage)
-              : CATEGORY_IMAGES[c.slug] ?? (c.image_url ? resolveAsset(c.image_url) : "/placeholder.svg");
-            const usesProductMedia = Boolean(productImage);
-
+            const productCount = c.subs.reduce((n, s) => n + s.products.length, 0) + c.directProducts.length;
+            const img = CATEGORY_IMAGES[c.slug] ?? (c.image_url ? resolveAsset(c.image_url) : "/placeholder.svg");
             return (
               <Link
                 key={c.slug}
                 to={`/products/${c.slug}`}
-                className="group relative aspect-[3/4] overflow-hidden bg-black border border-border/40 hover:border-gold/70 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(0,0,0,0.25)]"
+                className="group relative aspect-[3/4] overflow-hidden bg-black border border-border/40 hover:border-gold/70 transition-colors"
               >
-                <img
+                <ThumbnailImage
                   src={img}
-                  alt={featuredProduct ? `${featuredProduct.name} — ${c.name}` : c.name}
-                  loading="lazy"
-                  decoding="async"
-                  className={`absolute inset-0 w-full h-full transition-transform duration-[1200ms] group-hover:scale-[1.055] ${
-                    usesProductMedia ? "object-contain bg-[#f4f0e7] p-3 md:p-5" : "object-cover"
-                  }`}
+                  alt={c.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-[1.06]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
-                  <p className="mb-2 text-[8px] uppercase tracking-[0.23em] text-gold">
-                    {featuredProduct ? "Featured product" : "Manufacturing category"}
-                  </p>
                   <h3 className="font-display text-white text-base md:text-lg leading-tight">
                     {c.name}
                   </h3>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-white/60">
                     {productCount > 0 ? `${productCount} products` : "View Collection"}
                   </p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.28em] text-gold opacity-80 transition-opacity group-hover:opacity-100">
+                  <span className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.28em] text-gold opacity-0 group-hover:opacity-100 transition-opacity">
                     View Collection <ArrowUpRight size={12} />
                   </span>
                 </div>
