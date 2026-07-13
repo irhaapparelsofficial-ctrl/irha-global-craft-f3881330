@@ -1,5 +1,6 @@
 import { CalendarDays, CheckCircle2, Copy, Film, Linkedin, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import SocialRenderHealthPanel from "@/components/admin/SocialRenderHealthPanel";
 import SocialRenderPipelinePanel from "@/components/admin/SocialRenderPipelinePanel";
 
 const WEEK = [
@@ -110,6 +111,7 @@ export default function SocialContentPlaybook() {
         </div>
       </section>
 
+      <SocialRenderHealthPanel />
       <SocialRenderPipelinePanel />
 
       <section className="border border-border/60 bg-card/25 p-5 md:p-6">
