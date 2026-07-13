@@ -29,7 +29,7 @@ export default function StartProgramCTA() {
           <div className="flex flex-col gap-3 lg:col-span-4">
             <Link
               to="/inquiry?intent=rfq"
-              className="inline-flex min-h-13 items-center justify-center gap-3 bg-[#d1ad59] px-7 py-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#122033] transition-colors hover:bg-[#e0c275]"
+              className="inline-flex min-h-[52px] items-center justify-center gap-3 bg-[#d1ad59] px-7 py-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#122033] transition-colors hover:bg-[#e0c275]"
             >
               <FileText size={14} /> Request a quote <ArrowRight size={14} />
             </Link>
@@ -37,7 +37,7 @@ export default function StartProgramCTA() {
               href={whatsappLink("Hi, I'd like to discuss a B2B apparel manufacturing program.")}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-13 items-center justify-center gap-3 border border-white/25 px-7 py-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors hover:border-[#d9b765] hover:text-[#d9b765]"
+              className="inline-flex min-h-[52px] items-center justify-center gap-3 border border-white/25 px-7 py-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors hover:border-[#d9b765] hover:text-[#d9b765]"
             >
               <MessageCircle size={14} /> Discuss on WhatsApp
             </a>
