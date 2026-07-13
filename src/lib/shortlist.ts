@@ -34,15 +34,35 @@ function hasStoredSlug<T extends { slug: string }>(value: unknown): value is T {
   return typeof slug === "string" && slug.trim().length > 0;
 }
 
+export function sanitizeStoredList<T extends { slug: string }>(value: unknown): T[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is T => hasStoredSlug<T>(item))
+    .map(normalizeStoredImage);
+}
+
+export function addUniqueStoredItem<T extends { slug: string }>(currentValue: unknown, item: T, max: number): T[] {
+  if (!hasStoredSlug<T>(item) || max <= 0) return sanitizeStoredList<T>(currentValue).slice(0, Math.max(0, max));
+  const normalized = normalizeStoredImage(item);
+  const current = sanitizeStoredList<T>(currentValue).filter((stored) => stored.slug !== normalized.slug);
+  return [normalized, ...current].slice(0, max);
+}
+
+export function toggleStoredItem<T extends { slug: string }>(currentValue: unknown, item: T, max: number): T[] {
+  if (!hasStoredSlug<T>(item)) return sanitizeStoredList<T>(currentValue).slice(0, Math.max(0, max));
+  const normalized = normalizeStoredImage(item);
+  const current = sanitizeStoredList<T>(currentValue);
+  if (current.some((stored) => stored.slug === normalized.slug)) {
+    return current.filter((stored) => stored.slug !== normalized.slug);
+  }
+  return [normalized, ...current].slice(0, Math.max(0, max));
+}
+
 const read = <T extends { slug: string },>(key: string): T[] => {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((item): item is T => hasStoredSlug<T>(item))
-      .map(normalizeStoredImage);
+    return sanitizeStoredList<T>(JSON.parse(raw) as unknown);
   } catch {
     return [];
   }
@@ -82,13 +102,7 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
   }, [key]);
 
   const add = useCallback(
-    (item: T) => {
-      if (!hasStoredSlug<T>(item)) return;
-      const normalized = normalizeStoredImage(item);
-      const current = read<T>(key).filter((stored) => stored.slug !== normalized.slug);
-      current.unshift(normalized);
-      write(key, current.slice(0, max));
-    },
+    (item: T) => write(key, addUniqueStoredItem<T>(read<T>(key), item, max)),
     [key, max],
   );
 
@@ -104,17 +118,7 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
   const clear = useCallback(() => write(key, []), [key]);
   const has = useCallback((slug: string) => items.some((item) => item.slug === slug), [items]);
   const toggle = useCallback(
-    (item: T) => {
-      if (!hasStoredSlug<T>(item)) return;
-      const normalized = normalizeStoredImage(item);
-      const current = read<T>(key);
-      if (current.some((stored) => stored.slug === normalized.slug)) {
-        write(key, current.filter((stored) => stored.slug !== normalized.slug));
-      } else {
-        current.unshift(normalized);
-        write(key, current.slice(0, max));
-      }
-    },
+    (item: T) => write(key, toggleStoredItem<T>(read<T>(key), item, max)),
     [key, max],
   );
 
@@ -128,9 +132,10 @@ export const useCompare = () => useLocalList<ShortlistItem>(COMPARE_KEY, MAX_COM
 /** Add to recently viewed without a hook — safe to call from any effect. */
 export function pushRecentlyViewed(item: Omit<ShortlistItem, "addedAt">) {
   if (!hasStoredSlug<ShortlistItem>(item)) return;
-  const now = Date.now();
-  const normalized = normalizeStoredImage(item);
-  const current = read<ShortlistItem>(RECENT_KEY).filter((stored) => stored.slug !== normalized.slug);
-  current.unshift({ ...normalized, addedAt: now });
-  write(RECENT_KEY, current.slice(0, MAX_RECENT));
+  const next = addUniqueStoredItem<ShortlistItem>(
+    read<ShortlistItem>(RECENT_KEY),
+    { ...normalizeStoredImage(item), addedAt: Date.now() },
+    MAX_RECENT,
+  );
+  write(RECENT_KEY, next);
 }
