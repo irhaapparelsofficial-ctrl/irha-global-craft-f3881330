@@ -1,0 +1,26 @@
+{
+  "products": {
+    "black-scroll-embroidered-long-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=16itWsGceiMxYfxhWbnE-4--WNvXY7tOl","fallback":"https://drive.google.com/thumbnail?id=16itWsGceiMxYfxhWbnE-4--WNvXY7tOl&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=10cW_0L3bTXlrQ7vaiW7Gj2HraRo4nOmw","fallback":"https://drive.google.com/thumbnail?id=10cW_0L3bTXlrQ7vaiW7Gj2HraRo4nOmw&sz=w1600","file":"03-angle-back.webp"}
+    ],
+    "tan-minimal-embroidered-long-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1jwm193JZZ12xYP58dMQsMAEKAduj58X6","fallback":"https://drive.google.com/thumbnail?id=1jwm193JZZ12xYP58dMQsMAEKAduj58X6&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1sIX11Jkyek81u2XG4tlbEQLmk4DfgN_k","fallback":"https://drive.google.com/thumbnail?id=1sIX11Jkyek81u2XG4tlbEQLmk4DfgN_k&sz=w1600","file":"03-angle-back.webp"}
+    ],
+    "rustic-brown-button-fly-long-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1XkeRT7ti6tnglWDre-Y01tqHxVcEx3Ck","fallback":"https://drive.google.com/thumbnail?id=1XkeRT7ti6tnglWDre-Y01tqHxVcEx3Ck&sz=w1600","file":"01-hero-front.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1lJGYAizzoVcamgtikXe3HkWuAKapl1V1","fallback":"https://drive.google.com/thumbnail?id=1lJGYAizzoVcamgtikXe3HkWuAKapl1V1&sz=w1600","file":"03-angle-back.webp"},
+      {"source":"https://drive.google.com/uc?export=download&id=1pxzT66u4G4TcdDkzwFPkTDZKa5830qcT","fallback":"https://drive.google.com/thumbnail?id=1pxzT66u4G4TcdDkzwFPkTDZKa5830qcT&sz=w1600","file":"04-detail-side-embroidery.webp"}
+    ],
+    "dark-brown-floral-piped-long-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1S627WoAvt0oZaJH3IAAxOrbXTB8ynfBU","fallback":"https://drive.google.com/thumbnail?id=1S627WoAvt0oZaJH3IAAxOrbXTB8ynfBU&sz=w1600","file":"01-multi-angle-hero.webp"}
+    ],
+    "tan-side-embroidered-long-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1Uqbv6XjbA5OvPF8v3h4jqp0lJBdHPbCL","fallback":"https://drive.google.com/thumbnail?id=1Uqbv6XjbA5OvPF8v3h4jqp0lJBdHPbCL&sz=w1600","file":"01-multi-angle-hero.webp"}
+    ],
+    "black-gold-embroidered-long-lederhosen": [
+      {"source":"https://drive.google.com/uc?export=download&id=1pjsJSekTp_BLn4Qa-7U2iJVDrrkNt7yJ","fallback":"https://drive.google.com/thumbnail?id=1pjsJSekTp_BLn4Qa-7U2iJVDrrkNt7yJ&sz=w1600","file":"01-multi-angle-hero.webp"}
+    ]
+  }
+}
