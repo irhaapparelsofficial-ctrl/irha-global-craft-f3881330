@@ -39,13 +39,16 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          if ! npm run build > build.log 2>&1; then
-            echo "BUILD_FAILED_TAIL_START"
-            tail -n 120 build.log
-            echo "BUILD_FAILED_TAIL_END"
-            exit 1
-          fi
-          cat build.log
+          npm run build > build.log 2>&1
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Verify built release identity and canonical host
         shell: bash
