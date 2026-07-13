@@ -97,10 +97,11 @@ describe("daily owner command center", () => {
     expect(metrics.won).toBe(1);
   });
 
-  it("ranks owner-review quotation and overdue work", () => {
+  it("ranks overdue urgent work and preserves owner-review quotations", () => {
     const actions = buildOwnerActions({ buyers, tasks, meetings, samples, quotations, now });
-    expect(actions[0].kind).toBe("quotation");
-    expect(actions.some((action) => action.kind === "task")).toBe(true);
+    expect(actions[0].kind).toBe("task");
+    expect(actions[0].priority).toBe("urgent");
+    expect(actions.some((action) => action.kind === "quotation")).toBe(true);
     expect(actions.some((action) => action.kind === "meeting")).toBe(true);
   });
 
