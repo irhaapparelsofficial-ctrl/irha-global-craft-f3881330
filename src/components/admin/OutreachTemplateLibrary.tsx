@@ -1,6 +1,7 @@
 import { Copy, Mail, MessageCircle, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import GmailInboxPanel from "@/components/admin/GmailInboxPanel";
+import GmailBuyerLinkerPanel from "@/components/admin/GmailBuyerLinkerPanel";
 
 type Template = { title: string; channel: string; body: string };
 
@@ -125,6 +126,7 @@ export default function OutreachTemplateLibrary() {
   return (
     <>
       <GmailInboxPanel />
+      <div className="mt-6"><GmailBuyerLinkerPanel /></div>
 
       <div className="space-y-5 mt-6 mb-6">
         <section className="border border-gold/40 bg-card/25 p-5 md:p-6">
@@ -133,7 +135,7 @@ export default function OutreachTemplateLibrary() {
             <div>
               <p className="eyebrow mb-2">Buyer Outreach Library</p>
               <h2 className="font-display text-3xl">Truthful, personalized B2B messages</h2>
-              <p className="text-sm text-foreground/68 mt-3 max-w-4xl leading-relaxed">Use these drafts now. Replace every placeholder and verify the recipient before sending. The connected Gmail inbox appears above, while outbound delivery remains owner-approved.</p>
+              <p className="text-sm text-foreground/68 mt-3 max-w-4xl leading-relaxed">Use these drafts now. Replace every placeholder and verify the recipient before sending. The connected Gmail inbox and Buyer CRM linking appear above, while outbound delivery remains owner-approved.</p>
             </div>
           </div>
         </section>
