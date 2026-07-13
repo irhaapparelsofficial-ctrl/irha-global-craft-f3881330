@@ -43,8 +43,8 @@ export default function Home() {
       />
 
       <HeroCarousel />
-      <CapabilityStrip />
       <HomeCategoryUniverse />
+      <CapabilityStrip />
       <BuyerTrustSection />
       <HomeProductShowcase />
       <ProcessTimeline />

@@ -23,7 +23,7 @@ type ShowcaseProduct = {
   subcategoryName: string;
 };
 
-const AUTOPLAY_MS = 5400;
+const AUTOPLAY_MS = 3000;
 const MAX_PRODUCTS = 15;
 const CATEGORY_ORDER = [
   "bavarian-trachten-wear",
@@ -126,19 +126,46 @@ function useCardsPerView() {
 export default function HomeProductShowcase() {
   const { data: tree = [] } = usePublicCatalogTree();
   const products = useMemo(() => balancedProducts(tree), [tree]);
-  const cardsPerView = useCardsPerView();
-  const [index, setIndex] = useState(0);
+  const requestedCardsPerView = useCardsPerView();
+  const cardsPerView = Math.max(1, Math.min(requestedCardsPerView, products.length || 1));
+  const loopProducts = useMemo(
+    () => (products.length > 0 ? [...products, ...products.slice(0, cardsPerView)] : []),
+    [cardsPerView, products],
+  );
+  const [position, setPosition] = useState(0);
+  const [transitionEnabled, setTransitionEnabled] = useState(true);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
-  const go = useCallback(
-    (next: number) => {
-      if (products.length === 0) return;
-      setIndex(((next % products.length) + products.length) % products.length);
-    },
-    [products.length],
-  );
+  const enableTransitionNextFrame = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setTransitionEnabled(true));
+    });
+  }, []);
+
+  const goNext = useCallback(() => {
+    if (products.length < 2) return;
+    setTransitionEnabled(true);
+    setPosition((current) => current + 1);
+  }, [products.length]);
+
+  const goPrevious = useCallback(() => {
+    if (products.length < 2) return;
+    if (position === 0) {
+      setTransitionEnabled(false);
+      setPosition(products.length);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          setTransitionEnabled(true);
+          setPosition(products.length - 1);
+        });
+      });
+      return;
+    }
+    setTransitionEnabled(true);
+    setPosition((current) => Math.max(0, current - 1));
+  }, [position, products.length]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -150,43 +177,46 @@ export default function HomeProductShowcase() {
 
   useEffect(() => {
     if (products.length < 2 || paused || reducedMotion) return;
-    const timer = window.setInterval(() => {
-      setIndex((current) => (current + 1) % products.length);
-    }, AUTOPLAY_MS);
+    const timer = window.setInterval(goNext, AUTOPLAY_MS);
     return () => window.clearInterval(timer);
-  }, [paused, products.length, reducedMotion]);
+  }, [goNext, paused, products.length, reducedMotion]);
 
   useEffect(() => {
-    if (products.length === 0) setIndex(0);
-    else setIndex((current) => current % products.length);
-  }, [products.length]);
+    setTransitionEnabled(false);
+    setPosition(0);
+    enableTransitionNextFrame();
+  }, [cardsPerView, enableTransitionNextFrame, products.length]);
+
+  const handleTransitionEnd = () => {
+    if (position < products.length) return;
+    setTransitionEnabled(false);
+    setPosition(0);
+    enableTransitionNextFrame();
+  };
 
   if (products.length === 0) return null;
 
-  const visibleCount = Math.min(cardsPerView, products.length);
-  const visible = Array.from(
-    { length: visibleCount },
-    (_, offset) => products[(index + offset) % products.length],
-  );
+  const activeIndex = position % products.length;
+  const translatePercent = position * (100 / cardsPerView);
 
   return (
-    <section className="border-y border-border/60 bg-card/35 py-20 text-foreground md:py-24">
+    <section className="border-y border-border/60 bg-card/35 py-16 text-foreground md:py-20">
       <div className="container-luxe">
-        <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
             <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Selected manufacturing styles</p>
-            <h2 className="mt-4 font-display text-4xl leading-[1.04] md:text-5xl lg:text-6xl">
-              Representative products, arranged in a balanced category rotation.
+            <h2 className="mt-3 font-display text-4xl leading-[1.06] md:text-5xl">
+              Product programs moving through every core category.
             </h2>
-            <p className="mt-5 max-w-2xl text-sm leading-7 text-foreground/65 md:text-base">
-              The showcase moves through Bavarian wear, sportswear, leather, streetwear and leisure products instead of repeating one category. Open any style for buyer-ready details.
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-foreground/65 md:text-base">
+              Bavarian & Trachten Wear appears first, followed by sportswear, leather, streetwear and leisure products. The showcase advances smoothly every three seconds.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => go(index - 1)}
+              onClick={goPrevious}
               aria-label="Previous products"
               className="inline-flex h-11 w-11 items-center justify-center border border-border/70 bg-background text-foreground transition-colors hover:border-primary hover:text-primary"
             >
@@ -194,7 +224,7 @@ export default function HomeProductShowcase() {
             </button>
             <button
               type="button"
-              onClick={() => go(index + 1)}
+              onClick={goNext}
               aria-label="Next products"
               className="inline-flex h-11 w-11 items-center justify-center border border-border/70 bg-background text-foreground transition-colors hover:border-primary hover:text-primary"
             >
@@ -210,7 +240,7 @@ export default function HomeProductShowcase() {
         </div>
 
         <div
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          className="overflow-hidden"
           role="region"
           aria-roledescription="carousel"
           aria-label="Featured product programs"
@@ -226,54 +256,77 @@ export default function HomeProductShowcase() {
           onTouchEnd={(event) => {
             if (touchStartX.current == null) return;
             const delta = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
-            if (Math.abs(delta) > 42) go(index + (delta < 0 ? 1 : -1));
+            if (Math.abs(delta) > 42) {
+              if (delta < 0) goNext();
+              else goPrevious();
+            }
             touchStartX.current = null;
           }}
         >
-          {visible.map((product, cardIndex) => (
-            <Link
-              key={`${product.id}-${cardIndex}`}
-              to={`/products/${product.categorySlug}/${product.slug}`}
-              className="group overflow-hidden border border-border/70 bg-background transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:shadow-elegant"
-            >
-              <div className="relative aspect-[4/5] overflow-hidden bg-[#eee8dc]">
-                <ResilientImage
-                  sources={[product.image, product.originalImage, product.fallbackImage]}
-                  alt={`${product.name} by Irha Apparels`}
-                  loading={cardIndex === 0 ? "eager" : "lazy"}
-                  decoding="async"
-                  width={900}
-                  height={1125}
-                  className="h-full w-full object-contain p-6 transition-transform duration-700 group-hover:scale-[1.035] md:p-8"
-                />
-                <span className="absolute left-3 top-3 bg-black/85 px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-primary backdrop-blur-sm">
-                  {product.categoryName}
-                </span>
-              </div>
-              <div className="p-5 md:p-6">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  {product.subcategoryName}
-                </p>
-                <h3 className="mt-2 min-h-[3.25rem] font-display text-2xl leading-tight text-foreground transition-colors group-hover:text-primary">
-                  {product.name}
-                </h3>
-                <span className="mt-5 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary">
-                  View product <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
-                </span>
-              </div>
-            </Link>
-          ))}
+          <div
+            className={`-mx-2.5 flex will-change-transform ${
+              transitionEnabled && !reducedMotion
+                ? "transition-transform duration-700 ease-[cubic-bezier(0.22,0.61,0.36,1)]"
+                : ""
+            }`}
+            style={{ transform: `translate3d(-${translatePercent}%, 0, 0)` }}
+            onTransitionEnd={handleTransitionEnd}
+          >
+            {loopProducts.map((product, trackIndex) => {
+              const visible = trackIndex >= position && trackIndex < position + cardsPerView;
+              return (
+                <div
+                  key={`${product.id}-${trackIndex}`}
+                  className="shrink-0 px-2.5"
+                  style={{ flexBasis: `${100 / cardsPerView}%` }}
+                  aria-hidden={!visible}
+                >
+                  <Link
+                    to={`/products/${product.categorySlug}/${product.slug}`}
+                    tabIndex={visible ? 0 : -1}
+                    className="group block h-full overflow-hidden border border-border/70 bg-background transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:shadow-elegant"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden bg-[#eee8dc]">
+                      <ResilientImage
+                        sources={[product.image, product.originalImage, product.fallbackImage]}
+                        alt={`${product.name} by Irha Apparels`}
+                        loading={trackIndex < cardsPerView ? "eager" : "lazy"}
+                        decoding="async"
+                        width={900}
+                        height={1125}
+                        className="h-full w-full object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.035] md:p-8"
+                      />
+                      <span className="absolute left-3 top-3 bg-black/85 px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-primary backdrop-blur-sm">
+                        {product.categoryName}
+                      </span>
+                    </div>
+                    <div className="p-5 md:p-6">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {product.subcategoryName}
+                      </p>
+                      <h3 className="mt-2 min-h-[3.25rem] font-display text-2xl leading-tight text-foreground transition-colors group-hover:text-primary">
+                        {product.name}
+                      </h3>
+                      <span className="mt-5 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary">
+                        View product <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
+                      </span>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="mt-7 flex items-center gap-3">
           <div className="h-1 flex-1 overflow-hidden bg-foreground/12">
             <div
-              className="h-full bg-primary transition-all duration-500"
-              style={{ width: `${((index + 1) / products.length) * 100}%` }}
+              className="h-full bg-primary transition-[width] duration-700 ease-out"
+              style={{ width: `${((activeIndex + 1) / products.length) * 100}%` }}
             />
           </div>
           <span className="min-w-max text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            {String(index + 1).padStart(2, "0")} / {String(products.length).padStart(2, "0")}
+            {String(activeIndex + 1).padStart(2, "0")} / {String(products.length).padStart(2, "0")}
           </span>
         </div>
       </div>
