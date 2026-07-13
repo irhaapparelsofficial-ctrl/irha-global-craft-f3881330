@@ -31,6 +31,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: explicit-production-smoke
@@ -82,3 +83,24 @@ jobs:
           echo "This workflow is explicit and strict." >> "$GITHUB_STEP_SUMMARY"
           echo "It runs after manual dispatch or an approved [production-smoke] main commit marker." >> "$GITHUB_STEP_SUMMARY"
           echo "Normal pull requests remain gated by deterministic typecheck, tests and build—not by the live domain." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record result on activation board
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SMOKE_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          if [ "$SMOKE_STATUS" = "success" ]; then
+            heading="✅ Production Smoke passed"
+          else
+            heading="❌ Production Smoke failed"
+          fi
+
+          body=$(printf '%s\n\n- Workflow: Production Smoke\n- Status: `%s`\n- Commit: `%s`\n- Run: %s\n- Production: https://irhaapparels.com\n' \
+            "$heading" "$SMOKE_STATUS" "$COMMIT_SHA" "$RUN_URL")
+
+          gh issue comment 102 \
+            --repo "$GITHUB_REPOSITORY" \
+            --body "$body"
