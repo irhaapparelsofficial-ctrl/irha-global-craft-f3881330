@@ -1,0 +1,40 @@
+name: Diagnose Organized Media Typecheck
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Capture TypeScript diagnostics
+        id: typecheck
+        shell: bash
+        run: |
+          set +e
+          npx tsc --noEmit -p tsconfig.app.json > tsc-errors.txt 2>&1
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          cat tsc-errors.txt
+          exit 0
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: organized-media-tsc-diagnostics
+          path: tsc-errors.txt
+          if-no-files-found: error
+      - name: Fail when TypeScript failed
+        if: steps.typecheck.outputs.exit_code != '0'
+        run: exit 1
