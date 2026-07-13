@@ -35,6 +35,14 @@ function retireLegacyCatalogueFiles(): Plugin {
   };
 }
 
+function vendorChunk(id: string) {
+  if (!id.includes("node_modules")) return undefined;
+  if (/\/(react|react-dom|react-router-dom)\//.test(id)) return "react-vendor";
+  if (/\/(lucide-react|@radix-ui\/react-slot|@radix-ui\/react-dialog)\//.test(id)) return "ui-vendor";
+  if (/\/@tanstack\/(react-query|query-core)\//.test(id)) return "query-vendor";
+  return undefined;
+}
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -59,11 +67,7 @@ export default defineConfig(({ mode }) => ({
     minify: "esbuild",
     rollupOptions: {
       output: {
-        manualChunks: {
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          "ui-vendor": ["lucide-react", "@radix-ui/react-slot", "@radix-ui/react-dialog"],
-          "query-vendor": ["@tanstack/react-query"],
-        },
+        manualChunks: vendorChunk,
       },
     },
   },
