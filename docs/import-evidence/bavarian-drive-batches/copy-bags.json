@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:12:51+00:00",
+  "batch_slug": "copy-bags",
+  "label": "COPY/Bags",
+  "folder_url": "https://drive.google.com/drive/folders/15gNUJJJCdKHSIaooD2u57VQDhbO-ICiM",
+  "inventory_count": 15,
+  "downloaded_count": 15,
+  "download_failure_count": 0,
+  "image_candidate_count": 15,
+  "accepted_count": 14,
+  "rejected_count": 1,
+  "download_failures": []
+}

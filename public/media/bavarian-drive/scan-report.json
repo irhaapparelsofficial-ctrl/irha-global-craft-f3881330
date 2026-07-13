@@ -1,0 +1,527 @@
+{
+  "generated_at": "2026-07-13T15:36:41+00:00",
+  "batch_count": 29,
+  "inventory_count": 1516,
+  "downloaded_count": 1473,
+  "download_failure_count": 43,
+  "image_candidate_count": 1470,
+  "accepted_count": 1438,
+  "rejected_count": 32,
+  "cross_batch_duplicate_count": 2,
+  "reencoded_count": 156,
+  "missing_asset_count": 0,
+  "uncategorized_path_count": 0,
+  "review_only_count": 266,
+  "larger_than_source_count": 0,
+  "materially_oversized_count": 0,
+  "mapped_product_count": 13,
+  "accepted_by_group": {
+    "BANNERS": 8,
+    "CHILDREN": 78,
+    "COPY": 738,
+    "Jackets": 9,
+    "Leather": 34,
+    "MEN'S": 290,
+    "Size Chart": 1,
+    "Sizing": 1,
+    "WOMEN'S": 279
+  },
+  "mapped_by_product": {
+    "bavarian-embroidered-vest": 29,
+    "bavarian-leather-belt": 23,
+    "bavarian-men-s-checkered-shirt": 107,
+    "children-s-dirndl": 4,
+    "children-s-lederhosen": 27,
+    "dirndl-blouse": 53,
+    "haferl-leather-shoes": 72,
+    "knee-high-bavarian-socks": 35,
+    "leather-gloves": 22,
+    "leather-trousers": 15,
+    "premium-leather-bag": 26,
+    "traditional-dirndl-dress": 139,
+    "traditional-lederhosen": 620
+  },
+  "batches": [
+    {
+      "batch_slug": "banners",
+      "label": "BANNERS",
+      "inventory_count": 8,
+      "downloaded_count": 8,
+      "download_failure_count": 0,
+      "image_candidate_count": 8,
+      "accepted_count": 8,
+      "rejected_count": 0,
+      "finalized_record_count": 8
+    },
+    {
+      "batch_slug": "children",
+      "label": "CHILDREN",
+      "inventory_count": 79,
+      "downloaded_count": 79,
+      "download_failure_count": 0,
+      "image_candidate_count": 79,
+      "accepted_count": 78,
+      "rejected_count": 1,
+      "finalized_record_count": 78
+    },
+    {
+      "batch_slug": "copy-bags",
+      "label": "COPY/Bags",
+      "inventory_count": 15,
+      "downloaded_count": 15,
+      "download_failure_count": 0,
+      "image_candidate_count": 15,
+      "accepted_count": 14,
+      "rejected_count": 1,
+      "finalized_record_count": 14
+    },
+    {
+      "batch_slug": "copy-belts",
+      "label": "COPY/Belts",
+      "inventory_count": 12,
+      "downloaded_count": 12,
+      "download_failure_count": 0,
+      "image_candidate_count": 12,
+      "accepted_count": 12,
+      "rejected_count": 0,
+      "finalized_record_count": 12
+    },
+    {
+      "batch_slug": "copy-dirndl",
+      "label": "COPY/Drindl",
+      "inventory_count": 96,
+      "downloaded_count": 96,
+      "download_failure_count": 0,
+      "image_candidate_count": 96,
+      "accepted_count": 94,
+      "rejected_count": 2,
+      "finalized_record_count": 94
+    },
+    {
+      "batch_slug": "copy-gloves",
+      "label": "COPY/Gloves",
+      "inventory_count": 22,
+      "downloaded_count": 22,
+      "download_failure_count": 0,
+      "image_candidate_count": 22,
+      "accepted_count": 22,
+      "rejected_count": 0,
+      "finalized_record_count": 22
+    },
+    {
+      "batch_slug": "copy-jackets",
+      "label": "COPY/Jackets",
+      "inventory_count": 43,
+      "downloaded_count": 43,
+      "download_failure_count": 0,
+      "image_candidate_count": 43,
+      "accepted_count": 42,
+      "rejected_count": 1,
+      "finalized_record_count": 42
+    },
+    {
+      "batch_slug": "copy-lederhosen",
+      "label": "COPY/Lederhosen",
+      "inventory_count": 411,
+      "downloaded_count": 411,
+      "download_failure_count": 0,
+      "image_candidate_count": 411,
+      "accepted_count": 404,
+      "rejected_count": 7,
+      "finalized_record_count": 404
+    },
+    {
+      "batch_slug": "copy-shirts",
+      "label": "COPY/Shirts",
+      "inventory_count": 93,
+      "downloaded_count": 93,
+      "download_failure_count": 0,
+      "image_candidate_count": 93,
+      "accepted_count": 85,
+      "rejected_count": 8,
+      "finalized_record_count": 84
+    },
+    {
+      "batch_slug": "copy-shoes",
+      "label": "COPY/Shoes",
+      "inventory_count": 41,
+      "downloaded_count": 41,
+      "download_failure_count": 0,
+      "image_candidate_count": 41,
+      "accepted_count": 40,
+      "rejected_count": 1,
+      "finalized_record_count": 40
+    },
+    {
+      "batch_slug": "copy-socks",
+      "label": "COPY/Socks",
+      "inventory_count": 74,
+      "downloaded_count": 32,
+      "download_failure_count": 42,
+      "image_candidate_count": 32,
+      "accepted_count": 26,
+      "rejected_count": 6,
+      "finalized_record_count": 26
+    },
+    {
+      "batch_slug": "jackets",
+      "label": "Jackets",
+      "inventory_count": 9,
+      "downloaded_count": 9,
+      "download_failure_count": 0,
+      "image_candidate_count": 9,
+      "accepted_count": 9,
+      "rejected_count": 0,
+      "finalized_record_count": 9
+    },
+    {
+      "batch_slug": "leather-process",
+      "label": "Leather",
+      "inventory_count": 34,
+      "downloaded_count": 34,
+      "download_failure_count": 0,
+      "image_candidate_count": 34,
+      "accepted_count": 34,
+      "rejected_count": 0,
+      "finalized_record_count": 34
+    },
+    {
+      "batch_slug": "men-accessories",
+      "label": "MEN'S/Accessories",
+      "inventory_count": 17,
+      "downloaded_count": 17,
+      "download_failure_count": 0,
+      "image_candidate_count": 17,
+      "accepted_count": 17,
+      "rejected_count": 0,
+      "finalized_record_count": 17
+    },
+    {
+      "batch_slug": "men-leather-pants",
+      "label": "MEN'S/Leather Pants",
+      "inventory_count": 15,
+      "downloaded_count": 15,
+      "download_failure_count": 0,
+      "image_candidate_count": 15,
+      "accepted_count": 15,
+      "rejected_count": 0,
+      "finalized_record_count": 15
+    },
+    {
+      "batch_slug": "men-lederhosen",
+      "label": "MEN'S/Lederhosen",
+      "inventory_count": 162,
+      "downloaded_count": 162,
+      "download_failure_count": 0,
+      "image_candidate_count": 162,
+      "accepted_count": 162,
+      "rejected_count": 0,
+      "finalized_record_count": 161
+    },
+    {
+      "batch_slug": "men-shirts",
+      "label": "MEN'S/Shirts",
+      "inventory_count": 36,
+      "downloaded_count": 36,
+      "download_failure_count": 0,
+      "image_candidate_count": 36,
+      "accepted_count": 36,
+      "rejected_count": 0,
+      "finalized_record_count": 36
+    },
+    {
+      "batch_slug": "men-shoes-socks",
+      "label": "MEN'S/Shoes, Socks",
+      "inventory_count": 32,
+      "downloaded_count": 32,
+      "download_failure_count": 0,
+      "image_candidate_count": 32,
+      "accepted_count": 32,
+      "rejected_count": 0,
+      "finalized_record_count": 32
+    },
+    {
+      "batch_slug": "men-waistcoats-jackets",
+      "label": "MEN'S/Waistcoats, Jackets",
+      "inventory_count": 29,
+      "downloaded_count": 29,
+      "download_failure_count": 0,
+      "image_candidate_count": 29,
+      "accepted_count": 29,
+      "rejected_count": 0,
+      "finalized_record_count": 29
+    },
+    {
+      "batch_slug": "size-chart",
+      "label": "Size Chart",
+      "inventory_count": 1,
+      "downloaded_count": 1,
+      "download_failure_count": 0,
+      "image_candidate_count": 1,
+      "accepted_count": 1,
+      "rejected_count": 0,
+      "finalized_record_count": 1
+    },
+    {
+      "batch_slug": "sizing",
+      "label": "Sizing",
+      "inventory_count": 4,
+      "downloaded_count": 4,
+      "download_failure_count": 0,
+      "image_candidate_count": 1,
+      "accepted_count": 1,
+      "rejected_count": 0,
+      "finalized_record_count": 1
+    },
+    {
+      "batch_slug": "women-accessories",
+      "label": "WOMEN'S/Accessories",
+      "inventory_count": 32,
+      "downloaded_count": 32,
+      "download_failure_count": 0,
+      "image_candidate_count": 32,
+      "accepted_count": 30,
+      "rejected_count": 2,
+      "finalized_record_count": 30
+    },
+    {
+      "batch_slug": "women-dirndl",
+      "label": "WOMEN'S/Dirndl",
+      "inventory_count": 45,
+      "downloaded_count": 45,
+      "download_failure_count": 0,
+      "image_candidate_count": 45,
+      "accepted_count": 45,
+      "rejected_count": 0,
+      "finalized_record_count": 45
+    },
+    {
+      "batch_slug": "women-dirndl-blouses",
+      "label": "WOMEN'S/Dirndl Blouses",
+      "inventory_count": 54,
+      "downloaded_count": 53,
+      "download_failure_count": 1,
+      "image_candidate_count": 53,
+      "accepted_count": 53,
+      "rejected_count": 0,
+      "finalized_record_count": 53
+    },
+    {
+      "batch_slug": "women-janker",
+      "label": "WOMEN'S/Janker",
+      "inventory_count": 34,
+      "downloaded_count": 34,
+      "download_failure_count": 0,
+      "image_candidate_count": 34,
+      "accepted_count": 34,
+      "rejected_count": 0,
+      "finalized_record_count": 34
+    },
+    {
+      "batch_slug": "women-lederhosen",
+      "label": "WOMEN'S/Lederhosen",
+      "inventory_count": 56,
+      "downloaded_count": 56,
+      "download_failure_count": 0,
+      "image_candidate_count": 56,
+      "accepted_count": 55,
+      "rejected_count": 1,
+      "finalized_record_count": 55
+    },
+    {
+      "batch_slug": "women-pents",
+      "label": "WOMEN'S/Pents",
+      "inventory_count": 6,
+      "downloaded_count": 6,
+      "download_failure_count": 0,
+      "image_candidate_count": 6,
+      "accepted_count": 6,
+      "rejected_count": 0,
+      "finalized_record_count": 6
+    },
+    {
+      "batch_slug": "women-shirts",
+      "label": "WOMEN'S/Shirts",
+      "inventory_count": 38,
+      "downloaded_count": 38,
+      "download_failure_count": 0,
+      "image_candidate_count": 38,
+      "accepted_count": 38,
+      "rejected_count": 0,
+      "finalized_record_count": 38
+    },
+    {
+      "batch_slug": "women-skirts",
+      "label": "WOMEN'S/Skirts",
+      "inventory_count": 18,
+      "downloaded_count": 18,
+      "download_failure_count": 0,
+      "image_candidate_count": 18,
+      "accepted_count": 18,
+      "rejected_count": 0,
+      "finalized_record_count": 18
+    }
+  ],
+  "rejected": [
+    {
+      "source_path": "CHILDREN/01-1200x1200 (3).jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "CHILDREN/01-1200x1200 (2).jpg"
+    },
+    {
+      "source_path": "COPY/Bags/29432914_1397750130329086_4346908474404241408_n.jpg",
+      "reason": "too small: 208x296",
+      "duplicate_of": null
+    },
+    {
+      "source_path": "COPY/Drindl/12734270_791919080912197_6921225449493782171_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Drindl/11051977_674851105952329_261254108859035918_n.jpg"
+    },
+    {
+      "source_path": "COPY/Drindl/14519889_778346165641940_76430391640058567_n.jpg",
+      "reason": "too small: 236x419",
+      "duplicate_of": null
+    },
+    {
+      "source_path": "COPY/Jackets/26168424_1040440846099136_3293300693455649844_n.jpg",
+      "reason": "too small: 236x338",
+      "duplicate_of": null
+    },
+    {
+      "source_path": "COPY/Lederhosen/13051574_828493423921429_2374561281018970873_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Lederhosen/12963766_822571491180289_5809950348446604351_n.jpg"
+    },
+    {
+      "source_path": "COPY/Lederhosen/14369857_771219583021265_6501977458131539249_n.jpg",
+      "reason": "too small: 183x275",
+      "duplicate_of": null
+    },
+    {
+      "source_path": "COPY/Lederhosen/37190766_117345359187801_536073443947315200_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Lederhosen/37190766_117345359187801_536073443947315200_n (1).jpg"
+    },
+    {
+      "source_path": "COPY/Lederhosen/37626301_126650644923939_2385211234589868032_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Lederhosen/37626301_126650644923939_2385211234589868032_n (1).jpg"
+    },
+    {
+      "source_path": "COPY/Lederhosen/37657474_127516371504033_793520058616774656_o.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Lederhosen/37657474_127516371504033_793520058616774656_o (1).jpg"
+    },
+    {
+      "source_path": "COPY/Lederhosen/74209193_108904437217574_5724640614666993664_n.jpg",
+      "reason": "too small: 259x194",
+      "duplicate_of": null
+    },
+    {
+      "source_path": "COPY/Lederhosen/75610713_1552610871548795_1698865638098862080_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Lederhosen/72633943_1521807891295760_6253815357589422080_n.jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/1602095_362447980565096_1625607675_o.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shirts/1602036_380218172121410_1421497973_o.jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/1900187_380218175454743_279706612_o.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shirts/1559359_362447987231762_1498107126_o.jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/1962162_380218045454756_364235821_o.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shirts/1239157_362447907231770_500461621_o.jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/67122963_1443068442503039_3415754938951663616_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shirts/67122963_1443068442503039_3415754938951663616_n (1).jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/72998656_1521802154629667_3970167678504534016_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shirts/72998656_1521802154629667_3970167678504534016_n (1).jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/73127684_1521802167962999_6955478370826059776_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shirts/73127684_1521802167962999_6955478370826059776_n (1).jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/73346537_1521802254629657_6720748714358472704_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shirts/73346537_1521802254629657_6720748714358472704_n (1).jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/74580887_1521802284629654_4921051189908340736_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shirts/74580887_1521802284629654_4921051189908340736_n (1).jpg"
+    },
+    {
+      "source_path": "COPY/Shirts/76636723_1548206145322601_5224307105418182656_n.jpg",
+      "reason": "exact pixel duplicate across Drive batches",
+      "duplicate_of": "COPY/Lederhosen/76636723_1548206145322601_5224307105418182656_n.jpg"
+    },
+    {
+      "source_path": "COPY/Shoes/25790737_1039864026156818_1050502486493813888_o.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Shoes/25790737_1039864026156818_1050502486493813888_o (1).jpg"
+    },
+    {
+      "source_path": "COPY/Socks/120882913_815850639163918_7179587951514467772_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/120780994_815851439163838_7229128529875952396_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/120909721_815851435830505_588353935057484812_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/120847257_815850632497252_3125046275162980614_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/123140325_837536026995379_4403413822882161599_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/121257989_820258278723154_1374575009597975690_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/123183464_837536160328699_4322978797010352991_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/121736258_824285948320387_4264831180757360182_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/123245869_837536093662039_6080531747269356439_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/121732531_824285941653721_7617086014852007348_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/123296207_837536163662032_4378976139615836153_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/121635550_824285951653720_7281817601593400174_n.jpg"
+    },
+    {
+      "source_path": "MEN'S/Lederhosen/242414334_2161330277343515_6287444099161689817_n.jpg",
+      "reason": "exact pixel duplicate across Drive batches",
+      "duplicate_of": "COPY/Lederhosen/242414334_2161330277343515_6287444099161689817_n.jpg"
+    },
+    {
+      "source_path": "WOMEN'S/Accessories/Bags/50679301_2512545648972562_6262545475618996224_n.jpg",
+      "reason": "too small: 232x217",
+      "duplicate_of": null
+    },
+    {
+      "source_path": "WOMEN'S/Accessories/Bags/51225907_2266953633577252_1639468198900269056_n.jpg",
+      "reason": "too small: 187x270",
+      "duplicate_of": null
+    },
+    {
+      "source_path": "WOMEN'S/Lederhosen/kniebund-lederhosen.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "WOMEN'S/Lederhosen/kniebund-lederhosen (8).jpg"
+    }
+  ]
+}

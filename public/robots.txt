@@ -1,3 +1,6 @@
+# Public B2B website: search and AI retrieval crawlers may access published pages.
+# Private admin/auth routes and retired catalogue files remain blocked.
+
 User-agent: Googlebot
 Allow: /
 Disallow: /admin
@@ -6,6 +9,55 @@ Disallow: /seo-indexing
 Disallow: /catalogs/
 
 User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /seo-indexing
+Disallow: /catalogs/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /seo-indexing
+Disallow: /catalogs/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /seo-indexing
+Disallow: /catalogs/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /seo-indexing
+Disallow: /catalogs/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /seo-indexing
+Disallow: /catalogs/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /seo-indexing
+Disallow: /catalogs/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /seo-indexing
+Disallow: /catalogs/
+
+User-agent: Applebot-Extended
 Allow: /
 Disallow: /admin
 Disallow: /auth

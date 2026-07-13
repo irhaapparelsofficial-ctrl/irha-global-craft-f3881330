@@ -1,0 +1,56 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: quality-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify deployment source lock
+        run: npm run verify:deployment-source
+
+      - name: Typecheck application
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+
+      - name: Generate build prerequisites
+        run: |
+          npx tsx scripts/generate-sitemap.ts
+          node scripts/normalize-public-origin.mjs
+
+      - name: Build production bundle
+        run: npx vite build
+
+      - name: Verify built crawler shell
+        run: node scripts/verify-built-crawler-shell.mjs
