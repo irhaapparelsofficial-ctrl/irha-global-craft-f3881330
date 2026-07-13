@@ -5,8 +5,10 @@ import { enrich, importVerified, review } from "./actions.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+  if (req.method !== "POST") return response({ error: "Method not allowed" }, 405);
   try {
     const url = Deno.env.get("SUPABASE_URL") || "", anon = Deno.env.get("SUPABASE_ANON_KEY") || "", service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    if (!url || !anon || !service) return response({ error: "Supabase runtime is not configured" }, 500);
     const auth = createClient(url, anon, { global: { headers: { Authorization: req.headers.get("Authorization") || "" } } });
     const { data } = await auth.auth.getUser(); if (!data.user) return response({ error: "Unauthorized" }, 401);
     const { data: role } = await auth.from("user_roles").select("role").eq("user_id", data.user.id).eq("role", "admin").maybeSingle(); if (!role) return response({ error: "Admin only" }, 403);
