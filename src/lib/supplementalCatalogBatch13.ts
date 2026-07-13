@@ -15,7 +15,7 @@ type ProductSeed = {
 
 const PRODUCTS: ProductSeed[] = [
   {
-    id: 146,
+    id: 148,
     slug: "white-drawstring-puff-sleeve-dirndl-blouse",
     name: "White Drawstring Puff-Sleeve Dirndl Blouse",
     visual: "clean white",
@@ -24,7 +24,7 @@ const PRODUCTS: ProductSeed[] = [
     image: "/media/bavarian-drive/assets/women-dirndl-blouses/dirndl-blouse/dirndl-blouses-white-1.webp",
   },
   {
-    id: 147,
+    id: 149,
     slug: "white-button-front-halter-dirndl-blouse",
     name: "White Button-Front Halter Dirndl Blouse",
     visual: "clean white",
@@ -33,7 +33,7 @@ const PRODUCTS: ProductSeed[] = [
     image: "/media/bavarian-drive/assets/women-dirndl-blouses/dirndl-blouse/dirndl-blouses-white-5.webp",
   },
   {
-    id: 148,
+    id: 150,
     slug: "white-elbow-sleeve-lace-trim-dirndl-blouse",
     name: "White Elbow-Sleeve Lace-Trim Dirndl Blouse",
     visual: "clean white",
@@ -42,7 +42,7 @@ const PRODUCTS: ProductSeed[] = [
     image: "/media/bavarian-drive/assets/women-dirndl-blouses/dirndl-blouse/dirndl-blouses-white-10.webp",
   },
   {
-    id: 149,
+    id: 151,
     slug: "black-long-sleeve-button-front-dirndl-blouse",
     name: "Black Long-Sleeve Button-Front Dirndl Blouse",
     visual: "solid black",
@@ -51,7 +51,7 @@ const PRODUCTS: ProductSeed[] = [
     image: "/media/bavarian-drive/assets/women-dirndl-blouses/dirndl-blouse/dirndl-blouses-black-1.webp",
   },
   {
-    id: 150,
+    id: 152,
     slug: "black-lace-cap-sleeve-dirndl-blouse",
     name: "Black Lace Cap-Sleeve Dirndl Blouse",
     visual: "solid black",
@@ -60,7 +60,7 @@ const PRODUCTS: ProductSeed[] = [
     image: "/media/bavarian-drive/assets/women-dirndl-blouses/dirndl-blouse/dirndl-blouses-black-6.webp",
   },
   {
-    id: 151,
+    id: 153,
     slug: "cream-floral-puff-sleeve-dirndl-blouse",
     name: "Cream Floral Puff-Sleeve Dirndl Blouse",
     visual: "warm cream",
@@ -88,12 +88,12 @@ function createProduct(product: ProductSeed, categoryId: string): DbProduct {
     details: [],
     material_specifications: null,
     seo_title: `${product.name} Manufacturer | Irha Apparels`,
-    seo_description: `${product.name} for wholesale, OEM and private-label Dirndl programs from Irha Apparels, a B2B apparel manufacturer in Sialkot, Pakistan.`,
+    seo_description: `${product.name} for wholesale, OEM and private-label Dirndl blouse programs from Irha Apparels, a B2B apparel manufacturer in Sialkot, Pakistan.`,
     sort_order: product.sort,
     is_published: true,
     sku: null,
     is_featured: false,
-    short_description: `${product.name} for wholesale, OEM, ODM and private-label Dirndl programs.`,
+    short_description: `${product.name} for wholesale, OEM, ODM and private-label Dirndl blouse programs.`,
     moq_display: null,
     moq_min: null,
     sample_available: null,
