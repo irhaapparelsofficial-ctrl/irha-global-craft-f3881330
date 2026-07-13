@@ -3,11 +3,7 @@ import { Archive, BadgeCheck, Check, Copy, FileImage, RefreshCw, Search, ShieldC
 import ThumbnailImage from "@/components/ThumbnailImage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import {
-  createBrowserThumbnail,
-  thumbnailObjectPath,
-  thumbnailUrl as deriveThumbnailUrl,
-} from "@/lib/imageThumbnails";
+import { createBrowserThumbnail, thumbnailObjectPath } from "@/lib/imageThumbnails";
 
 const db = supabase as any;
 const BUCKET = "site-media";
@@ -349,7 +345,7 @@ export default function MediaLibraryPanel() {
   const verifiedCount = rows.filter((asset) => asset.verification_status === "verified").length;
   const approvedCount = rows.filter((asset) => asset.social_approved).length;
   const imageCount = rows.filter((asset) => asset.mime_type.startsWith("image/")).length;
-  const thumbnailCount = rows.filter((asset) => asset.mime_type.startsWith("image/") && (asset.thumbnail_url || deriveThumbnailUrl(asset.public_url) !== asset.public_url)).length;
+  const thumbnailCount = rows.filter((asset) => asset.mime_type.startsWith("image/") && Boolean(asset.thumbnail_url)).length;
   const missingThumbnailCount = rows.filter((asset) => asset.mime_type.startsWith("image/") && !asset.thumbnail_url).length;
 
   return (
@@ -404,13 +400,13 @@ function AssetCard({ asset, copied, onCopy, onUpdate, onDelete }: { asset: Media
   const ready = socialReady(asset);
   const previewSource = asset.thumbnail_url || asset.public_url;
   return <article className="border border-border/60 bg-card/25 overflow-hidden">
-    <div className="aspect-[16/10] bg-background/50 flex items-center justify-center overflow-hidden">{isImage ? <ThumbnailImage src={previewSource} alt={asset.alt_text || ""} className="w-full h-full object-cover" /> : isVideo ? <video src={asset.public_url} className="w-full h-full object-cover" preload="metadata" muted /> : <FileImage size={34} className="text-gold" />}</div>
+    <div className="aspect-[16/10] bg-background/50 flex items-center justify-center overflow-hidden">{isImage ? <ThumbnailImage src={previewSource} originalSrc={asset.public_url} alt={asset.alt_text || ""} className="w-full h-full object-cover" /> : isVideo ? <video src={asset.public_url} className="w-full h-full object-cover" preload="metadata" muted /> : <FileImage size={34} className="text-gold" />}</div>
     <div className="p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0"><p className="text-sm truncate" title={asset.file_name}>{asset.file_name}</p><p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground mt-1">{formatBytes(asset.size_bytes)} · {asset.mime_type} · {asset.status}</p></div>
         {asset.social_approved ? <BadgeCheck size={18} className="text-gold shrink-0" aria-label="Approved for social" /> : isVideo ? <Video size={18} className="text-muted-foreground shrink-0" /> : null}
       </div>
-      {isImage && <div className={`border px-3 py-2 text-[10px] uppercase tracking-[0.12em] ${asset.thumbnail_url ? "border-sky-500/35 text-sky-300" : "border-amber-500/35 text-amber-300"}`}>{asset.thumbnail_url ? `thumbnail ready${asset.thumbnail_width_px && asset.thumbnail_height_px ? ` · ${asset.thumbnail_width_px}×${asset.thumbnail_height_px}` : ""}` : "thumbnail derived / metadata pending"}</div>}
+      {isImage && <div className={`border px-3 py-2 text-[10px] uppercase tracking-[0.12em] ${asset.thumbnail_url ? "border-sky-500/35 text-sky-300" : "border-amber-500/35 text-amber-300"}`}>{asset.thumbnail_url ? `thumbnail ready${asset.thumbnail_width_px && asset.thumbnail_height_px ? ` · ${asset.thumbnail_width_px}×${asset.thumbnail_height_px}` : ""}` : "thumbnail missing / backfill required"}</div>}
       <div className={`border px-3 py-2 text-[10px] uppercase tracking-[0.12em] ${asset.verification_status === "verified" ? "border-emerald-500/35 text-emerald-300" : asset.verification_status === "rejected" ? "border-red-500/35 text-red-300" : "border-amber-500/35 text-amber-300"}`}>
         {asset.verification_status || "pending"}{asset.width_px && asset.height_px ? ` · ${asset.width_px}×${asset.height_px}` : ""}{asset.duration_ms ? ` · ${(asset.duration_ms / 1000).toFixed(1)}s` : ""}
       </div>
