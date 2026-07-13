@@ -4,6 +4,7 @@ import path from "node:path";
 
 const page = fs.readFileSync(path.resolve(process.cwd(), "src/pages/AdminLeadIntake.tsx"), "utf8");
 const backend = fs.readFileSync(path.resolve(process.cwd(), "supabase/functions/lead-bulk-stage/index.ts"), "utf8");
+const app = fs.readFileSync(path.resolve(process.cwd(), "src/App.tsx"), "utf8");
 
 describe("bulk lead intake safety", () => {
   it("requires owner authentication and admin authorization", () => {
@@ -11,6 +12,11 @@ describe("bulk lead intake safety", () => {
     expect(page).toContain("if (!isAdmin)");
     expect(backend).toContain("auth.auth.getUser()");
     expect(backend).toContain('.eq("role", "admin")');
+  });
+
+  it("registers the private route outside the public site layout", () => {
+    expect(app).toContain('const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"))');
+    expect(app).toContain('<Route path="/admin/lead-intake" element={<AdminLeadIntake />} />');
   });
 
   it("uses restartable small chunks and never sends outreach", () => {
