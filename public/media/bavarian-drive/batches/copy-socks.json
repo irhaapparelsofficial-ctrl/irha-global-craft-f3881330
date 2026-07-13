@@ -1,0 +1,571 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:25:17+00:00",
+  "batch_slug": "copy-socks",
+  "label": "COPY/Socks",
+  "folder_url": "https://drive.google.com/drive/folders/1i-3faSTSV4Lfrt9_VhF3PGowIAUJNCjI",
+  "inventory_count": 74,
+  "downloaded_count": 32,
+  "download_failure_count": 42,
+  "image_candidate_count": 32,
+  "accepted_count": 26,
+  "rejected_count": 6,
+  "records": [
+    {
+      "source_path": "COPY/Socks/02.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/02.webp",
+      "group": "COPY",
+      "width": 713,
+      "height": 1280,
+      "original_bytes": 96265,
+      "optimized_bytes": 88410,
+      "quality_score": 6.6807,
+      "pixel_sha256": "319c5f2fcf2f63d2fe3d67b0d16dd69cb828f64688cda30d7976050e7dd4ed3b",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/03.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/03.webp",
+      "group": "COPY",
+      "width": 891,
+      "height": 679,
+      "original_bytes": 164749,
+      "optimized_bytes": 97878,
+      "quality_score": 5.9464,
+      "pixel_sha256": "53e19f824f37cdd43ee2b04b8ada01ef2f83b55f0aa0141561720243361278b5",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/10003363_377762509033643_2080911983_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/10003363-377762509033643-2080911983-n.webp",
+      "group": "COPY",
+      "width": 276,
+      "height": 506,
+      "original_bytes": 17704,
+      "optimized_bytes": 19900,
+      "quality_score": 4.3172,
+      "pixel_sha256": "5b3cb321e4c0c153013378432074cb333f0232d446356d6af3e52140fefd7ffb",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120064325_807308470018135_705294304912367655_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120064325-807308470018135-705294304912367655-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 150366,
+      "optimized_bytes": 60784,
+      "quality_score": 5.4871,
+      "pixel_sha256": "1c19d1009c50c7a28f4faa3aaa96521efdac2b494598a47b542f2135c64adba1",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120089823_807308500018132_1586509942449093533_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120089823-807308500018132-1586509942449093533-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 176253,
+      "optimized_bytes": 86842,
+      "quality_score": 6.1275,
+      "pixel_sha256": "9e13da4162767a52f10877f866c523ccbd24b583dca9601851c197ba6e39da68",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120132500_807308546684794_2952306858032106913_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120132500-807308546684794-2952306858032106913-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 233952,
+      "optimized_bytes": 143314,
+      "quality_score": 6.9577,
+      "pixel_sha256": "41ab35e9ebf84346ea3771c0eeaa1165d20c3c8629ef1bcddb4fdc66920978ac",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120132787_807308593351456_1682847605440275160_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120132787-807308593351456-1682847605440275160-n.webp",
+      "group": "COPY",
+      "width": 960,
+      "height": 720,
+      "original_bytes": 214953,
+      "optimized_bytes": 123362,
+      "quality_score": 6.9454,
+      "pixel_sha256": "3d845203051482284a9f279fb9898d98147e7688475a8ab6d9cc11555d5ede25",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120765396_815851222497193_4635344571565828200_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120765396-815851222497193-4635344571565828200-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 65284,
+      "optimized_bytes": 80520,
+      "quality_score": 6.7729,
+      "pixel_sha256": "9b488390db3385c7fa8c208f304edb5d29e2eb986cc4d72cbde229d5e53e8d27",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120766896_815851342497181_5025062246658762174_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120766896-815851342497181-5025062246658762174-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 82114,
+      "optimized_bytes": 110892,
+      "quality_score": 6.8061,
+      "pixel_sha256": "9656fde07971bc972db762ce28fd8ff23c09e222e6017be926a71a037921eac3",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120771172_815851335830515_2427083288582096236_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120771172-815851335830515-2427083288582096236-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 65526,
+      "optimized_bytes": 80826,
+      "quality_score": 6.7735,
+      "pixel_sha256": "8f0e104f383f62146a1e86d2a79485f6aed55de82f8b09c54c2bc8048cb86e7f",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120771172_815851442497171_5779300409909724825_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120771172-815851442497171-5779300409909724825-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 88832,
+      "optimized_bytes": 115378,
+      "quality_score": 6.3281,
+      "pixel_sha256": "f80e1b28a3f21efc85055bf6bb9c95cef5858387c3d0ff7819686a4a5e01ab98",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120780994_815851439163838_7229128529875952396_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120780994-815851439163838-7229128529875952396-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 108546,
+      "optimized_bytes": 139378,
+      "quality_score": 6.8465,
+      "pixel_sha256": "64716edcfaba3966cb738eadeb0c607eada35645bfa9c92f96afee33e162c59b",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120847257_815850632497252_3125046275162980614_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120847257-815850632497252-3125046275162980614-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 69412,
+      "optimized_bytes": 88546,
+      "quality_score": 6.7589,
+      "pixel_sha256": "d4d7ef39c7cdb8c141c915ad0f0b339ddb8279853daacc06f0671cf1a2c503f5",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120852681_815851462497169_220684982221980986_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120852681-815851462497169-220684982221980986-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 94399,
+      "optimized_bytes": 120270,
+      "quality_score": 6.8263,
+      "pixel_sha256": "6a9595dc40f9be1992c8e28176843b66a5f956743e1aa1911677b75235df00c9",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120871685_815851219163860_815514212726081942_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120871685-815851219163860-815514212726081942-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 66168,
+      "optimized_bytes": 82428,
+      "quality_score": 6.7749,
+      "pixel_sha256": "b570687047812a894533cabd834a31f12d98f157f4ae7c03ccc724647c3394a4",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120924086_815851225830526_3956043614617226539_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120924086-815851225830526-3956043614617226539-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 42394,
+      "optimized_bytes": 44270,
+      "quality_score": 5.7843,
+      "pixel_sha256": "fc3a66c4c86abf35db59947489b741d885afded0692441ed901234690a7f89f8",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120925103_815851332497182_3792687971532205684_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120925103-815851332497182-3792687971532205684-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 79129,
+      "optimized_bytes": 105506,
+      "quality_score": 6.8008,
+      "pixel_sha256": "2e554dac0e8eac6059031462b155f3f16869bf3f417bc00b9a27efe6d34a7f73",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120930779_815851339163848_7374588367081591686_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120930779-815851339163848-7374588367081591686-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 54971,
+      "optimized_bytes": 65714,
+      "quality_score": 6.5321,
+      "pixel_sha256": "aaa2e37b65f369ed9216156308a5bcc3f462afc39aec51af5d02136cdcafd2da",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120996574_815851452497170_3501060038617980289_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120996574-815851452497170-3501060038617980289-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 52014,
+      "optimized_bytes": 62318,
+      "quality_score": 6.0578,
+      "pixel_sha256": "1d25990531c1291e800a32cc947cb710efa76fecda2cb25abc9921680e75c953",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120996785_815851212497194_283414263128968353_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120996785-815851212497194-283414263128968353-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 66444,
+      "optimized_bytes": 81634,
+      "quality_score": 6.7755,
+      "pixel_sha256": "f902c48119855394d5e14a2fdf29d07899d8d1deca76128f3125f5deff4c7995",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/120996974_815851552497160_1348039569384915143_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/120996974-815851552497160-1348039569384915143-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 94570,
+      "optimized_bytes": 116666,
+      "quality_score": 6.8266,
+      "pixel_sha256": "244b229d3f744dfd5558556d803b6c127f886add08a2ad620049b3f0d71bc0ed",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/121257989_820258278723154_1374575009597975690_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/121257989-820258278723154-1374575009597975690-n.webp",
+      "group": "COPY",
+      "width": 960,
+      "height": 720,
+      "original_bytes": 56615,
+      "optimized_bytes": 56876,
+      "quality_score": 6.1731,
+      "pixel_sha256": "9f89712453c3f550c3d7dca9b34b2e364d441ae389266c843b0672dc5fd3ab91",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/121635550_824285951653720_7281817601593400174_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/121635550-824285951653720-7281817601593400174-n.webp",
+      "group": "COPY",
+      "width": 960,
+      "height": 720,
+      "original_bytes": 63099,
+      "optimized_bytes": 64956,
+      "quality_score": 6.3086,
+      "pixel_sha256": "0e76f2ec32510465715647f6c3a57b39296d5a1b6aaef6a749b7abddbfc6ce3b",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/121732531_824285941653721_7617086014852007348_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/121732531-824285941653721-7617086014852007348-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 63546,
+      "optimized_bytes": 64798,
+      "quality_score": 6.4078,
+      "pixel_sha256": "4bb490520374f4b82281349d683e079e2f0271e427ff0fddd33181f5173310c0",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/121736258_824285948320387_4264831180757360182_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/121736258-824285948320387-4264831180757360182-n.webp",
+      "group": "COPY",
+      "width": 960,
+      "height": 720,
+      "original_bytes": 54101,
+      "optimized_bytes": 55190,
+      "quality_score": 6.1506,
+      "pixel_sha256": "fd34fd3a7e0fd3277e874f543db1c742b3703d1b36332b0741eebce532082191",
+      "product_slug": "knee-high-bavarian-socks"
+    },
+    {
+      "source_path": "COPY/Socks/124985562_846976662717982_5633443951733663658_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/copy-socks/uncategorized/124985562-846976662717982-5633443951733663658-n.webp",
+      "group": "COPY",
+      "width": 720,
+      "height": 960,
+      "original_bytes": 83553,
+      "optimized_bytes": 107922,
+      "quality_score": 6.8087,
+      "pixel_sha256": "abc3ad8d7076a29ddfbe6adcfd6bccc2719ff67498ca501b0adb1459ccc2770c",
+      "product_slug": "knee-high-bavarian-socks"
+    }
+  ],
+  "rejected": [
+    {
+      "source_path": "COPY/Socks/120882913_815850639163918_7179587951514467772_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/120780994_815851439163838_7229128529875952396_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/120909721_815851435830505_588353935057484812_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/120847257_815850632497252_3125046275162980614_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/123140325_837536026995379_4403413822882161599_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/121257989_820258278723154_1374575009597975690_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/123183464_837536160328699_4322978797010352991_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/121736258_824285948320387_4264831180757360182_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/123245869_837536093662039_6080531747269356439_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/121732531_824285941653721_7617086014852007348_n.jpg"
+    },
+    {
+      "source_path": "COPY/Socks/123296207_837536163662032_4378976139615836153_n.jpg",
+      "reason": "exact pixel duplicate",
+      "duplicate_of": "COPY/Socks/121635550_824285951653720_7281817601593400174_n.jpg"
+    }
+  ],
+  "download_failures": [
+    {
+      "file_id": "1bnEsxSL28wIUaB0QuCYFtf597NbI2V2L",
+      "source_path": "120852681_815850779163904_3911547370259624479_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1bnEsxSL28wIUaB0QuCYFtf597NbI2V2L\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1Xb0Wcy4p_Y3UKqEeYskdtp5hI3VNneXB",
+      "source_path": "120855487_815850789163903_6712557315150263226_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1Xb0Wcy4p_Y3UKqEeYskdtp5hI3VNneXB\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1s47wIqUVP8lpsLS5mMiJ8TSLyx9aDD7Y",
+      "source_path": "120871685_815851542497161_8031239438931659185_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1s47wIqUVP8lpsLS5mMiJ8TSLyx9aDD7Y\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1hfPk4jhBDWEm7oaCGF0iuc07GqLSHFut",
+      "source_path": "120895427_815851209163861_2604685283228383789_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1hfPk4jhBDWEm7oaCGF0iuc07GqLSHFut\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1FkYyRSYFQNbNKTjdUtNKbWf8ef-i4YxF",
+      "source_path": "121638154_824285944987054_1800728786880154101_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1FkYyRSYFQNbNKTjdUtNKbWf8ef-i4YxF\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1LzmcSBvjRN_eVJ-JhSNDk1OICS2sOtD2",
+      "source_path": "124810897_846976626051319_633282119855486604_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1LzmcSBvjRN_eVJ-JhSNDk1OICS2sOtD2\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1AXv1sk3aM5Lzvh6yh0fvl2z7MHlxeFqT",
+      "source_path": "124824847_846976279384687_5698337509032642157_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1AXv1sk3aM5Lzvh6yh0fvl2z7MHlxeFqT\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1bAgmRVtszvXepDrWGkM-UAjbhEHhvK_h",
+      "source_path": "124868286_846976456051336_2884132946995593780_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1bAgmRVtszvXepDrWGkM-UAjbhEHhvK_h\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1f44B2aAlwCtAUTSrdu66ucbxPmrvrDAT",
+      "source_path": "124886285_846976529384662_7323021114274724413_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1f44B2aAlwCtAUTSrdu66ucbxPmrvrDAT\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "13PyfZv2ThLR7YWcVQwl4zmVTe9CB55as",
+      "source_path": "125013291_846976239384691_2887690137321094367_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=13PyfZv2ThLR7YWcVQwl4zmVTe9CB55as\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1HJpI1fMt4NQBvGEVGo0o7rE1mMMbdAjn",
+      "source_path": "125030597_846976322718016_8310659583815680248_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1HJpI1fMt4NQBvGEVGo0o7rE1mMMbdAjn\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1RpgB6D5c_VcfPrVMv4QRfnAaL2k35dgi",
+      "source_path": "125037800_846976362718012_282988369857134754_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1RpgB6D5c_VcfPrVMv4QRfnAaL2k35dgi\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1oi1dCh-fJX1HoHSA9cgEIRZXn4YO1Tzn",
+      "source_path": "125057667_846976486051333_5323104679755779715_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1oi1dCh-fJX1HoHSA9cgEIRZXn4YO1Tzn\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1kD_w5M1ZNs7Nsh0t_pHilwAY00UOxKgG",
+      "source_path": "125139337_846976706051311_5156586582681760817_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1kD_w5M1ZNs7Nsh0t_pHilwAY00UOxKgG\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1grfRbYAeYuUhzgU0dChBabfMZEnUyVrk",
+      "source_path": "125317662_846976406051341_3809842405689711376_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1grfRbYAeYuUhzgU0dChBabfMZEnUyVrk\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "14MigaEfndfu_0FfvQ1SyizdCo2VocOcx",
+      "source_path": "125338932_846976592717989_908608090198320567_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=14MigaEfndfu_0FfvQ1SyizdCo2VocOcx\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1BSta6MpmcbqL4PJVE_UZvFdBKF2Q2Hya",
+      "source_path": "12747937_792507840853321_96971261684952253_o.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1BSta6MpmcbqL4PJVE_UZvFdBKF2Q2Hya\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1XUQn7hPFk2vIif0fIXQKc-HigDGgDrcG",
+      "source_path": "300504071_1264732270942417_571384902264982840_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1XUQn7hPFk2vIif0fIXQKc-HigDGgDrcG\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1X2bH6aUmWCtT1FOieNjoZVdN3U1A4ijN",
+      "source_path": "473182362_1829711604444478_1178549430401519926_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1X2bH6aUmWCtT1FOieNjoZVdN3U1A4ijN\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1FT127ug9TV3-uww-vxuOj7sWiP8IxxjB",
+      "source_path": "474005255_1835402180542087_102656980243090440_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1FT127ug9TV3-uww-vxuOj7sWiP8IxxjB\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1Y9JaaI9Run2QmscrKQuRy-P_E5HtM3-9",
+      "source_path": "474075338_1835402307208741_4733537528968140806_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1Y9JaaI9Run2QmscrKQuRy-P_E5HtM3-9\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1PXgyEVX6aAIIL4CGufQJJ3inlcAMahCh",
+      "source_path": "474082707_1835402313875407_7744793280231176844_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1PXgyEVX6aAIIL4CGufQJJ3inlcAMahCh\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1dd9Zbop_vu9vt2EgjA0xjRfO6PtFsZs3",
+      "source_path": "474085487_1835402157208756_8774906337103212858_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1dd9Zbop_vu9vt2EgjA0xjRfO6PtFsZs3\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1_imzWjuBaVg-PUcISJEmyOkWsIxXlGrx",
+      "source_path": "474103906_1835402350542070_9001160947089711794_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1_imzWjuBaVg-PUcISJEmyOkWsIxXlGrx\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "17_MwH5fZHQBF_nprX1b7TXwrU-tU9Ep6",
+      "source_path": "474116306_1835402320542073_1835972224040316659_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=17_MwH5fZHQBF_nprX1b7TXwrU-tU9Ep6\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1du35cCc36cqJcat5bDpBTMOrZ90UmTvp",
+      "source_path": "474187605_1835402163875422_8777449793838558726_n.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1du35cCc36cqJcat5bDpBTMOrZ90UmTvp\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "18eMueW5C2KNEkLPwUUJsc8n6VrW9qX3P",
+      "source_path": "4fcb225c-0a21-4158-be92-4a2efd601314.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=18eMueW5C2KNEkLPwUUJsc8n6VrW9qX3P\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1TBUoeS1W_fDIa9eCDxRsNnRPF5IvdI7y",
+      "source_path": "Black.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1TBUoeS1W_fDIa9eCDxRsNnRPF5IvdI7y\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1gd076pi5lBFizgk_biNwhYIOLZm2qBbJ",
+      "source_path": "Green.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1gd076pi5lBFizgk_biNwhYIOLZm2qBbJ\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1gf4USvZlH6_QulaR4mOYvlixleOTTVHo",
+      "source_path": "Grey.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1gf4USvZlH6_QulaR4mOYvlixleOTTVHo\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "17ONTQCN4BVtNEfd5I0cZGqG3g8mzpcum",
+      "source_path": "Red, Black.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=17ONTQCN4BVtNEfd5I0cZGqG3g8mzpcum\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1CeYqrvFpiloX8hLiZiH5zQ-lkFemNhfR",
+      "source_path": "Red.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1CeYqrvFpiloX8hLiZiH5zQ-lkFemNhfR\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1M6VyZqzi6VoJlYXCACrUEafT5789cwvf",
+      "source_path": "White.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1M6VyZqzi6VoJlYXCACrUEafT5789cwvf\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1ldevGwIYBs9_YvbtFplMI_JS7g1LyB4F",
+      "source_path": "socks (10).jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1ldevGwIYBs9_YvbtFplMI_JS7g1LyB4F\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1vGhIfmGmylXu9KRw12DiQF1HPzDkarVR",
+      "source_path": "socks (11).jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1vGhIfmGmylXu9KRw12DiQF1HPzDkarVR\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1jHZuSNGFEtrbZaVleDCYNLM5fPvXFD4h",
+      "source_path": "socks (12).jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1jHZuSNGFEtrbZaVleDCYNLM5fPvXFD4h\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1Tl7J6mjLhV_0RhYRDRMsEyj8OpzFdt5U",
+      "source_path": "socks (13).jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1Tl7J6mjLhV_0RhYRDRMsEyj8OpzFdt5U\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1DYSFlzSfNU6i1UQyVOBmdMAY_xreivJ7",
+      "source_path": "socks (15).jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1DYSFlzSfNU6i1UQyVOBmdMAY_xreivJ7\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1UTONmKCV0l00aPppSaJjbz17zhb2r69D",
+      "source_path": "socks (16).jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1UTONmKCV0l00aPppSaJjbz17zhb2r69D\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "17gQnJvTlqpHJsyD9_btFL_iJMEhuIdOV",
+      "source_path": "socks (17).jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=17gQnJvTlqpHJsyD9_btFL_iJMEhuIdOV\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1wuVnTgOL3maAfZTxBGOPKTD9dZNDCvAu",
+      "source_path": "socks (9).jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1wuVnTgOL3maAfZTxBGOPKTD9dZNDCvAu\n\nbut Gdown can't. Please check connections and permissions."
+    },
+    {
+      "file_id": "1FkAMLbo33nQlIVJQLCuOA43w1Im4bup9",
+      "source_path": "socks.jpg",
+      "reason": "^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 70, in get_url_from_gdrive_confirmation\n    raise FileURLRetrievalError(\ngdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/gdown/download.py\", line 324, in download\n    raise FileURLRetrievalError(message)\ngdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:\n\n\tCannot retrieve the public link of the file. You may need to change\n\tthe permission to 'Anyone with the link', or have had many accesses.\n\tCheck FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.\n\nYou may still be able to access the file from the browser:\n\n\thttps://drive.google.com/uc?id=1FkAMLbo33nQlIVJQLCuOA43w1Im4bup9\n\nbut Gdown can't. Please check connections and permissions."
+    }
+  ]
+}
