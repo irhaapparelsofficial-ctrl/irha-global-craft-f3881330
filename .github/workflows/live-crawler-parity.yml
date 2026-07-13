@@ -1,0 +1,52 @@
+name: Live crawler parity
+
+run-name: Live crawler parity · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Canonical production URL to verify
+        required: true
+        default: https://irhaapparels.com
+        type: string
+      alias_url:
+        description: Public alias expected to resolve to the canonical origin
+        required: true
+        default: https://www.irhaapparels.com
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-crawler-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out verified main source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify live routes, redirects, crawler files and security fallbacks
+        env:
+          IRHA_BASE_URL: ${{ inputs.base_url }}
+          IRHA_ALIAS_URL: ${{ inputs.alias_url }}
+        run: node scripts/live-crawler-parity.mjs
+
+      - name: Record verification scope
+        if: always()
+        run: |
+          echo "This check retries transient DNS, CDN, HTTP 429 and HTTP 5xx failures." >> "$GITHUB_STEP_SUMMARY"
+          echo "It accepts either server redirects or the verified noindex static redirect documents used by the Lovable deployment." >> "$GITHUB_STEP_SUMMARY"
+          echo "It fails only when the final live response violates the published crawler contract." >> "$GITHUB_STEP_SUMMARY"
