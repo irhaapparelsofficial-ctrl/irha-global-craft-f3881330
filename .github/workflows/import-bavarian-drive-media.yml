@@ -1,32 +1,24 @@
 name: Import Bavarian Drive media
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - ".github/workflows/import-bavarian-drive-media.yml"
-      - "tools/import_bavarian_drive_media.py"
-      - "tools/import_bavarian_drive_batch.py"
-      - "tools/finalize_bavarian_drive_media.py"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: bavarian-drive-media-${{ github.event.pull_request.number || github.ref }}
+  group: bavarian-drive-media-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   import-media:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
       - name: Check out import branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -54,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          branch="${{ github.event.pull_request.head.ref || github.ref_name }}"
+          branch="${{ github.ref_name }}"
 
           run_batch() {
             local slug="$1"
@@ -120,7 +112,7 @@ jobs:
           git add -A -- public/media/bavarian-drive docs/import-evidence supabase/manual/20260713_bavarian_drive_media_import.sql
           if ! git diff --cached --quiet; then
             git commit -m "feat(media): finalize Bavarian Drive library and galleries [skip ci]"
-            git push origin "HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}"
+            git push origin "HEAD:${{ github.ref_name }}"
           fi
 
       - name: Verify complete import evidence
