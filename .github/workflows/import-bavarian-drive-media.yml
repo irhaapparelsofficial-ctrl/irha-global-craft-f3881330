@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: bavarian-drive-media-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   import-media:
@@ -36,8 +36,27 @@ jobs:
       - name: Install image importer dependencies
         run: python -m pip install --upgrade gdown Pillow
 
-      - name: Align importer with current gdown API
-        run: sed -i '/remaining_ok=True,/d' tools/import_bavarian_drive_media.py
+      - name: Align importer with current gdown API and Drive root
+        run: |
+          sed -i '/remaining_ok=True,/d' tools/import_bavarian_drive_media.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tools/import_bavarian_drive_media.py')
+          text = path.read_text()
+          marker = '''def normalized_text(path: str) -> str:\n    return re.sub(r"[^a-z0-9]+", " ", path.lower()).strip()\n'''
+          helper = marker + '''\n\ndef logical_relative_path(path: str) -> Path:\n    parts = list(Path(path).parts)\n    if parts and slugify(parts[0]) in {"bavarian-images", "bavarian-image"}:\n        parts = parts[1:]\n    return Path(*parts) if parts else Path(path)\n'''
+          if 'def logical_relative_path(' not in text:
+              text = text.replace(marker, helper)
+          text = text.replace(
+              '''    text = normalized_text(source_path)\n    parts = [part.lower() for part in Path(source_path).parts]\n''',
+              '''    logical = logical_relative_path(source_path)\n    text = normalized_text(logical.as_posix())\n    parts = [part.lower() for part in logical.parts]\n''',
+          )
+          text = text.replace(
+              '''        relative = source.relative_to(raw_root)\n        source_path = relative.as_posix()\n''',
+              '''        relative = logical_relative_path(source.relative_to(raw_root).as_posix())\n        source_path = relative.as_posix()\n''',
+          )
+          path.write_text(text)
+          PY
 
       - name: Validate importer syntax
         run: python -m py_compile tools/import_bavarian_drive_media.py tools/run_bavarian_drive_import.py
