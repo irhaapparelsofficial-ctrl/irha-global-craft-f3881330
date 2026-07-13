@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/verify-built-crawler-shell.mjs",
-    "build:dev": "vite build --mode development && node scripts/verify-built-crawler-shell.mjs",
+    "build": "vite build && npx tsx scripts/generate-static-route-shells.ts && node scripts/verify-built-crawler-shell.mjs",
+    "build:dev": "vite build --mode development && npx tsx scripts/generate-static-route-shells.ts && node scripts/verify-built-crawler-shell.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
