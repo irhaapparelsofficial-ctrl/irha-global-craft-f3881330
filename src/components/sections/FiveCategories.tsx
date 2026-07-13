@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
 import bavarianImage from "@/assets/og/og-bavarian-hero.jpg";
@@ -60,11 +61,9 @@ export default function FiveCategories() {
                 to={`/products/${c.slug}`}
                 className="group relative aspect-[3/4] overflow-hidden bg-black border border-border/40 hover:border-gold/70 transition-colors"
               >
-                <img
+                <ThumbnailImage
                   src={img}
                   alt={c.name}
-                  loading="lazy"
-                  decoding="async"
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-[1.06]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
