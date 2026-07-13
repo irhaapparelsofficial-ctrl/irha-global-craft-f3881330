@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t parts < <(find recovery-input -maxdepth 1 -name 'archive.part-*.b64' -print | sort)
-          test "${#parts[@]}" -eq 15
+          test "${#parts[@]}" -eq 57
           cat "${parts[@]}" | base64 --decode > /tmp/authenticated-recovery.tar.gz
           echo "fedacfc8c137c041eda44b5938228b699ceea4f2f231e900f1a15c4311a96396  /tmp/authenticated-recovery.tar.gz" | sha256sum -c -
           tar -tzf /tmp/authenticated-recovery.tar.gz | grep -q '^public/media/bavarian-drive/batches/authenticated-recovery.json$'
