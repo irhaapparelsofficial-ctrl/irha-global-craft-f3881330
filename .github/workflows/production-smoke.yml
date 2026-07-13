@@ -33,9 +33,12 @@ permissions:
   contents: read
   issues: write
 
+# Do not let unrelated main pushes cancel an explicit post-publish check.
+# Normal pushes create a skipped job because of the job-level condition below;
+# cancel-in-progress=false lets the active smoke finish deterministically.
 concurrency:
   group: explicit-production-smoke
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release || 'frontend-live-2026-07-13-r11' }}
@@ -92,11 +95,17 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
-          if [ "$SMOKE_STATUS" = "success" ]; then
-            heading="✅ Production Smoke passed"
-          else
-            heading="❌ Production Smoke failed"
-          fi
+          case "$SMOKE_STATUS" in
+            success)
+              heading="✅ Production Smoke passed"
+              ;;
+            cancelled)
+              heading="⚪ Production Smoke cancelled or replaced"
+              ;;
+            *)
+              heading="❌ Production Smoke failed"
+              ;;
+          esac
 
           body=$(printf '%s\n\n- Workflow: Production Smoke\n- Status: `%s`\n- Commit: `%s`\n- Run: %s\n- Production: https://irhaapparels.com\n' \
             "$heading" "$SMOKE_STATUS" "$COMMIT_SHA" "$RUN_URL")
