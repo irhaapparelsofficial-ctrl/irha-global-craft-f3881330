@@ -51,6 +51,11 @@ const queryClient = new QueryClient();
 
 const LEGACY_REDIRECTS = [
   ["/catalogs/master-catalogue-2026.pdf", "/catalogue"],
+  ["/privacy", "/privacy-policy"],
+  ["/privacy/", "/privacy-policy"],
+  ["/terms", "/terms-of-service"],
+  ["/terms/", "/terms-of-service"],
+  ["/terms-and-conditions", "/terms-of-service"],
   ["/buyer-trust-center", "/buyer-trust"],
   ["/buyer-trust-centre", "/buyer-trust"],
   ["/buyer-resources", "/resources"],
