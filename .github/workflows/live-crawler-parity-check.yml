@@ -11,57 +11,27 @@ jobs:
   verify-live:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-      CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
     steps:
-      - name: Check safe Cloudflare access and crawler response
+      - name: Compare route HTML across hosts
         shell: bash
         run: |
           set -u
-          token="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}"
-          zone_id="${CLOUDFLARE_ZONE_ID:-${CF_ZONE_ID:-}}"
-          echo "Cloudflare API token: $([ -n "$token" ] && echo configured || echo missing)"
-          echo "Cloudflare zone ID secret: $([ -n "$zone_id" ] && echo configured || echo missing)"
-          if [ -n "$token" ]; then
-            response=$(curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' 'https://api.cloudflare.com/client/v4/zones?name=irhaapparels.com')
-            success=$(printf '%s' "$response" | jq -r '.success // false')
-            discovered=$(printf '%s' "$response" | jq -r '.result[0].id // empty')
-            echo "Cloudflare zone lookup: $success"
-            if [ -n "$discovered" ]; then
-              zone_id="$discovered"
-              echo "Cloudflare zone discovered successfully"
-            else
-              printf '%s' "$response" | jq -r '.errors[]?.message // empty' | head -5
-            fi
-          fi
-          echo '--- DNS ---'
-          echo 'NS:'; dig +short NS irhaapparels.com || true
-          echo 'A apex:'; dig +short A irhaapparels.com || true
-          echo 'CNAME www:'; dig +short CNAME www.irhaapparels.com || true
-          echo '--- Live browser release ---'
-          browser_code=$(curl -sSL -A 'Mozilla/5.0' -D browser.headers -o browser.html -w '%{http_code}' 'https://irhaapparels.com/' || true)
-          echo "browser HTTP $browser_code"
-          grep -o '<title>[^<]*</title>' browser.html | head -1 || true
-          grep -o 'name="x-irha-release" content="[^"]*"' browser.html | head -1 || true
-          grep -o 'name="x-irha-project-id" content="[^"]*"' browser.html | head -1 || true
-          grep -o 'name="x-irha-supabase-project-id" content="[^"]*"' browser.html | head -1 || true
-          grep -iE '^(content-security-policy|permissions-policy|x-frame-options|x-content-type-options|referrer-policy):' browser.headers || true
-          echo '--- Product raw HTML by host ---'
+          path='/products/leisure-nightwear/plush-bathrobe-sleep-robe'
           for base in 'https://irhaapparels.com' 'https://irha-global-craft.lovable.app' 'https://id-preview--da72a40a-7df3-44c3-a72d-f180d9ffcd25.lovable.app'; do
-            product_code=$(curl -sSL -A 'Mozilla/5.0' -D host.headers -o product.html -w '%{http_code}' "$base/products/leisure-nightwear/plush-bathrobe-sleep-robe" || true)
-            title=$(grep -o '<title>[^<]*</title>' product.html | head -1 || true)
-            canonical=$(grep -o '<link rel="canonical" href="[^"]*"' product.html | head -1 || true)
-            marker=$(grep -o 'data-irha-route-shell="[^"]*"' product.html | head -1 || true)
-            loading=$(grep -o 'Loading product[^<]*' product.html | head -1 || true)
-            echo "$base => HTTP $product_code | $title | $canonical | $marker | $loading"
-            grep -iE '^(content-security-policy|permissions-policy|x-frame-options|x-content-type-options|referrer-policy):' host.headers || true
-          done
-          echo '--- User-agent responses (spoof tests only) ---'
-          for agent in 'OAI-SearchBot/1.0' 'ChatGPT-User/1.0' 'GPTBot/1.0' 'Googlebot/2.1 (+http://www.google.com/bot.html)'; do
-            code=$(curl -sSL -A "$agent" -o body.html -w '%{http_code}' 'https://irhaapparels.com/' || true)
+            code=$(curl -sSL -A 'Mozilla/5.0' -D headers.txt -o body.html -w '%{http_code}' "$base$path" || true)
             title=$(grep -o '<title>[^<]*</title>' body.html | head -1 || true)
-            echo "$agent => HTTP $code $title"
+            canonical=$(grep -o '<link rel="canonical" href="[^"]*"' body.html | head -1 || true)
+            marker=$(grep -o 'data-irha-route-shell="[^"]*"' body.html | head -1 || true)
+            loading=$(grep -o 'Loading product[^<]*' body.html | head -1 || true)
+            release=$(grep -o 'name="x-irha-release" content="[^"]*"' body.html | head -1 || true)
+            echo "HOST=$base"
+            echo "HTTP=$code"
+            echo "TITLE=$title"
+            echo "CANONICAL=$canonical"
+            echo "MARKER=$marker"
+            echo "LOADING=$loading"
+            echo "RELEASE=$release"
+            echo 'HEADERS:'
+            grep -iE '^(content-security-policy|permissions-policy|x-frame-options|x-content-type-options|referrer-policy):' headers.txt || true
+            echo '---'
           done
