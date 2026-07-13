@@ -146,13 +146,18 @@ export default function AIOutreachCenter({ card, allCards }: { card: SalesCard; 
               <p className="text-[10px] uppercase tracking-[0.18em] text-gold">AI Draft Assistant · Owner approval required</p>
               <h3 className="font-display text-2xl sm:text-3xl mt-1">Ready-to-review email and WhatsApp</h3>
               <p className="text-sm text-foreground/65 mt-2 max-w-3xl leading-relaxed">
-                Drafts use verified CRM fields and approved Irha positioning. Press OK for each channel, then open the prepared Gmail or WhatsApp composer. This version never presses Send automatically.
+                These instant drafts can be copied or opened in Gmail and WhatsApp. For real audited Gmail delivery, create approved campaign drafts in Email & Follow-ups, then use the Quick Email Queue one message at a time.
               </p>
             </div>
           </div>
-          <button type="button" onClick={regenerate} className="min-h-11 inline-flex items-center justify-center gap-2 border border-border/60 px-4 text-[10px] uppercase tracking-[0.16em] text-muted-foreground hover:border-gold hover:text-gold">
-            <RefreshCw size={13} /> Regenerate
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <a href="/admin/outreach-quick" className="min-h-11 inline-flex items-center justify-center gap-2 border border-gold/50 px-4 text-[10px] uppercase tracking-[0.16em] text-gold hover:bg-gold hover:text-background">
+              <ExternalLink size={13} /> Quick Email Queue
+            </a>
+            <button type="button" onClick={regenerate} className="min-h-11 inline-flex items-center justify-center gap-2 border border-border/60 px-4 text-[10px] uppercase tracking-[0.16em] text-muted-foreground hover:border-gold hover:text-gold">
+              <RefreshCw size={13} /> Regenerate
+            </button>
+          </div>
         </div>
       </div>
 
@@ -263,7 +268,7 @@ export default function AIOutreachCenter({ card, allCards }: { card: SalesCard; 
 
         <div className="flex items-start gap-3 border border-sky-500/30 bg-sky-500/[0.04] p-4 text-sm text-foreground/70">
           <ShieldCheck size={17} className="text-sky-300 shrink-0 mt-0.5" />
-          <p>OK status is stored privately in this browser for Phase 1. Editing or regenerating a message clears its approval. Automated queue sending, delivery tracking and official WhatsApp Business execution will be added only with backend idempotency, suppression and audit controls.</p>
+          <p>Instant draft OK status stays in this browser. Real Gmail sending uses the separate Quick Email Queue and the private outreach engine, which enforces owner approval, suppression checks, deterministic Message-ID recovery and audit records.</p>
         </div>
       </div>
     </section>
