@@ -14,9 +14,12 @@ describe("bulk lead intake safety", () => {
     expect(backend).toContain('.eq("role", "admin")');
   });
 
-  it("registers the private route outside the public site layout", () => {
+  it("registers the private route before the public wildcard layout", () => {
+    const route = '<Route path="/admin/lead-intake" element={<AdminLeadIntake />} />';
     expect(app).toContain('const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"))');
-    expect(app).toContain('<Route path="/admin/lead-intake" element={<AdminLeadIntake />} />');
+    expect(app).toContain(route);
+    expect(app.indexOf(route)).toBeGreaterThan(-1);
+    expect(app.indexOf(route)).toBeLessThan(app.indexOf('<Route\n                path="*"'));
   });
 
   it("uses restartable small chunks and never sends outreach", () => {
