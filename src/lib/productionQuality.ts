@@ -85,6 +85,7 @@ export function qualityGateReadiness(input: {
   const finalInspections = input.inspections.filter((inspection) => inspection.inspectionType === "final" || (input.jobType === "sample" && inspection.inspectionType === "sample"));
   const passedFinal = finalInspections.some((inspection) => ["passed", "conditional"].includes(inspection.status));
   const open = defectSummary(input.defects);
+  const buyerApprovalConfirmed = input.sampleDecision === "approved";
 
   if (!passedFinal) missing.push(input.jobType === "sample" ? "passed sample/final inspection" : "passed final inspection");
   if (open.critical > 0) blockers.push(`${open.critical} open critical defect(s)`);
@@ -96,7 +97,8 @@ export function qualityGateReadiness(input: {
     missing,
     blockers,
     openDefects: open,
-    buyerApprovalConfirmed: input.sampleDecision === "approved",
+    buyerApprovalConfirmed,
+    buyer_approval_confirmed: buyerApprovalConfirmed,
   };
 }
 
