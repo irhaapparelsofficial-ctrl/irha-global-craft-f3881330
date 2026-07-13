@@ -21,12 +21,18 @@ jobs:
           cache: npm
       - name: Prepare secure dependency versions
         run: |
-          npm pkg set 'dependencies.@lovable.dev/mcp-js=^0.21.0'
-          npm pkg set 'devDependencies.vite=8.1.4'
-          npm pkg set 'devDependencies.@vitejs/plugin-react-swc=4.3.1'
-          npm pkg set 'devDependencies.vite-imagetools=10.0.1'
-          npm pkg set 'devDependencies.vitest=4.1.10'
-          npm pkg set 'overrides.esbuild=0.28.1'
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+          pkg.dependencies['@lovable.dev/mcp-js'] = '^0.21.0';
+          pkg.devDependencies['vite'] = '8.1.4';
+          pkg.devDependencies['@vitejs/plugin-react-swc'] = '4.3.1';
+          pkg.devDependencies['vite-imagetools'] = '10.0.1';
+          pkg.devDependencies['vitest'] = '4.1.10';
+          pkg.overrides = { ...(pkg.overrides || {}), esbuild: '0.28.1' };
+          fs.writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
+          NODE
       - name: Generate secure lockfile
         id: lock
         continue-on-error: true
