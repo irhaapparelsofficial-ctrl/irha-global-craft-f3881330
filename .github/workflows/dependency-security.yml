@@ -17,9 +17,35 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
       - name: Audit all locked dependencies
-        run: npm audit --audit-level=low
+        shell: bash
+        run: |
+          set +e
+          npm audit --json > npm-audit.json
+          audit_exit=$?
+          set -e
+          node <<'NODE'
+          const fs = require('fs');
+          const audit = JSON.parse(fs.readFileSync('npm-audit.json', 'utf8'));
+          const vulnerabilities = audit.vulnerabilities || {};
+          const compact = Object.entries(vulnerabilities).map(([name, item]) => ({
+            name,
+            severity: item.severity,
+            direct: item.isDirect,
+            via: (item.via || []).map((entry) => typeof entry === 'string' ? entry : ({
+              title: entry.title,
+              severity: entry.severity,
+              range: entry.range,
+              url: entry.url,
+            })),
+            range: item.range,
+            fixAvailable: item.fixAvailable,
+          }));
+          console.log(JSON.stringify({ summary: audit.metadata?.vulnerabilities, vulnerabilities: compact }, null, 2));
+          if ((audit.metadata?.vulnerabilities?.total || 0) > 0) process.exit(1);
+          NODE
+          exit "$audit_exit"
