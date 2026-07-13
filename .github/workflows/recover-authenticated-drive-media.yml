@@ -36,17 +36,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find recovery-input -maxdepth 1 -name 'recovery.tar.gz.part-*.b64' | wc -l)" -eq 5
-          sha256sum -c <<'SUMS'
-          4a7a6f24a21b1c4504557d555c52e64cb4941b31f179b1b961a9770d1e8b34c4  recovery-input/recovery.tar.gz.part-00.b64
-          ce7a001047b4fdc6b4222a2ca21b958b42e1515b4cd39b23fddca56648976932  recovery-input/recovery.tar.gz.part-01.b64
-          e4b6a7fb4893aa84585b04d4bf792fbdde07cfc92a16809f0215d6e3426b1dea  recovery-input/recovery.tar.gz.part-02.b64
-          6e02cc48e7d4a12b6cd26a5024bfcfc7163bc3d8fa6dc701f77c59ba1a9cea06  recovery-input/recovery.tar.gz.part-03.b64
-          0b72af47ba38a73d4badb0eb0b68fae3927bd58a30a43b70baabe2963775a742  recovery-input/recovery.tar.gz.part-04.b64
-          SUMS
-          cat recovery-input/recovery.tar.gz.part-*.b64 | base64 --decode > /tmp/authenticated-recovery.tar.gz
-          echo "42edafaeff0073bd64b9e8986363dc2a8491b7f2d58ea52e3cf55a6d489b4044  /tmp/authenticated-recovery.tar.gz" | sha256sum -c -
+          mapfile -t parts < <(find recovery-input -maxdepth 1 -name 'archive.part-*.b64' -print | sort)
+          test "${#parts[@]}" -eq 15
+          cat "${parts[@]}" | base64 --decode > /tmp/authenticated-recovery.tar.gz
+          echo "fedacfc8c137c041eda44b5938228b699ceea4f2f231e900f1a15c4311a96396  /tmp/authenticated-recovery.tar.gz" | sha256sum -c -
           tar -tzf /tmp/authenticated-recovery.tar.gz | grep -q '^public/media/bavarian-drive/batches/authenticated-recovery.json$'
+          test "$(tar -tzf /tmp/authenticated-recovery.tar.gz | grep -c '\.webp$')" -eq 42
+          if tar -tzf /tmp/authenticated-recovery.tar.gz | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
+            echo "::error::Unsafe archive path detected"
+            exit 1
+          fi
           tar -xzf /tmp/authenticated-recovery.tar.gz
 
       - name: Clear recovered public-download failures
@@ -90,6 +89,7 @@ jobs:
 
           assert report['batch_count'] == 30, report
           assert report['inventory_count'] == 1516, report
+          assert report['downloaded_count'] == 1516, report
           assert report['download_failure_count'] == 0, report
           assert report['missing_asset_count'] == 0, report
           assert report['uncategorized_path_count'] == 0, report
