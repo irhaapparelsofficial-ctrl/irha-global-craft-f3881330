@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => ({
     retireLegacyCatalogueFiles(),
     react(),
     imagetools(),
-    mcpPlugin(),
+    mode === "development" && mcpPlugin(),
     mode === "development" && componentTagger(),
   ].filter(Boolean),
   resolve: {
