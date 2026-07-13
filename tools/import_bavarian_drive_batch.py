@@ -200,7 +200,11 @@ def main() -> int:
     )
 
     if inventory_count > 0 and len(downloaded) == 0:
-        return 4
+        print(
+            "IRHA_BATCH_EVIDENCE_ONLY "
+            f"slug={batch_slug} inventory={inventory_count} failed={len(download_failures)}",
+            file=sys.stderr,
+        )
     return 0
 
 
