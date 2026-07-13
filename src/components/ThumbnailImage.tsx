@@ -3,19 +3,22 @@ import { thumbnailUrl } from "@/lib/imageThumbnails";
 
 type ThumbnailImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src?: string | null;
+  originalSrc?: string | null;
   fallbackSrc?: string;
 };
 
 export default function ThumbnailImage({
   src,
+  originalSrc,
   fallbackSrc = "/placeholder.svg",
   onError,
   loading = "lazy",
   decoding = "async",
   ...props
 }: ThumbnailImageProps) {
-  const original = src || fallbackSrc;
-  const candidate = useMemo(() => thumbnailUrl(original) || original, [original]);
+  const original = originalSrc || src || fallbackSrc;
+  const requested = src || original;
+  const candidate = useMemo(() => thumbnailUrl(requested) || requested, [requested]);
   const [useOriginal, setUseOriginal] = useState(false);
 
   useEffect(() => setUseOriginal(false), [candidate, original]);
