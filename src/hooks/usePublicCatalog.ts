@@ -77,6 +77,14 @@ const BLOCKED_PUBLIC_TERMS = [
   "container load",
 ];
 
+const TOP_CONFIG = [
+  { slug: "bavarian-trachten-wear", name: "Bavarian Trachten Wear", short: "Lederhosen, Dirndls & Trachten", sources: ["bavarian"] },
+  { slug: "premium-leather-apparel", name: "Premium Leather Apparel", short: "Custom Leather Garments", sources: ["leatherwear"] },
+  { slug: "sportswear", name: "Sportswear", short: "Custom Teamwear & Performance Apparel", sources: ["sportswear"] },
+  { slug: "streetwear-activewear", name: "Streetwear & Activewear", short: "Private-Label Urban & Performance Apparel", sources: ["streetwear"] },
+  { slug: "leisure-nightwear", name: "Leisurewear & Nightwear", short: "Casual, Lounge & Sleepwear Programs", sources: ["leisurewear", "nightwear"] },
+] as const;
+
 function hasBlockedPublicTerm(value: string): boolean {
   const lower = value.toLowerCase();
   return BLOCKED_PUBLIC_TERMS.some((term) => lower.includes(term));
@@ -120,7 +128,7 @@ function legacyProductToDb(product: LegacyProduct, categoryId: string, sortOrder
     id: `local-product-${categoryId}-${productSlug}`,
     category_id: categoryId,
     slug: productSlug,
-    name: override?.name ?? product.name,
+    name: product.name,
     description: override?.description ?? product.description ?? null,
     image_url: gallery[0] ?? null,
     gallery,
@@ -300,99 +308,136 @@ function mergeRelease(release: CatalogRelease): PublicTopCategory[] {
         ...localTop,
         ...(topOverride || {}),
         parent_id: null,
-        subs: localTop.subs,
-        directProducts: localTop.directProducts,
+        subs: [],
+        directProducts: [],
       };
-      top.subs = localTop.subs
-        .filter((sub) => !hiddenCategories.has(sub.slug))
-        .map((localSub) => {
-          const subOverride = releasedSubs.find((category) => categoryMatches(localSub, category));
-          const categorySlug = subOverride?.slug ?? localSub.slug;
-          const parentSlug = topOverride?.slug ?? top.slug;
-          const products = localSub.products
-            .filter((product) => !hiddenProducts.has(`${categorySlug}:${product.slug}`))
-            .map((product) => ({ ...product }));
-          const seen = new Map(products.map((product, index) => [product.slug, index]));
-          for (const released of release.products.filter((product) => {
-            if (product.parent_slug && product.parent_slug !== parentSlug) return false;
-            return product.category_slug === categorySlug || product.category_slug === localSub.slug;
-          })) {
-            const safe = sanitizePublicProduct(released);
-            const existingIndex = seen.get(safe.slug);
-            if (existingIndex === undefined) {
-              products.push(safe);
-              seen.set(safe.slug, products.length - 1);
-            } else {
-              products[existingIndex] = { ...products[existingIndex], ...safe };
-            }
-          }
-          products.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-          return {
-            ...localSub,
-            ...(subOverride || {}),
-            parent_id: top.id,
-            products,
-          };
+
+      const topReleasedSubs = releasedSubs.filter((category) => category.parent_slug === top.slug);
+      const matchedReleasedIds = new Set<string>();
+
+      for (const localSub of localTop.subs) {
+        const releasedSub = topReleasedSubs.find((category) => categoryMatches(localSub, category));
+        if (releasedSub && hiddenCategories.has(releasedSub.slug)) continue;
+        if (releasedSub) matchedReleasedIds.add(releasedSub.id);
+
+        const categorySlug = releasedSub?.slug ?? localSub.slug;
+        const databaseProducts = release.products.filter((product) => product.category_slug === categorySlug);
+        const databaseBySlug = new Map(databaseProducts.map((product) => [product.slug, product]));
+        const products = localSub.products
+          .filter((product) => !hiddenProducts.has(`${categorySlug}:${product.slug}`))
+          .map((product) => {
+            const override = databaseBySlug.get(product.slug);
+            if (!override) return sanitizePublicProduct(product);
+            databaseBySlug.delete(product.slug);
+            return sanitizePublicProduct({ ...product, ...override });
+          });
+
+        for (const product of databaseBySlug.values()) {
+          products.push(sanitizePublicProduct(product));
+        }
+
+        products.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+        top.subs.push({
+          ...localSub,
+          ...(releasedSub || {}),
+          parent_id: top.id,
+          products,
         });
+      }
+
+      for (const releasedSub of topReleasedSubs) {
+        if (matchedReleasedIds.has(releasedSub.id) || hiddenCategories.has(releasedSub.slug)) continue;
+        const products = release.products
+          .filter((product) => product.category_slug === releasedSub.slug)
+          .map(sanitizePublicProduct)
+          .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+        top.subs.push({ ...releasedSub, parent_id: top.id, products });
+      }
+
+      top.directProducts = release.products
+        .filter((product) => product.category_slug === top.slug)
+        .map(sanitizePublicProduct)
+        .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+      top.subs.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
       return top;
-    });
+    })
+    .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
 }
 
-async function fetchRelease(): Promise<CatalogRelease | null> {
-  const { data, error } = await supabase.functions.invoke("public-catalog-release", {
-    body: { action: "tree" },
-  });
-  if (error) throw error;
-  return normalizeRelease(data);
+async function fetchTree(): Promise<PublicTopCategory[]> {
+  const db = supabase as any;
+  const { data, error } = await db.rpc("catalog_get_public_release");
+  if (error) return cloneLocalTree();
+  const release = normalizeRelease(data);
+  return release ? mergeRelease(release) : cloneLocalTree();
 }
 
-async function fetchReleasedProduct(categorySlug: string, productSlug: string): Promise<DbProduct | null> {
-  const { data, error } = await supabase.functions.invoke("public-catalog-release", {
-    body: { action: "product", categorySlug, productSlug },
-  });
-  if (error) throw error;
-  const product = data?.product;
-  return product && typeof product === "object" ? sanitizePublicProduct(product as DbProduct) : null;
-}
-
-export function usePublicCatalog() {
+export function usePublicCatalogTree() {
   return useQuery({
     queryKey: K.tree,
-    queryFn: async () => {
-      try {
-        const release = await fetchRelease();
-        return release ? mergeRelease(release) : cloneLocalTree();
-      } catch (error) {
-        console.warn("Public catalog release unavailable; using verified local fallback.", error);
-        return cloneLocalTree();
-      }
-    },
+    queryFn: fetchTree,
+    initialData: cloneLocalTree,
+    initialDataUpdatedAt: 0,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
   });
 }
 
-export function usePublicProduct(categorySlug: string, productSlug: string) {
-  return useQuery({
-    queryKey: K.product(categorySlug, productSlug),
-    queryFn: async () => {
-      try {
-        const released = await fetchReleasedProduct(categorySlug, productSlug);
-        if (released) return released;
-      } catch (error) {
-        console.warn("Public product release unavailable; using verified local fallback.", error);
-      }
+export function usePublicTopCategory(slug?: string) {
+  const query = usePublicCatalogTree();
+  const top = slug ? query.data?.find((category) => category.slug === slug) ?? null : null;
+  return { ...query, data: top };
+}
 
-      for (const top of LOCAL_TREE) {
-        for (const sub of top.subs) {
-          const product = sub.products.find((item) => item.slug === productSlug);
-          if (product && (sub.slug === categorySlug || top.slug === categorySlug)) return { ...product };
-        }
+export function usePublicProduct(categorySlug?: string, productSlug?: string) {
+  const localProduct = () => {
+    if (!categorySlug || !productSlug) return undefined;
+    const top = LOCAL_TREE.find((category) => category.slug === categorySlug) ?? null;
+    if (!top) return null;
+    const directProduct = top.directProducts.find((candidate) => candidate.slug === productSlug);
+    if (directProduct) return { product: directProduct, subCategory: null, topCategory: top };
+    for (const sub of top.subs) {
+      const product = sub.products.find((candidate) => candidate.slug === productSlug);
+      if (product) return { product, subCategory: sub, topCategory: top };
+    }
+    return null;
+  };
+
+  return useQuery({
+    queryKey: K.product(categorySlug ?? "", productSlug ?? ""),
+    enabled: Boolean(categorySlug && productSlug),
+    initialData: localProduct,
+    initialDataUpdatedAt: 0,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    queryFn: async () => {
+      const tree = await fetchTree();
+      const top = tree.find((category) => category.slug === categorySlug) ?? null;
+      if (!top) return null;
+      const directProduct = top.directProducts.find((candidate) => candidate.slug === productSlug);
+      if (directProduct) return { product: directProduct, subCategory: null, topCategory: top };
+      for (const sub of top.subs) {
+        const product = sub.products.find((candidate) => candidate.slug === productSlug);
+        if (product) return { product, subCategory: sub, topCategory: top };
       }
       return null;
     },
-    enabled: Boolean(categorySlug && productSlug),
-    staleTime: 60_000,
-    gcTime: 5 * 60_000,
   });
+}
+
+export function adaptDbProduct(product: DbProduct): LegacyProduct & { slug: string; id: string } {
+  const clean = sanitizePublicProduct(product);
+  const gallery = clean.gallery.length ? clean.gallery : clean.image_url ? [clean.image_url] : [];
+  const details: ProductDetailSpec[] = Array.isArray(clean.details) ? clean.details : [];
+  return {
+    id: clean.id,
+    slug: clean.slug,
+    name: clean.name,
+    image: clean.image_url ?? gallery[0] ?? "",
+    gallery,
+    description: clean.description ?? "",
+    specs: clean.specs ?? [],
+    details,
+  };
 }
