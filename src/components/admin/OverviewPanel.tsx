@@ -6,6 +6,7 @@ import OwnerOperationsCenter from "./OwnerOperationsCenter";
 import SalesActionCenter from "./SalesActionCenter";
 import AutomationControlCenter from "./AutomationControlCenter";
 import LeadWaveSummary from "./LeadWaveSummary";
+import GuidedBusinessActions from "./GuidedBusinessActions";
 
 type Counts = {
   products: number;
@@ -77,6 +78,8 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
 
   return (
     <div className="space-y-8">
+      <GuidedBusinessActions />
+
       <div className="flex flex-wrap gap-2">
         <QuickAction label="Sales Pipeline" icon={<ListChecks size={12} />} onClick={() => go("pipeline")} />
         <QuickAction label="Buyer Inbox" icon={<Users size={12} />} onClick={() => go("leads")} />
