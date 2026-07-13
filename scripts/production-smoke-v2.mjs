@@ -1,12 +1,12 @@
 import { readFile } from "node:fs/promises";
 
-const BASE = (process.env.IRHA_BASE_URL || "https://www.irhaapparels.com").replace(/\/$/, "");
+const BASE = (process.env.IRHA_BASE_URL || "https://irhaapparels.com").replace(/\/$/, "");
 const EXPECTED_RELEASE = process.env.IRHA_EXPECTED_RELEASE || "frontend-live-2026-07-13-r11";
 const EXPECTED_RELEASE_TEXT = process.env.IRHA_EXPECTED_RELEASE_TEXT || "IRHA_FRONTEND_LIVE_2026_07_13_R11";
 const EXPECTED_PROJECT_ID = process.env.IRHA_EXPECTED_PROJECT_ID || "da72a40a-7df3-44c3-a72d-f180d9ffcd25";
 const EXPECTED_SUPABASE_PROJECT_ID = process.env.IRHA_EXPECTED_SUPABASE_PROJECT_ID || "pvzjiozismyxqrzmtfbi";
 const EXPECTED_REPOSITORY = process.env.IRHA_EXPECTED_REPOSITORY || "irhaapparelsofficial-ctrl/irha-global-craft-f3881330";
-const EXPECTED_ORIGIN = (process.env.IRHA_EXPECTED_ORIGIN || "https://www.irhaapparels.com").replace(/\/$/, "");
+const EXPECTED_ORIGIN = (process.env.IRHA_EXPECTED_ORIGIN || "https://irhaapparels.com").replace(/\/$/, "");
 
 const forbidden = [
   "Since 2014",
