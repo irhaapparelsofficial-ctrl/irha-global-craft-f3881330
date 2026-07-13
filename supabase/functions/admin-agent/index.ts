@@ -43,6 +43,8 @@ type AgentOutput = {
   actions?: unknown;
 };
 
+type PlannerSource = "lovable_gateway" | "zero_credit_rules";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -100,46 +102,49 @@ Deno.serve(async (req) => {
       .single();
     if (runError || !run) throw new Error(runError?.message || "Could not create AI run");
 
+    let parsed: AgentOutput;
+    let plannerSource: PlannerSource = "zero_credit_rules";
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableKey) {
-      await service.from("ai_runs").update({ status: "failed", reply: "AI gateway is not configured." }).eq("id", run.id);
-      return json({ error: "AI gateway is not configured", run_id: run.id }, 500);
+
+    if (lovableKey) {
+      try {
+        const prompt = buildSystemPrompt(context);
+        const model = Deno.env.get("ADMIN_AGENT_MODEL") || "google/gemini-3-flash-preview";
+        const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Lovable-API-Key": lovableKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            temperature: 0.25,
+            response_format: { type: "json_object" },
+            messages: [
+              { role: "system", content: prompt },
+              { role: "user", content: command },
+            ],
+          }),
+        });
+
+        if (upstream.ok) {
+          const gatewayPayload = await upstream.json();
+          const rawContent = gatewayPayload?.choices?.[0]?.message?.content;
+          parsed = parseAgentOutput(rawContent);
+          plannerSource = "lovable_gateway";
+        } else {
+          const details = (await upstream.text()).slice(0, 800);
+          console.warn("admin-agent gateway unavailable; using zero-credit planner", upstream.status, details);
+          parsed = buildZeroCreditPlan(command);
+        }
+      } catch (error) {
+        console.warn("admin-agent gateway request failed; using zero-credit planner", error);
+        parsed = buildZeroCreditPlan(command);
+      }
+    } else {
+      parsed = buildZeroCreditPlan(command);
     }
 
-    const prompt = buildSystemPrompt(context);
-    const model = Deno.env.get("ADMIN_AGENT_MODEL") || "google/gemini-3-flash-preview";
-    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Lovable-API-Key": lovableKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.25,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: prompt },
-          { role: "user", content: command },
-        ],
-      }),
-    });
-
-    if (!upstream.ok) {
-      const details = (await upstream.text()).slice(0, 800);
-      await service.from("ai_runs").update({ status: "failed", reply: "AI service did not return a plan." }).eq("id", run.id);
-      console.error("admin-agent gateway error", upstream.status, details);
-      const message = upstream.status === 429
-        ? "AI rate limit reached. Try again shortly."
-        : upstream.status === 402
-          ? "AI credits are exhausted."
-          : "AI service error.";
-      return json({ error: message, run_id: run.id }, upstream.status === 429 || upstream.status === 402 ? upstream.status : 500);
-    }
-
-    const gatewayPayload = await upstream.json();
-    const rawContent = gatewayPayload?.choices?.[0]?.message?.content;
-    const parsed = parseAgentOutput(rawContent);
     const reply = typeof parsed.reply === "string" && parsed.reply.trim()
       ? parsed.reply.trim().slice(0, 12000)
       : "Plan prepared. Review the actions below.";
@@ -160,6 +165,7 @@ Deno.serve(async (req) => {
         requires_approval: requiresApproval,
         payload: {
           ...action.payload,
+          _planner_source: plannerSource,
           _rules_reference: rulesRef,
           _execution_guard: {
             external,
@@ -173,6 +179,7 @@ Deno.serve(async (req) => {
           : {
               kind: "draft_or_plan",
               external_execution: false,
+              planner_source: plannerSource,
               output: action.payload,
               rules_reference: rulesRef,
             },
@@ -202,6 +209,8 @@ Deno.serve(async (req) => {
         operate_downgraded: requestedMode === "operate" && effectiveMode === "plan",
         business_rules: rulesRef,
         business_rules_missing: rulesState.missing,
+        planner_source: plannerSource,
+        zero_credit_fallback_used: plannerSource === "zero_credit_rules",
         external_actions_require_approval: Array.from(EXTERNAL_ACTION_TYPES),
         external_execution_claimed: false,
       },
@@ -337,6 +346,226 @@ Keep actions focused: normally 1 to 6. If the command is only a question, action
 
 CURRENT BUSINESS SNAPSHOT:
 ${JSON.stringify(context)}`;
+}
+
+function buildZeroCreditPlan(command: string): AgentOutput {
+  const lower = command.toLowerCase();
+  const romanUrdu = /\b(mujhe|mera|meri|ham|hum|karo|karna|chahiye|banao|bhejo|leads|sab|kaam|buyer)\b/i.test(command);
+  const market = detectMarket(command);
+  const products = detectProducts(command);
+  const platforms = detectPlatforms(command);
+  const actions: ProposedAction[] = [];
+
+  if (/\b(lead|leads|prospect|prospects|buyer|buyers|importer|wholesaler|distributor|search|research)\b/i.test(command)) {
+    actions.push({
+      action_type: "lead_campaign_plan",
+      title: `${market} buyer research plan`,
+      description: "Creates a research brief only. Candidate discovery, verification and CRM import remain separate reviewed steps.",
+      risk_level: "low",
+      payload: {
+        market,
+        buyer_types: ["importers", "wholesalers", "private-label brands", "retail distributors"],
+        products,
+        target_count: extractSafeTarget(command),
+        sources: ["official company websites", "public business directories", "public trade and retail sources"],
+        outreach_languages: marketLanguages(market),
+        qualification_rules: [
+          "Evidence-backed company website or public business profile",
+          "Clear wholesale, retail, import, distribution or private-label fit",
+          "No duplicate domain or email",
+          "No outreach opt-out or suppression flag",
+        ],
+        follow_up_cadence: "Owner-reviewed first contact, then follow-up after 3 to 5 working days",
+        csv_columns: ["company_name", "website", "country", "city", "email", "phone", "whatsapp", "buyer_type", "product_fit", "source_url", "verification_score"],
+      },
+    });
+  }
+
+  if (/\b(outreach|email|emails|contact|meeting|meetings|appointment|appointments|follow[- ]?up|campaign)\b/i.test(command)) {
+    actions.push({
+      action_type: "outreach_campaign_plan",
+      title: `${market} outreach brief`,
+      description: "Prepares a campaign brief only. No Gmail message is created or sent without CRM selection and owner review.",
+      risk_level: "low",
+      payload: {
+        name: `${market} qualified buyer outreach`,
+        product_focus: products,
+        target_market: market,
+        objective: "Start qualified B2B conversations and book requirement or factory-view calls",
+        language_mode: "Use the buyer's market language where verified; otherwise professional English",
+        call_to_action: "Reply with your requirements or request a scheduled live factory video call.",
+        lead_selection_rules: [
+          "Verified business identity and source URL",
+          "Relevant buyer type and product fit",
+          "Valid contact channel",
+          "Exclude opt-outs, suppressed addresses and duplicates",
+        ],
+        max_initial_batch: 20,
+        follow_up_after_days: 3,
+        compliance_checks: [
+          "No invented price, MOQ or delivery commitment",
+          "No sending before owner review",
+          "Include unsubscribe handling for email campaigns",
+        ],
+      },
+    });
+  }
+
+  if (/\b(social|post|posts|caption|captions|reel|reels|carousel|instagram|facebook|linkedin|tiktok)\b/i.test(command)) {
+    const product = products[0] || "custom apparel manufacturing";
+    actions.push({
+      action_type: "social_content_pack",
+      title: `${product} B2B content pack`,
+      description: "Creates editable B2B draft copy only. It does not publish to any social platform.",
+      risk_level: "low",
+      payload: {
+        platforms,
+        product_name: product,
+        language: romanUrdu ? "English with owner notes in Roman Urdu" : "English",
+        captions: {
+          linkedin: `Private-label ${product} manufacturing for wholesalers, importers and established brands. Share your specification to begin a reviewed quotation process.`,
+          instagram: `Custom ${product} for B2B buyers — materials, branding, labels and packaging developed against an approved specification.`,
+          facebook: `Sourcing ${product} for wholesale or private label? Irha Apparels supports custom development in Sialkot, Pakistan.`,
+          tiktok: `B2B ${product} manufacturing: material, branding, stitching and packing details.`
+        },
+        hashtags: {
+          default: ["#B2BApparel", "#PrivateLabel", "#ApparelManufacturer", "#Sialkot", "#Wholesale"]
+        },
+        reel_script: "Show product overview, material close-up, stitching detail, branding options and a final B2B inquiry call-to-action. Do not show public pricing.",
+        carousel_outline: ["Product overview", "Material and construction", "Customization options", "Labels and packaging", "B2B inquiry call-to-action"],
+        cta: "Send your specification or request a live factory video call.",
+      },
+    });
+  }
+
+  if (/\b(seo|google|keyword|keywords|ranking|rankings|sitemap|hreflang|localization|localisation)\b/i.test(command)) {
+    actions.push({
+      action_type: "seo_localization_plan",
+      title: `${market} SEO localization plan`,
+      description: "Creates a review plan only. Pages remain draft/noindex until quality and native-language review are complete.",
+      risk_level: "low",
+      payload: {
+        languages: marketLanguages(market),
+        page_types: ["category", "capability", "country landing", "buyer guide"],
+        keyword_clusters: {
+          commercial: products.map((product) => `${product} manufacturer`),
+          buyer_intent: products.map((product) => `private label ${product} supplier`),
+        },
+        hreflang_strategy: "Publish hreflang only for fully translated, indexable locale pages with reciprocal references.",
+        sitemap_strategy: "Include only approved, published and indexable locale routes.",
+        quality_gates: ["Useful market-specific copy", "Native-language review", "No doorway-page duplication", "Canonical and hreflang validation", "No invented claims"],
+      },
+    });
+  }
+
+  if (/\b(reply|response|respond|answer|customer message|buyer message)\b/i.test(command)) {
+    actions.push({
+      action_type: "buyer_reply_draft",
+      title: "Buyer reply draft",
+      description: "Creates a safe draft only. Price, MOQ, payment and delivery commitments require owner confirmation.",
+      risk_level: "low",
+      payload: {
+        channel: "email or messaging",
+        language: romanUrdu ? "English" : "English",
+        subject: "Your custom manufacturing requirements",
+        body: "Thank you for contacting Irha Apparels. We are an experienced B2B manufacturer in Sialkot, Pakistan, and our website is newly built. Please share the product, quantity, material, branding, target market and delivery destination so we can review your requirements. A live factory view can also be arranged by video call. Final MOQ, pricing, payment terms and timeline will be confirmed after review.",
+      },
+    });
+  }
+
+  if (/\b(weekly|week|growth plan|daily plan|today|operations|priority|priorities)\b/i.test(command)) {
+    actions.push({
+      action_type: "weekly_growth_plan",
+      title: "Owner growth plan",
+      description: "Creates an internal plan. It does not send, publish or commit commercial terms.",
+      risk_level: "low",
+      payload: {
+        focus: `${market} qualified B2B demand for ${products.join(", ")}`,
+        days: [
+          { day: "Day 1", work: "Verify priority leads and remove duplicates" },
+          { day: "Day 2", work: "Prepare owner-reviewed outreach drafts" },
+          { day: "Day 3", work: "Prepare B2B social and SEO drafts" },
+          { day: "Day 4", work: "Follow up only with eligible contacts" },
+          { day: "Day 5", work: "Review replies, meetings and next actions" },
+        ],
+        targets: { verified_leads: 20, reviewed_outreach_drafts: 20, content_drafts: 3 },
+        dependencies: ["Verified contact evidence", "Owner approval for external sends", "Approved Business Rules"],
+      },
+    });
+  }
+
+  const reply = romanUrdu
+    ? actions.length
+      ? "Zero-credit planner ne safe drafts aur plans tayar kar diye hain. Koi email, post ya external listing send/publish nahi hui; owner approval ke baghair external action nahi hoga."
+      : "Zero-credit operations mode active hai. Apna command leads, outreach, social, SEO, buyer reply ya weekly plan ke hawalay se likhein; system paid AI credits ke baghair structured plan bana dega."
+    : actions.length
+      ? "The zero-credit planner prepared safe drafts and plans. No email, social post or external listing was sent or published; external actions remain owner-controlled."
+      : "Zero-credit operations mode is active. Ask for a lead, outreach, social, SEO, buyer-reply or weekly plan to create a structured draft without paid AI credits.";
+
+  return { reply, actions: actions.slice(0, 6) };
+}
+
+function detectMarket(command: string) {
+  const markets = [
+    "Azerbaijan", "Germany", "Austria", "Switzerland", "Netherlands", "United Kingdom",
+    "United States", "Canada", "Australia", "United Arab Emirates", "Spain", "France", "Italy",
+  ];
+  const aliases: Record<string, string> = {
+    baku: "Azerbaijan",
+    azeri: "Azerbaijan",
+    uk: "United Kingdom",
+    england: "United Kingdom",
+    usa: "United States",
+    america: "United States",
+    uae: "United Arab Emirates",
+    dubai: "United Arab Emirates",
+  };
+  const lower = command.toLowerCase();
+  for (const [alias, market] of Object.entries(aliases)) {
+    if (new RegExp(`\\b${alias}\\b`, "i").test(lower)) return market;
+  }
+  return markets.find((market) => lower.includes(market.toLowerCase())) || "Priority markets";
+}
+
+function detectProducts(command: string) {
+  const lower = command.toLowerCase();
+  const found: string[] = [];
+  const mappings: Array<[RegExp, string]> = [
+    [/\b(lederhosen|dirndl|trachten|bavarian|oktoberfest)\b/i, "Bavarian & Trachten wear"],
+    [/\b(sportswear|teamwear|football|soccer|basketball|tracksuit|rugby|cricket|hockey)\b/i, "custom sportswear & teamwear"],
+    [/\b(leather|biker jacket|bomber jacket|waistcoat)\b/i, "premium leather apparel"],
+    [/\b(streetwear|hoodie|sweatshirt|activewear)\b/i, "streetwear & activewear"],
+    [/\b(nightwear|sleepwear|leisurewear)\b/i, "leisurewear & nightwear"],
+  ];
+  for (const [pattern, label] of mappings) if (pattern.test(lower)) found.push(label);
+  return found.length ? found : ["custom apparel manufacturing"];
+}
+
+function detectPlatforms(command: string) {
+  const lower = command.toLowerCase();
+  const platforms = ["facebook", "instagram", "linkedin", "tiktok"].filter((platform) => lower.includes(platform));
+  return platforms.length ? platforms : ["instagram", "facebook", "linkedin"];
+}
+
+function marketLanguages(market: string) {
+  const languageMap: Record<string, string[]> = {
+    Azerbaijan: ["Azerbaijani", "English"],
+    Germany: ["German", "English"],
+    Austria: ["German", "English"],
+    Switzerland: ["German", "French", "English"],
+    Netherlands: ["Dutch", "English"],
+    Spain: ["Spanish", "English"],
+    France: ["French", "English"],
+    Italy: ["Italian", "English"],
+    "United Arab Emirates": ["Arabic", "English"],
+  };
+  return languageMap[market] || ["English"];
+}
+
+function extractSafeTarget(command: string) {
+  const matches = command.match(/\b(\d{1,5})\b/g) || [];
+  const requested = matches.map(Number).find((value) => value > 0);
+  return Math.max(1, Math.min(requested || 25, 100));
 }
 
 function parseAgentOutput(raw: unknown): AgentOutput {
