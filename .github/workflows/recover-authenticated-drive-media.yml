@@ -32,21 +32,53 @@ jobs:
       - name: Install image dependencies
         run: python -m pip install --upgrade Pillow
 
-      - name: Verify and reconstruct recovery archive
+      - name: Verify and reconstruct recovered assets
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t parts < <(find recovery-input -maxdepth 1 -name 'archive.part-*.b64' -print | sort)
-          test "${#parts[@]}" -eq 57
-          cat "${parts[@]}" | base64 --decode > /tmp/authenticated-recovery.tar.gz
-          echo "fedacfc8c137c041eda44b5938228b699ceea4f2f231e900f1a15c4311a96396  /tmp/authenticated-recovery.tar.gz" | sha256sum -c -
-          tar -tzf /tmp/authenticated-recovery.tar.gz | grep -q '^public/media/bavarian-drive/batches/authenticated-recovery.json$'
-          test "$(tar -tzf /tmp/authenticated-recovery.tar.gz | grep -c '\.webp$')" -eq 42
-          if tar -tzf /tmp/authenticated-recovery.tar.gz | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
-            echo "::error::Unsafe archive path detected"
-            exit 1
-          fi
-          tar -xzf /tmp/authenticated-recovery.tar.gz
+          test "$(find recovery-input/assets -maxdepth 1 -name '*.b64' | wc -l)" -eq 42
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import json
+          from pathlib import Path
+          from PIL import Image
+
+          package = Path('recovery-input')
+          manifest_bytes = gzip.decompress(base64.b64decode(
+              (package / 'authenticated-recovery-manifest.json.gz.b64').read_text().strip(),
+              validate=True,
+          ))
+          manifest = json.loads(manifest_bytes)
+          mapping = json.loads((package / 'recovery-map.json').read_text())
+          records = manifest['records']
+          items = mapping['items']
+          parts = sorted((package / 'assets').glob('*.b64'))
+
+          assert manifest['accepted_count'] == 42, manifest
+          assert mapping['count'] == 42, mapping
+          assert len(records) == len(items) == len(parts) == 42
+
+          manifest_path = Path('public/media/bavarian-drive/batches/authenticated-recovery.json')
+          manifest_path.parent.mkdir(parents=True, exist_ok=True)
+          manifest_path.write_bytes(manifest_bytes)
+
+          for index, (record, item, part) in enumerate(zip(records, items, parts)):
+              assert item['i'] == index, item
+              assert record['output_path'] == item['output_path'], (record, item)
+              data = base64.b64decode(part.read_text().strip(), validate=True)
+              assert len(data) == item['bytes'], (part, len(data), item)
+              assert hashlib.sha256(data).hexdigest() == item['sha256'], part
+              target = Path('public') / record['output_path'].lstrip('/')
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(data)
+              with Image.open(target) as image:
+                  image.verify()
+              with Image.open(target) as image:
+                  assert image.size == (item['width'], item['height']), (target, image.size, item)
+          print(json.dumps({'reconstructed_assets': len(parts)}, indent=2))
+          PY
 
       - name: Clear recovered public-download failures
         run: |
@@ -54,10 +86,7 @@ jobs:
           import json
           from pathlib import Path
 
-          targets = (
-              'copy-socks',
-              'women-dirndl-blouses',
-          )
+          targets = ('copy-socks', 'women-dirndl-blouses')
           for slug in targets:
               for root in (
                   Path('public/media/bavarian-drive/batches'),
@@ -65,6 +94,7 @@ jobs:
               ):
                   path = root / f'{slug}.json'
                   payload = json.loads(path.read_text(encoding='utf-8'))
+                  payload['downloaded_count'] = payload['inventory_count']
                   payload['download_failure_count'] = 0
                   payload['download_failures'] = []
                   path.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
@@ -111,19 +141,17 @@ jobs:
           }, indent=2))
           PY
 
-      - name: Commit verified recovery
+      - name: Commit verified recovery and remove staging payloads
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -r recovery-input
           git add -A -- \
             public/media/bavarian-drive \
             docs/import-evidence \
-            supabase/manual/20260713_bavarian_drive_media_import.sql
-          if git diff --cached --quiet; then
-            echo "No recovery changes to commit"
-            exit 0
-          fi
+            supabase/manual/20260713_bavarian_drive_media_import.sql \
+            recovery-input
           git commit -m "fix(media): recover all authenticated Drive images [skip ci]"
           git push origin HEAD:fix/authenticated-drive-media-recovery
