@@ -4,7 +4,7 @@
   "lovable_project_id": "da72a40a-7df3-44c3-a72d-f180d9ffcd25",
   "repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330",
   "source_branch": "main",
-  "expected_origin": "https://www.irhaapparels.com",
+  "expected_origin": "https://irhaapparels.com",
   "deployment_policy": "latest-main-only",
   "supabase_project_id": "pvzjiozismyxqrzmtfbi"
 }
