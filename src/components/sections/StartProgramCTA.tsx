@@ -6,20 +6,20 @@ const REQUIREMENTS = ["Product or reference", "Approximate quantity", "Delivery 
 
 export default function StartProgramCTA() {
   return (
-    <section className="border-t border-border/60 bg-card/35 py-20 text-foreground md:py-24">
+    <section className="border-t border-border/60 bg-card/35 py-16 text-foreground md:py-20">
       <div className="container-luxe">
-        <div className="relative grid gap-10 overflow-hidden border border-primary/25 bg-[#090909] px-7 py-10 text-white md:px-10 md:py-12 lg:grid-cols-12 lg:items-center lg:px-14 lg:py-14">
+        <div className="relative grid gap-8 overflow-hidden border border-primary/25 bg-[#090909] px-6 py-8 text-white md:px-9 md:py-10 lg:grid-cols-12 lg:items-center lg:px-12 lg:py-12">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_10%,hsl(var(--primary)/0.14),transparent_30%)]" />
           <div className="relative lg:col-span-8">
             <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Start a B2B program</p>
-            <h2 className="mt-4 max-w-4xl font-display text-4xl leading-[1.04] md:text-5xl lg:text-6xl">
+            <h2 className="mt-3 max-w-3xl font-display text-3xl leading-[1.08] sm:text-4xl lg:text-5xl">
               Send the product, quantity and destination for a scoped response.
             </h2>
-            <p className="mt-5 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
               Pricing is prepared per order using material, construction, customization, branding, packaging and shipping requirements. No public retail pricing is used.
             </p>
 
-            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-[9px] font-semibold uppercase tracking-[0.17em] text-white/70">
+            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-[9px] font-semibold uppercase tracking-[0.17em] text-white/70">
               {REQUIREMENTS.map((requirement) => (
                 <span key={requirement} className="inline-flex items-center gap-2">
                   <CheckCircle2 size={13} className="text-primary" /> {requirement}
@@ -27,7 +27,7 @@ export default function StartProgramCTA() {
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/65">
+            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/65">
               <Link to="/inquiry?intent=reference" className="inline-flex items-center gap-2 hover:text-primary">
                 <Upload size={13} /> Upload reference
               </Link>
