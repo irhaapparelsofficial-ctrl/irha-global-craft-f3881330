@@ -35,6 +35,22 @@ function retireLegacyCatalogueFiles(): Plugin {
   };
 }
 
+function vendorChunk(id: string): string | undefined {
+  const normalized = id.replace(/\\/g, "/");
+  if (
+    normalized.includes("/node_modules/react/") ||
+    normalized.includes("/node_modules/react-dom/") ||
+    normalized.includes("/node_modules/react-router-dom/")
+  ) return "react-vendor";
+  if (
+    normalized.includes("/node_modules/lucide-react/") ||
+    normalized.includes("/node_modules/@radix-ui/react-slot/") ||
+    normalized.includes("/node_modules/@radix-ui/react-dialog/")
+  ) return "ui-vendor";
+  if (normalized.includes("/node_modules/@tanstack/react-query/")) return "query-vendor";
+  return undefined;
+}
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -46,9 +62,8 @@ export default defineConfig(({ mode }) => ({
     retireLegacyCatalogueFiles(),
     react(),
     imagetools(),
-    mcpPlugin(),
-    mode === "development" && componentTagger(),
-  ].filter(Boolean),
+    ...(mode === "development" ? [mcpPlugin(), componentTagger()] : []),
+  ],
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
@@ -56,14 +71,10 @@ export default defineConfig(({ mode }) => ({
   build: {
     cssCodeSplit: true,
     sourcemap: false,
-    minify: "esbuild",
-    rollupOptions: {
+    minify: "oxc",
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          "ui-vendor": ["lucide-react", "@radix-ui/react-slot", "@radix-ui/react-dialog"],
-          "query-vendor": ["@tanstack/react-query"],
-        },
+        manualChunks: vendorChunk,
       },
     },
   },
