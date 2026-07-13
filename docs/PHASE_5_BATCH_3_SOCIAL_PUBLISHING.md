@@ -65,6 +65,10 @@ Unsupported formats become `manual_required`; they are not mislabeled as success
 5. Create one non-public test/draft workflow, then use an owner-approved real post as the first production evidence test.
 6. Do not enable unattended scheduling until the first exact post result and duplicate-safe retry behavior are verified.
 
+## Validation state
+
+Quality Gate is rerun against the latest merged `main` source so typecheck, tests and production build are evaluated with current canonical and dependency fixes.
+
 ## Not performed in this batch
 
 - No migration was applied.
