@@ -40,6 +40,20 @@
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
 
+# Search and AI crawler controls — always expose the current deployment
+/robots.txt
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+/sitemap.xml
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+/llms.txt
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+/llms-full.txt
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+
 # HTML — always revalidate so deploys go live immediately
 /
   Cache-Control: no-store, max-age=0, must-revalidate
