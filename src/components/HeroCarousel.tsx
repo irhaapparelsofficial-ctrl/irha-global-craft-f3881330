@@ -102,7 +102,7 @@ export default function HeroCarousel() {
           <div className="grid gap-3 sm:grid-cols-2 sm:grid-rows-2">
             <Link
               to="/products/bavarian-trachten-wear"
-              className="group relative min-h-[420px] overflow-hidden border border-primary/30 bg-[#eee8dc] shadow-elegant sm:row-span-2"
+              className="group relative isolate min-h-[420px] min-w-0 overflow-hidden border border-primary/30 bg-[#eee8dc] shadow-elegant sm:row-span-2"
             >
               <ResilientImage
                 sources={[thumbnailUrl(BAVARIAN_PRODUCT_IMAGE), BAVARIAN_PRODUCT_IMAGE, bavarianCover]}
@@ -113,10 +113,20 @@ export default function HeroCarousel() {
                 height={1250}
                 className="h-full w-full object-contain p-7 transition-transform duration-700 ease-out group-hover:scale-[1.025] md:p-9"
               />
-              <div className="absolute inset-x-4 bottom-4 border border-white/20 bg-black/88 p-4 text-white backdrop-blur-sm">
-                <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-primary">Primary manufacturing program</p>
-                <p className="mt-1 font-display text-2xl">Bavarian & Trachten Wear</p>
-                <p className="mt-2 text-xs text-white/65">Lederhosen · Dirndl · Trachten</p>
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] bg-gradient-to-t from-black via-black/90 to-transparent"
+              />
+              <div className="absolute inset-x-0 bottom-0 z-10 min-w-0 p-5 text-white sm:p-6">
+                <p className="max-w-full text-[8px] font-semibold uppercase tracking-[0.18em] text-primary sm:text-[9px]">
+                  Primary manufacturing program
+                </p>
+                <p className="mt-2 max-w-[18ch] break-words font-display text-[1.9rem] leading-[1.03] tracking-[-0.025em] text-white sm:max-w-none sm:text-4xl">
+                  Bavarian &amp; Trachten Wear
+                </p>
+                <p className="mt-3 max-w-full text-[11px] leading-5 text-white/75 sm:text-sm">
+                  Lederhosen · Dirndl · Trachten Accessories
+                </p>
               </div>
             </Link>
 
