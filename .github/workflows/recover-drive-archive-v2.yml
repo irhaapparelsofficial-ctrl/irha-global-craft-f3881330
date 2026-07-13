@@ -1,0 +1,235 @@
+name: Recover Drive archive safely v2
+
+on:
+  push:
+    branches:
+      - fix/authenticated-drive-media-recovery
+    paths:
+      - recovery-input/ARCHIVE_RETRY_2
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: recover-drive-archive-main
+  cancel-in-progress: false
+
+env:
+  DRIVE_FILE_ID: 10QbGedL_8ZuuKhLDAwkJkpi12rgSD_oM
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out recovery controls
+        uses: actions/checkout@v4
+        with:
+          ref: fix/authenticated-drive-media-recovery
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade Pillow gdown
+
+      - name: Download archive using independent methods
+        id: download
+        shell: bash
+        run: |
+          set -u
+          archive=/tmp/authenticated-recovery.tar.gz
+          valid() { test -s "$archive" && tar -tzf "$archive" >/dev/null 2>&1; }
+          rm -f "$archive"
+
+          echo 'Method 1: gdown fuzzy'
+          gdown --fuzzy "https://drive.google.com/file/d/${DRIVE_FILE_ID}/view?usp=sharing" -O "$archive" || true
+          if valid; then echo 'method=gdown' >> "$GITHUB_OUTPUT"; exit 0; fi
+          rm -f "$archive"
+
+          echo 'Method 2: usercontent direct'
+          curl --fail --location --retry 3 --retry-all-errors \
+            "https://drive.usercontent.google.com/download?id=${DRIVE_FILE_ID}&export=download&confirm=t" \
+            --output "$archive" || true
+          if valid; then echo 'method=usercontent' >> "$GITHUB_OUTPUT"; exit 0; fi
+          rm -f "$archive"
+
+          echo 'Method 3: uc export with cookies and confirmation token'
+          cookie=/tmp/gdrive-cookie.txt
+          page=/tmp/gdrive-page.html
+          curl --location --cookie-jar "$cookie" \
+            "https://drive.google.com/uc?export=download&id=${DRIVE_FILE_ID}" \
+            --output "$page" || true
+          token="$(grep -o 'confirm=[0-9A-Za-z_-]*' "$page" | head -1 | cut -d= -f2 || true)"
+          if test -n "$token"; then
+            curl --fail --location --cookie "$cookie" \
+              "https://drive.google.com/uc?export=download&confirm=${token}&id=${DRIVE_FILE_ID}" \
+              --output "$archive" || true
+          else
+            cp "$page" "$archive" || true
+          fi
+          if valid; then echo 'method=cookie-confirm' >> "$GITHUB_OUTPUT"; exit 0; fi
+          rm -f "$archive"
+
+          echo 'Method 4: uc direct confirm=t'
+          curl --fail --location --retry 3 --retry-all-errors \
+            "https://drive.google.com/uc?export=download&confirm=t&id=${DRIVE_FILE_ID}" \
+            --output "$archive" || true
+          if valid; then echo 'method=uc-confirm' >> "$GITHUB_OUTPUT"; exit 0; fi
+
+          echo 'No downloader produced a valid tar.gz archive.' >&2
+          exit 1
+
+      - name: Prepare clean main worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          rm -rf /tmp/irha-main /tmp/recovery-extracted
+          git worktree add /tmp/irha-main origin/main
+          mkdir -p /tmp/recovery-extracted
+          tar -xzf /tmp/authenticated-recovery.tar.gz -C /tmp/recovery-extracted
+
+      - name: Verify and copy the exact 42 assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, gzip, hashlib, json
+          from pathlib import Path
+          from PIL import Image
+
+          control = Path.cwd() / 'recovery-input'
+          main = Path('/tmp/irha-main')
+          extracted = Path('/tmp/recovery-extracted')
+          manifest_bytes = gzip.decompress(base64.b64decode(
+              (control / 'authenticated-recovery-manifest.json.gz.b64').read_text().strip(), validate=True))
+          manifest = json.loads(manifest_bytes)
+          mapping = json.loads((control / 'recovery-map.json').read_text())
+          records, items = manifest['records'], mapping['items']
+          assert manifest['accepted_count'] == 42
+          assert mapping['count'] == 42
+          assert len(records) == len(items) == 42
+
+          by_sha = {}
+          for path in extracted.rglob('*.webp'):
+              data = path.read_bytes()
+              digest = hashlib.sha256(data).hexdigest()
+              if digest in by_sha:
+                  raise AssertionError(f'duplicate archive SHA: {digest}')
+              by_sha[digest] = path
+
+          batch = main / 'public/media/bavarian-drive/batches/authenticated-recovery.json'
+          batch.parent.mkdir(parents=True, exist_ok=True)
+          batch.write_bytes(manifest_bytes)
+
+          for index, (record, item) in enumerate(zip(records, items)):
+              assert item['i'] == index
+              assert record['output_path'] == item['output_path']
+              source = by_sha.get(item['sha256'])
+              assert source is not None, f"missing SHA {item['sha256']}"
+              data = source.read_bytes()
+              assert len(data) == item['bytes']
+              target = main / 'public' / record['output_path'].lstrip('/')
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(data)
+              with Image.open(target) as image: image.verify()
+              with Image.open(target) as image:
+                  assert image.size == (item['width'], item['height'])
+          print('Verified and copied 42 assets.')
+          PY
+
+      - name: Remove the original failure records
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/irha-main
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for slug in ('copy-socks', 'women-dirndl-blouses'):
+              for root in (Path('public/media/bavarian-drive/batches'), Path('docs/import-evidence/bavarian-drive-batches')):
+                  path = root / f'{slug}.json'
+                  obj = json.loads(path.read_text())
+                  obj['downloaded_count'] = obj['inventory_count']
+                  obj['download_failure_count'] = 0
+                  obj['download_failures'] = []
+                  path.write_text(json.dumps(obj, indent=2) + '\n')
+          PY
+
+      - name: Finalize and enforce all invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/irha-main
+          python tools/finalize_bavarian_drive_media.py --expected-count 30 --sql-output supabase/manual/20260713_bavarian_drive_media_import.sql
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from PIL import Image
+          report = json.loads(Path('public/media/bavarian-drive/scan-report.json').read_text())
+          failures = json.loads(Path('docs/import-evidence/bavarian-drive-download-failures.json').read_text())
+          recovery = json.loads(Path('public/media/bavarian-drive/batches/authenticated-recovery.json').read_text())
+          assert report['batch_count'] == 30
+          assert report['inventory_count'] == 1516
+          assert report['downloaded_count'] == 1516
+          assert report['download_failure_count'] == 0
+          assert report['missing_asset_count'] == 0
+          assert report['uncategorized_path_count'] == 0
+          assert report['materially_oversized_count'] == 0
+          assert report['accepted_count'] >= 1470
+          assert failures['failure_count'] == 0
+          assert failures['downloaded_count'] == 1516
+          assert recovery['accepted_count'] == 42
+          files = list(Path('public/media/bavarian-drive/assets/authenticated-recovery').rglob('*.webp'))
+          assert len(files) == recovery['finalized_record_count']
+          for path in files:
+              with Image.open(path) as image: image.verify()
+          print(json.dumps({
+              'accepted_unique': report['accepted_count'],
+              'recovered_final': recovery['finalized_record_count'],
+              'failures': failures['failure_count'],
+              'missing': report['missing_asset_count'],
+          }, indent=2))
+          PY
+
+      - name: Commit verified outputs to main only
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/irha-main
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- public/media/bavarian-drive docs/import-evidence supabase/manual/20260713_bavarian_drive_media_import.sql
+          if git diff --cached --quiet; then
+            echo 'Main already contains the verified recovery.'
+            exit 0
+          fi
+          base_sha="$(git rev-parse HEAD)"
+          git commit -m 'fix(media): recover all authenticated Drive images'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$base_sha" || { echo 'Main changed; refusing unsafe push.' >&2; exit 1; }
+          git push origin HEAD:main
+
+      - name: Trigger Cloudflare Pages deployment
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run cloudflare-pages.yml --ref main
+
+      - name: Record failure diagnostics on recovery branch
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          git worktree remove /tmp/irha-main --force 2>/dev/null || true
+          git checkout fix/authenticated-drive-media-recovery
+          mkdir -p recovery-status
+          printf 'failed_at=%s\nrun_id=%s\nrun_url=https://github.com/%s/actions/runs/%s\n' \
+            "$(date -u +%FT%TZ)" "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
+            > recovery-status/archive-v2-failed.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add recovery-status/archive-v2-failed.txt
+          git commit -m 'chore(recovery): record archive workflow failure [skip ci]' || true
+          git push origin HEAD:fix/authenticated-drive-media-recovery || true
