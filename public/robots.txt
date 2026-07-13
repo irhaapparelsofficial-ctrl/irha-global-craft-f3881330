@@ -81,4 +81,4 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /catalogs/
 
-Sitemap: https://www.irhaapparels.com/sitemap.xml
+Sitemap: https://irhaapparels.com/sitemap.xml
