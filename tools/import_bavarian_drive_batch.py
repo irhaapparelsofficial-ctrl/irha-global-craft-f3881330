@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -18,7 +19,8 @@ import gdown
 
 import import_bavarian_drive_media as core
 
-MAX_DOWNLOAD_WORKERS = 6
+MAX_DOWNLOAD_WORKERS = 12
+DOWNLOAD_TIMEOUT_SECONDS = 45
 
 
 def download_one(item: Any) -> tuple[str | None, dict[str, Any] | None]:
@@ -34,19 +36,35 @@ def download_one(item: Any) -> tuple[str | None, dict[str, Any] | None]:
 
     target = Path(local_path)
     target.parent.mkdir(parents=True, exist_ok=True)
+    code = (
+        "import gdown,sys; "
+        "result=gdown.download(id=sys.argv[1],output=sys.argv[2],quiet=True,use_cookies=False); "
+        "raise SystemExit(0 if result else 2)"
+    )
     try:
-        result = gdown.download(
-            id=file_id,
-            output=str(target),
-            quiet=True,
-            use_cookies=False,
+        completed = subprocess.run(
+            [sys.executable, "-c", code, str(file_id), str(target)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=DOWNLOAD_TIMEOUT_SECONDS,
+            check=False,
         )
-        if result and Path(result).is_file():
-            return str(result), None
+        if completed.returncode == 0 and target.is_file():
+            return str(target), None
+        reason = (completed.stderr or completed.stdout or "download returned no local file").strip()
         return None, {
             "file_id": file_id,
             "source_path": source_path,
-            "reason": "download returned no local file",
+            "reason": reason[-1200:],
+        }
+    except subprocess.TimeoutExpired:
+        if target.exists():
+            target.unlink(missing_ok=True)
+        return None, {
+            "file_id": file_id,
+            "source_path": source_path,
+            "reason": f"download timeout after {DOWNLOAD_TIMEOUT_SECONDS}s",
         }
     except Exception as exc:
         return None, {
@@ -70,7 +88,7 @@ def download_batch(folder_url: str, destination: Path) -> tuple[list[str], list[
 
     with ThreadPoolExecutor(max_workers=MAX_DOWNLOAD_WORKERS) as pool:
         futures = [pool.submit(download_one, item) for item in items]
-        for completed, future in enumerate(as_completed(futures), start=1):
+        for completed_count, future in enumerate(as_completed(futures), start=1):
             local_path, failure = future.result()
             if local_path:
                 downloaded.append(local_path)
@@ -81,10 +99,11 @@ def download_batch(folder_url: str, destination: Path) -> tuple[list[str], list[
                     f"id={failure.get('file_id')} path={failure.get('source_path')!r}",
                     file=sys.stderr,
                 )
-            if completed % 25 == 0 or completed == len(items):
+            if completed_count % 25 == 0 or completed_count == len(items):
                 print(
-                    f"IRHA_BATCH_PROGRESS completed={completed}/{len(items)} "
-                    f"downloaded={len(downloaded)} failed={len(failures)}"
+                    f"IRHA_BATCH_PROGRESS completed={completed_count}/{len(items)} "
+                    f"downloaded={len(downloaded)} failed={len(failures)}",
+                    flush=True,
                 )
 
     downloaded.sort()
