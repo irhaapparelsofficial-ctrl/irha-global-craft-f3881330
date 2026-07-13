@@ -6,6 +6,8 @@ import {
 } from "./utils.ts";
 
 const MAX_QUERIES = 8;
+const RUN_COOLDOWN_MS = 10_000;
+const STALE_RUNNING_MS = 15 * 60_000;
 
 export async function health(db: any) {
   const tables = await Promise.all(["lead_campaigns", "lead_search_runs", "lead_candidates", "b2b_leads"].map(async (table) => {
@@ -26,6 +28,7 @@ export async function health(db: any) {
     external_api_keys_required: false,
     firecrawl_configured: false,
     ai_gateway_configured: false,
+    rate_limit: { campaign_cooldown_seconds: RUN_COOLDOWN_MS / 1000, stale_run_recovery_minutes: STALE_RUNNING_MS / 60_000 },
     note: ready ? "Zero-credit buyer discovery is active. Public no-key sources and deterministic verification are used." : "Lead database tables are not ready.",
   });
 }
@@ -68,87 +71,128 @@ function classify(text: string, products: string[], osm = false) {
   return { fit, downstream, wholesale, maker, buyerSignal, accepted: fit.length > 0 && buyerSignal && !(maker && !downstream) };
 }
 
+function millisecondsSince(value: unknown) {
+  if (typeof value !== "string") return Number.POSITIVE_INFINITY;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? Date.now() - parsed : Number.POSITIVE_INFINITY;
+}
+
 export async function discover(db: any, userId: string, body: Record<string, any>) {
   const result = await db.from("lead_campaigns").select("*").eq("id", body.campaign_id).maybeSingle();
   if (result.error || !result.data) return response({ error: "Campaign not found" }, 404);
 
-  const campaign = result.data, id = String(campaign.id), target = clamp(campaign.target_count, 1, 100, 25);
-  const products = list(campaign.product_focus), buyers = list(campaign.buyer_types);
+  const campaign = result.data, id = String(campaign.id), sinceLastRun = millisecondsSince(campaign.last_run_at);
+  if (campaign.status === "running" && sinceLastRun < STALE_RUNNING_MS) {
+    return response({ error: "This campaign is already running. Wait for it to finish before starting another run.", retry_after_seconds: Math.max(1, Math.ceil((STALE_RUNNING_MS - sinceLastRun) / 1000)) }, 409);
+  }
+  if (campaign.status !== "running" && sinceLastRun < RUN_COOLDOWN_MS) {
+    return response({ error: "Campaign cooldown is active. Please wait a few seconds before rerunning.", retry_after_seconds: Math.max(1, Math.ceil((RUN_COOLDOWN_MS - sinceLastRun) / 1000)) }, 429);
+  }
+
+  const target = clamp(campaign.target_count, 1, 100, 25), products = list(campaign.product_focus), buyers = list(campaign.buyer_types);
   const searchQueries = (list(campaign.search_queries).length ? list(campaign.search_queries) : queries(String(campaign.market || ""), products, buyers)).slice(0, MAX_QUERIES);
-  await db.from("lead_campaigns").update({ status: "running", search_queries: searchQueries, source_providers: [PROVIDER, "direct_website", "openstreetmap_nominatim"], last_run_at: new Date().toISOString(), error: null, requested_by: campaign.requested_by || userId }).eq("id", id);
+  const startedAt = new Date().toISOString();
+  const claimed = await db.from("lead_campaigns").update({
+    status: "running",
+    search_queries: searchQueries,
+    source_providers: [PROVIDER, "direct_website", "openstreetmap_nominatim"],
+    last_run_at: startedAt,
+    error: null,
+    requested_by: campaign.requested_by || userId,
+  }).eq("id", id).select("id").single();
+  if (claimed.error) throw claimed.error;
 
-  const found: any[] = [], failures: string[] = [];
-  const perQuery = Math.max(5, Math.min(12, Math.ceil(target / Math.max(1, searchQueries.length)) + 4));
-  for (const query of searchQueries) {
-    const run = await db.from("lead_search_runs").insert({ campaign_id: id, query, provider: PROVIDER, status: "running", response_meta: { external_credits_used: 0 } }).select("id").single();
-    if (run.error || !run.data) throw run.error || new Error("Search run could not be created");
-    try {
-      const rows = await publicSearch(query, perQuery); found.push(...rows);
-      const providerBreakdown = rows.reduce((acc: Record<string, number>, row: any) => ({ ...acc, [row.provider]: (acc[row.provider] || 0) + 1 }), {});
-      await db.from("lead_search_runs").update({ status: "completed", result_count: rows.length, response_meta: { external_credits_used: 0, provider_breakdown: providerBreakdown }, completed_at: new Date().toISOString() }).eq("id", run.data.id);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Search failed"; failures.push(`${query}: ${message}`);
-      await db.from("lead_search_runs").update({ status: "failed", error: message, response_meta: { external_credits_used: 0 }, completed_at: new Date().toISOString() }).eq("id", run.data.id);
+  try {
+    const currentResult = await db.from("lead_candidates").select("website_domain,email").eq("campaign_id", id).limit(5000);
+    if (currentResult.error) throw currentResult.error;
+    const currentDomains = new Set<string>(), currentEmails = new Set<string>();
+    for (const row of currentResult.data || []) {
+      if (row.website_domain) currentDomains.add(String(row.website_domain).toLowerCase());
+      if (row.email) currentEmails.add(String(row.email).toLowerCase());
     }
-    await sleep(250);
-  }
 
-  const relevantCount = found.filter((item) => classify(`${item.title} ${item.description} ${item.url}`, products).accepted).length;
-  if (relevantCount < Math.min(5, target)) {
-    try { found.push(...await openStreetMapSearch(String(campaign.market || ""), products, Math.min(15, target + 5))); }
-    catch (error) { failures.push(`OpenStreetMap fallback: ${error instanceof Error ? error.message : "Search failed"}`); }
-  }
+    const found: any[] = [], failures: string[] = [];
+    const perQuery = Math.max(5, Math.min(12, Math.ceil(target / Math.max(1, searchQueries.length)) + 4));
+    for (const query of searchQueries) {
+      const run = await db.from("lead_search_runs").insert({ campaign_id: id, query, provider: PROVIDER, status: "running", response_meta: { external_credits_used: 0 } }).select("id").single();
+      if (run.error || !run.data) throw run.error || new Error("Search run could not be created");
+      try {
+        const rows = await publicSearch(query, perQuery); found.push(...rows);
+        const providerBreakdown = rows.reduce((acc: Record<string, number>, row: any) => ({ ...acc, [row.provider]: (acc[row.provider] || 0) + 1 }), {});
+        await db.from("lead_search_runs").update({ status: "completed", result_count: rows.length, response_meta: { external_credits_used: 0, provider_breakdown: providerBreakdown }, completed_at: new Date().toISOString() }).eq("id", run.data.id);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Search failed"; failures.push(`${query}: ${message}`);
+        await db.from("lead_search_runs").update({ status: "failed", error: message, response_meta: { external_credits_used: 0 }, completed_at: new Date().toISOString() }).eq("id", run.data.id);
+      }
+      await sleep(250);
+    }
 
-  const existing = await knownRecords(db), seen = new Set<string>(), seenEmails = new Set<string>(), candidates: any[] = [];
-  for (const item of found) {
-    const website = safeUrl(item.url), d = domain(website);
-    if (!website || !d || seen.has(d)) continue;
-    seen.add(d);
-    const text = `${item.title} ${item.description} ${item.url}`;
-    const signals = classify(text, products, item.provider === "openstreetmap_nominatim");
-    if (!signals.accepted) continue;
-    const buyerType = inferBuyer(text) || (item.provider === "openstreetmap_nominatim" ? "retailer" : null);
-    const email = item.email || emailFrom(text, d), phone = item.phone || phoneFrom(text);
-    if (email && seenEmails.has(email)) continue;
-    const duplicate = existing.domains.get(d) || (email ? existing.emails.get(email) : null);
-    const score = Math.min(60, 12 + (signals.downstream ? 22 : signals.wholesale ? 12 : 0) + (signals.fit.length ? 16 : 0) + (email || phone ? 8 : 0) + (item.provider === "openstreetmap_nominatim" ? 6 : 0));
-    candidates.push({
-      campaign_id: id,
-      company_name: companyName(item.title, d),
-      website,
-      website_domain: d,
-      country: item.country || inferCountry(d, String(campaign.market || "")),
-      city: item.city || null,
-      email,
-      phone,
-      whatsapp: item.whatsapp || null,
-      buyer_type: buyerType,
-      product_fit: signals.fit,
-      source_url: item.url,
-      source_title: clean(item.title, 300),
-      source_query: item.query,
-      source_provider: item.provider,
-      source_excerpt: clean(item.description, 1800),
-      evidence: { stage: "discovery", buyer_signal: signals.buyerSignal, downstream_buyer_signal: signals.downstream, wholesale_signal: signals.wholesale, manufacturer_signal: signals.maker, product_fit: signals.fit, search_provider: item.provider, external_credits_used: 0 },
-      raw_data: { search_result: item.raw || item },
-      verification_status: duplicate ? "duplicate" : score >= 28 ? "needs_review" : "unverified",
-      verification_score: score,
-      duplicate_reason: duplicate ? "Website domain or email already exists" : null,
-      duplicate_of: duplicate || null,
-    });
-    if (email) seenEmails.add(email);
-    if (candidates.length >= target) break;
-  }
+    const relevantCount = found.filter((item) => classify(`${item.title} ${item.description} ${item.url}`, products).accepted).length;
+    if (relevantCount < Math.min(5, target)) {
+      try { found.push(...await openStreetMapSearch(String(campaign.market || ""), products, Math.min(15, target + 5))); }
+      catch (error) { failures.push(`OpenStreetMap fallback: ${error instanceof Error ? error.message : "Search failed"}`); }
+    }
 
-  if (!candidates.length) {
-    const message = found.length ? "Search completed, but no relevant buyer websites passed the buyer/manufacturer filters." : "Public search returned no results. Try again later.";
-    await db.from("lead_campaigns").update({ status: "failed", error: failures.length ? `${message} ${failures.join(" | ")}`.slice(0, 4000) : message }).eq("id", id);
-    return response({ ok: false, error: message, searched_results: found.length, failures, external_credits_used: 0 }, 422);
-  }
+    const existing = await knownRecords(db), seen = new Set<string>(), seenEmails = new Set<string>(), candidates: any[] = [];
+    for (const item of found) {
+      const website = safeUrl(item.url), d = domain(website);
+      if (!website || !d || seen.has(d) || currentDomains.has(d)) continue;
+      seen.add(d);
+      const text = `${item.title} ${item.description} ${item.url}`;
+      const signals = classify(text, products, item.provider === "openstreetmap_nominatim");
+      if (!signals.accepted) continue;
+      const buyerType = inferBuyer(text) || (item.provider === "openstreetmap_nominatim" ? "retailer" : null);
+      const email = item.email || emailFrom(text, d), phone = item.phone || phoneFrom(text);
+      if (email && (seenEmails.has(email) || currentEmails.has(email))) continue;
+      const duplicate = existing.domains.get(d) || (email ? existing.emails.get(email) : null);
+      const score = Math.min(60, 12 + (signals.downstream ? 22 : signals.wholesale ? 12 : 0) + (signals.fit.length ? 16 : 0) + (email || phone ? 8 : 0) + (item.provider === "openstreetmap_nominatim" ? 6 : 0));
+      candidates.push({
+        campaign_id: id,
+        company_name: companyName(item.title, d),
+        website,
+        website_domain: d,
+        country: item.country || inferCountry(d, String(campaign.market || "")),
+        city: item.city || null,
+        email,
+        phone,
+        whatsapp: item.whatsapp || null,
+        buyer_type: buyerType,
+        product_fit: signals.fit,
+        source_url: item.url,
+        source_title: clean(item.title, 300),
+        source_query: item.query,
+        source_provider: item.provider,
+        source_excerpt: clean(item.description, 1800),
+        evidence: { stage: "discovery", buyer_signal: signals.buyerSignal, downstream_buyer_signal: signals.downstream, wholesale_signal: signals.wholesale, manufacturer_signal: signals.maker, product_fit: signals.fit, search_provider: item.provider, external_credits_used: 0 },
+        raw_data: { search_result: item.raw || item },
+        verification_status: duplicate ? "duplicate" : score >= 28 ? "needs_review" : "unverified",
+        verification_score: score,
+        duplicate_reason: duplicate ? "Website domain or email already exists" : null,
+        duplicate_of: duplicate || null,
+      });
+      if (email) seenEmails.add(email);
+      if (candidates.length >= target) break;
+    }
 
-  const inserted = await db.from("lead_candidates").insert(candidates).select("verification_status");
-  if (inserted.error) throw inserted.error;
-  await refreshCampaign(db, id);
-  await db.from("lead_campaigns").update({ status: failures.length ? "paused" : "completed", error: failures.length ? failures.join(" | ").slice(0, 4000) : null }).eq("id", id);
-  return response({ ok: true, campaign_id: id, inserted: inserted.data.length, failures, provider: PROVIDER, external_credits_used: 0, note: "Candidates are real public-web results and remain unverified until Enrich & Verify." });
+    if (!candidates.length) {
+      await refreshCampaign(db, id);
+      if (currentDomains.size || currentEmails.size) {
+        await db.from("lead_campaigns").update({ status: failures.length ? "paused" : "completed", error: failures.length ? failures.join(" | ").slice(0, 4000) : null }).eq("id", id);
+        return response({ ok: true, campaign_id: id, inserted: 0, existing_candidates: Math.max(currentDomains.size, currentEmails.size), failures, provider: PROVIDER, external_credits_used: 0, note: "No new unique candidates were added; existing campaign evidence was preserved." });
+      }
+      const message = found.length ? "Search completed, but no relevant buyer websites passed the buyer/manufacturer filters." : "Public search returned no results. Try again later.";
+      await db.from("lead_campaigns").update({ status: "failed", error: failures.length ? `${message} ${failures.join(" | ")}`.slice(0, 4000) : message }).eq("id", id);
+      return response({ ok: false, error: message, searched_results: found.length, failures, external_credits_used: 0 }, 422);
+    }
+
+    const inserted = await db.from("lead_candidates").insert(candidates).select("verification_status");
+    if (inserted.error) throw inserted.error;
+    await refreshCampaign(db, id);
+    await db.from("lead_campaigns").update({ status: failures.length ? "paused" : "completed", error: failures.length ? failures.join(" | ").slice(0, 4000) : null }).eq("id", id);
+    return response({ ok: true, campaign_id: id, inserted: inserted.data.length, failures, provider: PROVIDER, external_credits_used: 0, note: "Candidates are real public-web results and remain unverified until Enrich & Verify." });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Lead discovery failed";
+    await db.from("lead_campaigns").update({ status: "failed", error: message.slice(0, 4000) }).eq("id", id);
+    throw error;
+  }
 }
