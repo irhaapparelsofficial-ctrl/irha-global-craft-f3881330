@@ -1,0 +1,113 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:12:11+00:00",
+  "batch_slug": "banners",
+  "label": "BANNERS",
+  "folder_url": "https://drive.google.com/drive/folders/15KYT8Ott4d3TakEHPMxBTpLptz-1kOmj",
+  "inventory_count": 8,
+  "downloaded_count": 8,
+  "download_failure_count": 0,
+  "image_candidate_count": 8,
+  "accepted_count": 8,
+  "rejected_count": 0,
+  "records": [
+    {
+      "source_path": "BANNERS/1621731_358710630938831_135878123_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/1621731-358710630938831-135878123-n.webp",
+      "group": "BANNERS",
+      "width": 687,
+      "height": 458,
+      "original_bytes": 57141,
+      "optimized_bytes": 52560,
+      "quality_score": 5.2883,
+      "pixel_sha256": "93abb17127e974603220e1e8ea1a0d3e46c3ea46d26e4b6609aaaf10bf694961",
+      "product_slug": null
+    },
+    {
+      "source_path": "BANNERS/3.jpg",
+      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/3.webp",
+      "group": "BANNERS",
+      "width": 870,
+      "height": 465,
+      "original_bytes": 95624,
+      "optimized_bytes": 48340,
+      "quality_score": 5.2628,
+      "pixel_sha256": "a6f7f327c541aace766beb34644dc9e8f728bc379e5bc762c80c9a476457d781",
+      "product_slug": null
+    },
+    {
+      "source_path": "BANNERS/4.jpg",
+      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/4.webp",
+      "group": "BANNERS",
+      "width": 870,
+      "height": 465,
+      "original_bytes": 152612,
+      "optimized_bytes": 105878,
+      "quality_score": 5.6692,
+      "pixel_sha256": "fe0b58eb5f1e8e68b0da826279c403ae155f499efaeb63951025a7a4504a1497",
+      "product_slug": null
+    },
+    {
+      "source_path": "BANNERS/53145831_148227139523220_2153266379082432512_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/53145831-148227139523220-2153266379082432512-n.webp",
+      "group": "BANNERS",
+      "width": 885,
+      "height": 558,
+      "original_bytes": 80136,
+      "optimized_bytes": 75336,
+      "quality_score": 5.9852,
+      "pixel_sha256": "ea9bcf62401490e2a4a336841c1e43e6d9d7ea32b84b01160dc0439ea26cd757",
+      "product_slug": null
+    },
+    {
+      "source_path": "BANNERS/53866445_154134655599135_4647065712743940096_n.jpg",
+      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/53866445-154134655599135-4647065712743940096-n.webp",
+      "group": "BANNERS",
+      "width": 450,
+      "height": 361,
+      "original_bytes": 26273,
+      "optimized_bytes": 20014,
+      "quality_score": 4.6013,
+      "pixel_sha256": "ecae0e3a0d83999f45c5f597c3cd3606b16e2d4dcb702322acaaedf28daf0a74",
+      "product_slug": null
+    },
+    {
+      "source_path": "BANNERS/6.jpg",
+      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/6.webp",
+      "group": "BANNERS",
+      "width": 870,
+      "height": 465,
+      "original_bytes": 75869,
+      "optimized_bytes": 33272,
+      "quality_score": 4.1447,
+      "pixel_sha256": "c71ef4e2e1bb3e03e4b1d7ce89590e2baf4cef46c2220855aa687975738cf37a",
+      "product_slug": null
+    },
+    {
+      "source_path": "BANNERS/7.jpg",
+      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/7.webp",
+      "group": "BANNERS",
+      "width": 870,
+      "height": 465,
+      "original_bytes": 109607,
+      "optimized_bytes": 63812,
+      "quality_score": 5.6213,
+      "pixel_sha256": "1722faec888fa6c95f6c34d624750bf58279346f40d5f45edb45495c19f72329",
+      "product_slug": null
+    },
+    {
+      "source_path": "BANNERS/8.jpg",
+      "output_path": "/media/bavarian-drive/assets/banners/uncategorized/8.webp",
+      "group": "BANNERS",
+      "width": 870,
+      "height": 465,
+      "original_bytes": 21707,
+      "optimized_bytes": 6460,
+      "quality_score": 4.4052,
+      "pixel_sha256": "21b9e7a75aeff740469ad2e659e6e1f38e33f5910e4319e1546a60b968a6ce76",
+      "product_slug": null
+    }
+  ],
+  "rejected": [],
+  "download_failures": []
+}
