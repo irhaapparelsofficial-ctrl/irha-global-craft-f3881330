@@ -10,45 +10,57 @@ describe("lead intake parser", () => {
     ]);
   });
 
-  it("detects a real header after title rows and maps the international master format", () => {
+  it("detects title rows and maps the latest Irha International 527-lead master format", () => {
     const sheet = normalizeSheet({
       name: "Master Leads",
       rows: [
         ["IRHA INTERNATIONAL — NON-LEATHER APPAREL LEAD MASTER"],
-        ["322 unique public business leads"],
-        ["Lead ID", "Company", "Target Category", "Buyer Type", "Professional Email", "Phone / WhatsApp", "Country", "City / Region", "Website", "LinkedIn", "Email Verification", "Source Confidence", "Lead Priority", "Notes", "Verification Source"],
-        ["1", "KitKing", "Sportswear / Teamwear", "Teamwear Retailer / Distributor", "sales@kitking.co.uk", "0116 262 7332", "United Kingdom", "Loughborough", "https://kitking.co.uk", "https://linkedin.com/company/kitking", "Publicly listed", "High", "A", "Relevant buyer", "https://kitking.co.uk/contact"],
+        ["527 unique public business leads"],
+        ["Lead ID", "Company", "Target Category", "Buyer Type", "Professional Email", "Phone / WhatsApp", "Country", "City / Region", "Street Address", "Website", "LinkedIn", "Google Maps Search", "Email Verification", "WhatsApp Status", "Contact Name", "Designation", "Verification Source", "Source Confidence", "Completeness %", "Lead Priority", "Notes", "Retrieved Date"],
+        ["458", "Active Brands Asia Ltd.", "Sportswear / Compression / Running Apparel", "Hong Kong Sports Wholesaler", "wklo@ab-asia.com", "+852 2891 1588", "Hong Kong", "Causeway Bay", "Unit A 15/F, Vulcan House", "https://ab-asia.com", "https://linkedin.com/company/active-brands-asia-ltd", "", "Publicly listed", "Not confirmed", "", "", "https://ab-asia.com | https://linkedin.com/company/active-brands-asia-ltd", "High", "1", "A", "Wholesale distributor serving retailers.", "2026-07-13"],
       ],
     });
 
     expect(sheet?.headerRow).toBe(3);
     expect(sheet?.rows).toHaveLength(1);
     expect(sheet?.rows[0]).toMatchObject({
-      companyName: "KitKing",
-      email: "sales@kitking.co.uk",
-      country: "United Kingdom",
-      buyerType: "Teamwear Retailer / Distributor",
-      website: "https://kitking.co.uk/",
-      sourceUrl: "https://kitking.co.uk/contact",
+      companyName: "Active Brands Asia Ltd.",
+      email: "wklo@ab-asia.com",
+      phone: "+852 2891 1588",
+      country: "Hong Kong",
+      city: "Causeway Bay",
+      buyerType: "Hong Kong Sports Wholesaler",
+      website: "https://ab-asia.com/",
+      sourceUrl: "https://ab-asia.com/",
+      sourceConfidence: "High",
+      emailVerification: "Publicly listed",
       priority: "A",
     });
-    expect(sheet?.rows[0].productFit).toEqual(["Sportswear", "Teamwear"]);
+    expect(sheet?.rows[0].productFit).toEqual(["Sportswear", "Compression", "Running Apparel"]);
     expect(sheet?.rows[0].blockers).toEqual([]);
   });
 
-  it("maps the deduplicated Trachten master column names", () => {
+  it("maps the deduplicated clean Trachten master used for iPhone and print", () => {
     const sheet = normalizeSheet({
-      name: "Master Leads",
+      name: "Austria",
       rows: [
-        ["Lead ID", "Priority", "Country", "City/Region", "Company", "Buyer Type / Segment", "Phone / WhatsApp", "Email / Contact Route", "Website", "Product Fit / Best Offer", "Source URL", "Notes"],
-        ["IRHA-DE-0001", "P1", "Germany", "Munich", "Almliebe München", "Trachten store", "+49 89 24217592", "kundenservice@almliebe.com", "https://almliebe.com", "Dirndl | shirts | accessories", "https://almliebe.com/pages/contact", "Official contact page"],
+        ["Lead ID", "Priority", "Country", "City/Region", "Company", "Buyer Type / Segment", "Contact Name / Role", "Phone / WhatsApp", "Email / Contact Route", "Instagram / Social", "Website", "Product Fit / Best Offer", "Source URL", "Status", "Next Action", "Notes", "Source File", "Source Sheet"],
+        ["IRHA-AT-0202", "P2", "Austria", "Kufstein / Zillertal", "Zillertaler Trachtenwelt", "Trachten store / branch / atelier", "", "+43 676 84995535", "shop@trachtenwelt.com", "Search: Zillertaler Trachtenwelt Instagram", "https://shop.trachtenwelt.com", "Online shop / shirts / vests / accessories", "https://shop.trachtenwelt.com/impressum/", "Not Started", "DM + Email + Call", "Impressum lists phone/email.", "Master.xlsx", "Austria"],
       ],
     });
 
-    expect(sheet?.rows[0].companyName).toBe("Almliebe München");
-    expect(sheet?.rows[0].city).toBe("Munich");
-    expect(sheet?.rows[0].email).toBe("kundenservice@almliebe.com");
-    expect(sheet?.rows[0].productFit).toEqual(["Dirndl", "shirts", "accessories"]);
+    expect(sheet?.rows[0]).toMatchObject({
+      companyName: "Zillertaler Trachtenwelt",
+      country: "Austria",
+      city: "Kufstein / Zillertal",
+      email: "shop@trachtenwelt.com",
+      phone: "+43 676 84995535",
+      buyerType: "Trachten store / branch / atelier",
+      sourceUrl: "https://shop.trachtenwelt.com/impressum/",
+      priority: "P2",
+    });
+    expect(sheet?.rows[0].productFit).toEqual(["Online shop", "shirts", "vests", "accessories"]);
+    expect(sheet?.rows[0].blockers).toEqual([]);
   });
 
   it("extracts the first valid email and URL without treating contact-route prose as verified data", () => {
