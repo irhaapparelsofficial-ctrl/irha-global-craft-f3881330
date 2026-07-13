@@ -128,10 +128,16 @@ def main() -> int:
     if args.skip_existing and batch_manifest.exists():
         try:
             existing = json.loads(batch_manifest.read_text(encoding="utf-8"))
-            if existing.get("complete") is True:
+            complete = existing.get("complete") is True
+            failure_count = int(existing.get("download_failure_count", 0))
+            if complete and failure_count == 0:
                 print(f"IRHA_BATCH_SKIP slug={batch_slug} accepted={existing.get('accepted_count', 0)}")
                 return 0
-        except (OSError, json.JSONDecodeError):
+            print(
+                f"IRHA_BATCH_RETRY slug={batch_slug} previous_failures={failure_count}",
+                flush=True,
+            )
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
             pass
 
     if assets_root.exists():
