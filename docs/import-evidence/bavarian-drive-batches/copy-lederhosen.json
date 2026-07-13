@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:22:44+00:00",
+  "batch_slug": "copy-lederhosen",
+  "label": "COPY/Lederhosen",
+  "folder_url": "https://drive.google.com/drive/folders/1NsZ2oEmo3yDRrkSKIufVqjdK2aXEl81I",
+  "inventory_count": 411,
+  "downloaded_count": 411,
+  "download_failure_count": 0,
+  "image_candidate_count": 411,
+  "accepted_count": 404,
+  "rejected_count": 7,
+  "download_failures": []
+}
