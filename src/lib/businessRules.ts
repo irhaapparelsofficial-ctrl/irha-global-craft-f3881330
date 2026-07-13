@@ -53,7 +53,8 @@ export type BusinessRulesMaster = {
   escalationNotes: string;
 };
 
-export const BUSINESS_RULES_STORAGE_KEY = "irha_business_rules_master_v1";
+export const BUSINESS_RULES_STORAGE_KEY = "irha_business_rules_master_v2";
+export const LEGACY_BUSINESS_RULES_STORAGE_KEY = "irha_business_rules_master_v1";
 export const CURRENT_BUSINESS_RULES_VERSION = 2;
 
 export const DEFAULT_BUSINESS_RULES: BusinessRulesMaster = {
@@ -204,18 +205,37 @@ function mergeRules(value: Partial<BusinessRulesMaster>): BusinessRulesMaster {
   };
 }
 
+function parseStoredRules(stored: string, forceLegacyUpgrade = false) {
+  const parsed = JSON.parse(stored) as Partial<BusinessRulesMaster>;
+  return mergeRules(forceLegacyUpgrade ? { ...parsed, version: 1 } : parsed);
+}
+
 export function loadBusinessRules(): BusinessRulesMaster {
   if (typeof window === "undefined") return DEFAULT_BUSINESS_RULES;
   try {
-    const stored = window.localStorage.getItem(BUSINESS_RULES_STORAGE_KEY);
-    if (!stored) return DEFAULT_BUSINESS_RULES;
-    const parsed = JSON.parse(stored) as Partial<BusinessRulesMaster>;
-    const upgraded = mergeRules(parsed);
-    if (JSON.stringify(parsed) !== JSON.stringify(upgraded)) {
-      window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(upgraded));
+    const current = window.localStorage.getItem(BUSINESS_RULES_STORAGE_KEY);
+    if (current) {
+      const parsed = JSON.parse(current) as Partial<BusinessRulesMaster>;
+      const upgraded = mergeRules(parsed);
+      if (JSON.stringify(parsed) !== JSON.stringify(upgraded)) {
+        window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(upgraded));
+      }
+      return upgraded;
     }
-    return upgraded;
+
+    const legacy = window.localStorage.getItem(LEGACY_BUSINESS_RULES_STORAGE_KEY);
+    if (legacy) {
+      const upgraded = parseStoredRules(legacy, true);
+      window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(upgraded));
+      window.localStorage.removeItem(LEGACY_BUSINESS_RULES_STORAGE_KEY);
+      return upgraded;
+    }
+
+    window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(DEFAULT_BUSINESS_RULES));
+    return DEFAULT_BUSINESS_RULES;
   } catch {
+    window.localStorage.removeItem(LEGACY_BUSINESS_RULES_STORAGE_KEY);
+    window.localStorage.setItem(BUSINESS_RULES_STORAGE_KEY, JSON.stringify(DEFAULT_BUSINESS_RULES));
     return DEFAULT_BUSINESS_RULES;
   }
 }
