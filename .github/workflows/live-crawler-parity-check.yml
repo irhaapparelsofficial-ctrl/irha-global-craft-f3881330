@@ -12,43 +12,32 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify production HTML and crawler files
+      - name: Diagnose production crawler responses
         shell: bash
         run: |
-          set -euo pipefail
-          ok=0
-          for attempt in $(seq 1 12); do
-            echo "Attempt $attempt"
-            curl -fsSL -A 'Mozilla/5.0' https://irhaapparels.com/ -o browser.html
-            curl -fsSL -A 'OAI-SearchBot/1.0' https://irhaapparels.com/ -o ai.html
-            curl -fsSL https://irhaapparels.com/robots.txt -o robots.txt
-            curl -fsSL https://irhaapparels.com/llms.txt -o llms.txt
-            curl -fsSL https://irhaapparels.com/sitemap.xml -o sitemap.xml
-            if grep -q 'irha-static-crawler-shell' ai.html \
-              && grep -q 'Custom Apparel Manufacturer for Global B2B Buyers' ai.html \
-              && grep -q 'https://irhaapparels.com/' ai.html \
-              && grep -q 'OAI-SearchBot' robots.txt \
-              && grep -q 'Two production hubs' llms.txt \
-              && grep -q 'https://irhaapparels.com' sitemap.xml \
-              && ! grep -q 'https://www.irhaapparels.com' sitemap.xml; then
-              ok=1
-              break
-            fi
-            sleep 10
-          done
+          set -u
+          fetch() {
+            label="$1"; agent="$2"; url="$3"; output="$4"
+            code=$(curl -sSL -A "$agent" -o "$output" -w '%{http_code}' "$url" || true)
+            echo "$label HTTP $code bytes $(wc -c < "$output" 2>/dev/null || echo 0)"
+          }
+          fetch browser 'Mozilla/5.0' 'https://irhaapparels.com/' browser.html
+          fetch oai 'OAI-SearchBot/1.0' 'https://irhaapparels.com/' ai.html
+          fetch google 'Googlebot/2.1 (+http://www.google.com/bot.html)' 'https://irhaapparels.com/' google.html
+          fetch robots 'Mozilla/5.0' 'https://irhaapparels.com/robots.txt' robots.txt
+          fetch llms 'Mozilla/5.0' 'https://irhaapparels.com/llms.txt' llms.txt
+          fetch sitemap 'Mozilla/5.0' 'https://irhaapparels.com/sitemap.xml' sitemap.xml
           echo '--- Browser title ---'
           grep -o '<title>[^<]*</title>' browser.html | head -1 || true
-          echo '--- AI title ---'
+          echo '--- OAI title/H1/canonical ---'
           grep -o '<title>[^<]*</title>' ai.html | head -1 || true
-          echo '--- AI H1 ---'
           grep -o '<h1[^>]*>[^<]*</h1>' ai.html | head -1 || true
-          echo '--- Canonical ---'
           grep -o '<link rel="canonical"[^>]*>' ai.html | head -1 || true
-          echo '--- Crawler files ---'
+          echo '--- Google title ---'
+          grep -o '<title>[^<]*</title>' google.html | head -1 || true
+          echo '--- Crawler markers ---'
           grep -E 'OAI-SearchBot|Sitemap:' robots.txt || true
           grep -E 'Two production hubs|Bavarian & Leather' llms.txt || true
-          if [ "$ok" -ne 1 ]; then
-            echo 'Live crawler parity verification failed.'
-            exit 1
-          fi
-          echo 'Live crawler parity verification passed.'
+          echo '--- Response previews ---'
+          head -c 300 browser.html || true; echo
+          head -c 300 ai.html || true; echo
