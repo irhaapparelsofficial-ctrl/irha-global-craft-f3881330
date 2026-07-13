@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
+import { thumbnailUrl } from "@/lib/imageThumbnails";
 import bavarianImage from "@/assets/og/og-bavarian-hero.jpg";
 import leatherImage from "@/assets/og/og-leather.jpg";
 import sportswearImage from "@/assets/og/og-sportswear.jpg";
@@ -64,9 +65,9 @@ export default function HomeCategoryUniverse() {
               (product) => product.is_published && Boolean(product.image_url || product.gallery?.[0]),
             );
             const featured = products[0];
-            const image = featured
+            const image = thumbnailUrl(featured
               ? resolveAsset(featured.image_url || featured.gallery?.[0] || FALLBACKS[category.slug])
-              : FALLBACKS[category.slug];
+              : FALLBACKS[category.slug]);
             const usesProductMedia = Boolean(featured);
             const childNames = category.subs.slice(0, 3).map((subCategory) => subCategory.name);
 

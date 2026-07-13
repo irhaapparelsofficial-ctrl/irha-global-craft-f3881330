@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, ChevronRight, MessageCircle, Send, Share2 } from "lucide-react";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import { supabase } from "@/integrations/supabase/client";
 import { whatsappLink, BRAND } from "@/lib/constants";
 import { CATALOGUE_GROUPS, findCatalogueGroup, matchesCategorySlug } from "@/lib/catalogueGroups";
@@ -271,7 +272,7 @@ export default function CatalogueCategory() {
                   <article key={product.id} className="group border border-border/60 bg-card/30 overflow-hidden hover:border-gold transition-colors flex flex-col">
                     <Link to={productHref} className="aspect-[4/5] bg-card relative overflow-hidden block">
                       {product.image_url ? (
-                        <img src={product.image_url} alt={`${product.name} — custom B2B apparel`} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
+                        <ThumbnailImage src={product.image_url} alt={`${product.name} — custom B2B apparel`} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-foreground/30 text-xs uppercase tracking-[0.2em]">{group.name}</div>
                       )}

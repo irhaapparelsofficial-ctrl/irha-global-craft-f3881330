@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, GitCompareArrows, Trash2 } from "lucide-react";
 import SEO from "@/components/SEO";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import { useCompare } from "@/lib/shortlist";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbProduct } from "@/hooks/useCatalog";
@@ -83,7 +84,7 @@ export default function Compare() {
                         <th key={c.slug} className="p-4 text-left align-top min-w-[180px] border-l border-border/60">
                           <Link to={`/products/${c.categorySlug}/${c.slug}`} className="block group">
                             <div className="relative aspect-[3/4] mb-3 overflow-hidden bg-card">
-                              {c.image && <img src={c.image} alt={c.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />}
+                              {c.image && <ThumbnailImage src={c.image} alt={c.name} className="absolute inset-0 w-full h-full object-cover" />}
                             </div>
                             <p className="font-display text-sm leading-tight group-hover:text-primary transition-colors">{c.name}</p>
                           </Link>

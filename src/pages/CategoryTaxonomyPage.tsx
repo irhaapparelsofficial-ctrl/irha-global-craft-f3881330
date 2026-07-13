@@ -91,14 +91,22 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   }));
   const currentLocale = TAXONOMY_LOCALES.find((candidate) => candidate.code === locale)!;
   const products = collection?.products ?? [];
-  const heroImage = products[0]?.image ?? audience?.collections[0]?.products[0]?.image ?? category.image;
+  const firstHeroProduct = products[0] ?? audience?.collections[0]?.products[0];
+  const heroImage = firstHeroProduct?.originalImage
+    ?? firstHeroProduct?.gallery?.[0]
+    ?? category.originalImage
+    ?? firstHeroProduct?.image
+    ?? category.image;
   const heroLabel = collectionName ?? audienceName ?? topName;
   const heroProducts = collection
     ? products
     : audience
       ? audience.collections.flatMap((item) => item.products)
       : category.subs.flatMap((item) => item.products);
-  const heroSlides = [heroImage, ...heroProducts.map((product) => product.image)]
+  const heroSlides = [
+    heroImage,
+    ...heroProducts.map((product) => product.originalImage ?? product.gallery?.[0] ?? product.image),
+  ]
     .filter((src): src is string => Boolean(src))
     .filter((src, index, items) => items.indexOf(src) === index)
     .slice(0, 6)
