@@ -6,14 +6,13 @@ const assets = import.meta.glob("/src/assets/**/*.{jpg,jpeg,png,webp,svg}", {
 }) as Record<string, string>;
 
 // Vite Image Tools creates lightweight card/list thumbnails for every imported
-// raster asset. Heroes can keep using the original imported URL.
+// raster asset. Width-only resizing preserves the source aspect ratio. Heroes
+// can keep using the original imported URL.
 const importedThumbnails = import.meta.glob("/src/assets/**/*.{avif,jpg,jpeg,png,webp}", {
   eager: true,
   import: "default",
   query: {
     w: "720",
-    h: "720",
-    fit: "inside",
     format: "webp",
     quality: "72",
   },
