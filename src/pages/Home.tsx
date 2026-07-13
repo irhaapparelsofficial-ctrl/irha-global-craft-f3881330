@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import CapabilityStrip from "@/components/sections/CapabilityStrip";
 import FiveCategories from "@/components/sections/FiveCategories";
 import WhyB2B from "@/components/sections/WhyB2B";
@@ -109,10 +110,9 @@ export default function Home() {
                   key={hub.key}
                   className="group relative overflow-hidden border border-border/60 hover:border-gold/70 transition-all duration-500 min-h-[420px] md:min-h-[480px]"
                 >
-                  <img
+                  <ThumbnailImage
                     src={hub.fallbackImg}
                     alt={hub.productSafe ? "Distressed brown short Lederhosen with suspenders — Irha Apparels" : hub.title}
-                    loading="lazy"
                     className={`absolute inset-0 h-full w-full transition-transform duration-[1400ms] group-hover:scale-[1.04] ${hub.productSafe ? "object-contain bg-[#f4f0e7] p-8 md:p-12" : "object-cover"}`}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/25" />
