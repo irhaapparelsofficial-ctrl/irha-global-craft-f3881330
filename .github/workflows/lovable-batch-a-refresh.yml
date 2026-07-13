@@ -1,0 +1,65 @@
+name: Refresh Lovable Batch A Runtime
+
+on:
+  push:
+    branches:
+      - repair/lovable-batch-a-runtime-20260713-v1
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lovable-batch-a-runtime-refresh-20260713-v1
+  cancel-in-progress: false
+
+jobs:
+  refresh-runtime:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out runtime batch
+        uses: actions/checkout@v4
+        with:
+          ref: repair/lovable-batch-a-runtime-20260713-v1
+          fetch-depth: 0
+
+      - name: Refresh runtime source only from latest locked main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin a3a43c96a45efac1c0f453122f6ef8d7b9741881
+          git checkout FETCH_HEAD -- src
+          git rm -f --ignore-unmatch bun.lock bun.lockb
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Enforce zero known vulnerabilities
+        run: npm audit --audit-level=low
+
+      - name: Typecheck application
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+
+      - name: Run exact Lovable build command
+        run: npm run build
+
+      - name: Commit refreshed verified runtime batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/lovable-batch-a-refresh.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'repair: refresh Lovable runtime batch A with QC source'
+          git push origin HEAD:repair/lovable-batch-a-runtime-20260713-v1
