@@ -39,13 +39,20 @@ jobs:
         run: python -m py_compile tools/import_bavarian_drive_media.py
 
       - name: Scan, deduplicate and optimize every Drive image
+        id: import
+        continue-on-error: true
+        shell: bash
         run: |
+          set -o pipefail
+          mkdir -p docs/import-evidence
           python tools/import_bavarian_drive_media.py \
             --drive-url "https://drive.google.com/drive/folders/10pBXyaJyJgdt3nLe-opOcXW58ZE9ryug" \
             --output "public/media/bavarian-drive" \
-            --sql-output "supabase/manual/20260713_bavarian_drive_media_import.sql"
+            --sql-output "supabase/manual/20260713_bavarian_drive_media_import.sql" \
+            2>&1 | tee docs/import-evidence/bavarian-drive-latest.log
 
       - name: Verify generated import evidence
+        if: steps.import.outcome == 'success'
         run: |
           test -s public/media/bavarian-drive/manifest.json
           test -s public/media/bavarian-drive/scan-report.json
@@ -60,14 +67,21 @@ jobs:
           print(json.dumps(report, indent=2))
           PY
 
-      - name: Commit generated web media and mapping report
+      - name: Commit generated web media or diagnostic evidence
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/media/bavarian-drive supabase/manual/20260713_bavarian_drive_media_import.sql
+          git add docs/import-evidence/bavarian-drive-latest.log
+          if [ -d public/media/bavarian-drive ]; then git add public/media/bavarian-drive; fi
+          if [ -f supabase/manual/20260713_bavarian_drive_media_import.sql ]; then git add supabase/manual/20260713_bavarian_drive_media_import.sql; fi
           if git diff --cached --quiet; then
-            echo "Generated media is already current."
-            exit 0
+            echo "No generated evidence changed."
+          else
+            git commit -m "chore: record Bavarian Drive import evidence [skip ci]"
+            git push origin "HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}"
           fi
-          git commit -m "feat: publish scanned Bavarian Drive media [skip ci]"
-          git push origin "HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}"
+
+      - name: Fail when Drive import did not complete
+        if: steps.import.outcome != 'success'
+        run: exit 1
