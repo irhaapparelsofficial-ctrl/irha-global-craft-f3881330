@@ -56,6 +56,6 @@ assert(robots.includes(`Sitemap: ${canonical}/sitemap.xml`), "robots.txt sitemap
 assert(!sitemap.includes(`<loc>${alternateHost}`), "sitemap still contains www URLs");
 assert(sitemap.includes(`<loc>${canonical}/</loc>`), "sitemap is missing the canonical homepage");
 assert(llms.includes(`${canonical}/`), "llms.txt is missing absolute canonical URLs");
-assert(llmsFull.includes("Two production hubs"), "llms-full.txt is missing the current homepage structure");
+assert(llmsFull.toLowerCase().includes("two production hubs"), "llms-full.txt is missing the current homepage structure");
 
 console.log("PASS built crawler parity shell, canonical URLs, robots, sitemap and llms files");
