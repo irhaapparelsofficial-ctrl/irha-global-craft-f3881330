@@ -209,7 +209,7 @@ export default function HomeProductShowcase() {
               Product programs moving through every core category.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-foreground/65 md:text-base">
-              Bavarian & Trachten Wear appears first, followed by sportswear, leather, streetwear and leisure products. The showcase advances smoothly every three seconds.
+              Explore selected styles across our core manufacturing categories, from Bavarian and Trachten wear to sportswear, leather, streetwear and leisure apparel.
             </p>
           </div>
 
