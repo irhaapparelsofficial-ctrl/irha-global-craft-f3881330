@@ -6,8 +6,11 @@ const canonical = "https://irhaapparels.com";
 
 const sitemap = await readFile(sitemapPath, "utf8");
 const normalized = sitemap.replaceAll(wwwOrigin, canonical);
+const hasCanonicalHomepage =
+  normalized.includes(`<loc>${canonical}</loc>`) ||
+  normalized.includes(`<loc>${canonical}/</loc>`);
 
-if (!normalized.includes(`<loc>${canonical}/</loc>`)) {
+if (!hasCanonicalHomepage) {
   throw new Error("Generated sitemap is missing the canonical apex homepage URL");
 }
 
