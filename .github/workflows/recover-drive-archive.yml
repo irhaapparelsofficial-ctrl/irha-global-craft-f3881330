@@ -1,0 +1,220 @@
+name: Recover Drive archive safely
+
+on:
+  push:
+    branches:
+      - fix/authenticated-drive-media-recovery
+    paths:
+      - recovery-input/ARCHIVE_READY
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: recover-drive-archive-main
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out recovery controls
+        uses: actions/checkout@v4
+        with:
+          ref: fix/authenticated-drive-media-recovery
+          fetch-depth: 0
+
+      - name: Install recovery dependencies
+        run: |
+          python -m pip install --upgrade Pillow gdown
+
+      - name: Download authenticated recovery archive with retries
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f /tmp/authenticated-recovery.tar.gz
+          for attempt in 1 2 3; do
+            echo "Drive download attempt ${attempt}/3"
+            if gdown --fuzzy 'https://drive.google.com/file/d/10QbGedL_8ZuuKhLDAwkJkpi12rgSD_oM/view' -O /tmp/authenticated-recovery.tar.gz; then
+              if test -s /tmp/authenticated-recovery.tar.gz && tar -tzf /tmp/authenticated-recovery.tar.gz >/dev/null; then
+                exit 0
+              fi
+            fi
+            rm -f /tmp/authenticated-recovery.tar.gz
+            sleep $((attempt * 10))
+          done
+          echo 'Recovery archive could not be downloaded or validated.' >&2
+          exit 1
+
+      - name: Prepare clean main worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          rm -rf /tmp/irha-main /tmp/recovery-extracted
+          git worktree add /tmp/irha-main origin/main
+          mkdir -p /tmp/recovery-extracted
+          tar -xzf /tmp/authenticated-recovery.tar.gz -C /tmp/recovery-extracted
+
+      - name: Verify archive and reconstruct exact public assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import json
+          import shutil
+          from pathlib import Path
+          from PIL import Image
+
+          control = Path.cwd() / 'recovery-input'
+          main = Path('/tmp/irha-main')
+          extracted = Path('/tmp/recovery-extracted')
+
+          manifest_bytes = gzip.decompress(base64.b64decode(
+              (control / 'authenticated-recovery-manifest.json.gz.b64').read_text().strip(),
+              validate=True,
+          ))
+          manifest = json.loads(manifest_bytes)
+          mapping = json.loads((control / 'recovery-map.json').read_text())
+          records = manifest['records']
+          items = mapping['items']
+
+          assert manifest['accepted_count'] == 42, manifest
+          assert mapping['count'] == 42, mapping
+          assert len(records) == len(items) == 42
+
+          archive_files = list(extracted.rglob('*.webp'))
+          assert len(archive_files) >= 42, len(archive_files)
+          by_sha = {}
+          for path in archive_files:
+              data = path.read_bytes()
+              digest = hashlib.sha256(data).hexdigest()
+              if digest in by_sha:
+                  raise AssertionError(f'duplicate archive SHA: {digest}')
+              by_sha[digest] = path
+
+          batch_path = main / 'public/media/bavarian-drive/batches/authenticated-recovery.json'
+          batch_path.parent.mkdir(parents=True, exist_ok=True)
+          batch_path.write_bytes(manifest_bytes)
+
+          copied = 0
+          for index, (record, item) in enumerate(zip(records, items)):
+              assert item['i'] == index, item
+              assert record['output_path'] == item['output_path'], (record, item)
+              source = by_sha.get(item['sha256'])
+              assert source is not None, f"missing SHA {item['sha256']}"
+              data = source.read_bytes()
+              assert len(data) == item['bytes'], (source, len(data), item)
+              target = main / 'public' / record['output_path'].lstrip('/')
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(data)
+              with Image.open(target) as image:
+                  image.verify()
+              with Image.open(target) as image:
+                  assert image.size == (item['width'], item['height']), (target, image.size, item)
+              copied += 1
+
+          assert copied == 42
+          print(json.dumps({'verified_and_copied': copied}, indent=2))
+          PY
+
+      - name: Clear the original authenticated-download failures
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/irha-main
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          for slug in ('copy-socks', 'women-dirndl-blouses'):
+              for root in (
+                  Path('public/media/bavarian-drive/batches'),
+                  Path('docs/import-evidence/bavarian-drive-batches'),
+              ):
+                  path = root / f'{slug}.json'
+                  payload = json.loads(path.read_text(encoding='utf-8'))
+                  payload['downloaded_count'] = payload['inventory_count']
+                  payload['download_failure_count'] = 0
+                  payload['download_failures'] = []
+                  path.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Finalize and validate complete media library
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/irha-main
+          python tools/finalize_bavarian_drive_media.py \
+            --expected-count 30 \
+            --sql-output supabase/manual/20260713_bavarian_drive_media_import.sql
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from PIL import Image
+
+          report = json.loads(Path('public/media/bavarian-drive/scan-report.json').read_text())
+          failures = json.loads(Path('docs/import-evidence/bavarian-drive-download-failures.json').read_text())
+          recovery = json.loads(Path('public/media/bavarian-drive/batches/authenticated-recovery.json').read_text())
+
+          assert report['batch_count'] == 30, report
+          assert report['inventory_count'] == 1516, report
+          assert report['downloaded_count'] == 1516, report
+          assert report['download_failure_count'] == 0, report
+          assert report['missing_asset_count'] == 0, report
+          assert report['uncategorized_path_count'] == 0, report
+          assert report['materially_oversized_count'] == 0, report
+          assert report['accepted_count'] >= 1470, report
+          assert failures['failure_count'] == 0, failures
+          assert failures['downloaded_count'] == 1516, failures
+          assert recovery['accepted_count'] == 42, recovery
+
+          files = sorted(Path('public/media/bavarian-drive/assets/authenticated-recovery').rglob('*.webp'))
+          assert len(files) == recovery['finalized_record_count'], (len(files), recovery)
+          for path in files:
+              with Image.open(path) as image:
+                  image.verify()
+
+          print(json.dumps({
+              'accepted_unique': report['accepted_count'],
+              'recovered_final': recovery['finalized_record_count'],
+              'download_failures': failures['failure_count'],
+              'missing_assets': report['missing_asset_count'],
+          }, indent=2))
+          PY
+
+      - name: Commit only verified outputs to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/irha-main
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- \
+            public/media/bavarian-drive \
+            docs/import-evidence \
+            supabase/manual/20260713_bavarian_drive_media_import.sql
+          if git diff --cached --quiet; then
+            echo 'Verified outputs already exist on main.'
+            exit 0
+          fi
+          base_sha="$(git rev-parse HEAD)"
+          git commit -m 'fix(media): recover all authenticated Drive images'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$base_sha" || {
+            echo 'Main changed during recovery; refusing non-fast-forward push.' >&2
+            exit 1
+          }
+          git push origin HEAD:main
+
+      - name: Request Cloudflare Pages deployment
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run cloudflare-pages.yml --ref main
