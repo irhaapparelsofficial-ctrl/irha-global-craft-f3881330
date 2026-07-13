@@ -11,31 +11,39 @@ jobs:
   verify-live:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
     steps:
-      - name: Diagnose DNS and production crawler responses
+      - name: Check safe Cloudflare access and crawler response
         shell: bash
         run: |
           set -u
+          token="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}"
+          zone_id="${CLOUDFLARE_ZONE_ID:-${CF_ZONE_ID:-}}"
+          echo "Cloudflare API token: $([ -n "$token" ] && echo configured || echo missing)"
+          echo "Cloudflare zone ID secret: $([ -n "$zone_id" ] && echo configured || echo missing)"
+          if [ -n "$token" ]; then
+            response=$(curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' 'https://api.cloudflare.com/client/v4/zones?name=irhaapparels.com')
+            success=$(printf '%s' "$response" | jq -r '.success // false')
+            discovered=$(printf '%s' "$response" | jq -r '.result[0].id // empty')
+            echo "Cloudflare zone lookup: $success"
+            if [ -n "$discovered" ]; then
+              zone_id="$discovered"
+              echo "Cloudflare zone discovered successfully"
+            else
+              printf '%s' "$response" | jq -r '.errors[]?.message // empty' | head -5
+            fi
+          fi
           echo '--- DNS ---'
           echo 'NS:'; dig +short NS irhaapparels.com || true
           echo 'A apex:'; dig +short A irhaapparels.com || true
-          echo 'AAAA apex:'; dig +short AAAA irhaapparels.com || true
           echo 'CNAME www:'; dig +short CNAME www.irhaapparels.com || true
-          echo 'A www:'; dig +short A www.irhaapparels.com || true
-          echo 'TXT apex:'; dig +short TXT irhaapparels.com || true
           echo '--- HTTP ---'
-          fetch() {
-            label="$1"; agent="$2"; url="$3"; output="$4"
-            code=$(curl -sSL -A "$agent" -o "$output" -w '%{http_code}' "$url" || true)
-            echo "$label HTTP $code bytes $(wc -c < "$output" 2>/dev/null || echo 0)"
-          }
-          fetch browser 'Mozilla/5.0' 'https://irhaapparels.com/' browser.html
-          fetch oai 'OAI-SearchBot/1.0' 'https://irhaapparels.com/' ai.html
-          fetch google 'Googlebot/2.1 (+http://www.google.com/bot.html)' 'https://irhaapparels.com/' google.html
-          fetch lovable 'Mozilla/5.0' 'https://irha-global-craft-f3881330.lovable.app/' lovable.html
-          echo '--- Titles ---'
-          grep -o '<title>[^<]*</title>' browser.html | head -1 || true
-          grep -o '<title>[^<]*</title>' google.html | head -1 || true
-          grep -o '<title>[^<]*</title>' lovable.html | head -1 || true
-          echo '--- OAI response ---'
-          cat ai.html || true
+          for agent in 'Mozilla/5.0' 'OAI-SearchBot/1.0' 'ChatGPT-User/1.0' 'GPTBot/1.0' 'Googlebot/2.1 (+http://www.google.com/bot.html)'; do
+            code=$(curl -sSL -A "$agent" -o body.html -w '%{http_code}' 'https://irhaapparels.com/' || true)
+            title=$(grep -o '<title>[^<]*</title>' body.html | head -1 || true)
+            echo "$agent => HTTP $code $title"
+          done
