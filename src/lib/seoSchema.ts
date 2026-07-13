@@ -1,6 +1,6 @@
 import { BRAND } from "@/lib/constants";
 
-export const SITE_URL = "https://www.irhaapparels.com";
+export const SITE_URL = "https://irhaapparels.com";
 export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
