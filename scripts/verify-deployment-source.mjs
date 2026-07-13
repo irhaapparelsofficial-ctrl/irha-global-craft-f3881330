@@ -6,7 +6,7 @@ const EXPECTED = {
   projectId: "da72a40a-7df3-44c3-a72d-f180d9ffcd25",
   supabaseProjectId: "pvzjiozismyxqrzmtfbi",
   repository: "irhaapparelsofficial-ctrl/irha-global-craft-f3881330",
-  origin: "https://www.irhaapparels.com",
+  origin: "https://irhaapparels.com",
   branch: "main",
   policy: "latest-main-only",
 };
