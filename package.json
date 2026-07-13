@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/verify-built-crawler-shell.mjs",
-    "build:dev": "vite build --mode development && node scripts/verify-built-crawler-shell.mjs",
+    "build": "vite build && npx tsx scripts/generate-static-route-shells.ts && node scripts/verify-built-crawler-shell.mjs",
+    "build:dev": "vite build --mode development && npx tsx scripts/generate-static-route-shells.ts && node scripts/verify-built-crawler-shell.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -44,7 +44,6 @@
     "@radix-ui/react-switch": "^1.2.5",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.2.14",
-    "@radix-ui/react-toggle": "^1.1.9",
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@supabase/supabase-js": "^2.108.2",
