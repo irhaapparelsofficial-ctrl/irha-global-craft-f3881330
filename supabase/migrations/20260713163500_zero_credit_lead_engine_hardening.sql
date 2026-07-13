@@ -33,5 +33,10 @@ create unique index if not exists lead_candidates_campaign_email_unique
   on public.lead_candidates (campaign_id, lower(email))
   where email is not null;
 
-create index if not exists lead_search_runs_campaign_started_idx
-  on public.lead_search_runs (campaign_id, started_at desc);
+create index if not exists lead_campaigns_requested_by_idx
+  on public.lead_campaigns (requested_by)
+  where requested_by is not null;
+
+create index if not exists lead_candidates_reviewed_by_idx
+  on public.lead_candidates (reviewed_by)
+  where reviewed_by is not null;
