@@ -1,0 +1,40 @@
+name: Generate Secure Dependency Lock
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Upgrade and lock secure build dependencies
+        run: |
+          npm pkg set 'dependencies.@lovable.dev/mcp-js=^0.21.0'
+          npm pkg set 'devDependencies.vite=8.1.4'
+          npm pkg set 'devDependencies.@vitejs/plugin-react-swc=4.3.1'
+          npm pkg set 'devDependencies.vite-imagetools=10.0.1'
+          npm pkg set 'devDependencies.vitest=4.1.10'
+          npm pkg set 'overrides.esbuild=0.28.1'
+          npm install --package-lock-only --ignore-scripts
+          npm audit --audit-level=low
+      - name: Upload secure dependency files
+        uses: actions/upload-artifact@v4
+        with:
+          name: secure-dependency-lock
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 7
