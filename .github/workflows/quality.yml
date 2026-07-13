@@ -36,7 +36,22 @@ jobs:
         run: npm test -- --passWithNoTests
 
       - name: Build
-        run: npm run build
+        shell: bash
+        run: |
+          set +e
+          npm run build > build.log 2>&1
+          code=$?
+          cat build.log
+          exit "$code"
+
+      - name: Upload build failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-5-3-build-log
+          path: build.log
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Verify built release identity and canonical host
         shell: bash
