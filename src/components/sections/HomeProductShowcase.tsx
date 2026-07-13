@@ -1,15 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import ResilientImage from "@/components/ResilientImage";
 import { usePublicCatalogTree, type PublicTopCategory } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
 import { thumbnailUrl } from "@/lib/imageThumbnails";
+import bavarianImage from "@/assets/og/og-bavarian-hero.jpg";
+import leatherImage from "@/assets/og/og-leather.jpg";
+import sportswearImage from "@/assets/og/og-sportswear.jpg";
+import streetwearImage from "@/assets/og/og-streetwear.jpg";
+import nightwearImage from "@/assets/og/og-nightwear.jpg";
 
 type ShowcaseProduct = {
   id: string;
   slug: string;
   name: string;
   image: string;
+  originalImage: string;
+  fallbackImage: string;
   categoryName: string;
   categorySlug: string;
   subcategoryName: string;
@@ -25,32 +33,45 @@ const CATEGORY_ORDER = [
   "leisure-nightwear",
 ] as const;
 
+const CATEGORY_FALLBACKS: Record<string, string> = {
+  "bavarian-trachten-wear": bavarianImage,
+  "premium-leather-apparel": leatherImage,
+  sportswear: sportswearImage,
+  "streetwear-activewear": streetwearImage,
+  "leisure-nightwear": nightwearImage,
+};
+
+function productRecord(
+  category: PublicTopCategory,
+  product: PublicTopCategory["directProducts"][number],
+  subcategoryName: string,
+): ShowcaseProduct {
+  const fallbackImage = CATEGORY_FALLBACKS[category.slug] ?? bavarianImage;
+  const originalImage = resolveAsset(product.image_url || product.gallery?.[0] || fallbackImage);
+
+  return {
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    image: thumbnailUrl(originalImage),
+    originalImage,
+    fallbackImage,
+    categoryName: category.name,
+    categorySlug: category.slug,
+    subcategoryName,
+  };
+}
+
 function productsForCategory(category: PublicTopCategory): ShowcaseProduct[] {
   const nested = category.subs.flatMap((subCategory) =>
     subCategory.products
       .filter((product) => product.is_published && Boolean(product.image_url || product.gallery?.[0]))
-      .map((product) => ({
-        id: product.id,
-        slug: product.slug,
-        name: product.name,
-        image: thumbnailUrl(resolveAsset(product.image_url || product.gallery?.[0] || "/placeholder.svg")),
-        categoryName: category.name,
-        categorySlug: category.slug,
-        subcategoryName: subCategory.name,
-      })),
+      .map((product) => productRecord(category, product, subCategory.name)),
   );
 
   const direct = category.directProducts
     .filter((product) => product.is_published && Boolean(product.image_url || product.gallery?.[0]))
-    .map((product) => ({
-      id: product.id,
-      slug: product.slug,
-      name: product.name,
-      image: thumbnailUrl(resolveAsset(product.image_url || product.gallery?.[0] || "/placeholder.svg")),
-      categoryName: category.name,
-      categorySlug: category.slug,
-      subcategoryName: category.name,
-    }));
+    .map((product) => productRecord(category, product, category.name));
 
   return [...direct, ...nested];
 }
@@ -216,8 +237,8 @@ export default function HomeProductShowcase() {
               className="group overflow-hidden border border-border/70 bg-background transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:shadow-elegant"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-[#eee8dc]">
-                <img
-                  src={product.image}
+                <ResilientImage
+                  sources={[product.image, product.originalImage, product.fallbackImage]}
                   alt={`${product.name} by Irha Apparels`}
                   loading={cardIndex === 0 ? "eager" : "lazy"}
                   decoding="async"
