@@ -1,18 +1,20 @@
 import { readFile, writeFile } from "node:fs/promises";
 
 const sitemapPath = new URL("../public/sitemap.xml", import.meta.url);
-const apex = "https://irhaapparels.com";
-const canonical = "https://www.irhaapparels.com";
+const wwwOrigin = "https://www.irhaapparels.com";
+const canonical = "https://irhaapparels.com";
 
 const sitemap = await readFile(sitemapPath, "utf8");
-const normalized = sitemap.replaceAll(apex, canonical);
+const normalized = sitemap
+  .replaceAll(wwwOrigin, canonical)
+  .replaceAll(`<loc>${canonical}</loc>`, `<loc>${canonical}/</loc>`);
 
 if (!normalized.includes(`<loc>${canonical}/</loc>`)) {
-  throw new Error("Generated sitemap is missing the canonical www homepage URL");
+  throw new Error("Generated sitemap is missing the canonical apex homepage URL");
 }
 
-if (normalized.includes(`<loc>${apex}`)) {
-  throw new Error("Generated sitemap still contains apex URLs after normalization");
+if (normalized.includes(`<loc>${wwwOrigin}`)) {
+  throw new Error("Generated sitemap still contains www URLs after normalization");
 }
 
 await writeFile(sitemapPath, normalized, "utf8");
