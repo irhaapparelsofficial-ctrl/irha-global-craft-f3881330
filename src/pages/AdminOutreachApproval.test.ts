@@ -14,11 +14,14 @@ describe("outreach approval copilot safety", () => {
     expect(backend).toContain('.eq("role", "admin")');
   });
 
-  it("registers the private route before the public wildcard", () => {
+  it("registers the private route before the public wildcard and preserves lead intake", () => {
     const route = '<Route path="/admin/outreach-approval" element={<AdminOutreachApproval />} />';
+    const intakeRoute = '<Route path="/admin/lead-intake" element={<AdminLeadIntake />} />';
     expect(app).toContain('const AdminOutreachApproval = lazy(() => import("./pages/AdminOutreachApproval"))');
     expect(app).toContain(route);
+    expect(app).toContain(intakeRoute);
     expect(app.indexOf(route)).toBeLessThan(app.indexOf('<Route\n                path="*"'));
+    expect(app.indexOf(intakeRoute)).toBeLessThan(app.indexOf('<Route\n                path="*"'));
   });
 
   it("orchestrates existing lead and email engines instead of replacing them", () => {
