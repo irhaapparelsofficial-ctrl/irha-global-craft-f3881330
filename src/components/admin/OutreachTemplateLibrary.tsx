@@ -1,5 +1,6 @@
 import { Copy, Mail, MessageCircle, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import GmailInboxPanel from "@/components/admin/GmailInboxPanel";
 
 type Template = { title: string; channel: string; body: string };
 
@@ -122,47 +123,51 @@ export default function OutreachTemplateLibrary() {
   };
 
   return (
-    <div className="space-y-5 mb-6">
-      <section className="border border-gold/40 bg-card/25 p-5 md:p-6">
-        <div className="flex items-start gap-3">
-          <Mail size={20} className="text-gold shrink-0 mt-0.5" />
-          <div>
-            <p className="eyebrow mb-2">Buyer Outreach Library</p>
-            <h2 className="font-display text-3xl">Truthful, personalized B2B messages</h2>
-            <p className="text-sm text-foreground/68 mt-3 max-w-4xl leading-relaxed">Use these drafts now. Replace every placeholder and verify the recipient before sending. Automated Gmail delivery and reply sync remain pending until the final backend activation.</p>
-          </div>
-        </div>
-      </section>
+    <>
+      <GmailInboxPanel />
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        {TEMPLATES.map((item) => (
-          <article key={item.title} className="border border-border/60 bg-card/25 p-5 flex flex-col">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.16em] text-gold">{item.channel}</p>
-                <h3 className="font-display text-xl mt-1">{item.title}</h3>
-              </div>
-              {item.channel.includes("WhatsApp") ? <MessageCircle size={17} className="text-gold/70" /> : <Mail size={17} className="text-gold/70" />}
+      <div className="space-y-5 mt-6 mb-6">
+        <section className="border border-gold/40 bg-card/25 p-5 md:p-6">
+          <div className="flex items-start gap-3">
+            <Mail size={20} className="text-gold shrink-0 mt-0.5" />
+            <div>
+              <p className="eyebrow mb-2">Buyer Outreach Library</p>
+              <h2 className="font-display text-3xl">Truthful, personalized B2B messages</h2>
+              <p className="text-sm text-foreground/68 mt-3 max-w-4xl leading-relaxed">Use these drafts now. Replace every placeholder and verify the recipient before sending. The connected Gmail inbox appears above, while outbound delivery remains owner-approved.</p>
             </div>
-            <pre className="mt-4 whitespace-pre-wrap break-words text-xs leading-relaxed text-foreground/70 font-sans flex-1 border border-border/50 bg-background/35 p-4 max-h-80 overflow-y-auto">{item.body}</pre>
-            <button type="button" onClick={() => void copy(item.body, item.title)} className="mt-4 min-h-11 inline-flex items-center justify-center gap-2 border border-gold/50 text-gold px-4 py-2 text-[10px] uppercase tracking-[0.14em] hover:bg-gold hover:text-background"><Copy size={11} /> Copy template</button>
-          </article>
-        ))}
-      </div>
+          </div>
+        </section>
 
-      <section className="border border-border/60 bg-card/25 p-5">
-        <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-gold"><ShieldCheck size={14} /> Outreach rules</div>
-        <div className="grid md:grid-cols-2 gap-3 mt-4 text-sm text-foreground/65">
-          {[
-            "Use a real company-fit reason instead of generic mass outreach",
-            "Verify the recipient and avoid duplicate sends",
-            "Do not invent buyer names, roles, demand or previous contact",
-            "Do not promise universal MOQ, price, certification or delivery",
-            "Keep replies in the Buyer CRM with a clear next follow-up",
-            "Stop or suppress contact when the recipient declines further outreach",
-          ].map((item) => <p key={item} className="flex gap-2"><ShieldCheck size={14} className="text-gold shrink-0 mt-0.5" />{item}</p>)}
+        <div className="grid lg:grid-cols-2 gap-4">
+          {TEMPLATES.map((item) => (
+            <article key={item.title} className="border border-border/60 bg-card/25 p-5 flex flex-col">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[9px] uppercase tracking-[0.16em] text-gold">{item.channel}</p>
+                  <h3 className="font-display text-xl mt-1">{item.title}</h3>
+                </div>
+                {item.channel.includes("WhatsApp") ? <MessageCircle size={17} className="text-gold/70" /> : <Mail size={17} className="text-gold/70" />}
+              </div>
+              <pre className="mt-4 whitespace-pre-wrap break-words text-xs leading-relaxed text-foreground/70 font-sans flex-1 border border-border/50 bg-background/35 p-4 max-h-80 overflow-y-auto">{item.body}</pre>
+              <button type="button" onClick={() => void copy(item.body, item.title)} className="mt-4 min-h-11 inline-flex items-center justify-center gap-2 border border-gold/50 text-gold px-4 py-2 text-[10px] uppercase tracking-[0.14em] hover:bg-gold hover:text-background"><Copy size={11} /> Copy template</button>
+            </article>
+          ))}
         </div>
-      </section>
-    </div>
+
+        <section className="border border-border/60 bg-card/25 p-5">
+          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-gold"><ShieldCheck size={14} /> Outreach rules</div>
+          <div className="grid md:grid-cols-2 gap-3 mt-4 text-sm text-foreground/65">
+            {[
+              "Use a real company-fit reason instead of generic mass outreach",
+              "Verify the recipient and avoid duplicate sends",
+              "Do not invent buyer names, roles, demand or previous contact",
+              "Do not promise universal MOQ, price, certification or delivery",
+              "Keep replies in the Buyer CRM with a clear next follow-up",
+              "Stop or suppress contact when the recipient declines further outreach",
+            ].map((item) => <p key={item} className="flex gap-2"><ShieldCheck size={14} className="text-gold shrink-0 mt-0.5" />{item}</p>)}
+          </div>
+        </section>
+      </div>
+    </>
   );
 }
