@@ -5,15 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npx tsx scripts/generate-static-route-shells.ts && node scripts/verify-built-crawler-shell.mjs",
-    "build:dev": "vite build --mode development && npx tsx scripts/generate-static-route-shells.ts && node scripts/verify-built-crawler-shell.mjs",
+    "build": "vite build && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/verify-built-crawler-shell.mjs",
+    "build:dev": "vite build --mode development && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/verify-built-crawler-shell.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:deployment-source": "node scripts/verify-deployment-source.mjs",
-    "predev": "npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs",
-    "prebuild": "node scripts/verify-deployment-source.mjs && npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs",
+    "predev": "npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs",
+    "prebuild": "node scripts/verify-deployment-source.mjs && npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs",
     "postbuild": "node scripts/ping-search-engines.mjs"
   },
   "dependencies": {
