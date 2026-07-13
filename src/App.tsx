@@ -8,6 +8,7 @@ import Layout from "@/components/layout/Layout";
 import Home from "./pages/Home";
 import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
+import ProductionQualityLauncher from "@/components/admin/ProductionQualityLauncher";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const About = lazy(() => import("./pages/About"));
@@ -183,6 +184,7 @@ const App = () => (
               />
             </Routes>
           </Suspense>
+          <ProductionQualityLauncher />
           <CookieConsent />
         </BrowserRouter>
       </TooltipProvider>
