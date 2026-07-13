@@ -1,0 +1,40 @@
+name: Diagnose P0 compare tests
+
+on:
+  push:
+    branches:
+      - phase/p0-compare-shortlist-integrity-20260714
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Capture Vitest JSON without failing diagnostic job
+        shell: bash
+        run: |
+          set +e
+          npx vitest run --reporter=json --outputFile=vitest-results.json
+          code=$?
+          echo "$code" > vitest-exit-code.txt
+          test -s vitest-results.json || printf '{"diagnostic":"vitest produced no JSON","exitCode":%s}\n' "$code" > vitest-results.json
+          exit 0
+      - name: Upload exact test diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0-compare-vitest-diagnostic
+          path: |
+            vitest-results.json
+            vitest-exit-code.txt
+          if-no-files-found: error
+          retention-days: 1
