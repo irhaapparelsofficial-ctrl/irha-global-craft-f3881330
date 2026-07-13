@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, Bookmark, GitCompareArrows, MessageCircle, Trash2 } from "lucide-react";
 import SEO from "@/components/SEO";
 import ThumbnailImage from "@/components/ThumbnailImage";
-import { useShortlist, useCompare } from "@/lib/shortlist";
+import { shortlistProductPath, useShortlist, useCompare } from "@/lib/shortlist";
 import { whatsappLink } from "@/lib/constants";
 
 export default function Shortlist() {
@@ -10,12 +10,12 @@ export default function Shortlist() {
   const compare = useCompare();
 
   const rfqLink = shortlist.items.length
-    ? `/inquiry?intent=rfq&shortlist=${encodeURIComponent(shortlist.items.map((i) => i.slug).join(","))}&names=${encodeURIComponent(shortlist.items.map((i) => i.name).join(","))}`
+    ? `/inquiry?intent=rfq&shortlist=${encodeURIComponent(shortlist.items.map((item) => item.slug).join(","))}&names=${encodeURIComponent(shortlist.items.map((item) => item.name).join(","))}`
     : "/inquiry?intent=rfq";
 
   const whatsappMsg = shortlist.items.length
-    ? `Hello Irha Apparels — I've shortlisted these products:\n${shortlist.items.map((i, n) => `${n + 1}. ${i.name}`).join("\n")}\n\nPlease share a quotation.`
-    : "Hello Irha Apparels — I'd like a quote.";
+    ? `Hello Irha Apparels — I've shortlisted these products:\n${shortlist.items.map((item, index) => `${index + 1}. ${item.name}`).join("\n")}\n\nPlease review these requirements for a quotation.`
+    : "Hello Irha Apparels — I'd like to discuss a quotation.";
 
   return (
     <>
@@ -42,36 +42,37 @@ export default function Shortlist() {
                 <Link to={rfqLink} className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3.5 text-xs uppercase tracking-[0.3em]">
                   Request Quote for All <ArrowUpRight size={14} />
                 </Link>
-                <a href={whatsappLink(whatsappMsg)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-gold/70 text-gold hover:bg-gold hover:text-background px-6 py-3.5 text-xs uppercase tracking-[0.3em]">
+                <a href={whatsappLink(whatsappMsg)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 border border-gold/70 text-gold hover:bg-gold hover:text-background px-6 py-3.5 text-xs uppercase tracking-[0.3em]">
                   <MessageCircle size={14} /> WhatsApp
                 </a>
                 <Link to="/compare" className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-6 py-3.5 text-xs uppercase tracking-[0.3em]">
                   <GitCompareArrows size={14} /> Compare ({compare.items.length}/4)
                 </Link>
-                <button type="button" onClick={shortlist.clear} className="ml-auto text-[11px] uppercase tracking-[0.25em] text-foreground/60 hover:text-foreground inline-flex items-center gap-1">
+                <button type="button" onClick={shortlist.clear} className="ml-auto min-h-11 text-[11px] uppercase tracking-[0.25em] text-foreground/60 hover:text-foreground inline-flex items-center gap-1 px-2">
                   <Trash2 size={12} /> Clear all
                 </button>
               </div>
 
               <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-                {shortlist.items.map((p) => {
-                  const inCompare = compare.has(p.slug);
+                {shortlist.items.map((product) => {
+                  const inCompare = compare.has(product.slug);
+                  const productPath = shortlistProductPath(product);
                   return (
-                    <div key={p.slug} className="group flex flex-col">
-                      <Link to={`/products/${p.categorySlug}/${p.slug}`} className="block relative aspect-[3/4] overflow-hidden bg-card mb-3">
-                        {p.image && (
-                          <ThumbnailImage src={p.image} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+                    <div key={product.slug} className="group flex flex-col">
+                      <Link to={productPath} className="block relative aspect-[3/4] overflow-hidden bg-card mb-3">
+                        {product.image && (
+                          <ThumbnailImage src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
                         )}
                       </Link>
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/50">{p.categoryName}</p>
-                      <Link to={`/products/${p.categorySlug}/${p.slug}`} className="font-display text-sm leading-tight hover:text-primary transition-colors mt-1">
-                        {p.name}
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/50">{product.categoryName || "Saved product"}</p>
+                      <Link to={productPath} className="font-display text-sm leading-tight hover:text-primary transition-colors mt-1">
+                        {product.name}
                       </Link>
                       <div className="mt-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em]">
-                        <button type="button" onClick={() => compare.toggle(p)} disabled={!inCompare && compare.items.length >= 4} className={`px-2 py-1.5 border transition-colors ${inCompare ? "border-primary text-primary" : "border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed"}`}>
+                        <button type="button" onClick={() => compare.toggle(product)} disabled={!inCompare && compare.items.length >= 4} className={`min-h-10 px-2 py-1.5 border transition-colors ${inCompare ? "border-primary text-primary" : "border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed"}`}>
                           {inCompare ? "In Compare" : "Compare"}
                         </button>
-                        <button type="button" onClick={() => shortlist.remove(p.slug)} className="ml-auto p-1.5 text-foreground/50 hover:text-destructive" aria-label={`Remove ${p.name}`}>
+                        <button type="button" onClick={() => shortlist.remove(product.slug)} className="ml-auto min-h-10 min-w-10 inline-flex items-center justify-center text-foreground/50 hover:text-destructive" aria-label={`Remove ${product.name}`}>
                           <Trash2 size={12} />
                         </button>
                       </div>
