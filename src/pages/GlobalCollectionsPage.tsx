@@ -6,7 +6,7 @@ import { usePublicCategories } from "@/hooks/usePublicCategoryData";
 import { buildCategoryTaxonomy } from "@/lib/globalCategoryTaxonomy";
 import { whatsappLink } from "@/lib/constants";
 
-const SITE = "https://www.irhaapparels.com";
+const SITE = "https://irhaapparels.com";
 
 export default function GlobalCollectionsPage() {
   const { categories, isLoading } = usePublicCategories();
