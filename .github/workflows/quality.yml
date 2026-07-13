@@ -38,6 +38,18 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify built release identity and canonical host
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
+          grep -F '"expected_origin": "https://irhaapparels.com"' dist/build.json
+          grep -F 'Sitemap: https://irhaapparels.com/sitemap.xml' dist/robots.txt
+          if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'https://www.irhaapparels.com' dist; then
+            echo "Built output still contains the redirecting www host"
+            exit 1
+          fi
+
       - name: Guard production text output against legacy claims
         shell: bash
         run: |
