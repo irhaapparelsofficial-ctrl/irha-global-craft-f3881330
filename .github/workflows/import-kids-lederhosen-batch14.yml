@@ -10,62 +10,86 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: import-kids-lederhosen-batch14
+  cancel-in-progress: false
+
 jobs:
   import-media:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout feature branch
+      - name: Checkout feature branch with verified source refs
         uses: actions/checkout@v4
         with:
           ref: feature/bavarian-kids-lederhosen-batch-14
           fetch-depth: 0
 
-      - name: Install verified media tools
-        run: python -m pip install --disable-pip-version-check gdown==5.2.0 Pillow==11.3.0
+      - name: Install image validator
+        run: python -m pip install --disable-pip-version-check Pillow==12.3.0
 
-      - name: Download, validate and optimize original Drive images
+      - name: Copy and validate repository-backed originals
         shell: python
         run: |
           from pathlib import Path
           from PIL import Image
-          import gdown
+          import hashlib
+          import subprocess
 
+          source_ref = "origin/fix/authenticated-drive-media-recovery"
           assets = {
-              "brown-deer-embroidered-kids-lederhosen": "1kjHKfgySoD51V7fDWu06TYEwfWfKyyTa",
-              "classic-brown-lace-up-kids-lederhosen": "1SMqhZx6nr8rUR9wC7A-0yanuq7pcfdOF",
-              "black-floral-embroidered-kids-lederhosen": "1Yx4xe47Nn_1ee376Z_L_0paDsUsqAP5k",
-              "tan-red-lace-side-kids-lederhosen": "1zQ74b3woUpIgse8sm-4K3cFhrwyaVcqd",
-              "tan-heart-embroidered-kids-lederhosen": "16EjCYEUeFH-tU8cA5Ao6SDaRPQxu5HNl",
+              "brown-deer-embroidered-kids-lederhosen": "public/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-19.webp",
+              "classic-brown-lace-up-kids-lederhosen": "public/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-20.webp",
+              "black-floral-embroidered-kids-lederhosen": "public/media/bavarian-drive/assets/children/review-only/01-1200x1200-2.webp",
+              "tan-red-lace-side-kids-lederhosen": "public/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-24.webp",
+              "tan-heart-embroidered-kids-lederhosen": "public/media/bavarian-drive/assets/children/children-s-lederhosen/lederhosen-23.webp",
           }
 
           output_dir = Path("public/media/products/kids-lederhosen")
-          output_dir.mkdir(parents=True, exist_ok=True)
           temporary_dir = Path(".tmp-kids-batch14")
           temporary_dir.mkdir(exist_ok=True)
 
-          for slug, file_id in assets.items():
-              source = temporary_dir / f"{slug}.jpg"
-              result = gdown.download(id=file_id, output=str(source), quiet=False)
-              if not result or not source.exists() or source.stat().st_size < 10_000:
-                  raise RuntimeError(f"Drive download failed validation for {slug}")
+          # Preflight every source before touching the final output directory.
+          staged = []
+          for slug, source_path in assets.items():
+              probe = subprocess.run(
+                  ["git", "cat-file", "-e", f"{source_ref}:{source_path}"],
+                  capture_output=True,
+                  text=True,
+              )
+              if probe.returncode != 0:
+                  raise RuntimeError(f"Verified source missing: {source_ref}:{source_path}")
 
-              with Image.open(source) as probe:
-                  probe.verify()
-              with Image.open(source) as image:
-                  image = image.convert("RGB")
-                  image.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
-                  destination = output_dir / f"{slug}.webp"
-                  image.save(destination, "WEBP", quality=88, method=6)
-                  if destination.stat().st_size < 8_000:
-                      raise RuntimeError(f"Optimized output failed validation for {slug}")
-                  print(slug, image.size, destination.stat().st_size)
+              staged_path = temporary_dir / f"{slug}.webp"
+              data = subprocess.check_output(["git", "show", f"{source_ref}:{source_path}"])
+              staged_path.write_bytes(data)
+              if staged_path.stat().st_size < 8_000:
+                  raise RuntimeError(f"Source output too small for {slug}: {staged_path.stat().st_size}")
+
+              with Image.open(staged_path) as image:
+                  image.verify()
+              with Image.open(staged_path) as image:
+                  if image.format != "WEBP" or image.width < 800 or image.height < 800:
+                      raise RuntimeError(
+                          f"Invalid source for {slug}: format={image.format}, size={image.size}"
+                      )
+
+              staged.append((slug, staged_path, hashlib.sha256(data).hexdigest()))
+
+          output_dir.mkdir(parents=True, exist_ok=True)
+          for slug, staged_path, digest in staged:
+              destination = output_dir / f"{slug}.webp"
+              destination.write_bytes(staged_path.read_bytes())
+              print(slug, destination.stat().st_size, digest)
 
       - name: Commit validated media atomically
+        shell: bash
         run: |
+          set -euo pipefail
           rm -rf .tmp-kids-batch14
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/media/products/kids-lederhosen
           git rm .github/workflows/import-kids-lederhosen-batch14.yml
-          git commit -m "Add verified Kids Lederhosen Drive media"
+          git commit -m "Add verified Kids Lederhosen repository media"
           git push origin HEAD:feature/bavarian-kids-lederhosen-batch-14
