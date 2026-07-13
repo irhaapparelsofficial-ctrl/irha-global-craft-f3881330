@@ -4,8 +4,6 @@ import CapabilityStrip from "@/components/sections/CapabilityStrip";
 import HomeCategoryUniverse from "@/components/sections/HomeCategoryUniverse";
 import HomeProductShowcase from "@/components/sections/HomeProductShowcase";
 import HomeManufacturingEditorial from "@/components/sections/HomeManufacturingEditorial";
-import WhyB2B from "@/components/sections/WhyB2B";
-import BuyerTrustSection from "@/components/sections/BuyerTrustSection";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import {
@@ -48,8 +46,6 @@ export default function Home() {
       <HomeCategoryUniverse />
       <HomeProductShowcase />
       <HomeManufacturingEditorial />
-      <WhyB2B />
-      <BuyerTrustSection />
       <ProcessTimeline />
       <StartProgramCTA />
     </>

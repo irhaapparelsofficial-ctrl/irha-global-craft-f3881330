@@ -1,48 +1,47 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, MessageCircle, FileText, Upload, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, FileText, MessageCircle, Upload } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 
 export default function StartProgramCTA() {
   return (
-    <section className="relative py-24 md:py-32 border-t border-border/60 bg-background">
-      <div className="container-luxe relative max-w-5xl mx-auto text-center">
-        <p className="eyebrow justify-center inline-flex mb-6">Start Your Program</p>
-        <h2 className="font-display text-3xl md:text-5xl lg:text-6xl leading-[1.04]">
-          Start your next <span className="text-gold italic">production program</span>.
-        </h2>
-        <p className="mt-6 text-foreground/70 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-          Pricing is prepared per order — based on quantity, material, customization,
-          branding, packaging and destination. Share your requirement and we&apos;ll respond with a scoped quote.
-        </p>
+    <section className="bg-white py-20 text-[#122033] md:py-24">
+      <div className="container-luxe">
+        <div className="grid gap-10 bg-[#122033] px-7 py-10 text-white md:px-10 md:py-12 lg:grid-cols-12 lg:items-center lg:px-14 lg:py-14">
+          <div className="lg:col-span-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[#d9b765]">Start a B2B program</p>
+            <h2 className="mt-4 max-w-4xl font-display text-4xl leading-[1.04] md:text-5xl lg:text-6xl">
+              Send the requirement. Receive a scoped manufacturing response.
+            </h2>
+            <p className="mt-5 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+              Pricing is prepared per order using the product, quantity, material, customization, branding, packaging and destination. No public retail pricing is used.
+            </p>
 
-        <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
-          <Link
-            to="/inquiry?intent=rfq"
-            className="group inline-flex items-center justify-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-4 text-[11px] uppercase tracking-[0.28em] font-medium hover:shadow-gold transition-all"
-          >
-            <FileText size={14} /> Request a Quote
-            <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
-          <Link
-            to="/inquiry?intent=reference"
-            className="inline-flex items-center justify-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-4 text-[11px] uppercase tracking-[0.28em] font-medium transition-colors"
-          >
-            <Upload size={14} /> Upload Reference Design
-          </Link>
-          <Link
-            to="/inquiry?intent=catalogue"
-            className="inline-flex items-center justify-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-4 text-[11px] uppercase tracking-[0.28em] font-medium transition-colors"
-          >
-            <BookOpen size={14} /> Request Catalogue
-          </Link>
-          <a
-            href={whatsappLink("Hi, I'd like to discuss a production program.")}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 border border-foreground/25 hover:border-gold hover:text-gold px-6 py-4 text-[11px] uppercase tracking-[0.28em] font-medium transition-colors"
-          >
-            <MessageCircle size={14} /> Ask on WhatsApp
-          </a>
+            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/65">
+              <Link to="/inquiry?intent=reference" className="inline-flex items-center gap-2 hover:text-[#d9b765]">
+                <Upload size={13} /> Upload reference
+              </Link>
+              <Link to="/inquiry?intent=catalogue" className="inline-flex items-center gap-2 hover:text-[#d9b765]">
+                <BookOpen size={13} /> Request catalogue
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 lg:col-span-4">
+            <Link
+              to="/inquiry?intent=rfq"
+              className="inline-flex min-h-[52px] items-center justify-center gap-3 bg-[#d1ad59] px-7 py-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#122033] transition-colors hover:bg-[#e0c275]"
+            >
+              <FileText size={14} /> Request a quote <ArrowRight size={14} />
+            </Link>
+            <a
+              href={whatsappLink("Hi, I'd like to discuss a B2B apparel manufacturing program.")}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-[52px] items-center justify-center gap-3 border border-white/25 px-7 py-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors hover:border-[#d9b765] hover:text-[#d9b765]"
+            >
+              <MessageCircle size={14} /> Discuss on WhatsApp
+            </a>
+          </div>
         </div>
       </div>
     </section>
