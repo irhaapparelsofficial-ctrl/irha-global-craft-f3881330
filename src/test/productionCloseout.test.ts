@@ -42,57 +42,45 @@ describe("production closeout", () => {
   });
 
   it("allows closeout only after delivery, acceptance, invoice, payment review and verified costs", () => {
-    const result = closeoutReadiness({
+    const input = {
       shipmentStatus: "delivered",
       verifiedDeliveryEvidenceCount: 1,
-      acceptanceStatus: "accepted",
+      acceptanceStatus: "accepted" as const,
       acceptanceReference: "Buyer email thread 123",
       acceptedAt: "2026-07-20T10:00:00Z",
       invoiceNumber: "INV-1001",
       invoiceAmount: 1200,
       invoiceCurrency: "USD",
-      paymentStatus: "paid",
+      paymentStatus: "paid" as const,
       costs: [verifiedCost],
       openIssueCount: 0,
       openCriticalIssueCount: 0,
       lessonsLearned: "Packing labels should be generated earlier.",
-    });
+    };
+    const result = closeoutReadiness(input);
     expect(result.ready).toBe(true);
     expect(result.missing).toEqual([]);
-    expect(closeoutRisk({
-      shipmentStatus: "delivered",
-      verifiedDeliveryEvidenceCount: 1,
-      acceptanceStatus: "accepted",
-      acceptanceReference: "Buyer email thread 123",
-      acceptedAt: "2026-07-20T10:00:00Z",
-      invoiceNumber: "INV-1001",
-      invoiceAmount: 1200,
-      invoiceCurrency: "USD",
-      paymentStatus: "paid",
-      costs: [verifiedCost],
-      openIssueCount: 0,
-      openCriticalIssueCount: 0,
-      lessonsLearned: "Recorded",
-    })).toBe("clear");
+    expect(closeoutRisk(input)).toBe("clear");
   });
 
   it("blocks unsupported closure evidence", () => {
-    const result = closeoutReadiness({
+    const input = {
       shipmentStatus: "in_transit",
       verifiedDeliveryEvidenceCount: 0,
-      acceptanceStatus: "disputed",
+      acceptanceStatus: "disputed" as const,
       invoiceNumber: "",
       invoiceAmount: 0,
       invoiceCurrency: "",
-      paymentStatus: "disputed",
-      costs: [],
+      paymentStatus: "disputed" as const,
+      costs: [] as CostEntry[],
       openIssueCount: 1,
       openCriticalIssueCount: 1,
-    });
+    };
+    const result = closeoutReadiness(input);
     expect(result.ready).toBe(false);
     expect(result.missing.join(" ")).toMatch(/delivered/i);
     expect(result.missing.join(" ")).toMatch(/critical/i);
-    expect(closeoutRisk({ ...result, costs: [] } as never)).toBe("blocked");
+    expect(closeoutRisk(input)).toBe("blocked");
   });
 
   it("warns about unverified costs without treating them as verified profit evidence", () => {
