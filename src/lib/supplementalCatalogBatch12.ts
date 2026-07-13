@@ -59,6 +59,24 @@ const PRODUCTS: ProductSeed[] = [
     sort: 1104,
     image: "/media/bavarian-drive/assets/women-dirndl/traditional-dirndl-dress/08-1200x1200.webp",
   },
+  {
+    id: 146,
+    slug: "black-sky-blue-apron-dirndl-dress",
+    name: "Black Sky-Blue Apron Dirndl Dress",
+    visual: "black and sky-blue",
+    features: ["Sky-blue contrast apron and sash", "Decorative bodice front", "Coordinated white puff-sleeve blouse"],
+    sort: 1105,
+    image: "/product-media/black-sky-blue-apron-dirndl/01-hero-front.svg",
+  },
+  {
+    id: 147,
+    slug: "red-gingham-apron-dirndl-dress",
+    name: "Red Gingham Apron Dirndl Dress",
+    visual: "red, black and white gingham",
+    features: ["Coordinated red apron and sash", "Black contrast bodice", "Decorative front lacing"],
+    sort: 1106,
+    image: "/product-media/red-check-apron-dirndl/01-hero-front.svg",
+  },
 ];
 
 function createProduct(product: ProductSeed, categoryId: string): DbProduct {
