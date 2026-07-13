@@ -1,0 +1,59 @@
+# Irha Apparels — Expanded Public Website Summary
+
+## Company positioning
+
+Irha Apparels is an experienced B2B custom apparel manufacturer based in Sialkot, Pakistan. The company serves brands, wholesalers, importers, retailers and private-label buyers through OEM, ODM and made-to-requirement apparel programs.
+
+The website is for business inquiries rather than consumer retail. Fixed prices are not published. Commercial details are confirmed after the buyer shares requirements such as product type, quantity, materials, construction, branding, packaging, destination and target schedule.
+
+## Current homepage structure
+
+The homepage presents one manufacturing operation organized into two production hubs:
+
+1. Bavarian & Leather
+   - Bavarian and Trachten wear
+   - Lederhosen programs
+   - Dirndl programs
+   - Premium leather apparel
+
+2. Sportswear, Streetwear & Leisure
+   - Teamwear and club kits
+   - Performance sportswear and activewear
+   - Heavyweight streetwear
+   - Leisurewear and nightwear
+
+The main public buyer actions are to explore collections, view the catalogue, review manufacturing information, request an inquiry, contact the company or request a live factory-view video call.
+
+## Manufacturing capabilities
+
+Publicly described capabilities include custom cut and sew, embroidery, printing, sublimation where appropriate, private labels, woven labels, care labels, hang tags, buyer-specified packaging and export support. Exact capability and suitability depend on the product brief and are confirmed during requirement review.
+
+## Commercial accuracy policy
+
+The public website does not treat sample copy, concept images or automated calculations as binding quotations. Materials, MOQ, pricing, production timing, shipping method, documentation and compliance evidence are confirmed for each buyer requirement.
+
+Do not infer that every product uses the same MOQ, production time, material or certification. Do not infer certification status from general educational content. Evidence is provided before a claim is made to a buyer.
+
+## Buyer trust
+
+Irha Apparels can explain that it is an experienced manufacturer while the website itself is newly built. A live factory view may be arranged by video call as a trust and verification step during buyer discussions.
+
+## Canonical public URLs
+
+- Home: https://www.irhaapparels.com/
+- Collections: https://www.irhaapparels.com/products
+- Catalogue: https://www.irhaapparels.com/catalogue
+- About: https://www.irhaapparels.com/about
+- Manufacturing: https://www.irhaapparels.com/manufacturing
+- Buyer Trust: https://www.irhaapparels.com/buyer-trust
+- Factory Video Call: https://www.irhaapparels.com/factory-video-call
+- Resources: https://www.irhaapparels.com/resources
+- FAQ: https://www.irhaapparels.com/faq
+- Inquiry: https://www.irhaapparels.com/inquiry
+- Contact: https://www.irhaapparels.com/contact
+- Privacy Policy: https://www.irhaapparels.com/privacy-policy
+- Terms of Service: https://www.irhaapparels.com/terms-of-service
+
+## Contact context
+
+Official contact details should be taken from the current Contact page. The website supports business inquiries by email, WhatsApp and inquiry forms.

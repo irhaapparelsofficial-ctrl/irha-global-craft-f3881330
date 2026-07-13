@@ -1,29 +1,27 @@
 # Irha Apparels
 
-> B2B custom apparel manufacturer based in Sialkot, Pakistan for brands, wholesalers, importers, retailers and private-label buyers.
+> B2B custom apparel manufacturer in Sialkot, Pakistan for brands, wholesalers, importers, retailers and private-label buyers.
 
-Irha Apparels presents custom apparel program categories and inquiry tools. Product feasibility, materials, construction, MOQ, sampling, pricing, production timing, shipping and documentation are confirmed after requirement review.
+Irha Apparels provides OEM, ODM and private-label apparel programs. The public website is organized around two production hubs: Bavarian & Leather, and Sportswear, Streetwear & Leisure. Product feasibility, materials, construction, sampling, MOQ, pricing, production timing, shipping and documentation are confirmed after the buyer's requirements are reviewed.
 
-The website does not publish fixed commercial commitments or unverified certification claims. Buyers may also request a live factory view by video call during requirement discussion.
+The website does not publish fixed commercial commitments or unverified certification claims. Buyers may request a live factory view by video call during requirement discussion.
 
-## Public pages
+## Primary public pages
 
-- [Home](/): B2B manufacturing overview and main buyer actions.
-- [Collections](/products): Five canonical apparel categories with published products.
-- [Catalogue](/catalogue): Buyer-friendly catalogue groups backed by published product data.
-- [About](/about): Company and manufacturing context.
-- [Manufacturing](/manufacturing): Requirement-led production workflow.
-- [Compliance](/compliance): Buyer requirements and evidence-before-claims policy.
-- [Inquiry](/inquiry): Unified B2B inquiry for quotes, samples, catalogue requests, references and meetings.
-- [Studio](/studio): Non-binding concept preview for requirement discussion.
-- [Contact](/contact): Email and WhatsApp contact options.
-- [Privacy Policy](/privacy-policy): Website privacy information.
-- [Terms](/terms-of-service): Website terms; order-specific commercial terms are separate.
+- [Home](https://www.irhaapparels.com/): Current B2B manufacturing overview and main buyer actions.
+- [Collections](https://www.irhaapparels.com/products): Published apparel categories and product programs.
+- [Catalogue](https://www.irhaapparels.com/catalogue): Buyer-friendly catalogue groups.
+- [Manufacturing](https://www.irhaapparels.com/manufacturing): Requirement-led manufacturing workflow.
+- [Buyer Trust](https://www.irhaapparels.com/buyer-trust): Verification, communication and buyer confidence information.
+- [Factory Video Call](https://www.irhaapparels.com/factory-video-call): Live factory-view request information.
+- [Inquiry](https://www.irhaapparels.com/inquiry): Quotes, samples, catalogue requests, references and meeting requests.
+- [Contact](https://www.irhaapparels.com/contact): Official email and WhatsApp contact options.
 
-## Product categories
+## Two production hubs
 
-- Bavarian & Trachten Wear
-- Premium Leather Apparel
-- Sportswear
-- Streetwear & Activewear
-- Leisure & Nightwear
+- Bavarian & Leather: Trachten wear, Lederhosen, Dirndl programs and premium leather apparel.
+- Sportswear, Streetwear & Leisure: Teamwear, activewear, heavyweight streetwear, leisurewear and nightwear.
+
+## Additional machine-readable resource
+
+- [Expanded website summary](https://www.irhaapparels.com/llms-full.txt)
