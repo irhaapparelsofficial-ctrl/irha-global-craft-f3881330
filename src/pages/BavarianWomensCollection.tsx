@@ -1,4 +1,5 @@
 import SEO from "@/components/SEO";
+import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import { useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 import {
   BAVARIAN_WOMENS_COLLECTIONS,
@@ -31,6 +32,19 @@ export default function BavarianWomensCollection() {
     }
   }
   const products = Array.from(productsBySlug.values());
+  const heroSlides = [
+    {
+      src: collection.hero,
+      alt: `${collection.name} wholesale manufacturing collection`,
+      fit: "cover" as const,
+    },
+    ...products.slice(0, 5).map((product) => ({
+      src: product.image,
+      alt: `${product.name} wholesale manufacturing style`,
+      fit: "contain" as const,
+      backgroundClassName: "bg-[#f4f0e7]",
+    })),
+  ].filter((slide, index, items) => items.findIndex((item) => item.src === slide.src) === index);
   const path = `/products/${TOP_CATEGORY}/womens-trachten/${collection.slug}`;
   const absoluteUrl = `${SITE}${path}`;
 
@@ -90,14 +104,12 @@ export default function BavarianWomensCollection() {
       />
 
       <section className="relative min-h-[520px] pt-32 flex items-end overflow-hidden border-b border-border/60 bg-card">
-        <img
-          src={collection.hero}
-          alt={`${collection.name} wholesale manufacturing collection`}
-          loading="eager"
-          decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
+        <HeroMediaSlideshow
+          slides={heroSlides}
+          label={`${collection.name} slideshow`}
+          controlsClassName="bottom-5 right-5"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/25" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/25" />
         <div className="container-luxe relative z-10 pb-16 md:pb-20 text-white">
           <nav aria-label="Breadcrumb" className="mb-7 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/65">
             <Link to="/">Home</Link>
