@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BuyerCoreActionsPanel from "@/components/admin/BuyerCoreActionsPanel";
 import BuyerProfileCommunicationsPanel from "@/components/admin/BuyerProfileCommunicationsPanel";
 import BuyerClosureActionsPanel from "@/components/admin/BuyerClosureActionsPanel";
+import AIOutreachCenter from "@/components/admin/AIOutreachCenter";
 import {
   normalizePriority,
   normalizeStage,
@@ -239,6 +240,7 @@ export default function BuyerCoreActionsHub() {
               <h3 className="font-display text-2xl sm:text-3xl mt-1">{selected.company || selected.name}</h3>
               <p className="text-sm text-muted-foreground mt-2">{selected.country || "Country missing"}{selected.productInterest ? ` · ${selected.productInterest}` : ""}</p>
             </div>
+            <AIOutreachCenter card={selected} allCards={cards} />
             <BuyerCoreActionsPanel card={selected} onChanged={() => void load()} />
             <BuyerProfileCommunicationsPanel card={selected} onChanged={() => void load()} />
             <BuyerClosureActionsPanel card={selected} onChanged={() => void load()} />
