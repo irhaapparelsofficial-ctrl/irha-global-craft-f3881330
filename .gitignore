@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Generated website image thumbnails
+public/thumbnails/
+public/.thumbnail-build-*/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

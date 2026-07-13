@@ -39,7 +39,7 @@ export default function BavarianWomensCollection() {
       fit: "cover" as const,
     },
     ...products.slice(0, 5).map((product) => ({
-      src: product.image,
+      src: product.originalImage ?? product.gallery?.[0] ?? product.image,
       alt: `${product.name} wholesale manufacturing style`,
       fit: "contain" as const,
       backgroundClassName: "bg-[#f4f0e7]",

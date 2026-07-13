@@ -17,7 +17,7 @@ export default function GlobalCollectionsPage() {
   const { categories, isLoading } = usePublicCategories();
   const totalProducts = categories.reduce((total, category) => total + category.productCount, 0);
   const categoryHeroImages = categories
-    .map((category) => ({ src: category.image, alt: category.name }))
+    .map((category) => ({ src: category.originalImage || category.image, alt: category.name }))
     .filter((item): item is { src: string; alt: string } => Boolean(item.src))
     .slice(0, 5);
   const heroImages = FALLBACK_HERO_IMAGES.map((fallback, index) =>
