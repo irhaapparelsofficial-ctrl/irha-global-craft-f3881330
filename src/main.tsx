@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher";
 import "./index.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
@@ -37,4 +38,9 @@ async function healLegacyClientCacheOnce() {
 
 void healLegacyClientCacheOnce();
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <>
+    <App />
+    <AdminBuyerActionsLauncher />
+  </>,
+);
