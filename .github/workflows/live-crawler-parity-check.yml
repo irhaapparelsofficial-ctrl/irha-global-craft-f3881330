@@ -12,49 +12,39 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify live SEO redirects and security
+      - name: Verify live fallback bodies and sitemap evidence
         shell: bash
         run: |
           set -u
           base='https://irhaapparels.com'
-          echo 'ROUTE_HTML'
+          echo 'LEGACY_BODY_FALLBACKS'
           for path in \
-            '/products/leisure-nightwear/plush-bathrobe-sleep-robe' \
-            '/buyer-trust' \
-            '/resources' \
-            '/faq'; do
-            code=$(curl -sSL -A 'Mozilla/5.0' -D headers.txt -o body.html -w '%{http_code}' "$base$path" || true)
+            '/buyer-trust-center' \
+            '/buyer-trust-centre' \
+            '/buyer-resources' \
+            '/buyer-faq' \
+            '/shipping-returns' \
+            '/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe'; do
+            code=$(curl -sS -A 'Mozilla/5.0' -D headers.txt -o body.html -w '%{http_code}' "$base$path" || true)
             title=$(grep -o '<title>[^<]*</title>' body.html | head -1 || true)
+            robots=$(grep -o '<meta name="robots" content="[^"]*"' body.html | head -1 || true)
             canonical=$(grep -o '<link rel="canonical" href="[^"]*"' body.html | head -1 || true)
-            marker=$(grep -o 'data-irha-route-shell="[^"]*"' body.html | head -1 || true)
-            loading=$(grep -Eio 'Loading (product|page|collection|products)[^<]*' body.html | head -1 || true)
-            echo "$path | HTTP=$code | $title | $canonical | $marker | loading=$loading"
+            refresh=$(grep -o '<meta http-equiv="refresh" content="[^"]*"' body.html | head -1 || true)
+            marker=$(grep -o 'data-irha-static-redirect="[^"]*"' body.html | head -1 || true)
+            echo "$path | HTTP=$code | $title | $robots | $canonical | $refresh | $marker"
           done
-          echo 'REDIRECTS'
-          for url in \
-            'https://www.irhaapparels.com/' \
-            "$base/buyer-trust-center" \
-            "$base/buyer-trust-centre" \
-            "$base/buyer-resources" \
-            "$base/buyer-faq" \
-            "$base/shipping-returns" \
-            "$base/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe"; do
-            curl -sS -o /dev/null -D redirect.headers "$url" || true
-            status=$(awk 'toupper($1) ~ /^HTTP\// {s=$2} END{print s}' redirect.headers)
-            location=$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/\r$/,""); print $2}' redirect.headers | tail -1)
-            echo "$url | HTTP=$status | location=$location"
-          done
-          echo 'ROBOTS_SITEMAP'
-          curl -sSL "$base/robots.txt" -o robots.txt
-          curl -sSL "$base/sitemap.xml" -o sitemap.xml
-          robots_sitemap=$(grep -i '^Sitemap:' robots.txt | tail -1 || true)
-          urls=$(grep -c '<url>' sitemap.xml || true)
-          www_urls=$(grep -c '<loc>https://www\.irhaapparels\.com' sitemap.xml || true)
-          apex_home=$(grep -c '<loc>https://irhaapparels.com/\{0,1\}</loc>' sitemap.xml || true)
-          uuid_urls=$(grep -c 'd22ac15e-d657-4a4c-804c-fb8697ceb050' sitemap.xml || true)
-          unique_lastmod=$(grep -o '<lastmod>[^<]*' sitemap.xml | sort -u | wc -l)
-          echo "$robots_sitemap"
-          echo "urls=$urls www_urls=$www_urls apex_home=$apex_home uuid_urls=$uuid_urls unique_lastmod=$unique_lastmod"
-          echo 'SECURITY_HEADERS'
-          curl -sSL -o /dev/null -D security.headers "$base/"
-          grep -iE '^(strict-transport-security|content-security-policy|permissions-policy|x-frame-options|x-content-type-options|referrer-policy):' security.headers || true
+          echo 'SITEMAP_EVIDENCE'
+          curl -sSL "$base/sitemap.xml?audit=$(date +%s)" -o sitemap.xml
+          echo "urls=$(grep -c '<url>' sitemap.xml || true)"
+          echo "lastmod_count=$(grep -c '<lastmod>' sitemap.xml || true)"
+          echo 'unique_lastmod_values:'
+          grep -o '<lastmod>[^<]*' sitemap.xml | sort -u | head -10 || true
+          echo "uuid_urls=$(grep -c 'd22ac15e-d657-4a4c-804c-fb8697ceb050' sitemap.xml || true)"
+          echo 'CSP_META'
+          curl -sSL "$base/?audit=$(date +%s)" -o home.html
+          grep -o '<meta http-equiv="Content-Security-Policy" content="[^"]*"' home.html | head -1 || true
+          echo 'CANONICAL_ROUTE'
+          curl -sSL "$base/products/leisure-nightwear/plush-bathrobe-sleep-robe?audit=$(date +%s)" -o product.html
+          grep -o '<title>[^<]*</title>' product.html | head -1 || true
+          grep -o '<link rel="canonical" href="[^"]*"' product.html | head -1 || true
+          grep -o 'data-irha-route-shell="[^"]*"' product.html | head -1 || true
