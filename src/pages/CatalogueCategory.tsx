@@ -7,7 +7,7 @@ import { whatsappLink, BRAND } from "@/lib/constants";
 import { CATALOGUE_GROUPS, findCatalogueGroup, matchesCategorySlug } from "@/lib/catalogueGroups";
 import CatalogueLeadForm from "@/components/CatalogueLeadForm";
 
-const SITE = "https://www.irhaapparels.com";
+const SITE = "https://irhaapparels.com";
 const OG_IMAGE = `${SITE}/og-image.jpg`;
 const CANONICAL_TOP_SLUGS = new Set([
   "bavarian-trachten-wear",
