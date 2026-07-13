@@ -21,7 +21,7 @@ import { createSupplementalBatch08ProductsForSubcategory } from "../src/lib/supp
 import { createSupplementalBatch09ProductsForSubcategory } from "../src/lib/supplementalCatalogBatch09";
 import { createSupplementalBatch10ProductsForSubcategory } from "../src/lib/supplementalCatalogBatch10";
 
-const BASE_URL = "https://www.irhaapparels.com";
+const BASE_URL = "https://irhaapparels.com";
 
 type ChangeFrequency = "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
 

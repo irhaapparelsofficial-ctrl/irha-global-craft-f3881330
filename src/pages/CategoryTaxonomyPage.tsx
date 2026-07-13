@@ -20,7 +20,7 @@ import {
 } from "@/lib/taxonomyI18n";
 import { whatsappLink } from "@/lib/constants";
 
-const SITE = "https://www.irhaapparels.com";
+const SITE = "https://irhaapparels.com";
 
 type Props = {
   audienceOverride?: string;

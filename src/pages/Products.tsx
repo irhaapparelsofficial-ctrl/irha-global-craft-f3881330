@@ -62,14 +62,14 @@ export default function Products() {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
           name: "Apparel Collections — Irha Apparels",
-          url: "https://www.irhaapparels.com/products",
+          url: "https://irhaapparels.com/products",
           description:
             "Five specialist apparel programs produced in Sialkot: Bavarian & Trachten, Premium Leather, Sportswear, Streetwear & Activewear, and Leisure & Nightwear. OEM, ODM and private-label programs.",
-          isPartOf: { "@type": "WebSite", name: "Irha Apparels", url: "https://www.irhaapparels.com/" },
+          isPartOf: { "@type": "WebSite", name: "Irha Apparels", url: "https://irhaapparels.com/" },
           hasPart: CATEGORIES.map((c) => ({
             "@type": "CollectionPage",
             name: c.name,
-            url: `https://www.irhaapparels.com/products/${c.slug}`,
+            url: `https://irhaapparels.com/products/${c.slug}`,
           })),
         }}
       />

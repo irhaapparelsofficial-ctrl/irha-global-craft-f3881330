@@ -14,7 +14,7 @@ import { whatsappLink } from "@/lib/constants";
 import { usePublicCategories, useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 
-const SITE = "https://www.irhaapparels.com";
+const SITE = "https://irhaapparels.com";
 
 type SortKey = "recommended" | "name" | "newest";
 

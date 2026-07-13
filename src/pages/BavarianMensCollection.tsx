@@ -8,7 +8,7 @@ import { whatsappLink } from "@/lib/constants";
 import { ArrowUpRight, ChevronRight, MessageCircle, Video } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 
-const SITE = "https://www.irhaapparels.com";
+const SITE = "https://irhaapparels.com";
 const TOP_CATEGORY = "bavarian-trachten-wear";
 
 export default function BavarianMensCollection() {

@@ -31,7 +31,7 @@ type Inspection = {
   error?: string;
 };
 
-const SITE = "https://www.irhaapparels.com";
+const SITE = "https://irhaapparels.com";
 const PRIORITY_URLS = [
   `${SITE}/`,
   `${SITE}/products`,

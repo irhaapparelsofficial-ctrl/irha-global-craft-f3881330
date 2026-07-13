@@ -1,7 +1,7 @@
 import SEO from "@/components/SEO";
 import Products from "./Products";
 
-const SITE = "https://www.irhaapparels.com";
+const SITE = "https://irhaapparels.com";
 
 export default function AllProductsPage() {
   return (

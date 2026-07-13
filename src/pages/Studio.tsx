@@ -150,7 +150,7 @@ export default function Studio() {
           name="description"
           content="Design custom Bavarian, leather, sportswear & streetwear in 4 clicks. Upload your logo, pick a color, get a realistic front + back mockup. Flexible MOQ. FOB Sialkot."
         />
-        <link rel="canonical" href="https://www.irhaapparels.com/studio" />
+        <link rel="canonical" href="https://irhaapparels.com/studio" />
       </Helmet>
 
       {/* Header + hub toggle (sticky) */}
