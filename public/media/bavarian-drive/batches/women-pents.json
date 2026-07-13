@@ -1,0 +1,89 @@
+{
+  "complete": true,
+  "generated_at": "2026-07-13T15:35:16+00:00",
+  "batch_slug": "women-pents",
+  "label": "WOMEN'S/Pents",
+  "folder_url": "https://drive.google.com/drive/folders/1yWgdjGbb4Ylik5r7t-BpkFD4usN29U1c",
+  "inventory_count": 6,
+  "downloaded_count": 6,
+  "download_failure_count": 0,
+  "image_candidate_count": 6,
+  "accepted_count": 6,
+  "rejected_count": 0,
+  "records": [
+    {
+      "source_path": "WOMEN'S/Pents/01-1200x1200 (1).jpg",
+      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/01-1200x1200-1.webp",
+      "group": "WOMEN'S",
+      "width": 1200,
+      "height": 1200,
+      "original_bytes": 131460,
+      "optimized_bytes": 52366,
+      "quality_score": 8.6538,
+      "pixel_sha256": "124254a899d8c6d9ab7f6c7229c754c9a1f89b8ffa5b525618d66e3442aea198",
+      "product_slug": null
+    },
+    {
+      "source_path": "WOMEN'S/Pents/01-a-1200x1200.jpg",
+      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/01-a-1200x1200.webp",
+      "group": "WOMEN'S",
+      "width": 1200,
+      "height": 1200,
+      "original_bytes": 116821,
+      "optimized_bytes": 39672,
+      "quality_score": 8.5547,
+      "pixel_sha256": "8719dad17798c567283b723d2f425e6861303987c81d8865d9e1b02a2065e9d9",
+      "product_slug": null
+    },
+    {
+      "source_path": "WOMEN'S/Pents/01-b-1200x1200.jpg",
+      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/01-b-1200x1200.webp",
+      "group": "WOMEN'S",
+      "width": 1200,
+      "height": 1200,
+      "original_bytes": 76789,
+      "optimized_bytes": 24234,
+      "quality_score": 8.4058,
+      "pixel_sha256": "f37a01070409f64c7861dfa73226b14586ab8d43893fc42752ddfe70a0052f2a",
+      "product_slug": null
+    },
+    {
+      "source_path": "WOMEN'S/Pents/01-c-1200x1200.jpg",
+      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/01-c-1200x1200.webp",
+      "group": "WOMEN'S",
+      "width": 1200,
+      "height": 1200,
+      "original_bytes": 220874,
+      "optimized_bytes": 95850,
+      "quality_score": 9.2518,
+      "pixel_sha256": "53813ba42d4a4591d142258c51f67a1b61b6824c3cc8f15603ac06c633cf4ae3",
+      "product_slug": null
+    },
+    {
+      "source_path": "WOMEN'S/Pents/02-1200x1200 (1).jpg",
+      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/02-1200x1200-1.webp",
+      "group": "WOMEN'S",
+      "width": 1200,
+      "height": 1200,
+      "original_bytes": 91370,
+      "optimized_bytes": 29542,
+      "quality_score": 8.3727,
+      "pixel_sha256": "913b12e1905feb48c872677fae3b898c7112863e53ddc26db078abc2aa700681",
+      "product_slug": null
+    },
+    {
+      "source_path": "WOMEN'S/Pents/04-1200x1200 (1).jpg",
+      "output_path": "/media/bavarian-drive/assets/women-pents/uncategorized/04-1200x1200-1.webp",
+      "group": "WOMEN'S",
+      "width": 1200,
+      "height": 1200,
+      "original_bytes": 91805,
+      "optimized_bytes": 28552,
+      "quality_score": 8.4541,
+      "pixel_sha256": "4d8289fe53bacce5f9a3f8e25e76b6770e81db62ba1126b23ed495bf01450c06",
+      "product_slug": null
+    }
+  ],
+  "rejected": [],
+  "download_failures": []
+}
