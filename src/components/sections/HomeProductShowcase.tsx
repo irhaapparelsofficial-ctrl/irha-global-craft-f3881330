@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePublicCatalogTree, type PublicTopCategory } from "@/hooks/usePublicCatalog";
 import { resolveAsset } from "@/lib/assetResolver";
+import { thumbnailUrl } from "@/lib/imageThumbnails";
 
 type ShowcaseProduct = {
   id: string;
@@ -25,7 +26,7 @@ function productsForCategory(category: PublicTopCategory): ShowcaseProduct[] {
         id: product.id,
         slug: product.slug,
         name: product.name,
-        image: resolveAsset(product.image_url || product.gallery?.[0] || "/placeholder.svg"),
+        image: thumbnailUrl(resolveAsset(product.image_url || product.gallery?.[0] || "/placeholder.svg")),
         categoryName: category.name,
         categorySlug: category.slug,
         subcategoryName: sub.name,
@@ -38,7 +39,7 @@ function productsForCategory(category: PublicTopCategory): ShowcaseProduct[] {
       id: product.id,
       slug: product.slug,
       name: product.name,
-      image: resolveAsset(product.image_url || product.gallery?.[0] || "/placeholder.svg"),
+      image: thumbnailUrl(resolveAsset(product.image_url || product.gallery?.[0] || "/placeholder.svg")),
       categoryName: category.name,
       categorySlug: category.slug,
       subcategoryName: category.name,
