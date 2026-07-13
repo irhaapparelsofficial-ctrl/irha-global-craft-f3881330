@@ -1,0 +1,89 @@
+name: Cloudflare Pages Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: Cloudflare Pages project name
+        required: true
+        default: irha-apparels
+        type: string
+      deployment_branch:
+        description: Cloudflare Pages deployment branch; use main for production
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: cloudflare-pages-${{ inputs.deployment_branch }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Verify and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact requested source
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Verify Cloudflare credentials are configured
+        shell: bash
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "::error::Missing repository secret CLOUDFLARE_ACCOUNT_ID"
+            exit 1
+          fi
+          if [[ -z "$CLOUDFLARE_API_TOKEN" ]]; then
+            echo "::error::Missing repository secret CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify deployment source lock
+        run: npm run verify:deployment-source
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test -- --passWithNoTests
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Verify owner Supabase and release identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
+          grep -F '"expected_origin": "https://irhaapparels.com"' dist/build.json
+          grep -R -qF --include='*.js' 'pvzjiozismyxqrzmtfbi' dist/assets
+          if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
+            echo "::error::Built output references the retired Lovable Cloud database"
+            exit 1
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ inputs.project_name }} --branch=${{ inputs.deployment_branch }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
