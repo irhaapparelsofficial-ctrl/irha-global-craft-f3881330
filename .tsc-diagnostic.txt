@@ -1,0 +1,23 @@
+src/components/admin/AutomationControlCenter.tsx(227,209): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+src/components/admin/AutomationControlCenter.tsx(228,99): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+src/components/admin/Buyer360Panel.tsx(498,561): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+src/components/admin/Buyer360Panel.tsx(517,807): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+src/components/admin/Buyer360Panel.tsx(521,2599): error TS2551: Property 'replaceAll' does not exist on type '"other" | "sample" | "reference" | "shipping" | "tech_pack" | "quotation" | "compliance"'. Did you mean 'replace'?
+  Property 'replaceAll' does not exist on type '"other"'.
+src/components/admin/ContentCmsPanel.tsx(122,124): error TS2551: Property 'replaceAll' does not exist on type '"blog_post" | "faq" | "seo_override" | "internal_link"'. Did you mean 'replace'?
+  Property 'replaceAll' does not exist on type '"blog_post"'.
+src/components/admin/DailyOwnerCommandCenter.tsx(481,119): error TS2551: Property 'replaceAll' does not exist on type 'OwnerPresetKey'. Did you mean 'replace'?
+  Property 'replaceAll' does not exist on type '"all_actions"'.
+src/components/admin/HeroWebsiteEditorPanel.tsx(186,660): error TS2551: Property 'replaceAll' does not exist on type '"published" | "restored" | "draft_saved"'. Did you mean 'replace'?
+  Property 'replaceAll' does not exist on type '"published"'.
+src/components/admin/SalesPipelinePanel.tsx(405,374): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+src/components/admin/commercial/CommercialMeetingsPanel.tsx(80,67): error TS2551: Property 'replaceAll' does not exist on type 'MeetingType'. Did you mean 'replace'?
+  Property 'replaceAll' does not exist on type '"other"'.
+src/components/admin/commercial/CommercialMeetingsPanel.tsx(254,77): error TS2551: Property 'replaceAll' does not exist on type 'MeetingType'. Did you mean 'replace'?
+  Property 'replaceAll' does not exist on type '"other"'.
+src/components/content/SafeMarkdown.tsx(129,43): error TS2339: Property 'text' does not exist on type '{ type: "h2" | "h3" | "p" | "h4" | "quote"; text: string; } | { type: "ol" | "ul"; items: string[]; }'.
+  Property 'text' does not exist on type '{ type: "ol" | "ul"; items: string[]; }'.
+src/lib/ownerCommandCenter.ts(164,69): error TS2551: Property 'replaceAll' does not exist on type '"won" | "lost" | "new" | "qualified" | "replied" | "quote_requested" | "quotation_sent" | "negotiation" | "sample_requested" | "contacted"'. Did you mean 'replace'?
+  Property 'replaceAll' does not exist on type '"won"'.
+src/lib/ownerCommandCenter.ts(226,48): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+exit_code=2
