@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import type { Product } from "@/lib/categories";
-import { ArrowUpRight, MessageCircle, X } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { whatsappLink } from "@/lib/constants";
 
@@ -21,7 +22,6 @@ export default function ProductDetailModal({ product, onClose }: Props) {
       <DialogContent className="max-w-6xl max-h-[92vh] overflow-hidden p-0 bg-background border-border/60 [&>button]:hidden">
         {product && (
           <div className="grid lg:grid-cols-2 max-h-[92vh] overflow-y-auto">
-            {/* Gallery */}
             <div className="relative bg-card">
               <div className="aspect-[4/5] lg:aspect-auto lg:h-full relative overflow-hidden">
                 <img
@@ -41,7 +41,7 @@ export default function ProductDetailModal({ product, onClose }: Props) {
                       active === i ? "border-primary" : "border-background/60 opacity-70 hover:opacity-100"
                     }`}
                   >
-                    <img src={g} alt="" loading="lazy" decoding="async" width="56" height="56" className="w-full h-full object-cover" />
+                    <ThumbnailImage src={g} alt="" width="56" height="56" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -54,7 +54,6 @@ export default function ProductDetailModal({ product, onClose }: Props) {
               </button>
             </div>
 
-            {/* Details */}
             <div className="relative p-6 md:p-10 overflow-y-auto">
               <button
                 onClick={onClose}
