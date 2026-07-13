@@ -34,6 +34,17 @@ export type SocialRenderDraft = {
   items: SocialRenderItemInput[];
 };
 
+export type SocialRenderVerifiedFile = {
+  mediaAssetId?: string;
+  url?: string;
+  width?: number;
+  height?: number;
+  checksumSha256?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  position?: number;
+};
+
 export type SocialRenderVerification = {
   verified?: boolean;
   checkedAt?: string;
@@ -43,6 +54,7 @@ export type SocialRenderVerification = {
   checksumSha256?: string;
   mimeType?: string;
   sizeBytes?: number;
+  files?: SocialRenderVerifiedFile[];
 };
 
 export const SOCIAL_RENDER_TRANSITIONS: Record<SocialRenderStatus, SocialRenderStatus[]> = {
@@ -101,10 +113,20 @@ export function validateSocialRenderDraft(draft: SocialRenderDraft, assets: Soci
     if (!usable) missing.push(`image or video media for item ${index + 1}`);
   });
 
-  return {
-    ready: missing.length === 0,
-    missing: [...new Set(missing)],
-  };
+  return { ready: missing.length === 0, missing: [...new Set(missing)] };
+}
+
+function verifiedFile(file: SocialRenderVerifiedFile, requiredPrefix: "image/" | "video/") {
+  return Boolean(
+    file.mediaAssetId
+      && file.url?.startsWith("https://")
+      && file.checksumSha256
+      && /^[a-f0-9]{64}$/i.test(file.checksumSha256)
+      && file.width && file.width >= 100
+      && file.height && file.height >= 100
+      && file.mimeType?.startsWith(requiredPrefix)
+      && file.sizeBytes && file.sizeBytes > 0,
+  );
 }
 
 export function verifiedRenderOutput(input: {
@@ -115,18 +137,24 @@ export function verifiedRenderOutput(input: {
   aspectRatio: SocialAspectRatio;
 }) {
   const verification = input.verification || {};
-  if (!input.outputAssetId || !input.outputUrl?.startsWith("https://")) return false;
   if (verification.verified !== true) return false;
+
+  if (input.renderType === "carousel") {
+    const files = verification.files || [];
+    if (files.length < 2 || files.length > 10) return false;
+    if (!files.every((file) => verifiedFile(file, "image/"))) return false;
+    const positions = files.map((file) => file.position).filter((value): value is number => Number.isInteger(value));
+    return positions.length === files.length && new Set(positions).size === files.length;
+  }
+
+  if (!input.outputAssetId || !input.outputUrl?.startsWith("https://")) return false;
   if (!verification.checksumSha256 || !/^[a-f0-9]{64}$/i.test(verification.checksumSha256)) return false;
   if (!verification.width || !verification.height || verification.width < 100 || verification.height < 100) return false;
-  if (!verification.mimeType || !verification.mimeType.startsWith(input.renderType === "reel" ? "video/" : "image/")) return false;
+  if (!verification.mimeType?.startsWith("video/")) return false;
   if (!verification.sizeBytes || verification.sizeBytes <= 0) return false;
-  if (input.renderType === "reel") {
-    const duration = verification.durationSeconds || 0;
-    if (duration < 9.5 || duration > 10.5) return false;
-    if (input.aspectRatio !== "9:16") return false;
-  }
-  return true;
+  const duration = verification.durationSeconds || 0;
+  if (duration < 9.5 || duration > 10.5) return false;
+  return input.aspectRatio === "9:16";
 }
 
 export function renderManifest(draft: SocialRenderDraft, assets: SocialRenderAsset[]) {
