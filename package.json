@@ -13,8 +13,9 @@
     "test:watch": "vitest",
     "verify:deployment-source": "node scripts/verify-deployment-source.mjs",
     "verify:secrets": "node scripts/verify-secret-safety.mjs",
+    "verify:migrations": "node scripts/verify-migration-order.mjs",
     "predev": "npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs",
-    "prebuild": "node scripts/verify-deployment-source.mjs && node scripts/verify-secret-safety.mjs && npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs",
+    "prebuild": "node scripts/verify-deployment-source.mjs && node scripts/verify-secret-safety.mjs && node scripts/verify-migration-order.mjs && npx tsx scripts/generate-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs",
     "notify:search": "node scripts/ping-search-engines.mjs"
   },
   "dependencies": {
