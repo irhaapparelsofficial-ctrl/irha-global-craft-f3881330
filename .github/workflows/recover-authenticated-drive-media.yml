@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(find recovery-input/assets -maxdepth 1 -name '*.b64' | wc -l)" -eq 2
-          test "$(find recovery-input/bundles -maxdepth 1 -name 'bundle-*.txt' | wc -l)" -eq 8
+          test "$(find recovery-input/bundles -maxdepth 1 -name 'bundle-*.txt' | wc -l)" -eq 20
           python - <<'PY'
           import base64
           import gzip
@@ -57,7 +57,9 @@ jobs:
           items = mapping['items']
           payloads = [path.read_text().strip() for path in sorted((package / 'assets').glob('*.b64'))]
           for bundle in sorted((package / 'bundles').glob('bundle-*.txt')):
-              payloads.extend(line.strip() for line in bundle.read_text().splitlines() if line.strip())
+              lines = [line.strip() for line in bundle.read_text().splitlines() if line.strip()]
+              assert len(lines) == 2, (bundle, len(lines))
+              payloads.extend(lines)
 
           assert manifest['accepted_count'] == 42, manifest
           assert mapping['count'] == 42, mapping
