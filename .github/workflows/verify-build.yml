@@ -20,13 +20,23 @@ jobs:
           node-version: 24
           cache: npm
       - name: Clean install
+        id: install
+        continue-on-error: true
         shell: bash
+        run: npm ci --loglevel=error > npm-ci.log 2>&1
+      - name: Upload install log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-ci-log
+          path: npm-ci.log
+          if-no-files-found: error
+          retention-days: 1
+      - name: Stop on install failure
+        if: steps.install.outcome == 'failure'
         run: |
-          npm ci --loglevel=error > npm-ci.log 2>&1 || {
-            echo '--- npm ci error tail ---'
-            tail -n 80 npm-ci.log
-            exit 1
-          }
+          tail -n 80 npm-ci.log
+          exit 1
       - name: Production build
         run: npm run build
         env:
