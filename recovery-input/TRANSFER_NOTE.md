@@ -1,0 +1,1 @@
+Recovery staging remains locked until binary-safe upload validation passes. Do not create READY manually.
