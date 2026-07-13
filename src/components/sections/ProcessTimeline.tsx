@@ -29,31 +29,31 @@ const STEPS = [
 
 export default function ProcessTimeline() {
   return (
-    <section className="bg-[#f8f6f1] py-20 text-[#122033] md:py-24">
+    <section className="bg-background py-20 text-foreground md:py-24">
       <div className="container-luxe">
         <div className="mb-10 grid gap-6 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-8">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[#a77f34]">How the process works</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">How the process works</p>
             <h2 className="mt-4 max-w-4xl font-display text-4xl leading-[1.04] md:text-5xl lg:text-6xl">
               A clear path from buyer brief to approved production.
             </h2>
           </div>
-          <p className="text-sm leading-7 text-[#617082] lg:col-span-4">
+          <p className="text-sm leading-7 text-foreground/65 lg:col-span-4">
             Every program is reviewed on its own requirements. MOQ, pricing, timing and shipping are confirmed before commitment.
           </p>
         </div>
 
-        <div className="grid gap-px border border-[#ded8cd] bg-[#ded8cd] md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-px border border-border/60 bg-border/60 md:grid-cols-2 lg:grid-cols-4">
           {STEPS.map(({ Icon, number, title, text }) => (
-            <article key={number} className="relative bg-white p-6 md:p-7">
+            <article key={number} className="relative bg-card p-6 md:p-7">
               <div className="flex items-center justify-between">
-                <span className="inline-flex h-11 w-11 items-center justify-center border border-[#d7c9a8] bg-[#f8f4eb] text-[#a77f34]">
+                <span className="inline-flex h-11 w-11 items-center justify-center border border-primary/30 bg-primary/8 text-primary">
                   <Icon size={19} strokeWidth={1.6} />
                 </span>
-                <span className="font-display text-3xl text-[#d7c9a8]">{number}</span>
+                <span className="font-display text-3xl text-primary/25">{number}</span>
               </div>
-              <h3 className="mt-6 font-sans text-base font-semibold text-[#122033]">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-[#617082]">{text}</p>
+              <h3 className="mt-6 font-sans text-base font-semibold text-foreground">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-foreground/62">{text}</p>
             </article>
           ))}
         </div>

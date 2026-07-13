@@ -137,15 +137,15 @@ export default function HomeProductShowcase() {
   );
 
   return (
-    <section className="border-y border-[#ded8cd] bg-white py-20 text-[#122033] md:py-24">
+    <section className="border-y border-border/60 bg-card/35 py-20 text-foreground md:py-24">
       <div className="container-luxe">
         <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[#a77f34]">Selected products</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Selected products</p>
             <h2 className="mt-4 font-display text-4xl leading-[1.04] md:text-5xl lg:text-6xl">
               A practical view of our manufacturing range.
             </h2>
-            <p className="mt-5 max-w-2xl text-sm leading-7 text-[#617082] md:text-base">
+            <p className="mt-5 max-w-2xl text-sm leading-7 text-foreground/65 md:text-base">
               Browse representative products across Bavarian wear, leather apparel, sportswear, streetwear and leisure programs. Each product opens a buyer-ready detail page.
             </p>
           </div>
@@ -155,7 +155,7 @@ export default function HomeProductShowcase() {
               type="button"
               onClick={() => go(index - 1)}
               aria-label="Previous products"
-              className="inline-flex h-11 w-11 items-center justify-center border border-[#cfc6b7] bg-white text-[#122033] transition-colors hover:border-[#a77f34] hover:text-[#a77f34]"
+              className="inline-flex h-11 w-11 items-center justify-center border border-border/70 bg-background text-foreground transition-colors hover:border-primary hover:text-primary"
             >
               <ChevronLeft size={17} />
             </button>
@@ -163,13 +163,13 @@ export default function HomeProductShowcase() {
               type="button"
               onClick={() => go(index + 1)}
               aria-label="Next products"
-              className="inline-flex h-11 w-11 items-center justify-center border border-[#cfc6b7] bg-white text-[#122033] transition-colors hover:border-[#a77f34] hover:text-[#a77f34]"
+              className="inline-flex h-11 w-11 items-center justify-center border border-border/70 bg-background text-foreground transition-colors hover:border-primary hover:text-primary"
             >
               <ChevronRight size={17} />
             </button>
             <Link
               to="/products/all"
-              className="ml-1 inline-flex min-h-11 items-center gap-2 bg-[#122033] px-5 text-[9px] font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#1b3049]"
+              className="ml-1 inline-flex min-h-11 items-center gap-2 bg-gradient-gold px-5 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:shadow-gold"
             >
               All products <ArrowRight size={13} />
             </Link>
@@ -201,7 +201,7 @@ export default function HomeProductShowcase() {
             <Link
               key={`${product.id}-${cardIndex}`}
               to={`/products/${product.categorySlug}/${product.slug}`}
-              className="group overflow-hidden border border-[#ded8cd] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#b8924b] hover:shadow-[0_18px_50px_rgba(18,32,51,.12)]"
+              className="group overflow-hidden border border-border/70 bg-background transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:shadow-elegant"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-[#eee8dc]">
                 <img
@@ -213,18 +213,18 @@ export default function HomeProductShowcase() {
                   height={1125}
                   className="h-full w-full object-contain p-5 transition-transform duration-700 group-hover:scale-[1.035] md:p-7"
                 />
-                <span className="absolute left-3 top-3 bg-[#122033] px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#d9b765]">
+                <span className="absolute left-3 top-3 bg-black/85 px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-primary backdrop-blur-sm">
                   {product.categoryName}
                 </span>
               </div>
               <div className="p-5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[#7b8795]">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   {product.subcategoryName}
                 </p>
-                <h3 className="mt-2 min-h-[3.25rem] font-display text-xl leading-tight text-[#122033] transition-colors group-hover:text-[#a77f34]">
+                <h3 className="mt-2 min-h-[3.25rem] font-display text-xl leading-tight text-foreground transition-colors group-hover:text-primary">
                   {product.name}
                 </h3>
-                <span className="mt-5 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#a77f34]">
+                <span className="mt-5 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary">
                   View product <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
                 </span>
               </div>
@@ -233,13 +233,13 @@ export default function HomeProductShowcase() {
         </div>
 
         <div className="mt-7 flex items-center gap-3">
-          <div className="h-1 flex-1 overflow-hidden bg-[#e3ddd2]">
+          <div className="h-1 flex-1 overflow-hidden bg-foreground/12">
             <div
-              className="h-full bg-[#a77f34] transition-all duration-500"
+              className="h-full bg-primary transition-all duration-500"
               style={{ width: `${((index + 1) / products.length) * 100}%` }}
             />
           </div>
-          <span className="min-w-max text-[9px] font-semibold uppercase tracking-[0.18em] text-[#7b8795]">
+          <span className="min-w-max text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             {String(index + 1).padStart(2, "0")} / {String(products.length).padStart(2, "0")}
           </span>
         </div>

@@ -25,16 +25,16 @@ const ITEMS = [
 
 export default function CapabilityStrip() {
   return (
-    <section aria-label="Core B2B capabilities" className="border-b border-[#ded8cd] bg-white text-[#122033]">
-      <div className="container-luxe grid gap-px bg-[#ded8cd] md:grid-cols-2 lg:grid-cols-4">
+    <section aria-label="Core B2B capabilities" className="border-b border-border/60 bg-card/45">
+      <div className="container-luxe grid gap-px bg-border/60 md:grid-cols-2 lg:grid-cols-4">
         {ITEMS.map(({ Icon, title, text }) => (
-          <article key={title} className="flex gap-4 bg-white px-5 py-6 md:px-6 md:py-7">
-            <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center border border-[#d7c9a8] bg-[#f8f4eb] text-[#a77f34]">
+          <article key={title} className="flex gap-4 bg-background px-5 py-6 md:px-6 md:py-7">
+            <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center border border-primary/30 bg-primary/8 text-primary">
               <Icon size={18} strokeWidth={1.6} />
             </span>
             <div>
-              <h2 className="font-sans text-sm font-semibold tracking-[-0.01em] text-[#122033]">{title}</h2>
-              <p className="mt-1.5 text-xs leading-5 text-[#617082]">{text}</p>
+              <h2 className="font-sans text-sm font-semibold tracking-[-0.01em] text-foreground">{title}</h2>
+              <p className="mt-1.5 text-xs leading-5 text-muted-foreground">{text}</p>
             </div>
           </article>
         ))}
