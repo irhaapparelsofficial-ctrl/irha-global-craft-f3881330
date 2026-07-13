@@ -71,7 +71,7 @@ const PROFILE_COPY = {
 
 const PROFILE_CHECKLIST = [
   "Company name matches Irha Apparels everywhere",
-  "Website uses https://www.irhaapparels.com",
+  "Website uses https://irhaapparels.com",
   "Email and WhatsApp are current and monitored",
   "Manufacturer location is Sialkot, Pakistan",
   "Profile says experienced manufacturer; website is newly built",
