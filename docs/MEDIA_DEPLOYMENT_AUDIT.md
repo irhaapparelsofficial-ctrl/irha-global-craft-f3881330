@@ -8,6 +8,7 @@ _Last updated: 2026-07-13_
 - Master deployment sheet: `https://docs.google.com/spreadsheets/d/1rWDIZEZYP15oO4mP7L0GKnseQeGHhOoh-70nOxUQSnY`
 - Target repository: `irhaapparelsofficial-ctrl/irha-global-craft-f3881330`
 - Target branch: `feat/organized-media-library`
+- Pull request: `#153`
 
 ## Verified product and media counts
 
@@ -25,6 +26,7 @@ _Last updated: 2026-07-13_
 - `src/lib/supplementalCatalogBatch11.ts`
 - `src/lib/supplementalCatalogBatch10Legacy.ts`
 - `src/lib/supplementalCatalogBatch10.ts`
+- 23 optimized WebP assets under `public/product-media/<slug>/`
 
 The existing media pipeline reads `scripts/product-media-manifest.json` and all `scripts/product-media-batch-*.json` files, downloads first-party Drive sources, validates payloads, performs EXIF correction, constrains images to 1600 × 1600, converts them to WebP, and writes them to `public/product-media/<slug>/`.
 
@@ -44,15 +46,20 @@ The existing media pipeline reads `scripts/product-media-manifest.json` and all 
 - 5 model-based waistcoat reference images.
 - 36 low-resolution or third-party Shirts & T-Shirts reference graphics.
 
-## Validation checklist
+## Validation results
 
 - [x] Unique product slugs prepared.
 - [x] Duplicate-safe public catalogue integration prepared.
 - [x] Existing Batch10 products preserved through a legacy module.
 - [x] New Drive media manifests prepared.
-- [ ] GitHub media workflow completes and commits optimized WebP assets.
-- [ ] Lint passes on the pull-request branch.
-- [ ] Production build passes on the pull-request branch.
-- [ ] Public product routes and galleries are smoke-tested after CI.
+- [x] GitHub `Sync Product Media` workflow completed successfully and committed optimized WebP assets.
+- [x] Deployment source lock passed.
+- [x] Bavarian importer safety verification passed.
+- [x] Typecheck passed.
+- [x] Automated tests passed.
+- [x] Production build passed.
+- [x] Built release identity and canonical-host verification passed.
+- [x] Legacy public-claim guard passed.
+- [ ] Post-merge public product route and gallery smoke test.
 
-The remaining unchecked items must be updated from the pull-request CI results before merge.
+Validated by GitHub Actions runs `29265463977` (media sync) and `29265464048` (quality gate). The final unchecked item is intentionally post-merge because it requires the deployed public release.
