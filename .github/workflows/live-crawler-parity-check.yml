@@ -1,0 +1,54 @@
+name: Live crawler parity check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify production HTML and crawler files
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for attempt in $(seq 1 12); do
+            echo "Attempt $attempt"
+            curl -fsSL -A 'Mozilla/5.0' https://irhaapparels.com/ -o browser.html
+            curl -fsSL -A 'OAI-SearchBot/1.0' https://irhaapparels.com/ -o ai.html
+            curl -fsSL https://irhaapparels.com/robots.txt -o robots.txt
+            curl -fsSL https://irhaapparels.com/llms.txt -o llms.txt
+            curl -fsSL https://irhaapparels.com/sitemap.xml -o sitemap.xml
+            if grep -q 'irha-static-crawler-shell' ai.html \
+              && grep -q 'Custom Apparel Manufacturer for Global B2B Buyers' ai.html \
+              && grep -q 'https://irhaapparels.com/' ai.html \
+              && grep -q 'OAI-SearchBot' robots.txt \
+              && grep -q 'Two production hubs' llms.txt \
+              && grep -q 'https://irhaapparels.com' sitemap.xml \
+              && ! grep -q 'https://www.irhaapparels.com' sitemap.xml; then
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          echo '--- Browser title ---'
+          grep -o '<title>[^<]*</title>' browser.html | head -1 || true
+          echo '--- AI title ---'
+          grep -o '<title>[^<]*</title>' ai.html | head -1 || true
+          echo '--- AI H1 ---'
+          grep -o '<h1[^>]*>[^<]*</h1>' ai.html | head -1 || true
+          echo '--- Canonical ---'
+          grep -o '<link rel="canonical"[^>]*>' ai.html | head -1 || true
+          echo '--- Crawler files ---'
+          grep -E 'OAI-SearchBot|Sitemap:' robots.txt || true
+          grep -E 'Two production hubs|Bavarian & Leather' llms.txt || true
+          if [ "$ok" -ne 1 ]; then
+            echo 'Live crawler parity verification failed.'
+            exit 1
+          fi
+          echo 'Live crawler parity verification passed.'
