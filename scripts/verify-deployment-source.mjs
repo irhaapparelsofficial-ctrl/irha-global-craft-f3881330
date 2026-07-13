@@ -108,6 +108,11 @@ async function main() {
     `IRHA_DOMAIN_ALIASES: ${EXPECTED.alias}`,
     `default: ${EXPECTED.release}`,
     `default: ${EXPECTED.releaseText}`,
+    "push:",
+    "- main",
+    "contains(github.event.head_commit.message, '[production-smoke]')",
+    `inputs.base_url || '${EXPECTED.origin}'`,
+    `inputs.expected_release || '${EXPECTED.release}'`,
   ];
   for (const line of requiredWorkflowLines) {
     assert(workflow.includes(line), `production-smoke workflow missing or stale: ${line}`);
