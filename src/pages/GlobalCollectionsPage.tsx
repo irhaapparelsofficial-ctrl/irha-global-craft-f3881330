@@ -2,6 +2,7 @@ import { ArrowRight, Layers3, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
 import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
+import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import { usePublicCategories } from "@/hooks/usePublicCategoryData";
 import { buildCategoryTaxonomy } from "@/lib/globalCategoryTaxonomy";
 import { whatsappLink } from "@/lib/constants";
@@ -18,10 +19,14 @@ export default function GlobalCollectionsPage() {
   const categoryHeroImages = categories
     .map((category) => ({ src: category.image, alt: category.name }))
     .filter((item): item is { src: string; alt: string } => Boolean(item.src))
-    .slice(0, 3);
+    .slice(0, 5);
   const heroImages = FALLBACK_HERO_IMAGES.map((fallback, index) =>
     categoryHeroImages[index] ?? { src: fallback, alt: ["Bavarian Trachten", "Custom sportswear", "Premium leather apparel"][index] },
   );
+  const heroSlides = [...categoryHeroImages, ...heroImages]
+    .filter((image, index, items) => items.findIndex((item) => item.src === image.src) === index)
+    .slice(0, 6)
+    .map((image) => ({ src: image.src, alt: image.alt, fit: "cover" as const }));
 
   if (isLoading && categories.length === 0) {
     return <div className="pt-40 pb-24 container-luxe text-sm text-foreground/60">Loading collections…</div>;
@@ -48,7 +53,7 @@ export default function GlobalCollectionsPage() {
         title="Custom Apparel Manufacturing Categories | Wholesale & Private Label | Irha Apparels"
         description="Browse Irha Apparels by main category, Men, Women, Kids and relevant buyer program, then open product categories and individual products. B2B wholesale, OEM and private-label manufacturing."
         path="/products"
-        image={heroImages[0].src}
+        image={heroSlides[0]?.src}
         jsonLd={jsonLd}
       />
 
@@ -81,31 +86,17 @@ export default function GlobalCollectionsPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 grid grid-cols-2 grid-rows-2 gap-3 min-h-[380px] md:min-h-[480px]" aria-label="Featured manufacturing categories">
-            <div className="relative row-span-2 overflow-hidden border border-border/60 bg-card">
-              <img
-                src={heroImages[0].src}
-                alt={heroImages[0].alt}
-                loading="eager"
-                width={900}
-                height={1200}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+          <div className="lg:col-span-5 relative min-h-[380px] md:min-h-[500px] overflow-hidden border border-border/60 bg-card shadow-2xl" aria-label="Featured manufacturing categories">
+            <HeroMediaSlideshow
+              slides={heroSlides}
+              label="Manufacturing category slideshow"
+              controlsClassName="bottom-4 right-4"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
+            <div className="pointer-events-none absolute left-5 right-5 bottom-5 border border-white/20 bg-black/50 p-4 backdrop-blur-sm">
+              <p className="text-[9px] uppercase tracking-[0.32em] text-gold">Live product architecture</p>
+              <p className="mt-1 font-display text-xl text-white">Relevant category media</p>
             </div>
-            {heroImages.slice(1).map((image) => (
-              <div key={`${image.src}-${image.alt}`} className="relative overflow-hidden border border-border/60 bg-card">
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  loading="eager"
-                  width={720}
-                  height={480}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-              </div>
-            ))}
           </div>
         </div>
       </section>

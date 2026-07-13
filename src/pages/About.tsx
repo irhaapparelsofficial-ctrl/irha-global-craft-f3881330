@@ -1,4 +1,5 @@
 import SEO from "@/components/SEO";
+import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 import { Link } from "react-router-dom";
@@ -20,6 +21,19 @@ const principles = [
     Icon: PackageCheck,
     title: "Private-label programs",
     body: "Branding, labels, tags and packaging are scoped to the buyer's requirements and confirmed before production.",
+  },
+];
+
+const HERO_SLIDES = [
+  {
+    src: factoryCinematic,
+    alt: "Irha Apparels manufacturing environment in Sialkot",
+    fit: "cover" as const,
+  },
+  {
+    src: manufacturingImg,
+    alt: "Apparel manufacturing work in Sialkot",
+    fit: "cover" as const,
   },
 ];
 
@@ -56,16 +70,13 @@ export default function About() {
       />
 
       <section className="relative min-h-[620px] md:min-h-[720px] flex items-end pt-36 pb-20 md:pb-28 border-b border-border/60 overflow-hidden">
-        <img
-          src={factoryCinematic}
-          alt="Irha Apparels manufacturing environment in Sialkot"
-          loading="eager"
-          width={1920}
-          height={1080}
-          className="absolute inset-0 w-full h-full object-cover object-center"
+        <HeroMediaSlideshow
+          slides={HERO_SLIDES}
+          label="Irha Apparels factory slideshow"
+          controlsClassName="bottom-5 right-5"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/68 to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/90 via-black/68 to-black/30" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25" />
         <div className="container-luxe relative w-full">
           <div className="max-w-4xl">
             <div className="h-px w-16 bg-gold mb-6" />

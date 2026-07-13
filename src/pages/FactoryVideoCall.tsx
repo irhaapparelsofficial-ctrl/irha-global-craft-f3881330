@@ -8,8 +8,10 @@ import {
   Video,
 } from "lucide-react";
 import SEO from "@/components/SEO";
+import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import { whatsappLink } from "@/lib/constants";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
+import manufacturingImg from "@/assets/manufacturing.jpg";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -32,6 +34,19 @@ const PREP = [
   "Reference images, tech pack or specification if available",
   "Preferred meeting date, time window and timezone",
   "Questions your sourcing or quality team wants covered",
+];
+
+const HERO_SLIDES = [
+  {
+    src: factoryCinematic,
+    alt: "Live factory video call view at Irha Apparels",
+    fit: "cover" as const,
+  },
+  {
+    src: manufacturingImg,
+    alt: "Sialkot apparel manufacturing environment for live buyer verification",
+    fit: "cover" as const,
+  },
 ];
 
 export default function FactoryVideoCall() {
@@ -95,16 +110,13 @@ export default function FactoryVideoCall() {
           </div>
 
           <aside className="lg:col-span-5 relative min-h-[500px] overflow-hidden border border-border/60 bg-card">
-            <img
-              src={factoryCinematic}
-              alt="Live factory video call view at Irha Apparels"
-              loading="eager"
-              width={1080}
-              height={1350}
-              className="absolute inset-0 h-full w-full object-cover"
+            <HeroMediaSlideshow
+              slides={HERO_SLIDES}
+              label="Factory video call slideshow"
+              controlsClassName="top-4 right-4 bottom-auto"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/10" />
-            <div className="absolute inset-x-0 bottom-0 p-7 md:p-9">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/10" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-7 md:p-9">
               <Video className="text-gold" size={30} />
               <h2 className="font-display text-white text-3xl mt-5">What happens next</h2>
               <ol className="mt-6 space-y-4 text-sm text-white/78">
