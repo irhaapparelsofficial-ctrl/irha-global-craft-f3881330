@@ -1,0 +1,32 @@
+name: Thumbnail Build Diagnostic Fast
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Clone, build and print only failure tail
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          git clone --quiet "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          git fetch --quiet origin "+refs/pull/${PR_NUMBER}/merge:refs/remotes/pull/merge"
+          git checkout --quiet refs/remotes/pull/merge
+          npm install --legacy-peer-deps --no-audit --no-fund >/tmp/install.log 2>&1 || { tail -n 30 /tmp/install.log; exit 1; }
+          npm run build >/tmp/thumbnail-build.log 2>&1 || {
+            echo "--- BUILD FAILURE TAIL ---"
+            tail -n 90 /tmp/thumbnail-build.log
+            exit 1
+          }
+          tail -n 20 /tmp/thumbnail-build.log
