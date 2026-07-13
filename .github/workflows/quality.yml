@@ -29,6 +29,9 @@ jobs:
       - name: Verify deployment source lock
         run: npm run verify:deployment-source
 
+      - name: Verify Bavarian importer safety
+        run: node scripts/verify-bavarian-import-safety.mjs
+
       - name: Typecheck
         run: npx tsc --noEmit
 
