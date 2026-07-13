@@ -3,48 +3,13 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowUpRight, GitCompareArrows, RefreshCw, Trash2 } from "lucide-react";
 import SEO from "@/components/SEO";
 import ThumbnailImage from "@/components/ThumbnailImage";
-import { shortlistProductPath, type ShortlistItem, useCompare } from "@/lib/shortlist";
+import { shortlistProductPath, useCompare } from "@/lib/shortlist";
+import {
+  buildCompareColumns,
+  visibleCompareRows,
+  type CompareProduct,
+} from "@/lib/compareProducts";
 import { supabase } from "@/integrations/supabase/client";
-import type { DbProduct } from "@/hooks/useCatalog";
-
-type CompareProduct = DbProduct & {
-  categories?: { name?: string | null } | null;
-};
-
-type CompareColumn = {
-  item: ShortlistItem;
-  product?: CompareProduct;
-};
-
-type Row = {
-  label: string;
-  get: (column: CompareColumn) => string | null | undefined;
-};
-
-const ROWS: Row[] = [
-  { label: "Category", get: ({ item, product }) => item.categoryName || product?.categories?.name },
-  { label: "SKU", get: ({ product }) => product?.sku },
-  { label: "Primary Material", get: ({ product }) => product?.primary_material },
-  { label: "Fabric", get: ({ product }) => product?.fabric_composition },
-  { label: "GSM / Weight", get: ({ product }) => product?.gsm },
-  { label: "Sizes", get: ({ product }) => product?.available_sizes?.join(", ") ?? null },
-  { label: "Colors", get: ({ product }) => product?.available_colors?.join(", ") ?? null },
-  {
-    label: "Country",
-    get: ({ product }) => product ? product.country_of_origin ?? "Pakistan (Sialkot)" : null,
-  },
-];
-
-export function buildCompareColumns(items: ShortlistItem[], products: CompareProduct[]): CompareColumn[] {
-  return items.map((item) => ({
-    item,
-    product: products.find((product) => product.slug === item.slug),
-  }));
-}
-
-export function visibleCompareRows(columns: CompareColumn[]) {
-  return ROWS.filter((row) => columns.some((column) => (row.get(column) ?? "").toString().trim().length > 0));
-}
 
 export default function Compare() {
   const compare = useCompare();
