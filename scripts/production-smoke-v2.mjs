@@ -63,15 +63,17 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function readPublicKey(envText) {
-  const match = envText.match(/^VITE_SUPABASE_PUBLISHABLE_KEY=["']?([^"'\n]+)["']?$/m);
+function readPublicKey(runtimeText) {
+  const match = runtimeText.match(
+    /OWNER_SUPABASE_PUBLISHABLE_KEY\s*=\s*["']([^"'\n]+)["']/m,
+  );
   return match?.[1]?.trim() || "";
 }
 
 async function verifyTargetBackend() {
-  const envText = await readFile(".env", "utf8");
-  const publicKey = readPublicKey(envText);
-  assert(publicKey, "frontend publishable Supabase key is missing");
+  const runtimeText = await readFile("src/integrations/supabase/ownerRuntime.ts", "utf8");
+  const publicKey = readPublicKey(runtimeText);
+  assert(publicKey, "immutable frontend publishable Supabase key is missing");
 
   const backendBase = `https://${EXPECTED_SUPABASE_PROJECT_ID}.supabase.co`;
   const catalogueResponse = await fetch(

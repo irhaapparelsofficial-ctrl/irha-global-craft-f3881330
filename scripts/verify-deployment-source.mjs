@@ -30,6 +30,7 @@ async function main() {
     envFile,
     supabaseConfig,
     supabaseClient,
+    ownerRuntime,
   ] = await Promise.all([
     text("public/build.json"),
     text("public/release.txt"),
@@ -40,6 +41,7 @@ async function main() {
     text(".env"),
     text("supabase/config.toml"),
     text("src/integrations/supabase/client.ts"),
+    text("src/integrations/supabase/ownerRuntime.ts"),
   ]);
 
   const build = JSON.parse(buildRaw);
@@ -94,11 +96,40 @@ async function main() {
     }
   }
 
-  for (const source of [envFile, supabaseConfig, supabaseClient]) {
+  for (const source of [supabaseConfig, ownerRuntime]) {
     assert(source.includes(EXPECTED.supabaseProjectId), "runtime Supabase configuration is not locked to owner project");
+    assert(!source.includes("mlefxgyaqoisvdmoiapq"), "immutable runtime source references Lovable Cloud");
   }
-  assert(envFile.includes(`VITE_SUPABASE_URL="https://${EXPECTED.supabaseProjectId}.supabase.co"`), ".env owner Supabase URL mismatch");
-  assert(!envFile.includes("mlefxgyaqoisvdmoiapq"), ".env still references Lovable Cloud runtime database");
+  assert(
+    ownerRuntime.includes(`OWNER_SUPABASE_URL = "https://${EXPECTED.supabaseProjectId}.supabase.co"`),
+    "immutable owner Supabase URL mismatch",
+  );
+  assert(
+    ownerRuntime.includes("OWNER_SUPABASE_PUBLISHABLE_KEY"),
+    "immutable owner publishable key is missing",
+  );
+  assert(
+    !ownerRuntime.includes("service_role") && !ownerRuntime.includes("SERVICE_ROLE"),
+    "service-role material must never be present in the frontend runtime",
+  );
+  assert(
+    !supabaseClient.includes("import.meta.env") &&
+      supabaseClient.includes("OWNER_SUPABASE_PROJECT_ID") &&
+      supabaseClient.includes("OWNER_SUPABASE_URL") &&
+      supabaseClient.includes("OWNER_SUPABASE_PUBLISHABLE_KEY"),
+    "frontend client must use only immutable owner runtime constants",
+  );
+  assert(
+    !supabaseClient.includes("mlefxgyaqoisvdmoiapq"),
+    "frontend client references Lovable Cloud",
+  );
+
+  const managedEnvAligned =
+    envFile.includes(`VITE_SUPABASE_URL="https://${EXPECTED.supabaseProjectId}.supabase.co"`) &&
+    !envFile.includes("mlefxgyaqoisvdmoiapq");
+  if (!managedEnvAligned) {
+    console.warn("WARN Lovable-managed .env differs; immutable owner runtime remains authoritative.");
+  }
 
   console.log(
     `PASS deployment source lock: release=${EXPECTED.release} lovable=${EXPECTED.projectId} supabase=${EXPECTED.supabaseProjectId} repository=${EXPECTED.repository} origin=${EXPECTED.origin}`,

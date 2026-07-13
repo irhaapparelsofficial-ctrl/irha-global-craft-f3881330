@@ -49,6 +49,14 @@ jobs:
             echo "Built output still contains the redirecting www host"
             exit 1
           fi
+          if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
+            echo "Built output references the retired Lovable Cloud database"
+            exit 1
+          fi
+          if ! grep -R -qF --include='*.js' 'pvzjiozismyxqrzmtfbi' dist/assets; then
+            echo "Built frontend is missing the immutable owner Supabase identity"
+            exit 1
+          fi
 
       - name: Guard production text output against legacy claims
         shell: bash

@@ -1,39 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import {
+  OWNER_SUPABASE_PROJECT_ID,
+  OWNER_SUPABASE_PUBLISHABLE_KEY,
+  OWNER_SUPABASE_URL,
+} from "./ownerRuntime";
 
-const OWNER_SUPABASE_PROJECT_ID = "pvzjiozismyxqrzmtfbi";
-const configuredProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID?.trim();
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+// Runtime identity is sourced only from the immutable owner file. Lovable-managed
+// VITE_SUPABASE_* values are deliberately ignored so an editor sync cannot reconnect
+// production to the retired Lovable Cloud database.
+export const supabaseProjectId = OWNER_SUPABASE_PROJECT_ID;
+export const supabaseRuntimeUrl = OWNER_SUPABASE_URL;
 
-if (!configuredProjectId || !supabaseUrl || !supabasePublishableKey) {
-  throw new Error("Supabase runtime configuration is incomplete.");
-}
-
-let urlProjectId = "";
-try {
-  urlProjectId = new URL(supabaseUrl).hostname.split(".")[0] ?? "";
-} catch {
-  throw new Error("Supabase runtime URL is invalid.");
-}
-
-if (configuredProjectId !== urlProjectId) {
-  throw new Error("Supabase runtime identity mismatch: project ID and URL do not match.");
-}
-
-if (configuredProjectId !== OWNER_SUPABASE_PROJECT_ID) {
-  throw new Error("Blocked non-owner Supabase runtime. Use the verified Irha Apparels owner project.");
-}
-
-export const supabaseProjectId = configuredProjectId;
-export const supabaseRuntimeUrl = supabaseUrl;
-
-export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    experimental: { passkey: true },
+export const supabase = createClient<Database>(
+  OWNER_SUPABASE_URL,
+  OWNER_SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      experimental: { passkey: true },
+    },
   },
-});
+);
