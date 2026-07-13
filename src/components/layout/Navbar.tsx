@@ -19,7 +19,6 @@ export default function Navbar() {
   const moreLinks = settings.navigation.more.filter((link) => link.enabled);
   const tailLinks = settings.navigation.tail.filter((link) => link.enabled);
   const logoSrc = settings.brand.logoUrl || irhaLogo.url;
-  const lightHomepage = pathname === "/";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -39,22 +38,8 @@ export default function Navbar() {
     return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", onKeyDown); };
   }, [open]);
 
-  const inactiveNavClass = lightHomepage
-    ? "text-[#405064] hover:text-[#122033]"
-    : "text-foreground/80 hover:text-foreground";
-  const mobileInactiveClass = lightHomepage ? "text-[#405064]" : "text-foreground/80";
-
   return (
-    <header
-      className={cn(
-        "fixed top-0 inset-x-0 z-50 transition-all duration-500",
-        lightHomepage
-          ? "bg-[#f4f1ea]/95 backdrop-blur-xl border-b border-[#d9d2c3] py-3"
-          : scrolled || open
-            ? "bg-background/90 backdrop-blur-xl border-b border-border/60 py-3"
-            : "bg-transparent py-6",
-      )}
-    >
+    <header className={cn("fixed top-0 inset-x-0 z-50 transition-all duration-500", scrolled || open ? "bg-background/92 backdrop-blur-xl border-b border-border/60 py-3" : "bg-transparent py-6")}>
       <div className="container-luxe flex items-center justify-between">
         <Link to="/" className="group flex items-center shrink-0 mr-8" aria-label={`${settings.brand.name} — home`}>
           <img src={logoSrc} alt={settings.brand.name} className="h-9 md:h-12 w-auto object-contain transition-transform group-hover:scale-[1.04]" loading="eager" decoding="async" />
@@ -68,7 +53,7 @@ export default function Navbar() {
               end={link.href === "/"}
               className={({ isActive }) => cn(
                 "text-[11px] uppercase tracking-[0.25em] hover-gold-underline transition-colors",
-                isActive ? "text-primary" : inactiveNavClass,
+                isActive ? "text-primary" : "text-foreground/80 hover:text-foreground",
               )}
             >
               {link.label}
@@ -94,23 +79,13 @@ export default function Navbar() {
                 aria-expanded={moreOpen}
                 aria-haspopup="menu"
                 aria-controls="desktop-more-menu"
-                className={cn(
-                  "min-h-11 flex items-center gap-1 text-[11px] uppercase tracking-[0.25em] transition-colors",
-                  inactiveNavClass,
-                )}
+                className="min-h-11 flex items-center gap-1 text-[11px] uppercase tracking-[0.25em] text-foreground/80 hover:text-foreground transition-colors"
               >
                 More <ChevronDown size={12} className={cn("transition-transform", moreOpen && "rotate-180")} />
               </button>
               {moreOpen && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 animate-fade-in">
-                  <div
-                    id="desktop-more-menu"
-                    role="menu"
-                    className={cn(
-                      "border shadow-elegant min-w-[240px] py-2",
-                      lightHomepage ? "bg-white border-[#d9d2c3]" : "bg-background border-border/60",
-                    )}
-                  >
+                  <div id="desktop-more-menu" role="menu" className="bg-background border border-border/60 shadow-elegant min-w-[240px] py-2">
                     {moreLinks.map((link) => (
                       <NavLink
                         key={link.href}
@@ -118,11 +93,7 @@ export default function Navbar() {
                         role="menuitem"
                         className={({ isActive }) => cn(
                           "block px-5 py-3 text-[11px] uppercase tracking-[0.25em] transition-colors",
-                          isActive
-                            ? "text-primary"
-                            : lightHomepage
-                              ? "text-[#405064] hover:text-[#a77f34] hover:bg-[#f8f6f1]"
-                              : "text-foreground/75 hover:text-primary hover:bg-card",
+                          isActive ? "text-primary" : "text-foreground/75 hover:text-primary hover:bg-card",
                         )}
                       >
                         {link.label}
@@ -140,7 +111,7 @@ export default function Navbar() {
               to={link.href}
               className={({ isActive }) => cn(
                 "text-[11px] uppercase tracking-[0.25em] hover-gold-underline transition-colors",
-                isActive ? "text-primary" : inactiveNavClass,
+                isActive ? "text-primary" : "text-foreground/80 hover:text-foreground",
               )}
             >
               {link.label}
@@ -153,10 +124,7 @@ export default function Navbar() {
           <Link
             to="/shortlist"
             aria-label={`Shortlist (${savedCount} saved)`}
-            className={cn(
-              "relative min-h-11 min-w-11 inline-flex items-center justify-center hover:text-primary transition-colors",
-              lightHomepage ? "text-[#405064]" : "text-foreground/80",
-            )}
+            className="relative min-h-11 min-w-11 inline-flex items-center justify-center text-foreground/80 hover:text-primary transition-colors"
           >
             <Bookmark size={18} />
             {savedCount > 0 && (
@@ -173,10 +141,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className={cn(
-            "lg:hidden min-h-11 min-w-11 inline-flex items-center justify-center",
-            lightHomepage ? "text-[#122033]" : "text-foreground",
-          )}
+          className="lg:hidden min-h-11 min-w-11 inline-flex items-center justify-center text-foreground"
           aria-label={open ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={open}
           aria-controls="mobile-navigation"
@@ -198,7 +163,7 @@ export default function Navbar() {
               end={link.href === "/"}
               className={({ isActive }) => cn(
                 "min-h-11 inline-flex items-center text-sm uppercase tracking-[0.22em]",
-                isActive ? "text-primary" : mobileInactiveClass,
+                isActive ? "text-primary" : "text-foreground/80",
               )}
             >
               {link.label}
@@ -208,9 +173,7 @@ export default function Navbar() {
           <Link to={settings.ctas.quoteHref} className="mt-1 min-h-11 inline-flex w-fit items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em]">
             {settings.ctas.quoteLabel}
           </Link>
-          <p className={cn("text-xs pt-2", lightHomepage ? "text-[#617082]" : "text-muted-foreground")}>
-            {settings.brand.phoneDisplay}
-          </p>
+          <p className="text-xs text-muted-foreground pt-2">{settings.brand.phoneDisplay}</p>
         </nav>
       )}
     </header>
