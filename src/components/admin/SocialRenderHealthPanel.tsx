@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Activity, AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import SocialPublishingCenter from "@/components/admin/SocialPublishingCenter";
+import SocialGrowthAnalyticsPanel from "@/components/admin/SocialGrowthAnalyticsPanel";
 
 type Health = {
   ok?: boolean;
@@ -58,6 +59,7 @@ export default function SocialRenderHealthPanel() {
         )}
       </section>
       <SocialPublishingCenter />
+      <SocialGrowthAnalyticsPanel />
     </>
   );
 }
