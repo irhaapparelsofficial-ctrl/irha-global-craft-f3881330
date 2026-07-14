@@ -1,0 +1,43 @@
+              saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
++                          }`}
++                        >
++                          {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
++                          {saved ? "Saved" : "Save"}
++                        </button>
++                        <button
++                          type="button"
++                          onClick={() => compare.toggle(storedProduct)}
++                          disabled={compareFull}
++                          aria-pressed={inCompare}
++                          title={compareFull ? "Comparison is limited to four products" : undefined}
++                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
++                            inCompare
++                              ? "border-primary text-primary"
++                              : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"
++                          }`}
++                        >
++                          <GitCompareArrows size={12} />
++                          {inCompare ? "Added" : compareFull ? "Full" : "Compare"}
++                        </button>
++                        <Link
++                          to={productPath}
++                          aria-label={`Open ${product.name}`}
++                          className="ml-auto inline-flex min-h-10 min-w-10 items-center justify-center text-primary hover:text-primary/70"
++                        >
++                          <ArrowRight size={14} aria-hidden="true" />
++                        </Link>
+                       </div>
+-                      <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/45">{audienceName}</p>
+-                      <h3 className="font-display text-base md:text-lg mt-1 group-hover:text-primary">{product.name}</h3>
+-                      <span className="mt-2 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary">
+-                        {ui.viewProduct} <ArrowRight size={12} aria-hidden="true" />
+-                      </span>
+-                    </Link>
+-                  </article>
+-                ))}
++                    </article>
++                  );
++                })}
+               </div>
+             )}
+           </div>
