@@ -112,9 +112,10 @@ insert into public.outreach_events (campaign_id, message_id, lead_id, event_type
 select campaign_id,
        id,
        lead_id,
-       'manual_required',
+       'status_sync',
        jsonb_build_object(
          'reason', 'personal_or_free_email_domain',
+         'new_status', 'manual_required',
          'recipient_email', recipient_email,
          'migration', '20260714233000_guard_business_email_outreach_and_activation',
          'external_message_sent', false
