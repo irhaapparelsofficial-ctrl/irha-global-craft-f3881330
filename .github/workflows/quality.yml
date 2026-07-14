@@ -39,26 +39,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Test
-        id: tests
-        continue-on-error: true
-        shell: bash
-        run: npm test -- --passWithNoTests > quality-test-output.log 2>&1
-
-      - name: Upload test diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: quality-test-output
-          path: quality-test-output.log
-          if-no-files-found: error
-          retention-days: 3
-
-      - name: Enforce test result
-        if: steps.tests.outcome == 'failure'
-        shell: bash
-        run: |
-          tail -n 160 quality-test-output.log
-          exit 1
+        run: npm test -- --passWithNoTests
 
       - name: Build
         run: npm run build
@@ -67,6 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          npm run verify:release-identity
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
           grep -F '"expected_origin": "https://irhaapparels.com"' dist/build.json
           grep -F 'Sitemap: https://irhaapparels.com/sitemap.xml' dist/robots.txt
