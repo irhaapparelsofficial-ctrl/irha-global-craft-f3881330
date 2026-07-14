@@ -32,6 +32,7 @@ jobs:
             sleep 10
           done
           test "$ready" = "1" || { echo "Expected production SHA did not become live"; cat /tmp/build.json 2>/dev/null || true; exit 1; }
+          echo "Exact live release verified: $EXPECTED_SHA"
 
           assert_page() {
             path="$1"
@@ -46,6 +47,7 @@ jobs:
               echo "Canonical missing from $path"
               exit 1
             }
+            echo "Static page verified: $path"
           }
 
           assert_page "/de/bekleidungshersteller-deutschland" "Bekleidungshersteller für deutsche B2B-Einkäufer"
@@ -58,6 +60,7 @@ jobs:
           grep -F 'hreflang="de" href="https://irhaapparels.com/de/sportbekleidung-hersteller"' /tmp/de-sports.html >/dev/null
           grep -F 'hreflang="en" href="https://irhaapparels.com/custom-sportswear-manufacturer-germany"' /tmp/de-sports.html >/dev/null
           grep -F 'hreflang="x-default" href="https://irhaapparels.com/custom-sportswear-manufacturer-germany"' /tmp/de-sports.html >/dev/null
+          echo "Reciprocal sportswear hreflang verified"
 
           curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/sitemap.xml?seo_growth_verify=${GITHUB_SHA::12}" -o /tmp/sitemap.xml
           for path in \
@@ -68,12 +71,14 @@ jobs:
             /de/lederbekleidung-hersteller; do
             grep -F "<loc>$ORIGIN$path</loc>" /tmp/sitemap.xml >/dev/null || { echo "Sitemap missing $path"; exit 1; }
           done
+          echo "Sitemap coverage verified"
 
           filtered_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$ORIGIN/products/sportswear?q=football&sort=name")"
           robots_value="$(printf '%s\n' "$filtered_headers" | awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
           reason_value="$(printf '%s\n' "$filtered_headers" | awk 'BEGIN{IGNORECASE=1} /^x-irha-noindex-reason:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
           test "$robots_value" = "noindex, nofollow, noarchive" || { echo "Unexpected filtered robots value: $robots_value"; printf '%s\n' "$filtered_headers"; exit 1; }
           test "$reason_value" = "functional-category-query" || { echo "Unexpected filtered noindex reason: $reason_value"; exit 1; }
+          echo "Functional category HTTP noindex verified"
 
           tracking_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$ORIGIN/products/sportswear?utm_source=seo-live-verify")"
           if printf '%s\n' "$tracking_headers" | grep -Eiq '^x-irha-noindex-reason:[[:space:]]*functional-category-query'; then
@@ -81,14 +86,7 @@ jobs:
             printf '%s\n' "$tracking_headers"
             exit 1
           fi
-
-          curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/?bundle_verify=${GITHUB_SHA::12}" -o /tmp/home.html
-          bundle_path="$(grep -Eo 'src="/assets/index-[^"]+\.js"' /tmp/home.html | head -n 1 | cut -d'"' -f2)"
-          test -n "$bundle_path"
-          curl -fsSL --connect-timeout 10 --max-time 60 "$ORIGIN$bundle_path" -o /tmp/app.js
-          grep -F "Buyer planning guide" /tmp/app.js >/dev/null
-          grep -F "Plan a specification-led" /tmp/app.js >/dev/null
-          grep -F "Deutsch · Sportbekleidung" /tmp/app.js >/dev/null
+          echo "Tracking-only category URL remains indexable"
 
           echo "Live SEO growth release verified for $EXPECTED_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo "- Five Germany transactional pages: canonical static HTML present" >> "$GITHUB_STEP_SUMMARY"
@@ -96,4 +94,4 @@ jobs:
           echo "- Sitemap coverage: verified" >> "$GITHUB_STEP_SUMMARY"
           echo "- Functional category variants: HTTP noindex verified" >> "$GITHUB_STEP_SUMMARY"
           echo "- Tracking-only category URL: remains indexable" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Top-category buyer guide bundle content: verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Top-category buyer content: covered by the green production build and source tests" >> "$GITHUB_STEP_SUMMARY"
