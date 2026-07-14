@@ -377,7 +377,6 @@ async function scheduleVisit(db: any, userId: string, body: Record<string, unkno
     priority,
     status: "open",
     due_at: meetingAt,
-    assigned_to: "Daim Ali",
     created_by: userId,
     updated_by: userId,
   }).select("*").single();
