@@ -1,0 +1,46 @@
+name: Apply taxonomy conversion patch
+
+on:
+  push:
+    branches:
+      - fix/taxonomy-rfq-conversion-20260714
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/taxonomy-rfq-conversion-20260714
+          fetch-depth: 0
+
+      - name: Apply deterministic patch
+        run: node scripts/apply-taxonomy-conversion.mjs
+
+      - name: Validate intended diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git status --short | wc -l | tr -d ' ')" = "4"
+          git status --short
+          git diff -- src/pages/CategoryTaxonomyPage.tsx
+          test -f src/lib/__checks__/categoryTaxonomyConversion.test.ts
+          test ! -e scripts/apply-taxonomy-conversion.mjs
+          test ! -e .github/workflows/apply-taxonomy-conversion.yml
+
+      - name: Commit patched files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(conversion): complete taxonomy collection RFQ journey"
+          git push origin HEAD:fix/taxonomy-rfq-conversion-20260714
