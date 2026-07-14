@@ -1,0 +1,41 @@
+name: Apply Catalog Media Bootstrap UI
+
+on:
+  push:
+    branches: [feature/catalog-media-bootstrap]
+    paths:
+      - "scripts/patch-catalog-media-bootstrap-ui.mjs"
+      - ".github/workflows/apply-catalog-media-bootstrap-ui.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/catalog-media-bootstrap
+          fetch-depth: 0
+
+      - name: Apply exact source patches
+        run: node scripts/patch-catalog-media-bootstrap-ui.mjs
+
+      - name: Remove one-time patch machinery
+        run: git rm scripts/patch-catalog-media-bootstrap-ui.mjs .github/workflows/apply-catalog-media-bootstrap-ui.yml
+
+      - name: Commit wired source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/admin/MediaLibraryPanel.tsx supabase/functions/social-autopilot/index.ts
+          if git diff --cached --quiet; then
+            echo "No source changes were required."
+            exit 0
+          fi
+          git commit -m "Wire catalog media bootstrap into admin"
+          git push origin HEAD:feature/catalog-media-bootstrap
