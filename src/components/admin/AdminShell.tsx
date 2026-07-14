@@ -5,7 +5,7 @@ import {
   Users, MessageSquare, MessageCircle, Send, Sparkles, Cpu, ScrollText,
   MapPin, Share2, Activity, Settings, LogOut, ExternalLink, Menu, X,
   BarChart3, ListChecks, UserSearch, BookKey, Factory, LayoutTemplate, FileText,
-  BriefcaseBusiness,
+  BriefcaseBusiness, Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ListingsPanel from "@/components/admin/ListingsPanel";
@@ -36,7 +36,7 @@ import SocialContentPlaybook from "@/components/admin/SocialContentPlaybook";
 
 export type AdminView =
   | "overview"
-  | "products" | "categories" | "catalogues"
+  | "products" | "media" | "categories" | "catalogues"
   | "website" | "content" | "seo"
   | "lead_engine" | "pipeline" | "buyer360" | "commercial" | "leads" | "chat" | "whatsapp" | "mailing"
   | "rules" | "ai"
@@ -87,6 +87,7 @@ const NAV: NavGroup[] = [
     title: "Products",
     items: [
       { key: "products", label: "Products", description: "Add, edit, review, and publish products shown on the website.", icon: Package },
+      { key: "media", label: "Media Library", description: "Import, verify, review, and approve product images, videos, and reusable website assets.", icon: Images },
       { key: "categories", label: "Product Categories", description: "Organize products so buyers can find them easily.", icon: Layers },
       { key: "catalogues", label: "PDF Catalogues", description: "Manage downloadable catalogues and their website display.", icon: BookOpen },
     ],
@@ -140,7 +141,7 @@ const MOBILE_NAV: Array<{
     icon: Users,
     views: ["pipeline", "buyer360", "commercial", "leads", "lead_engine", "chat", "whatsapp", "mailing"],
   },
-  { key: "products", label: "Products", icon: Package, views: ["products", "categories", "catalogues"] },
+  { key: "products", label: "Products", icon: Package, views: ["products", "media", "categories", "catalogues"] },
   {
     key: "website",
     label: "Marketing",

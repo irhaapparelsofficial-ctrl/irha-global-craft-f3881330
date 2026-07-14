@@ -17,6 +17,7 @@ import {
 import { AdminShell, type AdminView } from "@/components/admin/AdminShell";
 import OverviewPanel from "@/components/admin/OverviewPanel";
 import ProductsPanel from "@/components/admin/ProductsPanel";
+import MediaLibraryPanel from "@/components/admin/MediaLibraryPanel";
 import CategoriesPanel from "@/components/admin/CategoriesPanel";
 import SocialPanel from "@/components/admin/SocialPanel";
 import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
@@ -74,6 +75,7 @@ function ViewRouter({ view, setView }: { view: AdminView; setView: (view: AdminV
   switch (view) {
     case "overview": return <OverviewPanel go={setView} />;
     case "products": return <ProductsPanel />;
+    case "media": return <MediaLibraryPanel />;
     case "categories": return <CategoriesPanel />;
     case "catalogues": return <CatalogPanel />;
     case "leads": return <LeadsPanel />;
