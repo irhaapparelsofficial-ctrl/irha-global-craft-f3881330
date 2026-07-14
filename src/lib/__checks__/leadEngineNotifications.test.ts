@@ -19,8 +19,8 @@ describe("lead conversion engine notifications", () => {
     expect(panel).toContain('rpc("crm_find_duplicate_candidates"');
     expect(panel).toContain('from("crm_record_links")');
     expect(panel).toContain('link_type: "duplicate"');
-    expect(panel).toContain('status: "confirmed"');
-    expect(panel).toContain('status: "rejected"');
+    expect(panel).toContain('decideDuplicate(candidate, "confirmed")');
+    expect(panel).toContain('decideDuplicate(candidate, "rejected")');
     expect(panel).toContain("No buyer record was merged or deleted");
   });
 
