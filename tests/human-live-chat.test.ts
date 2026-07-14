@@ -14,11 +14,17 @@ describe("secure human website live chat", () => {
     expect(layout).toContain("<HumanLiveChat />");
   });
 
-  it("provides a protected admin route and reply console", () => {
+  it("provides a protected admin route, reply console and one-tap launcher", () => {
     const app = read("src/App.tsx");
+    const main = read("src/main.tsx");
     const admin = read("src/pages/AdminLiveChat.tsx");
+    const launcher = read("src/components/admin/AdminLiveChatLauncher.tsx");
     expect(app).toContain('const AdminLiveChat = lazy(() => import("./pages/AdminLiveChat"))');
     expect(app).toContain('path="/admin/live-chat"');
+    expect(main).toContain('import AdminLiveChatLauncher from "@/components/admin/AdminLiveChatLauncher"');
+    expect(main).toContain("<AdminLiveChatLauncher />");
+    expect(launcher).toContain('href="/admin/live-chat"');
+    expect(launcher).toContain('.eq("role", "admin")');
     expect(admin).toContain("if (!user) return <Navigate");
     expect(admin).toContain("if (!isAdmin)");
     expect(admin).toContain('role: "admin"');
@@ -28,12 +34,14 @@ describe("secure human website live chat", () => {
 
   it("keeps public table access closed and admin writes behind RLS", () => {
     const migration = read("supabase/migrations/20260714213000_human_live_chat.sql");
+    const roleMigration = read("supabase/migrations/20260714213100_human_live_chat_admin_role.sql");
     expect(migration).toContain("alter table public.chat_sessions enable row level security");
     expect(migration).toContain("revoke all on table public.chat_sessions from anon");
     expect(migration).toContain('create policy "Admins reply to human live chat"');
     expect(migration).toContain("public.has_role((select auth.uid()), 'admin'::public.app_role)");
     expect(migration).toContain("and role = 'admin'");
     expect(migration).toContain("and channel = 'human'");
+    expect(roleMigration).toContain("check (role in ('user', 'assistant', 'admin'))");
   });
 
   it("uses custom visitor-token authentication, hashing and origin controls", () => {
