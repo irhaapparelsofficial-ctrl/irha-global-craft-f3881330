@@ -1,0 +1,100 @@
+name: Apply admin media navigation patch
+
+on:
+  push:
+    branches:
+      - feature/admin-media-nav-20260714
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'wire Media Library admin navigation') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feature/admin-media-nav-20260714
+
+      - name: Apply exact guarded patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          shell_path = Path('src/components/admin/AdminShell.tsx')
+          shell = shell_path.read_text()
+          shell = replace_once(
+              shell,
+              '  BriefcaseBusiness,\n} from "lucide-react";',
+              '  BriefcaseBusiness, Images,\n} from "lucide-react";',
+              'lucide Images import',
+          )
+          shell = replace_once(
+              shell,
+              '  | "products" | "categories" | "catalogues"',
+              '  | "products" | "media" | "categories" | "catalogues"',
+              'AdminView media key',
+          )
+          shell = replace_once(
+              shell,
+              '      { key: "products", label: "Products", description: "Add, edit, review, and publish products shown on the website.", icon: Package },\n      { key: "categories", label: "Product Categories", description: "Organize products so buyers can find them easily.", icon: Layers },',
+              '      { key: "products", label: "Products", description: "Add, edit, review, and publish products shown on the website.", icon: Package },\n      { key: "media", label: "Media Library", description: "Import, verify, review, and approve product images, videos, and reusable website assets.", icon: Images },\n      { key: "categories", label: "Product Categories", description: "Organize products so buyers can find them easily.", icon: Layers },',
+              'Products NAV media item',
+          )
+          shell = replace_once(
+              shell,
+              '{ key: "products", label: "Products", icon: Package, views: ["products", "categories", "catalogues"] },',
+              '{ key: "products", label: "Products", icon: Package, views: ["products", "media", "categories", "catalogues"] },',
+              'MOBILE_NAV media view',
+          )
+          shell_path.write_text(shell)
+
+          admin_path = Path('src/pages/Admin.tsx')
+          admin = admin_path.read_text()
+          admin = replace_once(
+              admin,
+              'import ProductsPanel from "@/components/admin/ProductsPanel";\nimport CategoriesPanel from "@/components/admin/CategoriesPanel";',
+              'import ProductsPanel from "@/components/admin/ProductsPanel";\nimport MediaLibraryPanel from "@/components/admin/MediaLibraryPanel";\nimport CategoriesPanel from "@/components/admin/CategoriesPanel";',
+              'MediaLibraryPanel import',
+          )
+          admin = replace_once(
+              admin,
+              '    case "products": return <ProductsPanel />;\n    case "categories": return <CategoriesPanel />;',
+              '    case "products": return <ProductsPanel />;\n    case "media": return <MediaLibraryPanel />;\n    case "categories": return <CategoriesPanel />;',
+              'ViewRouter media case',
+          )
+          admin_path.write_text(admin)
+
+          test_path = Path('src/test/adminMediaNavigation.test.ts')
+          test_path.write_text('''import { readFileSync } from "node:fs";\nimport { describe, expect, it } from "vitest";\n\nfunction source(path: string) {\n  return readFileSync(path, "utf8");\n}\n\ndescribe("admin Media Library navigation", () => {\n  it("exposes Media Library in desktop search, mobile Products group, and the page router", () => {\n    const shell = source("src/components/admin/AdminShell.tsx");\n    const admin = source("src/pages/Admin.tsx");\n\n    expect(shell).toContain('| "products" | "media" | "categories" | "catalogues"');\n    expect(shell).toContain('key: "media", label: "Media Library"');\n    expect(shell).toContain('views: ["products", "media", "categories", "catalogues"]');\n    expect(admin).toContain('import MediaLibraryPanel from "@/components/admin/MediaLibraryPanel";');\n    expect(admin).toContain('case "media": return <MediaLibraryPanel />;');\n  });\n});\n''')
+
+          workflow = Path('.github/workflows/apply-admin-media-nav-patch.yml')
+          if workflow.exists():
+              workflow.unlink()
+          PY
+
+      - name: Verify focused patch
+        shell: bash
+        run: |
+          git diff --check
+          test -f src/test/adminMediaNavigation.test.ts
+          grep -q 'key: "media", label: "Media Library"' src/components/admin/AdminShell.tsx
+          grep -q 'case "media": return <MediaLibraryPanel />;' src/pages/Admin.tsx
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/admin/AdminShell.tsx src/pages/Admin.tsx src/test/adminMediaNavigation.test.ts .github/workflows/apply-admin-media-nav-patch.yml
+          git commit -m "fix(admin): wire Media Library admin navigation"
+          git push origin HEAD:feature/admin-media-nav-20260714
