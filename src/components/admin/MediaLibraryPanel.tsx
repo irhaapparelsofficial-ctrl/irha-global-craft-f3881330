@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Archive, BadgeCheck, Check, Copy, FileImage, RefreshCw, Search, ShieldCheck, Trash2, UploadCloud, Video } from "lucide-react";
 import ThumbnailImage from "@/components/ThumbnailImage";
+import CatalogMediaBootstrapPanel from "@/components/admin/CatalogMediaBootstrapPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { createBrowserThumbnail, thumbnailObjectPath } from "@/lib/imageThumbnails";
@@ -371,6 +372,8 @@ export default function MediaLibraryPanel() {
           </div>
         </div>
       </section>
+
+      <CatalogMediaBootstrapPanel onChanged={load} />
 
       {error && <div className="border border-amber-500/40 bg-amber-500/5 p-4 text-sm text-amber-200">Media backend or storage bucket is unavailable. Detail: {error}</div>}
 

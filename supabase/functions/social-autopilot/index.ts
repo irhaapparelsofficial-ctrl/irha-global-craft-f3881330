@@ -182,7 +182,7 @@ async function health(service: DbClient) {
     ai_gateway_configured: Boolean(Deno.env.get("LOVABLE_API_KEY")),
     media_library_ready: media.ready,
     render_pipeline_ready: renders.ready && renderItems.ready,
-    renderer_provider_configured: Boolean(Deno.env.get("SOCIAL_RENDER_PROVIDER") && Deno.env.get("SOCIAL_RENDER_API_URL") && Deno.env.get("SOCIAL_RENDER_API_KEY")),
+    renderer_provider_configured: Boolean(Deno.env.get("SOCIAL_RENDER_PROVIDER_URL") && Deno.env.get("SOCIAL_RENDER_PROVIDER_KEY") && Deno.env.get("SOCIAL_RENDER_CALLBACK_SECRET")),
     tables: [...required, media, renders, renderItems],
     note: media.ready
       ? "Autopilot can select only active, verified, social-approved Media Library assets."
