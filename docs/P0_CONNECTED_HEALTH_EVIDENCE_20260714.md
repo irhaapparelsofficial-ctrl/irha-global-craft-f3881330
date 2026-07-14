@@ -19,7 +19,7 @@ Verified GitHub Actions evidence:
 
 ## SECURITY DEFINER grant hardening
 
-The grant-only SQL documented in `SECURITY_HARDENING_DEFINER_GRANTS_20260714.md` was applied directly to the owner Supabase project. No table, row, policy, trigger or function body was modified.
+The grant-only SQL documented in `SECURITY_HARDENING_DEFINER_GRANTS_20260714.md` was applied directly to the owner Supabase project. No table row or function body was modified.
 
 Before application:
 
@@ -47,6 +47,24 @@ Authenticated owner rollback-only verification passed after the grant change:
 - `content_get_admin_health()` succeeded.
 - The verification transaction was rolled back and wrote no business data.
 
+## Automation result guard follow-up
+
+The later automation-result migration introduced `guard_automation_task_result_state()` as an active `BEFORE INSERT OR UPDATE` trigger on `automation_tasks`. The function was confirmed to be trigger-only, so direct browser RPC execution was removed.
+
+Applied and verified in the owner project:
+
+- `anon` execute: false.
+- `authenticated` execute: false.
+- `service_role` execute: true.
+- Active trigger count: 1.
+- A rollback-only test confirmed that `ready_for_review` with an empty result is rejected.
+- The same test confirmed that a saved non-empty result is accepted.
+- Test residue after rollback: 0 rows.
+
+The internal tables `automation_task_repair_snapshots` and `backend_activation_checkpoints` were classified as privileged maintenance evidence, not admin-browser data. Both now have browser-role table privileges revoked plus explicit deny policies for `anon` and `authenticated`; `service_role` access remains available. The Supabase advisor no longer reports either table as RLS-without-policy, and no anonymous SECURITY DEFINER function warning remains.
+
+The reproducible repository migration is `20260714092600_harden_automation_guard_and_internal_tables.sql`.
+
 ## Google Search Console admin backend
 
 `gsc-analytics` version 2 was deployed to the owner Supabase project with JWT verification enabled.
@@ -63,3 +81,5 @@ The function now:
 ## Remaining acceptance boundary
 
 Actual Search Console rows and URL Inspection results must still be visually accepted from an authenticated owner admin session. A deployed function or configured schema is not treated as proof of external Google data until that owner-session request returns evidence.
+
+Supabase Auth leaked-password protection remains a hosted dashboard setting and is not changed by database SQL. It must be enabled separately in Auth password-security settings before that advisor warning can be closed.
