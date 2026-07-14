@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { BUYER_INTENT_LANDING_PAGES } from "../src/lib/buyerIntentLandingPages";
+import { SEO_BUYER_INTENT_LANDING_PAGES } from "../src/lib/buyerIntentSeoPages";
 
 const SITE_URL = "https://irhaapparels.com";
 const SITEMAP_PATH = resolve("public/sitemap.xml");
@@ -25,7 +25,7 @@ function main() {
     [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1].replace(/&amp;/g, "&")),
   );
 
-  const additions = BUYER_INTENT_LANDING_PAGES
+  const additions = SEO_BUYER_INTENT_LANDING_PAGES
     .filter((page) => !existing.has(`${SITE_URL}${page.path}`))
     .map((page) =>
       [
