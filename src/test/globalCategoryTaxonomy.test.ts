@@ -29,6 +29,7 @@ function category(slug: string, subs: NormalizedSub[]): NormalizedCategory {
     short: "",
     description: "",
     image: "",
+    originalImage: "",
     details: [],
     subs,
     productCount: subs.reduce((total, item) => total + item.products.length, 0),
