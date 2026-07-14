@@ -47,7 +47,10 @@ export default function Footer() {
 
         <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
           <summary className="flex md:block items-center justify-between cursor-pointer md:cursor-default list-none py-2 md:py-0 [&::-webkit-details-marker]:hidden"><span className="text-[11px] uppercase tracking-[0.3em] text-gold md:mb-5 block">Company & Buyer</span><ChevronDown size={16} className="md:hidden text-foreground/50 transition-transform group-open:rotate-180" /></summary>
-          <ul className="space-y-2.5 text-sm pt-3 md:pt-0">{companyLinks.map((item) => <li key={item.href}><Link to={item.href} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{item.label}</Link></li>)}</ul>
+          <ul className="space-y-2.5 text-sm pt-3 md:pt-0">
+            {companyLinks.map((item) => <li key={item.href}><Link to={item.href} className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">{item.label}</Link></li>)}
+            <li><Link to="/markets" className="inline-block py-1 text-foreground/70 hover:text-gold transition-colors">International Markets</Link></li>
+          </ul>
         </details>
 
         <details className="group border-b border-foreground/10 md:border-0 pb-3 md:pb-0" open>
