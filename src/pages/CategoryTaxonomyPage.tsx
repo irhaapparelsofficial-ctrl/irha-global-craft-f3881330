@@ -1,4 +1,12 @@
-import { ArrowRight, ChevronRight, Globe2, MessageCircle } from "lucide-react";
+import {
+  ArrowRight,
+  Bookmark,
+  BookmarkCheck,
+  ChevronRight,
+  GitCompareArrows,
+  Globe2,
+  MessageCircle,
+} from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import SEO from "@/components/SEO";
 import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
@@ -20,6 +28,7 @@ import {
   type TaxonomyLocale,
 } from "@/lib/taxonomyI18n";
 import { whatsappLink } from "@/lib/constants";
+import { useCompare, useShortlist } from "@/lib/shortlist";
 
 const SITE = "https://irhaapparels.com";
 
@@ -44,6 +53,8 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   const locale: TaxonomyLocale = params.locale && isTaxonomyLocale(params.locale) ? params.locale : "en";
   const invalidLocale = Boolean(params.locale && !isTaxonomyLocale(params.locale));
   const { category, isLoading } = useNormalizedCategory(categorySlug);
+  const shortlist = useShortlist();
+  const compare = useCompare();
 
   if (invalidLocale) return <Navigate to={`/products/${categorySlug}`} replace />;
   if (isLoading && !category) {
@@ -98,6 +109,9 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
     ?? firstHeroProduct?.image
     ?? category.image;
   const heroLabel = collectionName ?? audienceName ?? topName;
+  const quoteContext = collectionName ?? audienceName ?? topName;
+  const structuredQuoteLink = `/inquiry?intent=rfq&category=${encodeURIComponent(category.slug)}&categoryName=${encodeURIComponent(quoteContext)}${collection ? `&collection=${encodeURIComponent(collection.slug)}&collectionName=${encodeURIComponent(collectionName ?? collection.name)}` : ""}`;
+  const quoteWhatsappMessage = `Hello Irha Apparels — I need help reviewing a B2B requirement for ${collection?.name ?? audience?.name ?? category.name}.`;
   const heroProducts = collection
     ? products
     : audience
@@ -205,13 +219,20 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
             <p className="mt-4 text-sm text-foreground/55 max-w-3xl">{ui.programNote}</p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href={whatsappLink(`Hello Irha Apparels — I need a B2B quote for ${collection?.name ?? audience?.name ?? category.name}.`)}
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                to={structuredQuoteLink}
+                data-track="taxonomy-structured-rfq"
                 className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
               >
-                <MessageCircle size={15} aria-hidden="true" /> {ui.requestQuote}
+                {ui.requestQuote} <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+              <a
+                href={whatsappLink(quoteWhatsappMessage)}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-3 border border-gold/70 px-7 py-4 text-xs uppercase tracking-[0.25em] text-gold hover:bg-gold hover:text-background"
+              >
+                <MessageCircle size={15} aria-hidden="true" /> WhatsApp
               </a>
               <div className="inline-flex items-center gap-2 border border-border/60 px-4 py-2 bg-background/70 backdrop-blur-sm">
                 <Globe2 size={14} className="text-primary" aria-hidden="true" />
@@ -311,32 +332,101 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
             </div>
 
             {products.length === 0 ? (
-              <div className="border border-dashed border-border/60 p-10 text-center text-foreground/65">{ui.empty}</div>
+              <div className="border border-dashed border-border/60 p-10 text-center text-foreground/65">
+                <p>{ui.empty}</p>
+                <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-foreground/55">
+                  Share a reference or requirement and our team can review a custom manufacturing route for this collection.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Link
+                    to={structuredQuoteLink}
+                    className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-[10px] uppercase tracking-[0.2em] text-primary-foreground hover:bg-primary/90"
+                  >
+                    Request custom review <ArrowRight size={13} aria-hidden="true" />
+                  </Link>
+                  <a
+                    href={whatsappLink(quoteWhatsappMessage)}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex min-h-11 items-center gap-2 border border-gold/70 px-5 text-[10px] uppercase tracking-[0.2em] text-gold hover:bg-gold hover:text-background"
+                  >
+                    <MessageCircle size={13} aria-hidden="true" /> WhatsApp
+                  </a>
+                </div>
+              </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-                {products.map((product) => (
-                  <article key={product.slug} className="group">
-                    <Link to={`/products/${category.slug}/${product.slug}`} className="block">
-                      <div className="aspect-square overflow-hidden bg-card mb-3">
-                        {product.image && (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            loading="lazy"
-                            width={720}
-                            height={720}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          />
-                        )}
+                {products.map((product) => {
+                  const saved = shortlist.has(product.slug);
+                  const inCompare = compare.has(product.slug);
+                  const compareFull = !inCompare && compare.items.length >= 4;
+                  const productPath = `/products/${category.slug}/${product.slug}`;
+                  const storedProduct = {
+                    slug: product.slug,
+                    name: product.name,
+                    image: product.image,
+                    categorySlug: category.slug,
+                    categoryName: topName,
+                    addedAt: Date.now(),
+                  };
+
+                  return (
+                    <article key={product.slug} className="group flex min-w-0 flex-col">
+                      <Link to={productPath} className="block">
+                        <div className="aspect-square overflow-hidden bg-card mb-3">
+                          {product.image && (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              loading="lazy"
+                              width={720}
+                              height={720}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            />
+                          )}
+                        </div>
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/45">{audienceName}</p>
+                        <h3 className="font-display text-base md:text-lg mt-1 group-hover:text-primary">{product.name}</h3>
+                      </Link>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => shortlist.toggle(storedProduct)}
+                          aria-pressed={saved}
+                          aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
+                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
+                            saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
+                          }`}
+                        >
+                          {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
+                          {saved ? "Saved" : "Save"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => compare.toggle(storedProduct)}
+                          disabled={compareFull}
+                          aria-pressed={inCompare}
+                          title={compareFull ? "Comparison is limited to four products" : undefined}
+                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
+                            inCompare
+                              ? "border-primary text-primary"
+                              : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"
+                          }`}
+                        >
+                          <GitCompareArrows size={12} />
+                          {inCompare ? "Added" : compareFull ? "Full" : "Compare"}
+                        </button>
+                        <Link
+                          to={productPath}
+                          aria-label={`Open ${product.name}`}
+                          className="ml-auto inline-flex min-h-10 min-w-10 items-center justify-center text-primary hover:text-primary/70"
+                        >
+                          <ArrowRight size={14} aria-hidden="true" />
+                        </Link>
                       </div>
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/45">{audienceName}</p>
-                      <h3 className="font-display text-base md:text-lg mt-1 group-hover:text-primary">{product.name}</h3>
-                      <span className="mt-2 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary">
-                        {ui.viewProduct} <ArrowRight size={12} aria-hidden="true" />
-                      </span>
-                    </Link>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
