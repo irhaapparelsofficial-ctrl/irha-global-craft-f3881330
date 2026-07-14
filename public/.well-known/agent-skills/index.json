@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/agent-skills-discovery-rfc/main/schema/agent-skills-index.schema.json",
+  "version": "0.2.0",
+  "publisher": {
+    "name": "Irha Apparels",
+    "url": "https://www.irhaapparels.com"
+  },
+  "skills": [
+    {
+      "name": "buyer-inquiry",
+      "type": "instructions",
+      "description": "Prepare a buyer-reviewed B2B inquiry for Irha Apparels without sending it automatically.",
+      "url": "https://www.irhaapparels.com/skills/buyer-inquiry/SKILL.md",
+      "sha256": "d6eff075f81577aaf9ad67a1469203c01c2ae83e7ca4e75281b4e6a776a92570"
+    },
+    {
+      "name": "catalogue-discovery",
+      "type": "instructions",
+      "description": "Help a B2B buyer find the relevant Irha Apparels collection and public catalogue resources.",
+      "url": "https://www.irhaapparels.com/skills/catalogue-discovery/SKILL.md",
+      "sha256": "c4dc67eaddf490a46f2cae000fac05b983c7607571f7a370bdbcc00beb538245"
+    }
+  ]
+}
