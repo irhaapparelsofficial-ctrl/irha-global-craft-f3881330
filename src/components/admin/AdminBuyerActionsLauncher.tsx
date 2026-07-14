@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { UsersRound, X } from "lucide-react";
+import { Bell, UsersRound, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import BuyerCoreActionsHub from "@/components/admin/BuyerCoreActionsHub";
+import LeadEngineAlertsPanel from "@/components/admin/LeadEngineAlertsPanel";
 
 export default function AdminBuyerActionsLauncher() {
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,31 +40,50 @@ export default function AdminBuyerActionsLauncher() {
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open && !alertsOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        setAlertsOpen(false);
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, alertsOpen]);
 
   if (!visible) return null;
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="fixed z-[65] right-3 sm:right-5 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 min-h-13 inline-flex items-center gap-2 rounded-full border border-gold/60 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-gold shadow-2xl backdrop-blur hover:bg-gold hover:text-background"
-        aria-label="Open Buyer Actions"
-      >
-        <UsersRound size={17} /> Buyer Actions
-      </button>
+      <div className="fixed z-[65] right-3 sm:right-5 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 flex flex-col items-end gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setAlertsOpen(true);
+          }}
+          className="min-h-12 inline-flex items-center gap-2 rounded-full border border-gold/60 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-gold shadow-2xl backdrop-blur hover:bg-gold hover:text-background"
+          aria-label="Open Lead Alerts"
+        >
+          <Bell size={17} /> Lead Alerts
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAlertsOpen(false);
+            setOpen(true);
+          }}
+          className="min-h-13 inline-flex items-center gap-2 rounded-full border border-gold/60 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-gold shadow-2xl backdrop-blur hover:bg-gold hover:text-background"
+          aria-label="Open Buyer Actions"
+        >
+          <UsersRound size={17} /> Buyer Actions
+        </button>
+      </div>
 
       {open && (
         <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm overflow-y-auto" role="dialog" aria-modal="true" aria-label="Buyer CRM actions">
@@ -75,6 +96,21 @@ export default function AdminBuyerActionsLauncher() {
           </header>
           <main className="mx-auto max-w-[1600px] p-3 pb-10 sm:p-5 lg:p-8">
             <BuyerCoreActionsHub />
+          </main>
+        </div>
+      )}
+
+      {alertsOpen && (
+        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm overflow-y-auto" role="dialog" aria-modal="true" aria-label="Lead alerts and duplicate review">
+          <header className="sticky top-0 z-10 min-h-16 border-b border-border/70 bg-card/95 backdrop-blur flex items-center justify-between gap-3 px-3 sm:px-6 pt-[env(safe-area-inset-top)]">
+            <div className="min-w-0 py-2">
+              <p className="text-[9px] uppercase tracking-[0.18em] text-gold">Irha Admin · Lead Engine</p>
+              <h1 className="font-display text-lg sm:text-xl truncate">Lead Alerts & Duplicate Review</h1>
+            </div>
+            <button type="button" onClick={() => setAlertsOpen(false)} className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:border-gold hover:text-gold" aria-label="Close Lead Alerts"><X size={19} /></button>
+          </header>
+          <main className="mx-auto max-w-[1600px] p-3 pb-10 sm:p-5 lg:p-8">
+            <LeadEngineAlertsPanel />
           </main>
         </div>
       )}
