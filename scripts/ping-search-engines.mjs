@@ -1,39 +1,110 @@
-// Post-build: notify Google, Bing and IndexNow that the sitemap changed.
-// Failures are logged but never fail the build — pings are best-effort.
+// Notify IndexNow after a verified production deployment.
+// Google discovers the canonical sitemap through robots.txt and Search Console;
+// its retired unauthenticated sitemap ping endpoint is intentionally not called.
 
-const HOST = "www.irhaapparels.com";
-const SITEMAP = `https://${HOST}/sitemap.xml`;
-const INDEXNOW_KEY = "19d2833c43fe6e05e2a4416f65a53cdc";
+import { pathToFileURL } from "node:url";
 
-async function tryFetch(label, url, opts = {}) {
-  try {
-    const res = await fetch(url, { ...opts, signal: AbortSignal.timeout(10_000) });
-    console.log(`[ping] ${label} → ${res.status}`);
-  } catch (e) {
-    console.log(`[ping] ${label} → ${(e && e.message) || e}`);
+export const ORIGIN = "https://irhaapparels.com";
+export const HOST = "irhaapparels.com";
+export const INDEXNOW_KEY = "19d2833c43fe6e05e2a4416f65a53cdc";
+export const INDEXNOW_ENDPOINT = "https://api.indexnow.org/IndexNow";
+
+export const DEFAULT_CHANGED_PATHS = [
+  "/",
+  "/products",
+  "/catalogue",
+  "/buyer-trust",
+  "/factory-video-call",
+  "/inquiry",
+  "/germany-apparel-manufacturer",
+  "/austria-apparel-manufacturer",
+  "/switzerland-apparel-manufacturer",
+  "/netherlands-apparel-manufacturer",
+  "/uk-custom-apparel-manufacturer",
+  "/usa-private-label-clothing-manufacturer",
+  "/canada-apparel-manufacturer",
+  "/australia-apparel-manufacturer",
+  "/new-zealand-apparel-manufacturer",
+  "/lederhosen-manufacturer-germany",
+  "/dirndl-manufacturer-austria",
+  "/custom-sportswear-manufacturer-uk",
+  "/private-label-streetwear-manufacturer-usa",
+  "/custom-leather-jacket-manufacturer-canada",
+  "/de/lederhosen-hersteller",
+  "/de/dirndl-grosshandel",
+  "/de/trachten-private-label",
+];
+
+function normalizeUrl(value) {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return null;
+
+  const url = trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? new URL(trimmed)
+    : new URL(trimmed.startsWith("/") ? trimmed : `/${trimmed}`, ORIGIN);
+
+  if (url.origin !== ORIGIN) {
+    throw new Error(`IndexNow URL must use canonical origin ${ORIGIN}: ${url.href}`);
+  }
+
+  url.hash = "";
+  return url.href;
+}
+
+export function resolveChangedUrls({ args = process.argv.slice(2), env = process.env } = {}) {
+  const envValues = String(env.INDEXNOW_URLS ?? "")
+    .split(/[\n,]/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const candidates = args.length > 0 ? args : envValues.length > 0 ? envValues : DEFAULT_CHANGED_PATHS;
+  const urls = candidates.map(normalizeUrl).filter(Boolean);
+  return [...new Set(urls)];
+}
+
+export function buildIndexNowPayload(urlList = resolveChangedUrls()) {
+  if (urlList.length === 0) throw new Error("No canonical URLs were supplied to IndexNow");
+  if (urlList.length > 10_000) throw new Error("IndexNow accepts at most 10,000 URLs per request");
+
+  return {
+    host: HOST,
+    key: INDEXNOW_KEY,
+    keyLocation: `${ORIGIN}/${INDEXNOW_KEY}.txt`,
+    urlList,
+  };
+}
+
+async function submitIndexNow(payload) {
+  const response = await fetch(INDEXNOW_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  const body = await response.text().catch(() => "");
+  console.log(`[indexnow] status=${response.status} urls=${payload.urlList.length}`);
+  if (body) console.log(`[indexnow] response=${body.slice(0, 500)}`);
+
+  if (![200, 202].includes(response.status)) {
+    throw new Error(`IndexNow rejected the request with HTTP ${response.status}`);
   }
 }
 
-async function main() {
-  // Google's /ping was deprecated in 2023 but still accepts; harmless if 404.
-  await tryFetch("Google", `https://www.google.com/ping?sitemap=${encodeURIComponent(SITEMAP)}`);
-  await tryFetch("Bing", `https://www.bing.com/ping?sitemap=${encodeURIComponent(SITEMAP)}`);
+export async function main() {
+  const payload = buildIndexNowPayload();
 
-  // IndexNow — modern protocol consumed by Bing, Yandex, Seznam, Naver.
-  // Submit the sitemap URL itself as a "changed" signal.
-  await tryFetch("IndexNow", "https://api.indexnow.org/IndexNow", {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify({
-      host: HOST,
-      key: INDEXNOW_KEY,
-      keyLocation: `https://${HOST}/${INDEXNOW_KEY}.txt`,
-      urlList: [SITEMAP, `https://${HOST}/`],
-    }),
-  });
+  if (process.env.INDEXNOW_DRY_RUN === "1") {
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  await submitIndexNow(payload);
 }
 
-main().catch((e) => {
-  console.log("[ping] fatal", e);
-  process.exit(0); // never block the build
-});
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectRun) {
+  main().catch((error) => {
+    console.error(`[indexnow] ${(error && error.message) || error}`);
+    process.exitCode = process.env.INDEXNOW_STRICT === "1" ? 1 : 0;
+  });
+}

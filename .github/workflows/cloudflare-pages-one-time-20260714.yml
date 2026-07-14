@@ -1,5 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
-# Registered trigger revision: 9
+# Registered trigger revision: 10
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
@@ -96,6 +96,7 @@ jobs:
           npm test -- --passWithNoTests
           npm run build
           npm run verify:release-identity
+          INDEXNOW_DRY_RUN=1 INDEXNOW_STRICT=1 npm run notify:search
 
       - name: Verify release-safe output
         shell: bash
@@ -104,6 +105,8 @@ jobs:
           test -s dist/index.html
           test -s dist/build.json
           test -s dist/release.txt
+          test -s "dist/19d2833c43fe6e05e2a4416f65a53cdc.txt"
+          grep -Fx '19d2833c43fe6e05e2a4416f65a53cdc' "dist/19d2833c43fe6e05e2a4416f65a53cdc.txt"
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
           grep -F '"repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330"' dist/build.json
           grep -F '"supabase_project_id": "pvzjiozismyxqrzmtfbi"' dist/build.json
@@ -144,6 +147,14 @@ jobs:
           test "$ready" = "1"
           echo "Exact Cloudflare Pages release verified: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Notify IndexNow about priority SEO pages
+        continue-on-error: true
+        env:
+          INDEXNOW_STRICT: "1"
+        run: |
+          npm run notify:search
+          echo "IndexNow notification accepted for the canonical priority URL set." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Record verified release evidence
         env:
           GH_TOKEN: ${{ github.token }}
@@ -160,7 +171,8 @@ jobs:
           - Build fingerprint: \`$RELEASE_FINGERPRINT\`
           - Verified URL: \`$STAGING_URL\`
           - Verified at: \`$generated_at\`
-          - Release checks: source identity, Supabase project, canonical origin, tests, production build, legacy-claim guard and exact served fingerprint all passed.
+          - Search discovery: canonical sitemap remains available through robots.txt/Search Console; IndexNow notification runs after exact release verification.
+          - Release checks: source identity, Supabase project, canonical origin, tests, production build, IndexNow payload validation, legacy-claim guard and exact served fingerprint all passed.
           EOF
           )
           gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "$body"
