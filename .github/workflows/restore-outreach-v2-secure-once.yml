@@ -1,0 +1,73 @@
+name: Restore secure outreach backend once
+
+on:
+  push:
+    branches:
+      - feat/lead-file-outreach-approval
+    paths:
+      - .github/workflows/restore-outreach-v2-secure-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: restore-outreach-v2-secure-once
+  cancel-in-progress: false
+
+jobs:
+  restore-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v4
+        with:
+          ref: feat/lead-file-outreach-approval
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Restore only the secure backend from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          git show origin/main:supabase/functions/outreach-workflow-v2/index.ts > supabase/functions/outreach-workflow-v2/index.ts
+
+          grep -F 'if (action === "approve_and_send")' supabase/functions/outreach-workflow-v2/index.ts
+          grep -F 'body.owner_confirmed !== true' supabase/functions/outreach-workflow-v2/index.ts
+          grep -F 'primary_attempted: true' supabase/functions/outreach-workflow-v2/index.ts
+          grep -F 'MAX_WHATSAPP_ATTACHMENT_BYTES' supabase/functions/outreach-workflow-v2/index.ts
+          grep -F 'WhatsApp customer-service window is closed' supabase/functions/outreach-workflow-v2/index.ts
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Targeted outreach safety tests
+        run: npx vitest run src/test/leadOutreachSafetyContracts.test.ts src/components/admin/OutreachApprovalPanel.test.ts
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Full test suite
+        run: npm test -- --passWithNoTests
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit only after every validation passes
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/restore-outreach-v2-secure-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/functions/outreach-workflow-v2/index.ts .github/workflows/restore-outreach-v2-secure-once.yml
+          git diff --cached --check
+          git commit -m "fix(outreach): restore owner-approved secure dispatch backend"
+          git push origin HEAD:feat/lead-file-outreach-approval
