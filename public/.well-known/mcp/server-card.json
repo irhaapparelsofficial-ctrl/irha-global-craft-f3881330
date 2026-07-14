@@ -5,7 +5,7 @@
     "title": "Irha Apparels Public Buyer Assistant",
     "version": "1.0.0",
     "description": "Read-only B2B collection discovery, factory-verification information and reviewable inquiry preparation for Irha Apparels.",
-    "websiteUrl": "https://www.irhaapparels.com"
+    "websiteUrl": "https://irhaapparels.com"
   },
   "protocolVersions": [
     "2025-06-18"
@@ -13,7 +13,7 @@
   "transports": [
     {
       "type": "streamable-http",
-      "endpoint": "https://www.irhaapparels.com/mcp"
+      "endpoint": "https://irhaapparels.com/mcp"
     }
   ],
   "authentication": {
@@ -43,7 +43,7 @@
       "confirmationRequired": true
     }
   ],
-  "documentation": "https://www.irhaapparels.com/docs/mcp.md",
-  "privacyPolicy": "https://www.irhaapparels.com/privacy",
-  "termsOfService": "https://www.irhaapparels.com/terms"
+  "documentation": "https://irhaapparels.com/docs/mcp.md",
+  "privacyPolicy": "https://irhaapparels.com/privacy-policy",
+  "termsOfService": "https://irhaapparels.com/terms-of-service"
 }
