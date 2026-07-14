@@ -44,7 +44,7 @@ const HEADER_ALIASES: Record<string, string[]> = {
   city: ["city", "city region", "city/region", "region", "city / region"],
   email: ["email", "professional email", "email contact route", "email / contact route", "email/contact route"],
   phone: ["phone", "phone whatsapp", "phone / whatsapp", "phone/whatsapp", "telephone", "mobile"],
-  whatsapp: ["whatsapp", "whatsapp mobile", "whatsapp / mobile", "whatsapp/mobile"],
+  whatsapp: ["whatsapp", "whatsapp mobile", "whatsapp / mobile", "whatsapp/mobile", "phone whatsapp", "phone / whatsapp", "phone/whatsapp"],
   website: ["website", "website url", "domain", "primary domain"],
   buyerType: ["buyer type", "buyer type segment", "buyer type / segment", "lead type", "category"],
   productFit: ["target category", "product fit", "product fit best offer", "product fit / best offer", "relevant bavarian products", "offer to pitch"],
@@ -185,7 +185,7 @@ function normalizeRow(values: string[], columns: Record<string, number>, sourceR
   if (!buyerType) blockers.push("buyer type");
   if (!productFit.length) blockers.push("product fit");
   const domain = websiteDomain(website || sourceUrl);
-  const contactKey = email || (whatsapp ? `wa:${whatsapp.replace(/\D/g, "")}` : "");
+  const contactKey = email || (whatsapp ? `wa:${normalizeContactDigits(whatsapp)}` : "");
   const fingerprint = [contactKey, domain, normalizeKey(companyName), normalizeKey(country)].join("|");
 
   return {
@@ -224,6 +224,11 @@ function normalizePhone(value: string) {
   const compact = match.replace(/\s+/g, " ").trim();
   const digits = compact.replace(/\D/g, "");
   return digits.length >= 7 && digits.length <= 16 ? compact : "";
+}
+
+function normalizeContactDigits(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits.startsWith("00") ? digits.slice(2) : digits;
 }
 
 function normalizeKey(value: string) {
