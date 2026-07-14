@@ -39,10 +39,26 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Test
+        id: tests
+        continue-on-error: true
+        shell: bash
+        run: npm test -- --passWithNoTests > quality-test-output.log 2>&1
+
+      - name: Upload test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-test-output
+          path: quality-test-output.log
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Enforce test result
+        if: steps.tests.outcome == 'failure'
         shell: bash
         run: |
-          set -o pipefail
-          npm test -- --passWithNoTests 2>&1 | tail -n 160
+          tail -n 160 quality-test-output.log
+          exit 1
 
       - name: Build
         run: npm run build
