@@ -220,6 +220,20 @@ async function activate(service: any, userId: string, body: JsonRecord) {
       completed_at: new Date().toISOString(),
     }).eq("id", batch.data.id);
     return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });
+  } catch (error) {
+    const reason = errorText(error);
+    const failedBatch = await service.from("lead_activation_batches").update({
+      status: importedLeadIds.length ? "partial" : "failed",
+      imported_lead_ids: importedLeadIds,
+      imported_count: importedLeadIds.length,
+      skipped_count: Math.max(0, outcomes.length - importedLeadIds.length),
+      failed_count: Math.max(1, outcomes.filter((item) => item.status === "failed").length),
+      summary: { mode: "channel_activation_v2", recovery: "unexpected_error", sends_external_messages: false, claim_token: claimToken, max_batch: MAX_BATCH },
+      errors: [...outcomes.filter((item) => item.error), { phase: "activation", error: reason }].slice(0, MAX_BATCH + 1),
+      completed_at: new Date().toISOString(),
+    }).eq("id", batch.data.id);
+    if (failedBatch.error) console.error("lead activation batch failure checkpoint failed", failedBatch.error.message);
+    throw error;
   } finally {
     const release = await service.from("lead_candidates").update({
       activation_claim_token: null,
