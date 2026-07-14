@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher";
+import { registerWebMcpTools } from "@/lib/webMcp";
 import "./index.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
@@ -38,6 +39,7 @@ async function healLegacyClientCacheOnce() {
 }
 
 void healLegacyClientCacheOnce();
+void registerWebMcpTools();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Irha application root is missing");
