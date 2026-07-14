@@ -1,4 +1,4 @@
-name: Final Production Read-Only 805ce
+name: Final Production Read-Only Current
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ jobs:
       APEX: https://irhaapparels.com
       WWW: https://www.irhaapparels.com
       PAGES: https://irha-apparels.pages.dev
-      EXPECTED_SOURCE_SHA: 805ce356961f4f0ff126c233d52d46db033e09a9
+      EXPECTED_SOURCE_SHA: a6d7d377c3440f9ece7fd28ee8d3d8c735ca0823
 
     steps:
       - name: Verify raw www redirects
@@ -47,11 +47,11 @@ jobs:
         run: |
           set -euo pipefail
           for path in / /products /catalogue /inquiry /buyer-trust /factory-video-call /admin /admin/live-chat /sitemap.xml /robots.txt /llms.txt /.well-known/api-catalog /.well-known/mcp/server-card.json /.well-known/agent-skills/index.json /mcp; do
-            code="$(curl -sS -o /tmp/route-body -w '%{http_code}' "$APEX$path")"
+            code="$(curl -sS -L --max-redirs 5 -o /tmp/route-body -w '%{http_code}' "$APEX$path")"
             echo "$path -> $code"
             test "$code" = "200"
           done
-          curl -fsS "$APEX/sitemap.xml" | grep -q '<urlset'
+          curl -fsSL "$APEX/sitemap.xml" | grep -q '<urlset'
 
       - name: Verify OAuth discovery JSON
         shell: bash
