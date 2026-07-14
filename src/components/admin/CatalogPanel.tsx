@@ -1,7 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  BookOpen,
+  ExternalLink,
+  FolderTree,
+  ImageOff,
+  Package,
+  RefreshCw,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Save, X, Folder, Package, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
 import { resolveAsset } from "@/lib/assetResolver";
 
 type Category = {
@@ -10,397 +17,287 @@ type Category = {
   slug: string;
   name: string;
   short: string | null;
-  description: string | null;
   image_url: string | null;
   catalog_url: string | null;
-  details: string[];
-  seo_title: string | null;
-  seo_description: string | null;
   sort_order: number;
   is_published: boolean;
 };
-
-type ProductDetailSpec = { label: string; value: string };
 
 type Product = {
   id: string;
   category_id: string;
   slug: string;
   name: string;
-  description: string | null;
   image_url: string | null;
   gallery: string[];
-  specs: string[];
-  details: ProductDetailSpec[];
-  material_specifications: string | null;
-  seo_title: string | null;
-  seo_description: string | null;
   sort_order: number;
   is_published: boolean;
 };
 
-function slugify(s: string) {
-  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-}
-
 export default function CatalogPanel() {
-  const [cats, setCats] = useState<Category[]>([]);
-  const [prods, setProds] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openCat, setOpenCat] = useState<Record<string, boolean>>({});
-  const [editCat, setEditCat] = useState<Category | null>(null);
-  const [editProd, setEditProd] = useState<Product | null>(null);
-  const [addingProductToCat, setAddingProductToCat] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
-    const [c, p] = await Promise.all([
-      supabase.from("categories").select("*").order("sort_order"),
-      supabase.from("products").select("*").order("sort_order"),
+    const [categoryResult, productResult] = await Promise.all([
+      supabase
+        .from("categories")
+        .select("id,parent_id,slug,name,short,image_url,catalog_url,sort_order,is_published")
+        .order("sort_order"),
+      supabase
+        .from("products")
+        .select("id,category_id,slug,name,image_url,gallery,sort_order,is_published")
+        .order("sort_order")
+        .limit(1000),
     ]);
-    if (c.error) toast({ title: "Failed to load categories", description: c.error.message, variant: "destructive" });
-    if (p.error) toast({ title: "Failed to load products", description: p.error.message, variant: "destructive" });
-    setCats((c.data ?? []) as Category[]);
-    setProds((p.data ?? []) as unknown as Product[]);
+
+    setCategories((categoryResult.data ?? []) as Category[]);
+    setProducts((productResult.data ?? []) as unknown as Product[]);
+    setError(categoryResult.error?.message || productResult.error?.message || null);
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  const productsByCat = useMemo(() => {
-    const m = new Map<string, Product[]>();
-    prods.forEach((p) => {
-      const arr = m.get(p.category_id) ?? [];
-      arr.push(p);
-      m.set(p.category_id, arr);
-    });
-    return m;
-  }, [prods]);
-
-  const rootCats = cats.filter((c) => !c.parent_id);
-  const subsOf = (parentId: string) => cats.filter((c) => c.parent_id === parentId);
-  // Recursive product count: direct products + all descendant categories' products
-  const totalProductsFor = (catId: string): number => {
-    const direct = productsByCat.get(catId)?.length ?? 0;
-    const childTotal = subsOf(catId).reduce((sum, s) => sum + totalProductsFor(s.id), 0);
-    return direct + childTotal;
-  };
-
-  const saveCategory = async (c: Partial<Category>) => {
-    const payload = {
-      ...c,
-      slug: c.slug || slugify(c.name ?? ""),
-      details: c.details ?? [],
-    };
-    if (c.id) {
-      const { error } = await supabase.from("categories").update(payload).eq("id", c.id);
-      if (error) return toast({ title: "Save failed", description: error.message, variant: "destructive" });
-      toast({ title: "Category updated" });
-    } else {
-      const { error } = await supabase.from("categories").insert(payload as never);
-      if (error) return toast({ title: "Create failed", description: error.message, variant: "destructive" });
-      toast({ title: "Category created" });
+  const categoryById = useMemo(
+    () => new Map(categories.map((category) => [category.id, category])),
+    [categories],
+  );
+  const roots = useMemo(
+    () => categories.filter((category) => category.parent_id === null).sort((a, b) => a.sort_order - b.sort_order),
+    [categories],
+  );
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, Category[]>();
+    for (const category of categories) {
+      if (!category.parent_id) continue;
+      const rows = map.get(category.parent_id) ?? [];
+      rows.push(category);
+      map.set(category.parent_id, rows);
     }
-    setEditCat(null);
-    void load();
-  };
-
-  const removeCategory = async (id: string) => {
-    if (!confirm("Delete this category and ALL its products? This cannot be undone.")) return;
-    const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (error) return toast({ title: "Delete failed", description: error.message, variant: "destructive" });
-    toast({ title: "Category deleted" });
-    void load();
-  };
-
-  const saveProduct = async (p: Partial<Product>) => {
-    const payload = {
-      ...p,
-      slug: p.slug || slugify(p.name ?? ""),
-      gallery: p.gallery ?? [],
-      specs: p.specs ?? [],
-      details: p.details ?? [],
-    };
-    if (p.id) {
-      const { error } = await supabase.from("products").update(payload as never).eq("id", p.id);
-      if (error) return toast({ title: "Save failed", description: error.message, variant: "destructive" });
-      toast({ title: "Product updated" });
-    } else {
-      const { error } = await supabase.from("products").insert(payload as never);
-      if (error) return toast({ title: "Create failed", description: error.message, variant: "destructive" });
-      toast({ title: "Product created" });
+    for (const rows of map.values()) rows.sort((a, b) => a.sort_order - b.sort_order);
+    return map;
+  }, [categories]);
+  const productsByCategory = useMemo(() => {
+    const map = new Map<string, Product[]>();
+    for (const product of products) {
+      const rows = map.get(product.category_id) ?? [];
+      rows.push(product);
+      map.set(product.category_id, rows);
     }
-    setEditProd(null);
-    setAddingProductToCat(null);
-    void load();
-  };
+    for (const rows of map.values()) rows.sort((a, b) => a.sort_order - b.sort_order);
+    return map;
+  }, [products]);
 
-  const removeProduct = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) return toast({ title: "Delete failed", description: error.message, variant: "destructive" });
-    toast({ title: "Product deleted" });
-    void load();
-  };
+  const publishedCategories = categories.filter((category) => category.is_published).length;
+  const publishedProducts = products.filter((product) => product.is_published).length;
+  const downloadableCatalogues = categories.filter((category) => Boolean(category.catalog_url)).length;
+  const orphanProducts = products.filter((product) => !categoryById.has(product.category_id));
 
-  if (loading) return <div className="text-sm text-muted-foreground py-12 text-center">Loading catalog…</div>;
+  if (loading && categories.length === 0) {
+    return <p className="py-16 text-center text-sm text-muted-foreground">Loading live catalog structure…</p>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Stats + actions */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-6 text-xs uppercase tracking-[0.2em] text-foreground/70">
-          <span><Folder size={12} className="inline mr-1.5" /> {cats.length} categories</span>
-          <span><Package size={12} className="inline mr-1.5" /> {prods.length} products</span>
+      <section className="border border-gold/40 bg-gold/[0.04] p-5 md:p-7">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+          <div>
+            <p className="eyebrow mb-2">Owner database source of truth</p>
+            <h2 className="font-display text-2xl md:text-4xl">Live Catalog Structure</h2>
+            <p className="mt-3 max-w-3xl text-sm text-foreground/65 leading-relaxed">
+              This is a read-only release view of the categories and products currently stored in owner Supabase. Use the dedicated Products and Product Categories sections for controlled edits. Static PDF catalogues are not treated as available unless a verified category download URL exists.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="min-h-11 inline-flex items-center gap-2 border border-border/60 px-4 text-[10px] uppercase tracking-[0.18em] hover:border-gold hover:text-gold"
+            >
+              <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh
+            </button>
+            <a
+              href="/catalogue"
+              target="_blank"
+              rel="noreferrer"
+              className="min-h-11 inline-flex items-center gap-2 border border-gold/60 text-gold px-4 text-[10px] uppercase tracking-[0.18em] hover:bg-gold hover:text-background"
+            >
+              Open public catalogue <ExternalLink size={13} />
+            </a>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button onClick={load} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] border border-border/60 px-3 py-2 hover:border-primary hover:text-primary">
-            <RefreshCw size={12} /> Refresh
-          </button>
-          <button
-            onClick={() => setEditCat({ id: "", parent_id: null, slug: "", name: "", short: "", description: "", image_url: "", catalog_url: "", details: [], seo_title: "", seo_description: "", sort_order: cats.length * 10, is_published: true })}
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] bg-primary text-primary-foreground px-4 py-2 hover:bg-primary/90"
-          >
-            <Plus size={12} /> New Category
-          </button>
+      </section>
+
+      {error && (
+        <div className="border border-red-500/40 bg-red-500/5 p-4 flex items-start gap-3 text-sm text-red-200">
+          <AlertTriangle size={17} className="shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">Latest catalog refresh failed</p>
+            <p className="mt-1 text-xs text-foreground/60 break-words">{error}</p>
+          </div>
         </div>
+      )}
+
+      {orphanProducts.length > 0 && (
+        <div className="border border-amber-500/40 bg-amber-500/5 p-4 flex items-start gap-3 text-sm text-amber-200">
+          <AlertTriangle size={17} className="shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">Catalog relationship issue</p>
+            <p className="mt-1 text-xs text-foreground/60">{orphanProducts.length} product record(s) reference a missing category and require repair before publication.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Metric label="Categories" value={categories.length} detail={`${publishedCategories} published`} icon={<FolderTree size={15} />} />
+        <Metric label="Products" value={products.length} detail={`${publishedProducts} published`} icon={<Package size={15} />} />
+        <Metric label="Verified PDF links" value={downloadableCatalogues} detail="Category download URLs" icon={<BookOpen size={15} />} />
+        <Metric label="Orphan products" value={orphanProducts.length} detail="Must remain zero" icon={<AlertTriangle size={15} />} emphasis={orphanProducts.length > 0} />
       </div>
 
-      {/* Tree */}
-      <div className="space-y-2">
-        {rootCats.map((c) => {
-          const isOpen = openCat[c.id] ?? false;
-          const subs = subsOf(c.id);
-          const list = productsByCat.get(c.id) ?? [];
-          return (
-            <div key={c.id} className="border border-border/60 bg-card/30">
-              <div className="flex items-center justify-between p-4 gap-3">
-                <button onClick={() => setOpenCat((o) => ({ ...o, [c.id]: !isOpen }))} className="flex items-center gap-3 text-left flex-1 min-w-0">
-                  {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  <img src={resolveAsset(c.image_url)} alt="" className="w-10 h-10 object-cover" />
-                  <div className="min-w-0">
-                    <p className="font-display text-base truncate">{c.name}</p>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground truncate">/{c.slug} · {totalProductsFor(c.id)} products ({list.length} direct) · {subs.length} subs {!c.is_published && "· Draft"}</p>
+      {roots.length === 0 ? (
+        <div className="border border-dashed border-border/60 p-10 text-center text-sm text-muted-foreground">
+          No top-level catalog categories are available.
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {roots.map((root) => {
+            const children = childrenByParent.get(root.id) ?? [];
+            const directProducts = productsByCategory.get(root.id) ?? [];
+            const descendantProducts = children.flatMap((child) => productsByCategory.get(child.id) ?? []);
+            const totalProducts = directProducts.length + descendantProducts.length;
+            return (
+              <section key={root.id} className="border border-border/60 bg-card/25 overflow-hidden">
+                <div className="p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4 border-b border-border/50">
+                  <CatalogImage src={root.image_url} alt={root.name} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-display text-2xl">{root.name}</h3>
+                      <Status published={root.is_published} />
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">/{root.slug} · {children.length} subcategories · {totalProducts} products</p>
+                    {root.short && <p className="mt-2 text-sm text-foreground/65">{root.short}</p>}
                   </div>
-                </button>
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={() => setEditCat({ id: "", parent_id: c.id, slug: "", name: "", short: "", description: "", image_url: "", catalog_url: "", details: [], seo_title: "", seo_description: "", sort_order: subs.length * 10, is_published: true })}
-                    title="Add sub-category"
-                    className="p-2 hover:text-primary"
-                  >
-                    <Folder size={14} />
-                  </button>
-                  <button
-                    onClick={() => setAddingProductToCat(c.id)}
-                    title="Add product"
-                    className="p-2 hover:text-primary"
-                  >
-                    <Plus size={14} />
-                  </button>
-                  <button onClick={() => setEditCat(c)} className="p-2 hover:text-primary" title="Edit"><Pencil size={14} /></button>
-                  <button onClick={() => removeCategory(c.id)} className="p-2 hover:text-destructive" title="Delete"><Trash2 size={14} /></button>
+                  <div className="flex flex-wrap gap-2">
+                    {root.is_published && (
+                      <a href={`/products/${root.slug}`} target="_blank" rel="noreferrer" className={linkClass}>
+                        Live category <ExternalLink size={12} />
+                      </a>
+                    )}
+                    {root.catalog_url && (
+                      <a href={root.catalog_url} target="_blank" rel="noreferrer" className={linkClass}>
+                        Verified PDF <BookOpen size={12} />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {isOpen && (
-                <div className="px-4 pb-4 pl-12 space-y-2 border-t border-border/40 pt-3">
-                  {subs.map((s) => (
-                    <div key={s.id} className="flex items-center justify-between p-3 border border-border/40 bg-background/40">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Folder size={12} className="text-muted-foreground" />
-                        <span className="text-sm truncate">{s.name}</span>
-                        <span className="text-[10px] text-muted-foreground">/{s.slug}</span>
-                      </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => setEditCat(s)} className="p-1.5 hover:text-primary"><Pencil size={12} /></button>
-                        <button onClick={() => removeCategory(s.id)} className="p-1.5 hover:text-destructive"><Trash2 size={12} /></button>
-                      </div>
-                    </div>
-                  ))}
-                  {list.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between p-3 border border-border/40 bg-background/40">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <img src={resolveAsset(p.image_url)} alt="" className="w-8 h-8 object-cover shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-sm truncate">{p.name}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">/{p.slug} {!p.is_published && "· Draft"}</p>
+                <div className="p-4 md:p-5 grid lg:grid-cols-2 gap-4">
+                  {children.map((child) => {
+                    const childProducts = productsByCategory.get(child.id) ?? [];
+                    return (
+                      <article key={child.id} className="border border-border/50 bg-background/35 p-4">
+                        <div className="flex items-start gap-3">
+                          <CatalogImage src={child.image_url} alt={child.name} small />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="font-medium">{child.name}</h4>
+                              <Status published={child.is_published} />
+                            </div>
+                            <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground mt-1">/{child.slug} · {childProducts.length} products</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => setEditProd(p)} className="p-1.5 hover:text-primary"><Pencil size={12} /></button>
-                        <button onClick={() => removeProduct(p.id)} className="p-1.5 hover:text-destructive"><Trash2 size={12} /></button>
-                      </div>
-                    </div>
-                  ))}
-                  {list.length === 0 && subs.length === 0 && (
-                    <p className="text-xs text-muted-foreground italic py-2">No items yet.</p>
+                        {childProducts.length === 0 ? (
+                          <p className="mt-4 text-xs text-muted-foreground">No products assigned.</p>
+                        ) : (
+                          <ul className="mt-4 space-y-2">
+                            {childProducts.map((product) => (
+                              <li key={product.id} className="flex items-center justify-between gap-3 border-t border-border/35 pt-2 text-xs">
+                                <span className="min-w-0 truncate">{product.name}</span>
+                                <span className="flex items-center gap-2 shrink-0">
+                                  <Status published={product.is_published} compact />
+                                  {product.is_published && (
+                                    <a href={`/products/${root.slug}/${product.slug}`} target="_blank" rel="noreferrer" aria-label={`Open ${product.name}`} className="text-gold hover:underline">
+                                      <ExternalLink size={12} />
+                                    </a>
+                                  )}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </article>
+                    );
+                  })}
+
+                  {directProducts.length > 0 && (
+                    <article className="border border-amber-500/40 bg-amber-500/5 p-4">
+                      <p className="font-medium text-amber-200">Products assigned directly to top-level category</p>
+                      <p className="mt-1 text-xs text-foreground/60">These records should normally be reviewed and moved to a valid subcategory.</p>
+                      <ul className="mt-3 space-y-1 text-xs">
+                        {directProducts.map((product) => <li key={product.id}>{product.name}</li>)}
+                      </ul>
+                    </article>
                   )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Category editor modal */}
-      {editCat && (
-        <CategoryEditor
-          value={editCat}
-          allCategories={cats}
-          onClose={() => setEditCat(null)}
-          onSave={saveCategory}
-        />
-      )}
-
-      {/* Product editor modal */}
-      {(editProd || addingProductToCat) && (
-        <ProductEditor
-          value={editProd ?? {
-            id: "",
-            category_id: addingProductToCat!,
-            slug: "",
-            name: "",
-            description: "",
-            image_url: "",
-            gallery: [],
-            specs: [],
-            details: [],
-            material_specifications: "",
-            seo_title: "",
-            seo_description: "",
-            sort_order: (productsByCat.get(addingProductToCat!)?.length ?? 0) * 10,
-            is_published: true,
-          }}
-          categories={cats}
-          onClose={() => { setEditProd(null); setAddingProductToCat(null); }}
-          onSave={saveProduct}
-        />
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────
-function CategoryEditor({ value, allCategories, onClose, onSave }: {
-  value: Category;
-  allCategories: Category[];
-  onClose: () => void;
-  onSave: (c: Partial<Category>) => void;
-}) {
-  const [c, setC] = useState<Category>(value);
-  const parentOptions = allCategories.filter((x) => x.id !== c.id && !x.parent_id);
-
-  return (
-    <Modal onClose={onClose} title={c.id ? "Edit Category" : "New Category"}>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Field label="Name *"><input className={inp} value={c.name} onChange={(e) => setC({ ...c, name: e.target.value, slug: c.slug || slugify(e.target.value) })} /></Field>
-        <Field label="Slug *"><input className={inp} value={c.slug} onChange={(e) => setC({ ...c, slug: slugify(e.target.value) })} /></Field>
-        <Field label="Parent (for sub-category)">
-          <select className={inp} value={c.parent_id ?? ""} onChange={(e) => setC({ ...c, parent_id: e.target.value || null })}>
-            <option value="">— Top-level —</option>
-            {parentOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </Field>
-        <Field label="Sort order"><input type="number" className={inp} value={c.sort_order} onChange={(e) => setC({ ...c, sort_order: +e.target.value })} /></Field>
-        <Field label="Short tagline" cls="sm:col-span-2"><input className={inp} value={c.short ?? ""} onChange={(e) => setC({ ...c, short: e.target.value })} /></Field>
-        <Field label="Description" cls="sm:col-span-2"><textarea className={inp + " min-h-24"} value={c.description ?? ""} onChange={(e) => setC({ ...c, description: e.target.value })} /></Field>
-        <Field label="Image path / URL"><input className={inp} placeholder="cat-bavarian.jpg or https://…" value={c.image_url ?? ""} onChange={(e) => setC({ ...c, image_url: e.target.value })} /></Field>
-        <Field label="Catalog PDF URL"><input className={inp} value={c.catalog_url ?? ""} onChange={(e) => setC({ ...c, catalog_url: e.target.value })} /></Field>
-        <Field label="Bullet details (one per line)" cls="sm:col-span-2">
-          <textarea className={inp + " min-h-20"} value={(c.details ?? []).join("\n")} onChange={(e) => setC({ ...c, details: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })} />
-        </Field>
-        <Field label="SEO title"><input className={inp} value={c.seo_title ?? ""} onChange={(e) => setC({ ...c, seo_title: e.target.value })} /></Field>
-        <Field label="SEO description"><input className={inp} value={c.seo_description ?? ""} onChange={(e) => setC({ ...c, seo_description: e.target.value })} /></Field>
-        <Field label=""><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={c.is_published} onChange={(e) => setC({ ...c, is_published: e.target.checked })} /> Published</label></Field>
-      </div>
-      <ModalActions onClose={onClose} onSave={() => onSave(c)} />
-    </Modal>
-  );
-}
-
-function ProductEditor({ value, categories, onClose, onSave }: {
-  value: Product;
-  categories: Category[];
-  onClose: () => void;
-  onSave: (p: Partial<Product>) => void;
-}) {
-  const [p, setP] = useState<Product>(value);
-
-  return (
-    <Modal onClose={onClose} title={p.id ? "Edit Product" : "New Product"}>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Field label="Name *"><input className={inp} value={p.name} onChange={(e) => setP({ ...p, name: e.target.value, slug: p.slug || slugify(e.target.value) })} /></Field>
-        <Field label="Slug *"><input className={inp} value={p.slug} onChange={(e) => setP({ ...p, slug: slugify(e.target.value) })} /></Field>
-        <Field label="Category *">
-          <select className={inp} value={p.category_id} onChange={(e) => setP({ ...p, category_id: e.target.value })}>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </Field>
-        <Field label="Sort order"><input type="number" className={inp} value={p.sort_order} onChange={(e) => setP({ ...p, sort_order: +e.target.value })} /></Field>
-        <Field label="Description" cls="sm:col-span-2"><textarea className={inp + " min-h-24"} value={p.description ?? ""} onChange={(e) => setP({ ...p, description: e.target.value })} /></Field>
-        <Field label="Main image path / URL" cls="sm:col-span-2"><input className={inp} placeholder="products/bavarian-1.jpg or https://…" value={p.image_url ?? ""} onChange={(e) => setP({ ...p, image_url: e.target.value })} /></Field>
-        <Field label="Gallery (one image path per line)" cls="sm:col-span-2">
-          <textarea className={inp + " min-h-20"} value={(p.gallery ?? []).join("\n")} onChange={(e) => setP({ ...p, gallery: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })} />
-        </Field>
-        <Field label="Short specs (one per line)" cls="sm:col-span-2">
-          <textarea className={inp + " min-h-20"} value={(p.specs ?? []).join("\n")} onChange={(e) => setP({ ...p, specs: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })} />
-        </Field>
-        <Field label="Detailed spec sheet (one per line: Label | Value)" cls="sm:col-span-2">
-          <textarea
-            className={inp + " min-h-32 font-mono text-xs"}
-            value={(p.details ?? []).map((d) => `${d.label} | ${d.value}`).join("\n")}
-            onChange={(e) => {
-              const lines = e.target.value.split("\n").map((l) => l.trim()).filter(Boolean);
-              const details = lines.map((l) => {
-                const [label, ...rest] = l.split("|");
-                return { label: label.trim(), value: rest.join("|").trim() };
-              }).filter((d) => d.label);
-              setP({ ...p, details });
-            }}
-          />
-        </Field>
-        <Field label="SEO title"><input className={inp} value={p.seo_title ?? ""} onChange={(e) => setP({ ...p, seo_title: e.target.value })} /></Field>
-        <Field label="SEO description"><input className={inp} value={p.seo_description ?? ""} onChange={(e) => setP({ ...p, seo_description: e.target.value })} /></Field>
-        <Field label=""><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={p.is_published} onChange={(e) => setP({ ...p, is_published: e.target.checked })} /> Published</label></Field>
-      </div>
-      <ModalActions onClose={onClose} onSave={() => onSave(p)} />
-    </Modal>
-  );
-}
-
-const inp = "w-full bg-background border border-border/60 px-3 py-2 text-sm focus:outline-none focus:border-primary";
-
-function Field({ label, children, cls = "" }: { label: string; children: React.ReactNode; cls?: string }) {
-  return (
-    <label className={`block ${cls}`}>
-      {label && <span className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1.5">{label}</span>}
-      {children}
-    </label>
-  );
-}
-
-function Modal({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
-  return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-start justify-center overflow-y-auto p-4 pt-20">
-      <div className="w-full max-w-3xl bg-card border border-border/60 p-6 mb-20">
-        <div className="flex items-center justify-between mb-6 border-b border-border/60 pb-4">
-          <h3 className="font-display text-xl">{title}</h3>
-          <button onClick={onClose} className="p-2 hover:text-primary"><X size={16} /></button>
+              </section>
+            );
+          })}
         </div>
-        {children}
-      </div>
+      )}
     </div>
   );
 }
 
-function ModalActions({ onClose, onSave }: { onClose: () => void; onSave: () => void }) {
+function Metric({
+  label,
+  value,
+  detail,
+  icon,
+  emphasis = false,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  icon: React.ReactNode;
+  emphasis?: boolean;
+}) {
   return (
-    <div className="flex justify-end gap-2 mt-6 pt-6 border-t border-border/60">
-      <button onClick={onClose} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] border border-border/60 px-4 py-2.5 hover:border-foreground/60">Cancel</button>
-      <button onClick={onSave} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] bg-primary text-primary-foreground px-5 py-2.5 hover:bg-primary/90">
-        <Save size={12} /> Save
-      </button>
+    <div className={`border p-4 ${emphasis ? "border-red-500/50 bg-red-500/5" : "border-border/60 bg-card/25"}`}>
+      <div className="flex items-center justify-between gap-2 text-gold">{icon}</div>
+      <p className="font-display text-3xl mt-3 tabular-nums">{value.toLocaleString()}</p>
+      <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground mt-1">{label}</p>
+      <p className="text-[10px] text-foreground/50 mt-2">{detail}</p>
     </div>
   );
 }
+
+function CatalogImage({ src, alt, small = false }: { src: string | null; alt: string; small?: boolean }) {
+  const resolved = src ? resolveAsset(src) : "";
+  const size = small ? "w-12 h-12" : "w-20 h-20";
+  return resolved ? (
+    <img src={resolved} alt={alt} className={`${size} shrink-0 object-cover border border-border/50`} loading="lazy" />
+  ) : (
+    <div className={`${size} shrink-0 border border-dashed border-border/60 inline-flex items-center justify-center text-muted-foreground`} aria-label={`${alt} has no image`}>
+      <ImageOff size={small ? 15 : 20} />
+    </div>
+  );
+}
+
+function Status({ published, compact = false }: { published: boolean; compact?: boolean }) {
+  return (
+    <span className={`inline-flex border px-2 py-0.5 uppercase tracking-[0.14em] ${compact ? "text-[8px]" : "text-[9px]"} ${
+      published ? "border-emerald-500/40 text-emerald-300" : "border-slate-500/40 text-slate-300"
+    }`}>
+      {published ? "Published" : "Draft"}
+    </span>
+  );
+}
+
+const linkClass = "min-h-10 inline-flex items-center gap-2 border border-border/60 px-3 text-[9px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold";
