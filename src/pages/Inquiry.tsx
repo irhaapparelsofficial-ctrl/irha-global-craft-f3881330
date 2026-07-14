@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import InquiryBase from "@/pages/InquiryBase";
+import { trackLeadGenerated } from "@/lib/analytics";
 import {
   loadDraft,
   saveDraft,
@@ -20,9 +21,27 @@ function listParam(params: URLSearchParams, key: string): string[] | undefined {
   return values.length ? values : undefined;
 }
 
+function intentFromSuccessScreen(container: Element, fallback: InquiryIntent): InquiryIntent {
+  const whatsapp = container.querySelector<HTMLAnchorElement>('a[href*="wa.me"]');
+  if (!whatsapp) return fallback;
+  try {
+    const text = new URL(whatsapp.href).searchParams.get("text") ?? "";
+    const label = text.match(/Intent:\s*([^\n]+)/i)?.[1]?.trim().toLowerCase();
+    if (label === "request sample") return "sample";
+    if (label === "request catalogue") return "catalogue";
+    if (label === "upload reference") return "reference";
+    if (label === "request meeting") return "meeting";
+    if (label === "request quote") return "rfq";
+  } catch {
+    // A malformed follow-up link must never affect the completed inquiry.
+  }
+  return fallback;
+}
+
 export default function Inquiry() {
   const [searchParams] = useSearchParams();
   const queryKey = searchParams.toString();
+  const trackedSuccessRef = useRef(false);
 
   const prefilledEntry = useMemo(() => {
     const params = new URLSearchParams(queryKey);
@@ -55,6 +74,39 @@ export default function Inquiry() {
     });
 
     return true;
+  }, [queryKey]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(queryKey);
+    const fallbackIntent = validIntent(params.get("intent")) ? (params.get("intent") as InquiryIntent) : "rfq";
+
+    const detectSuccess = () => {
+      if (trackedSuccessRef.current) return true;
+      const heading = [...document.querySelectorAll("h2")].find(
+        (element) => element.textContent?.trim().toLowerCase() === "inquiry received",
+      );
+      if (!heading) return false;
+
+      const container = heading.closest("div") ?? heading;
+      const intent = intentFromSuccessScreen(container, fallbackIntent);
+      trackLeadGenerated({
+        leadType: intent,
+        formName: "inquiry_wizard",
+        sourcePage: `${window.location.pathname}${window.location.search}`,
+        category: params.get("category"),
+        productSlug: params.get("product"),
+        intentDetail: intent === "meeting" ? "factory-video-call" : "completed-inquiry",
+      });
+      trackedSuccessRef.current = true;
+      return true;
+    };
+
+    if (detectSuccess()) return;
+    const observer = new MutationObserver(() => {
+      if (detectSuccess()) observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [queryKey]);
 
   return (

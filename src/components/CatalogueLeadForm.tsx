@@ -3,6 +3,11 @@ import { X, Send, MessageCircle, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { whatsappLink } from "@/lib/constants";
 import { submitPublicCatalogueLead } from "@/lib/publicLeadGateway";
+import {
+  GOOGLE_ADS_CATALOGUE_CONVERSION,
+  currentPagePath,
+  trackLeadGenerated,
+} from "@/lib/analytics";
 
 interface Props {
   onClose: () => void;
@@ -71,15 +76,15 @@ export default function CatalogueLeadForm({
         form_started_at: startedAtRef.current,
       });
 
-      try {
-        (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
-          "event",
-          "conversion",
-          { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
-        );
-      } catch {
-        // Analytics failure must never block lead submission.
-      }
+      trackLeadGenerated({
+        leadType: productInterest ? "product-catalogue" : categoryInterest ? "category-catalogue" : "catalogue",
+        formName: "catalogue_lead_form",
+        sourcePage: currentPagePath(),
+        country: data.country,
+        category: categoryInterest,
+        intentDetail: source,
+        adsSendTo: GOOGLE_ADS_CATALOGUE_CONVERSION,
+      });
 
       setSent(true);
     } catch (error) {
