@@ -181,11 +181,12 @@ function normalizeRow(values: string[], columns: Record<string, number>, sourceR
   const buyerType = read("buyerType", 240);
   const blockers: string[] = [];
   if (!sourceUrl) blockers.push("website or source URL");
-  if (!email) blockers.push("valid business email");
+  if (!email && !whatsapp) blockers.push("valid business email or WhatsApp");
   if (!buyerType) blockers.push("buyer type");
   if (!productFit.length) blockers.push("product fit");
   const domain = websiteDomain(website || sourceUrl);
-  const fingerprint = [email || "", domain, normalizeKey(companyName), normalizeKey(country)].join("|");
+  const contactKey = email || (whatsapp ? `wa:${whatsapp.replace(/\D/g, "")}` : "");
+  const fingerprint = [contactKey, domain, normalizeKey(companyName), normalizeKey(country)].join("|");
 
   return {
     sourceRow,
