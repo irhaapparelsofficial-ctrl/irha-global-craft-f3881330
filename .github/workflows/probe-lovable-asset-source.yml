@@ -1,0 +1,74 @@
+name: Probe Lovable Asset Source
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/probe-lovable-asset-source.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://pvzjiozismyxqrzmtfbi.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_FG8JlthvLLBD3W5Aj84E3g_U6Bzp9zv
+      SOURCE_ORIGIN: https://irha-apparels.lovable.app
+      SAMPLE_PATH: /__l5e/assets-v1/1afd0194-b039-43b6-b816-f11ad2738b6a/irha-fix-0004.jpg
+    steps:
+      - name: Query current published image inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS --retry 3 --retry-all-errors \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/rest/v1/products?select=id,slug,image_url,gallery&is_published=eq.true" \
+            -o /tmp/products.json
+
+          jq -e 'type == "array" and length > 0' /tmp/products.json >/dev/null
+          jq '{
+            published_products: length,
+            internal_primary: ([.[] | select(.image_url | type == "string" and startswith("/__l5e/"))] | length),
+            internal_gallery_items: ([.[] | (.gallery // [])[] | select(type == "string" and startswith("/__l5e/"))] | length)
+          }' /tmp/products.json | tee /tmp/inventory-summary.json
+
+      - name: Download and validate one exact source asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="$SOURCE_ORIGIN$SAMPLE_PATH"
+          curl -fsSL --retry 4 --retry-all-errors --connect-timeout 15 --max-time 90 \
+            -D /tmp/sample-headers.txt "$url" -o /tmp/sample.jpg
+
+          test -s /tmp/sample.jpg
+          size="$(stat -c '%s' /tmp/sample.jpg)"
+          test "$size" -gt 5000
+          mime="$(file --brief --mime-type /tmp/sample.jpg)"
+          [[ "$mime" == image/* ]]
+          checksum="$(sha256sum /tmp/sample.jpg | awk '{print $1}')"
+          dimensions="$(identify -format '%wx%h' /tmp/sample.jpg 2>/dev/null || true)"
+
+          jq -n \
+            --arg source_url "$url" \
+            --arg mime "$mime" \
+            --arg checksum_sha256 "$checksum" \
+            --arg dimensions "$dimensions" \
+            --argjson size_bytes "$size" \
+            '{source_url:$source_url,mime:$mime,size_bytes:$size_bytes,checksum_sha256:$checksum_sha256,dimensions:$dimensions}' \
+            | tee /tmp/source-probe.json
+
+      - name: Upload read-only probe evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: lovable-asset-source-probe
+          path: |
+            /tmp/inventory-summary.json
+            /tmp/source-probe.json
+            /tmp/sample-headers.txt
+            /tmp/sample.jpg
+          if-no-files-found: error
+          retention-days: 7
