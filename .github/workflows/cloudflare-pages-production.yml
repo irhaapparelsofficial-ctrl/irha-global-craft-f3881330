@@ -1,0 +1,285 @@
+name: Cloudflare Pages Production
+
+run-name: Controlled Cloudflare production · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type DEPLOY to publish the current main commit to irha-apparels.pages.dev
+        required: true
+        default: "NO"
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cloudflare-pages-production.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-pages-production
+  cancel-in-progress: false
+
+env:
+  PRODUCTION_BRANCH: main
+  PRODUCTION_URL: https://irha-apparels.pages.dev
+
+jobs:
+  preflight:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.confirm == 'DEPLOY') ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[cloudflare-production-bootstrap]'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      previous_deployment_id: ${{ steps.cloudflare.outputs.previous_deployment_id }}
+      domain_count: ${{ steps.cloudflare.outputs.domain_count }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+
+    steps:
+      - name: Verify Cloudflare credentials, account and production branch
+        id: cloudflare
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+
+          test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
+          test -n "$account_id" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
+          test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
+
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {
+            echo "CLOUDFLARE_ACCOUNT_ID must be the 32-character Account ID only"
+            exit 1
+          }
+          [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {
+            echo "CLOUDFLARE_PROJECT_NAME contains invalid characters"
+            exit 1
+          }
+
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+
+          verify_json="$(curl -sS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            https://api.cloudflare.com/client/v4/user/tokens/verify)"
+
+          if [ "$(printf '%s' "$verify_json" | jq -r '.success // false')" != "true" ]; then
+            echo "Cloudflare API token verification failed"
+            printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+            exit 1
+          fi
+
+          project_json="$(curl -sS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+
+          if [ "$(printf '%s' "$project_json" | jq -r '.success // false')" != "true" ]; then
+            echo "Cloudflare Pages project lookup failed"
+            printf '%s' "$project_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+            exit 1
+          fi
+
+          actual_name="$(printf '%s' "$project_json" | jq -r '.result.name // empty')"
+          production_branch="$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')"
+          previous_deployment_id="$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // "none"')"
+          domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
+
+          test "$actual_name" = "$project_name" || {
+            echo "Cloudflare project mismatch: expected $project_name, got $actual_name"
+            exit 1
+          }
+          test "$production_branch" = "$PRODUCTION_BRANCH" || {
+            echo "Cloudflare production branch mismatch: expected $PRODUCTION_BRANCH, got ${production_branch:-unset}"
+            exit 1
+          }
+
+          echo "previous_deployment_id=$previous_deployment_id" >> "$GITHUB_OUTPUT"
+          echo "domain_count=$domain_count" >> "$GITHUB_OUTPUT"
+          echo "Cloudflare project confirmed: $actual_name"
+          echo "Production branch confirmed: $production_branch"
+          echo "Existing custom-domain count: $domain_count"
+
+  deploy:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      PREVIOUS_DEPLOYMENT_ID: ${{ needs.preflight.outputs.previous_deployment_id }}
+      INITIAL_DOMAIN_COUNT: ${{ needs.preflight.outputs.domain_count }}
+
+    steps:
+      - name: Normalize Cloudflare environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+          {
+            echo "CLOUDFLARE_API_TOKEN=$token"
+            echo "CLOUDFLARE_ACCOUNT_ID=$account_id"
+            echo "CLOUDFLARE_PROJECT_NAME=$project_name"
+          } >> "$GITHUB_ENV"
+
+      - name: Checkout exact approved source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Re-run deterministic release checks
+        run: |
+          npm run verify:deployment-source
+          npm run verify:secrets
+          npm run verify:migrations
+          npx tsc --noEmit
+          npm test -- --passWithNoTests
+
+      - name: Build exact source
+        run: npm run build
+
+      - name: Verify release-safe build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/build.json
+          test -s dist/release.txt
+          grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
+          grep -F '"repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330"' dist/build.json
+          grep -F '"supabase_project_id": "pvzjiozismyxqrzmtfbi"' dist/build.json
+          grep -F '"expected_origin": "https://irhaapparels.com"' dist/build.json
+
+          if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
+            echo "Built frontend references the retired Lovable Cloud database"
+            exit 1
+          fi
+
+          if grep -R -nE --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' \
+            'Since 2014|MOQ 50|45-Day Delivery|45-day delivery|reply within 12 hours|BSCI Audited|ISO 9001:2015|SEDEX Member' dist; then
+            echo "Built output contains blocked legacy production claims"
+            exit 1
+          fi
+
+          jq -n \
+            --arg source_sha "$GITHUB_SHA" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg branch "$PRODUCTION_BRANCH" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{source_sha: $source_sha, repository: $repository, branch: $branch, generated_at: $generated_at}' \
+            > dist/cloudflare-deployment.json
+
+      - name: Deploy Cloudflare production branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 pages deploy dist \
+            --project-name="$CLOUDFLARE_PROJECT_NAME" \
+            --branch="$PRODUCTION_BRANCH"
+
+      - name: Verify exact production deployment on pages.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+
+          for attempt in $(seq 1 24); do
+            cache_bust="${GITHUB_SHA::12}-$attempt"
+
+            if curl -fsS \
+              --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/?release_check=$cache_bust" \
+              -o /tmp/production-home.html \
+              -D /tmp/production-headers \
+              && curl -fsS \
+              --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/build.json?release_check=$cache_bust" \
+              -o /tmp/production-build.json \
+              && curl -fsS \
+              --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/cloudflare-deployment.json?release_check=$cache_bust" \
+              -o /tmp/cloudflare-deployment.json; then
+
+              if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/production-headers \
+                && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' /tmp/production-home.html \
+                && jq -e \
+                  --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
+                  --arg supabase 'pvzjiozismyxqrzmtfbi' \
+                  '.repository == $repo and .supabase_project_id == $supabase' \
+                  /tmp/production-build.json >/dev/null \
+                && jq -e \
+                  --arg sha "$GITHUB_SHA" \
+                  --arg repo "$GITHUB_REPOSITORY" \
+                  '.source_sha == $sha and .repository == $repo and .branch == "main"' \
+                  /tmp/cloudflare-deployment.json >/dev/null; then
+                ready=1
+                echo "Exact Cloudflare production deployment verified on attempt $attempt"
+                break
+              fi
+            fi
+
+            echo "Production deployment not ready yet (attempt $attempt/24)"
+            sleep 10
+          done
+
+          test "$ready" = "1" || {
+            echo "Cloudflare production deployment did not converge safely"
+            exit 1
+          }
+
+      - name: Verify custom-domain configuration was not changed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          project_json="$(curl -sS \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME")"
+
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true"
+
+          final_domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
+          latest_deployment_id="$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // "unknown"')"
+
+          test "$final_domain_count" = "$INITIAL_DOMAIN_COUNT" || {
+            echo "Custom-domain count changed unexpectedly: before $INITIAL_DOMAIN_COUNT, after $final_domain_count"
+            exit 1
+          }
+
+          {
+            echo "## Cloudflare Pages production deployment"
+            echo "- Status: verified"
+            echo "- Source commit: \`$GITHUB_SHA\`"
+            echo "- Production URL: $PRODUCTION_URL"
+            echo "- Previous deployment ID: \`$PREVIOUS_DEPLOYMENT_ID\`"
+            echo "- New deployment ID: \`$latest_deployment_id\`"
+            echo "- Custom-domain count unchanged: $final_domain_count"
+            echo "- DNS/custom domains were not modified by this workflow"
+          } >> "$GITHUB_STEP_SUMMARY"
