@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { Bell, UsersRound, X } from "lucide-react";
+import { Bell, MessageSquare, UsersRound, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import BuyerCoreActionsHub from "@/components/admin/BuyerCoreActionsHub";
 import LeadEngineAlertsPanel from "@/components/admin/LeadEngineAlertsPanel";
+import LiveChatAdminPanel from "@/components/admin/LiveChatAdminPanel";
 
 export default function AdminBuyerActionsLauncher() {
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,13 +42,14 @@ export default function AdminBuyerActionsLauncher() {
   }, []);
 
   useEffect(() => {
-    if (!open && !alertsOpen) return;
+    if (!open && !alertsOpen && !chatOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
         setAlertsOpen(false);
+        setChatOpen(false);
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -54,7 +57,13 @@ export default function AdminBuyerActionsLauncher() {
       document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, alertsOpen]);
+  }, [open, alertsOpen, chatOpen]);
+
+  const closeAll = () => {
+    setOpen(false);
+    setAlertsOpen(false);
+    setChatOpen(false);
+  };
 
   if (!visible) return null;
 
@@ -64,7 +73,18 @@ export default function AdminBuyerActionsLauncher() {
         <button
           type="button"
           onClick={() => {
-            setOpen(false);
+            closeAll();
+            setChatOpen(true);
+          }}
+          className="min-h-12 inline-flex items-center gap-2 rounded-full border border-emerald-500/55 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-emerald-300 shadow-2xl backdrop-blur hover:bg-emerald-500 hover:text-background"
+          aria-label="Open Live Chat Inbox"
+        >
+          <MessageSquare size={17} /> Live Chat
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            closeAll();
             setAlertsOpen(true);
           }}
           className="min-h-12 inline-flex items-center gap-2 rounded-full border border-gold/60 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-gold shadow-2xl backdrop-blur hover:bg-gold hover:text-background"
@@ -75,7 +95,7 @@ export default function AdminBuyerActionsLauncher() {
         <button
           type="button"
           onClick={() => {
-            setAlertsOpen(false);
+            closeAll();
             setOpen(true);
           }}
           className="min-h-13 inline-flex items-center gap-2 rounded-full border border-gold/60 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-gold shadow-2xl backdrop-blur hover:bg-gold hover:text-background"
@@ -111,6 +131,21 @@ export default function AdminBuyerActionsLauncher() {
           </header>
           <main className="mx-auto max-w-[1600px] p-3 pb-10 sm:p-5 lg:p-8">
             <LeadEngineAlertsPanel />
+          </main>
+        </div>
+      )}
+
+      {chatOpen && (
+        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm overflow-y-auto" role="dialog" aria-modal="true" aria-label="Human live chat inbox">
+          <header className="sticky top-0 z-10 min-h-16 border-b border-border/70 bg-card/95 backdrop-blur flex items-center justify-between gap-3 px-3 sm:px-6 pt-[env(safe-area-inset-top)]">
+            <div className="min-w-0 py-2">
+              <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-300">Irha Admin · Website Support</p>
+              <h1 className="font-display text-lg sm:text-xl truncate">Human Live Chat</h1>
+            </div>
+            <button type="button" onClick={() => setChatOpen(false)} className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:border-gold hover:text-gold" aria-label="Close Live Chat"><X size={19} /></button>
+          </header>
+          <main className="mx-auto max-w-[1600px] p-3 pb-10 sm:p-5 lg:p-8">
+            <LiveChatAdminPanel />
           </main>
         </div>
       )}
