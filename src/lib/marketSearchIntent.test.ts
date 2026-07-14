@@ -1,10 +1,13 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BUYER_INTENT_LANDING_PAGES, BUYER_INTENT_PATHS } from "./buyerIntentLandingPages";
+import {
+  SEO_BUYER_INTENT_LANDING_PAGES,
+  SEO_BUYER_INTENT_PATHS,
+} from "./buyerIntentSeoPages";
 import { MARKET_PAGES } from "./marketPages";
 import { MARKET_SEARCH_INTENT, getMarketSearchIntent } from "./marketSearchIntent";
 
-const buyerPageByPath = new Map(BUYER_INTENT_LANDING_PAGES.map((page) => [page.path, page]));
+const buyerPageByPath = new Map(SEO_BUYER_INTENT_LANDING_PAGES.map((page) => [page.path, page]));
 
 describe("market guide search-intent separation", () => {
   it("provides one informational search profile for every country page", () => {
@@ -27,7 +30,7 @@ describe("market guide search-intent separation", () => {
     expect(new Set(manufacturerPaths).size).toBe(MARKET_PAGES.length);
 
     for (const path of manufacturerPaths) {
-      expect(BUYER_INTENT_PATHS).toContain(path);
+      expect(SEO_BUYER_INTENT_PATHS).toContain(path);
       const buyerPage = buyerPageByPath.get(path);
       expect(buyerPage?.title).toMatch(/Manufacturer|Manufacturing/i);
       expect(buyerPage?.h1).toMatch(/Manufacturer|Manufacturing/i);
@@ -36,7 +39,7 @@ describe("market guide search-intent separation", () => {
 
   it("keeps market titles and transactional titles unique", () => {
     const marketTitles = MARKET_PAGES.map((market) => getMarketSearchIntent(market.slug).title.toLowerCase());
-    const buyerTitles = BUYER_INTENT_LANDING_PAGES.map((page) => page.title.toLowerCase());
+    const buyerTitles = SEO_BUYER_INTENT_LANDING_PAGES.map((page) => page.title.toLowerCase());
     expect(new Set(marketTitles).size).toBe(marketTitles.length);
 
     for (const title of marketTitles) {
