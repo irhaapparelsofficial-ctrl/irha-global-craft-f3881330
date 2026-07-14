@@ -1,10 +1,114 @@
 const APEX_ORIGIN = "https://irhaapparels.com";
 const WWW_HOST = "www.irhaapparels.com";
 
+const MARKET_PATHS = new Set([
+  "/markets",
+  "/markets/germany",
+  "/markets/austria",
+  "/markets/switzerland",
+  "/markets/netherlands",
+  "/markets/united-states",
+  "/markets/united-kingdom",
+  "/markets/canada",
+  "/markets/australia",
+  "/markets/new-zealand",
+]);
+
+const EXACT_PUBLIC_PATHS = new Set([
+  "/",
+  "/about",
+  "/products",
+  "/manufacturing",
+  "/compliance",
+  "/buyer-trust",
+  "/factory-video-call",
+  "/resources",
+  "/faq",
+  "/blog",
+  "/sustainability",
+  "/shipping-returns",
+  "/inquiry",
+  "/repeat-order",
+  "/contact",
+  "/privacy-policy",
+  "/terms-of-service",
+  "/connect",
+  "/catalogue",
+  "/catalog",
+  "/studio",
+  "/shortlist",
+  "/compare",
+  "/journal",
+  "/auth",
+  "/admin",
+  "/login",
+  "/signin",
+  "/sign-in",
+  "/log-in",
+  "/dashboard",
+  "/de",
+  "/de/katalog",
+  "/legacy-home",
+  "/seo-indexing",
+]);
+
+const COUNTRY_ALIASES = new Map([
+  ["/germany", "/markets/germany"],
+  ["/austria", "/markets/austria"],
+  ["/switzerland", "/markets/switzerland"],
+  ["/netherlands", "/markets/netherlands"],
+  ["/usa", "/markets/united-states"],
+  ["/united-states", "/markets/united-states"],
+  ["/uk", "/markets/united-kingdom"],
+  ["/united-kingdom", "/markets/united-kingdom"],
+  ["/canada", "/markets/canada"],
+  ["/australia", "/markets/australia"],
+  ["/new-zealand", "/markets/new-zealand"],
+]);
+
+const PUBLIC_PREFIXES = [
+  "/products/",
+  "/catalogue/",
+  "/blog/",
+  "/intl/",
+  "/admin/",
+  "/auth/",
+  "/de/",
+  "/journal/",
+  "/.well-known/",
+  "/openapi/",
+  "/skills/",
+  "/docs/",
+  "/mcp/",
+  "/assets/",
+  "/media/",
+  "/catalogs/",
+];
+
+const BUYER_INTENT_PATH = /^\/[a-z0-9-]*(?:apparel-manufacturer|clothing-manufacturer|sportswear-manufacturer|streetwear-manufacturer|leather-jacket-manufacturer|lederhosen-manufacturer|dirndl-manufacturer|grosshandel|hersteller)[a-z0-9-]*$/;
+
+function normalizePath(pathname) {
+  if (pathname === "/") return "/";
+  return pathname.replace(/\/+$/, "") || "/";
+}
+
+function looksLikeFile(pathname) {
+  const segment = pathname.split("/").pop() || "";
+  return segment.includes(".");
+}
+
+export function isKnownHtmlRoute(pathname) {
+  const normalized = normalizePath(pathname);
+  if (MARKET_PATHS.has(normalized) || EXACT_PUBLIC_PATHS.has(normalized)) return true;
+  if (normalized.startsWith("/markets/")) return false;
+  if (BUYER_INTENT_PATH.test(normalized)) return true;
+  if (looksLikeFile(normalized)) return true;
+  return PUBLIC_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+}
+
 function canonicalRedirect(request, url) {
   const target = new URL(`${url.pathname}${url.search}`, APEX_ORIGIN);
   const status = request.method === "GET" || request.method === "HEAD" ? 301 : 308;
-
   return new Response(null, {
     status,
     headers: {
@@ -15,12 +119,46 @@ function canonicalRedirect(request, url) {
   });
 }
 
+function aliasRedirect(request, url, targetPath) {
+  const target = new URL(targetPath, APEX_ORIGIN);
+  target.search = url.search;
+  const status = request.method === "GET" || request.method === "HEAD" ? 301 : 308;
+  return new Response(null, {
+    status,
+    headers: {
+      Location: target.toString(),
+      "Cache-Control": "public, max-age=3600",
+      "X-Irha-Legacy-Redirect": "country-market-canonical",
+    },
+  });
+}
+
+function notFoundResponse(request, pathname) {
+  const safePath = pathname.replace(/[&<>"']/g, "");
+  const body = request.method === "HEAD" ? null : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page Not Found — Irha Apparels</title></head><body style="margin:0;background:#0a0a0a;color:#f5f1e8;font-family:Arial,sans-serif"><main style="max-width:760px;margin:0 auto;padding:96px 24px"><p style="color:#c9a45c;text-transform:uppercase;letter-spacing:.18em">404 — Page not found</p><h1 style="font-size:48px;line-height:1.05">This page does not exist.</h1><p style="color:#c9c1b5;line-height:1.7">The requested path <code>${safePath}</code> is not a published Irha Apparels page.</p><p><a href="/products" style="color:#e8c477">Browse products</a> · <a href="/markets" style="color:#e8c477">International markets</a> · <a href="/inquiry" style="color:#e8c477">Request a quote</a></p></main></body></html>`;
+  return new Response(body, {
+    status: 404,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store, max-age=0, must-revalidate",
+      "X-Robots-Tag": "noindex, follow",
+      "X-Irha-Route-Status": "not-found",
+    },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const pathname = normalizePath(url.pathname);
 
-    if (url.hostname === WWW_HOST) {
-      return canonicalRedirect(request, url);
+    if (url.hostname === WWW_HOST) return canonicalRedirect(request, url);
+
+    const aliasTarget = COUNTRY_ALIASES.get(pathname);
+    if (aliasTarget) return aliasRedirect(request, url, aliasTarget);
+
+    if ((request.method === "GET" || request.method === "HEAD") && !isKnownHtmlRoute(pathname)) {
+      return notFoundResponse(request, pathname);
     }
 
     if (!env?.ASSETS?.fetch) {
