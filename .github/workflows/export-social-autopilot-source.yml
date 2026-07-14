@@ -1,0 +1,33 @@
+name: Export Social Autopilot Source
+
+on:
+  push:
+    branches:
+      - ops/export-social-autopilot-source
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch source
+        uses: actions/checkout@v4
+
+      - name: Verify source exists and record checksum
+        run: |
+          set -euo pipefail
+          test -s supabase/functions/social-autopilot/index.ts
+          sha256sum supabase/functions/social-autopilot/index.ts | tee social-autopilot-index.sha256
+
+      - name: Upload exact source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-social-autopilot-source
+          path: |
+            supabase/functions/social-autopilot/index.ts
+            social-autopilot-index.sha256
+          if-no-files-found: error
+          retention-days: 1
