@@ -1,7 +1,8 @@
-import { ArrowRight, Layers3, Users } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Layers3, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { NormalizedCategory } from "@/hooks/usePublicCategoryData";
 import { buildCategoryTaxonomy, taxonomyAudiencePath, taxonomyCollectionPath } from "@/lib/globalCategoryTaxonomy";
+import { CATEGORY_SEO } from "@/lib/categorySeo";
 import {
   localizedAudienceName,
   localizedCollectionName,
@@ -20,6 +21,7 @@ export default function CategoryAudienceNavigator({ category, locale = "en", com
   const taxonomy = buildCategoryTaxonomy(category);
   const ui = taxonomyUi(locale);
   const topName = localizedTopName(locale, category.slug, category.name);
+  const buyerContent = locale === "en" ? CATEGORY_SEO[category.slug] : undefined;
 
   if (taxonomy.audiences.length === 0) return null;
 
@@ -83,6 +85,64 @@ export default function CategoryAudienceNavigator({ category, locale = "en", com
             );
           })}
         </div>
+
+        {!compact && buyerContent && (
+          <div className="mt-16 pt-14 border-t border-border/60">
+            <div className="max-w-4xl">
+              <p className="eyebrow mb-3">Buyer planning guide</p>
+              <h2 className="font-display text-3xl md:text-5xl leading-tight">Plan a specification-led {category.name} program</h2>
+              <p className="mt-5 text-sm md:text-base text-foreground/70 leading-relaxed">{buyerContent.intro}</p>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-5 mt-9">
+              {buyerContent.sections.map((section) => (
+                <article key={section.heading} className="border border-border/60 bg-card/20 p-6 md:p-7">
+                  <h3 className="font-display text-2xl">{section.heading}</h3>
+                  <p className="mt-4 text-sm text-foreground/65 leading-relaxed">{section.body}</p>
+                  <ul className="mt-5 space-y-3">
+                    {section.bullets.map((bullet) => (
+                      <li key={bullet} className="flex items-start gap-2 text-sm text-foreground/70">
+                        <CheckCircle2 size={15} className="text-gold shrink-0 mt-0.5" aria-hidden="true" />
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+
+            <div className="grid lg:grid-cols-12 gap-8 mt-12">
+              <div className="lg:col-span-8">
+                <p className="eyebrow mb-3">Buyer questions</p>
+                <div className="divide-y divide-border/60 border-y border-border/60">
+                  {buyerContent.faqs.map((faq) => (
+                    <details key={faq.q} className="group py-5">
+                      <summary className="cursor-pointer list-none flex items-start justify-between gap-5">
+                        <h3 className="font-display text-lg md:text-xl leading-snug group-open:text-primary">{faq.q}</h3>
+                        <span className="text-gold text-xl leading-none group-open:rotate-45 transition-transform">+</span>
+                      </summary>
+                      <p className="mt-4 text-sm text-foreground/70 leading-relaxed max-w-3xl">{faq.a}</p>
+                    </details>
+                  ))}
+                </div>
+              </div>
+
+              <nav aria-label={`${category.name} buyer guides`} className="lg:col-span-4 border border-gold/35 bg-gold/5 p-6">
+                <p className="text-[10px] uppercase tracking-[0.26em] text-gold inline-flex items-center gap-2">
+                  <BookOpen size={13} aria-hidden="true" /> Related sourcing guides
+                </p>
+                <div className="mt-5 space-y-3">
+                  {buyerContent.buyerGuides.map((guide) => (
+                    <Link key={guide.href} to={guide.href} className="flex items-center justify-between gap-3 border-b border-border/50 pb-3 text-sm text-foreground/75 hover:text-primary last:border-b-0 last:pb-0">
+                      <span>{guide.label}</span>
+                      <ArrowRight size={13} aria-hidden="true" />
+                    </Link>
+                  ))}
+                </div>
+              </nav>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

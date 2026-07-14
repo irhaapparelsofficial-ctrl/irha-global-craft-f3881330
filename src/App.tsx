@@ -11,7 +11,7 @@ import PageViewTracker from "@/components/PageViewTracker";
 import GlobalInteractionTracker from "@/components/GlobalInteractionTracker";
 import AdminOutreachCommandCenter from "@/components/admin/AdminOutreachCommandCenter";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import { BUYER_INTENT_LANDING_PAGES } from "@/lib/buyerIntentLandingPages";
+import { SEO_BUYER_INTENT_LANDING_PAGES } from "@/lib/buyerIntentSeoPages";
 
 const About = lazy(() => import("./pages/About"));
 const AllProductsPage = lazy(() => import("./pages/AllProductsPage"));
@@ -184,7 +184,7 @@ const App = () => (
                       <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/seo-indexing" element={<Navigate to="/admin" replace />} />
                       <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
-                      {BUYER_INTENT_LANDING_PAGES.map((page) => (
+                      {SEO_BUYER_INTENT_LANDING_PAGES.map((page) => (
                         <Route key={page.path} path={page.path} element={<BuyerIntentLandingPage />} />
                       ))}
                       <Route path="/studio" element={<Studio />} />

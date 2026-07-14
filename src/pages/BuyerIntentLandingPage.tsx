@@ -2,9 +2,9 @@ import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Factory, Globe2, ShieldCheck } from "lucide-react";
 import SEO from "@/components/SEO";
 import {
-  BUYER_INTENT_LANDING_PAGES,
-  getBuyerIntentLandingPage,
-} from "@/lib/buyerIntentLandingPages";
+  SEO_BUYER_INTENT_LANDING_PAGES,
+  getSeoBuyerIntentLandingPage,
+} from "@/lib/buyerIntentSeoPages";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/seoSchema";
 
 function readableLinkLabel(path: string) {
-  const landingPage = BUYER_INTENT_LANDING_PAGES.find((page) => page.path === path);
+  const landingPage = SEO_BUYER_INTENT_LANDING_PAGES.find((page) => page.path === path);
   if (landingPage) return landingPage.h1;
 
   const lastSegment = path.split("/").filter(Boolean).at(-1) ?? "products";
@@ -24,7 +24,7 @@ function readableLinkLabel(path: string) {
 
 export default function BuyerIntentLandingPage() {
   const { pathname } = useLocation();
-  const page = getBuyerIntentLandingPage(pathname);
+  const page = getSeoBuyerIntentLandingPage(pathname);
 
   if (!page) {
     return (

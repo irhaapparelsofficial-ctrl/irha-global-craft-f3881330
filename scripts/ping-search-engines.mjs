@@ -12,6 +12,11 @@ export const INDEXNOW_ENDPOINT = "https://api.indexnow.org/IndexNow";
 export const CORE_CHANGED_PATHS = [
   "/",
   "/products",
+  "/products/bavarian-trachten-wear",
+  "/products/premium-leather-apparel",
+  "/products/sportswear",
+  "/products/streetwear-activewear",
+  "/products/leisure-nightwear",
   "/catalogue",
   "/buyer-trust",
   "/factory-video-call",
@@ -20,6 +25,11 @@ export const CORE_CHANGED_PATHS = [
 
 export const BUYER_INTENT_CHANGED_PATHS = [
   "/germany-apparel-manufacturer",
+  "/de/bekleidungshersteller-deutschland",
+  "/custom-sportswear-manufacturer-germany",
+  "/de/sportbekleidung-hersteller",
+  "/leather-apparel-manufacturer-germany",
+  "/de/lederbekleidung-hersteller",
   "/austria-apparel-manufacturer",
   "/switzerland-apparel-manufacturer",
   "/netherlands-apparel-manufacturer",

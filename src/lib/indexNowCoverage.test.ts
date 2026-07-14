@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BLOG_SLUGS } from "./blogPostsTrusted";
-import { BUYER_INTENT_PATHS } from "./buyerIntentLandingPages";
+import { SEO_BUYER_INTENT_PATHS } from "./buyerIntentSeoPages";
 import { MARKET_PAGES } from "./marketPages";
 // @ts-expect-error The production notification script is intentionally plain ESM JavaScript.
 import {
@@ -14,7 +14,7 @@ import {
 
 describe("IndexNow changed-URL coverage", () => {
   it("covers every audited buyer-intent page", () => {
-    expect(new Set(BUYER_INTENT_CHANGED_PATHS)).toEqual(new Set(BUYER_INTENT_PATHS));
+    expect(new Set(BUYER_INTENT_CHANGED_PATHS)).toEqual(new Set(SEO_BUYER_INTENT_PATHS));
   });
 
   it("covers the market hub and every country sourcing guide", () => {

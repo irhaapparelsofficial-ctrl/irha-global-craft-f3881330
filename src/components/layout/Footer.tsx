@@ -3,7 +3,7 @@ import { Mail, MapPin, MessageCircle, ChevronDown } from "lucide-react";
 import irhaLogo from "@/assets/irha-logo.png.asset.json";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { settingsWhatsappLink } from "@/lib/siteSettings";
-import { BUYER_INTENT_FOOTER_LINKS } from "@/lib/buyerIntentLandingPages";
+import { SEO_BUYER_INTENT_FOOTER_LINKS } from "@/lib/buyerIntentSeoPages";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>;
@@ -75,7 +75,7 @@ export default function Footer() {
       <nav aria-label="Priority apparel sourcing markets" className="container-luxe mt-12 pt-7 border-t border-foreground/10">
         <p className="text-center text-[10px] uppercase tracking-[0.28em] text-gold mb-5">Manufacturing for international B2B buyers</p>
         <div className="flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs">
-          {BUYER_INTENT_FOOTER_LINKS.map((item) => (
+          {SEO_BUYER_INTENT_FOOTER_LINKS.map((item) => (
             <Link key={item.href} to={item.href} className="text-foreground/60 hover:text-gold transition-colors">{item.label}</Link>
           ))}
         </div>

@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import defaultSocialImage from "@/assets/banners/products-flatlay.jpg";
 import { SITE_URL } from "@/lib/seoSchema";
 import { usePublicPageTools } from "@/hooks/usePublicContent";
+import { shouldNoIndexCategorySearchParams } from "@/lib/categoryIndexing";
 
 type Alternate = { locale: string; href: string };
 
@@ -62,7 +63,10 @@ export default function SEO({
   const url = absoluteUrl(canonicalValue);
   const ogImage = absoluteUrl(override?.og_image_url || image || defaultSocialImage);
   const effectiveJsonLd = override?.json_ld || jsonLd;
-  const robots = noindex || override?.noindex
+  const isCategoryRoute = /^\/products\/[^/]+(?:\/all-products)?\/?$/.test(location.pathname);
+  const functionalCategoryVariant =
+    isCategoryRoute && shouldNoIndexCategorySearchParams(location.search);
+  const robots = noindex || override?.noindex || functionalCategoryVariant
     ? "noindex,follow,max-image-preview:large"
     : "index,follow,max-image-preview:large";
   const normalizedAlternates = alternates.length > 0
