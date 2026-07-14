@@ -1,0 +1,46 @@
+name: Lead Test Diagnostics
+
+on:
+  push:
+    branches:
+      - feat/lead-file-outreach-approval
+    paths:
+      - ".github/workflows/lead-test-diagnostics.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/lead-file-outreach-approval
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Capture test output without changing repository
+        shell: bash
+        run: |
+          set +e
+          npm test -- --passWithNoTests > /tmp/lead-test-output.txt 2>&1
+          code=$?
+          echo "exit_code=$code" > /tmp/lead-test-result.txt
+          tail -n 300 /tmp/lead-test-output.txt > /tmp/lead-test-tail.txt
+          exit 0
+
+      - name: Upload sanitized diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: lead-test-diagnostics
+          path: |
+            /tmp/lead-test-result.txt
+            /tmp/lead-test-tail.txt
+          retention-days: 1
