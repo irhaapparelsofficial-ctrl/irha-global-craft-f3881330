@@ -1,0 +1,44 @@
+       target="_blank"
+-                rel="noreferrer"
+-                className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
++                rel="noreferrer noopener"
++                className="inline-flex items-center gap-3 border border-gold/70 px-7 py-4 text-xs uppercase tracking-[0.25em] text-gold hover:bg-gold hover:text-background"
+               >
+-                <MessageCircle size={15} aria-hidden="true" /> {ui.requestQuote}
++                <MessageCircle size={15} aria-hidden="true" /> WhatsApp
+               </a>
+               <div className="inline-flex items-center gap-2 border border-border/60 px-4 py-2 bg-background/70 backdrop-blur-sm">
+                 <Globe2 size={14} className="text-primary" aria-hidden="true" />
+@@ -311,32 +332,101 @@
+             </div>
+ 
+             {products.length === 0 ? (
+-              <div className="border border-dashed border-border/60 p-10 text-center text-foreground/65">{ui.empty}</div>
++              <div className="border border-dashed border-border/60 p-10 text-center text-foreground/65">
++                <p>{ui.empty}</p>
++                <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-foreground/55">
++                  Share a reference or requirement and our team can review a custom manufacturing route for this collection.
++                </p>
++                <div className="mt-6 flex flex-wrap justify-center gap-3">
++                  <Link
++                    to={structuredQuoteLink}
++                    className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-[10px] uppercase tracking-[0.2em] text-primary-foreground hover:bg-primary/90"
++                  >
++                    Request custom review <ArrowRight size={13} aria-hidden="true" />
++                  </Link>
++                  <a
++                    href={whatsappLink(quoteWhatsappMessage)}
++                    target="_blank"
++                    rel="noreferrer noopener"
++                    className="inline-flex min-h-11 items-center gap-2 border border-gold/70 px-5 text-[10px] uppercase tracking-[0.2em] text-gold hover:bg-gold hover:text-background"
++                  >
++                    <MessageCircle size={13} aria-hidden="true" /> WhatsApp
++                  </a>
++                </div>
++              </div>
+             ) : (
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+-                {products.map((product) => (
+-                  <article key={product.slug} className="group">
+-                    <Link to={`/products/${category.slug}/${product.slug}`} className="block">
+-                      <div className="aspect-square overflow-hid
