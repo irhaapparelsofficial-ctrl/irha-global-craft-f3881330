@@ -1,6 +1,6 @@
 name: Cloudflare Pages Production
 
-run-name: Controlled Cloudflare production · ${{ github.ref_name }} · #${{ github.run_number }}
+run-name: Controlled Cloudflare production · ${{ github.event.workflow_run.head_branch || github.ref_name }} · #${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -10,7 +10,9 @@ on:
         required: true
         default: "NO"
         type: string
-  push:
+  workflow_run:
+    workflows: ["Quality Gate"]
+    types: [completed]
     branches: [main]
 
 permissions:
@@ -29,7 +31,9 @@ env:
 jobs:
   deploy:
     if: >-
-      github.event_name == 'push' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main') ||
       (github.event_name == 'workflow_dispatch' && inputs.confirm == 'DEPLOY')
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -37,6 +41,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      SOURCE_COMMIT_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
     steps:
       - name: Resolve Cloudflare account and verify project
@@ -140,7 +145,19 @@ jobs:
       - name: Checkout exact approved source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ env.SOURCE_COMMIT_SHA }}
+          fetch-depth: 0
+
+      - name: Verify approved SHA is still exact current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --no-tags
+          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT_SHA"
+          test "$(git rev-parse origin/main)" = "$SOURCE_COMMIT_SHA" || {
+            echo "Approved Quality Gate SHA is no longer current main"
+            exit 1
+          }
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -159,7 +176,7 @@ jobs:
           npm test -- --passWithNoTests
 
       - name: Build exact source
-        run: npm run build
+        run: env -u GITHUB_SHA SOURCE_COMMIT_SHA="$SOURCE_COMMIT_SHA" npm run build
 
       - name: Verify release-safe build output
         shell: bash
@@ -192,7 +209,7 @@ jobs:
           }
 
           jq -n \
-            --arg source_sha "$GITHUB_SHA" \
+            --arg source_sha "$SOURCE_COMMIT_SHA" \
             --arg repository "$GITHUB_REPOSITORY" \
             --arg branch "$PRODUCTION_BRANCH" \
             --arg build_fingerprint "$build_fingerprint" \
@@ -215,7 +232,7 @@ jobs:
           ready=0
 
           for attempt in $(seq 1 24); do
-            cache_bust="${GITHUB_SHA::12}-$attempt"
+            cache_bust="${SOURCE_COMMIT_SHA::12}-$attempt"
             if curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
               "$PRODUCTION_URL/?release_check=$cache_bust" -o /tmp/production-home.html -D /tmp/production-headers \
               && curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
@@ -227,10 +244,10 @@ jobs:
               if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/production-headers \
                 && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' /tmp/production-home.html \
                 && [[ "$build_fingerprint" =~ ^[0-9a-f]{64}$ ]] \
-                && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase 'pvzjiozismyxqrzmtfbi' \
+                && jq -e --arg sha "$SOURCE_COMMIT_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase 'pvzjiozismyxqrzmtfbi' \
                   '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and .build_fingerprint_algorithm == "sha256"' \
                   /tmp/production-build.json >/dev/null \
-                && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg fingerprint "$build_fingerprint" \
+                && jq -e --arg sha "$SOURCE_COMMIT_SHA" --arg repo "$GITHUB_REPOSITORY" --arg fingerprint "$build_fingerprint" \
                   '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint' \
                   /tmp/cloudflare-deployment.json >/dev/null; then
                 ready=1
@@ -261,7 +278,7 @@ jobs:
             safe_host="$(printf '%s' "$host" | tr -c 'A-Za-z0-9._-' '_')"
 
             for attempt in $(seq 1 24); do
-              cache_bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
+              cache_bust="${SOURCE_COMMIT_SHA::12}-$attempt-$RANDOM"
               home_file="/tmp/${safe_host}-home.html"
               header_file="/tmp/${safe_host}-headers"
               build_file="/tmp/${safe_host}-build.json"
@@ -277,10 +294,10 @@ jobs:
                 if grep -Eiq '^HTTP/[0-9.]+ (200|301|302|307|308)' "$header_file" \
                   && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' "$home_file" \
                   && grep -Eiq 'Custom Apparel Manufacturer for Global B2B Buyers|Custom Apparel Manufacturing for Global B2B Buyers' "$home_file" \
-                  && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase 'pvzjiozismyxqrzmtfbi' --arg fingerprint "$expected_fingerprint" \
+                  && jq -e --arg sha "$SOURCE_COMMIT_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase 'pvzjiozismyxqrzmtfbi' --arg fingerprint "$expected_fingerprint" \
                     '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and .build_fingerprint == $fingerprint' \
                     "$build_file" >/dev/null \
-                  && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg fingerprint "$expected_fingerprint" \
+                  && jq -e --arg sha "$SOURCE_COMMIT_SHA" --arg repo "$GITHUB_REPOSITORY" --arg fingerprint "$expected_fingerprint" \
                     '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint' \
                     "$deployment_file" >/dev/null; then
                   ready=1
@@ -325,7 +342,7 @@ jobs:
           {
             echo "## Cloudflare Pages production deployment"
             echo "- Status: verified"
-            echo "- Source commit: \`$GITHUB_SHA\`"
+            echo "- Source commit: \`$SOURCE_COMMIT_SHA\`"
             echo "- Production URL: $PRODUCTION_URL"
             echo "- Previous deployment ID: \`$PREVIOUS_DEPLOYMENT_ID\`"
             echo "- New deployment ID: \`$latest_deployment_id\`"
