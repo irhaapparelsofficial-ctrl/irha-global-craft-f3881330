@@ -8,6 +8,7 @@ import AutomationControlCenter from "./AutomationControlCenter";
 import LeadWaveSummary from "./LeadWaveSummary";
 import GuidedBusinessActions from "./GuidedBusinessActions";
 import BackendActivationDashboard from "./BackendActivationDashboard";
+import CatalogDataReviewWorkspace from "./CatalogDataReviewWorkspace";
 
 type Counts = {
   products: number;
@@ -112,6 +113,7 @@ export default function OverviewPanel({ go }: { go: (view: AdminView) => void })
       <LeadWaveSummary go={go} />
       <OwnerOperationsCenter go={go} />
       <BackendActivationDashboard go={go} />
+      <CatalogDataReviewWorkspace go={go} />
       <SalesActionCenter go={go} />
       <AutomationControlCenter />
 
