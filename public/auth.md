@@ -7,12 +7,14 @@ The following resources are public and require no credentials:
 - `/.well-known/api-catalog`
 - `/.well-known/agent-skills/index.json`
 - `/.well-known/mcp/server-card.json`
+- `/.well-known/agent-card.json`
 - `/mcp`
+- `/a2a`
 - `/openapi/public-lead-gateway.json`
 - `/llms.txt`
 - `/llms-full.txt`
 
-The public MCP server exposes read-only buyer information and prepares reviewable links. It does not submit buyer data or expose private records.
+The public MCP and A2A services expose read-only buyer information and prepare reviewable links. They do not submit buyer data, create commercial commitments or expose private records.
 
 ## Public lead submissions
 
