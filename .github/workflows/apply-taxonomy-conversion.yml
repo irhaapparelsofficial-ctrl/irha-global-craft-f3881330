@@ -1,5 +1,6 @@
 name: Apply taxonomy conversion patch
 
+# Second branch push intentionally triggers this one-time workflow.
 on:
   push:
     branches:
