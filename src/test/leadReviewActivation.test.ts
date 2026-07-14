@@ -95,5 +95,10 @@ describe("lead review and CRM activation safety", () => {
     expect(backend).toContain('event: "visit_scheduled"');
     expect(panel).toContain("Azerbaijan visit planner");
     expect(panel).toContain("It does not contact the company");
+    expect(panel).toContain('const BAKU_UTC_OFFSET = "+04:00"');
+    expect(panel).toContain("bakuLocalToIso(visitAt)");
+    expect(panel).toContain("Baku time (UTC+4)");
+    expect(panel).not.toContain("new Date(visitAt).toISOString()");
+    expect(backend).not.toContain('assigned_to: "Daim Ali"');
   });
 });
