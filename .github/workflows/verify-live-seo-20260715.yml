@@ -44,8 +44,9 @@ jobs:
           assert_redirect "/buyer-trust-center" "/buyer-trust"
 
           admin_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$ORIGIN/admin")"
-          printf '%s' "$admin_headers" | grep -Eiq '^x-robots-tag: noindex, nofollow, noarchive\r?$' || {
-            echo "Admin noindex header missing"
+          robots_value="$(printf '%s\n' "$admin_headers" | awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
+          test "$robots_value" = "noindex, nofollow, noarchive" || {
+            echo "Unexpected admin X-Robots-Tag: $robots_value"
             printf '%s\n' "$admin_headers"
             exit 1
           }
