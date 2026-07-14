@@ -1,0 +1,314 @@
+name: Apply Outreach V2 Safety Repair Once
+
+on:
+  push:
+    branches:
+      - feat/lead-file-outreach-approval
+    paths:
+      - ".github/workflows/apply-outreach-v2-safety-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/lead-file-outreach-approval
+          fetch-depth: 0
+
+      - name: Apply idempotent backend safety repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          PATH = Path('supabase/functions/outreach-workflow-v2/index.ts')
+          source = PATH.read_text()
+
+
+          def replace_once(old: str, new: str, label: str) -> None:
+              global source
+              if new in source:
+                  return
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected marker once, found {count}')
+              source = source.replace(old, new, 1)
+
+
+          replace_once(
+              'const MAX_GENERATE = 50;\n',
+              'const MAX_GENERATE = 50;\n'
+              'const MAX_EMAIL_ATTACHMENT_BYTES = 20 * 1024 * 1024;\n'
+              'const MAX_WHATSAPP_ATTACHMENT_BYTES = 16 * 1024 * 1024;\n'
+              'const MAX_WHATSAPP_ATTACHMENTS = 1;\n',
+              'attachment limits',
+          )
+
+          replace_once(
+              'type Draft = { index: number; language: string; subject: string; body_text: string; evidence: string[]; risk_flags: string[] };\n',
+              'type Draft = { index: number; language: string; subject: string; body_text: string; evidence: string[]; risk_flags: string[] };\n'
+              'type Runtime = { url: string; anon: string; authorization: string };\n',
+              'runtime type',
+          )
+
+          replace_once(
+              '''    const service = createClient(url, serviceKey);\n    const body = await request.json().catch(() => ({})) as JsonRecord;\n    const action = clean(body.action, 50) || "health";\n    if (action === "health") return await health(service);\n    if (action === "generate") return await generate(service, user.id, body);\n    if (action === "update") return await updateDraft(service, user.id, body);\n    if (action === "approve") return await approve(service, user.id, body);\n    if (action === "finalize_whatsapp") return await finalizeWhatsApp(service, user.id, body);\n''',
+              '''    const service = createClient(url, serviceKey);\n    const runtime: Runtime = { url, anon, authorization };\n    const body = await request.json().catch(() => ({})) as JsonRecord;\n    const action = clean(body.action, 50) || "health";\n    if (action === "health") return await health(service);\n    if (action === "generate") return await generate(service, user.id, body);\n    if (action === "update") return await updateDraft(service, user.id, body);\n    if (action === "set_attachments") return await setAttachments(service, user.id, body);\n    if (action === "approve_and_send") return await approveAndSend(service, user.id, body, runtime);\n    if (action === "approve") return await approve(service, user.id, body);\n    if (action === "finalize_whatsapp") return await finalizeWhatsApp(service, user.id, body);\n''',
+              'action routes',
+          )
+
+          replace_once(
+              '    "whatsapp_messages",\n',
+              '    "whatsapp_messages",\n    "crm_files",\n    "outreach_message_attachments",\n',
+              'health tables',
+          )
+
+          replace_once(
+              '    limits: { generate: MAX_GENERATE },\n',
+              '    limits: { generate: MAX_GENERATE, email_attachment_bytes: MAX_EMAIL_ATTACHMENT_BYTES, whatsapp_attachment_bytes: MAX_WHATSAPP_ATTACHMENT_BYTES, whatsapp_attachments: MAX_WHATSAPP_ATTACHMENTS },\n',
+              'health limits',
+          )
+
+          replace_once(
+              '  if (!EDITABLE.has(message.status)) return json({ error: `Message cannot be approved from status ${message.status}` }, 409);\n',
+              '  if (!EDITABLE.has(message.status) && message.status !== "sending") return json({ error: `Message cannot be approved from status ${message.status}` }, 409);\n',
+              'sending approval state',
+          )
+
+          INSERT_MARKER = 'async function updateDraft(service: Db, userId: string, body: JsonRecord) {'
+          if 'async function setAttachments(' not in source:
+              if source.count(INSERT_MARKER) != 1:
+                  raise SystemExit('function insertion marker missing or duplicated')
+              block = r'''
+          async function setAttachments(service: Db, userId: string, body: JsonRecord) {
+            const messageId = clean(body.message_id, 80);
+            if (!messageId) return json({ error: "message_id required" }, 400);
+            const fileIds = stringArray(body.file_ids).slice(0, 20);
+            const current = await service.from("outreach_messages")
+              .select("id,lead_id,channel,status,campaign_id")
+              .eq("id", messageId)
+              .maybeSingle();
+            if (current.error || !current.data) return json({ error: "Message not found" }, 404);
+            if (IMMUTABLE.has(current.data.status) || current.data.status === "sending") {
+              return json({ error: `Attachments cannot change from status ${current.data.status}` }, 409);
+            }
+
+            let files: any[] = [];
+            if (fileIds.length) {
+              const selected = await service.from("crm_files")
+                .select("id,source_type,source_id,file_name,mime_type,size_bytes,category,description")
+                .in("id", fileIds);
+              if (selected.error) throw selected.error;
+              files = selected.data || [];
+              if (files.length !== fileIds.length) return json({ error: "One or more private buyer files were not found" }, 404);
+              const foreignFile = files.find((file) => file.source_type !== "prospect" || file.source_id !== current.data.lead_id);
+              if (foreignFile) return json({ error: "A selected file does not belong to this buyer" }, 403);
+            }
+
+            const totalBytes = files.reduce((sum, file) => sum + Math.max(0, Number(file.size_bytes || 0)), 0);
+            const maxBytes = current.data.channel === "whatsapp" ? MAX_WHATSAPP_ATTACHMENT_BYTES : MAX_EMAIL_ATTACHMENT_BYTES;
+            if (totalBytes > maxBytes) return json({ error: `Selected attachments exceed the ${maxBytes} byte channel limit` }, 413);
+            if (current.data.channel === "whatsapp" && files.length > MAX_WHATSAPP_ATTACHMENTS) {
+              return json({ error: `WhatsApp allows at most ${MAX_WHATSAPP_ATTACHMENTS} selected attachment` }, 413);
+            }
+
+            const existing = await service.from("outreach_message_attachments")
+              .select("id,crm_file_id,status")
+              .eq("message_id", messageId);
+            if (existing.error) throw existing.error;
+            const selectedSet = new Set(fileIds);
+            const removeIds = (existing.data || []).filter((row) => !selectedSet.has(row.crm_file_id) && row.status !== "removed").map((row) => row.id);
+            if (removeIds.length) {
+              const removed = await service.from("outreach_message_attachments").update({ status: "removed", error: null }).in("id", removeIds);
+              if (removed.error) throw removed.error;
+            }
+            if (files.length) {
+              const saved = await service.from("outreach_message_attachments").upsert(files.map((file) => ({
+                message_id: messageId,
+                crm_file_id: file.id,
+                channel: current.data.channel,
+                status: "selected",
+                error: null,
+                created_by: userId,
+                metadata: { file_name: file.file_name, mime_type: file.mime_type, size_bytes: file.size_bytes, category: file.category, private_buyer_file: true },
+              })), { onConflict: "message_id,crm_file_id" });
+              if (saved.error) throw saved.error;
+            }
+            await event(service, current.data, "status_sync", { action: "attachments_selected", attachment_count: files.length, total_bytes: totalBytes }, userId);
+            return json({ ok: true, message_id: messageId, attachment_count: files.length, total_bytes: totalBytes, sent: false });
+          }
+
+          async function approveAndSend(service: Db, userId: string, body: JsonRecord, runtime: Runtime) {
+            if (body.owner_confirmed !== true) return json({ error: "Explicit owner confirmation is required" }, 400);
+            const messageId = clean(body.message_id, 80);
+            if (!messageId) return json({ error: "message_id required" }, 400);
+
+            const current = await service.from("outreach_messages")
+              .select("*,b2b_leads(id,email,phone,whatsapp,outreach_opt_out,crm_status,verification_score)")
+              .eq("id", messageId)
+              .maybeSingle();
+            if (current.error || !current.data) return json({ error: "Message not found" }, 404);
+            const message = current.data;
+            if (["sent", "replied"].includes(message.status)) return json({ ok: true, status: message.status, already_dispatched: true, message_id: message.id });
+            if (message.status === "sending") return json({ error: "Dispatch is already in progress" }, 409);
+            if (!EDITABLE.has(message.status)) return json({ error: `Message cannot be sent from status ${message.status}` }, 409);
+            if (message.b2b_leads?.outreach_opt_out === true) return await markManual(service, message, userId, "Lead opted out of outreach");
+            if (!eligibleLead(message.b2b_leads || {})) return await markManual(service, message, userId, "Lead is no longer verified or qualified");
+            if (commercialCommitment(message.body_text)) return await markManual(service, message, userId, "Draft contains pricing, MOQ, certification, guarantee or delivery commitments requiring manual review");
+
+            const attachmentResult = await service.from("outreach_message_attachments")
+              .select("id,crm_file_id,status,metadata")
+              .eq("message_id", message.id)
+              .in("status", ["selected", "sending", "manual_required"]);
+            if (attachmentResult.error) throw attachmentResult.error;
+            const attachments = attachmentResult.data || [];
+            if (attachments.length) {
+              const reason = "Real private buyer files are selected, but automated provider attachment transfer is not enabled. Send manually to avoid silently dropping attachments.";
+              await service.from("outreach_message_attachments").update({ status: "manual_required", error: reason }).eq("message_id", message.id).in("status", ["selected", "sending"]);
+              return await markManual(service, message, userId, reason);
+            }
+
+            const connector = record(message.connector_response);
+            if (message.channel === "whatsapp" && connector.primary_attempted === true) {
+              return await markManual(service, message, userId, "Automatic retry is blocked to prevent duplicate text");
+            }
+
+            const claimToken = crypto.randomUUID();
+            const claimed = await service.from("outreach_messages").update({
+              status: "sending",
+              approved_by: userId,
+              approved_at: new Date().toISOString(),
+              dispatched_by: userId,
+              error: null,
+              manual_reason: null,
+              connector_response: { ...connector, dispatch_claim_token: claimToken, primary_attempted: connector.primary_attempted === true },
+            }).eq("id", message.id).eq("status", message.status).eq("updated_at", message.updated_at).select("*").maybeSingle();
+            if (claimed.error) throw claimed.error;
+            if (!claimed.data) return json({ error: "Message changed before dispatch; refresh and review again" }, 409);
+            await event(service, claimed.data, "send_started", { channel: message.channel, dispatch_claim_token: claimToken }, userId);
+
+            if (message.channel === "email") {
+              if (!validEmail(message.recipient_email)) return await markManual(service, claimed.data, userId, "Valid recipient email is missing");
+              const approved = await service.from("outreach_messages").update({ status: "approved" }).eq("id", message.id).eq("status", "sending").select("*").maybeSingle();
+              if (approved.error || !approved.data) return json({ error: "Email dispatch claim was lost" }, 409);
+              const provider = await invokeAdminFunction(runtime, "outreach-engine", { action: "send", message_ids: [message.id] });
+              const outcome = isRecord(provider.data) && Array.isArray(provider.data.outcomes)
+                ? provider.data.outcomes.find((item: any) => item?.id === message.id)
+                : null;
+              if (!provider.ok || !outcome || outcome.status !== "sent") {
+                const reason = isRecord(outcome) ? clean(outcome.error || outcome.reason, 4000) : clean(isRecord(provider.data) ? provider.data.error : null, 4000);
+                return json({ ok: false, status: outcome?.status || "failed", channel: "email", message_id: message.id, error: reason || `Email provider returned ${provider.status}` }, provider.status >= 400 ? provider.status : 502);
+              }
+              return json({ ok: true, status: "sent", channel: "email", message_id: message.id, gmail_message_id: outcome.gmail_message_id || null, attachment_count: 0 });
+            }
+
+            const preparedResponse = await approve(service, userId, { ...body, message_id: message.id });
+            const prepared = await responseJson(preparedResponse);
+            if (!preparedResponse.ok || prepared.ok !== true || typeof prepared.whatsapp_message_id !== "string") {
+              const reason = clean(prepared.reason || prepared.error, 4000) || "WhatsApp message could not be prepared";
+              return await markManual(service, claimed.data, userId, reason);
+            }
+
+            const attemptMarked = await service.from("outreach_messages").update({
+              connector_response: { ...record(claimed.data.connector_response), primary_attempted: true },
+            }).eq("id", message.id).eq("status", "approved").select("*").maybeSingle();
+            if (attemptMarked.error || !attemptMarked.data) return json({ error: "WhatsApp dispatch claim was lost" }, 409);
+
+            const provider = await invokeAdminFunction(runtime, "whatsapp-admin", { action: "send_approved", message_id: prepared.whatsapp_message_id });
+            if (!provider.ok || !isRecord(provider.data) || provider.data.ok !== true) {
+              const providerReason = clean(isRecord(provider.data) ? provider.data.error : null, 4000) || `WhatsApp provider returned ${provider.status}`;
+              if (/customer-service window/i.test(providerReason)) {
+                await service.from("outreach_messages").update({ connector_response: { ...record(claimed.data.connector_response), primary_attempted: false } }).eq("id", message.id);
+                return await markManual(service, claimed.data, userId, "WhatsApp customer-service window is closed; use an approved template or send manually");
+              }
+              return await markManual(service, claimed.data, userId, `${providerReason}. Automatic retry is blocked to prevent duplicate text`);
+            }
+
+            const graphMessageId = clean(provider.data.wa_message_id, 300);
+            if (!graphMessageId) {
+              return await markManual(service, claimed.data, userId, "Primary WhatsApp text was sent but no provider message ID was returned. Automatic retry is blocked to prevent duplicate text");
+            }
+            const finalizedResponse = await finalizeWhatsApp(service, userId, { message_id: message.id });
+            const finalized = await responseJson(finalizedResponse);
+            if (!finalizedResponse.ok || finalized.status !== "sent") {
+              return await markManual(service, claimed.data, userId, "Primary WhatsApp text was sent, but local finalization was uncertain. Automatic retry is blocked to prevent duplicate text");
+            }
+            return json({ ok: true, status: "sent", channel: "whatsapp", message_id: message.id, graphMessageId, wa_message_id: graphMessageId, attachment_count: 0 });
+          }
+
+          async function invokeAdminFunction(runtime: Runtime, name: string, payload: JsonRecord) {
+            try {
+              const response = await fetch(`${runtime.url}/functions/v1/${name}`, {
+                method: "POST",
+                headers: { Authorization: runtime.authorization, apikey: runtime.anon, "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              return { ok: response.ok, status: response.status, data: await safeJson(response) };
+            } catch (error) {
+              return { ok: false, status: 503, data: { error: errorText(error) } };
+            }
+          }
+
+          async function responseJson(response: Response): Promise<any> {
+            try { return await response.json(); }
+            catch { return {}; }
+          }
+
+          '''
+              source = source.replace(INSERT_MARKER, block + INSERT_MARKER, 1)
+
+          required = [
+              'if (action === "set_attachments")',
+              'if (action === "approve_and_send")',
+              'body.owner_confirmed !== true',
+              '.eq("status", message.status)',
+              '.eq("updated_at", message.updated_at)',
+              'primary_attempted: true',
+              'Automatic retry is blocked to prevent duplicate text',
+              'Primary WhatsApp text was sent',
+              'WhatsApp customer-service window is closed',
+              'graphMessageId',
+              'from("crm_files")',
+              'from("outreach_message_attachments")',
+              'MAX_EMAIL_ATTACHMENT_BYTES',
+              'MAX_WHATSAPP_ATTACHMENT_BYTES',
+          ]
+          missing = [item for item in required if item not in source]
+          if missing:
+              raise SystemExit(f'missing required safety contracts: {missing}')
+
+          PATH.write_text(source)
+          PY
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Run safety contract tests
+        run: npm test -- --run src/components/admin/OutreachApprovalPanel.test.ts src/test/leadOutreachSafetyContracts.test.ts
+
+      - name: Run full test suite
+        run: npm test -- --passWithNoTests
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit repair and remove temporary diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/apply-outreach-v2-safety-once.yml
+          rm -f .github/workflows/lead-test-diagnostics.yml
+          git config user.name "irhaapparelsofficial-ctrl"
+          git config user.email "irhaapparelsofficial@gmail.com"
+          git add supabase/functions/outreach-workflow-v2/index.ts .github/workflows/apply-outreach-v2-safety-once.yml .github/workflows/lead-test-diagnostics.yml
+          git commit -m "fix(outreach): enforce owner-approved idempotent dispatch"
+          git push origin HEAD:feat/lead-file-outreach-approval
