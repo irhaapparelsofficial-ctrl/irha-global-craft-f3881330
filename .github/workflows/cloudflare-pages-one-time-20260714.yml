@@ -1,5 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
-# Registered trigger revision: 10
+# Registered trigger revision: 11
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
@@ -105,12 +105,18 @@ jobs:
           test -s dist/index.html
           test -s dist/build.json
           test -s dist/release.txt
+          test -s dist/_redirects
+          test -s dist/_headers
           test -s "dist/19d2833c43fe6e05e2a4416f65a53cdc.txt"
           grep -Fx '19d2833c43fe6e05e2a4416f65a53cdc' "dist/19d2833c43fe6e05e2a4416f65a53cdc.txt"
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
           grep -F '"repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330"' dist/build.json
           grep -F '"supabase_project_id": "pvzjiozismyxqrzmtfbi"' dist/build.json
           grep -F '"expected_origin": "https://irhaapparels.com"' dist/build.json
+          grep -Fx '/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe /products/leisure-nightwear/plush-bathrobe-sleep-robe 301' dist/_redirects
+          grep -Fx '/products/sportswear/ /products/sportswear 301' dist/_redirects
+          grep -Fx '/buyer-trust-center /buyer-trust 301' dist/_redirects
+          grep -F 'X-Robots-Tag: noindex, nofollow, noarchive' dist/_headers
           if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
             echo "Retired Supabase identity found"
             exit 1
@@ -147,6 +153,29 @@ jobs:
           test "$ready" = "1"
           echo "Exact Cloudflare Pages release verified: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Verify live SEO redirect and noindex contract
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          assert_redirect() {
+            source_path="$1"
+            expected_path="$2"
+            headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$STAGING_URL$source_path")"
+            status="$(printf '%s' "$headers" | awk 'NR==1 {print $2}')"
+            location="$(printf '%s' "$headers" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
+            test "$status" = "301" || { echo "Expected 301 for $source_path, got $status"; exit 1; }
+            test "$location" = "$STAGING_URL$expected_path" || { echo "Unexpected Location for $source_path: $location"; exit 1; }
+          }
+
+          assert_redirect "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe" "/products/leisure-nightwear/plush-bathrobe-sleep-robe"
+          assert_redirect "/products/sportswear/" "/products/sportswear"
+          assert_redirect "/buyer-trust-center" "/buyer-trust"
+
+          admin_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$STAGING_URL/admin")"
+          printf '%s' "$admin_headers" | grep -Eiq '^x-robots-tag: noindex, nofollow, noarchive\r?$'
+          echo "SEO redirects and private-route noindex headers verified." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Notify IndexNow about priority SEO pages
         continue-on-error: true
         env:
@@ -172,6 +201,7 @@ jobs:
           - Verified URL: \`$STAGING_URL\`
           - Verified at: \`$generated_at\`
           - Search discovery: canonical sitemap remains available through robots.txt/Search Console; IndexNow notification runs after exact release verification.
+          - SEO contract: UUID and legacy aliases use HTTP 301, priority trailing-slash duplicates normalize, and private routes return X-Robots-Tag noindex.
           - Release checks: source identity, Supabase project, canonical origin, tests, production build, IndexNow payload validation, legacy-claim guard and exact served fingerprint all passed.
           EOF
           )
