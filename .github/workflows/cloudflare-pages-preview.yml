@@ -36,15 +36,32 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
-          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
-          test -n "$CLOUDFLARE_PROJECT_NAME" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
+          raw_token="$CLOUDFLARE_API_TOKEN"
+          raw_account_id="$CLOUDFLARE_ACCOUNT_ID"
+          raw_project_name="$CLOUDFLARE_PROJECT_NAME"
 
-          echo "::add-mask::$CLOUDFLARE_API_TOKEN"
-          echo "::add-mask::$CLOUDFLARE_ACCOUNT_ID"
+          token="$(printf '%s' "$raw_token" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "$raw_account_id" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "$raw_project_name" | tr -d '[:space:]')"
+
+          test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
+          test -n "$account_id" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
+          test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
+
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {
+            echo "CLOUDFLARE_ACCOUNT_ID must be the 32-character Account ID only"
+            exit 1
+          }
+          [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {
+            echo "CLOUDFLARE_PROJECT_NAME contains invalid characters"
+            exit 1
+          }
+
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
 
           verify_json="$(curl -sS \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
             https://api.cloudflare.com/client/v4/user/tokens/verify)" || {
               echo "Cloudflare token verification request could not be completed"
@@ -58,9 +75,9 @@ jobs:
           fi
 
           project_json="$(curl -sS \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME")" || {
+            "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")" || {
               echo "Cloudflare Pages project request could not be completed"
               exit 1
             }
@@ -72,10 +89,16 @@ jobs:
           fi
 
           actual_name="$(printf '%s' "$project_json" | jq -r '.result.name // empty')"
-          test "$actual_name" = "$CLOUDFLARE_PROJECT_NAME" || {
-            echo "Cloudflare project mismatch: expected $CLOUDFLARE_PROJECT_NAME, got $actual_name"
+          test "$actual_name" = "$project_name" || {
+            echo "Cloudflare project mismatch: expected $project_name, got $actual_name"
             exit 1
           }
+
+          {
+            echo "CLOUDFLARE_API_TOKEN=$token"
+            echo "CLOUDFLARE_ACCOUNT_ID=$account_id"
+            echo "CLOUDFLARE_PROJECT_NAME=$project_name"
+          } >> "$GITHUB_ENV"
 
           echo "Cloudflare credentials valid and Pages project confirmed: $actual_name"
 
