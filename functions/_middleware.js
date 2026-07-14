@@ -1,4 +1,4 @@
-const SITE_ORIGIN = "https://www.irhaapparels.com";
+const SITE_ORIGIN = "https://irhaapparels.com";
 
 const PAGE_SUMMARIES = {
   "/": {
