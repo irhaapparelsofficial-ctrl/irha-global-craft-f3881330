@@ -1,4 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
+# Registered trigger revision: 2
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
