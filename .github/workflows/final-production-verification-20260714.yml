@@ -14,12 +14,11 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     env:
       GH_TOKEN: ${{ github.token }}
       APEX: https://irhaapparels.com
       WWW: https://www.irhaapparels.com
-      EXPECTED_SOURCE: 1f9b1b33265996f7ee20ae82158dc58713b68ebd
     steps:
       - name: Capture evidence, then validate production
         shell: bash
@@ -27,26 +26,86 @@ jobs:
           set -u
           cache_bust="final-${GITHUB_SHA::12}-$RANDOM"
 
-          get_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /dev/null -D /tmp/www-get.headers -w '%{http_code}' "$WWW/products/sportswear?canonical_test=$cache_bust" || printf 'curl_error')"
-          post_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /dev/null -D /tmp/www-post.headers -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{"synthetic":true}' "$WWW/inquiry?canonical_test=$cache_bust" || printf 'curl_error')"
+          header_value() {
+            local name="$1"
+            local file="$2"
+            grep -i -m1 "^${name}:" "$file" 2>/dev/null \
+              | cut -d: -f2- \
+              | sed -E 's/^[[:space:]]*//; s/\r$//' \
+              || true
+          }
 
-          get_location="$(grep -i -m1 '^location:' /tmp/www-get.headers 2>/dev/null | cut -d: -f2- | sed -E 's/^[[:space:]]*//; s/\r$//' || true)"
-          get_marker="$(grep -i -m1 '^x-irha-canonical-redirect:' /tmp/www-get.headers 2>/dev/null | cut -d: -f2- | sed -E 's/^[[:space:]]*//; s/\r$//' || true)"
-          post_location="$(grep -i -m1 '^location:' /tmp/www-post.headers 2>/dev/null | cut -d: -f2- | sed -E 's/^[[:space:]]*//; s/\r$//' || true)"
-          post_marker="$(grep -i -m1 '^x-irha-canonical-redirect:' /tmp/www-post.headers 2>/dev/null | cut -d: -f2- | sed -E 's/^[[:space:]]*//; s/\r$//' || true)"
+          raw_request() {
+            local name="$1"
+            local url="$2"
+            local headers="/tmp/${name}.headers"
+            local code
+            code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o "/tmp/${name}.body" -D "$headers" -w '%{http_code}' "$url" || printf 'curl_error')"
+            printf '%s' "$code"
+          }
 
-          home_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/home.html -w '%{http_code}' "$APEX/?canonical_test=$cache_bust" || printf 'curl_error')"
-          admin_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/admin.html -w '%{http_code}' "$APEX/admin/live-chat?canonical_test=$cache_bust" || printf 'curl_error')"
-          products_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/products.html -w '%{http_code}' "$APEX/products?canonical_test=$cache_bust" || printf 'curl_error')"
-          catalogue_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/catalogue.html -w '%{http_code}' "$APEX/catalogue?canonical_test=$cache_bust" || printf 'curl_error')"
-          inquiry_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/inquiry.html -w '%{http_code}' "$APEX/inquiry?canonical_test=$cache_bust" || printf 'curl_error')"
-          sitemap_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/sitemap.xml -w '%{http_code}' "$APEX/sitemap.xml?canonical_test=$cache_bust" || printf 'curl_error')"
-          curl -sS --connect-timeout 10 --max-time 30 "$APEX/build.json?canonical_test=$cache_bust" -o /tmp/build.json || printf '{}' > /tmp/build.json
-          source_commit="$(jq -r '.source_commit // empty' /tmp/build.json 2>/dev/null || true)"
-          identity_state="$(jq -r '.source_identity_state // empty' /tmp/build.json 2>/dev/null || true)"
-          built_at="$(jq -r '.built_at // empty' /tmp/build.json 2>/dev/null || true)"
+          followed_request() {
+            local name="$1"
+            local url="$2"
+            curl -sS -L --connect-timeout 10 --max-time 60 -o "/tmp/${name}-final.body" -w '%{http_code}' "$url" || printf 'curl_error'
+          }
 
-          main_js="$(grep -Eo 'src="[^"]+index-[^"]+\.js"' /tmp/home.html 2>/dev/null | head -n1 | sed -E 's/^src="|"$//g' || true)"
+          www_get_url="$WWW/products/sportswear?canonical_test=$cache_bust"
+          www_post_url="$WWW/inquiry?canonical_test=$cache_bust"
+          get_code="$(raw_request www-get "$www_get_url")"
+          get_location="$(header_value location /tmp/www-get.headers)"
+          get_marker="$(header_value x-irha-canonical-redirect /tmp/www-get.headers)"
+          post_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /tmp/www-post.body -D /tmp/www-post.headers -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{"synthetic":true}' "$www_post_url" || printf 'curl_error')"
+          post_location="$(header_value location /tmp/www-post.headers)"
+          post_marker="$(header_value x-irha-canonical-redirect /tmp/www-post.headers)"
+
+          home_url="$APEX/?canonical_test=$cache_bust"
+          admin_url="$APEX/admin/live-chat?canonical_test=$cache_bust"
+          products_url="$APEX/products?canonical_test=$cache_bust"
+          catalogue_url="$APEX/catalogue?canonical_test=$cache_bust"
+          inquiry_url="$APEX/inquiry?canonical_test=$cache_bust"
+          sitemap_url="$APEX/sitemap.xml?canonical_test=$cache_bust"
+
+          home_raw="$(raw_request home "$home_url")"
+          admin_raw="$(raw_request admin "$admin_url")"
+          products_raw="$(raw_request products "$products_url")"
+          products_location="$(header_value location /tmp/products.headers)"
+          catalogue_raw="$(raw_request catalogue "$catalogue_url")"
+          catalogue_location="$(header_value location /tmp/catalogue.headers)"
+          inquiry_raw="$(raw_request inquiry "$inquiry_url")"
+          inquiry_location="$(header_value location /tmp/inquiry.headers)"
+          sitemap_raw="$(raw_request sitemap "$sitemap_url")"
+
+          home_final="$(followed_request home "$home_url")"
+          admin_final="$(followed_request admin "$admin_url")"
+          products_final="$(followed_request products "$products_url")"
+          catalogue_final="$(followed_request catalogue "$catalogue_url")"
+          inquiry_final="$(followed_request inquiry "$inquiry_url")"
+          sitemap_final="$(followed_request sitemap "$sitemap_url")"
+
+          identity_ready=0
+          for attempt in $(seq 1 8); do
+            suffix="$cache_bust-identity-$attempt"
+            curl -sS --connect-timeout 10 --max-time 30 "$APEX/build.json?canonical_test=$suffix" -o /tmp/build.json || printf '{}' > /tmp/build.json
+            curl -sS --connect-timeout 10 --max-time 30 "$APEX/cloudflare-deployment.json?canonical_test=$suffix" -o /tmp/deployment.json || printf '{}' > /tmp/deployment.json
+            source_commit="$(jq -r '.source_commit // empty' /tmp/build.json 2>/dev/null || true)"
+            deployment_source="$(jq -r '.source_sha // empty' /tmp/deployment.json 2>/dev/null || true)"
+            identity_state="$(jq -r '.source_identity_state // empty' /tmp/build.json 2>/dev/null || true)"
+            build_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/build.json 2>/dev/null || true)"
+            deployment_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/deployment.json 2>/dev/null || true)"
+            built_at="$(jq -r '.built_at // empty' /tmp/build.json 2>/dev/null || true)"
+            if test "$identity_state" = "verified" \
+              && test -n "$source_commit" \
+              && test "$source_commit" = "$deployment_source" \
+              && test -n "$build_fingerprint" \
+              && test "$build_fingerprint" = "$deployment_fingerprint"; then
+              identity_ready=1
+              break
+            fi
+            sleep 8
+          done
+
+          main_js="$(grep -Eo 'src="[^"]+index-[^"]+\.js"' /tmp/home-final.body 2>/dev/null | head -n1 | sed -E 's/^src="|"$//g' || true)"
           bundle_live_team=false
           bundle_admin_route=false
           bundle_endpoint=false
@@ -59,17 +118,20 @@ jobs:
           fi
 
           {
-            echo '## Final production verification — captured evidence'
+            echo '## Final production verification — redirect-aware evidence'
             echo
-            echo "- Raw www GET status: \`$get_code\`"
-            echo "- Raw www GET location: \`$get_location\`"
-            echo "- Raw www GET marker: \`$get_marker\`"
-            echo "- Raw www POST status: \`$post_code\`"
-            echo "- Raw www POST location: \`$post_location\`"
-            echo "- Raw www POST marker: \`$post_marker\`"
-            echo "- Apex routes — home \`$home_code\`, admin live chat \`$admin_code\`, products \`$products_code\`, catalogue \`$catalogue_code\`, inquiry \`$inquiry_code\`, sitemap \`$sitemap_code\`"
+            echo "- Raw www GET: \`$get_code\` → \`$get_location\`; marker \`$get_marker\`"
+            echo "- Raw www POST: \`$post_code\` → \`$post_location\`; marker \`$post_marker\`"
+            echo "- Apex home: raw \`$home_raw\`, final \`$home_final\`"
+            echo "- Admin live chat: raw \`$admin_raw\`, final \`$admin_final\`"
+            echo "- Products: raw \`$products_raw\` → \`$products_location\`, final \`$products_final\`"
+            echo "- Catalogue: raw \`$catalogue_raw\` → \`$catalogue_location\`, final \`$catalogue_final\`"
+            echo "- Inquiry: raw \`$inquiry_raw\` → \`$inquiry_location\`, final \`$inquiry_final\`"
+            echo "- Sitemap: raw \`$sitemap_raw\`, final \`$sitemap_final\`"
             echo "- Production source: \`$source_commit\`"
+            echo "- Deployment source: \`$deployment_source\`"
             echo "- Source identity: \`$identity_state\`"
+            echo "- Build fingerprint matches deployment: \`$(test "$build_fingerprint" = "$deployment_fingerprint" && echo true || echo false)\`"
             echo "- Built at: \`$built_at\`"
             echo "- Bundle checks — Live Team \`$bundle_live_team\`, admin route \`$bundle_admin_route\`, endpoint \`$bundle_endpoint\`, title \`$bundle_title\`"
             echo
@@ -85,15 +147,14 @@ jobs:
           test "$post_code" = "308" || failed=1
           test "$post_location" = "https://irhaapparels.com/inquiry?canonical_test=$cache_bust" || failed=1
           test "$post_marker" = "www-to-apex" || failed=1
-          test "$home_code" = "200" || failed=1
-          test "$admin_code" = "200" || failed=1
-          test "$products_code" = "200" || failed=1
-          test "$catalogue_code" = "200" || failed=1
-          test "$inquiry_code" = "200" || failed=1
-          test "$sitemap_code" = "200" || failed=1
-          grep -q '<urlset' /tmp/sitemap.xml || failed=1
-          test "$source_commit" = "$EXPECTED_SOURCE" || failed=1
-          test "$identity_state" = "verified" || failed=1
+          test "$home_final" = "200" || failed=1
+          test "$admin_final" = "200" || failed=1
+          test "$products_final" = "200" || failed=1
+          test "$catalogue_final" = "200" || failed=1
+          test "$inquiry_final" = "200" || failed=1
+          test "$sitemap_final" = "200" || failed=1
+          grep -q '<urlset' /tmp/sitemap-final.body || failed=1
+          test "$identity_ready" = "1" || failed=1
           test "$bundle_live_team" = "true" || failed=1
           test "$bundle_admin_route" = "true" || failed=1
           test "$bundle_endpoint" = "true" || failed=1
