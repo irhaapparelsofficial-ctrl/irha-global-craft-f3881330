@@ -1,17 +1,15 @@
 name: Cloudflare Pages Production
 
-run-name: Controlled Cloudflare production · ${{ github.ref_name }} · #${{ github.run_number }}
+run-name: Guarded Cloudflare production · ${{ github.ref_name }} · #${{ github.run_number }}
 
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: Type DEPLOY to publish the current main commit to irha-apparels.pages.dev
+        description: Type DEPLOY to publish the exact current main commit
         required: true
         default: "NO"
         type: string
-  push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -28,9 +26,7 @@ env:
 
 jobs:
   deploy:
-    if: >-
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && inputs.confirm == 'DEPLOY')
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm == 'DEPLOY'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
@@ -39,12 +35,20 @@ jobs:
       CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
 
     steps:
+      - name: Checkout exact approved source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       - name: Resolve Cloudflare account and verify project
-        id: cloudflare
         shell: bash
         run: |
           set -euo pipefail
-
           token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
           raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
           project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
@@ -57,115 +61,70 @@ jobs:
           }
 
           echo "::add-mask::$token"
-
-          verify_json="$(curl -sS \
+          verify_json="$(curl -fsS \
             -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
             https://api.cloudflare.com/client/v4/user/tokens/verify)"
-          if [ "$(printf '%s' "$verify_json" | jq -r '.success // false')" != "true" ]; then
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = "true" || {
             echo "Cloudflare API token verification failed"
-            printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
             exit 1
-          fi
+          }
 
           account_id="$raw_account_id"
           if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
-            embedded_account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
-            if [[ "$embedded_account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
-              account_id="$embedded_account_id"
-              echo "Normalized Account ID from the configured secret value"
-            else
-              accounts_json="$(curl -sS \
-                -H "Authorization: Bearer $token" \
-                -H 'Content-Type: application/json' \
-                'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
-              if [ "$(printf '%s' "$accounts_json" | jq -r '.success // false')" != "true" ]; then
-                echo "Cloudflare account discovery failed. Set CLOUDFLARE_ACCOUNT_ID to the exact 32-character Account ID."
-                printf '%s' "$accounts_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
-                exit 1
-              fi
-
-              account_count="$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')"
-              if [ "$account_count" != "1" ]; then
-                echo "Cloudflare token can access $account_count accounts. Set CLOUDFLARE_ACCOUNT_ID to the exact 32-character Account ID."
-                exit 1
-              fi
-              account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
-              echo "Resolved the only Cloudflare account accessible to this token"
-            fi
+            account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
           fi
-
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            accounts_json="$(curl -fsS \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+            test "$(printf '%s' "$accounts_json" | jq -r '.success // false')" = "true"
+            test "$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')" = "1" || {
+              echo "Set CLOUDFLARE_ACCOUNT_ID to the exact 32-character account ID"
+              exit 1
+            }
+            account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+          fi
           [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {
             echo "Cloudflare Account ID could not be resolved safely"
             exit 1
           }
-          echo "::add-mask::$account_id"
 
-          project_json="$(curl -sS \
+          echo "::add-mask::$account_id"
+          project_json="$(curl -fsS \
             -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
             "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
-          if [ "$(printf '%s' "$project_json" | jq -r '.success // false')" != "true" ]; then
-            echo "Cloudflare Pages project lookup failed"
-            printf '%s' "$project_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
-            exit 1
-          fi
-
-          actual_name="$(printf '%s' "$project_json" | jq -r '.result.name // empty')"
-          production_branch="$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')"
-          previous_deployment_id="$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // "none"')"
-          initial_domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
-
-          test "$actual_name" = "$project_name" || {
-            echo "Cloudflare project mismatch: expected $project_name, got $actual_name"
-            exit 1
-          }
-          test "$production_branch" = "$PRODUCTION_BRANCH" || {
-            echo "Cloudflare production branch mismatch: expected $PRODUCTION_BRANCH, got ${production_branch:-unset}"
-            exit 1
-          }
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true"
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
+          test "$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')" = "$PRODUCTION_BRANCH"
 
           {
             echo "CLOUDFLARE_API_TOKEN=$token"
             echo "CLOUDFLARE_ACCOUNT_ID=$account_id"
             echo "CLOUDFLARE_PROJECT_NAME=$project_name"
-            echo "PREVIOUS_DEPLOYMENT_ID=$previous_deployment_id"
-            echo "INITIAL_DOMAIN_COUNT=$initial_domain_count"
+            echo "INITIAL_DOMAIN_COUNT=$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
           } >> "$GITHUB_ENV"
-
-          echo "Cloudflare project confirmed: $actual_name"
-          echo "Production branch confirmed: $production_branch"
-          echo "Existing domain count: $initial_domain_count"
-
-      - name: Checkout exact approved source
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
 
-      - name: Re-run deterministic release checks
+      - name: Run deterministic release checks
         run: |
+          set -euo pipefail
           npm run verify:deployment-source
           npm run verify:secrets
           npm run verify:migrations
           npx tsc --noEmit
           npm test -- --passWithNoTests
-
-      - name: Build exact source
-        run: npm run build
+          npm run build
+          npm run verify:release-identity
 
       - name: Verify release-safe build output
         shell: bash
         run: |
           set -euo pipefail
-          npm run verify:release-identity
           test -s dist/index.html
           test -s dist/build.json
           test -s dist/release.txt
@@ -185,8 +144,8 @@ jobs:
             exit 1
           fi
 
-          build_fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
-          [[ "$build_fingerprint" =~ ^[0-9a-f]{64}$ ]] || {
+          fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
+          [[ "$fingerprint" =~ ^[0-9a-f]{64}$ ]] || {
             echo "Built output is missing a valid deterministic fingerprint"
             exit 1
           }
@@ -195,12 +154,12 @@ jobs:
             --arg source_sha "$GITHUB_SHA" \
             --arg repository "$GITHUB_REPOSITORY" \
             --arg branch "$PRODUCTION_BRANCH" \
-            --arg build_fingerprint "$build_fingerprint" \
+            --arg build_fingerprint "$fingerprint" \
             --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '{source_sha: $source_sha, repository: $repository, branch: $branch, build_fingerprint: $build_fingerprint, generated_at: $generated_at}' \
             > dist/cloudflare-deployment.json
 
-      - name: Deploy Cloudflare production branch
+      - name: Deploy exact build to Cloudflare Pages
         shell: bash
         run: |
           set -euo pipefail
@@ -208,85 +167,43 @@ jobs:
             --project-name="$CLOUDFLARE_PROJECT_NAME" \
             --branch="$PRODUCTION_BRANCH"
 
-      - name: Verify exact production deployment on pages.dev
+      - name: Verify pages.dev and custom domains serve the exact release
         shell: bash
         run: |
           set -euo pipefail
-          ready=0
-
-          for attempt in $(seq 1 24); do
-            cache_bust="${GITHUB_SHA::12}-$attempt"
-            if curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-              "$PRODUCTION_URL/?release_check=$cache_bust" -o /tmp/production-home.html -D /tmp/production-headers \
-              && curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-              "$PRODUCTION_URL/build.json?release_check=$cache_bust" -o /tmp/production-build.json \
-              && curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-              "$PRODUCTION_URL/cloudflare-deployment.json?release_check=$cache_bust" -o /tmp/cloudflare-deployment.json; then
-
-              build_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/production-build.json)"
-              if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/production-headers \
-                && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' /tmp/production-home.html \
-                && [[ "$build_fingerprint" =~ ^[0-9a-f]{64}$ ]] \
-                && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase 'pvzjiozismyxqrzmtfbi' \
-                  '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and .build_fingerprint_algorithm == "sha256"' \
-                  /tmp/production-build.json >/dev/null \
-                && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg fingerprint "$build_fingerprint" \
-                  '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint' \
-                  /tmp/cloudflare-deployment.json >/dev/null; then
-                ready=1
-                echo "Exact Cloudflare production deployment verified on attempt $attempt"
-                break
-              fi
-            fi
-
-            echo "Production deployment not ready yet (attempt $attempt/24)"
-            sleep 10
-          done
-
-          test "$ready" = "1" || {
-            echo "Cloudflare production deployment did not converge safely"
-            exit 1
-          }
-
-      - name: Verify custom domain serves exact release
-        shell: bash
-        run: |
-          set -euo pipefail
-          expected_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/production-build.json)"
+          expected_fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
           [[ "$expected_fingerprint" =~ ^[0-9a-f]{64}$ ]]
 
-          for base_url in "$CUSTOM_DOMAIN_URL" "$WWW_CUSTOM_DOMAIN_URL"; do
-            ready=0
-            host="${base_url#https://}"
-            safe_host="$(printf '%s' "$host" | tr -c 'A-Za-z0-9._-' '_')"
+          verify_url() {
+            local base_url="$1"
+            local ready=0
+            local safe_host
+            safe_host="$(printf '%s' "${base_url#https://}" | tr -c 'A-Za-z0-9._-' '_')"
 
             for attempt in $(seq 1 24); do
-              cache_bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
-              home_file="/tmp/${safe_host}-home.html"
-              header_file="/tmp/${safe_host}-headers"
-              build_file="/tmp/${safe_host}-build.json"
-              deployment_file="/tmp/${safe_host}-cloudflare-deployment.json"
+              local cache_bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
+              local home="/tmp/${safe_host}-home.html"
+              local build="/tmp/${safe_host}-build.json"
+              local deployment="/tmp/${safe_host}-deployment.json"
 
               if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-                "$base_url/?release_check=$cache_bust" -o "$home_file" -D "$header_file" \
+                   "$base_url/?release_check=$cache_bust" -o "$home" \
                 && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-                "$base_url/build.json?release_check=$cache_bust" -o "$build_file" \
+                   "$base_url/build.json?release_check=$cache_bust" -o "$build" \
                 && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-                "$base_url/cloudflare-deployment.json?release_check=$cache_bust" -o "$deployment_file"; then
-
-                if grep -Eiq '^HTTP/[0-9.]+ (200|301|302|307|308)' "$header_file" \
-                  && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' "$home_file" \
-                  && grep -Eiq 'Custom Apparel Manufacturer for Global B2B Buyers|Custom Apparel Manufacturing for Global B2B Buyers' "$home_file" \
-                  && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase 'pvzjiozismyxqrzmtfbi' --arg fingerprint "$expected_fingerprint" \
-                    '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and .build_fingerprint == $fingerprint' \
-                    "$build_file" >/dev/null \
-                  && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg fingerprint "$expected_fingerprint" \
-                    '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint' \
-                    "$deployment_file" >/dev/null; then
-                  ready=1
-                  echo "$base_url verified on attempt $attempt"
-                  break
-                fi
+                   "$base_url/cloudflare-deployment.json?release_check=$cache_bust" -o "$deployment" \
+                && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' "$home" \
+                && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" \
+                     --arg supabase 'pvzjiozismyxqrzmtfbi' --arg fingerprint "$expected_fingerprint" \
+                     '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and .build_fingerprint == $fingerprint' \
+                     "$build" >/dev/null \
+                && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" \
+                     --arg fingerprint "$expected_fingerprint" \
+                     '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint' \
+                     "$deployment" >/dev/null; then
+                ready=1
+                echo "$base_url verified on attempt $attempt"
+                break
               fi
 
               echo "$base_url not converged yet (attempt $attempt/24)"
@@ -294,7 +211,7 @@ jobs:
             done
 
             test "$ready" = "1" || {
-              echo "Custom domain did not converge to the exact production release: $base_url"
+              echo "Exact release verification failed for $base_url"
               exit 1
             }
 
@@ -302,23 +219,24 @@ jobs:
               echo "Blocked legacy production claims are present on $base_url"
               exit 1
             fi
-          done
+          }
 
-      - name: Verify domain configuration was not changed
+          verify_url "$PRODUCTION_URL"
+          verify_url "$CUSTOM_DOMAIN_URL"
+          verify_url "$WWW_CUSTOM_DOMAIN_URL"
+
+      - name: Verify Cloudflare domain configuration was not changed
         shell: bash
         run: |
           set -euo pipefail
-
-          project_json="$(curl -sS \
+          project_json="$(curl -fsS \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H 'Content-Type: application/json' \
             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME")"
           test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true"
-
           final_domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
-          latest_deployment_id="$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // "unknown"')"
           test "$final_domain_count" = "$INITIAL_DOMAIN_COUNT" || {
-            echo "Domain count changed unexpectedly: before $INITIAL_DOMAIN_COUNT, after $final_domain_count"
+            echo "Domain count changed unexpectedly"
             exit 1
           }
 
@@ -327,11 +245,8 @@ jobs:
             echo "- Status: verified"
             echo "- Source commit: \`$GITHUB_SHA\`"
             echo "- Production URL: $PRODUCTION_URL"
-            echo "- Previous deployment ID: \`$PREVIOUS_DEPLOYMENT_ID\`"
-            echo "- New deployment ID: \`$latest_deployment_id\`"
-            echo "- Build fingerprint: \`$(jq -r '.build_fingerprint' /tmp/production-build.json)\`"
+            echo "- Custom domain: $CUSTOM_DOMAIN_URL"
+            echo "- WWW domain: $WWW_CUSTOM_DOMAIN_URL"
             echo "- Domain count unchanged: $final_domain_count"
-            echo "- Custom domain verified: $CUSTOM_DOMAIN_URL"
-            echo "- WWW domain verified: $WWW_CUSTOM_DOMAIN_URL"
             echo "- DNS/custom domains were not modified by this workflow"
           } >> "$GITHUB_STEP_SUMMARY"
