@@ -12,16 +12,15 @@ describe("human live chat admin alerts", () => {
     expect(layout).toContain("<HumanLiveChat />");
   });
 
-  it("exposes a mobile-only protected admin inbox without duplicating the desktop launcher", () => {
-    const launcher = read("src/components/admin/AdminBuyerActionsLauncher.tsx");
+  it("preserves the existing protected admin live chat console launcher", () => {
+    const launcher = read("src/components/admin/AdminLiveChatLauncher.tsx");
+    const main = read("src/main.tsx");
     const mobileFocus = read("src/admin-mobile-focus.css");
+    expect(main).toContain("<AdminLiveChatLauncher />");
     expect(launcher).toContain('href="/admin/live-chat"');
-    expect(launcher).toContain("Live Chat");
     expect(launcher).toContain('.eq("role", "admin")');
-    expect(launcher).toContain("md:hidden");
-    expect(launcher).toContain('aria-label="Open Human Live Chat inbox"');
+    expect(launcher).toContain('aria-label="Open human live chat console"');
     expect(mobileFocus).toContain('[aria-label="Open human live chat console"]');
-    expect(mobileFocus).not.toContain('[aria-label="Open Human Live Chat inbox"]');
   });
 
   it("creates an internal alert for a human buyer message and clears it on reply", () => {
