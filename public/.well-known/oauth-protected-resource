@@ -1,0 +1,17 @@
+{
+  "resource": "https://pvzjiozismyxqrzmtfbi.supabase.co",
+  "resource_name": "Irha Apparels Owner Backend",
+  "authorization_servers": [
+    "https://pvzjiozismyxqrzmtfbi.supabase.co/auth/v1"
+  ],
+  "scopes_supported": [
+    "openid",
+    "profile",
+    "email",
+    "phone"
+  ],
+  "bearer_methods_supported": [
+    "header"
+  ],
+  "resource_documentation": "https://irhaapparels.com/docs/oauth.md"
+}
