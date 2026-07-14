@@ -25,63 +25,84 @@ env:
   PRODUCTION_URL: https://irha-apparels.pages.dev
 
 jobs:
-  preflight:
+  deploy:
     if: >-
       github.event_name == 'push' ||
       (github.event_name == 'workflow_dispatch' && inputs.confirm == 'DEPLOY')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      previous_deployment_id: ${{ steps.cloudflare.outputs.previous_deployment_id }}
-      domain_count: ${{ steps.cloudflare.outputs.domain_count }}
+    timeout-minutes: 35
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
 
     steps:
-      - name: Verify Cloudflare credentials, account and production branch
+      - name: Resolve Cloudflare account and verify project
         id: cloudflare
         shell: bash
         run: |
           set -euo pipefail
 
-          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
-          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
-          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
 
           test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
-          test -n "$account_id" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
           test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
-
-          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {
-            echo "CLOUDFLARE_ACCOUNT_ID must be the 32-character Account ID only"
-            exit 1
-          }
           [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {
             echo "CLOUDFLARE_PROJECT_NAME contains invalid characters"
             exit 1
           }
 
           echo "::add-mask::$token"
-          echo "::add-mask::$account_id"
 
           verify_json="$(curl -sS \
             -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
             https://api.cloudflare.com/client/v4/user/tokens/verify)"
-
           if [ "$(printf '%s' "$verify_json" | jq -r '.success // false')" != "true" ]; then
             echo "Cloudflare API token verification failed"
             printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
             exit 1
           fi
 
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            embedded_account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
+            if [[ "$embedded_account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+              account_id="$embedded_account_id"
+              echo "Normalized Account ID from the configured secret value"
+            else
+              accounts_json="$(curl -sS \
+                -H "Authorization: Bearer $token" \
+                -H 'Content-Type: application/json' \
+                'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+              if [ "$(printf '%s' "$accounts_json" | jq -r '.success // false')" != "true" ]; then
+                echo "Cloudflare account discovery failed. Set CLOUDFLARE_ACCOUNT_ID to the exact 32-character Account ID."
+                printf '%s' "$accounts_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+                exit 1
+              fi
+
+              account_count="$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')"
+              if [ "$account_count" != "1" ]; then
+                echo "Cloudflare token can access $account_count accounts. Set CLOUDFLARE_ACCOUNT_ID to the exact 32-character Account ID."
+                exit 1
+              fi
+              account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+              echo "Resolved the only Cloudflare account accessible to this token"
+            fi
+          fi
+
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {
+            echo "Cloudflare Account ID could not be resolved safely"
+            exit 1
+          }
+          echo "::add-mask::$account_id"
+
           project_json="$(curl -sS \
             -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
             "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
-
           if [ "$(printf '%s' "$project_json" | jq -r '.success // false')" != "true" ]; then
             echo "Cloudflare Pages project lookup failed"
             printf '%s' "$project_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
@@ -91,7 +112,7 @@ jobs:
           actual_name="$(printf '%s' "$project_json" | jq -r '.result.name // empty')"
           production_branch="$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')"
           previous_deployment_id="$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // "none"')"
-          domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
+          initial_domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
 
           test "$actual_name" = "$project_name" || {
             echo "Cloudflare project mismatch: expected $project_name, got $actual_name"
@@ -102,38 +123,17 @@ jobs:
             exit 1
           }
 
-          echo "previous_deployment_id=$previous_deployment_id" >> "$GITHUB_OUTPUT"
-          echo "domain_count=$domain_count" >> "$GITHUB_OUTPUT"
-          echo "Cloudflare project confirmed: $actual_name"
-          echo "Production branch confirmed: $production_branch"
-          echo "Existing custom-domain count: $domain_count"
-
-  deploy:
-    needs: preflight
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-      PREVIOUS_DEPLOYMENT_ID: ${{ needs.preflight.outputs.previous_deployment_id }}
-      INITIAL_DOMAIN_COUNT: ${{ needs.preflight.outputs.domain_count }}
-
-    steps:
-      - name: Normalize Cloudflare environment
-        shell: bash
-        run: |
-          set -euo pipefail
-          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
-          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
-          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
-          echo "::add-mask::$token"
-          echo "::add-mask::$account_id"
           {
             echo "CLOUDFLARE_API_TOKEN=$token"
             echo "CLOUDFLARE_ACCOUNT_ID=$account_id"
             echo "CLOUDFLARE_PROJECT_NAME=$project_name"
+            echo "PREVIOUS_DEPLOYMENT_ID=$previous_deployment_id"
+            echo "INITIAL_DOMAIN_COUNT=$initial_domain_count"
           } >> "$GITHUB_ENV"
+
+          echo "Cloudflare project confirmed: $actual_name"
+          echo "Production branch confirmed: $production_branch"
+          echo "Existing domain count: $initial_domain_count"
 
       - name: Checkout exact approved source
         uses: actions/checkout@v4
@@ -214,43 +214,25 @@ jobs:
 
           for attempt in $(seq 1 24); do
             cache_bust="${GITHUB_SHA::12}-$attempt"
-
-            if curl -fsS \
-              --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              "$PRODUCTION_URL/?release_check=$cache_bust" \
-              -o /tmp/production-home.html \
-              -D /tmp/production-headers \
-              && curl -fsS \
-              --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              "$PRODUCTION_URL/build.json?release_check=$cache_bust" \
-              -o /tmp/production-build.json \
-              && curl -fsS \
-              --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              "$PRODUCTION_URL/cloudflare-deployment.json?release_check=$cache_bust" \
-              -o /tmp/cloudflare-deployment.json; then
+            if curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/?release_check=$cache_bust" -o /tmp/production-home.html -D /tmp/production-headers \
+              && curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/build.json?release_check=$cache_bust" -o /tmp/production-build.json \
+              && curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/cloudflare-deployment.json?release_check=$cache_bust" -o /tmp/cloudflare-deployment.json; then
 
               build_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/production-build.json)"
-
               if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/production-headers \
                 && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' /tmp/production-home.html \
                 && [[ "$build_fingerprint" =~ ^[0-9a-f]{64}$ ]] \
-                && jq -e \
-                  --arg sha "$GITHUB_SHA" \
-                  --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
-                  --arg supabase 'pvzjiozismyxqrzmtfbi' \
+                && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase 'pvzjiozismyxqrzmtfbi' \
                   '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and .build_fingerprint_algorithm == "sha256"' \
                   /tmp/production-build.json >/dev/null \
-                && jq -e \
-                  --arg sha "$GITHUB_SHA" \
-                  --arg repo "$GITHUB_REPOSITORY" \
-                  --arg fingerprint "$build_fingerprint" \
+                && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg fingerprint "$build_fingerprint" \
                   '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint' \
                   /tmp/cloudflare-deployment.json >/dev/null; then
                 ready=1
-                echo "Exact Cloudflare production deployment and fingerprint verified on attempt $attempt"
+                echo "Exact Cloudflare production deployment verified on attempt $attempt"
                 break
               fi
             fi
@@ -264,7 +246,7 @@ jobs:
             exit 1
           }
 
-      - name: Verify custom-domain configuration was not changed
+      - name: Verify domain configuration was not changed
         shell: bash
         run: |
           set -euo pipefail
@@ -273,14 +255,12 @@ jobs:
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H 'Content-Type: application/json' \
             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME")"
-
           test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true"
 
           final_domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
           latest_deployment_id="$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // "unknown"')"
-
           test "$final_domain_count" = "$INITIAL_DOMAIN_COUNT" || {
-            echo "Custom-domain count changed unexpectedly: before $INITIAL_DOMAIN_COUNT, after $final_domain_count"
+            echo "Domain count changed unexpectedly: before $INITIAL_DOMAIN_COUNT, after $final_domain_count"
             exit 1
           }
 
@@ -292,6 +272,6 @@ jobs:
             echo "- Previous deployment ID: \`$PREVIOUS_DEPLOYMENT_ID\`"
             echo "- New deployment ID: \`$latest_deployment_id\`"
             echo "- Build fingerprint: \`$(jq -r '.build_fingerprint' /tmp/production-build.json)\`"
-            echo "- Custom-domain count unchanged: $final_domain_count"
+            echo "- Domain count unchanged: $final_domain_count"
             echo "- DNS/custom domains were not modified by this workflow"
           } >> "$GITHUB_STEP_SUMMARY"
