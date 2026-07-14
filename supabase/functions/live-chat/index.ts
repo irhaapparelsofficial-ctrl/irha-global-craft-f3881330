@@ -106,7 +106,7 @@ async function hashToken(token: string) {
 async function getSession(sessionId: string) {
   const { data, error } = await service()
     .from("live_chat_sessions")
-    .select("session_id,visitor_token_hash,status,unread_visitor,visitor_name,visitor_email,visitor_whatsapp,company_name,country,page_path,page_title,last_message_at")
+    .select("session_id,visitor_token_hash,status,unread_admin,unread_visitor,visitor_name,visitor_email,visitor_whatsapp,company_name,country,page_path,page_title,last_message_at")
     .eq("session_id", sessionId)
     .maybeSingle();
   if (error) throw error;
@@ -289,7 +289,7 @@ Deno.serve(async (req: Request) => {
           page_path: pagePath,
           page_title: pageTitle,
           status: existing.status === "closed" || existing.status === "resolved" ? "pending" : existing.status,
-          unread_admin: 1,
+          unread_admin: Number(existing.unread_admin || 0) + 1,
           last_message_at: now,
           last_user_message_at: now,
           updated_at: now,
@@ -306,8 +306,11 @@ Deno.serve(async (req: Request) => {
     if (!verification.ok) return json({ error: verification.reason }, verification.reason === "session_not_found" ? 404 : 403, headers);
 
     await insertVisitorMessage(sessionId, message, clientMessageId);
+    const nextStatus = verification.session.status === "closed" || verification.session.status === "resolved"
+      ? "pending"
+      : verification.session.status;
     const { error: updateError } = await service().from("live_chat_sessions").update({
-      status: verification.session.status === "closed" || verification.session.status === "resolved" ? "pending" : verification.session.status,
+      status: nextStatus,
       unread_admin: Number(verification.session.unread_admin || 0) + 1,
       last_message_at: now,
       last_user_message_at: now,
@@ -316,7 +319,7 @@ Deno.serve(async (req: Request) => {
     if (updateError) throw updateError;
 
     await notifyAdmin(sessionId, verification.session.visitor_name, message, verification.session.page_path);
-    return json({ ok: true, status: "pending", messages: await loadMessages(sessionId) }, 200, headers);
+    return json({ ok: true, status: nextStatus, messages: await loadMessages(sessionId) }, 200, headers);
   } catch (error) {
     console.error("live chat gateway error", error);
     return json({ error: "live_chat_unavailable" }, 503, headers);
