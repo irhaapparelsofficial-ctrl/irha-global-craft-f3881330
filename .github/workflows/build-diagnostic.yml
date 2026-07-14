@@ -40,6 +40,28 @@ jobs:
           status=$?
           echo "exit_code=$status" >> "$GITHUB_OUTPUT"
           tail -n 160 build.log > build-tail.log
+          node <<'NODE' > source-context.log
+          const fs = require('node:fs');
+          const log = fs.readFileSync('build.log', 'utf8');
+          const match = log.match(/in ([^\s]+\.(?:ts|tsx|js|jsx)) at (\d+)\.\.(\d+)/);
+          if (!match || !fs.existsSync(match[1])) {
+            console.log('No source offset context could be extracted.');
+            process.exit(0);
+          }
+          const source = fs.readFileSync(match[1], 'utf8');
+          const offset = Number(match[2]);
+          const prefix = source.slice(0, offset);
+          const lineNumber = prefix.split('\n').length;
+          const columnNumber = offset - prefix.lastIndexOf('\n');
+          const lines = source.split('\n');
+          const start = Math.max(0, lineNumber - 5);
+          const end = Math.min(lines.length, lineNumber + 4);
+          console.log(`${match[1]}:${lineNumber}:${columnNumber}`);
+          for (let index = start; index < end; index += 1) {
+            const marker = index + 1 === lineNumber ? '>>' : '  ';
+            console.log(`${marker} ${String(index + 1).padStart(4, ' ')} | ${lines[index]}`);
+          }
+          NODE
           exit "$status"
 
       - name: Comment exact build failure
@@ -52,6 +74,12 @@ jobs:
           {
             echo '### Build diagnostic'
             echo
+            echo '#### Source context'
+            echo '```text'
+            cat source-context.log
+            echo '```'
+            echo
+            echo '#### Build output'
             echo '```text'
             cat build-tail.log
             echo '```'
