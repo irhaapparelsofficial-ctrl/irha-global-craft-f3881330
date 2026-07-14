@@ -1,6 +1,6 @@
 # Irha Apparels Public MCP Server
 
-Endpoint: `https://www.irhaapparels.com/mcp`
+Endpoint: `https://irhaapparels.com/mcp`
 
 Transport: Streamable HTTP
 
