@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   CalendarDays,
@@ -31,6 +31,7 @@ import {
   type SocialContentType,
   type SocialPlatform,
 } from "@/lib/socialAutopilot";
+import { nextFutureWeeklyOccurrence } from "@/lib/weeklySchedule";
 
 type AutopilotHealth = {
   ok?: boolean;
@@ -78,14 +79,14 @@ type Props = {
   onPrepared: (campaignId: string) => Promise<void> | void;
 };
 
-const platformIcon: Record<SocialPlatform, React.ReactNode> = {
+const platformIcon: Record<SocialPlatform, ReactNode> = {
   facebook: <Facebook size={14} />,
   instagram: <Instagram size={14} />,
   linkedin: <Linkedin size={14} />,
   tiktok: <FileVideo2 size={14} />,
 };
 
-const contentIcon: Record<SocialContentType, React.ReactNode> = {
+const contentIcon: Record<SocialContentType, ReactNode> = {
   single_image: <ImageIcon size={13} />,
   carousel: <WandSparkles size={13} />,
   reel: <FileVideo2 size={13} />,
@@ -128,19 +129,24 @@ export default function SocialAutopilotPanel({ migrationReady, onPrepared }: Pro
     ]),
   ) as Record<SocialPlatform, ReturnType<typeof truthfulChannelStatus>>, [calendarHealth, settings.platforms]);
 
-  const save = async () => {
+  const persistSettings = async (showSuccess: boolean) => {
     const next = normalizeAutopilotSettings({ ...settings, targetMarkets: splitList(marketsText) });
-    setBusy("save");
     const { data, error } = await supabase.functions.invoke("social-autopilot", { body: { action: "save_settings", settings: next } });
-    setBusy(null);
     if (error || !data?.ok) {
       toast({ title: "Autopilot settings could not save", description: data?.error || error?.message || "Unknown error", variant: "destructive" });
-      return;
+      return null;
     }
     const saved = normalizeAutopilotSettings(data.settings);
     setSettings(saved);
     setMarketsText(saved.targetMarkets.join(", "));
-    toast({ title: "Autopilot settings saved", description: "No content was generated or published." });
+    if (showSuccess) toast({ title: "Autopilot settings saved", description: "No content was generated or published." });
+    return saved;
+  };
+
+  const save = async () => {
+    setBusy("save");
+    await persistSettings(true);
+    setBusy(null);
   };
 
   const prepare = async (dryRun: boolean) => {
@@ -154,7 +160,14 @@ export default function SocialAutopilotPanel({ migrationReady, onPrepared }: Pro
       return;
     }
     if (!dryRun && !window.confirm("Prepare the next seven days as drafts only? AI will select products and media, but nothing will be approved, published or sent until your final clearance.")) return;
+
     setBusy(dryRun ? "dry" : "prepare");
+    const saved = await persistSettings(false);
+    if (!saved) {
+      setBusy(null);
+      return;
+    }
+
     const { data, error } = await supabase.functions.invoke("social-autopilot", { body: { action: "prepare_week", dry_run: dryRun } });
     setBusy(null);
     if (error || !data?.ok) {
@@ -247,6 +260,7 @@ export default function SocialAutopilotPanel({ migrationReady, onPrepared }: Pro
               <button type="button" onClick={() => void prepare(false)} disabled={busy !== null || !ready} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[9px] uppercase tracking-[0.18em] disabled:opacity-40">{busy === "prepare" ? <Loader2 size={12} className="animate-spin" /> : <CalendarDays size={12} />} Prepare next 7 days</button>
               <button type="button" onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-2 border border-border/60 px-3 py-2.5 text-[9px] uppercase tracking-[0.14em] disabled:opacity-40"><RefreshCw size={11} className={loading ? "animate-spin" : ""} /> Refresh</button>
             </div>
+            <p className="text-[9px] text-foreground/45">Dry run and Prepare automatically save the policy shown above before calculating the queue.</p>
           </div>
 
           <div className="xl:col-span-5 space-y-4">
@@ -294,7 +308,7 @@ export default function SocialAutopilotPanel({ migrationReady, onPrepared }: Pro
   );
 }
 
-function StateCard({ label, ok, icon, text }: { label: string; ok: boolean; icon: React.ReactNode; text: string }) {
+function StateCard({ label, ok, icon, text }: { label: string; ok: boolean; icon: ReactNode; text: string }) {
   return <div className={`border p-4 ${ok ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"}`}><div className="flex items-center justify-between gap-2"><span className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em]">{icon}{label}</span>{ok ? <CheckCircle2 size={13} className="text-emerald-300" /> : <AlertTriangle size={13} className="text-amber-300" />}</div><p className="text-[9px] text-foreground/60 mt-2 leading-relaxed">{text}</p></div>;
 }
 
@@ -316,7 +330,7 @@ function toggleValue<T extends string>(values: T[], value: T) {
 }
 
 function formatPakistanTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Time pending";
+  const date = nextFutureWeeklyOccurrence(value);
+  if (!date) return "Time pending";
   return new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Karachi", weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
 }
