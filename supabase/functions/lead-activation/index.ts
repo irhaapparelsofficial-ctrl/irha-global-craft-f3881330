@@ -34,19 +34,17 @@ Deno.serve(async (request) => {
   try {
     const url = Deno.env.get("SUPABASE_URL") || "";
     const anon = Deno.env.get("SUPABASE_ANON_KEY") || "";
-    const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    if (!url || !anon || !service) return json({ error: "Supabase runtime is not configured" }, 500);
+    if (!url || !anon) return json({ error: "Supabase runtime is not configured" }, 500);
 
     const authorization = request.headers.get("Authorization") || "";
-    const auth = createClient(url, anon, { global: { headers: { Authorization: authorization } } });
-    const { data: userResult } = await auth.auth.getUser();
+    const db = createClient(url, anon, { global: { headers: { Authorization: authorization } } });
+    const { data: userResult } = await db.auth.getUser();
     const user = userResult.user;
     if (!user) return json({ error: "Unauthorized" }, 401);
-    const { data: role } = await auth.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    const { data: role } = await db.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
     if (!role) return json({ error: "Admin only" }, 403);
 
     const body = await request.json().catch(() => ({}));
-    const db = createClient(url, service);
     const action = clean(body.action, 40) || "health";
     if (action === "health") return health(db);
     if (action === "update_candidate") return updateCandidate(db, user.id, body);
@@ -74,6 +72,7 @@ async function health(db: any) {
     tables,
     max_batch: MAX_BATCH,
     sends_external_messages: false,
+    authorization_mode: "admin_jwt_rls",
     rollback_policy: "untouched_imports_only",
   });
 }
