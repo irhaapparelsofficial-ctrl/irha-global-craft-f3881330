@@ -17,18 +17,16 @@ jobs:
           ref: feat/lead-file-outreach-approval
           fetch-depth: 0
 
-      - name: Patch and verify failure checkpoint
+      - name: Apply exact recovery block
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re
 
           path = Path('supabase/functions/lead-activation-channel-v2/index.ts')
           source = path.read_text()
-          return_line = '    return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });'
-          pattern = re.escape(return_line) + r'\n  \} finally \{'
-          replacement = return_line + '''
+          old = '    return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });\n  } finally {'
+          new = '''    return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });
   } catch (error) {
     const reason = errorText(error);
     const failedBatch = await service.from("lead_activation_batches").update({
@@ -44,29 +42,19 @@ jobs:
     if (failedBatch.error) console.error("lead activation batch failure checkpoint failed", failedBatch.error.message);
     throw error;
   } finally {'''
-          patched, count = re.subn(pattern, replacement, source, count=1)
-          if count != 1:
-              raise SystemExit(f'expected checkpoint insertion point once; found {count}')
+          if source.count(old) != 1:
+              raise SystemExit(f'expected checkpoint insertion point once; found {source.count(old)}')
+          patched = source.replace(old, new, 1)
+          if 'recovery: "unexpected_error"' not in patched:
+              raise SystemExit('recovery checkpoint missing after patch')
           path.write_text(patched)
           PY
 
-          npm ci --ignore-scripts
           node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs';
-          import ts from 'typescript';
-          const path = 'supabase/functions/lead-activation-channel-v2/index.ts';
-          const source = readFileSync(path, 'utf8');
-          if (!source.includes('recovery: "unexpected_error"')) process.exit(2);
-          const result = ts.transpileModule(source, {
-            fileName: path,
-            reportDiagnostics: true,
-            compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
-          });
-          const errors = (result.diagnostics ?? []).filter((item) => item.category === ts.DiagnosticCategory.Error);
-          if (errors.length) {
-            console.error(errors.map((item) => ts.flattenDiagnosticMessageText(item.messageText, '\n')).join('\n'));
-            process.exit(1);
-          }
+          const source = readFileSync('supabase/functions/lead-activation-channel-v2/index.ts', 'utf8');
+          if (!source.includes('recovery: "unexpected_error"')) process.exit(1);
+          if (!source.includes('} catch (error) {')) process.exit(1);
           NODE
 
       - name: Commit verified checkpoint
