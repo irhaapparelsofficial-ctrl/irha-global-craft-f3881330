@@ -131,6 +131,7 @@ export default function SocialPublishingCenter() {
 
   const queue = useMemo(() => items.filter((item) => !["published", "cancelled"].includes(item.status)), [items]);
   const dueCount = useMemo(() => queue.filter((item) => item.delivery_mode === "automatic" && item.publish_approved_at && (!item.next_attempt_at || new Date(item.next_attempt_at).getTime() <= Date.now())).length, [queue]);
+  const verifiedAccountCount = useMemo(() => accounts.filter((account) => account.verification_status === "verified" && account.enabled).length, [accounts]);
 
   const toggleAccount = async (account: Account) => {
     setBusy(`account:${account.id}`);
@@ -235,6 +236,7 @@ export default function SocialPublishingCenter() {
 
       {backendError && <div className="m-4 md:m-5 border border-amber-500/35 bg-amber-500/[0.05] p-4 flex items-start gap-3"><AlertTriangle size={17} className="text-amber-300 shrink-0 mt-0.5" /><div><p className="text-sm text-amber-200">Publishing backend needs final activation.</p><p className="text-xs text-foreground/55 mt-1 break-all">{backendError}</p></div></div>}
       {health?.error && <div className="m-4 md:m-5 border border-destructive/35 bg-destructive/[0.05] p-4 text-sm text-destructive">{health.error}</div>}
+      {!loading && !backendError && accounts.length > 0 && verifiedAccountCount === 0 && <div className="m-4 md:m-5 border border-amber-500/35 bg-amber-500/[0.05] p-4 flex items-start gap-3"><Unplug size={17} className="text-amber-300 shrink-0 mt-0.5" /><div><p className="text-sm text-amber-200">External publishing is blocked.</p><p className="text-xs text-foreground/55 mt-1">No platform account is both verified and enabled. Draft generation, review and media preparation can continue; automatic delivery cannot.</p></div></div>}
 
       <div className="p-4 md:p-5 border-b border-border/60">
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
@@ -243,7 +245,7 @@ export default function SocialPublishingCenter() {
             return <article key={account.id} className="border border-border/60 bg-background/35 p-4">
               <div className="flex items-start justify-between gap-3"><div><p className="text-[9px] uppercase tracking-[0.16em] text-gold">{account.platform}</p><h3 className="font-display text-xl mt-1">{account.display_name}</h3></div>{verified ? <CheckCircle2 size={18} className="text-emerald-400" /> : account.verification_status === "failed" ? <XCircle size={18} className="text-destructive" /> : <Unplug size={18} className="text-muted-foreground" />}</div>
               <p className="text-xs text-foreground/55 mt-3 min-h-10">{account.connection_note || "Run a connection check after credentials are configured."}</p>
-              <div className="mt-3 flex flex-wrap gap-1.5">{Object.entries(account.capabilities || {}).filter(([, value]) => value).map(([key]) => <span key={key} className="border border-border/60 px-2 py-1 text-[8px] uppercase tracking-[0.12em]">{key}</span>)}</div>
+              <p className="text-[8px] uppercase tracking-[0.13em] text-muted-foreground mt-3">Adapter capability — not connection proof</p><div className="mt-1.5 flex flex-wrap gap-1.5">{Object.entries(account.capabilities || {}).filter(([, value]) => value).map(([key]) => <span key={key} className="border border-border/60 px-2 py-1 text-[8px] uppercase tracking-[0.12em]">{key}</span>)}</div>
               <button type="button" onClick={() => void toggleAccount(account)} disabled={busy !== null || !verified} className="mt-4 w-full min-h-10 border border-border/60 text-[9px] uppercase tracking-[0.14em] hover:border-gold disabled:opacity-40">{busy === `account:${account.id}` ? "Saving…" : account.enabled ? "Disable publishing" : "Enable after verification"}</button>
             </article>;
           })}
