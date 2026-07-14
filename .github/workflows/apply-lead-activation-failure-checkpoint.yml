@@ -1,68 +1,16 @@
 name: Apply Lead Activation Failure Checkpoint
 
 on:
-  push:
-    branches:
-      - feat/lead-file-outreach-approval
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/lead-file-outreach-approval
-          fetch-depth: 0
-
-      - name: Apply exact recovery block
+      - name: Record disabled one-shot patcher
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('supabase/functions/lead-activation-channel-v2/index.ts')
-          source = path.read_text()
-          old = '    return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });\n  } finally {'
-          new = '''    return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });
-  } catch (error) {
-    const reason = errorText(error);
-    const failedBatch = await service.from("lead_activation_batches").update({
-      status: importedLeadIds.length ? "partial" : "failed",
-      imported_lead_ids: importedLeadIds,
-      imported_count: importedLeadIds.length,
-      skipped_count: Math.max(0, outcomes.length - importedLeadIds.length),
-      failed_count: Math.max(1, outcomes.filter((item) => item.status === "failed").length),
-      summary: { mode: "channel_activation_v2", recovery: "unexpected_error", sends_external_messages: false, claim_token: claimToken, max_batch: MAX_BATCH },
-      errors: [...outcomes.filter((item) => item.error), { phase: "activation", error: reason }].slice(0, MAX_BATCH + 1),
-      completed_at: new Date().toISOString(),
-    }).eq("id", batch.data.id);
-    if (failedBatch.error) console.error("lead activation batch failure checkpoint failed", failedBatch.error.message);
-    throw error;
-  } finally {'''
-          if source.count(old) != 1:
-              raise SystemExit(f'expected checkpoint insertion point once; found {source.count(old)}')
-          patched = source.replace(old, new, 1)
-          if 'recovery: "unexpected_error"' not in patched:
-              raise SystemExit('recovery checkpoint missing after patch')
-          path.write_text(patched)
-          PY
-
-          node --input-type=module <<'NODE'
-          import { readFileSync } from 'node:fs';
-          const source = readFileSync('supabase/functions/lead-activation-channel-v2/index.ts', 'utf8');
-          if (!source.includes('recovery: "unexpected_error"')) process.exit(1);
-          if (!source.includes('} catch (error) {')) process.exit(1);
-          NODE
-
-      - name: Commit verified checkpoint
-        run: |
-          set -euo pipefail
-          rm .github/workflows/apply-lead-activation-failure-checkpoint.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add supabase/functions/lead-activation-channel-v2/index.ts .github/workflows/apply-lead-activation-failure-checkpoint.yml
-          git commit -m "fix(leads): checkpoint unexpected activation failures"
-          git push origin HEAD:feat/lead-file-outreach-approval
+          echo "The recursive branch push patcher is disabled."
+          echo "The recovery checkpoint is maintained directly in source and verified by Quality Gate."
