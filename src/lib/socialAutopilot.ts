@@ -198,17 +198,20 @@ export function buildPostingSlots(settingsInput: SocialAutopilotSettings): Posti
   if (platforms.length === 0) return [];
   const total = Math.min(28, settings.horizonDays * settings.dailyDraftLimit);
   const slots: PostingSlot[] = [];
-  let reelsRemaining = Math.min(settings.weeklyReels, total);
+  const reelCount = settings.contentMix.includes("reel") ? Math.min(settings.weeklyReels, total) : 0;
+  const reelIndexes = evenlySpacedIndexes(total, reelCount);
+  const nonReelMix = settings.contentMix.filter((type) => type !== "reel");
+  const fallbackMix: SocialContentType[] = nonReelMix.length > 0 ? nonReelMix : ["single_image"];
+  let nonReelIndex = 0;
 
   for (let index = 0; index < total; index += 1) {
     const dayOffset = Math.floor(index / settings.dailyDraftLimit);
     const platform = platforms[index % platforms.length];
     const windows = settings.postingWindows[platform].filter(validTime);
     const localTime = windows[index % Math.max(1, windows.length)] || "13:00";
-    const preferred = settings.contentMix[index % settings.contentMix.length];
-    const mustUseReel = reelsRemaining > 0 && (index % Math.max(1, Math.floor(total / Math.max(1, settings.weeklyReels))) === 0);
-    const contentType = mustUseReel && settings.contentMix.includes("reel") ? "reel" : preferred;
-    if (contentType === "reel") reelsRemaining -= 1;
+    const contentType: SocialContentType = reelIndexes.has(index)
+      ? "reel"
+      : fallbackMix[nonReelIndex++ % fallbackMix.length];
     slots.push({ dayOffset, platform, localTime, contentType });
   }
   return slots;
@@ -240,6 +243,19 @@ export function truthfulChannelStatus(platform: SocialPlatform, state?: ChannelS
 
 export function applyVisualPreset<T extends Record<string, unknown>>(brief: T): T & { visual_preset: SocialVisualPreset } {
   return { ...brief, visual_preset: IRHA_SOCIAL_VISUAL_PRESET };
+}
+
+function evenlySpacedIndexes(total: number, count: number) {
+  const indexes = new Set<number>();
+  if (total <= 0 || count <= 0) return indexes;
+  if (count === 1) {
+    indexes.add(0);
+    return indexes;
+  }
+  for (let index = 0; index < count; index += 1) {
+    indexes.add(Math.round((index * (total - 1)) / (count - 1)));
+  }
+  return indexes;
 }
 
 function clamp(value: unknown, minimum: number, maximum: number, fallback: number) {
