@@ -19,13 +19,19 @@ export default function ThumbnailImage({
   const original = originalSrc || src || fallbackSrc;
   const requested = src || original;
   const candidate = useMemo(() => thumbnailUrl(requested) || requested, [requested]);
-  const [useOriginal, setUseOriginal] = useState(false);
+  const sources = useMemo(
+    () => Array.from(new Set([candidate, original, fallbackSrc].filter((value): value is string => Boolean(value)))),
+    [candidate, fallbackSrc, original],
+  );
+  const [sourceIndex, setSourceIndex] = useState(0);
 
-  useEffect(() => setUseOriginal(false), [candidate, original]);
+  useEffect(() => setSourceIndex(0), [sources]);
+
+  const currentSrc = sources[Math.min(sourceIndex, Math.max(0, sources.length - 1))] || fallbackSrc;
 
   const handleError = (event: SyntheticEvent<HTMLImageElement>) => {
-    if (!useOriginal && candidate !== original) {
-      setUseOriginal(true);
+    if (sourceIndex < sources.length - 1) {
+      setSourceIndex((index) => Math.min(index + 1, sources.length - 1));
       return;
     }
     onError?.(event);
@@ -34,11 +40,12 @@ export default function ThumbnailImage({
   return (
     <img
       {...props}
-      src={useOriginal ? original : candidate}
+      src={currentSrc}
       loading={loading}
       decoding={decoding}
       onError={handleError}
       data-thumbnail-source={candidate !== original ? original : undefined}
+      data-fallback-active={currentSrc === fallbackSrc && fallbackSrc !== original ? "true" : undefined}
     />
   );
 }
