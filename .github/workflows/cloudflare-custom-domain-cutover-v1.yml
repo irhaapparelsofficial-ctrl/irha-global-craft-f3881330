@@ -1,0 +1,423 @@
+name: Cloudflare Custom Domain Cutover V1
+
+run-name: Guarded Cloudflare cutover · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/cloudflare-custom-domain-cutover-v1.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cloudflare-custom-domain-cutover
+  cancel-in-progress: false
+
+env:
+  EXPECTED_MAIN_SHA: dd29d370a5da7a93395e0a3f501f388a1944d7b6
+  ZONE_NAME: irhaapparels.com
+  WWW_NAME: www.irhaapparels.com
+  PAGES_TARGET: irha-apparels.pages.dev
+  PAGES_URL: https://irha-apparels.pages.dev
+
+jobs:
+  cutover:
+    if: github.event.pull_request.head.ref == 'ops/cloudflare-custom-domain-cutover-20260714-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact operational source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Wait for Quality Gate and freeze exact main
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_sha="$(jq -r '.pull_request.base.sha' "$GITHUB_EVENT_PATH")"
+          head_sha="$(jq -r '.pull_request.head.sha' "$GITHUB_EVENT_PATH")"
+          test "$base_sha" = "$EXPECTED_MAIN_SHA" || {
+            echo "PR base moved: expected $EXPECTED_MAIN_SHA, got $base_sha"
+            exit 1
+          }
+
+          current_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$current_main" = "$EXPECTED_MAIN_SHA" || {
+            echo "main advanced: expected $EXPECTED_MAIN_SHA, got $current_main"
+            exit 1
+          }
+
+          quality_ready=0
+          for attempt in $(seq 1 120); do
+            runs="$(curl -fsS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$head_sha&event=pull_request&per_page=100")"
+
+            status="$(printf '%s' "$runs" | jq -r '[.workflow_runs[] | select(.name == "Quality Gate")] | sort_by(.run_number) | last | .status // "missing"')"
+            conclusion="$(printf '%s' "$runs" | jq -r '[.workflow_runs[] | select(.name == "Quality Gate")] | sort_by(.run_number) | last | .conclusion // "pending"')"
+
+            if [ "$status" = completed ] && [ "$conclusion" = success ]; then
+              quality_ready=1
+              echo "Quality Gate passed for PR head $head_sha"
+              break
+            fi
+
+            if [ "$status" = completed ] && [ "$conclusion" != success ]; then
+              echo "Quality Gate completed with $conclusion"
+              exit 1
+            fi
+
+            echo "Waiting for Quality Gate ($status/$conclusion, attempt $attempt/120)"
+            sleep 10
+          done
+
+          test "$quality_ready" = 1 || {
+            echo 'Quality Gate did not complete successfully in time'
+            exit 1
+          }
+
+      - name: Preflight and create private rollback checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+
+          test -n "$token"
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
+          test -n "$project_name"
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+
+          verify_json="$(curl -fsS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = true
+
+          project_json="$(curl -fsS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = true
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
+          test "$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')" = main
+
+          printf '%s' "$project_json" | jq -e \
+            --arg default "$PAGES_TARGET" \
+            '(.result.domains // []) == [$default]' \
+            >/dev/null || {
+              echo 'Unexpected existing Pages custom-domain state; refusing mutation'
+              printf '%s' "$project_json" | jq '.result.domains'
+              exit 1
+            }
+
+          pages_release="$(curl -fsS --connect-timeout 10 --max-time 45 \
+            -H 'Cache-Control: no-cache' \
+            "$PAGES_URL/cloudflare-deployment.json?cutover_preflight=${EXPECTED_MAIN_SHA::12}")"
+          printf '%s' "$pages_release" | jq -e \
+            --arg sha "$EXPECTED_MAIN_SHA" \
+            --arg repo "$GITHUB_REPOSITORY" \
+            '.source_sha == $sha and .repository == $repo and .branch == "main"' \
+            >/dev/null || {
+              echo 'Pages production is not the exact frozen main release'
+              exit 1
+            }
+
+          zone_json="$(curl -fsS -G \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data-urlencode "name=$ZONE_NAME" \
+            --data-urlencode 'status=active' \
+            --data-urlencode 'per_page=50' \
+            https://api.cloudflare.com/client/v4/zones)"
+          test "$(printf '%s' "$zone_json" | jq -r '.success // false')" = true
+
+          zone_id="$(printf '%s' "$zone_json" | jq -r '.result[0].id // empty')"
+          zone_account_id="$(printf '%s' "$zone_json" | jq -r '.result[0].account.id // empty')"
+          test -n "$zone_id"
+          test "$zone_account_id" = "$account_id"
+          echo "::add-mask::$zone_id"
+
+          records_json="$(curl -fsS -G \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data-urlencode 'per_page=100' \
+            "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records")"
+          test "$(printf '%s' "$records_json" | jq -r '.success // false')" = true
+
+          apex_count="$(printf '%s' "$records_json" | jq --arg name "$ZONE_NAME" '[.result[] | select(.name == $name and .type == "CNAME")] | length')"
+          www_count="$(printf '%s' "$records_json" | jq --arg name "$WWW_NAME" '[.result[] | select(.name == $name and .type == "CNAME")] | length')"
+          test "$apex_count" = 1
+          test "$www_count" = 1
+
+          printf '%s' "$records_json" | jq \
+            --arg apex "$ZONE_NAME" \
+            --arg www "$WWW_NAME" \
+            '[.result[] | select((.name == $apex or .name == $www) and .type == "CNAME") | {id,type,name,content,proxied,ttl,comment}] | sort_by(.name)' \
+            > /tmp/original-web-cnames.json
+
+          jq -e 'length == 2 and all(.[]; .content == "cname.lovable.app" and .proxied == true)' \
+            /tmp/original-web-cnames.json >/dev/null || {
+              echo 'Apex/www DNS no longer matches the expected Lovable rollback baseline'
+              exit 1
+            }
+
+          apex_code="$(curl -LsS --connect-timeout 10 --max-time 45 -o /tmp/pre-apex.html -w '%{http_code}' "https://$ZONE_NAME/")"
+          www_effective="$(curl -LsS --connect-timeout 10 --max-time 45 -o /tmp/pre-www.html -w '%{url_effective}' "https://$WWW_NAME/")"
+          test "$apex_code" = 200
+          case "$www_effective" in
+            https://irhaapparels.com/*) ;;
+            *) echo "Pre-cutover www redirect is not canonical: $www_effective"; exit 1;;
+          esac
+
+          jq -n \
+            --arg expected_main_sha "$EXPECTED_MAIN_SHA" \
+            --arg account_id "$account_id" \
+            --arg project_name "$project_name" \
+            --arg zone_id "$zone_id" \
+            --arg latest_deployment_id "$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // empty')" \
+            --slurpfile records /tmp/original-web-cnames.json \
+            --argjson pages_release "$(printf '%s' "$pages_release" | jq -c '.')" \
+            '{expected_main_sha:$expected_main_sha,account_id:$account_id,project_name:$project_name,zone_id:$zone_id,latest_deployment_id:$latest_deployment_id,original_web_cnames:$records[0],pages_release:$pages_release,created_at:(now|todateiso8601)}' \
+            > /tmp/cloudflare-cutover-backup-private.json
+
+          echo 'Read-only checkpoint complete; no mutation yet.'
+
+      - name: Upload pre-cutover rollback checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-cutover-backup-private
+          path: /tmp/cloudflare-cutover-backup-private.json
+          retention-days: 14
+
+      - name: Attach domains, switch DNS and verify with automatic rollback
+        shell: bash
+        run: |
+          set -eEuo pipefail
+
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          account_id="$(jq -r '.account_id' /tmp/cloudflare-cutover-backup-private.json)"
+          project_name="$(jq -r '.project_name' /tmp/cloudflare-cutover-backup-private.json)"
+          zone_id="$(jq -r '.zone_id' /tmp/cloudflare-cutover-backup-private.json)"
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+          echo "::add-mask::$zone_id"
+
+          created_apex=0
+          created_www=0
+          switched_apex=0
+          switched_www=0
+
+          restore_record() {
+            local name="$1"
+            local record
+            record="$(jq -c --arg name "$name" '.original_web_cnames[] | select(.name == $name)' /tmp/cloudflare-cutover-backup-private.json)"
+            local record_id
+            record_id="$(printf '%s' "$record" | jq -r '.id')"
+            local payload
+            payload="$(printf '%s' "$record" | jq '{type,name,content,ttl,proxied}')"
+            curl -sS -X PUT \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              --data "$payload" \
+              "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records/$record_id" \
+              | jq -e '.success == true' >/dev/null
+          }
+
+          delete_domain() {
+            local domain="$1"
+            curl -sS -X DELETE \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name/domains/$domain" \
+              | jq -e '(.success == true) or ((.errors // []) | any(.code == 8000007 or .code == 1000))' >/dev/null || true
+          }
+
+          rollback() {
+            local rc=$?
+            trap - ERR INT TERM
+            set +e
+            echo "Cutover failed (exit $rc); restoring original DNS and Pages domain state"
+
+            [ "$switched_apex" = 1 ] && restore_record "$ZONE_NAME"
+            [ "$switched_www" = 1 ] && restore_record "$WWW_NAME"
+            [ "$created_www" = 1 ] && delete_domain "$WWW_NAME"
+            [ "$created_apex" = 1 ] && delete_domain "$ZONE_NAME"
+
+            rollback_ready=0
+            for attempt in $(seq 1 30); do
+              apex_code="$(curl -LsS --connect-timeout 10 --max-time 40 -o /tmp/rollback-apex.html -w '%{http_code}' "https://$ZONE_NAME/" 2>/dev/null || true)"
+              www_effective="$(curl -LsS --connect-timeout 10 --max-time 40 -o /tmp/rollback-www.html -w '%{url_effective}' "https://$WWW_NAME/" 2>/dev/null || true)"
+              if [ "$apex_code" = 200 ]; then
+                case "$www_effective" in
+                  https://irhaapparels.com/*) rollback_ready=1; break;;
+                esac
+              fi
+              sleep 10
+            done
+
+            jq -n \
+              --arg status rollback \
+              --argjson original_exit "$rc" \
+              --argjson live_restored "$rollback_ready" \
+              '{status:$status,original_exit:$original_exit,live_restored:($live_restored == 1),finished_at:(now|todateiso8601)}' \
+              > /tmp/cloudflare-cutover-result.json
+
+            if [ "$rollback_ready" != 1 ]; then
+              echo 'Rollback API calls completed, but public recovery could not be confirmed in time'
+            else
+              echo 'Rollback verified publicly'
+            fi
+            exit "$rc"
+          }
+          trap rollback ERR INT TERM
+
+          create_domain() {
+            local domain="$1"
+            local response
+            response="$(curl -sS -X POST \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              --data "$(jq -nc --arg name "$domain" '{name:$name}')" \
+              "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name/domains")"
+            if [ "$(printf '%s' "$response" | jq -r '.success // false')" != true ]; then
+              printf '%s' "$response" | jq -r '.errors[]? | "Create domain error \(.code): \(.message)"'
+              return 1
+            fi
+          }
+
+          create_domain "$ZONE_NAME"
+          created_apex=1
+          create_domain "$WWW_NAME"
+          created_www=1
+
+          update_record() {
+            local name="$1"
+            local record
+            record="$(jq -c --arg name "$name" '.original_web_cnames[] | select(.name == $name)' /tmp/cloudflare-cutover-backup-private.json)"
+            local record_id
+            record_id="$(printf '%s' "$record" | jq -r '.id')"
+            local payload
+            payload="$(jq -nc \
+              --arg name "$name" \
+              --arg content "$PAGES_TARGET" \
+              '{type:"CNAME",name:$name,content:$content,ttl:1,proxied:true}')"
+            response="$(curl -sS -X PUT \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              --data "$payload" \
+              "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records/$record_id")"
+            test "$(printf '%s' "$response" | jq -r '.success // false')" = true || {
+              printf '%s' "$response" | jq -r '.errors[]? | "DNS update error \(.code): \(.message)"'
+              return 1
+            }
+          }
+
+          update_record "$ZONE_NAME"
+          switched_apex=1
+          update_record "$WWW_NAME"
+          switched_www=1
+
+          ready=0
+          for attempt in $(seq 1 72); do
+            project_json="$(curl -sS \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+
+            domains_ok="$(printf '%s' "$project_json" | jq -r \
+              --arg apex "$ZONE_NAME" \
+              --arg www "$WWW_NAME" \
+              '((.result.domains // []) | index($apex)) != null and ((.result.domains // []) | index($www)) != null')"
+
+            cache_bust="${EXPECTED_MAIN_SHA::12}-$attempt"
+            apex_code="$(curl -LsS --connect-timeout 10 --max-time 45 -o /tmp/live-apex.html -D /tmp/live-apex.headers -w '%{http_code}' "https://$ZONE_NAME/?cutover=$cache_bust" 2>/dev/null || true)"
+            www_effective="$(curl -LsS --connect-timeout 10 --max-time 45 -o /tmp/live-www.html -w '%{url_effective}' "https://$WWW_NAME/?cutover=$cache_bust" 2>/dev/null || true)"
+            curl -fsS --connect-timeout 10 --max-time 45 -H 'Cache-Control: no-cache' \
+              "https://$ZONE_NAME/build.json?cutover=$cache_bust" -o /tmp/live-build.json 2>/dev/null || true
+            curl -fsS --connect-timeout 10 --max-time 45 -H 'Cache-Control: no-cache' \
+              "https://$ZONE_NAME/cloudflare-deployment.json?cutover=$cache_bust" -o /tmp/live-deployment.json 2>/dev/null || true
+
+            build_ok=false
+            deployment_ok=false
+            home_ok=false
+            www_ok=false
+
+            grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' /tmp/live-apex.html 2>/dev/null && home_ok=true
+            jq -e \
+              --arg repo "$GITHUB_REPOSITORY" \
+              --arg supabase pvzjiozismyxqrzmtfbi \
+              '.repository == $repo and .supabase_project_id == $supabase and (.application_fingerprint | test("^[0-9a-f]{64}$"))' \
+              /tmp/live-build.json >/dev/null 2>&1 && build_ok=true
+            jq -e \
+              --arg sha "$EXPECTED_MAIN_SHA" \
+              --arg repo "$GITHUB_REPOSITORY" \
+              '.source_sha == $sha and .repository == $repo and .branch == "main"' \
+              /tmp/live-deployment.json >/dev/null 2>&1 && deployment_ok=true
+            case "$www_effective" in
+              https://irhaapparels.com/*) www_ok=true;;
+            esac
+
+            if [ "$domains_ok" = true ] && [ "$apex_code" = 200 ] && [ "$home_ok" = true ] && [ "$build_ok" = true ] && [ "$deployment_ok" = true ] && [ "$www_ok" = true ]; then
+              ready=1
+              echo "Custom domains verified on attempt $attempt"
+              break
+            fi
+
+            echo "Waiting for cutover: domains=$domains_ok apex=$apex_code home=$home_ok build=$build_ok deployment=$deployment_ok www=$www_ok ($attempt/72)"
+            sleep 10
+          done
+
+          test "$ready" = 1 || {
+            echo 'Custom-domain cutover did not converge safely'
+            false
+          }
+
+          final_records="$(curl -fsS -G \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data-urlencode 'per_page=100' \
+            "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records")"
+          printf '%s' "$final_records" | jq -e \
+            --arg apex "$ZONE_NAME" \
+            --arg www "$WWW_NAME" \
+            --arg target "$PAGES_TARGET" \
+            '([.result[] | select((.name == $apex or .name == $www) and .type == "CNAME" and .content == $target and .proxied == true)] | length) == 2' \
+            >/dev/null
+
+          trap - ERR INT TERM
+          jq -n \
+            --arg status success \
+            --arg source_sha "$EXPECTED_MAIN_SHA" \
+            --arg apex "https://$ZONE_NAME" \
+            --arg www "https://$WWW_NAME" \
+            --arg target "$PAGES_TARGET" \
+            '{status:$status,source_sha:$source_sha,apex:$apex,www:$www,dns_target:$target,verified:true,finished_at:(now|todateiso8601)}' \
+            > /tmp/cloudflare-cutover-result.json
+
+          echo 'Cloudflare custom-domain cutover verified successfully.'
+
+      - name: Upload cutover result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-cutover-result
+          path: /tmp/cloudflare-cutover-result.json
+          if-no-files-found: warn
+          retention-days: 14
