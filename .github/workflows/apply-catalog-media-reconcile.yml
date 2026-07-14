@@ -1,0 +1,37 @@
+name: Apply Catalog Media Reconciliation
+
+on:
+  push:
+    branches: [hotfix/catalog-media-reconcile-placeholders]
+    paths:
+      - "scripts/patch-catalog-media-reconcile.mjs"
+      - ".github/workflows/apply-catalog-media-reconcile.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/catalog-media-reconcile-placeholders
+          fetch-depth: 0
+      - name: Apply exact reconciliation patch
+        run: node scripts/patch-catalog-media-reconcile.mjs
+      - name: Remove one-time patch machinery
+        run: git rm scripts/patch-catalog-media-reconcile.mjs .github/workflows/apply-catalog-media-reconcile.yml
+      - name: Commit reconciled source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/functions/catalog-media-bootstrap/index.ts src/components/admin/CatalogMediaBootstrapPanel.tsx
+          if git diff --cached --quiet; then
+            echo "No source changes were required."
+            exit 0
+          fi
+          git commit -m "Reconcile pending catalog media without duplicates"
+          git push origin HEAD:hotfix/catalog-media-reconcile-placeholders
