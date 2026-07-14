@@ -1,5 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
-# Registered trigger revision: 12
+# Registered trigger revision: 13
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
@@ -178,7 +178,12 @@ jobs:
           assert_redirect "/buyer-trust-center" "/buyer-trust"
 
           admin_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$STAGING_URL/admin")"
-          printf '%s' "$admin_headers" | grep -Eiq '^x-robots-tag: noindex, nofollow, noarchive\r?$'
+          robots_value="$(printf '%s\n' "$admin_headers" | awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
+          test "$robots_value" = "noindex, nofollow, noarchive" || {
+            echo "Unexpected admin X-Robots-Tag: $robots_value"
+            printf '%s\n' "$admin_headers"
+            exit 1
+          }
           echo "SEO redirects and private-route noindex headers verified." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Notify IndexNow about priority SEO pages
