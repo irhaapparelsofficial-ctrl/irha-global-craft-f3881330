@@ -9,7 +9,6 @@ const PROVIDER = "owner_spreadsheet_upload";
 const MAX_ROWS = 100;
 
 type InputRow = Record<string, unknown>;
-
 type NormalizedRow = {
   sourceRow: number;
   companyName: string;
@@ -80,7 +79,7 @@ async function stage(db: any, userId: string, body: Record<string, any>) {
 
   const sourceFile = clean(body.source_file, 240) || "Owner spreadsheet";
   const sourceSheet = clean(body.source_sheet, 160) || "Lead table";
-  const batchTotal = clamp(body.batch_total, 1, 500, body.rows.length);
+  const batchTotal = clamp(body.batch_total, 1, 100000, body.rows.length);
   const normalized = body.rows.map(normalizeRow);
   const inputFingerprints = new Set<string>();
   const blocked: any[] = [];
@@ -89,19 +88,32 @@ async function stage(db: any, userId: string, body: Record<string, any>) {
   for (const row of normalized) {
     if (!row.companyName) { blocked.push({ source_row: row.sourceRow, reason: "Company name missing" }); continue; }
     if (!row.sourceUrl) { blocked.push({ source_row: row.sourceRow, company: row.companyName, reason: "Public website/source URL missing" }); continue; }
+    if (!row.email && !row.whatsapp) { blocked.push({ source_row: row.sourceRow, company: row.companyName, reason: "Business email or WhatsApp missing" }); continue; }
     if (inputFingerprints.has(row.fingerprint)) { blocked.push({ source_row: row.sourceRow, company: row.companyName, reason: "Duplicate inside uploaded file" }); continue; }
     inputFingerprints.add(row.fingerprint);
     candidates.push(row);
   }
 
   const campaign = await resolveCampaign(db, userId, body.campaign_id, sourceFile, sourceSheet, batchTotal, candidates);
-  const known = await knownRecords(db);
+  const known = await knownRecords(db, campaign.id);
   const inserts: any[] = [];
   const duplicates: any[] = [];
 
   for (const row of candidates) {
-    const existingCandidate = (row.websiteDomain && known.candidateDomains.get(row.websiteDomain)) || (row.email && known.candidateEmails.get(row.email)) || known.candidateCompanies.get(companyCountryKey(row.companyName, row.country));
-    const existingLead = (row.websiteDomain && known.crmDomains.get(row.websiteDomain)) || (row.email && known.crmEmails.get(row.email)) || known.crmCompanies.get(companyCountryKey(row.companyName, row.country));
+    const sameCampaign = known.currentFingerprints.get(row.fingerprint);
+    if (sameCampaign) {
+      duplicates.push({ source_row: row.sourceRow, company: row.companyName, reason: "Already staged in this campaign", existing_id: sameCampaign, retry_safe: true });
+      continue;
+    }
+
+    const existingCandidate = (row.websiteDomain && known.candidateDomains.get(row.websiteDomain))
+      || (row.email && known.candidateEmails.get(row.email))
+      || (row.whatsapp && known.candidateWhatsapps.get(phoneKey(row.whatsapp)))
+      || known.candidateCompanies.get(companyCountryKey(row.companyName, row.country));
+    const existingLead = (row.websiteDomain && known.crmDomains.get(row.websiteDomain))
+      || (row.email && known.crmEmails.get(row.email))
+      || (row.whatsapp && known.crmWhatsapps.get(phoneKey(row.whatsapp)))
+      || known.crmCompanies.get(companyCountryKey(row.companyName, row.country));
     if (existingCandidate || existingLead) {
       duplicates.push({
         source_row: row.sourceRow,
@@ -114,6 +126,7 @@ async function stage(db: any, userId: string, body: Record<string, any>) {
 
     inserts.push({
       campaign_id: campaign.id,
+      import_fingerprint: row.fingerprint,
       company_name: row.companyName,
       website: row.website,
       website_domain: row.websiteDomain,
@@ -139,14 +152,11 @@ async function stage(db: any, userId: string, body: Record<string, any>) {
         source_row: row.sourceRow,
         source_confidence: row.sourceConfidence,
         email_verification: row.emailVerification,
+        contact_routes: [row.email ? "email" : null, row.whatsapp ? "whatsapp" : null].filter(Boolean),
         owner_uploaded: true,
         external_messages_sent: false,
       },
-      raw_data: {
-        fingerprint: row.fingerprint,
-        priority: row.priority,
-        notes: row.notes,
-      },
+      raw_data: { fingerprint: row.fingerprint, priority: row.priority, notes: row.notes },
       verification_status: "needs_review",
       verification_score: row.score,
       reviewed_by: null,
@@ -156,7 +166,9 @@ async function stage(db: any, userId: string, body: Record<string, any>) {
 
   let staged: any[] = [];
   if (inserts.length) {
-    const result = await db.from("lead_candidates").insert(inserts).select("id,company_name,verification_score");
+    const result = await db.from("lead_candidates")
+      .upsert(inserts, { onConflict: "campaign_id,import_fingerprint", ignoreDuplicates: true })
+      .select("id,company_name,verification_score,import_fingerprint");
     if (result.error) throw result.error;
     staged = result.data || [];
   }
@@ -211,30 +223,40 @@ async function resolveCampaign(db: any, userId: string, campaignId: unknown, sou
   return inserted.data;
 }
 
-async function knownRecords(db: any) {
+async function knownRecords(db: any, campaignId: string) {
   const [candidateResult, crmResult] = await Promise.all([
-    db.from("lead_candidates").select("id,company_name,country,email,website_domain").limit(10000),
-    db.from("b2b_leads").select("id,company_name,country,email,website_domain").limit(10000),
+    db.from("lead_candidates").select("id,campaign_id,import_fingerprint,company_name,country,email,whatsapp,website_domain").limit(20000),
+    db.from("b2b_leads").select("id,company_name,country,email,whatsapp,website_domain").limit(20000),
   ]);
   if (candidateResult.error) throw candidateResult.error;
   if (crmResult.error) throw crmResult.error;
+
+  const currentFingerprints = new Map<string, string>();
   const candidateDomains = new Map<string, string>();
   const candidateEmails = new Map<string, string>();
+  const candidateWhatsapps = new Map<string, string>();
   const candidateCompanies = new Map<string, string>();
   const crmDomains = new Map<string, string>();
   const crmEmails = new Map<string, string>();
+  const crmWhatsapps = new Map<string, string>();
   const crmCompanies = new Map<string, string>();
+
   for (const row of candidateResult.data || []) {
+    if (row.campaign_id === campaignId && row.import_fingerprint) {
+      currentFingerprints.set(String(row.import_fingerprint), row.id);
+    }
     if (row.website_domain) candidateDomains.set(String(row.website_domain).toLowerCase(), row.id);
     const email = validEmail(row.email); if (email) candidateEmails.set(email, row.id);
+    const whatsapp = phoneKey(row.whatsapp); if (whatsapp) candidateWhatsapps.set(whatsapp, row.id);
     candidateCompanies.set(companyCountryKey(row.company_name, row.country), row.id);
   }
   for (const row of crmResult.data || []) {
     if (row.website_domain) crmDomains.set(String(row.website_domain).toLowerCase(), row.id);
     const email = validEmail(row.email); if (email) crmEmails.set(email, row.id);
+    const whatsapp = phoneKey(row.whatsapp); if (whatsapp) crmWhatsapps.set(whatsapp, row.id);
     crmCompanies.set(companyCountryKey(row.company_name, row.country), row.id);
   }
-  return { candidateDomains, candidateEmails, candidateCompanies, crmDomains, crmEmails, crmCompanies };
+  return { currentFingerprints, candidateDomains, candidateEmails, candidateWhatsapps, candidateCompanies, crmDomains, crmEmails, crmWhatsapps, crmCompanies };
 }
 
 async function refreshCampaign(db: any, campaignId: string, completed: boolean) {
@@ -261,6 +283,8 @@ function normalizeRow(input: InputRow): NormalizedRow {
   const website = safeUrl(input.website);
   const sourceUrl = safeUrl(input.sourceUrl) || website || "";
   const email = validEmail(input.email);
+  const whatsapp = normalizePhone(input.whatsapp || input.phone);
+  const phone = normalizePhone(input.phone || input.whatsapp);
   const buyerType = nullable(input.buyerType, 240);
   const productFit = list(input.productFit, 20, 160);
   const websiteDomain = domain(website || sourceUrl);
@@ -269,6 +293,7 @@ function normalizeRow(input: InputRow): NormalizedRow {
   let score = 10;
   if (websiteDomain) score += 15;
   if (email) score += 25;
+  else if (whatsapp) score += 18;
   if (buyerType) score += 15;
   if (productFit.length) score += 15;
   if (sourceUrl) score += 10;
@@ -276,15 +301,16 @@ function normalizeRow(input: InputRow): NormalizedRow {
   if (/valid|publicly listed|verified/i.test(emailVerification || "")) score += 5;
   if (country) score += 5;
   score = Math.max(0, Math.min(95, score));
-  const fingerprint = clean(input.fingerprint, 500) || [email || "", websiteDomain || "", normalizeKey(companyName), normalizeKey(country || "")].join("|");
+  const fingerprint = clean(input.fingerprint, 500)
+    || [email || phoneKey(whatsapp) || "", websiteDomain || "", normalizeKey(companyName), normalizeKey(country || "")].join("|");
   return {
     sourceRow: clamp(input.sourceRow, 1, 1_000_000, 1),
     companyName,
     country,
     city: nullable(input.city, 160),
     email,
-    phone: nullable(input.phone, 180),
-    whatsapp: nullable(input.whatsapp, 180),
+    phone,
+    whatsapp,
     website,
     websiteDomain,
     buyerType,
@@ -315,23 +341,11 @@ function safeUrl(value: unknown): string | null {
     return url.toString();
   } catch { return null; }
 }
-
-function domain(value: unknown) {
-  const url = safeUrl(value);
-  if (!url) return null;
-  try { return new URL(url).hostname.toLowerCase().replace(/^www\./, ""); } catch { return null; }
-}
-
-function validEmail(value: unknown) {
-  const email = clean(value, 320).toLowerCase();
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
-}
-
-function list(value: unknown, maxItems: number, maxLength: number) {
-  const values = Array.isArray(value) ? value : typeof value === "string" ? value.split(/[|;,]/) : [];
-  return unique(values.map((item) => clean(item, maxLength))).slice(0, maxItems);
-}
-
+function domain(value: unknown) { const url = safeUrl(value); if (!url) return null; try { return new URL(url).hostname.toLowerCase().replace(/^www\./, ""); } catch { return null; } }
+function validEmail(value: unknown) { const email = clean(value, 320).toLowerCase(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null; }
+function normalizePhone(value: unknown) { const text = clean(value, 180); const match = text.match(/(?:\+|00)?\d[\d\s().\/-]{6,}\d/)?.[0] || ""; const digits = match.replace(/\D/g, ""); return digits.length >= 7 && digits.length <= 16 ? match.trim() : null; }
+function phoneKey(value: unknown) { const digits = clean(value, 180).replace(/\D/g, ""); return digits.length >= 7 && digits.length <= 16 ? digits : ""; }
+function list(value: unknown, maxItems: number, maxLength: number) { const values = Array.isArray(value) ? value : typeof value === "string" ? value.split(/[|;,]/) : []; return unique(values.map((item) => clean(item, maxLength))).slice(0, maxItems); }
 function unique(values: string[]) { return [...new Set(values.filter(Boolean))]; }
 function nullable(value: unknown, max: number) { return clean(value, max) || null; }
 function normalizeKey(value: unknown) { return clean(value, 300).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); }
