@@ -38,6 +38,34 @@ const sportswearOverride = ({
     `Custom ${productName.toLowerCase()} manufacturing for ${buyerPrograms}, wholesalers and private-label buyers, with material, construction, artwork, sizing and branding confirmed by specification.`,
 });
 
+type StreetwearOverrideInput = {
+  productName: string;
+  construction: string;
+  customization: string;
+};
+
+const streetwearOverride = ({
+  productName,
+  construction,
+  customization,
+}: StreetwearOverrideInput): ProductSeoOverride => ({
+  description:
+    `${productName} developed for streetwear brands, wholesalers, OEM and private-label programs. ` +
+    `${construction}, material composition, fabric weight, finish or wash where applicable, fit, colour, artwork method, trims, sizing and packing are confirmed against the buyer-approved sample and order specification.`,
+  shortDescription:
+    `Custom ${productName.toLowerCase()} for wholesale, OEM and private-label streetwear collections.`,
+  specs: [
+    construction,
+    "Material composition and fabric weight confirmed by approved sample",
+    customization,
+    "Fit, colour, finish and size grading confirmed by buyer brief",
+    "Private-label labels, trims and packaging available",
+  ],
+  seoTitle: `${productName} Manufacturer & Private Label Supplier | Irha Apparels`,
+  seoDescription:
+    `Custom ${productName.toLowerCase()} manufacturing for streetwear brands, wholesalers and private-label buyers, with material, construction, fit, artwork and branding confirmed by specification.`,
+});
+
 export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
   "traditional-dirndl-dress": {
     description:
@@ -340,5 +368,40 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
     buyerPrograms: "clubs, teams and activewear buyers",
     construction: "Collar, zip, pocket, sleeve, cuff and hem construction developed from the approved jacket sample",
     customization: "Team branding, logo placement and trims confirmed by buyer artwork",
+  }),
+  "bomber-jacket": streetwearOverride({
+    productName: "Bomber Jacket",
+    construction: "Collar, front closure, pocket, sleeve, cuff and hem construction developed from the approved jacket sample",
+    customization: "Artwork placement, embroidery, print, patches and trims confirmed by buyer brief",
+  }),
+  "long-sleeve-streetwear-tee": streetwearOverride({
+    productName: "Long-Sleeve Streetwear Tee",
+    construction: "Neckline, shoulder, sleeve, cuff, body fit and hem construction developed from the approved tee sample",
+    customization: "Artwork placement, print, embroidery and label treatment confirmed by buyer brief",
+  }),
+  "oversized-graphic-t-shirt": streetwearOverride({
+    productName: "Oversized Graphic T-Shirt",
+    construction: "Neckline, shoulder drop, sleeve, body proportion and hem developed from the approved T-shirt sample",
+    customization: "Graphic placement, print, embroidery and label treatment confirmed by buyer artwork",
+  }),
+  "oversized-streetwear-hoodie": streetwearOverride({
+    productName: "Oversized Streetwear Hoodie",
+    construction: "Hood, shoulder, sleeve, cuff, pocket, body proportion and hem developed from the approved hoodie sample",
+    customization: "Artwork placement, print, embroidery, patches and trims confirmed by buyer brief",
+  }),
+  "casual-sweatpants": streetwearOverride({
+    productName: "Casual Sweatpants",
+    construction: "Rise, waistband, drawcord, pocket, leg profile, cuff and hem developed from the approved sweatpant sample",
+    customization: "Artwork placement, embroidery, print, labels and trims confirmed by buyer brief",
+  }),
+  "streetwear-shorts": streetwearOverride({
+    productName: "Streetwear Shorts",
+    construction: "Rise, waistband, drawcord, pocket, inseam and hem construction developed from the approved shorts sample",
+    customization: "Artwork placement, embroidery, print, labels and trims confirmed by buyer brief",
+  }),
+  "tactical-cargo-pants": streetwearOverride({
+    productName: "Tactical Cargo Pants",
+    construction: "Rise, waistband, cargo pocket, knee, leg profile, adjustment and hem construction developed from the approved trouser sample",
+    customization: "Pocket layout, hardware, labels, patches and trims confirmed by buyer brief",
   }),
 };
