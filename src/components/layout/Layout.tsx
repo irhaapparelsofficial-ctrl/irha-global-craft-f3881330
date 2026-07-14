@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import FloatingActions from "./FloatingActions";
 import LiveChat from "@/components/LiveChat";
+import HumanLiveChat from "@/components/HumanLiveChat";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import OccasionBanner from "@/components/OccasionBanner";
 import InternalLinksBlock from "@/components/content/InternalLinksBlock";
@@ -29,6 +30,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <Footer />
       <FloatingActions />
       <LiveChat />
+      <HumanLiveChat />
       <StickyMobileCTA />
     </div>
   );
