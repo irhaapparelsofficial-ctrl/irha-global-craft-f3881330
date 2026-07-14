@@ -1,0 +1,121 @@
+name: Cloudflare Pages Exact Main Once
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-pages-exact-main-once
+  cancel-in-progress: false
+
+env:
+  STAGING_URL: https://irha-apparels.pages.dev
+  PAGES_BRANCH: main
+
+jobs:
+  deploy:
+    if: contains(github.event.head_commit.message, '[deploy-staging-once]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+
+    steps:
+      - name: Checkout exact main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Resolve Cloudflare account and verify project
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          test -n "$project_name"
+          echo "::add-mask::$token"
+
+          verify_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = "true"
+
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
+          fi
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            accounts_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+            test "$(printf '%s' "$accounts_json" | jq -r '.success // false')" = "true"
+            test "$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')" = "1"
+            account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+          fi
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
+          echo "::add-mask::$account_id"
+
+          project_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true"
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
+          test "$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')" = "$PAGES_BRANCH"
+
+          {
+            echo "CLOUDFLARE_API_TOKEN=$token"
+            echo "CLOUDFLARE_ACCOUNT_ID=$account_id"
+            echo "CLOUDFLARE_PROJECT_NAME=$project_name"
+          } >> "$GITHUB_ENV"
+
+      - name: Install and certify exact source
+        run: |
+          set -euo pipefail
+          npm install --legacy-peer-deps --no-audit --no-fund
+          npm run verify:deployment-source
+          npm run verify:secrets
+          npm run verify:migrations
+          npx tsc --noEmit
+          npm test -- --passWithNoTests
+          npm run build
+          npm run verify:release-identity
+          test -s dist/index.html
+          test -s dist/build.json
+          grep -F '"supabase_project_id": "pvzjiozismyxqrzmtfbi"' dist/build.json
+          if grep -R -nE --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'Since 2014|MOQ 50|45-Day Delivery|45-day delivery|reply within 12 hours|BSCI Audited|ISO 9001:2015|SEDEX Member' dist; then
+            echo 'Blocked legacy production claims found'
+            exit 1
+          fi
+          fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
+          [[ "$fingerprint" =~ ^[0-9a-f]{64}$ ]]
+          jq -n --arg source_sha "$GITHUB_SHA" --arg repository "$GITHUB_REPOSITORY" --arg branch "$PAGES_BRANCH" --arg build_fingerprint "$fingerprint" --arg purpose 'exact-main-recovery' --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{source_sha:$source_sha,repository:$repository,branch:$branch,build_fingerprint:$build_fingerprint,purpose:$purpose,generated_at:$generated_at}' > dist/cloudflare-deployment.json
+
+      - name: Deploy exact build
+        run: npx --yes wrangler@4 pages deploy dist --project-name="$CLOUDFLARE_PROJECT_NAME" --branch="$PAGES_BRANCH"
+
+      - name: Verify exact release on pages.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
+          ready=0
+          for attempt in $(seq 1 24); do
+            bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$STAGING_URL/build.json?release_check=$bust" -o /tmp/build.json \
+              && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$STAGING_URL/cloudflare-deployment.json?release_check=$bust" -o /tmp/deployment.json \
+              && jq -e --arg sha "$GITHUB_SHA" --arg fp "$expected_fingerprint" '.source_commit == $sha and .source_identity_state == "verified" and .supabase_project_id == "pvzjiozismyxqrzmtfbi" and .build_fingerprint == $fp' /tmp/build.json >/dev/null \
+              && jq -e --arg sha "$GITHUB_SHA" --arg fp "$expected_fingerprint" '.source_sha == $sha and .branch == "main" and .build_fingerprint == $fp and .purpose == "exact-main-recovery"' /tmp/deployment.json >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 10
+          done
+          test "$ready" = "1"
+          echo "Exact release $GITHUB_SHA verified on $STAGING_URL" >> "$GITHUB_STEP_SUMMARY"
