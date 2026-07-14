@@ -18,13 +18,29 @@ The public MCP server exposes read-only buyer information and prepares reviewabl
 
 The public lead gateway accepts rate-limited B2B inquiries, catalogue requests and signed upload-ticket requests. It does not require an OAuth token. Agents must obtain the buyer's explicit confirmation before sending any side-effecting submission.
 
+## Owner OAuth and OpenID Connect
+
+Authenticated owner resources use the owner-controlled Supabase authorization server:
+
+`https://pvzjiozismyxqrzmtfbi.supabase.co/auth/v1`
+
+Live discovery aliases are available at:
+
+- `/.well-known/openid-configuration`
+- `/.well-known/oauth-authorization-server`
+- `/.well-known/oauth-protected-resource`
+
+The protected resource is the owner Supabase backend. OAuth or OpenID Connect tokens remain subject to database row-level security, authenticated-user checks and owner/admin authorization. A token never grants blanket access.
+
 ## Owner and admin resources
 
-Admin, CRM, outreach, social publishing, analytics and private file resources are not advertised for autonomous public use. They require the authenticated owner session and server-side authorization checks. Their internal authentication endpoints, scopes and implementation details are deliberately excluded from the public API catalog.
+Admin, CRM, outreach, social publishing, analytics and private file resources require an authenticated owner session and server-side authorization checks. Their private operations are not included in the public API catalog and are not available to anonymous agents.
 
 ## Agent registration
 
-No autonomous public agent registration is currently offered. A third-party agent must not claim an Irha Apparels identity, publish content, send outreach, approve commercial terms or access owner data without a separately executed agreement and owner-controlled authorization.
+No unrestricted autonomous public agent registration is offered by Irha Apparels. A third-party agent must not claim an Irha Apparels identity, publish content, send outreach, approve commercial terms or access owner data without a separately executed agreement, registered client and owner-controlled authorization.
+
+Approved integrations must use authorization code with PKCE, explicit user consent and minimum-necessary access. See `/docs/oauth.md` for the resource boundary.
 
 ## Contact
 
