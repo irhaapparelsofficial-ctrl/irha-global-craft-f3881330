@@ -62,19 +62,25 @@ jobs:
           actual_name="$(printf '%s' "$project_json" | jq -r '.result.name // empty')"
           production_branch="$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')"
           latest_deployment_id="$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // empty')"
-          domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
+          default_hostname="$project_name.pages.dev"
+          has_default_hostname="$(printf '%s' "$project_json" | jq -r --arg expected "$default_hostname" '((.result.domains // []) | index($expected)) != null')"
+          unexpected_domains="$(printf '%s' "$project_json" | jq -r --arg expected "$default_hostname" '(.result.domains // []) | map(select(. != $expected)) | join(",")')"
 
           test "$actual_name" = "$project_name"
           test "$production_branch" = "main"
           test -n "$latest_deployment_id"
-          test "$domain_count" = "0" || {
-            echo "Custom domains are already attached; expected zero during bootstrap verification, found $domain_count"
+          test "$has_default_hostname" = "true" || {
+            echo "Default Pages hostname is missing: $default_hostname"
+            exit 1
+          }
+          test -z "$unexpected_domains" || {
+            echo "Unexpected custom domains are already attached: $unexpected_domains"
             exit 1
           }
 
           echo "latest_deployment_id=$latest_deployment_id" >> "$GITHUB_OUTPUT"
           echo "Cloudflare project and production branch verified"
-          echo "Custom-domain count remains zero"
+          echo "Only the default Pages hostname is attached: $default_hostname"
 
       - name: Verify exact pages.dev production release
         shell: bash
@@ -142,6 +148,7 @@ jobs:
             echo "- Source commit: \`$EXPECTED_SOURCE_SHA\`"
             echo "- Production URL: $PRODUCTION_URL"
             echo "- Latest Cloudflare deployment ID: \`${{ steps.project.outputs.latest_deployment_id }}\`"
-            echo "- Custom domains/DNS unchanged"
+            echo "- Only the default pages.dev hostname is attached"
+            echo "- DNS/custom domains remain unchanged"
             echo "- This workflow performed no deployment or mutation"
           } >> "$GITHUB_STEP_SUMMARY"
