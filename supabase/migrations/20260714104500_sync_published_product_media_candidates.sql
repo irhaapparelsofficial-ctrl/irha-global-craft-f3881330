@@ -1,6 +1,9 @@
 -- Seed the Media Library from real, already-published product media.
 -- These rows are review candidates only: they remain pending and are never
 -- automatically social-approved or represented as AI-generated assets.
+-- The write guard explicitly recognizes this transaction as service maintenance.
+
+SELECT set_config('request.jwt.claim.role', 'service_role', true);
 
 WITH product_media AS (
   SELECT
