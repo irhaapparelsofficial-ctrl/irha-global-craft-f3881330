@@ -1,5 +1,6 @@
 import { CalendarDays, CheckCircle2, Copy, Film, Linkedin, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import SocialAutopilotPanel from "@/components/admin/SocialAutopilotPanel";
 import SocialRenderHealthPanel from "@/components/admin/SocialRenderHealthPanel";
 import SocialRenderPipelinePanel from "@/components/admin/SocialRenderPipelinePanel";
 
@@ -111,6 +112,7 @@ export default function SocialContentPlaybook() {
         </div>
       </section>
 
+      <SocialAutopilotPanel migrationReady onPrepared={() => undefined} />
       <SocialRenderHealthPanel />
       <SocialRenderPipelinePanel />
 
