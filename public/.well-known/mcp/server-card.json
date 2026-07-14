@@ -1,0 +1,49 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/server-card/v1.json",
+  "serverInfo": {
+    "name": "irha-apparels-public",
+    "title": "Irha Apparels Public Buyer Assistant",
+    "version": "1.0.0",
+    "description": "Read-only B2B collection discovery, factory-verification information and reviewable inquiry preparation for Irha Apparels.",
+    "websiteUrl": "https://www.irhaapparels.com"
+  },
+  "protocolVersions": [
+    "2025-06-18"
+  ],
+  "transports": [
+    {
+      "type": "streamable-http",
+      "endpoint": "https://www.irhaapparels.com/mcp"
+    }
+  ],
+  "authentication": {
+    "type": "none",
+    "description": "The advertised MCP tools are public and read-only. They do not submit buyer data or expose owner/admin records."
+  },
+  "capabilities": {
+    "tools": {
+      "listChanged": false
+    }
+  },
+  "tools": [
+    {
+      "name": "list_b2b_collections",
+      "description": "Return current manufacturing hubs and collection links.",
+      "readOnly": true
+    },
+    {
+      "name": "get_factory_verification_options",
+      "description": "Return buyer-trust and live factory video-call options.",
+      "readOnly": true
+    },
+    {
+      "name": "prepare_buyer_inquiry",
+      "description": "Create a reviewable inquiry URL without submitting buyer data.",
+      "readOnly": true,
+      "confirmationRequired": true
+    }
+  ],
+  "documentation": "https://www.irhaapparels.com/docs/mcp.md",
+  "privacyPolicy": "https://www.irhaapparels.com/privacy",
+  "termsOfService": "https://www.irhaapparels.com/terms"
+}
