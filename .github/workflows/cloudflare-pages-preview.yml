@@ -31,14 +31,6 @@ jobs:
       CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
 
     steps:
-      - name: Checkout exact source
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
       - name: Verify Cloudflare credentials and project
         shell: bash
         run: |
@@ -51,33 +43,49 @@ jobs:
           echo "::add-mask::$CLOUDFLARE_API_TOKEN"
           echo "::add-mask::$CLOUDFLARE_ACCOUNT_ID"
 
-          verify_json="$(curl -fsS \
+          verify_json="$(curl -sS \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H 'Content-Type: application/json' \
-            https://api.cloudflare.com/client/v4/user/tokens/verify)"
+            https://api.cloudflare.com/client/v4/user/tokens/verify)" || {
+              echo "Cloudflare token verification request could not be completed"
+              exit 1
+            }
 
-          test "$(printf '%s' "$verify_json" | jq -r '.success')" = "true" || {
-            printf '%s' "$verify_json" | jq -r '.errors[]?.message // empty'
+          if [ "$(printf '%s' "$verify_json" | jq -r '.success // false')" != "true" ]; then
+            echo "Cloudflare API token verification failed"
+            printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
             exit 1
-          }
+          fi
 
-          project_json="$(curl -fsS \
+          project_json="$(curl -sS \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H 'Content-Type: application/json' \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME")"
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME")" || {
+              echo "Cloudflare Pages project request could not be completed"
+              exit 1
+            }
 
-          test "$(printf '%s' "$project_json" | jq -r '.success')" = "true" || {
-            printf '%s' "$project_json" | jq -r '.errors[]?.message // empty'
+          if [ "$(printf '%s' "$project_json" | jq -r '.success // false')" != "true" ]; then
+            echo "Cloudflare Pages project lookup failed"
+            printf '%s' "$project_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
             exit 1
-          }
+          fi
 
-          actual_name="$(printf '%s' "$project_json" | jq -r '.result.name')"
+          actual_name="$(printf '%s' "$project_json" | jq -r '.result.name // empty')"
           test "$actual_name" = "$CLOUDFLARE_PROJECT_NAME" || {
             echo "Cloudflare project mismatch: expected $CLOUDFLARE_PROJECT_NAME, got $actual_name"
             exit 1
           }
 
           echo "Cloudflare credentials valid and Pages project confirmed: $actual_name"
+
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
