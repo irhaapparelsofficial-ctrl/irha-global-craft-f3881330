@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher";
 import AdminLiveChatLauncher from "@/components/admin/AdminLiveChatLauncher";
+import AdminLiveChatNotification from "@/components/admin/AdminLiveChatNotification";
 import "./index.css";
 import "./admin-mobile-focus.css";
 
@@ -53,5 +54,6 @@ createRoot(rootElement).render(
     <App />
     <AdminBuyerActionsLauncher />
     <AdminLiveChatLauncher />
+    <AdminLiveChatNotification />
   </AppErrorBoundary>,
 );
