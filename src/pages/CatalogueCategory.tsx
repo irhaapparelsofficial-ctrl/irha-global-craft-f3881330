@@ -18,13 +18,34 @@ const CANONICAL_TOP_SLUGS = new Set([
   "leisure-nightwear",
 ]);
 
+const CUSTOMIZATION_LABELS: Array<[string, string]> = [
+  ["private_label", "Private label"],
+  ["oem", "OEM"],
+  ["odm", "ODM"],
+  ["embroidery", "Embroidery"],
+  ["dtf_printing", "DTF printing"],
+  ["screen_printing", "Screen printing"],
+  ["sublimation", "Sublimation"],
+  ["custom_labels", "Custom labels"],
+  ["woven_labels", "Woven labels"],
+  ["hang_tags", "Hang tags"],
+  ["custom_trims", "Custom trims"],
+];
+
 type ProductRow = {
   id: string;
   slug: string;
   name: string;
   description: string | null;
+  short_description: string | null;
   image_url: string | null;
   category_id: string;
+  moq_display: string | null;
+  sample_available: boolean | null;
+  primary_material: string | null;
+  custom_colors: boolean | null;
+  customization: Record<string, boolean> | null;
+  packaging_custom: boolean | null;
 };
 
 type CategoryRow = {
@@ -39,6 +60,41 @@ type CategoryMeta = {
   topSlug: string;
 };
 
+type SelectedProduct = {
+  name: string;
+  slug: string;
+  url: string;
+};
+
+function compactLabel(value: string, max = 28) {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  return normalized.length > max ? `${normalized.slice(0, max - 1).trim()}…` : normalized;
+}
+
+function productChips(product: ProductRow): string[] {
+  const chips: string[] = [];
+  const add = (value: string | null | undefined) => {
+    const normalized = value?.trim();
+    if (normalized && !chips.includes(normalized)) chips.push(normalized);
+  };
+
+  add(product.primary_material ? compactLabel(product.primary_material) : null);
+  if (product.sample_available) add("Sampling available");
+
+  for (const [key, label] of CUSTOMIZATION_LABELS) {
+    if (product.customization?.[key]) add(label);
+    if (chips.length >= 4) break;
+  }
+
+  if (product.custom_colors) add("Custom colours");
+  if (product.packaging_custom) add("Custom packaging");
+  add(product.moq_display ? compactLabel(product.moq_display, 34) : null);
+
+  if (chips.length < 3) add("Custom manufacturing");
+  if (chips.length < 3) add("Buyer-led specifications");
+  return chips.slice(0, 4);
+}
+
 export default function CatalogueCategory() {
   const { slug = "" } = useParams<{ slug: string }>();
   const group = findCatalogueGroup(slug);
@@ -47,6 +103,7 @@ export default function CatalogueCategory() {
   const [loading, setLoading] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<SelectedProduct | null>(null);
   const [categoryMeta, setCategoryMeta] = useState<Record<string, CategoryMeta>>({});
 
   useEffect(() => {
@@ -110,14 +167,14 @@ export default function CatalogueCategory() {
 
       const { data: productData, error: productError } = await supabase
         .from("products")
-        .select("id, slug, name, description, image_url, category_id")
+        .select("id, slug, name, description, short_description, image_url, category_id, moq_display, sample_available, primary_material, custom_colors, customization, packaging_custom")
         .eq("is_published", true)
         .in("category_id", selectedIds)
         .order("sort_order", { ascending: true })
         .limit(120);
 
       if (!cancelled) {
-        setProducts(productError ? [] : ((productData as ProductRow[]) ?? []));
+        setProducts(productError ? [] : ((productData as unknown as ProductRow[]) ?? []));
         setCategoryMeta(meta);
         setLoading(false);
       }
@@ -168,7 +225,7 @@ export default function CatalogueCategory() {
               "@id": `${productUrl}#service`,
               name: `Custom ${product.name} Manufacturing`,
               serviceType: "B2B custom apparel manufacturing",
-              description: product.description || group.description,
+              description: product.short_description || product.description || group.description,
               image: product.image_url || OG_IMAGE,
               url: productUrl,
               category: `${group.name} custom manufacturing`,
@@ -187,6 +244,10 @@ export default function CatalogueCategory() {
   ], [categoryMeta, desc, group.description, group.name, pageUrl, products]);
 
   const shareText = `${group.name} catalogue — Irha Apparels, Sialkot. Custom B2B apparel programs.`;
+  const closeLead = () => {
+    setLeadOpen(false);
+    setSelectedProduct(null);
+  };
 
   return (
     <>
@@ -228,8 +289,14 @@ export default function CatalogueCategory() {
           <p className="text-foreground/70 mt-5 max-w-3xl text-sm md:text-base leading-relaxed">{group.description}</p>
 
           <div className="flex flex-wrap gap-3 mt-7">
-            <button onClick={() => setLeadOpen(true)} className="inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-6 py-3.5 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all">
-              <Send size={14} /> Discuss Requirement
+            <button
+              onClick={() => {
+                setSelectedProduct(null);
+                setLeadOpen(true);
+              }}
+              className="inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-6 py-3.5 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all"
+            >
+              <Send size={14} /> Discuss Bulk Requirement
             </button>
             <a href={whatsappLink(`Hi, I'd like to discuss ${group.name} requirements.`)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-3 border border-gold/60 text-gold px-6 py-3.5 text-xs uppercase tracking-[0.3em] hover:bg-gold hover:text-primary-foreground transition-all">
               <MessageCircle size={14} /> WhatsApp
@@ -266,7 +333,13 @@ export default function CatalogueCategory() {
           ) : products.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-foreground/70">No published products are currently mapped to this catalogue.</p>
-              <button onClick={() => setLeadOpen(true)} className="mt-6 inline-flex items-center gap-2 border border-gold text-gold px-6 py-3 text-xs uppercase tracking-[0.3em] hover:bg-gold hover:text-primary-foreground transition-colors">
+              <button
+                onClick={() => {
+                  setSelectedProduct(null);
+                  setLeadOpen(true);
+                }}
+                className="mt-6 inline-flex items-center gap-2 border border-gold text-gold px-6 py-3 text-xs uppercase tracking-[0.3em] hover:bg-gold hover:text-primary-foreground transition-colors"
+              >
                 Discuss a custom requirement
               </button>
             </div>
@@ -275,6 +348,10 @@ export default function CatalogueCategory() {
               {products.map((product) => {
                 const meta = categoryMeta[product.category_id];
                 const productHref = meta ? `/products/${meta.topSlug}/${product.slug}` : "/products";
+                const productUrl = `${SITE}${productHref}`;
+                const descriptionText = product.short_description || product.description;
+                const chips = productChips(product);
+
                 return (
                   <article key={product.id} className="group border border-border/60 bg-card/30 overflow-hidden hover:border-gold transition-colors flex flex-col">
                     <Link to={productHref} className="aspect-[4/5] bg-card relative overflow-hidden block">
@@ -285,12 +362,29 @@ export default function CatalogueCategory() {
                       )}
                     </Link>
                     <div className="p-4 md:p-5 flex flex-col flex-1">
-                      <p className="text-[10px] uppercase tracking-[0.25em] text-gold/70">{meta?.name || group.name}</p>
+                      <p className="text-[9px] md:text-[10px] uppercase tracking-[0.22em] text-gold/70">{meta?.name || group.name}</p>
                       <Link to={productHref} className="font-display text-base md:text-lg mt-1 leading-tight hover:text-gold transition-colors">{product.name}</Link>
-                      {product.description && <p className="text-foreground/60 text-xs mt-2 line-clamp-2">{product.description}</p>}
+                      {descriptionText && <p className="text-foreground/60 text-xs mt-2 line-clamp-2">{descriptionText}</p>}
+
+                      <div className="mt-3 flex flex-wrap gap-1.5" aria-label={`${product.name} manufacturing options`}>
+                        {chips.map((chip) => (
+                          <span key={chip} className="max-w-full border border-border/60 px-2 py-1 text-[8px] md:text-[9px] uppercase tracking-[0.12em] text-foreground/55 leading-tight">
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+
                       <div className="mt-auto pt-4 flex items-center gap-2">
-                        <button onClick={() => setLeadOpen(true)} className="flex-1 text-[10px] uppercase tracking-[0.2em] border border-gold/60 text-gold py-2 hover:bg-gold hover:text-primary-foreground transition-colors">Discuss</button>
-                        <a href={whatsappLink(`Hi, I'm interested in ${product.name} (${group.name}).`)} target="_blank" rel="noreferrer noopener" aria-label={`WhatsApp inquiry for ${product.name}`} className="text-[10px] uppercase tracking-[0.2em] border border-border py-2 px-3 text-foreground/70 hover:border-gold hover:text-gold transition-colors">WhatsApp</a>
+                        <button
+                          onClick={() => {
+                            setSelectedProduct({ name: product.name, slug: product.slug, url: productUrl });
+                            setLeadOpen(true);
+                          }}
+                          className="flex-1 text-[10px] uppercase tracking-[0.2em] border border-gold/60 text-gold py-2 hover:bg-gold hover:text-primary-foreground transition-colors"
+                        >
+                          Discuss
+                        </button>
+                        <a href={whatsappLink(`Hi, I'm interested in ${product.name} (${group.name}). Product page: ${productUrl}`)} target="_blank" rel="noreferrer noopener" aria-label={`WhatsApp inquiry for ${product.name}`} className="text-[10px] uppercase tracking-[0.2em] border border-border py-2 px-3 text-foreground/70 hover:border-gold hover:text-gold transition-colors">WhatsApp</a>
                       </div>
                     </div>
                   </article>
@@ -317,10 +411,12 @@ export default function CatalogueCategory() {
 
       {leadOpen && (
         <CatalogueLeadForm
-          onClose={() => setLeadOpen(false)}
+          onClose={closeLead}
           catalogueUrl={pageUrl}
-          source={`catalogue:${group.slug}`}
+          source={selectedProduct ? `catalogue:${group.slug}:product:${selectedProduct.slug}` : `catalogue:${group.slug}`}
           categoryInterest={group.name}
+          productInterest={selectedProduct?.name}
+          productUrl={selectedProduct?.url}
         />
       )}
     </>
