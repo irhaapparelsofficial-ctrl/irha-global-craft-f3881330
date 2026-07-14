@@ -19,6 +19,6 @@ describe("Cloudflare Pages canonical host worker", () => {
   it("serves the existing Pages application through the static asset binding", () => {
     expect(worker).toContain("env.ASSETS.fetch(request)");
     expect(worker).toContain('status: 503');
-    expect(worker).not.toContain("fetch(request);");
+    expect(worker).not.toContain("return fetch(request)");
   });
 });
