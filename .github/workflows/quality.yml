@@ -48,6 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          npm run verify:release-identity
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
           grep -F '"expected_origin": "https://irhaapparels.com"' dist/build.json
           grep -F 'Sitemap: https://irhaapparels.com/sitemap.xml' dist/robots.txt
