@@ -1,4 +1,5 @@
 import type { DbProduct } from "@/hooks/useCatalog";
+import { registerLeisureNightwearSeoOverrides } from "@/lib/leisureNightwearSeoOverrides";
 import { createSupplementalBatch10LegacyProductsForSubcategory } from "@/lib/supplementalCatalogBatch10Legacy";
 import { createSupplementalBatch11ProductsForSubcategory } from "@/lib/supplementalCatalogBatch11";
 import { createSupplementalBatch12ProductsForSubcategory } from "@/lib/supplementalCatalogBatch12";
@@ -8,6 +9,8 @@ import { createSupplementalAccessories20260713ProductsForSubcategory } from "@/l
 import { createSupplementalBatch16ProductsForSubcategory } from "@/lib/supplementalCatalogBatch16";
 import { createSupplementalBatch17ProductsForSubcategory } from "@/lib/supplementalCatalogBatch17";
 import { createSupplementalFinalCompletion20260714ProductsForSubcategory } from "@/lib/supplementalCatalogFinalCompletion20260714";
+
+registerLeisureNightwearSeoOverrides();
 
 export function createSupplementalBatch10ProductsForSubcategory(
   topCategorySlug: string,
