@@ -1,0 +1,41 @@
+name: Export Lead Outreach V3 Sources
+
+on:
+  push:
+    branches:
+      - ops/export-lead-outreach-v3-sources
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify sources and record checksums
+        run: |
+          set -euo pipefail
+          files=(
+            supabase/functions/lead-file-registry/index.ts
+            supabase/functions/lead-bulk-stage/index.ts
+            supabase/functions/lead-activation-channel-v2/index.ts
+            supabase/functions/outreach-workflow-v2/index.ts
+          )
+          for file in "${files[@]}"; do test -s "$file"; done
+          sha256sum "${files[@]}" | tee lead-outreach-v3.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exact-lead-outreach-v3-sources
+          path: |
+            supabase/functions/lead-file-registry/index.ts
+            supabase/functions/lead-bulk-stage/index.ts
+            supabase/functions/lead-activation-channel-v2/index.ts
+            supabase/functions/outreach-workflow-v2/index.ts
+            lead-outreach-v3.sha256
+          if-no-files-found: error
+          retention-days: 1
