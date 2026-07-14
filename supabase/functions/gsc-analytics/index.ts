@@ -1,71 +1,164 @@
-// GSC Search Analytics — returns top queries / pages / countries for the property.
-// Admin-only: validates the caller's JWT and checks `user_roles.role = 'admin'`.
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+// Google Search Console analytics for the private owner admin.
+// Read-only: validates the caller, checks admin role and returns exact connector results.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+const DEFAULT_SITE_URL = "https://irhaapparels.com/";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
-const SITE_URL = "https://irhaapparels.com/";
+const ALLOWED_DIMENSIONS = new Set(["query", "page", "country", "device"]);
+const ALLOWED_WINDOWS = new Set([28, 90]);
+
+function isAllowedOrigin(origin: string) {
+  try {
+    const url = new URL(origin);
+    return url.hostname === "irhaapparels.com"
+      || url.hostname === "www.irhaapparels.com"
+      || url.hostname === "localhost"
+      || url.hostname === "127.0.0.1"
+      || url.hostname.endsWith(".lovable.app")
+      || url.hostname === "irha-apparels.pages.dev"
+      || url.hostname.endsWith(".irha-apparels.pages.dev");
+  } catch {
+    return false;
+  }
+}
+
+function corsHeaders(origin: string | null) {
+  const allowedOrigin = origin && isAllowedOrigin(origin) ? origin : "https://irhaapparels.com";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+}
+
+function json(payload: unknown, status: number, headers: Record<string, string>) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...headers, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
+
+async function requireAdmin(req: Request, headers: Record<string, string>) {
+  const authHeader = req.headers.get("Authorization") || "";
+  if (!/^Bearer\s+\S+/i.test(authHeader)) return { response: json({ error: "Unauthorized" }, 401, headers) };
+
+  const client = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  const { data: userResult, error: userError } = await client.auth.getUser();
+  const user = userResult?.user;
+  if (userError || !user) return { response: json({ error: "Unauthorized" }, 401, headers) };
+
+  const { data: role, error: roleError } = await client
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (roleError || !role) return { response: json({ error: "Admin only" }, 403, headers) };
+  return { response: null };
+}
+
+function connectionState() {
+  const connectorGatewayKey = Boolean(Deno.env.get("LOVABLE_API_KEY"));
+  const searchConsoleConnectionKey = Boolean(Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY"));
+  const siteUrl = (Deno.env.get("GSC_SITE_URL") || DEFAULT_SITE_URL).trim();
+  return {
+    ready: connectorGatewayKey && searchConsoleConnectionKey && Boolean(siteUrl),
+    configuration: {
+      connector_gateway_key: connectorGatewayKey,
+      search_console_connection_key: searchConsoleConnectionKey,
+      site_url: Boolean(siteUrl),
+    },
+    site_url: siteUrl,
+  };
+}
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const origin = req.headers.get("origin");
+  const headers = corsHeaders(origin);
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405, headers);
+  if (origin && !isAllowedOrigin(origin)) return json({ error: "Origin not allowed" }, 403, headers);
 
   try {
-    // ── auth: must be an admin ───────────────────────────────
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) return json({ error: "Unauthorized" }, 401);
+    const auth = await requireAdmin(req, headers);
+    if (auth.response) return auth.response;
 
-    const supaUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const sb = createClient(supaUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+    const body = await req.json().catch(() => ({}));
+    const action = typeof body?.action === "string" ? body.action : "query";
+    const state = connectionState();
 
-    const { data: userRes, error: uErr } = await sb.auth.getUser();
-    if (uErr || !userRes.user) return json({ error: "Unauthorized" }, 401);
-    const { data: roleRow } = await sb.from("user_roles").select("role").eq("user_id", userRes.user.id).eq("role", "admin").maybeSingle();
-    if (!roleRow) return json({ error: "Forbidden — admin only" }, 403);
-
-    const { dimension = "query", days = 28 } = await req.json().catch(() => ({}));
-    if (!["query", "page", "country", "device"].includes(dimension)) {
-      return json({ error: "invalid dimension" }, 400);
+    if (action === "health") {
+      return json({
+        ok: true,
+        ready: state.ready,
+        state: state.ready ? "ready" : "blocked",
+        configuration: state.configuration,
+        site_url: state.site_url,
+        notes: ["Secret values are never returned.", "Health performs no Search Console query."],
+      }, 200, headers);
     }
 
+    if (!state.ready) {
+      return json({
+        error: "Google Search Console connection is not configured",
+        code: "gsc_connection_not_configured",
+        configuration: state.configuration,
+      }, 503, headers);
+    }
 
-    const LOVABLE = Deno.env.get("LOVABLE_API_KEY");
-    const GSC_KEY = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
-    if (!LOVABLE || !GSC_KEY) return json({ error: "Missing connector credentials" }, 500);
+    const dimension = typeof body?.dimension === "string" ? body.dimension : "query";
+    const days = Number(body?.days ?? 28);
+    if (!ALLOWED_DIMENSIONS.has(dimension)) return json({ error: "Invalid dimension" }, 400, headers);
+    if (!ALLOWED_WINDOWS.has(days)) return json({ error: "Days must be 28 or 90" }, 400, headers);
 
     const end = new Date();
-    const start = new Date(end.getTime() - Number(days) * 86400000);
-    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    const start = new Date(end.getTime() - days * 86_400_000);
+    const formatDate = (date: Date) => date.toISOString().slice(0, 10);
+    const connectorToken = Deno.env.get("LOVABLE_API_KEY")!;
+    const connectionKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY")!;
+    const endpoint = `${GATEWAY}/webmasters/v3/sites/${encodeURIComponent(state.site_url)}/searchAnalytics/query`;
 
-    const url = `${GATEWAY}/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/searchAnalytics/query`;
-    const res = await fetch(url, {
+    const upstream = await fetch(endpoint, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE}`,
-        "X-Connection-Api-Key": GSC_KEY,
+        Authorization: `Bearer ${connectorToken}`,
+        "X-Connection-Api-Key": connectionKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        startDate: fmt(start),
-        endDate: fmt(end),
+        startDate: formatDate(start),
+        endDate: formatDate(end),
         dimensions: [dimension],
         rowLimit: 100,
       }),
     });
 
-    const body = await res.text();
-    if (!res.ok) return json({ error: `GSC ${res.status}: ${body.slice(0, 300)}` }, 502);
-    const parsed = JSON.parse(body);
-    return json({ rows: parsed.rows ?? [] });
-  } catch (e) {
-    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
+    const raw = await upstream.text();
+    let payload: Record<string, unknown> = {};
+    try { payload = JSON.parse(raw) as Record<string, unknown>; } catch { payload = { raw: raw.slice(0, 1000) }; }
+    if (!upstream.ok) {
+      return json({
+        error: `Google Search Console returned HTTP ${upstream.status}`,
+        code: "gsc_upstream_error",
+        detail: payload,
+      }, 502, headers);
+    }
+
+    return json({
+      ok: true,
+      dimension,
+      days,
+      site_url: state.site_url,
+      rows: Array.isArray(payload.rows) ? payload.rows : [],
+    }, 200, headers);
+  } catch (error) {
+    console.error("gsc-analytics error", error instanceof Error ? error.message : error);
+    return json({ error: "Google Search Console analytics failed" }, 500, headers);
   }
 });
-
-function json(b: unknown, status = 200) {
-  return new Response(JSON.stringify(b), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
