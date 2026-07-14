@@ -1,0 +1,45 @@
+name: Apply buyer conversion audit patch
+
+on:
+  push:
+    branches:
+      - fix/home-nav-b2b-conversion-20260714
+    paths:
+      - scripts/.run-buyer-conversion-audit
+
+permissions:
+  contents: write
+
+concurrency:
+  group: buyer-conversion-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply deterministic patch
+        shell: bash
+        run: |
+          if [ ! -f scripts/.run-buyer-conversion-audit ]; then
+            echo "One-time marker already consumed."
+            exit 0
+          fi
+          node scripts/apply-buyer-conversion-audit.mjs
+          rm scripts/.run-buyer-conversion-audit
+      - name: Commit patched frontend files
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/layout/Navbar.tsx src/pages/CategoryTaxonomyPage.tsx src/pages/Inquiry.tsx src/lib/__checks__/homeNavigationConversion.test.ts scripts/.run-buyer-conversion-audit
+          git commit -m "fix(conversion): streamline category discovery and RFQ entry"
+          git push origin HEAD:${GITHUB_REF_NAME}
