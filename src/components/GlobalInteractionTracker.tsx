@@ -28,6 +28,16 @@ export function classifyBuyerInteraction(target: Element): Interaction | null {
     };
   }
 
+  if (trackable instanceof HTMLButtonElement) {
+    const label = trackable.textContent?.trim().toLowerCase() ?? "";
+    if (label.includes("get full catalogue")) {
+      return {
+        name: "begin_catalogue_request",
+        parameters: { source_page: currentPagePath(), element_type: "button" },
+      };
+    }
+  }
+
   if (trackable instanceof HTMLAnchorElement) {
     const rawHref = trackable.getAttribute("href") ?? "";
     const href = rawHref.toLowerCase();
