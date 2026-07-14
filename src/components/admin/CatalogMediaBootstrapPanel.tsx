@@ -44,6 +44,8 @@ type ImportResult = {
   next_offset?: number;
   has_more?: boolean;
   imported?: number;
+  reconciled?: number;
+  inserted?: number;
   skipped?: number;
   failed?: number;
   note?: string;
@@ -105,7 +107,7 @@ export default function CatalogMediaBootstrapPanel({ onChanged }: Props) {
     setPreview(null);
     toast({
       title: `${result.imported || 0} catalog assets imported`,
-      description: `${result.skipped || 0} already existed · ${result.failed || 0} failed. Social approval is still off.`,
+      description: `${result.reconciled || 0} pending rows upgraded · ${result.inserted || 0} new · ${result.skipped || 0} already verified · ${result.failed || 0} failed. Social approval is still off.`,
       variant: result.failed ? "destructive" : undefined,
     });
     await onChanged?.();
