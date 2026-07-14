@@ -129,11 +129,15 @@ async function importBatch(service: DbClient, body: JsonRecord) {
       const primarySlug = candidate.productSlugs[0] || "catalog-product";
       const objectPath = `catalog/${safeSegment(primarySlug)}/${sourceKey.slice(0, 20)}-${checksum.slice(0, 12)}.${extension}`;
 
-      const { data: existing } = await service.from("media_assets").select("id,public_url,verification_status,social_approved").eq("object_path", objectPath).maybeSingle();
-      if (existing) {
-        outcomes.push({ source: candidate.source, status: "skipped_existing", asset_id: existing.id, public_url: existing.public_url });
+      const { data: existingByObject } = await service.from("media_assets").select("id,public_url,verification_status,social_approved,tags").eq("object_path", objectPath).maybeSingle();
+      if (existingByObject) {
+        outcomes.push({ source: candidate.source, status: "skipped_existing", asset_id: existingByObject.id, public_url: existingByObject.public_url });
         continue;
       }
+      const { data: placeholder } = await service.from("media_assets")
+        .select("id,public_url,verification_status,social_approved,tags")
+        .eq("public_url", candidate.source)
+        .maybeSingle();
 
       const dimensions = imageDimensions(fetched.bytes, fetched.mimeType);
       if (!dimensions || dimensions.width < 100 || dimensions.height < 100) {
@@ -156,7 +160,7 @@ async function importBatch(service: DbClient, body: JsonRecord) {
         ...candidate.categorySlugs,
       ]).slice(0, 40);
       const fileName = fileNameFromUrl(fetched.resolvedUrl, extension);
-      const { data: asset, error: insertError } = await service.from("media_assets").insert({
+      const metadata = {
         bucket: BUCKET,
         object_path: objectPath,
         public_url: publicData.publicUrl,
@@ -165,8 +169,8 @@ async function importBatch(service: DbClient, body: JsonRecord) {
         size_bytes: fetched.bytes.byteLength,
         title: `${candidate.productNames[0] || "Catalog product"} · catalog image ${candidate.position}`,
         alt_text: candidate.productNames[0] || "Irha Apparels product",
-        tags,
-        usage_notes: `Imported from the published Irha Apparels catalog. Source: ${fetched.resolvedUrl}. Owner social approval remains required.`,
+        tags: unique([...(placeholder ? stringArray(placeholder.tags) : []), ...tags]).slice(0, 50),
+        usage_notes: `Reconciled from the published Irha Apparels catalog. Source: ${fetched.resolvedUrl}. Owner social approval remains required.`,
         status: "active",
         verification_status: "verified",
         width_px: dimensions.width,
@@ -174,16 +178,22 @@ async function importBatch(service: DbClient, body: JsonRecord) {
         duration_ms: null,
         checksum_sha256: checksum,
         social_approved: false,
-      }).select("id,public_url,verification_status,social_approved,width_px,height_px").single();
-      if (insertError || !asset) {
+        social_approved_by: null,
+        social_approved_at: null,
+      };
+      const saveQuery = placeholder
+        ? service.from("media_assets").update(metadata).eq("id", placeholder.id)
+        : service.from("media_assets").insert(metadata);
+      const { data: asset, error: saveError } = await saveQuery.select("id,public_url,verification_status,social_approved,width_px,height_px").single();
+      if (saveError || !asset) {
         await service.storage.from(BUCKET).remove([objectPath]);
-        throw new Error(insertError?.message || "Media metadata insert returned no row");
+        throw new Error(saveError?.message || "Media metadata save returned no row");
       }
 
       outcomes.push({
         source: candidate.source,
         resolved_url: fetched.resolvedUrl,
-        status: "imported_verified",
+        status: placeholder ? "reconciled_verified" : "imported_verified",
         asset_id: asset.id,
         public_url: asset.public_url,
         width: asset.width_px,
@@ -195,7 +205,9 @@ async function importBatch(service: DbClient, body: JsonRecord) {
     }
   }
 
-  const imported = outcomes.filter((item) => item.status === "imported_verified").length;
+  const reconciled = outcomes.filter((item) => item.status === "reconciled_verified").length;
+  const inserted = outcomes.filter((item) => item.status === "imported_verified").length;
+  const imported = reconciled + inserted;
   const skipped = outcomes.filter((item) => item.status === "skipped_existing").length;
   const failed = outcomes.filter((item) => item.status === "failed").length;
   return json({
@@ -206,6 +218,8 @@ async function importBatch(service: DbClient, body: JsonRecord) {
     next_offset: offset + slice.length,
     has_more: offset + slice.length < candidates.length,
     imported,
+    reconciled,
+    inserted,
     skipped,
     failed,
     outcomes,
