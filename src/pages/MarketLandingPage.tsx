@@ -2,7 +2,8 @@ import { ArrowRight, CheckCircle2, FileText, ShieldCheck, Video } from "lucide-r
 import { Link, useParams } from "react-router-dom";
 import SEO from "@/components/SEO";
 import NotFound from "@/pages/NotFound";
-import { MARKET_ALTERNATES, MARKET_PAGE_BY_SLUG, MARKET_PAGES } from "@/lib/marketPages";
+import { MARKET_PAGE_BY_SLUG, MARKET_PAGES } from "@/lib/marketPages";
+import { getMarketSearchIntent } from "@/lib/marketSearchIntent";
 import { SITE_URL } from "@/lib/seoSchema";
 
 export default function MarketLandingPage() {
@@ -11,6 +12,7 @@ export default function MarketLandingPage() {
 
   if (!market) return <NotFound />;
 
+  const searchIntent = getMarketSearchIntent(market.slug);
   const path = `/markets/${market.slug}`;
   const faqSchema = {
     "@context": "https://schema.org",
@@ -26,45 +28,39 @@ export default function MarketLandingPage() {
     "@type": "WebPage",
     "@id": `${SITE_URL}${path}#page`,
     url: `${SITE_URL}${path}`,
-    name: market.title,
-    description: market.description,
+    name: searchIntent.title,
+    description: searchIntent.description,
     inLanguage: market.locale,
     isPartOf: { "@id": `${SITE_URL}/#website` },
-    about: { "@id": `${SITE_URL}/#organization` },
+    about: {
+      "@type": "Thing",
+      name: `Apparel sourcing guidance for ${market.country}`,
+    },
     primaryImageOfPage: `${SITE_URL}/icon-512x512.png`,
-  };
-  const serviceSchema = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: `Custom apparel manufacturing for B2B buyers in ${market.country}`,
-    description: market.description,
-    provider: { "@id": `${SITE_URL}/#organization` },
-    areaServed: { "@type": "Country", name: market.country },
-    serviceType: "OEM, ODM and private-label apparel manufacturing",
-    url: `${SITE_URL}${path}`,
   };
   const relatedMarkets = MARKET_PAGES.filter((item) => item.slug !== market.slug).slice(0, 4);
 
   return (
     <>
       <SEO
-        title={market.title}
-        description={market.description}
+        title={searchIntent.title}
+        description={searchIntent.description}
         path={path}
         locale={market.locale}
-        alternates={MARKET_ALTERNATES}
-        xDefaultPath="/markets"
-        jsonLd={[pageSchema, serviceSchema, faqSchema]}
+        jsonLd={[pageSchema, faqSchema]}
       />
 
       <section className="border-b border-border/60 bg-gradient-to-br from-card/80 via-background to-gold/5">
         <div className="container-luxe py-20 md:py-28 max-w-6xl">
-          <p className="eyebrow mb-4">{market.eyebrow}</p>
-          <h1 className="font-display text-4xl md:text-6xl leading-[1.02] max-w-4xl">{market.h1}</h1>
-          <p className="mt-6 max-w-3xl text-base md:text-lg text-foreground/70 leading-relaxed">{market.intro}</p>
+          <p className="eyebrow mb-4">{searchIntent.eyebrow}</p>
+          <h1 className="font-display text-4xl md:text-6xl leading-[1.02] max-w-4xl">{searchIntent.h1}</h1>
+          <p className="mt-6 max-w-3xl text-base md:text-lg text-foreground/70 leading-relaxed">{searchIntent.intro}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link to={`/inquiry?intent=rfq&market=${encodeURIComponent(market.country)}`} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.2em]">
-              Request a quote <ArrowRight size={14} />
+            <Link to={searchIntent.manufacturerPath} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.2em]">
+              {searchIntent.manufacturerLabel} <ArrowRight size={14} />
+            </Link>
+            <Link to={`/inquiry?intent=rfq&market=${encodeURIComponent(market.country)}`} className="inline-flex items-center gap-2 border border-border/70 px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-gold hover:text-gold">
+              Submit requirements
             </Link>
             <Link to="/factory-video-call" className="inline-flex items-center gap-2 border border-border/70 px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-gold hover:text-gold">
               Live factory view <Video size={14} />
@@ -127,6 +123,7 @@ export default function MarketLandingPage() {
               <Link to="/buyer-trust" className="text-gold">Buyer trust</Link>
               <Link to="/factory-video-call" className="text-gold">Factory video call</Link>
               <Link to="/manufacturing" className="text-gold">Manufacturing process</Link>
+              <Link to={searchIntent.manufacturerPath} className="text-gold">Manufacturer page</Link>
             </div>
           </div>
         </section>
@@ -145,12 +142,17 @@ export default function MarketLandingPage() {
         </section>
 
         <section className="mt-20 border border-border/60 bg-card/30 p-8 md:p-12 text-center">
-          <p className="eyebrow mb-3">Start with the actual requirement</p>
-          <h2 className="font-display text-3xl md:text-4xl">Prepare a scoped {market.country} inquiry.</h2>
-          <p className="text-sm text-foreground/70 leading-relaxed max-w-2xl mx-auto mt-4">Send the product reference, quantity range, materials, branding, packaging and destination. The team will review feasibility before confirming MOQ, pricing, timing or shipping.</p>
-          <Link to={`/inquiry?intent=rfq&market=${encodeURIComponent(market.country)}`} className="inline-flex items-center gap-2 mt-7 bg-gradient-gold text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.2em]">
-            Submit requirements <ArrowRight size={13} />
-          </Link>
+          <p className="eyebrow mb-3">Move from research to a scoped inquiry</p>
+          <h2 className="font-display text-3xl md:text-4xl">Review the dedicated {market.country} manufacturing page.</h2>
+          <p className="text-sm text-foreground/70 leading-relaxed max-w-2xl mx-auto mt-4">Use the transactional manufacturer page for a product-led overview, then send the reference, quantity range, materials, branding, packaging and destination for feasibility review.</p>
+          <div className="flex flex-wrap justify-center gap-3 mt-7">
+            <Link to={searchIntent.manufacturerPath} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.2em]">
+              {searchIntent.manufacturerLabel} <ArrowRight size={13} />
+            </Link>
+            <Link to={`/inquiry?intent=rfq&market=${encodeURIComponent(market.country)}`} className="inline-flex items-center gap-2 border border-border/70 px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-gold hover:text-gold">
+              Submit requirements
+            </Link>
+          </div>
         </section>
 
         <nav aria-label="Other country market pages" className="mt-14 border-t border-border/50 pt-8">
