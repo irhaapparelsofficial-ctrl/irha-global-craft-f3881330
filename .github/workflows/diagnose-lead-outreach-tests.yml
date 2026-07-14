@@ -1,11 +1,15 @@
 name: Diagnose Lead Outreach Tests
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/lead-file-outreach-approval
+      - main
     paths:
       - ".github/workflows/diagnose-lead-outreach-tests.yml"
+      - "src/**"
+      - "supabase/**"
+      - "package.json"
+      - "package-lock.json"
 
 permissions:
   contents: read
@@ -16,8 +20,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: feat/lead-file-outreach-approval
       - uses: actions/setup-node@v4
         with:
           node-version: 20
