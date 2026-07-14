@@ -8,6 +8,7 @@ import Layout from "@/components/layout/Layout";
 import Home from "./pages/Home";
 import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
+import GlobalInteractionTracker from "@/components/GlobalInteractionTracker";
 import AdminOutreachCommandCenter from "@/components/admin/AdminOutreachCommandCenter";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { BUYER_INTENT_LANDING_PAGES } from "@/lib/buyerIntentLandingPages";
@@ -119,6 +120,7 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <PageViewTracker />
+          <GlobalInteractionTracker />
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Layout><Home /></Layout>} />
