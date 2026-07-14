@@ -1,0 +1,120 @@
+name: Verify Cloudflare Token Scope
+
+run-name: Cloudflare token scope · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/cloudflare-token-scope-verify.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      ZONE_NAME: irhaapparels.com
+
+    steps:
+      - name: Verify token, Pages project, zone and DNS read scope
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+
+          test -n "$token" || { echo 'CLOUDFLARE_API_TOKEN missing'; exit 1; }
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || { echo 'CLOUDFLARE_ACCOUNT_ID is not a 32-character account ID'; exit 1; }
+          test -n "$project_name" || { echo 'CLOUDFLARE_PROJECT_NAME missing'; exit 1; }
+
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+
+          verify_json="$(curl -sS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            'https://api.cloudflare.com/client/v4/user/tokens/verify')"
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = true || {
+            echo 'Cloudflare token verification failed'
+            printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+            exit 1
+          }
+
+          project_json="$(curl -sS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = true || {
+            echo 'Cloudflare Pages project lookup failed'
+            printf '%s' "$project_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+            exit 1
+          }
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
+
+          zones_json="$(curl -sS -G \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data-urlencode "name=$ZONE_NAME" \
+            --data-urlencode "account.id=$account_id" \
+            --data-urlencode 'status=active' \
+            --data-urlencode 'per_page=10' \
+            'https://api.cloudflare.com/client/v4/zones')"
+          test "$(printf '%s' "$zones_json" | jq -r '.success // false')" = true || {
+            echo 'Cloudflare zone lookup failed'
+            printf '%s' "$zones_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+            exit 1
+          }
+
+          zone_count="$(printf '%s' "$zones_json" | jq -r '.result | length')"
+          test "$zone_count" = 1 || {
+            echo "Expected exactly one active $ZONE_NAME zone in the configured account; found $zone_count"
+            exit 1
+          }
+          zone_id="$(printf '%s' "$zones_json" | jq -r '.result[0].id')"
+          echo "::add-mask::$zone_id"
+
+          records_json="$(curl -sS -G \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data-urlencode 'per_page=100' \
+            "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records")"
+          test "$(printf '%s' "$records_json" | jq -r '.success // false')" = true || {
+            echo 'Cloudflare DNS record lookup failed'
+            printf '%s' "$records_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+            exit 1
+          }
+
+          printf '%s' "$records_json" | jq --arg zone "$ZONE_NAME" \
+            '[.result[] | select(.name == $zone or .name == ("www." + $zone)) | {id,type,name,content,proxied,ttl,comment}] | sort_by(.name,.type,.content)' \
+            > /tmp/cloudflare-dns-private.json
+
+          jq 'map(del(.id))' /tmp/cloudflare-dns-private.json > /tmp/cloudflare-dns-public.json
+          record_count="$(jq 'length' /tmp/cloudflare-dns-private.json)"
+          test "$record_count" -gt 0 || { echo 'No apex/www DNS records found; refusing any cutover preparation'; exit 1; }
+
+          {
+            echo '## Cloudflare credential scope verified'
+            echo "- Pages project: \`$project_name\`"
+            echo "- Active zone: \`$ZONE_NAME\`"
+            echo "- Apex/www records captured: $record_count"
+            echo '```json'
+            cat /tmp/cloudflare-dns-public.json
+            echo '```'
+            echo 'Read-only verification only. No Pages domain or DNS mutation was performed.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload private rollback snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-token-scope-rollback-snapshot
+          path: /tmp/cloudflare-dns-private.json
+          retention-days: 7
