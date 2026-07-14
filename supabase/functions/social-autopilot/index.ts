@@ -543,7 +543,7 @@ ${JSON.stringify(slots.map((slot) => ({
     available_colors: slot.product.available_colors,
   },
   media_status: slot.mediaStatus,
-}))}
+})))}
 
 STRICT RULES:
 - Return one item for every slot_index and keep its platform/content type unchanged.
