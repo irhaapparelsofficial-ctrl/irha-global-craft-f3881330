@@ -12,18 +12,26 @@ export const SOURCE_COMMIT_ENV_KEYS = [
 ] as const;
 
 export const BUILD_FINGERPRINT_ALGORITHM = "sha256" as const;
+export const RUNTIME_FINGERPRINT_SCOPE = "immutable-runtime-assets" as const;
 
 const RELEASE_META_NAMES = [
   "x-irha-source-commit",
   "x-irha-source-identity-state",
   "x-irha-build-fingerprint",
   "x-irha-build-fingerprint-algorithm",
+  "x-irha-runtime-fingerprint",
+  "x-irha-runtime-fingerprint-algorithm",
+  "x-irha-runtime-fingerprint-scope",
 ] as const;
 
 const FINGERPRINT_EXCLUDED_PATHS = new Set([
   "build.json",
   "cloudflare-deployment.json",
 ]);
+
+const RUNTIME_DIRECTORY_PREFIXES = ["assets/", "media/", "catalogs/"] as const;
+const RUNTIME_FILE_EXTENSION =
+  /\.(?:js|mjs|cjs|css|wasm|png|jpe?g|webp|gif|svg|ico|avif|bmp|woff2?|ttf|otf|eot|mp4|webm|ogg|mp3|wav|pdf|zip)$/i;
 
 export type SourceIdentityState = "verified" | "unverified";
 
@@ -40,6 +48,9 @@ export type BuildManifest = Record<string, unknown> & {
   source_identity_state: SourceIdentityState;
   build_fingerprint: string;
   build_fingerprint_algorithm: typeof BUILD_FINGERPRINT_ALGORITHM;
+  runtime_fingerprint: string;
+  runtime_fingerprint_algorithm: typeof BUILD_FINGERPRINT_ALGORITHM;
+  runtime_fingerprint_scope: typeof RUNTIME_FINGERPRINT_SCOPE;
 };
 
 export type BuildFingerprintEntry = {
@@ -109,11 +120,17 @@ export function createBuildManifest(
   baseManifest: Record<string, unknown>,
   identity: SourceIdentity,
   buildFingerprint: string,
+  runtimeFingerprint: string,
   builtAt = new Date().toISOString(),
 ): BuildManifest {
-  const normalizedFingerprint = normalizeBuildFingerprint(buildFingerprint);
-  if (!normalizedFingerprint) {
+  const normalizedBuildFingerprint = normalizeBuildFingerprint(buildFingerprint);
+  const normalizedRuntimeFingerprint = normalizeBuildFingerprint(runtimeFingerprint);
+
+  if (!normalizedBuildFingerprint) {
     throw new Error(`Invalid build fingerprint: ${buildFingerprint}`);
+  }
+  if (!normalizedRuntimeFingerprint) {
+    throw new Error(`Invalid runtime fingerprint: ${runtimeFingerprint}`);
   }
   if (Number.isNaN(Date.parse(builtAt))) {
     throw new Error(`Invalid built_at timestamp: ${builtAt}`);
@@ -125,8 +142,11 @@ export function createBuildManifest(
     source_commit_short: identity.sourceCommitShort,
     built_at: builtAt,
     source_identity_state: identity.sourceIdentityState,
-    build_fingerprint: normalizedFingerprint,
+    build_fingerprint: normalizedBuildFingerprint,
     build_fingerprint_algorithm: BUILD_FINGERPRINT_ALGORITHM,
+    runtime_fingerprint: normalizedRuntimeFingerprint,
+    runtime_fingerprint_algorithm: BUILD_FINGERPRINT_ALGORITHM,
+    runtime_fingerprint_scope: RUNTIME_FINGERPRINT_SCOPE,
   };
 }
 
@@ -173,6 +193,16 @@ function normalizeFingerprintPath(filePath: string): string {
   return filePath.replaceAll("\\", "/").replace(/^\.\//, "");
 }
 
+export function isRuntimeFingerprintPath(filePath: string): boolean {
+  const normalizedPath = normalizeFingerprintPath(filePath).toLowerCase();
+  if (!normalizedPath || FINGERPRINT_EXCLUDED_PATHS.has(normalizedPath)) return false;
+
+  return (
+    RUNTIME_DIRECTORY_PREFIXES.some((prefix) => normalizedPath.startsWith(prefix)) ||
+    RUNTIME_FILE_EXTENSION.test(normalizedPath)
+  );
+}
+
 export function computeBuildFingerprintFromEntries(entries: BuildFingerprintEntry[]): string {
   const normalizedEntries = entries
     .map((entry) => ({
@@ -215,6 +245,14 @@ export function computeBuildFingerprintFromEntries(entries: BuildFingerprintEntr
   return hash.digest("hex");
 }
 
+export function computeRuntimeFingerprintFromEntries(entries: BuildFingerprintEntry[]): string {
+  const runtimeEntries = entries.filter((entry) => isRuntimeFingerprintPath(entry.path));
+  if (runtimeEntries.length === 0) {
+    throw new Error("Cannot fingerprint an empty immutable runtime payload");
+  }
+  return computeBuildFingerprintFromEntries(runtimeEntries);
+}
+
 export function listBuildFingerprintEntries(rootDir: string, currentDir = rootDir): BuildFingerprintEntry[] {
   const entries: BuildFingerprintEntry[] = [];
 
@@ -239,21 +277,34 @@ export function computeBuildFingerprint(rootDir: string): string {
   return computeBuildFingerprintFromEntries(listBuildFingerprintEntries(rootDir));
 }
 
+export function computeRuntimeFingerprint(rootDir: string): string {
+  return computeRuntimeFingerprintFromEntries(listBuildFingerprintEntries(rootDir));
+}
+
 export function injectSourceIdentityMetas(
   html: string,
   identity: SourceIdentity,
   buildFingerprint: string,
+  runtimeFingerprint: string,
 ): string {
-  const normalizedFingerprint = normalizeBuildFingerprint(buildFingerprint);
-  if (!normalizedFingerprint) {
+  const normalizedBuildFingerprint = normalizeBuildFingerprint(buildFingerprint);
+  const normalizedRuntimeFingerprint = normalizeBuildFingerprint(runtimeFingerprint);
+
+  if (!normalizedBuildFingerprint) {
     throw new Error(`Invalid build fingerprint: ${buildFingerprint}`);
+  }
+  if (!normalizedRuntimeFingerprint) {
+    throw new Error(`Invalid runtime fingerprint: ${runtimeFingerprint}`);
   }
 
   const metas: Array<[string, string]> = [
     ["x-irha-source-commit", identity.sourceCommit],
     ["x-irha-source-identity-state", identity.sourceIdentityState],
-    ["x-irha-build-fingerprint", normalizedFingerprint],
+    ["x-irha-build-fingerprint", normalizedBuildFingerprint],
     ["x-irha-build-fingerprint-algorithm", BUILD_FINGERPRINT_ALGORITHM],
+    ["x-irha-runtime-fingerprint", normalizedRuntimeFingerprint],
+    ["x-irha-runtime-fingerprint-algorithm", BUILD_FINGERPRINT_ALGORITHM],
+    ["x-irha-runtime-fingerprint-scope", RUNTIME_FINGERPRINT_SCOPE],
   ];
 
   return metas.reduce((result, [name, content]) => upsertMeta(result, name, content), html);

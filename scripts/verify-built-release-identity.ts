@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
   BUILD_FINGERPRINT_ALGORITHM,
+  RUNTIME_FINGERPRINT_SCOPE,
   computeBuildFingerprint,
+  computeRuntimeFingerprint,
   extractMetaContent,
   listHtmlFiles,
   normalizeBuildFingerprint,
@@ -24,6 +26,9 @@ const identityState = manifest.source_identity_state;
 const builtAt = manifest.built_at;
 const manifestFingerprint = normalizeBuildFingerprint(manifest.build_fingerprint);
 const fingerprintAlgorithm = manifest.build_fingerprint_algorithm;
+const manifestRuntimeFingerprint = normalizeBuildFingerprint(manifest.runtime_fingerprint);
+const runtimeFingerprintAlgorithm = manifest.runtime_fingerprint_algorithm;
+const runtimeFingerprintScope = manifest.runtime_fingerprint_scope;
 
 if (sourceCommit !== expectedCommit) {
   throw new Error(`Built source_commit mismatch: expected ${expectedCommit}, received ${String(sourceCommit)}`);
@@ -47,11 +52,31 @@ if (fingerprintAlgorithm !== BUILD_FINGERPRINT_ALGORITHM) {
     `Built fingerprint algorithm mismatch: expected ${BUILD_FINGERPRINT_ALGORITHM}, received ${String(fingerprintAlgorithm)}`,
   );
 }
+if (!manifestRuntimeFingerprint) {
+  throw new Error(`Built runtime_fingerprint is invalid: ${String(manifest.runtime_fingerprint)}`);
+}
+if (runtimeFingerprintAlgorithm !== BUILD_FINGERPRINT_ALGORITHM) {
+  throw new Error(
+    `Built runtime fingerprint algorithm mismatch: expected ${BUILD_FINGERPRINT_ALGORITHM}, received ${String(runtimeFingerprintAlgorithm)}`,
+  );
+}
+if (runtimeFingerprintScope !== RUNTIME_FINGERPRINT_SCOPE) {
+  throw new Error(
+    `Built runtime fingerprint scope mismatch: expected ${RUNTIME_FINGERPRINT_SCOPE}, received ${String(runtimeFingerprintScope)}`,
+  );
+}
 
 const recomputedFingerprint = computeBuildFingerprint(distDir);
 if (recomputedFingerprint !== manifestFingerprint) {
   throw new Error(
     `Built fingerprint mismatch: manifest ${manifestFingerprint}, recomputed ${recomputedFingerprint}`,
+  );
+}
+
+const recomputedRuntimeFingerprint = computeRuntimeFingerprint(distDir);
+if (recomputedRuntimeFingerprint !== manifestRuntimeFingerprint) {
+  throw new Error(
+    `Runtime fingerprint mismatch: manifest ${manifestRuntimeFingerprint}, recomputed ${recomputedRuntimeFingerprint}`,
   );
 }
 
@@ -68,6 +93,15 @@ for (const htmlPath of htmlFiles) {
   const htmlFingerprintAlgorithm = extractMetaContent(
     html,
     "x-irha-build-fingerprint-algorithm",
+  );
+  const htmlRuntimeFingerprint = extractMetaContent(html, "x-irha-runtime-fingerprint");
+  const htmlRuntimeFingerprintAlgorithm = extractMetaContent(
+    html,
+    "x-irha-runtime-fingerprint-algorithm",
+  );
+  const htmlRuntimeFingerprintScope = extractMetaContent(
+    html,
+    "x-irha-runtime-fingerprint-scope",
   );
 
   if (htmlCommit !== expectedCommit) {
@@ -90,8 +124,23 @@ for (const htmlPath of htmlFiles) {
       `${path.relative(process.cwd(), htmlPath)} fingerprint algorithm mismatch: expected ${BUILD_FINGERPRINT_ALGORITHM}, received ${String(htmlFingerprintAlgorithm)}`,
     );
   }
+  if (htmlRuntimeFingerprint !== manifestRuntimeFingerprint) {
+    throw new Error(
+      `${path.relative(process.cwd(), htmlPath)} runtime fingerprint mismatch: expected ${manifestRuntimeFingerprint}, received ${String(htmlRuntimeFingerprint)}`,
+    );
+  }
+  if (htmlRuntimeFingerprintAlgorithm !== BUILD_FINGERPRINT_ALGORITHM) {
+    throw new Error(
+      `${path.relative(process.cwd(), htmlPath)} runtime fingerprint algorithm mismatch: expected ${BUILD_FINGERPRINT_ALGORITHM}, received ${String(htmlRuntimeFingerprintAlgorithm)}`,
+    );
+  }
+  if (htmlRuntimeFingerprintScope !== RUNTIME_FINGERPRINT_SCOPE) {
+    throw new Error(
+      `${path.relative(process.cwd(), htmlPath)} runtime fingerprint scope mismatch: expected ${RUNTIME_FINGERPRINT_SCOPE}, received ${String(htmlRuntimeFingerprintScope)}`,
+    );
+  }
 }
 
 console.log(
-  `[release-identity] verified exact Git SHA ${expectedCommit} and fingerprint ${manifestFingerprint} across build.json and ${htmlFiles.length} HTML files`,
+  `[release-identity] verified exact Git SHA ${expectedCommit}, build ${manifestFingerprint}, and runtime ${manifestRuntimeFingerprint} across build.json and ${htmlFiles.length} HTML files`,
 );
