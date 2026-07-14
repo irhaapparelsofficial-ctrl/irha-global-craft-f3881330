@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ArrowUpRight, GitCompareArrows, RefreshCw, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  GitCompareArrows,
+  MessageCircle,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import SEO from "@/components/SEO";
 import ThumbnailImage from "@/components/ThumbnailImage";
 import { shortlistProductPath, useCompare } from "@/lib/shortlist";
@@ -9,6 +16,7 @@ import {
   visibleCompareRows,
   type CompareProduct,
 } from "@/lib/compareProducts";
+import { whatsappLink } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Compare() {
@@ -39,10 +47,26 @@ export default function Compare() {
   const unavailableCount = !isLoading && !error
     ? columns.filter((column) => !column.product).length
     : 0;
+  const canSubmitRfq =
+    compare.items.length > 0 &&
+    !isLoading &&
+    !error &&
+    unavailableCount === 0 &&
+    columns.every((column) => Boolean(column.product));
 
   const rfqLink = compare.items.length
     ? `/inquiry?intent=rfq&compare=${encodeURIComponent(compare.items.map((item) => item.slug).join(","))}&compareNames=${encodeURIComponent(compare.items.map((item) => item.name).join(","))}`
     : "/inquiry?intent=rfq";
+  const rfqBlockReason = isLoading
+    ? "Current published specifications are still loading."
+    : error
+      ? "Reload current published specifications before starting a structured RFQ."
+      : unavailableCount > 0
+        ? "Remove unavailable products before starting a structured RFQ."
+        : "Add at least one product to compare.";
+  const whatsappMsg = compare.items.length
+    ? `Hello Irha Apparels — I am comparing these products:\n${compare.items.map((item, index) => `${index + 1}. ${item.name}`).join("\n")}\n\nPlease help me review the suitable option for a B2B program.`
+    : "Hello Irha Apparels — I would like help comparing products for a B2B program.";
 
   return (
     <>
@@ -68,13 +92,44 @@ export default function Compare() {
           ) : (
             <>
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Link to={rfqLink} className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3.5 text-xs uppercase tracking-[0.3em]">
-                  Request Quote for Selected <ArrowUpRight size={14} />
+                {canSubmitRfq ? (
+                  <Link
+                    to={rfqLink}
+                    data-track="compare-structured-rfq"
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3.5 text-xs uppercase tracking-[0.3em]"
+                  >
+                    Request Quote for Selected <ArrowUpRight size={14} />
+                  </Link>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    title={rfqBlockReason}
+                    className="inline-flex min-h-11 cursor-not-allowed items-center gap-2 bg-primary/45 px-6 py-3.5 text-xs uppercase tracking-[0.3em] text-primary-foreground/75"
+                  >
+                    Verify products before RFQ
+                  </span>
+                )}
+                <a
+                  href={whatsappLink(whatsappMsg)}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center gap-2 border border-gold/70 text-gold hover:bg-gold hover:text-background px-6 py-3.5 text-xs uppercase tracking-[0.3em]"
+                >
+                  <MessageCircle size={14} /> Discuss comparison
+                </a>
+                <Link to="/shortlist" className="inline-flex min-h-11 items-center border border-border/60 px-5 py-3 text-[11px] uppercase tracking-[0.22em] hover:border-primary hover:text-primary">
+                  Edit shortlist
                 </Link>
                 <button type="button" onClick={compare.clear} className="ml-auto min-h-11 text-[11px] uppercase tracking-[0.25em] text-foreground/60 hover:text-foreground inline-flex items-center gap-1 px-2">
                   <Trash2 size={12} /> Clear
                 </button>
               </div>
+
+              {!canSubmitRfq && (
+                <p className="mt-3 text-xs text-foreground/55" role="status" aria-live="polite">
+                  {rfqBlockReason} WhatsApp remains available for assistance.
+                </p>
+              )}
 
               {isLoading && (
                 <p className="mt-5 text-xs text-foreground/55" role="status" aria-live="polite">Loading current published specifications…</p>
