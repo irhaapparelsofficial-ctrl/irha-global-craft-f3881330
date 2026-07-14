@@ -1,0 +1,107 @@
+name: Verify Cloudflare Custom Domains V2
+
+run-name: Verify Cloudflare domains · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-cloudflare-custom-domains-v2.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+
+    steps:
+      - name: Inspect Cloudflare project domains
+        id: domains
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+
+          test -n "$token"
+          test -n "$account_id"
+          test -n "$project_name"
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+
+          project_json="$(curl -sS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true" || {
+            printf '%s' "$project_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+            exit 1
+          }
+
+          printf '%s' "$project_json" | jq -r '.result.domains[]?' | sort -u | tee /tmp/all-domains.txt
+          grep -Fxq 'irha-apparels.pages.dev' /tmp/all-domains.txt
+
+          grep -vE '\.pages\.dev$' /tmp/all-domains.txt > /tmp/custom-domains.txt || true
+          custom_count="$(wc -l < /tmp/custom-domains.txt | tr -d ' ')"
+          echo "custom_count=$custom_count" >> "$GITHUB_OUTPUT"
+          echo "Custom domains reported by Cloudflare:"
+          cat /tmp/custom-domains.txt || true
+
+      - name: Verify apex and www publicly
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          apex_code="$(curl -LsS -o /tmp/apex.html -D /tmp/apex.headers -w '%{http_code}' \
+            --connect-timeout 10 --max-time 45 \
+            -H 'Cache-Control: no-cache' \
+            'https://irhaapparels.com/?domain_check=20260714')"
+          test "$apex_code" = "200"
+          grep -Fq 'Custom Apparel Manufacturer for Global B2B Buyers' /tmp/apex.html
+
+          www_effective="$(curl -LsS -o /tmp/www.html -w '%{url_effective}' \
+            --connect-timeout 10 --max-time 45 \
+            -H 'Cache-Control: no-cache' \
+            'https://www.irhaapparels.com/?domain_check=20260714')"
+          grep -Fq 'Custom Apparel Manufacturer for Global B2B Buyers' /tmp/www.html
+          case "$www_effective" in
+            https://irhaapparels.com/*) ;;
+            *) echo "www did not resolve to apex; effective URL: $www_effective"; exit 1;;
+          esac
+
+          curl -fsS --connect-timeout 10 --max-time 45 \
+            -H 'Cache-Control: no-cache' \
+            'https://irhaapparels.com/cloudflare-deployment.json?domain_check=20260714' \
+            -o /tmp/deployment.json
+          jq -e \
+            --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
+            '.repository == $repo and .branch == "main" and (.source_sha | length == 40)' \
+            /tmp/deployment.json >/dev/null
+
+      - name: Require both custom domains attached
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fxq 'irhaapparels.com' /tmp/custom-domains.txt
+          grep -Fxq 'www.irhaapparels.com' /tmp/custom-domains.txt
+          test "${{ steps.domains.outputs.custom_count }}" = "2"
+
+      - name: Record result
+        shell: bash
+        run: |
+          {
+            echo '## Cloudflare custom-domain verification'
+            echo '- `irhaapparels.com`: attached and HTTP 200'
+            echo '- `www.irhaapparels.com`: attached and resolves to apex'
+            echo '- Cloudflare deployment manifest: repository/main identity valid'
+            echo '- No DNS or domain mutation performed by this workflow'
+          } >> "$GITHUB_STEP_SUMMARY"
