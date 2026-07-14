@@ -15,9 +15,12 @@ jobs:
   snapshot:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - name: Capture public DNS and HTTP routing
+      - name: Capture public DNS, Cloudflare zone scope and HTTP routing
         shell: bash
         run: |
           set -euo pipefail
@@ -26,6 +29,12 @@ jobs:
 
           domain='irhaapparels.com'
           www='www.irhaapparels.com'
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          pages_account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          test -n "$token"
+          test -n "$pages_account_id"
+          echo "::add-mask::$token"
+          echo "::add-mask::$pages_account_id"
 
           jq -n \
             --arg domain "$domain" \
@@ -36,12 +45,54 @@ jobs:
             --argjson www_a "$(dig +short A "$www" | sort -u | jq -R . | jq -s .)" \
             --argjson www_aaaa "$(dig +short AAAA "$www" | sort -u | jq -R . | jq -s .)" \
             --argjson www_cname "$(dig +short CNAME "$www" | sed 's/\.$//' | sort -u | jq -R . | jq -s .)" \
-            '{domain:$domain,nameservers:$ns,apex:{a:$apex_a,aaaa:$apex_aaaa,cname:$apex_cname},www:{a:$www_a,aaaa:$www_aaaa,cname:$www_cname}}' \
+            '{domain:$domain,nameservers:$ns,apex:{a:$apex_a,aaaa:$apex_aaaa,cname:$apex_cname},www:{a:$www_a,aaaa:$www_aaaa,cname:$www_cname},cloudflare:{zone_visible:false,same_account:false,dns_records_readable:false,records:[],errors:[]},http:[]}' \
             > /tmp/dns-snapshot.json
 
+          zones_json="$(curl -sS -G \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data-urlencode "name=$domain" \
+            --data-urlencode 'status=active' \
+            --data-urlencode 'per_page=50' \
+            'https://api.cloudflare.com/client/v4/zones')"
+
+          if [ "$(printf '%s' "$zones_json" | jq -r '.success // false')" = 'true' ]; then
+            zone_id="$(printf '%s' "$zones_json" | jq -r '.result[0].id // empty')"
+            zone_account_id="$(printf '%s' "$zones_json" | jq -r '.result[0].account.id // empty')"
+            if [ -n "$zone_id" ]; then
+              echo "::add-mask::$zone_id"
+              echo "::add-mask::$zone_account_id"
+              same_account=false
+              [ "$zone_account_id" = "$pages_account_id" ] && same_account=true
+              jq --argjson same_account "$same_account" '.cloudflare.zone_visible=true | .cloudflare.same_account=$same_account' /tmp/dns-snapshot.json > /tmp/dns-next.json
+              mv /tmp/dns-next.json /tmp/dns-snapshot.json
+
+              records_json="$(curl -sS -G \
+                -H "Authorization: Bearer $token" \
+                -H 'Content-Type: application/json' \
+                --data-urlencode 'per_page=100' \
+                "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records")"
+              if [ "$(printf '%s' "$records_json" | jq -r '.success // false')" = 'true' ]; then
+                printf '%s' "$records_json" | jq --arg domain "$domain" '[.result[] | select(.name == $domain or .name == ("www." + $domain)) | {id,type,name,content,proxied,ttl,comment}]' > /tmp/records.json
+                jq --slurpfile records /tmp/records.json '.cloudflare.dns_records_readable=true | .cloudflare.records=$records[0]' /tmp/dns-snapshot.json > /tmp/dns-next.json
+                mv /tmp/dns-next.json /tmp/dns-snapshot.json
+              else
+                error="$(printf '%s' "$records_json" | jq -r '[.errors[]?.message] | join("; ")')"
+                jq --arg error "dns records: ${error:-read failed}" '.cloudflare.errors += [$error]' /tmp/dns-snapshot.json > /tmp/dns-next.json
+                mv /tmp/dns-next.json /tmp/dns-snapshot.json
+              fi
+            else
+              jq '.cloudflare.errors += ["active zone not visible to token"]' /tmp/dns-snapshot.json > /tmp/dns-next.json
+              mv /tmp/dns-next.json /tmp/dns-snapshot.json
+            fi
+          else
+            error="$(printf '%s' "$zones_json" | jq -r '[.errors[]?.message] | join("; ")')"
+            jq --arg error "zone lookup: ${error:-failed}" '.cloudflare.errors += [$error]' /tmp/dns-snapshot.json > /tmp/dns-next.json
+            mv /tmp/dns-next.json /tmp/dns-snapshot.json
+          fi
+
           for host in "https://$domain/" "https://$www/" "https://irha-apparels.pages.dev/"; do
-            safe="$(printf '%s' "$host" | tr -c 'A-Za-z0-9' '_')"
-            code="$(curl -LsS --connect-timeout 10 --max-time 45 -o "/tmp/${safe}.body" -D "/tmp/${safe}.headers" -w '%{http_code}' "$host")"
+            code="$(curl -LsS --connect-timeout 10 --max-time 45 -o /dev/null -w '%{http_code}' "$host")"
             effective="$(curl -LsS --connect-timeout 10 --max-time 45 -o /dev/null -w '%{url_effective}' "$host")"
             jq --arg host "$host" --arg code "$code" --arg effective "$effective" '.http += [{host:$host,status:($code|tonumber),effective_url:$effective}]' /tmp/dns-snapshot.json > /tmp/dns-next.json
             mv /tmp/dns-next.json /tmp/dns-snapshot.json
@@ -49,14 +100,14 @@ jobs:
 
           cat /tmp/dns-snapshot.json
           {
-            echo '## Public DNS snapshot (read-only)'
+            echo '## Public DNS and Cloudflare scope snapshot (read-only)'
             echo '```json'
-            cat /tmp/dns-snapshot.json
+            jq 'del(.cloudflare.records[].id)' /tmp/dns-snapshot.json
             echo '```'
             echo 'No DNS, Pages domain, deployment, Supabase or application mutation was performed.'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload rollback snapshot
+      - name: Upload private rollback snapshot
         uses: actions/upload-artifact@v4
         with:
           name: cloudflare-public-dns-snapshot
