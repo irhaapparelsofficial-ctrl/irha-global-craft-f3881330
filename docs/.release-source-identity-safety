@@ -1,1 +1,0 @@
-This branch changes build identity verification only. It does not publish, mutate production data, or change buyer-facing business behavior.
