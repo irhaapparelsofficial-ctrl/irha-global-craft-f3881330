@@ -1,5 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
-# Registered trigger revision: 8
+# Registered trigger revision: 9
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
@@ -13,7 +13,7 @@ on:
 
 permissions:
   contents: read
-  issues: read
+  issues: write
   pull-requests: read
 
 concurrency:
@@ -23,6 +23,7 @@ concurrency:
 env:
   PAGES_BRANCH: main
   STAGING_URL: https://irha-apparels.pages.dev
+  RELEASE_AUDIT_ISSUE: "375"
 
 jobs:
   deploy:
@@ -117,6 +118,7 @@ jobs:
           fi
           fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
           [[ "$fingerprint" =~ ^[0-9a-f]{64}$ ]]
+          echo "RELEASE_FINGERPRINT=$fingerprint" >> "$GITHUB_ENV"
           jq -n --arg source_sha "$GITHUB_SHA" --arg repository "$GITHUB_REPOSITORY" --arg branch "$PAGES_BRANCH" --arg build_fingerprint "$fingerprint" --arg purpose "one-time-latest-main" --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{source_sha:$source_sha,repository:$repository,branch:$branch,build_fingerprint:$build_fingerprint,purpose:$purpose,generated_at:$generated_at}' > dist/cloudflare-deployment.json
 
       - name: Deploy exact build to Cloudflare Pages
@@ -141,3 +143,24 @@ jobs:
           done
           test "$ready" = "1"
           echo "Exact Cloudflare Pages release verified: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record verified release evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          generated_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          body=$(cat <<EOF
+          ## Verified Cloudflare production release
+
+          - Source SHA: \`$GITHUB_SHA\`
+          - Branch: \`$PAGES_BRANCH\`
+          - Pages project: \`$CLOUDFLARE_PROJECT_NAME\`
+          - Build fingerprint: \`$RELEASE_FINGERPRINT\`
+          - Verified URL: \`$STAGING_URL\`
+          - Verified at: \`$generated_at\`
+          - Release checks: source identity, Supabase project, canonical origin, tests, production build, legacy-claim guard and exact served fingerprint all passed.
+          EOF
+          )
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "$body"
