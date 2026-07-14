@@ -1,0 +1,107 @@
+name: Cloudflare Production Binding Audit
+
+on:
+  push:
+    branches:
+      - ops/cloudflare-binding-audit-20260714
+    paths:
+      - .github/workflows/cloudflare-binding-audit-20260714.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+    steps:
+      - name: Inspect Pages, domains, DNS, and Worker routes without changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+          test -n "$token" || { echo 'CLOUDFLARE_API_TOKEN is missing'; exit 1; }
+          test -n "$project_name" || { echo 'CLOUDFLARE_PROJECT_NAME is missing'; exit 1; }
+          echo "::add-mask::$token"
+
+          cf_get() {
+            curl -fsS \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              "$1"
+          }
+
+          verify_json="$(cf_get 'https://api.cloudflare.com/client/v4/user/tokens/verify')"
+          test "$(jq -r '.success // false' <<<"$verify_json")" = true
+
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            account_id="$(grep -Eo '[0-9a-fA-F]{32}' <<<"$raw_account_id" | head -n1 || true)"
+          fi
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            accounts_json="$(cf_get 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+            test "$(jq -r '.success // false' <<<"$accounts_json")" = true
+            test "$(jq -r '(.result // []) | length' <<<"$accounts_json")" = 1
+            account_id="$(jq -r '.result[0].id // empty' <<<"$accounts_json")"
+          fi
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
+          echo "::add-mask::$account_id"
+
+          project_json="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(jq -r '.success // false' <<<"$project_json")" = true
+          domains_json="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name/domains")"
+          deployments_json="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name/deployments?per_page=10")"
+
+          zone_json="$(cf_get 'https://api.cloudflare.com/client/v4/zones?name=irhaapparels.com&status=active&per_page=10' || true)"
+          zone_id="$(jq -r '.result[0].id // empty' <<<"$zone_json" 2>/dev/null || true)"
+          dns_json='{"success":false,"result":[],"note":"zone unavailable or permission denied"}'
+          routes_json='{"success":false,"result":[],"note":"zone unavailable or permission denied"}'
+          if [[ "$zone_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            echo "::add-mask::$zone_id"
+            dns_json="$(cf_get "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records?per_page=100" || printf '%s' "$dns_json")"
+            routes_json="$(cf_get "https://api.cloudflare.com/client/v4/zones/$zone_id/workers/routes" || printf '%s' "$routes_json")"
+          fi
+
+          summary_json="$(jq -n \
+            --arg project "$project_name" \
+            --argjson project_json "$project_json" \
+            --argjson domains_json "$domains_json" \
+            --argjson deployments_json "$deployments_json" \
+            --argjson dns_json "$dns_json" \
+            --argjson routes_json "$routes_json" \
+            '{
+              pages_project: {
+                name: $project,
+                production_branch: ($project_json.result.production_branch // null),
+                subdomain: ($project_json.result.subdomain // null),
+                source: ($project_json.result.source // null),
+                latest_deployment: ($project_json.result.latest_deployment | {
+                  id, environment, url, created_on,
+                  source: (.source | {type, config}),
+                  stages
+                })
+              },
+              custom_domains: (($domains_json.result // []) | map({name, status, created_on})),
+              latest_deployments: (($deployments_json.result // []) | map({
+                id, environment, url, created_on,
+                source: (.source | {type, config}),
+                stages
+              })),
+              relevant_dns: (($dns_json.result // []) | map(select(.name == "irhaapparels.com" or .name == "www.irhaapparels.com") | {name, type, content, proxied, ttl})),
+              worker_routes: (($routes_json.result // []) | map({pattern, script}))
+            }')"
+
+          echo "$summary_json" | jq .
+          {
+            echo '## Cloudflare production binding audit (read-only)'
+            echo '```json'
+            echo "$summary_json" | jq .
+            echo '```'
+            echo '- No Pages, DNS, Worker, deployment, or domain setting was changed.'
+          } >> "$GITHUB_STEP_SUMMARY"
