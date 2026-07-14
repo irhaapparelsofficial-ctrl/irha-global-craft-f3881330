@@ -1,0 +1,131 @@
+name: Verify Cloudflare Token Scope V3
+
+run-name: Read-only Cloudflare token scope · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/cloudflare-token-scope-v3.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      ZONE_NAME: irhaapparels.com
+      PAGES_URL: https://irha-apparels.pages.dev
+
+    steps:
+      - name: Verify token, Pages project, zone and DNS read scope
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+
+          test -n "$token" || { echo 'CLOUDFLARE_API_TOKEN missing'; exit 1; }
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || { echo 'CLOUDFLARE_ACCOUNT_ID invalid'; exit 1; }
+          test -n "$project_name" || { echo 'CLOUDFLARE_PROJECT_NAME missing'; exit 1; }
+
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+
+          verify_json="$(curl -fsS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = true || {
+            printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare token error \(.code): \(.message)"'
+            exit 1
+          }
+
+          project_json="$(curl -fsS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = true || {
+            printf '%s' "$project_json" | jq -r '.errors[]? | "Pages project error \(.code): \(.message)"'
+            exit 1
+          }
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
+
+          zone_json="$(curl -fsS -G \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data-urlencode "name=$ZONE_NAME" \
+            --data-urlencode 'status=active' \
+            --data-urlencode 'per_page=50' \
+            https://api.cloudflare.com/client/v4/zones)"
+          test "$(printf '%s' "$zone_json" | jq -r '.success // false')" = true || {
+            printf '%s' "$zone_json" | jq -r '.errors[]? | "Zone lookup error \(.code): \(.message)"'
+            exit 1
+          }
+
+          zone_id="$(printf '%s' "$zone_json" | jq -r '.result[0].id // empty')"
+          zone_account_id="$(printf '%s' "$zone_json" | jq -r '.result[0].account.id // empty')"
+          test -n "$zone_id" || { echo 'Active irhaapparels.com zone not visible to token'; exit 1; }
+          test "$zone_account_id" = "$account_id" || { echo 'Zone and Pages project are not in the same Cloudflare account'; exit 1; }
+          echo "::add-mask::$zone_id"
+
+          records_json="$(curl -fsS -G \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data-urlencode 'per_page=100' \
+            "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records")"
+          test "$(printf '%s' "$records_json" | jq -r '.success // false')" = true || {
+            printf '%s' "$records_json" | jq -r '.errors[]? | "DNS read error \(.code): \(.message)"'
+            exit 1
+          }
+
+          printf '%s' "$records_json" | jq \
+            --arg domain "$ZONE_NAME" \
+            '[.result[] | select(.name == $domain or .name == ("www." + $domain)) | {id,type,name,content,proxied,ttl,comment}]' \
+            > /tmp/current-dns-private.json
+
+          printf '%s' "$project_json" | jq \
+            '{name:.result.name,production_branch:.result.production_branch,domains:(.result.domains // []),latest_deployment_id:(.result.latest_deployment.id // null)}' \
+            > /tmp/pages-project.json
+
+          pages_release="$(curl -fsS --connect-timeout 10 --max-time 45 \
+            -H 'Cache-Control: no-cache' \
+            "$PAGES_URL/cloudflare-deployment.json?scope_check=${GITHUB_SHA::12}")"
+          printf '%s' "$pages_release" | jq -e \
+            --arg repo "$GITHUB_REPOSITORY" \
+            '.repository == $repo and .branch == "main" and (.source_sha | test("^[0-9a-f]{40}$"))' \
+            >/dev/null
+          printf '%s' "$pages_release" | jq . > /tmp/pages-release.json
+
+          jq -n \
+            --slurpfile records /tmp/current-dns-private.json \
+            --slurpfile project /tmp/pages-project.json \
+            --slurpfile release /tmp/pages-release.json \
+            '{token_verified:true,pages_project_read:true,zone_visible:true,same_account:true,dns_records_readable:true,dns_records:$records[0],pages_project:$project[0],pages_release:$release[0]}' \
+            > /tmp/cloudflare-scope-private.json
+
+          {
+            echo '## Updated Cloudflare token scope'
+            echo '- Token verification: passed'
+            echo '- Pages project access: passed'
+            echo '- Zone read access: passed'
+            echo '- DNS record read access: passed'
+            echo '- Zone and Pages account match: passed'
+            echo '- Exact Pages release manifest: readable'
+            echo '- No DNS, domain or deployment mutation was performed.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload private rollback checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-token-scope-v3
+          path: /tmp/cloudflare-scope-private.json
+          retention-days: 7
