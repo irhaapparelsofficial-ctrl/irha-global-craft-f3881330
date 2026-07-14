@@ -258,7 +258,7 @@ export default function OutreachApprovalPanel() {
       await load(selectedCampaignId);
       return;
     }
-    const dispatched = await supabase.functions.invoke("outreach-workflow-v2", { body: { action: "approve_and_send", message_id: message.id } });
+    const dispatched = await supabase.functions.invoke("outreach-workflow-v2", { body: { action: "approve_and_send", message_id: message.id, owner_confirmed: true } });
     setBusy(null);
     if (dispatched.data?.status === "manual_required") {
       toast({ title: "Manual action required", description: dispatched.data.reason || "Provider rules blocked automatic sending.", variant: "destructive" });

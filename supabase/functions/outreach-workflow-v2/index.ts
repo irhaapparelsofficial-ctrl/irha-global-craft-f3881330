@@ -258,20 +258,42 @@ async function setAttachments(service: Db, userId: string, body: JsonRecord) {
 async function approveAndSend(service: Db, userId: string, body: JsonRecord) {
   const messageId = clean(body.message_id, 80);
   if (!messageId) return json({ error: "message_id required" }, 400);
+  if (body.owner_confirmed !== true) return json({ error: "Explicit owner confirmation is required before dispatch" }, 400);
+
   const current = await service.from("outreach_messages").select("*,b2b_leads(id,email,phone,whatsapp,outreach_opt_out,crm_status,verification_score)").eq("id", messageId).maybeSingle();
   if (current.error || !current.data) return json({ error: "Message not found" }, 404);
   const message = current.data;
   if (message.status === "sent" || message.status === "replied") return json({ ok: true, status: message.status, already_dispatched: true, message_id: message.id });
+  if (message.status === "sending") return json({ error: "This message is already being processed. Automatic retry is blocked to prevent duplicate delivery." }, 409);
   if (!EDITABLE.has(message.status)) return json({ error: `Message cannot be approved from status ${message.status}` }, 409);
   if (message.b2b_leads?.outreach_opt_out === true) return await markManual(service, message, userId, "Lead opted out of outreach");
   if (!eligibleLead(message.b2b_leads || {})) return await markManual(service, message, userId, "Lead is no longer verified or qualified");
   if (commercialCommitment(message.body_text)) return await markManual(service, message, userId, "Draft contains pricing, MOQ, certification, guarantee or delivery commitments requiring manual review");
 
   const approvedAt = new Date().toISOString();
-  const approval = await service.from("outreach_messages").update({ status: "approved", approved_by: userId, approved_at: approvedAt, dispatched_by: userId, manual_reason: null, error: null }).eq("id", message.id).select("*").single();
-  if (approval.error || !approval.data) throw approval.error || new Error("Message approval failed");
-  await outreachEvent(service, approval.data, "approved", { channel: approval.data.channel, approve_and_send: true }, userId);
+  const approval = await service.from("outreach_messages").update({
+    status: "sending",
+    approved_by: userId,
+    approved_at: approvedAt,
+    dispatched_by: userId,
+    manual_reason: null,
+    error: null,
+  })
+    .eq("id", message.id)
+    .eq("status", message.status)
+    .eq("updated_at", message.updated_at)
+    .select("*")
+    .maybeSingle();
+  if (approval.error) throw approval.error;
+  if (!approval.data) {
+    const latest = await service.from("outreach_messages").select("id,status").eq("id", message.id).maybeSingle();
+    if (latest.data && ["sent", "replied"].includes(latest.data.status)) {
+      return json({ ok: true, status: latest.data.status, already_dispatched: true, message_id: message.id });
+    }
+    return json({ error: "Message state changed before dispatch. Refresh before trying again; no duplicate send was attempted." }, 409);
+  }
 
+  await outreachEvent(service, approval.data, "approved", { channel: approval.data.channel, approve_and_send: true, atomic_claim: true }, userId);
   const outcome = approval.data.channel === "whatsapp"
     ? await dispatchWhatsApp(service, approval.data, userId)
     : await dispatchEmail(service, approval.data, userId);
@@ -325,6 +347,21 @@ async function dispatchWhatsApp(service: Db, message: any, userId: string): Prom
   const phone = normalizePhone(message.recipient_whatsapp);
   if (!phone) return await markManual(service, message, userId, "Valid WhatsApp number is missing");
   const waId = phone.replace(/\D/g, "");
+
+  if (message.whatsapp_message_id) {
+    const prior = await service.from("whatsapp_messages").select("id,status,wa_message_id,raw_payload").eq("id", message.whatsapp_message_id).maybeSingle();
+    if (prior.error) throw prior.error;
+    const priorPayload = record(prior.data?.raw_payload);
+    if (prior.data?.wa_message_id || priorPayload.primary_attempted === true) {
+      return await markManual(
+        service,
+        message,
+        userId,
+        "A primary WhatsApp delivery was already attempted for this draft. Automatic retry is blocked to prevent duplicate text. Review the provider record and create a separate follow-up if needed.",
+      );
+    }
+  }
+
   let contact = await service.from("whatsapp_contacts").select("*").eq("crm_lead_id", message.lead_id).maybeSingle();
   if (contact.error) throw contact.error;
   if (!contact.data) {
@@ -360,16 +397,41 @@ async function dispatchWhatsApp(service: Db, message: any, userId: string): Prom
     approved_by: userId,
     approved_at: new Date().toISOString(),
     created_by: userId,
-    raw_payload: { outreach_message_id: message.id, owner_approved: true, external_execution: true },
+    raw_payload: { outreach_message_id: message.id, owner_approved: true, external_execution: true, primary_attempted: false },
   }).select("*").single();
   if (draft.error || !draft.data) throw draft.error || new Error("WhatsApp audit draft could not be created");
   await service.from("outreach_messages").update({ status: "sending", whatsapp_message_id: draft.data.id, error: null }).eq("id", message.id);
   await outreachEvent(service, message, "send_started", { channel: "whatsapp", whatsapp_message_id: draft.data.id, attachment_count: attachments.length }, userId);
 
+  let primaryAttempted = false;
+  let primaryId: string | null = null;
   try {
+    const attemptRecorded = await service.from("whatsapp_messages").update({
+      raw_payload: { outreach_message_id: message.id, owner_approved: true, external_execution: true, primary_attempted: true, attempted_at: new Date().toISOString() },
+    }).eq("id", draft.data.id);
+    if (attemptRecorded.error) throw attemptRecorded.error;
+    primaryAttempted = true;
+
     const textResult = await graphSend(config, { messaging_product: "whatsapp", recipient_type: "individual", to: waId, type: "text", text: { preview_url: false, body: cleanLines(message.body_text, 8000) } });
-    const primaryId = graphMessageId(textResult);
-    await service.from("whatsapp_messages").update({ status: "sent", wa_message_id: primaryId, sent_at: new Date().toISOString(), error: null, raw_payload: { response: textResult, outreach_message_id: message.id } }).eq("id", draft.data.id);
+    primaryId = graphMessageId(textResult);
+    const primarySentAt = new Date().toISOString();
+    await service.from("whatsapp_messages").update({
+      status: "sent",
+      wa_message_id: primaryId,
+      sent_at: primarySentAt,
+      error: null,
+      raw_payload: { response: textResult, outreach_message_id: message.id, primary_attempted: true, primary_sent: true },
+    }).eq("id", draft.data.id);
+    await service.from("outreach_messages").update({
+      connector_response: {
+        ...record(message.connector_response),
+        provider: "meta_whatsapp",
+        wa_message_id: primaryId,
+        whatsapp_message_id: draft.data.id,
+        primary_text_sent: true,
+        primary_text_sent_at: primarySentAt,
+      },
+    }).eq("id", message.id);
 
     for (const item of attachments) {
       await service.from("outreach_message_attachments").update({ status: "sending", error: null }).eq("id", item.link.id);
@@ -391,6 +453,40 @@ async function dispatchWhatsApp(service: Db, message: any, userId: string): Prom
     return { ok: true, status: "sent", channel: "whatsapp", message_id: message.id, wa_message_id: primaryId, attachment_count: attachments.length };
   } catch (error) {
     const reason = errorText(error);
+    if (primaryAttempted) {
+      await service.from("whatsapp_messages").update({
+        status: primaryId ? "sent" : "failed",
+        wa_message_id: primaryId,
+        error: primaryId ? null : reason,
+        raw_payload: {
+          outreach_message_id: message.id,
+          primary_attempted: true,
+          primary_sent: Boolean(primaryId),
+          uncertain_delivery: !primaryId,
+          error: reason,
+        },
+      }).eq("id", draft.data.id);
+      await service.from("outreach_message_attachments").update({
+        status: "manual_required",
+        error: `Automatic attachment delivery stopped: ${reason}`.slice(0, 4000),
+      }).eq("message_id", message.id).in("status", ["selected", "sending", "failed"]);
+      await service.from("outreach_messages").update({
+        connector_response: {
+          ...record(message.connector_response),
+          provider: "meta_whatsapp",
+          wa_message_id: primaryId,
+          whatsapp_message_id: draft.data.id,
+          primary_attempted: true,
+          uncertain_delivery: !primaryId,
+          partial_delivery: true,
+        },
+      }).eq("id", message.id);
+      const manualReason = primaryId
+        ? `Primary WhatsApp text was sent (${primaryId}), but attachment delivery stopped safely: ${reason}. Automatic retry is blocked; use a separate reviewed follow-up.`
+        : `Primary WhatsApp delivery was attempted but provider acceptance is uncertain: ${reason}. Automatic retry is blocked to prevent duplicate text.`;
+      return await markManual(service, message, userId, manualReason);
+    }
+
     await service.from("whatsapp_messages").update({ status: "failed", error: reason }).eq("id", draft.data.id);
     await markFailed(service, message, userId, reason, "whatsapp");
     return { ok: false, status: "failed", channel: "whatsapp", message_id: message.id, error: reason };

@@ -52,7 +52,7 @@ export default function ChannelCandidateActivationPanel({ onActivated }: { onAct
   }, [candidates, query]);
 
   const activate = async () => {
-    const ids = [...selected].slice(0, 50);
+    const ids = [...selected].slice(0, 25);
     if (!ids.length) return;
     if (!window.confirm(`Activate ${ids.length} owner-reviewed candidate${ids.length === 1 ? "" : "s"} in Buyer CRM? This does not send email or WhatsApp. It only makes them available for AI draft preparation.`)) return;
     setBusy(true);
@@ -82,7 +82,7 @@ export default function ChannelCandidateActivationPanel({ onActivated }: { onAct
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-[240px] flex-1 items-center gap-2 border border-border/60 bg-background/30 px-3 py-2"><Search size={12} className="text-muted-foreground" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search strict-ready file candidates…" className="w-full bg-transparent text-xs outline-none" /></div>
             <button type="button" onClick={() => void load()} className="inline-flex min-h-10 items-center gap-2 border border-border/60 px-3 text-[9px] uppercase tracking-[0.14em] hover:border-cyan-400"><RefreshCw size={11} className={loading ? "animate-spin" : ""} /> Refresh</button>
-            <button type="button" onClick={() => setSelected(new Set(filtered.slice(0, 50).map((candidate) => candidate.id)))} className="text-[9px] uppercase tracking-[0.14em] text-cyan-300">Select visible</button>
+            <button type="button" onClick={() => setSelected(new Set(filtered.slice(0, 25).map((candidate) => candidate.id)))} className="text-[9px] uppercase tracking-[0.14em] text-cyan-300">Select visible</button>
             <button type="button" onClick={() => setSelected(new Set())} className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Clear</button>
           </div>
 
@@ -115,4 +115,4 @@ function isChannelReady(candidate: Candidate) {
 }
 function validEmail(value: unknown) { const email = typeof value === "string" ? value.trim().toLowerCase() : ""; return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null; }
 function normalizePhone(value: unknown) { const raw = typeof value === "string" ? value.trim() : ""; const match = raw.match(/(?:\+|00)?\d[\d\s().\/-]{6,}\d/)?.[0] || ""; const digits = match.replace(/\D/g, ""); return digits.length >= 7 && digits.length <= 16 ? match.trim() : null; }
-function toggleSet(current: Set<string>, id: string) { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; }
+function toggleSet(current: Set<string>, id: string) { const next = new Set(current); if (next.has(id)) next.delete(id); else if (next.size < 25) next.add(id); return next; }

@@ -5,7 +5,7 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const MAX_BATCH = 50;
+const MAX_BATCH = 25;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -56,144 +56,177 @@ async function activate(service: any, userId: string, body: JsonRecord) {
   if (!ids.length) return json({ error: "candidate_ids[] required" }, 400);
   if (body.owner_confirmed !== true) return json({ error: "Explicit owner confirmation is required" }, 400);
 
-  const candidateResult = await service.from("lead_candidates").select("*").in("id", ids);
-  if (candidateResult.error) throw candidateResult.error;
   const batch = await service.from("lead_activation_batches").insert({
     status: "running",
     requested_by: userId,
     candidate_ids: ids,
     strict_ready_count: 0,
-    summary: { mode: "channel_activation_v2", started_at: new Date().toISOString(), sends_external_messages: false },
+    summary: { mode: "channel_activation_v2", started_at: new Date().toISOString(), sends_external_messages: false, max_batch: MAX_BATCH },
   }).select("*").single();
   if (batch.error || !batch.data) throw batch.error || new Error("Activation batch could not be created");
 
-  const known = await loadKnown(service);
-  const outcomes: JsonRecord[] = [];
-  const importedLeadIds: string[] = [];
-
-  for (const candidate of candidateResult.data || []) {
-    if (candidate.imported_lead_id) {
-      outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "duplicate", lead_id: candidate.imported_lead_id, reason: "Already imported" });
-      await audit(service, batch.data.id, candidate.id, candidate.imported_lead_id, "duplicate", { reason: "Already imported" }, userId);
-      continue;
-    }
-    const email = validEmail(candidate.email);
-    const whatsapp = normalizePhone(candidate.whatsapp || candidate.phone);
-    const blockers = candidateBlockers(candidate, email, whatsapp);
-    if (blockers.length) {
-      outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "blocked", blockers });
-      await service.from("lead_candidates").update({ verification_status: "needs_review", reviewed_by: userId, reviewed_at: new Date().toISOString() }).eq("id", candidate.id);
-      await audit(service, batch.data.id, candidate.id, null, "blocked", { blockers }, userId);
-      continue;
-    }
-
-    const website = safeUrl(candidate.website || candidate.source_url);
-    const websiteDomain = domain(candidate.website_domain || website);
-    const companyKey = companyCountryKey(candidate.company_name, candidate.country);
-    const existing = (websiteDomain && known.domains.get(websiteDomain))
-      || (email && known.emails.get(email))
-      || (whatsapp && known.whatsapps.get(phoneKey(whatsapp)))
-      || known.companies.get(companyKey);
-    if (existing) {
-      await service.from("lead_candidates").update({
-        verification_status: "duplicate",
-        duplicate_reason: "Already exists in Buyer CRM",
-        imported_lead_id: existing,
-        reviewed_by: userId,
-        reviewed_at: new Date().toISOString(),
-      }).eq("id", candidate.id);
-      outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "duplicate", lead_id: existing, reason: "Already exists in Buyer CRM" });
-      await audit(service, batch.data.id, candidate.id, existing, "duplicate", { reason: "Already exists in Buyer CRM" }, userId);
-      continue;
-    }
-
-    const now = new Date().toISOString();
-    const leadResult = await service.from("b2b_leads").insert({
-      company_name: clean(candidate.company_name, 240),
-      country: clean(candidate.country, 100),
-      email,
-      phone: normalizePhone(candidate.phone || candidate.whatsapp),
-      whatsapp,
-      website,
-      website_domain: websiteDomain,
-      apparel_segment: Array.isArray(candidate.product_fit) ? candidate.product_fit.join(", ") : null,
-      lead_status: "New",
-      crm_status: "new",
-      priority: Number(candidate.verification_score || 0) >= 85 ? "high" : "normal",
-      notes: `Owner-approved candidate activation\nSource: ${candidate.source_url}\nVerification: ${candidate.verification_score}/100\nContact route: ${email ? "email" : "WhatsApp"}\nBatch: ${batch.data.id}`,
-      crm_history: [{ event: "candidate_imported", at: now, batch_id: batch.data.id, candidate_id: candidate.id, actor: userId, source: candidate.source_url, contact_route: email ? "email" : "whatsapp" }],
-      lead_campaign_id: candidate.campaign_id,
-      buyer_type: candidate.buyer_type,
-      linkedin_url: candidate.linkedin_url,
-      instagram_url: candidate.instagram_url,
-      facebook_url: candidate.facebook_url,
-      source_url: candidate.source_url,
-      source_provider: candidate.source_provider,
-      verification_score: candidate.verification_score,
-      verification_evidence: {
-        ...(isRecord(candidate.evidence) ? candidate.evidence : {}),
-        activation_batch_id: batch.data.id,
-        activated_at: now,
-        activated_by: userId,
-        accepted_contact_route: email ? "email" : "whatsapp",
-        automatic_message_sent: false,
-      },
-    }).select("id").single();
-    if (leadResult.error || !leadResult.data) {
-      const reason = leadResult.error?.message || "CRM insert failed";
-      outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "failed", error: reason });
-      await audit(service, batch.data.id, candidate.id, null, "failed", { phase: "crm_insert", error: reason }, userId);
-      continue;
-    }
-
-    const candidateSaved = await service.from("lead_candidates").update({
-      verification_status: "imported",
-      imported_lead_id: leadResult.data.id,
-      reviewed_by: userId,
-      reviewed_at: now,
-      evidence: {
-        ...(isRecord(candidate.evidence) ? candidate.evidence : {}),
-        activation: { batch_id: batch.data.id, lead_id: leadResult.data.id, at: now, actor: userId, contact_route: email ? "email" : "whatsapp" },
-      },
-    }).eq("id", candidate.id);
-    if (candidateSaved.error) {
-      await service.from("b2b_leads").delete().eq("id", leadResult.data.id);
-      const reason = `Candidate link failed; CRM insert rolled back: ${candidateSaved.error.message}`;
-      outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "failed", error: reason });
-      await audit(service, batch.data.id, candidate.id, null, "failed", { phase: "candidate_link", error: reason }, userId);
-      continue;
-    }
-
-    const sourceFiles = await service.from("lead_import_files").select("id").eq("campaign_id", candidate.campaign_id).in("status", ["uploaded", "staged", "failed"]);
-    if (!sourceFiles.error && sourceFiles.data?.length) {
-      await service.from("lead_source_file_links").upsert(sourceFiles.data.map((file: any) => ({ import_file_id: file.id, lead_id: leadResult.data.id, candidate_id: candidate.id, created_by: userId })), { onConflict: "import_file_id,lead_id", ignoreDuplicates: true });
-    }
-
-    importedLeadIds.push(leadResult.data.id);
-    if (websiteDomain) known.domains.set(websiteDomain, leadResult.data.id);
-    if (email) known.emails.set(email, leadResult.data.id);
-    if (whatsapp) known.whatsapps.set(phoneKey(whatsapp), leadResult.data.id);
-    known.companies.set(companyKey, leadResult.data.id);
-    outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "imported", lead_id: leadResult.data.id, contact_route: email ? "email" : "whatsapp" });
-    await audit(service, batch.data.id, candidate.id, leadResult.data.id, "imported", { contact_route: email ? "email" : "whatsapp", automatic_message_sent: false }, userId);
+  const claimToken = crypto.randomUUID();
+  const candidateResult = await service.rpc("claim_lead_candidates_for_activation", {
+    p_candidate_ids: ids,
+    p_claim_token: claimToken,
+    p_limit: MAX_BATCH,
+  });
+  if (candidateResult.error) {
+    await service.from("lead_activation_batches").update({
+      status: "failed",
+      failed_count: ids.length,
+      errors: [{ phase: "candidate_claim", error: candidateResult.error.message }],
+      completed_at: new Date().toISOString(),
+    }).eq("id", batch.data.id);
+    throw candidateResult.error;
   }
 
-  const summary = summarize(outcomes);
-  const imported = Number(summary.imported || 0);
-  const failed = Number(summary.failed || 0);
-  const skipped = outcomes.length - imported - failed;
-  await service.from("lead_activation_batches").update({
-    status: failed ? (imported ? "partial" : "failed") : "completed",
-    imported_lead_ids: importedLeadIds,
-    strict_ready_count: imported + Number(summary.duplicate || 0),
-    imported_count: imported,
-    skipped_count: skipped,
-    failed_count: failed,
-    summary: { mode: "channel_activation_v2", ...summary, sends_external_messages: false },
-    errors: outcomes.filter((item) => item.error),
-    completed_at: new Date().toISOString(),
-  }).eq("id", batch.data.id);
-  return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });
+  const claimedCandidates = candidateResult.data || [];
+  const claimedIds = new Set(claimedCandidates.map((candidate: any) => candidate.id));
+  const outcomes: JsonRecord[] = ids
+    .filter((id) => !claimedIds.has(id))
+    .map((id) => ({
+      candidate_id: id,
+      status: "busy",
+      reason: "Candidate is already imported, no longer eligible, or locked by another activation run",
+    }));
+  const importedLeadIds: string[] = [];
+
+  try {
+    const known = await loadKnown(service);
+
+    for (const candidate of claimedCandidates) {
+      if (candidate.imported_lead_id) {
+        outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "duplicate", lead_id: candidate.imported_lead_id, reason: "Already imported" });
+        await audit(service, batch.data.id, candidate.id, candidate.imported_lead_id, "duplicate", { reason: "Already imported" }, userId);
+        continue;
+      }
+      const email = validEmail(candidate.email);
+      const whatsapp = normalizePhone(candidate.whatsapp || candidate.phone);
+      const blockers = candidateBlockers(candidate, email, whatsapp);
+      if (blockers.length) {
+        outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "blocked", blockers });
+        await service.from("lead_candidates").update({ verification_status: "needs_review", reviewed_by: userId, reviewed_at: new Date().toISOString() }).eq("id", candidate.id).eq("activation_claim_token", claimToken);
+        await audit(service, batch.data.id, candidate.id, null, "blocked", { blockers }, userId);
+        continue;
+      }
+
+      const website = safeUrl(candidate.website || candidate.source_url);
+      const websiteDomain = domain(candidate.website_domain || website);
+      const companyKey = companyCountryKey(candidate.company_name, candidate.country);
+      const existing = (websiteDomain && known.domains.get(websiteDomain))
+        || (email && known.emails.get(email))
+        || (whatsapp && known.whatsapps.get(phoneKey(whatsapp)))
+        || known.companies.get(companyKey);
+      if (existing) {
+        await service.from("lead_candidates").update({
+          verification_status: "duplicate",
+          duplicate_reason: "Already exists in Buyer CRM",
+          imported_lead_id: existing,
+          reviewed_by: userId,
+          reviewed_at: new Date().toISOString(),
+        }).eq("id", candidate.id).eq("activation_claim_token", claimToken);
+        outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "duplicate", lead_id: existing, reason: "Already exists in Buyer CRM" });
+        await audit(service, batch.data.id, candidate.id, existing, "duplicate", { reason: "Already exists in Buyer CRM" }, userId);
+        continue;
+      }
+
+      const now = new Date().toISOString();
+      const leadResult = await service.from("b2b_leads").insert({
+        company_name: clean(candidate.company_name, 240),
+        country: clean(candidate.country, 100),
+        email,
+        phone: normalizePhone(candidate.phone || candidate.whatsapp),
+        whatsapp,
+        website,
+        website_domain: websiteDomain,
+        apparel_segment: Array.isArray(candidate.product_fit) ? candidate.product_fit.join(", ") : null,
+        lead_status: "New",
+        crm_status: "new",
+        priority: Number(candidate.verification_score || 0) >= 85 ? "high" : "normal",
+        notes: `Owner-approved candidate activation\nSource: ${candidate.source_url}\nVerification: ${candidate.verification_score}/100\nContact route: ${email ? "email" : "WhatsApp"}\nBatch: ${batch.data.id}`,
+        crm_history: [{ event: "candidate_imported", at: now, batch_id: batch.data.id, candidate_id: candidate.id, actor: userId, source: candidate.source_url, contact_route: email ? "email" : "whatsapp" }],
+        lead_campaign_id: candidate.campaign_id,
+        buyer_type: candidate.buyer_type,
+        linkedin_url: candidate.linkedin_url,
+        instagram_url: candidate.instagram_url,
+        facebook_url: candidate.facebook_url,
+        source_url: candidate.source_url,
+        source_provider: candidate.source_provider,
+        verification_score: candidate.verification_score,
+        verification_evidence: {
+          ...(isRecord(candidate.evidence) ? candidate.evidence : {}),
+          activation_batch_id: batch.data.id,
+          activated_at: now,
+          activated_by: userId,
+          accepted_contact_route: email ? "email" : "whatsapp",
+          automatic_message_sent: false,
+        },
+      }).select("id").single();
+      if (leadResult.error || !leadResult.data) {
+        const reason = leadResult.error?.message || "CRM insert failed";
+        outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "failed", error: reason });
+        await audit(service, batch.data.id, candidate.id, null, "failed", { phase: "crm_insert", error: reason }, userId);
+        continue;
+      }
+
+      const candidateSaved = await service.from("lead_candidates").update({
+        verification_status: "imported",
+        imported_lead_id: leadResult.data.id,
+        reviewed_by: userId,
+        reviewed_at: now,
+        activation_claim_token: null,
+        activation_claimed_at: null,
+        evidence: {
+          ...(isRecord(candidate.evidence) ? candidate.evidence : {}),
+          activation: { batch_id: batch.data.id, lead_id: leadResult.data.id, at: now, actor: userId, contact_route: email ? "email" : "whatsapp" },
+        },
+      }).eq("id", candidate.id).eq("activation_claim_token", claimToken).select("id").maybeSingle();
+      if (candidateSaved.error || !candidateSaved.data) {
+        await service.from("b2b_leads").delete().eq("id", leadResult.data.id);
+        const reason = `Candidate link failed; CRM insert rolled back: ${candidateSaved.error?.message || "activation claim was lost"}`;
+        outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "failed", error: reason });
+        await audit(service, batch.data.id, candidate.id, null, "failed", { phase: "candidate_link", error: reason }, userId);
+        continue;
+      }
+
+      const sourceFiles = await service.from("lead_import_files").select("id").eq("campaign_id", candidate.campaign_id).in("status", ["uploaded", "staged", "failed"]);
+      if (!sourceFiles.error && sourceFiles.data?.length) {
+        await service.from("lead_source_file_links").upsert(sourceFiles.data.map((file: any) => ({ import_file_id: file.id, lead_id: leadResult.data.id, candidate_id: candidate.id, created_by: userId })), { onConflict: "import_file_id,lead_id", ignoreDuplicates: true });
+      }
+
+      importedLeadIds.push(leadResult.data.id);
+      if (websiteDomain) known.domains.set(websiteDomain, leadResult.data.id);
+      if (email) known.emails.set(email, leadResult.data.id);
+      if (whatsapp) known.whatsapps.set(phoneKey(whatsapp), leadResult.data.id);
+      known.companies.set(companyKey, leadResult.data.id);
+      outcomes.push({ candidate_id: candidate.id, company: candidate.company_name, status: "imported", lead_id: leadResult.data.id, contact_route: email ? "email" : "whatsapp" });
+      await audit(service, batch.data.id, candidate.id, leadResult.data.id, "imported", { contact_route: email ? "email" : "whatsapp", automatic_message_sent: false }, userId);
+    }
+
+    const summary = summarize(outcomes);
+    const imported = Number(summary.imported || 0);
+    const failed = Number(summary.failed || 0);
+    const skipped = outcomes.length - imported - failed;
+    await service.from("lead_activation_batches").update({
+      status: failed ? (imported ? "partial" : "failed") : "completed",
+      imported_lead_ids: importedLeadIds,
+      strict_ready_count: imported + Number(summary.duplicate || 0),
+      imported_count: imported,
+      skipped_count: skipped,
+      failed_count: failed,
+      summary: { mode: "channel_activation_v2", ...summary, sends_external_messages: false, claim_token: claimToken, max_batch: MAX_BATCH },
+      errors: outcomes.filter((item) => item.error),
+      completed_at: new Date().toISOString(),
+    }).eq("id", batch.data.id);
+    return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });
+  } finally {
+    const release = await service.from("lead_candidates").update({
+      activation_claim_token: null,
+      activation_claimed_at: null,
+    }).eq("activation_claim_token", claimToken);
+    if (release.error) console.error("lead activation claim release failed", release.error.message);
+  }
 }
 
 function candidateBlockers(candidate: any, email: string | null, whatsapp: string | null) {

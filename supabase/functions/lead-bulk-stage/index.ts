@@ -244,7 +244,6 @@ async function knownRecords(db: any, campaignId: string) {
   for (const row of candidateResult.data || []) {
     if (row.campaign_id === campaignId && row.import_fingerprint) {
       currentFingerprints.set(String(row.import_fingerprint), row.id);
-      continue;
     }
     if (row.website_domain) candidateDomains.set(String(row.website_domain).toLowerCase(), row.id);
     const email = validEmail(row.email); if (email) candidateEmails.set(email, row.id);
