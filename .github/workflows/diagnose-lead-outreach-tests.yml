@@ -1,0 +1,41 @@
+name: Diagnose Lead Outreach Tests
+
+on:
+  push:
+    branches:
+      - feat/lead-file-outreach-approval
+    paths:
+      - ".github/workflows/diagnose-lead-outreach-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/lead-file-outreach-approval
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Capture exact test output
+        run: |
+          set +e
+          npm test -- --run > test-output.txt 2>&1
+          status=$?
+          echo "$status" > test-exit-code.txt
+          tail -n 300 test-output.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lead-outreach-test-diagnostic
+          path: |
+            test-output.txt
+            test-exit-code.txt
+          if-no-files-found: error
+          retention-days: 1
