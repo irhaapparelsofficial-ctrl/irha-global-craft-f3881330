@@ -1,5 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
-# Registered trigger revision: 11
+# Registered trigger revision: 12
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
@@ -107,6 +107,7 @@ jobs:
           test -s dist/release.txt
           test -s dist/_redirects
           test -s dist/_headers
+          test -s dist/_worker.js
           test -s "dist/19d2833c43fe6e05e2a4416f65a53cdc.txt"
           grep -Fx '19d2833c43fe6e05e2a4416f65a53cdc' "dist/19d2833c43fe6e05e2a4416f65a53cdc.txt"
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
@@ -116,7 +117,8 @@ jobs:
           grep -Fx '/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe /products/leisure-nightwear/plush-bathrobe-sleep-robe 301' dist/_redirects
           grep -Fx '/products/sportswear/ /products/sportswear 301' dist/_redirects
           grep -Fx '/buyer-trust-center /buyer-trust 301' dist/_redirects
-          grep -F 'X-Robots-Tag: noindex, nofollow, noarchive' dist/_headers
+          grep -F '["/buyer-trust-center", "/buyer-trust"]' dist/_worker.js
+          grep -F 'X-Robots-Tag", "noindex, nofollow, noarchive' dist/_worker.js
           if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
             echo "Retired Supabase identity found"
             exit 1
@@ -165,7 +167,10 @@ jobs:
             status="$(printf '%s' "$headers" | awk 'NR==1 {print $2}')"
             location="$(printf '%s' "$headers" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
             test "$status" = "301" || { echo "Expected 301 for $source_path, got $status"; exit 1; }
-            test "$location" = "$STAGING_URL$expected_path" || { echo "Unexpected Location for $source_path: $location"; exit 1; }
+            case "$location" in
+              "$expected_path"|"$STAGING_URL$expected_path") ;;
+              *) echo "Unexpected Location for $source_path: $location"; exit 1 ;;
+            esac
           }
 
           assert_redirect "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe" "/products/leisure-nightwear/plush-bathrobe-sleep-robe"
