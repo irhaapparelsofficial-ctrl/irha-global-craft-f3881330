@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.gsc-inspect]
 verify_jwt = true
 
+[functions.gsc-analytics]
+verify_jwt = true
+
 [functions.sitemap-ping]
 verify_jwt = true
 
