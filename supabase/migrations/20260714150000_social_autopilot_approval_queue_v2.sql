@@ -172,6 +172,49 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.normalize_social_autopilot_calendar_schedule()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  original_schedule timestamptz;
+  minimum_schedule timestamptz := now() + interval '15 minutes';
+BEGIN
+  IF COALESCE(NEW.creative_brief #>> '{autopilot,version}', '') <> 'v2'
+     OR NEW.scheduled_at IS NULL
+     OR NEW.status NOT IN ('draft','approved','scheduled') THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.scheduled_at < minimum_schedule THEN
+    original_schedule := NEW.scheduled_at;
+    WHILE NEW.scheduled_at < minimum_schedule LOOP
+      NEW.scheduled_at := NEW.scheduled_at + interval '7 days';
+    END LOOP;
+
+    NEW.creative_brief := jsonb_set(
+      jsonb_set(
+        jsonb_set(
+          COALESCE(NEW.creative_brief, '{}'::jsonb),
+          '{autopilot,proposed_schedule}',
+          to_jsonb(NEW.scheduled_at),
+          true
+        ),
+        '{autopilot,schedule_adjusted_from}',
+        to_jsonb(original_schedule),
+        true
+      ),
+      '{autopilot,schedule_adjustment_reason}',
+      to_jsonb('Past weekly slot moved to its next future occurrence.'::text),
+      true
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS trg_social_autopilot_settings_normalize ON public.social_autopilot_settings;
 CREATE TRIGGER trg_social_autopilot_settings_normalize
   BEFORE INSERT OR UPDATE ON public.social_autopilot_settings
@@ -181,6 +224,11 @@ DROP TRIGGER IF EXISTS trg_social_autopilot_settings_updated ON public.social_au
 CREATE TRIGGER trg_social_autopilot_settings_updated
   BEFORE UPDATE ON public.social_autopilot_settings
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+DROP TRIGGER IF EXISTS trg_social_autopilot_calendar_schedule ON public.social_calendar_items;
+CREATE TRIGGER trg_social_autopilot_calendar_schedule
+  BEFORE INSERT OR UPDATE OF scheduled_at, status, creative_brief ON public.social_calendar_items
+  FOR EACH ROW EXECUTE FUNCTION public.normalize_social_autopilot_calendar_schedule();
 
 INSERT INTO public.social_autopilot_settings (id)
 VALUES ('default')
