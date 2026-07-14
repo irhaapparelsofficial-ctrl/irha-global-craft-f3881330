@@ -20,6 +20,8 @@ const CategoryTaxonomyPage = lazy(() => import("./pages/CategoryTaxonomyPage"));
 const CategoryOrProductPage = lazy(() => import("./pages/CategoryOrProductPage"));
 const BavarianMensCollection = lazy(() => import("./pages/BavarianMensCollection"));
 const BavarianWomensCollection = lazy(() => import("./pages/BavarianWomensCollection"));
+const Markets = lazy(() => import("./pages/Markets"));
+const MarketLandingPage = lazy(() => import("./pages/MarketLandingPage"));
 const Manufacturing = lazy(() => import("./pages/Manufacturing"));
 const Inquiry = lazy(() => import("./pages/Inquiry"));
 const RepeatOrder = lazy(() => import("./pages/RepeatOrder"));
@@ -64,6 +66,17 @@ const LEGACY_REDIRECTS = [
   ["/buyer-trust-centre", "/buyer-trust"],
   ["/buyer-resources", "/resources"],
   ["/buyer-faq", "/faq"],
+  ["/germany", "/markets/germany"],
+  ["/austria", "/markets/austria"],
+  ["/switzerland", "/markets/switzerland"],
+  ["/netherlands", "/markets/netherlands"],
+  ["/usa", "/markets/united-states"],
+  ["/united-states", "/markets/united-states"],
+  ["/uk", "/markets/united-kingdom"],
+  ["/united-kingdom", "/markets/united-kingdom"],
+  ["/canada", "/markets/canada"],
+  ["/australia", "/markets/australia"],
+  ["/new-zealand", "/markets/new-zealand"],
   ["/sportswear-manufacturer-pakistan", "/products/sportswear"],
   ["/sportswear-manufacturer-sialkot", "/products/sportswear"],
   ["/private-label-sportswear-manufacturer", "/products/sportswear"],
@@ -132,22 +145,10 @@ const App = () => (
                       <Route path="/products/all" element={<AllProductsPage />} />
                       <Route path="/products/:categorySlug/all-products" element={<CategoryPage />} />
                       <Route path="/products/:categorySlug" element={<CategoryTaxonomyPage />} />
-                      <Route
-                        path="/products/bavarian-trachten-wear/mens-trachten"
-                        element={<Navigate to="/products/bavarian-trachten-wear/men" replace />}
-                      />
-                      <Route
-                        path="/products/bavarian-trachten-wear/mens-trachten/:collectionSlug"
-                        element={<BavarianMensCollection />}
-                      />
-                      <Route
-                        path="/products/bavarian-trachten-wear/womens-trachten"
-                        element={<Navigate to="/products/bavarian-trachten-wear/women" replace />}
-                      />
-                      <Route
-                        path="/products/bavarian-trachten-wear/womens-trachten/:collectionSlug"
-                        element={<BavarianWomensCollection />}
-                      />
+                      <Route path="/products/bavarian-trachten-wear/mens-trachten" element={<Navigate to="/products/bavarian-trachten-wear/men" replace />} />
+                      <Route path="/products/bavarian-trachten-wear/mens-trachten/:collectionSlug" element={<BavarianMensCollection />} />
+                      <Route path="/products/bavarian-trachten-wear/womens-trachten" element={<Navigate to="/products/bavarian-trachten-wear/women" replace />} />
+                      <Route path="/products/bavarian-trachten-wear/womens-trachten/:collectionSlug" element={<BavarianWomensCollection />} />
                       <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
                       <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
                       <Route path="/products/:categorySlug/:productSlug" element={<CategoryOrProductPage />} />
@@ -156,6 +157,8 @@ const App = () => (
                       <Route path="/intl/:locale/products/:categorySlug/:audienceSlug" element={<CategoryTaxonomyPage />} />
                       <Route path="/intl/:locale/products/:categorySlug" element={<CategoryTaxonomyPage />} />
 
+                      <Route path="/markets" element={<Markets />} />
+                      <Route path="/markets/:countrySlug" element={<MarketLandingPage />} />
                       <Route path="/manufacturing" element={<Manufacturing />} />
                       <Route path="/compliance" element={<Compliance />} />
                       <Route path="/buyer-trust" element={<BuyerTrust />} />
