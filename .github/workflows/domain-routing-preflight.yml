@@ -1,0 +1,118 @@
+name: Domain Routing Preflight
+
+on:
+  push:
+    branches:
+      - ops/domain-routing-preflight-20260714
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      ROOT_DOMAIN: irhaapparels.com
+      WWW_DOMAIN: www.irhaapparels.com
+      PAGES_DOMAIN: irha-apparels.pages.dev
+      LOVABLE_DOMAIN: irha-apparels.lovable.app
+
+    steps:
+      - name: Resolve Cloudflare account and inspect Pages project
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          test -n "$project_name"
+          echo "::add-mask::$token"
+
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            embedded="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
+            if [[ "$embedded" =~ ^[0-9a-fA-F]{32}$ ]]; then
+              account_id="$embedded"
+            else
+              accounts_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+              test "$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')" = "1"
+              account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+            fi
+          fi
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
+          echo "::add-mask::$account_id"
+
+          project_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          printf '%s' "$project_json" | jq -e '.success == true' >/dev/null
+          printf '%s' "$project_json" | jq '{
+            project_name: .result.name,
+            production_branch: .result.production_branch,
+            subdomain: .result.subdomain,
+            domains: (.result.domains // []),
+            latest_deployment: {
+              id: .result.latest_deployment.id,
+              url: .result.latest_deployment.url,
+              environment: .result.latest_deployment.environment,
+              source: .result.latest_deployment.source,
+              latest_stage: .result.latest_deployment.latest_stage
+            }
+          }' > cloudflare-project.json
+
+          zones_json="$(curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/zones?name=$ROOT_DOMAIN&per_page=10")"
+          if [ "$(printf '%s' "$zones_json" | jq -r '.success // false')" = "true" ]; then
+            printf '%s' "$zones_json" | jq '{zones: [.result[] | {id, name, status, paused, type, name_servers}]}' > cloudflare-zone.json
+          else
+            jq -n --arg note 'Zone lookup unavailable to configured token' '{zones: [], note: $note}' > cloudflare-zone.json
+          fi
+
+      - name: Capture DNS and HTTP routing evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p routing
+          : > routing/summary.tsv
+          printf 'host\tdns_cname\tdns_a\thttp_code\tfinal_url\tserver\tcf_cache_status\tbuild_source_commit\tcloudflare_source_sha\tlegacy_claims\tbuyer_safe_marker\n' >> routing/summary.tsv
+
+          for host in "$ROOT_DOMAIN" "$WWW_DOMAIN" "$PAGES_DOMAIN" "$LOVABLE_DOMAIN"; do
+            cname="$(dig +short CNAME "$host" | tr '\n' ',' | sed 's/,$//' || true)"
+            arecord="$(dig +short A "$host" | tr '\n' ',' | sed 's/,$//' || true)"
+            cache_bust="${GITHUB_SHA::12}-$(date +%s)-$RANDOM"
+            base="https://$host"
+
+            http_code="$(curl -sSLo "routing/${host}.home.html" -D "routing/${host}.headers" --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -w '%{http_code}' "$base/?domain_check=$cache_bust" || true)"
+            final_url="$(curl -sSLo /dev/null --connect-timeout 10 --max-time 40 -w '%{url_effective}' "$base/?domain_check=$cache_bust" || true)"
+            server="$(awk 'BEGIN{IGNORECASE=1} /^server:/{sub(/\r$/, ""); print substr($0,9); exit}' "routing/${host}.headers" 2>/dev/null || true)"
+            cf_cache="$(awk 'BEGIN{IGNORECASE=1} /^cf-cache-status:/{sub(/\r$/, ""); print substr($0,18); exit}' "routing/${host}.headers" 2>/dev/null || true)"
+
+            curl -sSLo "routing/${host}.build.json" --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$base/build.json?domain_check=$cache_bust" || true
+            curl -sSLo "routing/${host}.cloudflare-deployment.json" --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$base/cloudflare-deployment.json?domain_check=$cache_bust" || true
+
+            build_sha="$(jq -r '.source_commit // empty' "routing/${host}.build.json" 2>/dev/null || true)"
+            cf_sha="$(jq -r '.source_sha // empty' "routing/${host}.cloudflare-deployment.json" 2>/dev/null || true)"
+            legacy="false"
+            buyer_safe="false"
+            if grep -Eiq 'Since 2014|MOQ 50|45-Day Delivery|45-day delivery|reply within 12 hours|BSCI Audited|ISO 9001:2015|SEDEX Member' "routing/${host}.home.html" 2>/dev/null; then legacy="true"; fi
+            if grep -Eiq 'Custom Apparel Manufacturer for Global B2B Buyers|Custom Apparel Manufacturing for Global B2B Buyers' "routing/${host}.home.html" 2>/dev/null; then buyer_safe="true"; fi
+
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$host" "$cname" "$arecord" "$http_code" "$final_url" "$server" "$cf_cache" "$build_sha" "$cf_sha" "$legacy" "$buyer_safe" >> routing/summary.tsv
+          done
+
+          column -t -s $'\t' routing/summary.tsv || cat routing/summary.tsv
+
+      - name: Upload sanitized routing evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: domain-routing-preflight
+          path: |
+            cloudflare-project.json
+            cloudflare-zone.json
+            routing/
+          if-no-files-found: error
+          retention-days: 1
