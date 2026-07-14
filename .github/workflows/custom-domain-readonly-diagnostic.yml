@@ -1,0 +1,46 @@
+name: Custom Domain Runtime Diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/custom-domain-readonly-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect apex and www without mutation
+        shell: bash
+        run: |
+          set -u
+          for host in irhaapparels.com www.irhaapparels.com; do
+            echo "=== $host ==="
+            for path in / /build.json /cloudflare-deployment.json; do
+              body="/tmp/${host//./_}${path//\//_}.body"
+              headers="/tmp/${host//./_}${path//\//_}.headers"
+              meta="$(curl -sS -L --connect-timeout 10 --max-time 30 -D "$headers" -o "$body" -w 'code=%{http_code} final=%{url_effective} type=%{content_type}' "https://$host$path?runtime_diag=${GITHUB_RUN_ID}-${RANDOM}" 2>&1)"
+              echo "$path $meta"
+              if [ "$path" = "/" ]; then
+                if grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' "$body" 2>/dev/null; then
+                  echo "home_marker=present"
+                else
+                  echo "home_marker=missing"
+                fi
+                title="$(grep -Eio '<title>[^<]+' "$body" 2>/dev/null | head -n1 | sed 's/<title>//I' || true)"
+                echo "title=${title:-unavailable}"
+              else
+                if jq -e . "$body" >/dev/null 2>&1; then
+                  jq -c '{source_commit,source_sha,repository,branch,supabase_project_id,source_identity_state,build_fingerprint,build_fingerprint_algorithm}' "$body"
+                else
+                  echo -n 'non_json_prefix='
+                  head -c 160 "$body" | tr '\n' ' '
+                  echo
+                fi
+              fi
+            done
+          done
