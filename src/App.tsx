@@ -10,6 +10,7 @@ import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
 import AdminOutreachCommandCenter from "@/components/admin/AdminOutreachCommandCenter";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import { BUYER_INTENT_LANDING_PAGES } from "@/lib/buyerIntentLandingPages";
 
 const About = lazy(() => import("./pages/About"));
 const AllProductsPage = lazy(() => import("./pages/AllProductsPage"));
@@ -25,6 +26,7 @@ const RepeatOrder = lazy(() => import("./pages/RepeatOrder"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const LocalizedSeoPage = lazy(() => import("./pages/LocalizedSeoPage"));
+const BuyerIntentLandingPage = lazy(() => import("./pages/BuyerIntentLandingPage"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminLiveChat = lazy(() => import("./pages/AdminLiveChat"));
@@ -70,18 +72,15 @@ const LEGACY_REDIRECTS = [
   ["/lederhosen-manufacturer", "/products/bavarian-trachten-wear"],
   ["/trachten-manufacturer", "/products/bavarian-trachten-wear"],
   ["/oktoberfest-clothing-manufacturer", "/products/bavarian-trachten-wear"],
-  ["/austria-lederhosen-manufacturer", "/products/bavarian-trachten-wear"],
+  ["/austria-lederhosen-manufacturer", "/lederhosen-manufacturer-germany"],
   ["/streetwear-manufacturer-pakistan", "/products/streetwear-activewear"],
   ["/uae-sportswear-manufacturer", "/products/sportswear"],
   ["/custom-apparel-manufacturer-pakistan", "/products"],
-  ["/germany-apparel-manufacturer", "/products"],
-  ["/usa-private-label-clothing-manufacturer", "/products"],
-  ["/uk-custom-apparel-manufacturer", "/products"],
-  ["/usa-manufacturer", "/products"],
-  ["/uk-manufacturer", "/products"],
-  ["/germany-manufacturer", "/products"],
-  ["/canada-manufacturer", "/products"],
-  ["/australia-manufacturer", "/products"],
+  ["/usa-manufacturer", "/usa-private-label-clothing-manufacturer"],
+  ["/uk-manufacturer", "/uk-custom-apparel-manufacturer"],
+  ["/germany-manufacturer", "/germany-apparel-manufacturer"],
+  ["/canada-manufacturer", "/canada-apparel-manufacturer"],
+  ["/australia-manufacturer", "/australia-apparel-manufacturer"],
 ] as const;
 
 function ScrollToTop() {
@@ -180,6 +179,9 @@ const App = () => (
                       <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/seo-indexing" element={<Navigate to="/admin" replace />} />
                       <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
+                      {BUYER_INTENT_LANDING_PAGES.map((page) => (
+                        <Route key={page.path} path={page.path} element={<BuyerIntentLandingPage />} />
+                      ))}
                       <Route path="/studio" element={<Studio />} />
                       <Route path="/shortlist" element={<Shortlist />} />
                       <Route path="/compare" element={<Compare />} />

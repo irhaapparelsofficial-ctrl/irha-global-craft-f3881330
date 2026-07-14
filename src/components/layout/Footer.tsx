@@ -3,6 +3,7 @@ import { Mail, MapPin, MessageCircle, ChevronDown } from "lucide-react";
 import irhaLogo from "@/assets/irha-logo.png.asset.json";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { settingsWhatsappLink } from "@/lib/siteSettings";
+import { BUYER_INTENT_FOOTER_LINKS } from "@/lib/buyerIntentLandingPages";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>;
@@ -68,7 +69,16 @@ export default function Footer() {
         </details>
       </div>
 
-      <div className="container-luxe mt-14 pt-6 border-t border-foreground/10"><p className="text-center text-[11px] md:text-xs uppercase tracking-[0.3em] text-foreground/65">{settings.footer.stripText}</p></div>
+      <nav aria-label="Priority apparel sourcing markets" className="container-luxe mt-12 pt-7 border-t border-foreground/10">
+        <p className="text-center text-[10px] uppercase tracking-[0.28em] text-gold mb-5">Manufacturing for international B2B buyers</p>
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs">
+          {BUYER_INTENT_FOOTER_LINKS.map((item) => (
+            <Link key={item.href} to={item.href} className="text-foreground/60 hover:text-gold transition-colors">{item.label}</Link>
+          ))}
+        </div>
+      </nav>
+
+      <div className="container-luxe mt-10 pt-6 border-t border-foreground/10"><p className="text-center text-[11px] md:text-xs uppercase tracking-[0.3em] text-foreground/65">{settings.footer.stripText}</p></div>
 
       <div className="container-luxe mt-6 flex flex-col md:flex-row items-center justify-between gap-3">
         <p className="text-[10px] uppercase tracking-[0.25em] text-foreground/45">© {new Date().getFullYear()} {settings.brand.name}. {settings.footer.copyrightSuffix}</p>
