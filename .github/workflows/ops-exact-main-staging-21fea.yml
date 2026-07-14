@@ -1,0 +1,191 @@
+name: Exact Main Staging Orchestrator
+
+run-name: Orchestrate exact 21fea048 staging · PR #${{ github.event.pull_request.number }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ops-exact-main-staging-21fea.yml"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: exact-main-staging-21fea
+  cancel-in-progress: false
+
+env:
+  EXPECTED_MAIN_SHA: 21fea048bab55a6574b031d385b55cd7fa853223
+  EXPECTED_HEAD_BRANCH: ops/exact-main-staging-21fea
+  STAGING_URL: https://irha-apparels.pages.dev
+  STAGING_WORKFLOW_FILE: cloudflare-pages-production.yml
+  STAGING_WORKFLOW_NAME: Cloudflare Pages Staging
+
+jobs:
+  orchestrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact frozen main
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_MAIN_SHA }}
+          fetch-depth: 1
+
+      - name: Freeze source and wait for PR Quality Gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          head_branch="$(jq -r '.pull_request.head.ref' "$GITHUB_EVENT_PATH")"
+          base_sha="$(jq -r '.pull_request.base.sha' "$GITHUB_EVENT_PATH")"
+          head_sha="$(jq -r '.pull_request.head.sha' "$GITHUB_EVENT_PATH")"
+          test "$head_branch" = "$EXPECTED_HEAD_BRANCH"
+          test "$base_sha" = "$EXPECTED_MAIN_SHA" || {
+            echo "PR base moved: expected $EXPECTED_MAIN_SHA, got $base_sha"
+            exit 1
+          }
+          test "$(git rev-parse HEAD)" = "$EXPECTED_MAIN_SHA"
+          current_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$current_main" = "$EXPECTED_MAIN_SHA" || {
+            echo "main advanced: expected $EXPECTED_MAIN_SHA, got $current_main"
+            exit 1
+          }
+
+          quality_ready=0
+          for attempt in $(seq 1 120); do
+            runs="$(curl -fsS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$head_sha&event=pull_request&per_page=100")"
+            status="$(printf '%s' "$runs" | jq -r '[.workflow_runs[] | select(.name == "Quality Gate")] | sort_by(.run_number) | last | .status // "missing"')"
+            conclusion="$(printf '%s' "$runs" | jq -r '[.workflow_runs[] | select(.name == "Quality Gate")] | sort_by(.run_number) | last | .conclusion // "pending"')"
+            if [ "$status" = completed ] && [ "$conclusion" = success ]; then
+              quality_ready=1
+              break
+            fi
+            if [ "$status" = completed ] && [ "$conclusion" != success ]; then
+              echo "Quality Gate completed with $conclusion"
+              exit 1
+            fi
+            echo "Waiting for PR Quality Gate ($status/$conclusion, $attempt/120)"
+            sleep 10
+          done
+          test "$quality_ready" = 1 || { echo 'PR Quality Gate did not complete successfully'; exit 1; }
+
+      - name: Dispatch exact-main Cloudflare staging workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(curl -fsS \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$STAGING_WORKFLOW_FILE/runs?event=workflow_dispatch&branch=main&per_page=20")"
+          previous_run_number="$(printf '%s' "$before" | jq -r '[.workflow_runs[] | select(.head_sha == env.EXPECTED_MAIN_SHA)] | map(.run_number) | max // 0')"
+          echo "Previous exact-main staging run number: $previous_run_number"
+
+          response_code="$(curl -sS -o /tmp/dispatch-response.txt -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$STAGING_WORKFLOW_FILE/dispatches" \
+            -d "$(jq -nc --arg ref main '{ref:$ref,inputs:{confirm:"DEPLOY_STAGING"}}')")"
+          test "$response_code" = 204 || {
+            echo "Workflow dispatch failed with HTTP $response_code"
+            cat /tmp/dispatch-response.txt
+            exit 1
+          }
+          echo "PREVIOUS_RUN_NUMBER=$previous_run_number" >> "$GITHUB_ENV"
+
+      - name: Wait for exact staging deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id=""
+          run_number=""
+          for attempt in $(seq 1 60); do
+            runs="$(curl -fsS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$STAGING_WORKFLOW_FILE/runs?event=workflow_dispatch&branch=main&per_page=50")"
+            run_id="$(printf '%s' "$runs" | jq -r --arg sha "$EXPECTED_MAIN_SHA" --argjson previous "$PREVIOUS_RUN_NUMBER" \
+              '[.workflow_runs[] | select(.head_sha == $sha and .run_number > $previous)] | sort_by(.run_number) | last | .id // empty')"
+            run_number="$(printf '%s' "$runs" | jq -r --arg sha "$EXPECTED_MAIN_SHA" --argjson previous "$PREVIOUS_RUN_NUMBER" \
+              '[.workflow_runs[] | select(.head_sha == $sha and .run_number > $previous)] | sort_by(.run_number) | last | .run_number // empty')"
+            if [ -n "$run_id" ]; then
+              break
+            fi
+            echo "Waiting for dispatched run to appear ($attempt/60)"
+            sleep 5
+          done
+          test -n "$run_id" || { echo 'Dispatched staging run did not appear'; exit 1; }
+          echo "STAGING_RUN_ID=$run_id" >> "$GITHUB_ENV"
+          echo "STAGING_RUN_NUMBER=$run_number" >> "$GITHUB_ENV"
+
+          for attempt in $(seq 1 240); do
+            run="$(curl -fsS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"
+            status="$(printf '%s' "$run" | jq -r '.status')"
+            conclusion="$(printf '%s' "$run" | jq -r '.conclusion // "pending"')"
+            if [ "$status" = completed ]; then
+              test "$conclusion" = success || {
+                echo "Staging workflow concluded: $conclusion"
+                exit 1
+              }
+              break
+            fi
+            echo "Staging run $run_number: $status/$conclusion ($attempt/240)"
+            sleep 10
+          done
+
+      - name: Independently verify exact staging identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 24); do
+            bust="${EXPECTED_MAIN_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$STAGING_URL/?verify=$bust" -o /tmp/staging-home.html \
+              && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$STAGING_URL/build.json?verify=$bust" -o /tmp/staging-build.json \
+              && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$STAGING_URL/cloudflare-deployment.json?verify=$bust" -o /tmp/staging-deployment.json \
+              && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' /tmp/staging-home.html \
+              && jq -e --arg sha "$EXPECTED_MAIN_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase pvzjiozismyxqrzmtfbi \
+                '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase' \
+                /tmp/staging-build.json >/dev/null \
+              && jq -e --arg sha "$EXPECTED_MAIN_SHA" --arg repo "$GITHUB_REPOSITORY" \
+                '.source_sha == $sha and .repository == $repo and .branch == "main" and .purpose == "staging-only" and .production_routing_repository == "irhaapparelsofficial-ctrl/irha-global-craft" and .production_routing_policy == "approved-lovable-r11"' \
+                /tmp/staging-deployment.json >/dev/null; then
+              ready=1
+              break
+            fi
+            echo "Independent staging verification pending ($attempt/24)"
+            sleep 10
+          done
+          test "$ready" = 1 || { echo 'Exact staging identity could not be verified'; exit 1; }
+          if grep -Eiq 'Since 2014|MOQ 50|45-Day Delivery|45-day delivery|reply within 12 hours|BSCI Audited|ISO 9001:2015|SEDEX Member' /tmp/staging-home.html; then
+            echo 'Blocked legacy claims are present on staging'
+            exit 1
+          fi
+          jq -n --arg status success --arg source_sha "$EXPECTED_MAIN_SHA" --arg staging_url "$STAGING_URL" \
+            --argjson staging_run_id "$STAGING_RUN_ID" --arg staging_run_number "$STAGING_RUN_NUMBER" \
+            '{status:$status,source_sha:$source_sha,staging_url:$staging_url,staging_run_id:$staging_run_id,staging_run_number:$staging_run_number,production_authority:"irhaapparelsofficial-ctrl/irha-global-craft",production_policy:"approved-lovable-r11",verified:true,finished_at:(now|todateiso8601)}' \
+            > /tmp/exact-main-staging-result.json
+
+      - name: Upload staging certification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-main-staging-certification
+          path: /tmp/exact-main-staging-result.json
+          if-no-files-found: warn
+          retention-days: 14
