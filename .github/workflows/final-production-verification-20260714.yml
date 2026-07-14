@@ -27,16 +27,24 @@ jobs:
           set -euo pipefail
           cache_bust="final-${GITHUB_SHA::12}-$RANDOM"
 
+          header_value() {
+            local header_name="$1"
+            local header_file="$2"
+            grep -i -m1 "^${header_name}:" "$header_file" \
+              | sed -E 's/^[^:]+:[[:space:]]*//; s/\r$//' \
+              || true
+          }
+
           verify_raw_redirects() {
             local attempt="$1"
             local suffix="$cache_bust-$attempt"
             get_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /dev/null -D /tmp/www-get.headers -w '%{http_code}' "$WWW/products/sportswear?canonical_test=$suffix" || true)"
-            get_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/www-get.headers 2>/dev/null || true)"
-            get_marker="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-canonical-redirect:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/www-get.headers 2>/dev/null || true)"
+            get_location="$(header_value location /tmp/www-get.headers)"
+            get_marker="$(header_value x-irha-canonical-redirect /tmp/www-get.headers)"
 
             post_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /dev/null -D /tmp/www-post.headers -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{"synthetic":true}' "$WWW/inquiry?canonical_test=$suffix" || true)"
-            post_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/www-post.headers 2>/dev/null || true)"
-            post_marker="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-canonical-redirect:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/www-post.headers 2>/dev/null || true)"
+            post_location="$(header_value location /tmp/www-post.headers)"
+            post_marker="$(header_value x-irha-canonical-redirect /tmp/www-post.headers)"
 
             echo "attempt=$attempt www_GET=$get_code location=$get_location marker=$get_marker"
             echo "attempt=$attempt www_POST=$post_code location=$post_location marker=$post_marker"
