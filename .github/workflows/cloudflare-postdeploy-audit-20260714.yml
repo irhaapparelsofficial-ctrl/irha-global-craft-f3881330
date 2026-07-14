@@ -1,0 +1,76 @@
+name: Cloudflare Postdeploy Audit 20260714
+
+on:
+  push:
+    branches:
+      - ops/cloudflare-postdeploy-audit-20260714
+    paths:
+      - .github/workflows/cloudflare-postdeploy-audit-20260714.yml
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Inspect latest Pages deployments and post concise evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+          test -n "$token" && test -n "$project_name"
+          echo "::add-mask::$token"
+          cf_get() { curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "$1"; }
+
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n1 || true)"
+          fi
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            accounts="$(cf_get 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+            test "$(jq -r '(.result // []) | length' <<<"$accounts")" = 1
+            account_id="$(jq -r '.result[0].id' <<<"$accounts")"
+          fi
+          echo "::add-mask::$account_id"
+
+          project="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          deployments="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name/deployments?per_page=8")"
+          domains="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name/domains")"
+
+          concise="$(jq -n \
+            --arg expected_sha "1da2b1e8e46be0e34751eb6e5e2934b5a08c8926" \
+            --argjson project "$project" \
+            --argjson deployments "$deployments" \
+            --argjson domains "$domains" \
+            '{
+              expected_source_sha: $expected_sha,
+              project: {
+                name: ($project.result.name // null),
+                production_branch: ($project.result.production_branch // null),
+                latest_deployment: ($project.result.latest_deployment | {id, environment, url, created_on, source, stages})
+              },
+              custom_domains: (($domains.result // []) | map({name,status})),
+              newest_deployments: (($deployments.result // []) | map({id, environment, url, created_on, source, stages}))
+            }')"
+
+          {
+            echo '## Cloudflare postdeploy audit — canonical/live-chat release'
+            echo
+            echo '```json'
+            echo "$concise" | jq .
+            echo '```'
+            echo
+            echo 'Read-only audit; no Cloudflare or application setting changed.'
+          } > /tmp/comment.md
+
+          gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/comment.md
