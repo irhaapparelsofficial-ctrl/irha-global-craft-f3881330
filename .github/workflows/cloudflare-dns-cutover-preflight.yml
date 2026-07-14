@@ -1,0 +1,143 @@
+name: Cloudflare DNS Cutover Preflight
+
+run-name: Read-only Cloudflare DNS preflight · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/cloudflare-dns-cutover-preflight.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      EXPECTED_MAIN_SHA: 7615335372308dea5cf34c7ccdb88c0e39b327d7
+      ZONE_NAME: irhaapparels.com
+      PAGES_URL: https://irha-apparels.pages.dev
+
+    steps:
+      - name: Capture read-only Cloudflare and DNS state
+        shell: bash
+        run: |
+          set -u
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+
+          jq -n \
+            --arg expected_main_sha "$EXPECTED_MAIN_SHA" \
+            --arg zone_name "$ZONE_NAME" \
+            '{expected_main_sha:$expected_main_sha,zone_name:$zone_name,token_present:false,account_id_valid:false,project_name_present:false,token_verified:false,pages_project_read:false,dns_zone_read:false,dns_records_read:false,pages_domains:[],dns_records:[],pages_release:null,errors:[]}' \
+            > /tmp/preflight.json
+
+          update_json() {
+            local filter="$1"
+            local tmp
+            tmp="$(mktemp)"
+            jq "$filter" /tmp/preflight.json > "$tmp" && mv "$tmp" /tmp/preflight.json
+          }
+
+          if [ -n "$token" ]; then update_json '.token_present=true'; else update_json '.errors += ["CLOUDFLARE_API_TOKEN missing"]'; fi
+          if [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then update_json '.account_id_valid=true'; else update_json '.errors += ["CLOUDFLARE_ACCOUNT_ID missing or invalid"]'; fi
+          if [ -n "$project_name" ]; then update_json '.project_name_present=true'; else update_json '.errors += ["CLOUDFLARE_PROJECT_NAME missing"]'; fi
+
+          if [ -n "$token" ]; then
+            verify_json="$(curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' https://api.cloudflare.com/client/v4/user/tokens/verify 2>/tmp/verify-curl.err || true)"
+            if [ "$(printf '%s' "$verify_json" | jq -r '.success // false' 2>/dev/null)" = "true" ]; then
+              update_json '.token_verified=true'
+            else
+              error="$(printf '%s' "$verify_json" | jq -r '[.errors[]?.message] | join("; ")' 2>/dev/null)"
+              [ -n "$error" ] || error="$(cat /tmp/verify-curl.err 2>/dev/null || echo token_verify_failed)"
+              jq --arg error "token verify: $error" '.errors += [$error]' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+            fi
+          fi
+
+          if [ -n "$token" ] && [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] && [ -n "$project_name" ]; then
+            project_json="$(curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name" 2>/tmp/project-curl.err || true)"
+            if [ "$(printf '%s' "$project_json" | jq -r '.success // false' 2>/dev/null)" = "true" ]; then
+              domains="$(printf '%s' "$project_json" | jq -c '[.result.domains[]?] | sort')"
+              printf '%s' "$domains" | jq . > /tmp/pages-domains.json
+              jq --slurpfile domains /tmp/pages-domains.json '.pages_project_read=true | .pages_domains=$domains[0]' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+            else
+              error="$(printf '%s' "$project_json" | jq -r '[.errors[]?.message] | join("; ")' 2>/dev/null)"
+              [ -n "$error" ] || error="$(cat /tmp/project-curl.err 2>/dev/null || echo pages_project_read_failed)"
+              jq --arg error "pages project: $error" '.errors += [$error]' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+            fi
+
+            zone_json="$(curl -sS -G -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+              --data-urlencode "name=$ZONE_NAME" \
+              --data-urlencode "account.id=$account_id" \
+              --data-urlencode "status=active" \
+              "https://api.cloudflare.com/client/v4/zones" 2>/tmp/zone-curl.err || true)"
+
+            if [ "$(printf '%s' "$zone_json" | jq -r '.success // false' 2>/dev/null)" = "true" ]; then
+              zone_id="$(printf '%s' "$zone_json" | jq -r '.result[0].id // empty')"
+              if [ -n "$zone_id" ]; then
+                echo "::add-mask::$zone_id"
+                jq --arg zone_id "$zone_id" '.dns_zone_read=true | .zone_id=$zone_id' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+
+                : > /tmp/records.ndjson
+                for host in "$ZONE_NAME" "www.$ZONE_NAME"; do
+                  records_json="$(curl -sS -G -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+                    --data-urlencode "name=$host" \
+                    --data-urlencode "per_page=100" \
+                    "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records" 2>/tmp/records-curl.err || true)"
+                  if [ "$(printf '%s' "$records_json" | jq -r '.success // false' 2>/dev/null)" = "true" ]; then
+                    printf '%s' "$records_json" | jq -c '.result[]? | {id,type,name,content,proxied,ttl,comment}' >> /tmp/records.ndjson
+                  else
+                    error="$(printf '%s' "$records_json" | jq -r '[.errors[]?.message] | join("; ")' 2>/dev/null)"
+                    jq --arg error "dns records $host: ${error:-read_failed}" '.errors += [$error]' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+                  fi
+                done
+
+                jq -s 'sort_by(.name,.type,.content)' /tmp/records.ndjson > /tmp/records.json
+                jq --slurpfile records /tmp/records.json '.dns_records_read=true | .dns_records=$records[0]' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+              else
+                update_json '.errors += ["active zone not found in token scope"]'
+              fi
+            else
+              error="$(printf '%s' "$zone_json" | jq -r '[.errors[]?.message] | join("; ")' 2>/dev/null)"
+              [ -n "$error" ] || error="$(cat /tmp/zone-curl.err 2>/dev/null || echo zone_read_failed)"
+              jq --arg error "zone read: $error" '.errors += [$error]' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+            fi
+          fi
+
+          release_json="$(curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$PAGES_URL/cloudflare-deployment.json?preflight=$EXPECTED_MAIN_SHA" 2>/tmp/release-curl.err || true)"
+          if printf '%s' "$release_json" | jq -e --arg sha "$EXPECTED_MAIN_SHA" '.source_sha == $sha and .branch == "main" and (.build_fingerprint | test("^[0-9a-f]{64}$"))' >/dev/null 2>&1; then
+            printf '%s' "$release_json" | jq . > /tmp/pages-release.json
+            jq --slurpfile release /tmp/pages-release.json '.pages_release=$release[0]' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+          else
+            error="$(cat /tmp/release-curl.err 2>/dev/null || echo exact_pages_release_not_ready)"
+            jq --arg error "pages release: ${error:-exact current-main release mismatch}" '.errors += [$error]' /tmp/preflight.json > /tmp/preflight.next && mv /tmp/preflight.next /tmp/preflight.json
+          fi
+
+          jq 'del(.zone_id)' /tmp/preflight.json > /tmp/preflight-public.json
+          mv /tmp/preflight-public.json /tmp/preflight.json
+          cat /tmp/preflight.json
+
+          {
+            echo "## Cloudflare DNS cutover preflight (read-only)"
+            echo '```json'
+            cat /tmp/preflight.json
+            echo '```'
+            echo "No deployment, DNS, domain, Supabase or application mutation was performed."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload sanitized preflight snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-dns-cutover-preflight
+          path: /tmp/preflight.json
+          retention-days: 3
