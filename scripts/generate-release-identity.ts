@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
   computeBuildFingerprint,
+  computeRuntimeFingerprint,
   createBuildManifest,
   injectSourceIdentityMetas,
   listHtmlFiles,
@@ -23,19 +24,25 @@ if (!existsSync(publicManifestPath)) {
 }
 
 const identity = resolveSourceIdentity();
+const runtimeFingerprint = computeRuntimeFingerprint(distDir);
 const htmlFiles = listHtmlFiles(distDir);
 if (htmlFiles.length === 0) {
   throw new Error(`No built HTML files found in ${distDir}`);
 }
 
-// First create the final HTML structure with a fixed-width placeholder. The
-// fingerprint normalizer removes the volatile meta tags but preserves all
-// surrounding final-build bytes and whitespace deterministically.
+// First create the final HTML structure with a fixed-width full-build
+// placeholder. Runtime fingerprinting excludes host-generated document shells
+// and therefore is already final before HTML identity metadata is injected.
 for (const htmlPath of htmlFiles) {
   const html = readFileSync(htmlPath, "utf8");
   writeFileSync(
     htmlPath,
-    injectSourceIdentityMetas(html, identity, fingerprintPlaceholder),
+    injectSourceIdentityMetas(
+      html,
+      identity,
+      fingerprintPlaceholder,
+      runtimeFingerprint,
+    ),
     "utf8",
   );
 }
@@ -64,10 +71,11 @@ const manifest = createBuildManifest(
   readJsonObject(publicManifestPath),
   identity,
   buildFingerprint,
+  runtimeFingerprint,
   builtAt,
 );
 writeFileSync(distManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
 console.log(
-  `[release-identity] ${identity.sourceIdentityState}: ${identity.sourceCommit}; fingerprint ${buildFingerprint} (${htmlFiles.length} HTML files)`,
+  `[release-identity] ${identity.sourceIdentityState}: ${identity.sourceCommit}; build ${buildFingerprint}; runtime ${runtimeFingerprint} (${htmlFiles.length} HTML files)`,
 );
