@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
+  computeBuildFingerprint,
   createBuildManifest,
   injectSourceIdentityMetas,
   listHtmlFiles,
@@ -21,8 +22,14 @@ if (!existsSync(publicManifestPath)) {
 }
 
 const identity = resolveSourceIdentity();
+const buildFingerprint = computeBuildFingerprint(distDir);
 const builtAt = process.env.SOURCE_BUILT_AT?.trim() || new Date().toISOString();
-const manifest = createBuildManifest(readJsonObject(publicManifestPath), identity, builtAt);
+const manifest = createBuildManifest(
+  readJsonObject(publicManifestPath),
+  identity,
+  buildFingerprint,
+  builtAt,
+);
 
 writeFileSync(distManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
@@ -33,9 +40,13 @@ if (htmlFiles.length === 0) {
 
 for (const htmlPath of htmlFiles) {
   const html = readFileSync(htmlPath, "utf8");
-  writeFileSync(htmlPath, injectSourceIdentityMetas(html, identity), "utf8");
+  writeFileSync(
+    htmlPath,
+    injectSourceIdentityMetas(html, identity, buildFingerprint),
+    "utf8",
+  );
 }
 
 console.log(
-  `[release-identity] ${identity.sourceIdentityState}: ${identity.sourceCommit} (${htmlFiles.length} HTML files)`,
+  `[release-identity] ${identity.sourceIdentityState}: ${identity.sourceCommit}; fingerprint ${buildFingerprint} (${htmlFiles.length} HTML files)`,
 );
