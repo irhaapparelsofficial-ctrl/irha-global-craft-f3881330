@@ -6,6 +6,7 @@ on:
       - feature/lead-outreach-safe-v3
     paths:
       - ".github/workflows/build-clean-lead-outreach-v3.yml"
+      - "scripts/build_clean_lead_outreach_v3.py"
   pull_request:
     branches:
       - main
@@ -24,220 +25,10 @@ jobs:
           ref: feature/lead-outreach-safe-v3
           fetch-depth: 0
 
-      - name: Restore only reviewed feature files
-        run: |
-          set -euo pipefail
-          source_commit="212234de454136b2e587bece5e295fccb194416c"
-          git cat-file -e "${source_commit}^{commit}"
-          git checkout "$source_commit" -- \
-            docs/OWNER_APPROVED_OUTREACH_V2.md \
-            docs/verification/LEAD_OUTREACH_SAFETY_GUARDS_20260714.md \
-            src/components/admin/ChannelCandidateActivationPanel.tsx \
-            src/components/admin/MailingPanel.tsx \
-            src/components/admin/OutreachApprovalPanel.test.ts \
-            src/components/admin/OutreachApprovalPanel.tsx \
-            src/lib/leadIntake.test.ts \
-            src/lib/leadIntake.ts \
-            src/pages/AdminLeadIntake.test.ts \
-            src/pages/AdminLeadIntake.tsx \
-            src/test/leadOutreachSafetyContracts.test.ts \
-            supabase/functions/lead-activation-channel-v2/index.ts \
-            supabase/functions/lead-bulk-stage/index.ts \
-            supabase/functions/lead-file-registry/index.ts \
-            supabase/functions/outreach-workflow-v2/index.ts \
-            supabase/migrations/20260714095000_lead_import_files.sql \
-            supabase/migrations/20260714120000_outreach_approval_dispatch.sql \
-            supabase/migrations/20260714121000_lead_source_file_links.sql \
-            supabase/migrations/20260714122000_lead_activation_claims.sql
+      - name: Build deterministic candidate
+        run: python scripts/build_clean_lead_outreach_v3.py
 
-          rm -f \
-            src/components/admin/OutreachApprovalLivePanel.tsx \
-            supabase/functions/outreach-email-dispatch-v2/index.ts \
-            .github/workflows/diagnose-lead-outreach-tests.yml \
-            .github/workflows/lead-test-diagnostics.yml
-
-      - name: Apply atomic failure and concurrency guards
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace_once(path: str, old: str, new: str) -> None:
-              file = Path(path)
-              text = file.read_text()
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f"{path}: expected exact match once, found {count}")
-              file.write_text(text.replace(old, new, 1))
-
-          outreach = "supabase/functions/outreach-workflow-v2/index.ts"
-          replace_once(outreach, "const MAX_GENERATE = 50;", "const MAX_GENERATE = 25;")
-
-          activation = "supabase/functions/lead-activation-channel-v2/index.ts"
-          replace_once(
-              activation,
-              '''  const batch = await service.from("lead_activation_batches").insert({''',
-              '''  const staleCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-          const staleBatchCleanup = await service.from("lead_activation_batches").update({
-            status: "failed",
-            failed_count: 1,
-            errors: [{ phase: "recovery", error: "Stale running activation checkpoint expired" }],
-            summary: { mode: "channel_activation_v2", recovery: "stale_running_batch", sends_external_messages: false, max_batch: MAX_BATCH },
-            completed_at: new Date().toISOString(),
-          }).eq("status", "running").lt("created_at", staleCutoff);
-          if (staleBatchCleanup.error) throw staleBatchCleanup.error;
-
-          const batch = await service.from("lead_activation_batches").insert({''',
-          )
-          replace_once(
-              activation,
-              '''  if (batch.error || !batch.data) throw batch.error || new Error("Activation batch could not be created");''',
-              '''  if (batch.error || !batch.data) {
-            if (batch.error?.code === "23505") {
-              return json({ error: "Another owner activation batch is already running. Wait for its checkpoint to complete before retrying." }, 409);
-            }
-            throw batch.error || new Error("Activation batch could not be created");
-          }''',
-          )
-          replace_once(
-              activation,
-              '''    return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });
-            } finally {''',
-              '''    return json({ ok: true, batch_id: batch.data.id, outcomes, summary, imported_lead_ids: importedLeadIds, sends_external_messages: false });
-            } catch (error) {
-              const reason = errorText(error);
-              const failedBatch = await service.from("lead_activation_batches").update({
-                status: importedLeadIds.length ? "partial" : "failed",
-                imported_lead_ids: importedLeadIds,
-                imported_count: importedLeadIds.length,
-                skipped_count: Math.max(0, outcomes.length - importedLeadIds.length),
-                failed_count: Math.max(1, outcomes.filter((item) => item.status === "failed").length),
-                summary: { mode: "channel_activation_v2", recovery: "unexpected_error", sends_external_messages: false, claim_token: claimToken, max_batch: MAX_BATCH },
-                errors: [...outcomes.filter((item) => item.error), { phase: "activation", error: reason }].slice(0, MAX_BATCH + 1),
-                completed_at: new Date().toISOString(),
-              }).eq("id", batch.data.id);
-              if (failedBatch.error) console.error("lead activation batch failure checkpoint failed", failedBatch.error.message);
-              throw error;
-            } finally {''',
-          )
-
-          panel = "src/components/admin/OutreachApprovalPanel.tsx"
-          replace_once(
-              panel,
-              'function toggleSet(current: Set<string>, id: string) { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; }',
-              'function toggleSet(current: Set<string>, id: string) { const next = new Set(current); if (next.has(id)) next.delete(id); else if (next.size < 25) next.add(id); return next; }',
-          )
-
-          migration = Path("supabase/migrations/20260714122000_lead_activation_claims.sql")
-          text = migration.read_text()
-          marker = "\ncommit;\n"
-          if text.count(marker) != 1:
-              raise SystemExit(f"migration commit marker expected once; found {text.count(marker)}")
-          guard_sql = '''
-
-          update public.lead_activation_batches
-          set status = 'failed',
-              failed_count = greatest(coalesce(failed_count, 0), 1),
-              errors = coalesce(errors, '[]'::jsonb) || jsonb_build_array(jsonb_build_object(
-                'phase', 'migration_recovery',
-                'error', 'Stale running activation batch closed before singleton guard creation'
-              )),
-              completed_at = coalesce(completed_at, now())
-          where status = 'running'
-            and created_at < now() - interval '15 minutes';
-
-          create unique index if not exists lead_activation_single_running_idx
-            on public.lead_activation_batches ((true))
-            where status = 'running';
-          '''
-          migration.write_text(text.replace(marker, guard_sql + marker, 1))
-
-          safety = Path("src/test/leadOutreachSafetyContracts.test.ts")
-          test = safety.read_text()
-          replace_target = '''    expect(backend).toContain('.eq("activation_claim_token", claimToken)');
-              expect(migration).toContain("activation_claim_token uuid");'''
-          replace_value = '''    expect(backend).toContain('.eq("activation_claim_token", claimToken)');
-              expect(backend).toContain('recovery: "unexpected_error"');
-              expect(backend).toContain("Another owner activation batch is already running");
-              expect(migration).toContain("activation_claim_token uuid");
-              expect(migration).toContain("lead_activation_single_running_idx");'''
-          if test.count(replace_target) != 1:
-              raise SystemExit(f"safety test insertion point expected once; found {test.count(replace_target)}")
-          test = test.replace(replace_target, replace_value, 1)
-          end_marker = '''  it("blocks automatic WhatsApp retry after any primary delivery attempt", () => {'''
-          extra = '''  it("caps draft generation at 25 and keeps one authoritative dispatch path", () => {
-              const backend = read("supabase/functions/outreach-workflow-v2/index.ts");
-              const panel = read("src/components/admin/OutreachApprovalPanel.tsx");
-              const mailing = read("src/components/admin/MailingPanel.tsx");
-              expect(backend).toContain("const MAX_GENERATE = 25;");
-              expect(backend).toContain('if (action === "approve_and_send")');
-              expect(panel).toContain('action: "approve_and_send"');
-              expect(panel).toContain("next.size < 25");
-              expect(mailing).toContain("OutreachApprovalPanel");
-              expect(mailing).not.toContain("OutreachApprovalLivePanel");
-            });
-
-          '''
-          if test.count(end_marker) != 1:
-              raise SystemExit(f"safety test end marker expected once; found {test.count(end_marker)}")
-          safety.write_text(test.replace(end_marker, extra + end_marker, 1))
-
-          syntax_test = Path("src/test/leadOutreachEdgeSyntax.test.ts")
-          syntax_test.write_text('''import { readFileSync } from "node:fs";
-          import { resolve } from "node:path";
-          import * as ts from "typescript";
-          import { describe, expect, it } from "vitest";
-
-          const paths = [
-            "supabase/functions/lead-activation-channel-v2/index.ts",
-            "supabase/functions/lead-bulk-stage/index.ts",
-            "supabase/functions/lead-file-registry/index.ts",
-            "supabase/functions/outreach-workflow-v2/index.ts",
-          ];
-
-          describe("lead outreach Edge Function sources", () => {
-            for (const relativePath of paths) {
-              it(`${relativePath} has no TypeScript syntax diagnostics`, () => {
-                const filePath = resolve(process.cwd(), relativePath);
-                const source = readFileSync(filePath, "utf8");
-                const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
-                const result = ts.transpileModule(source, {
-                  fileName: filePath,
-                  reportDiagnostics: true,
-                  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
-                });
-                const errors = (result.diagnostics ?? [])
-                  .filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error)
-                  .map((diagnostic) => {
-                    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\\n");
-                    if (diagnostic.start === undefined) return message;
-                    const position = sourceFile.getLineAndCharacterOfPosition(diagnostic.start);
-                    return `${position.line + 1}:${position.character + 1} ${message}`;
-                  });
-                expect(errors).toEqual([]);
-              });
-            }
-          });
-          ''')
-
-          verification = Path("docs/LEAD_OUTREACH_V3_CLEAN_REBUILD_20260714.md")
-          verification.write_text('''# Lead Outreach V3 Clean Rebuild — 2026-07-14
-
-          This replacement was rebuilt from latest `main` instead of merging the conflicted 47-commit PR #288.
-
-          Safety contracts:
-          - Maximum 25 candidate activations and 25 draft generations per owner checkpoint.
-          - One global running activation batch; stale batches close after 15 minutes.
-          - Candidate claims are atomic and are released in `finally`.
-          - Unexpected activation failures persist a failed/partial checkpoint.
-          - One authoritative `approve_and_send` action requires explicit owner confirmation.
-          - Email uses deterministic Gmail Message-ID recovery.
-          - WhatsApp records a primary attempt before sending and blocks automatic duplicate retries.
-          - No candidate activation, external email, WhatsApp message, or production deployment is performed by this commit.
-          ''')
-          PY
-
-      - name: Verify focused contracts before committing
+      - name: Verify focused contracts
         run: |
           set -euo pipefail
           npm install --legacy-peer-deps --no-audit --no-fund
@@ -250,10 +41,12 @@ jobs:
             src/pages/AdminLeadIntake.test.ts
           npm run verify:migrations
 
-      - name: Commit clean candidate and remove one-time workflow
+      - name: Commit candidate and remove one-time tooling
         run: |
           set -euo pipefail
           rm .github/workflows/build-clean-lead-outreach-v3.yml
+          rm scripts/build_clean_lead_outreach_v3.py
+          rm -f .github/workflows/fix-clean-build-source.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
