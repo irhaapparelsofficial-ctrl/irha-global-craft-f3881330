@@ -1,145 +1,17 @@
-// Admin-only Gemini assistant for Irha Apparels dashboard.
-// Streams via Lovable AI Gateway. Requires authenticated admin user.
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const SYSTEM_PROMPT = `You are "Irha Atelier AI" — a private business assistant for the OWNER of Irha Apparels (a premium clothing manufacturer in Sialkot, Pakistan).
-
-You help the owner with:
-- Marketing copy, captions, hashtags for Facebook/Instagram
-- Product descriptions, spec sheet copy, catalogue text
-- Buyer outreach emails, B2B inquiry replies, negotiation drafts
-- Business strategy, market research summaries, competitor notes
-- Operations: lead time planning, MOQ logic, packaging ideas
-- Translations (English, Urdu, Roman Urdu, German)
-- Quick brainstorming and content ideas
-
-CONTEXT — Irha Apparels:
-- Categories: Bavarian Wear, Sportswear, Leatherwear, Streetwear, Leisurewear, Nightwear, Business Suits.
-- Services: OEM, ODM, Private Label, custom embroidery, sublimation, sampling.
-- Markets: Germany, Austria, USA, UAE, EU.
-- Contact: WhatsApp +92 320 411 0066, email irhaapparelsofficial@gmail.com, irhaapparels.com.
-
-STYLE:
-- Reply in the same language the owner writes in. Default English.
-- Be concise, direct, practical. Use bullet points and short paragraphs.
-- When drafting customer-facing copy, follow the public no-pricing policy (never quote prices; always direct buyers to share tech-pack for custom quote).
-- For internal owner-only analysis, you CAN discuss costs, margins, and pricing strategy candidly.
-- Always offer a clear next action.`;
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  try {
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "AI not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Verify caller is an authenticated admin.
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData?.user;
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const { data: roleRow } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleRow) {
-      return new Response(JSON.stringify({ error: "Admin only" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { messages } = await req.json();
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return new Response(JSON.stringify({ error: "messages required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const safeMessages = (messages as Array<{ role?: unknown; content?: unknown }>)
-      .filter(
-        (m) =>
-          m &&
-          typeof m.content === "string" &&
-          (m.role === "user" || m.role === "assistant"),
-      )
-      .map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: (m.content as string).slice(0, 8000),
-      }))
-      .slice(-30);
-
-    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Lovable-API-Key": apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        stream: true,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...safeMessages,
-        ],
-      }),
-    });
-
-    if (!upstream.ok) {
-      const text = await upstream.text();
-      const status = upstream.status === 429 || upstream.status === 402 ? upstream.status : 500;
-      const msg =
-        upstream.status === 429
-          ? "Rate limit reached. Try again in a moment."
-          : upstream.status === 402
-            ? "AI credits exhausted. Add credits in workspace billing."
-            : "AI service error.";
-      console.error("admin-chat gateway error", upstream.status, text);
-      return new Response(JSON.stringify({ error: msg }), {
-        status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(upstream.body, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
-  } catch (e) {
-    console.error("admin-chat fn error", e);
-    return new Response(JSON.stringify({ error: "Internal error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-});
+const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
+type J=Record<string,unknown>;type K={knowledge_key:string;category:string;title:string;content:string;instructions:J;tags:string[];admin_route:string|null;priority:number};
+Deno.serve(async(req)=>{if(req.method==="OPTIONS")return new Response(null,{headers:cors});if(req.method!=="POST")return json({error:"Method not allowed"},405);try{const auth=req.headers.get("Authorization")??"";const c=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_ANON_KEY")!,{global:{headers:{Authorization:auth}}});const{data:u}=await c.auth.getUser();if(!u?.user)return json({error:"Unauthorized"},401);const{data:r}=await c.from("user_roles").select("role").eq("user_id",u.user.id).eq("role","admin").maybeSingle();if(!r)return json({error:"Admin only"},403);const b=await req.json().catch(()=>({}));const m=Array.isArray(b?.messages)?b.messages:[];const command=[...m].reverse().find((x)=>x?.role==="user"&&typeof x?.content==="string")?.content?.trim()?.slice(0,5000)??"";if(!command)return json({error:"messages required"},400);const s=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);const[{data:snap,error},{data:rows}]=await Promise.all([s.rpc("admin_ai_live_snapshot"),s.from("admin_ai_knowledge").select("knowledge_key,category,title,content,instructions,tags,admin_route,priority").eq("is_active",true).order("priority",{ascending:false}).limit(120)]);if(error||!snap)throw new Error(error?.message||"Live situation unavailable");const knowledge=rank((rows??[]) as K[],command);const answer=await respond(command,auth,s,snap as J,knowledge);return stream(answer);}catch(e){return json({error:e instanceof Error?e.message:"Internal error"},500);}});
+async function respond(command:string,auth:string,s:any,snap:J,k:K[]){const v=command.toLowerCase();if(current(v))return situation(snap);if(/\b(blocker|blocked|missing|kya reh gaya|kya baqi|setup required|problem|issue)\b/i.test(v))return blockers(snap);if(/\b(tutorial|instruction|instructions|guide|how to|kaise|workflow|samjhao)\b/i.test(v))return tutorial(k,snap);if(/(lead|buyer|prospect).*(status|count|kitn|haal)|(?:status|count|kitn|haal).*(lead|buyer|prospect)/i.test(v))return leadStatus(snap);if(/(import|crm).*(verified|lead|buyer)|verified.*(import|crm)/i.test(v)){const{data}=await s.from("lead_candidates").select("id").eq("verification_status","verified").limit(100);const ids=(data??[]).map((x:any)=>x.id);if(!ids.length)return"Abhi verified lead CRM import ke liye available nahi. Pehle verify leads chalao.";const x=await lead(auth,{action:"import",candidate_ids:ids});return`CRM import complete. Imported: ${n(x.imported_count)}. Skipped: ${n(x.skipped_count)}. Koi message automatically send nahi hua.`;}if(/(verify|enrich|scan|check).*(lead|buyer|prospect)|(?:lead|buyer|prospect).*(verify|enrich|scan|check)/i.test(v)){const{data}=await s.from("lead_candidates").select("id").in("verification_status",["unverified","needs_review"]).limit(20);const ids=(data??[]).map((x:any)=>x.id);if(!ids.length)return"Verification ke liye pending lead nahi.";const x=await lead(auth,{action:"enrich",candidate_ids:ids});const z=o(x.summary);return`Verification complete. Verified: ${n(z.verified)}, Needs review: ${n(z.needs_review)}, Rejected: ${n(z.rejected)}, Duplicate: ${n(z.duplicate)}, Failed: ${n(z.failed)}. CRM import aur outreach automatically nahi hui.`;}if(discovery(v)){const campaign=parse(command);const x=await lead(auth,{action:"discover",campaign});const z=o(x.counts);return`Buyer search complete. Market: ${campaign.market}. Products: ${campaign.product_focus.join(", ")}. Discovered: ${n(x.inserted)}. Needs review: ${n(z.needs_review)}. Duplicates: ${n(z.duplicate)}. Credits: 0. Koi CRM import ya outreach automatically nahi hui.`;}return help(k,snap);}
+function situation(s:J){const c=o(s.catalogue),crm=o(s.crm),l=o(s.lead_engine),out=o(s.outreach),so=o(s.social),ops=o(s.operations),lc=o(l.candidate_statuses),os=o(out.message_statuses),ss=o(so.item_statuses),b=a(s.recorded_blockers);return`Irha Apparels ki real current situation:\n\nOperational\n- Catalogue: ${n(c.published_products)} published products, ${n(c.published_categories)} categories, ${n(c.verified_media_assets)} verified media assets.\n- CRM: ${n(crm.total_buyer_records)} buyer records, ${n(crm.open_tasks)} open tasks, ${n(crm.overdue_tasks)} overdue tasks, ${n(crm.overdue_followups)} overdue follow-ups.\n- Lead Engine: ${sum(o(l.campaign_statuses))} campaigns; ${n(lc.needs_review)} need review, ${n(lc.verified)} verified, ${n(lc.imported)} imported.\n- Outreach: ${n(os.draft)} drafts, ${n(os.approved)} approved, ${n(os.sent)} sent.\n- Social: ${n(ss.draft)} drafts, ${n(ss.approved)} approved, ${n(ss.published)} published.\n- Last heartbeat: ${String(o(ops.control).last_heartbeat_at??"not recorded")}.\n\nNeeds Owner Approval\n- Final price, discount, payment terms, production/delivery commitments, email/WhatsApp sending aur social publishing.\n\nBlocked / Setup Required\n${b.length?b.map(x=>`- ${h(x)}`).join("\n"):"- Koi recorded blocker nahi."}\n\nAgly 3 actions\n1. Buyer Inbox aur overdue tasks: /admin/leads, /admin/pipeline\n2. Lead review: /admin/lead-acquisition\n3. System/connection health: /admin/production-health, /admin/ai-assistant\n\nChecked: ${String(s.checked_at??"unknown")}`;}
+function blockers(s:J){const b=a(s.recorded_blockers);return`Current blockers:\n${b.length?b.map(x=>`- ${h(x)}`).join("\n"):"- Koi recorded blocker nahi."}\n\nSetup routes\n- Email: /admin/mailing\n- WhatsApp: /admin/whatsapp\n- Social: /admin/social\n- Search Console: /admin/gsc\n- System Health: /admin/production-health\n\nChecked: ${String(s.checked_at??"unknown")}`;}
+function tutorial(k:K[],s:J){const q=k.filter(x=>x.category==="tutorial"||x.category==="setup");const items=(q.length?q:k).slice(0,5);return items.map((x,i)=>{const steps=a(x.instructions?.steps);return`${i+1}) ${x.title}\n${x.content}${steps.length?`\n${steps.map((v,j)=>`${j+1}. ${v}`).join("\n")}`:""}${x.admin_route?`\nAdmin route: ${x.admin_route}`:""}`;}).join("\n\n")+`\n\nChecked: ${String(s.checked_at??"unknown")}`;}
+function leadStatus(s:J){const l=o(s.lead_engine),crm=o(s.crm),c=o(l.candidate_statuses);return`Lead Engine status: Campaigns ${sum(o(l.campaign_statuses))}; Candidates ${sum(c)}; Needs review ${n(c.needs_review)}; Verified ${n(c.verified)}; Imported ${n(c.imported)}; Duplicates ${n(c.duplicate)}; Rejected ${n(c.rejected)}; CRM buyer records ${n(crm.total_buyer_records)}. Automatic CRM import OFF. Automatic outreach OFF. Credits 0. Checked: ${String(s.checked_at??"unknown")}`;}
+function help(k:K[],s:J){const text=k.slice(0,6).map(x=>`- ${x.title}: ${x.content}${x.admin_route?` Route: ${x.admin_route}`:""}`).join("\n");return`Main live Irha Business Brain mode mein hun. Relevant verified help:\n${text||"- Specific instruction nahi mili."}\n\nAap pooch sakte hain: hamari real current situation, CRM tutorial, social status, website blockers, production workflow, SEO instructions, ya focused lead campaign. Checked: ${String(s.checked_at??"unknown")}`;}
+async function lead(auth:string,p:J){const r=await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/lead-research`,{method:"POST",headers:{Authorization:auth,apikey:Deno.env.get("SUPABASE_ANON_KEY")!,"Content-Type":"application/json"},body:JSON.stringify(p)});const t=await r.text();let d:J={};try{d=JSON.parse(t);}catch{d={error:t.slice(0,500)}}if(!r.ok)throw new Error(String(d.error??`Lead engine ${r.status}`));return d;}
+function rank(rows:K[],q:string){const terms=unique(q.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2));return rows.map(x=>({x,s:(x.knowledge_key==="company.identity"||x.knowledge_key==="commercial.quote_only"||x.knowledge_key==="safety.truth_policy"?1000:0)+terms.filter(t=>`${x.knowledge_key} ${x.category} ${x.title} ${x.content} ${(x.tags??[]).join(" ")}`.toLowerCase().includes(t)).length*10+x.priority/10})).sort((a,b)=>b.s-a.s).slice(0,14).map(z=>z.x);}
+function parse(q:string){const v=q.toLowerCase(),m=v.match(/\b(\d{1,3})\b/),target_count=Math.max(1,Math.min(100,m?Number(m[1]):25));const market=/austria|österreich/i.test(v)?"Austria":/switzerland|schweiz/i.test(v)?"Switzerland":/azerbaijan|baku/i.test(v)?"Azerbaijan":/\buk\b|england|britain/i.test(v)?"United Kingdom":/usa|united states|america/i.test(v)?"United States":"Germany";const product_focus=/dirndl/i.test(v)?["Dirndl"]:/sportswear|teamwear|football|soccer/i.test(v)?["Sportswear"]:/leather jacket|leatherwear/i.test(v)?["Premium Leather"]:/streetwear|hoodie|activewear/i.test(v)?["Streetwear & Activewear"]:/nightwear|sleepwear/i.test(v)?["Leisurewear & Nightwear"]:["Lederhosen","Bavarian & Trachten"];return{name:`${market} · Admin AI`,market,product_focus,buyer_types:["wholesaler","importer","distributor","retailer","private-label brand"],target_count};}
+function current(v:string){return/(real|current|abhi|aaj|hamari|business|system).*(situation|status|haal|halat)|(?:situation|status|haal|halat).*(real|current|abhi|hamari|system)/i.test(v);}
+function discovery(v:string){return/\b(lead|buyer|prospect|wholesaler|importer|distributor|retailer)\b/i.test(v)&&/\b(find|search|dhoond|dhund|discover|research|lao|chahiye|chaya)\b/i.test(v);}
+function stream(content:string){const id=crypto.randomUUID(),x=JSON.stringify({id,choices:[{delta:{content}}]});return new Response(`data: ${x}\n\ndata: [DONE]\n\n`,{headers:{...cors,"Content-Type":"text/event-stream","Cache-Control":"no-store"}});}
+function o(v:unknown):J{return v&&typeof v==="object"&&!Array.isArray(v)?v as J:{}}function a(v:unknown):string[]{return Array.isArray(v)?v.filter((x):x is string=>typeof x==="string"):[]}function n(v:unknown){return Number.isFinite(Number(v))?Number(v):0}function sum(v:J){return Object.values(v).reduce((x,y)=>x+n(y),0)}function unique(v:string[]){return[...new Set(v)]}function h(v:string){return v.replace(/_/g," ").replace(/\b\w/g,x=>x.toUpperCase())}function json(p:unknown,status=200){return new Response(JSON.stringify(p),{status,headers:{...cors,"Content-Type":"application/json","Cache-Control":"no-store"}})}
