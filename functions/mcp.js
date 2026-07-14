@@ -126,12 +126,12 @@ function callTool(name, args) {
       {
         name: "Bavarian Heritage & Leather",
         description: "Lederhosen, Dirndl and premium leather apparel programs for wholesalers, importers and private-label buyers.",
-        url: `${SITE_ORIGIN}/collections/bavarian-heritage-leather`,
+        url: `${SITE_ORIGIN}/products/bavarian-trachten-wear`,
       },
       {
         name: "Textile, Streetwear & Active",
         description: "Sportswear, activewear, heavyweight streetwear, leisurewear and nightwear manufacturing programs.",
-        url: `${SITE_ORIGIN}/collections/textile-streetwear-active`,
+        url: `${SITE_ORIGIN}/products`,
       },
     ];
     return textResult(
