@@ -4,9 +4,17 @@ import SEO from "@/components/SEO";
 import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicProduct } from "@/hooks/usePublicCatalog";
 import { resolveGallery } from "@/lib/assetResolver";
-import { Bookmark, BookmarkCheck, ChevronRight, MessageCircle, Printer, Upload } from "lucide-react";
+import {
+  Bookmark,
+  BookmarkCheck,
+  ChevronRight,
+  GitCompareArrows,
+  MessageCircle,
+  Printer,
+  Upload,
+} from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
-import { pushRecentlyViewed, useShortlist } from "@/lib/shortlist";
+import { pushRecentlyViewed, useCompare, useShortlist } from "@/lib/shortlist";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -19,6 +27,7 @@ export default function ProductDetail() {
   const { data, isLoading, error } = usePublicProduct(categorySlug, productSlug);
   const [activeImg, setActiveImg] = useState(0);
   const shortlist = useShortlist();
+  const compare = useCompare();
 
   useEffect(() => setActiveImg(0), [productSlug]);
 
@@ -45,6 +54,16 @@ export default function ProductDetail() {
   const product = data.product;
   const gallery = resolveGallery(product.gallery.length ? product.gallery : [product.image_url ?? ""]);
   const url = `${SITE_URL}/products/${category.slug}/${product.slug}`;
+  const savedProduct = {
+    slug: product.slug,
+    name: product.name,
+    image: product.image_url ?? gallery[0],
+    categorySlug: category.slug,
+    categoryName: category.name,
+    addedAt: Date.now(),
+  };
+  const inCompare = compare.has(product.slug);
+  const compareFull = !inCompare && compare.items.length >= 4;
 
   const allCategoryProducts = data.topCategory.subs.flatMap((subCategory) => subCategory.products);
   const manualRelated = (product.related_product_ids ?? [])
@@ -189,15 +208,44 @@ export default function ProductDetail() {
                 <a href={whatsappLink(whatsappMsg)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
                   <MessageCircle size={16} /> WhatsApp
                 </a>
-                <button type="button" onClick={() => shortlist.toggle({ slug: product.slug, name: product.name, image: product.image_url ?? gallery[0], categorySlug: category.slug, categoryName: category.name, addedAt: Date.now() })} aria-pressed={shortlist.has(product.slug)} aria-label={shortlist.has(product.slug) ? "Remove from shortlist" : "Save to shortlist"} className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
+                <button
+                  type="button"
+                  onClick={() => shortlist.toggle(savedProduct)}
+                  aria-pressed={shortlist.has(product.slug)}
+                  aria-label={shortlist.has(product.slug) ? "Remove from shortlist" : "Save to shortlist"}
+                  className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+                >
                   {shortlist.has(product.slug) ? <BookmarkCheck size={16} className="text-primary" /> : <Bookmark size={16} />}
                   {shortlist.has(product.slug) ? "Saved" : "Save"}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => compare.toggle(savedProduct)}
+                  disabled={compareFull}
+                  aria-pressed={inCompare}
+                  aria-label={inCompare ? "Remove from product comparison" : "Add to product comparison"}
+                  title={compareFull ? "Comparison is limited to four products" : undefined}
+                  data-track="product-compare-toggle"
+                  className={`inline-flex items-center gap-2 border px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors ${
+                    inCompare
+                      ? "border-primary text-primary"
+                      : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-45"
+                  }`}
+                >
+                  <GitCompareArrows size={16} />
+                  {inCompare ? "In Compare" : compareFull ? "Compare Full" : "Compare"}
+                </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.25em]">
-                <Link to={`/inquiry?product=${encodeURIComponent(product.slug)}&intent=reference`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Upload size={12} /> Upload reference design</Link>
+                <Link to={`/inquiry?product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}&intent=reference`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Upload size={12} /> Upload reference design</Link>
                 <span className="text-foreground/25">·</span>
                 <Link to={`/products/${category.slug}/${product.slug}/spec-sheet`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Printer size={12} /> Print spec sheet</Link>
+                {inCompare && (
+                  <>
+                    <span className="text-foreground/25">·</span>
+                    <Link to="/compare" className="text-primary hover:text-primary/75 inline-flex items-center gap-2"><GitCompareArrows size={12} /> Open comparison ({compare.items.length}/4)</Link>
+                  </>
+                )}
               </div>
 
               <p className="mt-6 text-[11px] md:text-xs text-foreground/60 leading-relaxed">
