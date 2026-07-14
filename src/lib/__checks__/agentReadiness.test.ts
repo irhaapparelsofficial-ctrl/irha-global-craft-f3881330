@@ -12,14 +12,16 @@ const OWNER_PROJECT_ORIGIN = "https://pvzjiozismyxqrzmtfbi.supabase.co";
 const OWNER_AUTH_ISSUER = `${OWNER_PROJECT_ORIGIN}/auth/v1`;
 
 describe("agent readiness public contracts", () => {
-  it("publishes an API catalog linked to the deployed public gateway", () => {
+  it("publishes an API catalog linked to the deployed public gateway and agent services", () => {
     const catalog = json<{ linkset: Array<Record<string, unknown>> }>("public/.well-known/api-catalog");
     const raw = JSON.stringify(catalog);
     expect(Array.isArray(catalog.linkset)).toBe(true);
-    expect(catalog.linkset.length).toBeGreaterThanOrEqual(2);
+    expect(catalog.linkset.length).toBeGreaterThanOrEqual(4);
     expect(raw).toContain("public-lead-gateway");
     expect(raw).toContain("/openapi/public-lead-gateway.json");
     expect(raw).toContain("/.well-known/mcp/server-card.json");
+    expect(raw).toContain("/.well-known/agent-card.json");
+    expect(raw).toContain("https://irhaapparels.com/a2a");
     expect(raw).not.toContain("https://www.irhaapparels.com");
   });
 
@@ -69,6 +71,54 @@ describe("agent readiness public contracts", () => {
     expect(card.tools.find((tool) => tool.name === "prepare_buyer_inquiry")?.confirmationRequired).toBe(true);
   });
 
+  it("publishes a real A2A v1 card backed by a read-only JSON-RPC endpoint", () => {
+    const server = read("functions/a2a.js");
+    const card = json<{
+      name: string;
+      supportedInterfaces: Array<{ url: string; protocolBinding: string; protocolVersion: string }>;
+      version: string;
+      capabilities: { streaming: boolean; pushNotifications: boolean; extendedAgentCard: boolean };
+      defaultInputModes: string[];
+      defaultOutputModes: string[];
+      skills: Array<{ id: string }>;
+      security?: unknown;
+      securitySchemes?: unknown;
+    }>("public/.well-known/agent-card.json");
+
+    expect(card.name).toBe("Irha Apparels Public Buyer Agent");
+    expect(card.version).toBe("1.0.0");
+    expect(card.supportedInterfaces).toEqual([
+      {
+        url: "https://irhaapparels.com/a2a",
+        protocolBinding: "JSONRPC",
+        protocolVersion: "1.0",
+      },
+    ]);
+    expect(card.capabilities).toEqual({
+      streaming: false,
+      pushNotifications: false,
+      extendedAgentCard: false,
+    });
+    expect(card.defaultInputModes).toEqual(["text/plain"]);
+    expect(card.defaultOutputModes).toEqual(["text/plain"]);
+    expect(card.skills.map((skill) => skill.id)).toEqual([
+      "browse-b2b-collections",
+      "factory-verification",
+      "prepare-buyer-inquiry",
+    ]);
+    expect(card.security).toBeUndefined();
+    expect(card.securitySchemes).toBeUndefined();
+
+    expect(server).toContain('const A2A_VERSION = "1.0"');
+    expect(server).toContain('method === "SendMessage"');
+    expect(server).toContain('method === "ListTasks"');
+    expect(server).toContain("ROLE_AGENT");
+    expect(server).toContain("submitted: false");
+    expect(server).toContain("MAX_REQUEST_BYTES");
+    expect(server).toContain("MAX_TEXT_LENGTH");
+    expect(server).not.toContain("public-lead-gateway");
+  });
+
   it("injects buyer-safe WebMCP tools on public HTML pages", () => {
     const webMcp = read("public/agent-webmcp.js");
     const middleware = read("functions/_middleware.js");
@@ -79,6 +129,8 @@ describe("agent readiness public contracts", () => {
     expect(webMcp).toContain("submitted: false");
     expect(middleware).toContain("/agent-webmcp.js");
     expect(middleware).toContain("data-irha-agent-tools");
+    expect(middleware).toContain("/.well-known/agent-card.json");
+    expect(middleware).toContain('pathname === "/a2a"');
   });
 
   it("serves explicit content types and negotiates Markdown", () => {
@@ -87,10 +139,12 @@ describe("agent readiness public contracts", () => {
     const routes = json<{ version: number; include: string[]; exclude: string[] }>("public/_routes.json");
     expect(headers).toContain("application/linkset+json");
     expect(headers).toContain("application/vnd.oai.openapi+json;version=3.1");
+    expect(headers).toContain("application/a2a+json; charset=utf-8");
     expect(headers).toContain("text/markdown; charset=utf-8");
     expect(headers).toContain("/.well-known/openid-configuration");
     expect(headers).toContain("/.well-known/oauth-authorization-server");
     expect(headers).toContain("/.well-known/oauth-protected-resource");
+    expect(headers).toContain("/.well-known/agent-card.json");
     expect(headers).toContain('rel="api-catalog"');
     expect(headers).toContain("Permissions-Policy: tools=(self)");
     expect(middleware).toContain('accept.toLowerCase().includes("text/markdown")');
@@ -138,6 +192,8 @@ describe("agent readiness public contracts", () => {
     expect(resource.resource_documentation).toBe("https://irhaapparels.com/docs/oauth.md");
     expect(auth).toContain(OWNER_AUTH_ISSUER);
     expect(auth).toContain("No unrestricted autonomous public agent registration is offered");
+    expect(auth).toContain("/.well-known/agent-card.json");
+    expect(auth).toContain("/a2a");
     expect(oauthDocs).toContain("row-level security");
     expect(oauthDocs).toContain("explicit user consent");
   });
