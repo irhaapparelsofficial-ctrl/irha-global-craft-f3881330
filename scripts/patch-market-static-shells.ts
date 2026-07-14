@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { MARKET_PAGES, type MarketPage } from "../src/lib/marketPages";
+import { getMarketSearchIntent, type MarketSearchIntent } from "../src/lib/marketSearchIntent";
 
 const DIST_DIR = resolve("dist");
 const SITE_URL = "https://irhaapparels.com";
@@ -18,7 +19,7 @@ function replaceAttribute(html: string, pattern: RegExp, replacement: string) {
   return pattern.test(html) ? html.replace(pattern, replacement) : html;
 }
 
-function marketShell(market: MarketPage) {
+function marketShell(market: MarketPage, searchIntent: MarketSearchIntent) {
   const programLinks = market.priorityPrograms
     .map((program) => `<li><a href="${escapeHtml(program.href)}" style="color:#e8c477">${escapeHtml(program.label)}</a> — ${escapeHtml(program.note)}</li>`)
     .join("\n");
@@ -28,18 +29,20 @@ function marketShell(market: MarketPage) {
 
   return `<main id="irha-static-crawler-shell" data-irha-route-shell="/markets/${escapeHtml(market.slug)}" style="min-height:100vh;background:#0a0a0a;color:#f5f1e8;padding:48px 24px;font-family:Arial,sans-serif;line-height:1.6">
     <div style="max-width:960px;margin:0 auto">
-      <p style="margin:0 0 12px;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#c9a45c">${escapeHtml(market.eyebrow)}</p>
-      <h1 style="margin:0 0 20px;font-size:clamp(34px,7vw,68px);line-height:1.08">${escapeHtml(market.h1)}</h1>
-      <p style="max-width:820px;font-size:18px;color:#d7d0c4">${escapeHtml(market.intro)}</p>
+      <p style="margin:0 0 12px;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#c9a45c">${escapeHtml(searchIntent.eyebrow)}</p>
+      <h1 style="margin:0 0 20px;font-size:clamp(34px,7vw,68px);line-height:1.08">${escapeHtml(searchIntent.h1)}</h1>
+      <p style="max-width:820px;font-size:18px;color:#d7d0c4">${escapeHtml(searchIntent.intro)}</p>
+      <p style="margin-top:24px"><a href="${escapeHtml(searchIntent.manufacturerPath)}" style="color:#e8c477">${escapeHtml(searchIntent.manufacturerLabel)}</a></p>
       <h2 style="font-size:26px;margin:34px 0 10px">Product programs to review</h2>
       <ul style="padding-left:20px;color:#d7d0c4">${programLinks}</ul>
       ${sectionText}
       <p style="max-width:820px;color:#aaa29a;margin-top:28px">Irha Apparels is an experienced manufacturer and the current website is newly built. MOQ, pricing, production timing, shipping and documentation are confirmed after the buyer's requirements are reviewed.</p>
       <nav aria-label="Market crawler links" style="display:flex;flex-wrap:wrap;gap:16px;margin-top:34px">
         <a href="/markets" style="color:#e8c477">All Markets</a>
+        <a href="${escapeHtml(searchIntent.manufacturerPath)}" style="color:#e8c477">Manufacturer Page</a>
         <a href="/products" style="color:#e8c477">Products</a>
         <a href="/factory-video-call" style="color:#e8c477">Live Factory View</a>
-        <a href="/inquiry" style="color:#e8c477">Request a Quote</a>
+        <a href="/inquiry" style="color:#e8c477">Submit Requirements</a>
       </nav>
     </div>
   </main>`;
@@ -74,6 +77,7 @@ async function patch(path: string, title: string, description: string, locale: s
   html = replaceAttribute(html, /<meta data-irha-fallback-seo="true" property="og:url" content="[^"]*"\s*\/?>/i, `<meta data-irha-fallback-seo="true" property="og:url" content="${canonical}" />`);
   html = replaceAttribute(html, /<meta data-irha-fallback-seo="true" name="twitter:title" content="[^"]*"\s*\/?>/i, `<meta data-irha-fallback-seo="true" name="twitter:title" content="${escapedTitle}" />`);
   html = replaceAttribute(html, /<meta data-irha-fallback-seo="true" name="twitter:description" content="[^"]*"\s*\/?>/i, `<meta data-irha-fallback-seo="true" name="twitter:description" content="${escapedDescription}" />`);
+  html = html.replace(/\s*<link rel="alternate" hreflang="[^"]+" href="[^"]+"\s*\/?>/gi, "");
   html = html.replace(/<main id="irha-static-crawler-shell"[\s\S]*?<\/main>/i, shell);
   await writeFile(file, html, "utf8");
 }
@@ -88,7 +92,14 @@ async function main() {
   );
 
   for (const market of MARKET_PAGES) {
-    await patch(`/markets/${market.slug}`, market.title, market.description, market.locale, marketShell(market));
+    const searchIntent = getMarketSearchIntent(market.slug);
+    await patch(
+      `/markets/${market.slug}`,
+      searchIntent.title,
+      searchIntent.description,
+      market.locale,
+      marketShell(market, searchIntent),
+    );
   }
   console.log(`patched static crawler shells for ${MARKET_PAGES.length + 1} market routes`);
 }
