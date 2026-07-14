@@ -1,0 +1,54 @@
+name: Verify live SEO repair
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-live-seo-20260715.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-live-seo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify exact live release and SEO HTTP contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          ORIGIN="https://irhaapparels.com"
+          EXPECTED_SHA="8e60a4f1feb5745955e6f086a9e4943e99622358"
+
+          build_json="$(curl -fsS --connect-timeout 10 --max-time 40 "$ORIGIN/build.json?live_seo_verify=${GITHUB_SHA::12}")"
+          test "$(printf '%s' "$build_json" | jq -r '.source_commit // empty')" = "$EXPECTED_SHA"
+          test "$(printf '%s' "$build_json" | jq -r '.source_identity_state // empty')" = "verified"
+
+          assert_redirect() {
+            source_path="$1"
+            expected_path="$2"
+            headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$ORIGIN$source_path")"
+            status="$(printf '%s' "$headers" | awk 'NR==1 {print $2}')"
+            location="$(printf '%s' "$headers" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
+            test "$status" = "301" || { echo "Expected 301 for $source_path, got $status"; printf '%s\n' "$headers"; exit 1; }
+            test "$location" = "$ORIGIN$expected_path" || { echo "Unexpected Location for $source_path: $location"; exit 1; }
+            echo "$source_path -> $location ($status)"
+          }
+
+          assert_redirect "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe" "/products/leisure-nightwear/plush-bathrobe-sleep-robe"
+          assert_redirect "/products/sportswear/" "/products/sportswear"
+          assert_redirect "/buyer-trust-center" "/buyer-trust"
+
+          admin_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$ORIGIN/admin")"
+          printf '%s' "$admin_headers" | grep -Eiq '^x-robots-tag: noindex, nofollow, noarchive\r?$' || {
+            echo "Admin noindex header missing"
+            printf '%s\n' "$admin_headers"
+            exit 1
+          }
+
+          echo "Live SEO repair verified for $EXPECTED_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "- UUID legacy URL: HTTP 301" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Priority trailing slash: HTTP 301" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Buyer alias: HTTP 301" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Admin: X-Robots-Tag noindex" >> "$GITHUB_STEP_SUMMARY"
