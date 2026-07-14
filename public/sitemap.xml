@@ -116,6 +116,11 @@
     <priority>0.79</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/accessories/boys-lederhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/accessories/hats-headwear</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
@@ -151,7 +156,27 @@
     <priority>0.76</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/kids/dirndl-blouses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/kids/girls-dirndl</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/kids/other-kids-styles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/kids/trachten-shirts</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/kids/trachten-vests-jankers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
   </url>
@@ -202,6 +227,31 @@
   </url>
   <url>
     <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/women/dirndl-dresses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/women/knee-length-lederhosen-bundhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/women/long-leather-pants</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/women/other-women-styles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/women/short-lederhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/de/products/bavarian-trachten-wear/women/trachten-vests-jankers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
   </url>
@@ -591,6 +641,11 @@
     <priority>0.79</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/accessories/boys-lederhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/accessories/hats-headwear</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
@@ -626,7 +681,27 @@
     <priority>0.76</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/kids/dirndl-blouses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/kids/girls-dirndl</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/kids/other-kids-styles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/kids/trachten-shirts</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/kids/trachten-vests-jankers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
   </url>
@@ -677,6 +752,31 @@
   </url>
   <url>
     <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/women/dirndl-dresses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/women/knee-length-lederhosen-bundhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/women/long-leather-pants</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/women/other-women-styles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/women/short-lederhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/es/products/bavarian-trachten-wear/women/trachten-vests-jankers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
   </url>
@@ -1066,6 +1166,11 @@
     <priority>0.79</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/accessories/boys-lederhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/accessories/hats-headwear</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
@@ -1101,7 +1206,27 @@
     <priority>0.76</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/kids/dirndl-blouses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/kids/girls-dirndl</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/kids/other-kids-styles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/kids/trachten-shirts</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/kids/trachten-vests-jankers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
   </url>
@@ -1152,6 +1277,31 @@
   </url>
   <url>
     <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/women/dirndl-dresses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/women/knee-length-lederhosen-bundhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/women/long-leather-pants</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/women/other-women-styles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/women/short-lederhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.76</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/intl/fr/products/bavarian-trachten-wear/women/trachten-vests-jankers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.76</priority>
   </url>
@@ -1556,6 +1706,11 @@
     <priority>0.87</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/accessories/boys-lederhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/accessories/hats-headwear</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
@@ -1586,6 +1741,11 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/alpine-trachten-hat-reference-style-02</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/antique-brown-scroll-embroidered-short-lederhosen</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -1606,6 +1766,11 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/bavarian-leather-belt-reference-style-02</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/bavarian-men-s-checkered-shirt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -1621,7 +1786,17 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/beige-square-neck-cropped-trachten-jacket</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-brown-trim-trachten-waistcoat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-burgundy-floral-apron-dirndl-dress</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1632,6 +1807,16 @@
   </url>
   <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-contrast-piped-long-leather-pants</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-embroidered-long-leather-trousers</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-floral-embroidered-kids-lederhosen</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1651,6 +1836,16 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-lace-cap-sleeve-dirndl-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-long-sleeve-button-front-dirndl-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-red-trim-trachten-waistcoat</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -1666,7 +1861,32 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-sky-blue-apron-dirndl-dress</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-slim-fit-leather-trousers</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-turquoise-embroidered-dirndl-dress</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/black-white-micro-gingham-pocket-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/blue-cold-shoulder-gingham-trachten-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/blue-corset-lace-trachten-blouse</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1676,7 +1896,17 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/blue-gingham-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/bright-green-micro-check-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/brown-deer-embroidered-kids-lederhosen</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1691,6 +1921,16 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/brown-heart-embroidered-womens-knee-length-lederhosen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/brown-kids-haferl-shoes</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/brown-ornamental-side-tie-short-lederhosen</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -1701,7 +1941,22 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/brown-yoke-two-tone-janker</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/burgundy-floral-embroidered-womens-short-lederhosen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/burgundy-micro-gingham-pocket-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/charcoal-green-trim-layered-trachten-blazer</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1721,7 +1976,17 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/chocolate-embroidered-trachten-skirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/classic-blue-micro-check-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/classic-brown-lace-up-kids-lederhosen</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1736,12 +2001,32 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/cream-floral-puff-sleeve-dirndl-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/cream-lace-panel-fitted-janker</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dark-brown-classic-womens-short-lederhosen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dark-brown-contrast-piped-knee-panel-long-leather-pants</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dark-brown-eagle-embroidered-suspender-short-lederhosen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dark-brown-embroidered-long-leather-trousers</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1771,6 +2056,11 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dark-brown-ornate-trachten-skirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dark-brown-panelled-long-leather-pants</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -1786,12 +2076,22 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dark-brown-side-button-embroidered-womens-short-lederhosen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dirndl-apron</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/dirndl-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/distressed-brown-pink-embroidered-womens-short-lederhosen</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1811,6 +2111,16 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/forest-green-kids-trachten-waistcoat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/fuchsia-green-gingham-dirndl-dress</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/golden-tan-contrast-piped-long-leather-pants</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -1826,7 +2136,17 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/green-gingham-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/green-plain-trachten-waistcoat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/green-puff-sleeve-gingham-trachten-blouse</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1836,7 +2156,37 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/grey-deer-graphic-kids-trachten-t-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/grey-embroidered-trachten-skirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/grey-green-trim-trachten-waistcoat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/grey-knee-high-kids-trachten-socks</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/grey-magenta-lined-janker-coat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/grey-olive-piped-classic-janker</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/grey-red-collar-classic-janker</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1846,7 +2196,17 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/grey-suspender-kids-lederhosen-set</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/haferl-leather-shoes</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/haferl-leather-shoes-reference-style-02</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1861,12 +2221,37 @@
     <priority>0.82</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/kids/dirndl-blouses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/kids/girls-dirndl</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/kids/other-kids-styles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/kids/trachten-shirts</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/kids/trachten-vests-jankers</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/knee-high-bavarian-socks</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/knee-high-bavarian-socks-reference-style-02</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1886,7 +2271,22 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/lilac-micro-gingham-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/lime-gingham-kids-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/lime-green-micro-gingham-pocket-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/long-grey-olive-trim-janker-coat</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1951,7 +2351,22 @@
     <priority>0.82</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/monochrome-black-lace-up-dirndl-dress</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/mustard-embroidered-trachten-skirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/navy-brown-trim-trachten-waistcoat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/navy-gingham-floral-trim-dirndl-dress</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1971,12 +2386,27 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/olive-floral-trim-trachten-skirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/olive-green-micro-gingham-pocket-trachten-shirt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/premium-leather-trachten-bag-reference-style-01</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/red-brown-trim-trachten-waistcoat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/red-gingham-apron-dirndl-dress</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1991,7 +2421,22 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/red-slim-fit-leather-trousers</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/red-suspender-kids-lederhosen-set</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/rose-micro-gingham-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/royal-blue-contrast-kids-trachten-waistcoat</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -2006,6 +2451,11 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/sand-floral-embroidered-womens-knee-length-lederhosen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/sky-blue-micro-gingham-trachten-shirt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -2016,12 +2466,32 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/tan-buckle-waist-leather-trousers</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/tan-buckle-waist-long-leather-trousers</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/tan-floral-embroidered-long-leather-pants</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/tan-heart-embroidered-kids-lederhosen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/tan-minimal-embroidered-long-lederhosen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/tan-red-lace-side-kids-lederhosen</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -2032,6 +2502,11 @@
   </url>
   <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/traditional-dirndl-dress</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/traditional-graphic-trachten-t-shirt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -2066,7 +2541,22 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-button-front-halter-dirndl-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-classic-point-collar-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-drawstring-puff-sleeve-dirndl-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-elbow-sleeve-lace-trim-dirndl-blouse</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -2081,6 +2571,11 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-lace-puff-kids-dirndl-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-olive-trim-button-down-trachten-shirt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -2091,12 +2586,27 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-puff-sleeve-kids-dirndl-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-ruffle-trim-trachten-blouse</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-stand-collar-trachten-shirt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-tie-neck-trachten-shirt</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/white-traditional-trachten-shirt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -2117,6 +2627,31 @@
   </url>
   <url>
     <loc>https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/women/knee-length-lederhosen-bundhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/women/long-leather-pants</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/women/other-women-styles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/women/short-lederhosen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://irhaapparels.com/products/bavarian-trachten-wear/women/trachten-vests-jankers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
