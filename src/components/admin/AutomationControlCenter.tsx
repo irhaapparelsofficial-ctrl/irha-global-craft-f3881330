@@ -147,6 +147,7 @@ export default function AutomationControlCenter() {
   const activeTasks = snapshot.tasks.filter((task) => !["cancelled", "executed"].includes(task.status));
   const pending = activeTasks.filter((task) => ["draft", "ready_for_review", "approved"].includes(task.status)).length;
   const failed = activeTasks.filter((task) => task.status === "failed" || Boolean(task.error)).length;
+  const skippedRuns = snapshot.runs.filter((run) => run.status === "skipped").length;
   const rulesApproved = snapshot.rules?.status === "approved";
   const safeMode = !rulesApproved;
 
@@ -157,7 +158,7 @@ export default function AutomationControlCenter() {
           <p className="eyebrow mb-2">AI Growth Engine</p>
           <h2 id="automation-control-title" className="font-display text-2xl">Automation Control Center</h2>
           <p className="mt-2 text-sm text-muted-foreground max-w-3xl leading-relaxed">
-            Daily lead, SEO, listing, social and Canva planning. Review controls update internal task state only; they never send or publish externally.
+            Daily lead, SEO, listing, social and Canva planning. Review controls update internal task state only; they never send or publish externally. Zero-task cycles are reported as skipped rather than successful work.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -172,11 +173,12 @@ export default function AutomationControlCenter() {
 
       {error && <div className="border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive flex items-start gap-2"><AlertTriangle size={16} className="mt-0.5 shrink-0" /><span>{error}</span></div>}
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-3">
+      <div className="grid sm:grid-cols-2 xl:grid-cols-6 gap-3">
         <StatusCard label="Engine" value={snapshot.settings?.enabled ? "Enabled" : "Disabled"} tone={snapshot.settings?.enabled ? "good" : "warn"} />
         <StatusCard label="Safety mode" value={safeMode ? "Plan only" : "Rules approved"} tone={safeMode ? "warn" : "good"} />
         <StatusCard label="Review queue" value={String(pending)} tone={pending > 0 ? "warn" : "good"} />
         <StatusCard label="Failed tasks" value={String(failed)} tone={failed > 0 ? "bad" : "good"} />
+        <StatusCard label="Skipped runs" value={String(skippedRuns)} tone={skippedRuns > 0 ? "warn" : "good"} />
         <StatusCard label="External execution" value="Disabled" tone="good" />
       </div>
 
@@ -206,28 +208,37 @@ export default function AutomationControlCenter() {
       </div>
 
       <div className="grid xl:grid-cols-2 gap-4">
-        <div className="border border-border/50 p-4">
+        <div className="border border-border/50 p-4 min-w-0">
           <p className="text-xs uppercase tracking-[0.18em] mb-3">Recent runs</p>
-          {snapshot.runs.length === 0 ? <Empty text="No planning run recorded." /> : <div className="space-y-2">{snapshot.runs.map((run) => (
-            <div key={run.id} className="border-b border-border/30 pb-2 last:border-0 text-xs flex items-start justify-between gap-3">
-              <div className="min-w-0"><p className="capitalize">{run.trigger_source} · {run.status}</p><p className="text-muted-foreground mt-1">{new Date(run.started_at).toLocaleString()}</p>{run.error && <p className="text-destructive mt-1 break-words">{run.error}</p>}</div>
-              <span className="shrink-0 text-[9px] uppercase tracking-[0.16em] text-muted-foreground">external: {run.external_execution ? "yes" : "no"}</span>
-            </div>
-          ))}</div>}
+          {snapshot.runs.length === 0 ? <Empty text="No planning run recorded." /> : <div className="space-y-2">{snapshot.runs.map((run) => {
+            const reason = summaryText(run.summary, "reason") || summaryText(run.summary, "note");
+            const tasksCreated = summaryNumber(run.summary, "tasks_created");
+            return (
+              <div key={run.id} className="border-b border-border/30 pb-2 last:border-0 text-xs flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="capitalize">{run.trigger_source} · <RunStatus status={run.status} /></p>
+                  <p className="text-muted-foreground mt-1">{new Date(run.started_at).toLocaleString()} · tasks {tasksCreated ?? "—"}</p>
+                  {reason && <p className="text-foreground/60 mt-1 break-words">{reason.replaceAll("_", " ")}</p>}
+                  {run.error && <p className="text-destructive mt-1 break-words">{run.error}</p>}
+                </div>
+                <span className="shrink-0 text-[9px] uppercase tracking-[0.16em] text-muted-foreground">external: {run.external_execution ? "yes" : "no"}</span>
+              </div>
+            );
+          })}</div>}
         </div>
 
-        <div className="border border-border/50 p-4">
+        <div className="border border-border/50 p-4 min-w-0">
           <p className="text-xs uppercase tracking-[0.18em] mb-3">Task review queue</p>
           {activeTasks.length === 0 ? <Empty text="No tasks are waiting." /> : <div className="space-y-3 max-h-[32rem] overflow-y-auto pr-1">{activeTasks.slice(0, 20).map((task) => {
             const busy = actingTaskId === task.id;
             const canApprove = ["draft", "ready_for_review"].includes(task.status) && !task.external_action;
             const canRetry = ["failed", "blocked"].includes(task.status) || Boolean(task.error);
             return (
-              <div key={task.id} className="border border-border/40 p-3 text-xs">
-                <div className="flex items-start justify-between gap-3"><p className="leading-relaxed">{task.title}</p><span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-gold">{task.status.replaceAll("_", " ")}</span></div>
-                <p className="mt-1 text-muted-foreground capitalize">{task.module} · {task.action.replaceAll("_", " ")} · approval {task.requires_approval ? "required" : "not required"}</p>
+              <div key={task.id} className="border border-border/40 p-3 text-xs min-w-0">
+                <div className="flex items-start justify-between gap-3"><p className="leading-relaxed break-words min-w-0">{task.title}</p><span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-gold">{task.status.replaceAll("_", " ")}</span></div>
+                <p className="mt-1 text-muted-foreground capitalize break-words">{task.module} · {task.action.replaceAll("_", " ")} · approval {task.requires_approval ? "required" : "not required"}</p>
                 {task.external_action && <p className="mt-2 text-amber-400">External action: execution remains blocked.</p>}
-                {task.error && <p className="mt-2 text-destructive">{task.error}</p>}
+                {task.error && <p className="mt-2 text-destructive break-words">{task.error}</p>}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {canApprove && <button type="button" disabled={busy} onClick={() => void updateTaskStatus(task, "approved")} className="min-h-9 inline-flex items-center gap-2 border border-emerald-500/40 px-3 text-[9px] uppercase tracking-[0.14em] text-emerald-400 disabled:opacity-40"><CheckCircle2 size={11} /> Approve internal</button>}
                   {canRetry && <button type="button" disabled={busy} onClick={() => void updateTaskStatus(task, "ready_for_review")} className="min-h-9 inline-flex items-center gap-2 border border-amber-500/40 px-3 text-[9px] uppercase tracking-[0.14em] text-amber-400 disabled:opacity-40"><RotateCcw size={11} /> Retry review</button>}
@@ -244,11 +255,26 @@ export default function AutomationControlCenter() {
 
 function StatusCard({ label, value, tone }: { label: string; value: string; tone: "good" | "warn" | "bad" }) {
   const toneClass = tone === "good" ? "text-emerald-500" : tone === "warn" ? "text-amber-500" : "text-destructive";
-  return <div className="border border-border/50 p-4"><p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p><p className={`font-display text-xl mt-2 ${toneClass}`}>{value}</p></div>;
+  return <div className="border border-border/50 p-4 min-w-0"><p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground break-words">{label}</p><p className={`font-display text-xl mt-2 ${toneClass}`}>{value}</p></div>;
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
   return <div className="flex items-start justify-between gap-3 text-xs border-b border-border/20 pb-2 last:border-0"><span className="text-muted-foreground capitalize">{label}</span><span className="text-right break-words">{value}</span></div>;
+}
+
+function RunStatus({ status }: { status: string }) {
+  const tone = status === "completed" ? "text-emerald-400" : status === "skipped" ? "text-amber-400" : status === "failed" ? "text-destructive" : "text-gold";
+  return <span className={tone}>{status.replaceAll("_", " ")}</span>;
+}
+
+function summaryText(summary: Record<string, unknown> | null, key: string) {
+  const value = summary?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function summaryNumber(summary: Record<string, unknown> | null, key: string) {
+  const value = Number(summary?.[key]);
+  return Number.isFinite(value) ? value : null;
 }
 
 function Empty({ text }: { text: string }) { return <p className="text-xs text-muted-foreground py-4">{text}</p>; }
