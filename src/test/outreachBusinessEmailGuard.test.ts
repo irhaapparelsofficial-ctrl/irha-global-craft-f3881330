@@ -43,6 +43,9 @@ describe("business email activation and dispatch guard", () => {
     expect(migration).toContain("status = 'manual_required'");
     expect(migration).toContain("approved_by = null");
     expect(migration).toContain("approved_at = null");
+    expect(migration).toContain("'status_sync'");
+    expect(migration).toContain("'new_status', 'manual_required'");
+    expect(migration).not.toContain("'manual_required',\n       jsonb_build_object");
     expect(migration).toContain("external_message_sent', false");
     expect(migration).not.toContain("gmail/v1");
     expect(migration).not.toContain("graph.facebook.com");
