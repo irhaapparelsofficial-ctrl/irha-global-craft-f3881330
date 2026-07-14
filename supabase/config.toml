@@ -30,6 +30,12 @@ verify_jwt = true
 [functions.lead-research]
 verify_jwt = true
 
+[functions.lead-bulk-stage]
+verify_jwt = true
+
+[functions.lead-activation]
+verify_jwt = true
+
 [functions.multilingual-seo]
 verify_jwt = true
 
