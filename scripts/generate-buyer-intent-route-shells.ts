@@ -1,9 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import {
-  BUYER_INTENT_LANDING_PAGES,
-  type BuyerIntentLandingPage,
-} from "../src/lib/buyerIntentLandingPages";
+import { SEO_BUYER_INTENT_LANDING_PAGES } from "../src/lib/buyerIntentSeoPages";
+import type { BuyerIntentLandingPage } from "../src/lib/buyerIntentLandingPages";
 
 const DIST_DIR = resolve("dist");
 const SITE_URL = "https://irhaapparels.com";
@@ -159,7 +157,7 @@ function replaceSeo(template: string, page: BuyerIntentLandingPage): string {
 }
 
 async function verify() {
-  for (const page of BUYER_INTENT_LANDING_PAGES) {
+  for (const page of SEO_BUYER_INTENT_LANDING_PAGES) {
     const outputPath = join(DIST_DIR, page.path.slice(1), "index.html");
     const output = await readFile(outputPath, "utf8");
     if (!output.includes(`data-irha-route-shell="${page.path}"`)) {
@@ -179,13 +177,13 @@ async function verify() {
 
 async function main() {
   const template = await readFile(join(DIST_DIR, "index.html"), "utf8");
-  for (const page of BUYER_INTENT_LANDING_PAGES) {
+  for (const page of SEO_BUYER_INTENT_LANDING_PAGES) {
     const outputPath = join(DIST_DIR, page.path.slice(1), "index.html");
     await mkdir(dirname(outputPath), { recursive: true });
     await writeFile(outputPath, replaceSeo(template, page), "utf8");
   }
   await verify();
-  console.log(`Generated ${BUYER_INTENT_LANDING_PAGES.length} rich buyer-intent route shells`);
+  console.log(`Generated ${SEO_BUYER_INTENT_LANDING_PAGES.length} rich buyer-intent route shells`);
 }
 
 main().catch((error) => {
