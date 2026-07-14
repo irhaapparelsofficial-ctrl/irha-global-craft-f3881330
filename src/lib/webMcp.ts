@@ -34,7 +34,7 @@ declare global {
   }
 }
 
-const SITE_ORIGIN = "https://www.irhaapparels.com";
+const SITE_ORIGIN = "https://irhaapparels.com";
 
 function safeText(value: unknown, maxLength: number) {
   return typeof value === "string"
