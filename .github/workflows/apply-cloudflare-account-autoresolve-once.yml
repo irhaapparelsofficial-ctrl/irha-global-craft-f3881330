@@ -1,0 +1,95 @@
+name: Apply Cloudflare Account Autoresolution Once
+
+on:
+  push:
+    branches:
+      - fix/cloudflare-account-id-autoresolve-20260714
+    paths:
+      - ".github/workflows/apply-cloudflare-account-autoresolve-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/cloudflare-account-id-autoresolve-20260714
+          fetch-depth: 0
+
+      - name: Patch production workflow idempotently
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/cloudflare-pages-production.yml')
+          source = path.read_text()
+
+          def replace_once(old: str, new: str, label: str) -> None:
+              global source
+              if new in source:
+                  return
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected marker once, found {count}')
+              source = source.replace(old, new, 1)
+
+          replace_once(
+              '      domain_count: ${{ steps.cloudflare.outputs.domain_count }}\n',
+              '      domain_count: ${{ steps.cloudflare.outputs.domain_count }}\n      resolved_account_id: ${{ steps.cloudflare.outputs.resolved_account_id }}\n',
+              'preflight account output',
+          )
+
+          replace_once(
+              '''          test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }\n          test -n "$account_id" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }\n          test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }\n\n          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {\n            echo "CLOUDFLARE_ACCOUNT_ID must be the 32-character Account ID only"\n            exit 1\n          }\n          [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {\n            echo "CLOUDFLARE_PROJECT_NAME contains invalid characters"\n            exit 1\n          }\n\n          echo "::add-mask::$token"\n          echo "::add-mask::$account_id"\n''',
+              '''          test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }\n          test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }\n\n          [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {\n            echo "CLOUDFLARE_PROJECT_NAME contains invalid characters"\n            exit 1\n          }\n\n          echo "::add-mask::$token"\n''',
+              'credential normalization prelude',
+          )
+
+          replace_once(
+              '''          if [ "$(printf '%s' "$verify_json" | jq -r '.success // false')" != "true" ]; then\n            echo "Cloudflare API token verification failed"\n            printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare error \\(.code // "unknown"): \\(.message // "unknown")"'\n            exit 1\n          fi\n\n          project_json="$(curl -sS \\\n''',
+              '''          if [ "$(printf '%s' "$verify_json" | jq -r '.success // false')" != "true" ]; then\n            echo "Cloudflare API token verification failed"\n            printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare error \\(.code // "unknown"): \\(.message // "unknown")"'\n            exit 1\n          fi\n\n          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then\n            embedded_account_id="$(printf '%s' "$account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"\n            if [[ "$embedded_account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then\n              account_id="$embedded_account_id"\n              echo "Normalized Account ID from the configured secret value"\n            else\n              accounts_json="$(curl -sS \\\n                -H "Authorization: Bearer $token" \\\n                -H 'Content-Type: application/json' \\\n                'https://api.cloudflare.com/client/v4/accounts?per_page=50')"\n\n              if [ "$(printf '%s' "$accounts_json" | jq -r '.success // false')" != "true" ]; then\n                echo "Cloudflare account discovery failed; set CLOUDFLARE_ACCOUNT_ID to the exact 32-character Account ID"\n                printf '%s' "$accounts_json" | jq -r '.errors[]? | "Cloudflare error \\(.code // "unknown"): \\(.message // "unknown")"'\n                exit 1\n              fi\n\n              account_count="$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')"\n              if [ "$account_count" != "1" ]; then\n                echo "Cloudflare token can access $account_count accounts; set CLOUDFLARE_ACCOUNT_ID to the exact 32-character Account ID"\n                exit 1\n              fi\n              account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"\n              echo "Resolved the only Cloudflare account accessible to this token"\n            fi\n          fi\n\n          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {\n            echo "Cloudflare Account ID could not be resolved safely"\n            exit 1\n          }\n          echo "::add-mask::$account_id"\n\n          project_json="$(curl -sS \\\n''',
+              'account ID resolution',
+          )
+
+          replace_once(
+              '          echo "previous_deployment_id=$previous_deployment_id" >> "$GITHUB_OUTPUT"\n',
+              '          echo "resolved_account_id=$account_id" >> "$GITHUB_OUTPUT"\n          echo "previous_deployment_id=$previous_deployment_id" >> "$GITHUB_OUTPUT"\n',
+              'resolved account output value',
+          )
+
+          replace_once(
+              '      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}\n      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}\n      PREVIOUS_DEPLOYMENT_ID:',
+              '      CLOUDFLARE_ACCOUNT_ID: ${{ needs.preflight.outputs.resolved_account_id }}\n      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}\n      PREVIOUS_DEPLOYMENT_ID:',
+              'deploy resolved account',
+          )
+
+          required = [
+              'resolved_account_id: ${{ steps.cloudflare.outputs.resolved_account_id }}',
+              "grep -Eo '[0-9a-fA-F]{32}'",
+              'https://api.cloudflare.com/client/v4/accounts?per_page=50',
+              'CLOUDFLARE_ACCOUNT_ID: ${{ needs.preflight.outputs.resolved_account_id }}',
+              'Cloudflare token can access $account_count accounts',
+          ]
+          missing = [item for item in required if item not in source]
+          if missing:
+              raise SystemExit(f'missing autoresolution contracts: {missing}')
+
+          path.write_text(source)
+          PY
+
+      - name: Commit patch and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-cloudflare-account-autoresolve-once.yml
+          git config user.name "irhaapparelsofficial-ctrl"
+          git config user.email "irhaapparelsofficial@gmail.com"
+          git add .github/workflows/cloudflare-pages-production.yml .github/workflows/apply-cloudflare-account-autoresolve-once.yml
+          git commit -m "fix(ci): resolve Cloudflare account ID safely"
+          git push origin HEAD:fix/cloudflare-account-id-autoresolve-20260714
