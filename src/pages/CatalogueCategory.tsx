@@ -158,23 +158,30 @@ export default function CatalogueCategory() {
       },
       mainEntity: {
         "@type": "ItemList",
-        itemListElement: products.slice(0, 50).map((product, index) => ({
-          "@type": "ListItem",
-          position: index + 1,
-          item: {
-            "@type": "Product",
-            name: product.name,
-            description: product.description || group.description,
-            image: product.image_url || OG_IMAGE,
-            url: `${SITE}/products/${categoryMeta[product.category_id]?.topSlug ?? "products"}/${product.slug}`,
-            brand: { "@type": "Brand", name: BRAND.name },
-            manufacturer: {
-              "@type": "Organization",
-              name: BRAND.name,
-              address: { "@type": "PostalAddress", addressLocality: "Sialkot", addressCountry: "PK" },
+        itemListElement: products.slice(0, 50).map((product, index) => {
+          const productUrl = `${SITE}/products/${categoryMeta[product.category_id]?.topSlug ?? "products"}/${product.slug}`;
+          return {
+            "@type": "ListItem",
+            position: index + 1,
+            item: {
+              "@type": "Service",
+              "@id": `${productUrl}#service`,
+              name: `Custom ${product.name} Manufacturing`,
+              serviceType: "B2B custom apparel manufacturing",
+              description: product.description || group.description,
+              image: product.image_url || OG_IMAGE,
+              url: productUrl,
+              category: `${group.name} custom manufacturing`,
+              provider: {
+                "@type": "Organization",
+                name: BRAND.name,
+                url: SITE,
+                address: { "@type": "PostalAddress", addressLocality: "Sialkot", addressCountry: "PK" },
+              },
+              areaServed: { "@type": "Place", name: "Worldwide" },
             },
-          },
-        })),
+          };
+        }),
       },
     },
   ], [categoryMeta, desc, group.description, group.name, pageUrl, products]);
