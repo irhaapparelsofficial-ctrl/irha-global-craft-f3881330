@@ -20,6 +20,7 @@ type MessageTarget = {
   id: string;
   lead_id: string;
   recipient_company: string;
+  channel: "email" | "whatsapp";
   status: string;
 };
 
@@ -59,7 +60,7 @@ export default function CampaignPrivateFileFanoutPanel({ onPrepared }: Props) {
       return;
     }
     const result = await db.from("outreach_messages")
-      .select("id,lead_id,recipient_company,status")
+      .select("id,lead_id,recipient_company,channel,status")
       .eq("campaign_id", campaignId)
       .order("recipient_company", { ascending: true })
       .limit(1000);
