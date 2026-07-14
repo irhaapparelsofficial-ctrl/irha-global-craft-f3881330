@@ -1,0 +1,108 @@
+name: Final Production Read-Only 805ce
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/final-production-readonly-805ce.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APEX: https://irhaapparels.com
+      WWW: https://www.irhaapparels.com
+      PAGES: https://irha-apparels.pages.dev
+      EXPECTED_SOURCE_SHA: 805ce356961f4f0ff126c233d52d46db033e09a9
+
+    steps:
+      - name: Verify raw www redirects
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache_bust="readonly-${GITHUB_SHA::12}-$RANDOM"
+
+          get_code="$(curl -sS --http1.1 --max-redirs 0 -o /dev/null -D /tmp/www-get.headers -w '%{http_code}' "$WWW/products/sportswear?canonical_test=$cache_bust")"
+          get_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/www-get.headers)"
+          get_marker="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-canonical-redirect:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/www-get.headers)"
+          echo "www GET status=$get_code location=$get_location marker=$get_marker"
+          test "$get_code" = "301"
+          test "$get_location" = "$APEX/products/sportswear?canonical_test=$cache_bust"
+          test "$get_marker" = "www-to-apex"
+
+          post_code="$(curl -sS --http1.1 --max-redirs 0 -o /dev/null -D /tmp/www-post.headers -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{"synthetic":true}' "$WWW/inquiry?canonical_test=$cache_bust")"
+          post_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/www-post.headers)"
+          post_marker="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-canonical-redirect:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/www-post.headers)"
+          echo "www POST status=$post_code location=$post_location marker=$post_marker"
+          test "$post_code" = "308"
+          test "$post_location" = "$APEX/inquiry?canonical_test=$cache_bust"
+          test "$post_marker" = "www-to-apex"
+
+      - name: Verify critical public and admin routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /products /catalogue /inquiry /buyer-trust /factory-video-call /admin /admin/live-chat /sitemap.xml /robots.txt /llms.txt /.well-known/api-catalog /.well-known/mcp/server-card.json /.well-known/agent-skills/index.json /mcp; do
+            code="$(curl -sS -o /tmp/route-body -w '%{http_code}' "$APEX$path")"
+            echo "$path -> $code"
+            test "$code" = "200"
+          done
+          curl -fsS "$APEX/sitemap.xml" | grep -q '<urlset'
+
+      - name: Verify OAuth discovery JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in /.well-known/openid-configuration /.well-known/oauth-authorization-server /.well-known/oauth-protected-resource; do
+            curl -fsS -D /tmp/oauth.headers "$APEX$path" -o /tmp/oauth.json
+            grep -qi '^content-type: application/json' /tmp/oauth.headers
+            jq -e 'type == "object"' /tmp/oauth.json >/dev/null
+            echo "$path JSON verified"
+          done
+          curl -fsS "$APEX/docs/oauth.md" | grep -Fq 'OAuth'
+
+      - name: Verify exact production source and fingerprint
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache_bust="source-${GITHUB_SHA::12}-$RANDOM"
+          curl -fsS -H 'Cache-Control: no-cache' "$APEX/build.json?verify=$cache_bust" -o /tmp/apex-build.json
+          curl -fsS -H 'Cache-Control: no-cache' "$PAGES/build.json?verify=$cache_bust" -o /tmp/pages-build.json
+          curl -fsS -H 'Cache-Control: no-cache' "$PAGES/cloudflare-deployment.json?verify=$cache_bust" -o /tmp/deployment.json
+
+          apex_sha="$(jq -r '.source_commit // empty' /tmp/apex-build.json)"
+          pages_sha="$(jq -r '.source_commit // empty' /tmp/pages-build.json)"
+          deployment_sha="$(jq -r '.source_sha // empty' /tmp/deployment.json)"
+          apex_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/apex-build.json)"
+          pages_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/pages-build.json)"
+          deployment_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/deployment.json)"
+
+          echo "apex=$apex_sha pages=$pages_sha deployment=$deployment_sha"
+          test "$apex_sha" = "$EXPECTED_SOURCE_SHA"
+          test "$pages_sha" = "$EXPECTED_SOURCE_SHA"
+          test "$deployment_sha" = "$EXPECTED_SOURCE_SHA"
+          test "$(jq -r '.source_identity_state // empty' /tmp/apex-build.json)" = "verified"
+          test "$apex_fingerprint" = "$pages_fingerprint"
+          test "$apex_fingerprint" = "$deployment_fingerprint"
+          [[ "$apex_fingerprint" =~ ^[0-9a-f]{64}$ ]]
+
+      - name: Verify compiled live-chat and mobile inbox bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS "$APEX/" -o /tmp/home.html
+          mapfile -t scripts < <(grep -Eo 'src="[^"]+\.js"' /tmp/home.html | sed -E 's/^src="|"$//g' | sort -u)
+          test "${#scripts[@]}" -gt 0
+          : > /tmp/all-main-js
+          for script in "${scripts[@]}"; do
+            curl -fsS "$APEX$script" >> /tmp/all-main-js
+          done
+          grep -Fq 'Live Team' /tmp/all-main-js
+          grep -Fq 'Open Human Live Chat inbox' /tmp/all-main-js
+          grep -Fq '/admin/live-chat' /tmp/all-main-js
+          grep -Fq '/functions/v1/live-chat' /tmp/all-main-js
+          echo "Compiled customer chat and mobile admin inbox markers verified"
