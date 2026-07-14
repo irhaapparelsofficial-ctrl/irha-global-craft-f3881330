@@ -14,120 +14,93 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
       APEX: https://irhaapparels.com
       WWW: https://www.irhaapparels.com
       EXPECTED_SOURCE: 1f9b1b33265996f7ee20ae82158dc58713b68ebd
     steps:
-      - name: Verify raw redirects, routes, source identity and live-chat bundle
+      - name: Capture evidence, then validate production
         shell: bash
         run: |
-          set -euo pipefail
+          set -u
           cache_bust="final-${GITHUB_SHA::12}-$RANDOM"
 
-          header_value() {
-            local header_name="$1"
-            local header_file="$2"
-            grep -i -m1 "^${header_name}:" "$header_file" \
-              | sed -E 's/^[^:]+:[[:space:]]*//; s/\r$//' \
-              || true
-          }
+          get_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /dev/null -D /tmp/www-get.headers -w '%{http_code}' "$WWW/products/sportswear?canonical_test=$cache_bust" || printf 'curl_error')"
+          post_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /dev/null -D /tmp/www-post.headers -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{"synthetic":true}' "$WWW/inquiry?canonical_test=$cache_bust" || printf 'curl_error')"
 
-          verify_raw_redirects() {
-            local attempt="$1"
-            local suffix="$cache_bust-$attempt"
-            get_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /dev/null -D /tmp/www-get.headers -w '%{http_code}' "$WWW/products/sportswear?canonical_test=$suffix" || true)"
-            get_location="$(header_value location /tmp/www-get.headers)"
-            get_marker="$(header_value x-irha-canonical-redirect /tmp/www-get.headers)"
+          get_location="$(grep -i -m1 '^location:' /tmp/www-get.headers 2>/dev/null | cut -d: -f2- | sed -E 's/^[[:space:]]*//; s/\r$//' || true)"
+          get_marker="$(grep -i -m1 '^x-irha-canonical-redirect:' /tmp/www-get.headers 2>/dev/null | cut -d: -f2- | sed -E 's/^[[:space:]]*//; s/\r$//' || true)"
+          post_location="$(grep -i -m1 '^location:' /tmp/www-post.headers 2>/dev/null | cut -d: -f2- | sed -E 's/^[[:space:]]*//; s/\r$//' || true)"
+          post_marker="$(grep -i -m1 '^x-irha-canonical-redirect:' /tmp/www-post.headers 2>/dev/null | cut -d: -f2- | sed -E 's/^[[:space:]]*//; s/\r$//' || true)"
 
-            post_code="$(curl -sS --http1.1 --connect-timeout 10 --max-time 30 -o /dev/null -D /tmp/www-post.headers -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{"synthetic":true}' "$WWW/inquiry?canonical_test=$suffix" || true)"
-            post_location="$(header_value location /tmp/www-post.headers)"
-            post_marker="$(header_value x-irha-canonical-redirect /tmp/www-post.headers)"
+          home_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/home.html -w '%{http_code}' "$APEX/?canonical_test=$cache_bust" || printf 'curl_error')"
+          admin_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/admin.html -w '%{http_code}' "$APEX/admin/live-chat?canonical_test=$cache_bust" || printf 'curl_error')"
+          products_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/products.html -w '%{http_code}' "$APEX/products?canonical_test=$cache_bust" || printf 'curl_error')"
+          catalogue_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/catalogue.html -w '%{http_code}' "$APEX/catalogue?canonical_test=$cache_bust" || printf 'curl_error')"
+          inquiry_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/inquiry.html -w '%{http_code}' "$APEX/inquiry?canonical_test=$cache_bust" || printf 'curl_error')"
+          sitemap_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/sitemap.xml -w '%{http_code}' "$APEX/sitemap.xml?canonical_test=$cache_bust" || printf 'curl_error')"
+          curl -sS --connect-timeout 10 --max-time 30 "$APEX/build.json?canonical_test=$cache_bust" -o /tmp/build.json || printf '{}' > /tmp/build.json
+          source_commit="$(jq -r '.source_commit // empty' /tmp/build.json 2>/dev/null || true)"
+          identity_state="$(jq -r '.source_identity_state // empty' /tmp/build.json 2>/dev/null || true)"
+          built_at="$(jq -r '.built_at // empty' /tmp/build.json 2>/dev/null || true)"
 
-            echo "attempt=$attempt www_GET=$get_code location=$get_location marker=$get_marker"
-            echo "attempt=$attempt www_POST=$post_code location=$post_location marker=$post_marker"
-
-            test "$get_code" = "301" \
-              && test "$get_location" = "https://irhaapparels.com/products/sportswear?canonical_test=$suffix" \
-              && test "$get_marker" = "www-to-apex" \
-              && test "$post_code" = "308" \
-              && test "$post_location" = "https://irhaapparels.com/inquiry?canonical_test=$suffix" \
-              && test "$post_marker" = "www-to-apex"
-          }
-
-          redirects_ready=0
-          for attempt in $(seq 1 12); do
-            if verify_raw_redirects "$attempt"; then
-              redirects_ready=1
-              break
-            fi
-            echo "Canonical edge not converged yet; retrying"
-            sleep 10
-          done
-
-          if test "$redirects_ready" != "1"; then
-            echo 'Final GET headers:'
-            sed -n '1,40p' /tmp/www-get.headers || true
-            echo 'Final POST headers:'
-            sed -n '1,40p' /tmp/www-post.headers || true
-            exit 1
+          main_js="$(grep -Eo 'src="[^"]+index-[^"]+\.js"' /tmp/home.html 2>/dev/null | head -n1 | sed -E 's/^src="|"$//g' || true)"
+          bundle_live_team=false
+          bundle_admin_route=false
+          bundle_endpoint=false
+          bundle_title=false
+          if test -n "$main_js" && curl -sS --connect-timeout 10 --max-time 60 "$APEX$main_js?canonical_test=$cache_bust" -o /tmp/main.js; then
+            grep -Fq 'Live Team' /tmp/main.js && bundle_live_team=true
+            grep -Fq '/admin/live-chat' /tmp/main.js && bundle_admin_route=true
+            grep -Fq '/functions/v1/live-chat' /tmp/main.js && bundle_endpoint=true
+            grep -Fq 'Irha Live Team' /tmp/main.js && bundle_title=true
           fi
 
-          routes_ready=0
-          for attempt in $(seq 1 12); do
-            suffix="$cache_bust-routes-$attempt"
-            home_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/home.html -w '%{http_code}' "$APEX/?canonical_test=$suffix" || true)"
-            admin_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/admin.html -w '%{http_code}' "$APEX/admin/live-chat?canonical_test=$suffix" || true)"
-            products_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/products.html -w '%{http_code}' "$APEX/products?canonical_test=$suffix" || true)"
-            catalogue_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/catalogue.html -w '%{http_code}' "$APEX/catalogue?canonical_test=$suffix" || true)"
-            inquiry_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/inquiry.html -w '%{http_code}' "$APEX/inquiry?canonical_test=$suffix" || true)"
-            sitemap_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/sitemap.xml -w '%{http_code}' "$APEX/sitemap.xml?canonical_test=$suffix" || true)"
-            curl -sS --connect-timeout 10 --max-time 30 "$APEX/build.json?canonical_test=$suffix" -o /tmp/build.json || true
-            source_commit="$(jq -r '.source_commit // empty' /tmp/build.json 2>/dev/null || true)"
-            identity_state="$(jq -r '.source_identity_state // empty' /tmp/build.json 2>/dev/null || true)"
-            built_at="$(jq -r '.built_at // empty' /tmp/build.json 2>/dev/null || true)"
-            echo "attempt=$attempt routes home=$home_code admin=$admin_code products=$products_code catalogue=$catalogue_code inquiry=$inquiry_code sitemap=$sitemap_code source=$source_commit identity=$identity_state"
-
-            if test "$home_code" = "200" \
-              && test "$admin_code" = "200" \
-              && test "$products_code" = "200" \
-              && test "$catalogue_code" = "200" \
-              && test "$inquiry_code" = "200" \
-              && test "$sitemap_code" = "200" \
-              && grep -q '<urlset' /tmp/sitemap.xml \
-              && test "$identity_state" = "verified" \
-              && test "$source_commit" = "$EXPECTED_SOURCE"; then
-              routes_ready=1
-              break
-            fi
-            echo "Apex edge not converged yet; retrying"
-            sleep 10
-          done
-          test "$routes_ready" = "1"
-
-          main_js="$(grep -Eo 'src="[^"]+index-[^"]+\.js"' /tmp/home.html | head -n1 | sed -E 's/^src="|"$//g')"
-          test -n "$main_js"
-          curl -sS --connect-timeout 10 --max-time 60 "$APEX$main_js?canonical_test=$cache_bust" -o /tmp/main.js
-          grep -Fq 'Live Team' /tmp/main.js
-          grep -Fq '/admin/live-chat' /tmp/main.js
-          grep -Fq '/functions/v1/live-chat' /tmp/main.js
-          grep -Fq 'Irha Live Team' /tmp/main.js
-
           {
-            echo '## Final production verification'
+            echo '## Final production verification — captured evidence'
             echo
-            echo '- Raw `www` GET: **301** to apex, same path/query'
-            echo '- Raw `www` POST: **308** to apex, method-preserving'
-            echo '- Apex homepage, products, catalogue, inquiry and admin live-chat route: **200**'
-            echo '- Sitemap: **200** with XML URL set'
-            echo '- Compiled apex bundle contains `Live Team`, `/admin/live-chat`, the Supabase live-chat endpoint and `Irha Live Team`'
+            echo "- Raw www GET status: \`$get_code\`"
+            echo "- Raw www GET location: \`$get_location\`"
+            echo "- Raw www GET marker: \`$get_marker\`"
+            echo "- Raw www POST status: \`$post_code\`"
+            echo "- Raw www POST location: \`$post_location\`"
+            echo "- Raw www POST marker: \`$post_marker\`"
+            echo "- Apex routes — home \`$home_code\`, admin live chat \`$admin_code\`, products \`$products_code\`, catalogue \`$catalogue_code\`, inquiry \`$inquiry_code\`, sitemap \`$sitemap_code\`"
             echo "- Production source: \`$source_commit\`"
             echo "- Source identity: \`$identity_state\`"
             echo "- Built at: \`$built_at\`"
+            echo "- Bundle checks — Live Team \`$bundle_live_team\`, admin route \`$bundle_admin_route\`, endpoint \`$bundle_endpoint\`, title \`$bundle_title\`"
             echo
             echo 'No production setting or data was changed by this verification workflow.'
           } > /tmp/comment.md
           cat /tmp/comment.md
           gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/comment.md
+
+          failed=0
+          test "$get_code" = "301" || failed=1
+          test "$get_location" = "https://irhaapparels.com/products/sportswear?canonical_test=$cache_bust" || failed=1
+          test "$get_marker" = "www-to-apex" || failed=1
+          test "$post_code" = "308" || failed=1
+          test "$post_location" = "https://irhaapparels.com/inquiry?canonical_test=$cache_bust" || failed=1
+          test "$post_marker" = "www-to-apex" || failed=1
+          test "$home_code" = "200" || failed=1
+          test "$admin_code" = "200" || failed=1
+          test "$products_code" = "200" || failed=1
+          test "$catalogue_code" = "200" || failed=1
+          test "$inquiry_code" = "200" || failed=1
+          test "$sitemap_code" = "200" || failed=1
+          grep -q '<urlset' /tmp/sitemap.xml || failed=1
+          test "$source_commit" = "$EXPECTED_SOURCE" || failed=1
+          test "$identity_state" = "verified" || failed=1
+          test "$bundle_live_team" = "true" || failed=1
+          test "$bundle_admin_route" = "true" || failed=1
+          test "$bundle_endpoint" = "true" || failed=1
+          test "$bundle_title" = "true" || failed=1
+
+          if test "$failed" = "1"; then
+            echo 'Production verification captured unexpected values; see issue #375 evidence comment.'
+            exit 1
+          fi
+          echo 'Final production verification passed.'
