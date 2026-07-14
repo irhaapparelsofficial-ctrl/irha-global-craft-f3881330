@@ -1,5 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
-# Registered trigger revision: 7
+# Registered trigger revision: 8
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
@@ -8,9 +8,13 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/cloudflare-pages-one-time-20260714.yml"
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
+  issues: read
+  pull-requests: read
 
 concurrency:
   group: cloudflare-pages-staging
@@ -22,7 +26,9 @@ env:
 
 jobs:
   deploy:
-    if: contains(github.event.head_commit.message, '[deploy-cloudflare-once]')
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[deploy-cloudflare-once]')) ||
+      (github.event_name == 'issue_comment' && github.event.issue.number == 375 && github.event.comment.body == '/deploy-cloudflare-latest' && github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
