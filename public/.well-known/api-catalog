@@ -8,6 +8,9 @@
         },
         {
           "href": "https://irhaapparels.com/mcp"
+        },
+        {
+          "href": "https://irhaapparels.com/a2a"
         }
       ]
     },
@@ -37,6 +40,21 @@
       "service-doc": [
         {
           "href": "https://irhaapparels.com/docs/mcp.md",
+          "type": "text/markdown"
+        }
+      ]
+    },
+    {
+      "anchor": "https://irhaapparels.com/a2a",
+      "service-desc": [
+        {
+          "href": "https://irhaapparels.com/.well-known/agent-card.json",
+          "type": "application/a2a+json"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://irhaapparels.com/docs/a2a.md",
           "type": "text/markdown"
         }
       ]
