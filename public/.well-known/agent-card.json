@@ -1,0 +1,44 @@
+{
+  "name": "Irha Apparels Public Buyer Agent",
+  "description": "A read-only B2B buyer agent for public Irha Apparels product discovery, factory-verification information and reviewable inquiry preparation. It does not submit buyer data or access owner-only systems.",
+  "supportedInterfaces": [{
+    "url": "https://irhaapparels.com/a2a",
+    "protocolBinding": "JSONRPC",
+    "protocolVersion": "1.0"
+  }],
+  "provider": {"organization": "Irha Apparels", "url": "https://irhaapparels.com"},
+  "version": "1.0.0",
+  "documentationUrl": "https://irhaapparels.com/docs/a2a.md",
+  "capabilities": {"streaming": false, "pushNotifications": false, "extendedAgentCard": false},
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "skills": [
+    {
+      "id": "browse-b2b-collections",
+      "name": "Browse B2B Collections",
+      "description": "Returns public Irha Apparels manufacturing programs and product collection links without making commercial commitments.",
+      "tags": ["apparel", "manufacturing", "b2b", "private-label", "products"],
+      "examples": ["Which product categories does Irha Apparels manufacture?", "Show me the Bavarian and leather collections."],
+      "inputModes": ["text/plain"],
+      "outputModes": ["text/plain"]
+    },
+    {
+      "id": "factory-verification",
+      "name": "Factory Verification",
+      "description": "Returns public buyer-trust and live factory video-call links. It does not book a meeting or claim an audit.",
+      "tags": ["factory", "verification", "buyer-trust", "video-call"],
+      "examples": ["How can I verify the factory?", "Can I arrange a live factory video call?"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["text/plain"]
+    },
+    {
+      "id": "prepare-buyer-inquiry",
+      "name": "Prepare Buyer Inquiry",
+      "description": "Creates a reviewable website inquiry link. The buyer must review and submit the form; the agent never sends data automatically.",
+      "tags": ["rfq", "quotation", "catalogue", "sample", "inquiry"],
+      "examples": ["Prepare an inquiry for 500 custom football kits.", "I need a catalogue and sample information."],
+      "inputModes": ["text/plain"],
+      "outputModes": ["text/plain"]
+    }
+  ]
+}
