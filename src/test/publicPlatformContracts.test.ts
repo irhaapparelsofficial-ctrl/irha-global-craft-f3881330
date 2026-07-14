@@ -83,11 +83,12 @@ describe("buyer-critical public platform contracts", () => {
     expect(liveChat).not.toContain("import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY");
     expect(liveChat).not.toContain('.from("chat_messages")');
 
-    expect(chatFunction).toContain("persistExchange(sessionId, latestUser, answer)");
+    expect(chatFunction).toContain("persistExchange(sessionId, latestUser, safeAnswer)");
     expect(chatFunction).toContain('service().from("chat_messages").insert');
     expect(chatFunction).toContain('provider: "deterministic-backup"');
     expect(chatFunction).toContain("resolveSessionId(body.sessionId, req)");
     expect(chatFunction).toContain("isAllowedOrigin(origin)");
+    expect(chatFunction).toContain("ai.gateway.lovable.dev/v1/chat/completions");
   });
 
   it("keeps Custom Lab independent of the paid Lovable AI gateway", () => {
