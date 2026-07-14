@@ -3,43 +3,25 @@
     {
       "anchor": "https://irhaapparels.com/.well-known/api-catalog",
       "item": [
-        {
-          "href": "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/public-lead-gateway"
-        },
-        {
-          "href": "https://irhaapparels.com/mcp"
-        }
+        { "href": "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/public-lead-gateway" },
+        { "href": "https://irhaapparels.com/mcp" },
+        { "href": "https://irhaapparels.com/a2a" }
       ]
     },
     {
       "anchor": "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/public-lead-gateway",
-      "service-desc": [
-        {
-          "href": "https://irhaapparels.com/openapi/public-lead-gateway.json",
-          "type": "application/vnd.oai.openapi+json;version=3.1"
-        }
-      ],
-      "service-doc": [
-        {
-          "href": "https://irhaapparels.com/docs/public-lead-gateway.md",
-          "type": "text/markdown"
-        }
-      ]
+      "service-desc": [{ "href": "https://irhaapparels.com/openapi/public-lead-gateway.json", "type": "application/vnd.oai.openapi+json;version=3.1" }],
+      "service-doc": [{ "href": "https://irhaapparels.com/docs/public-lead-gateway.md", "type": "text/markdown" }]
     },
     {
       "anchor": "https://irhaapparels.com/mcp",
-      "service-desc": [
-        {
-          "href": "https://irhaapparels.com/.well-known/mcp/server-card.json",
-          "type": "application/json"
-        }
-      ],
-      "service-doc": [
-        {
-          "href": "https://irhaapparels.com/docs/mcp.md",
-          "type": "text/markdown"
-        }
-      ]
+      "service-desc": [{ "href": "https://irhaapparels.com/.well-known/mcp/server-card.json", "type": "application/json" }],
+      "service-doc": [{ "href": "https://irhaapparels.com/docs/mcp.md", "type": "text/markdown" }]
+    },
+    {
+      "anchor": "https://irhaapparels.com/a2a",
+      "service-desc": [{ "href": "https://irhaapparels.com/.well-known/agent-card.json", "type": "application/a2a+json" }],
+      "service-doc": [{ "href": "https://irhaapparels.com/docs/a2a.md", "type": "text/markdown" }]
     }
   ]
 }
