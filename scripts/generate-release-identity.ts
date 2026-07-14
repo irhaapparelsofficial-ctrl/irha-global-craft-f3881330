@@ -1,6 +1,11 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
+  APPLICATION_FINGERPRINT_ALGORITHM,
+  APPLICATION_FINGERPRINT_SCOPE,
+  computeApplicationFingerprint,
+} from "./application-fingerprint";
+import {
   computeBuildFingerprint,
   computeRuntimeFingerprint,
   createBuildManifest,
@@ -25,14 +30,15 @@ if (!existsSync(publicManifestPath)) {
 
 const identity = resolveSourceIdentity();
 const runtimeFingerprint = computeRuntimeFingerprint(distDir);
+const applicationFingerprint = computeApplicationFingerprint(distDir);
 const htmlFiles = listHtmlFiles(distDir);
 if (htmlFiles.length === 0) {
   throw new Error(`No built HTML files found in ${distDir}`);
 }
 
 // First create the final HTML structure with a fixed-width full-build
-// placeholder. Runtime fingerprinting excludes host-generated document shells
-// and therefore is already final before HTML identity metadata is injected.
+// placeholder. Runtime and application fingerprints exclude host-generated
+// document shells and are already final before identity metadata is injected.
 for (const htmlPath of htmlFiles) {
   const html = readFileSync(htmlPath, "utf8");
   writeFileSync(
@@ -67,15 +73,20 @@ for (const htmlPath of htmlFiles) {
 }
 
 const builtAt = process.env.SOURCE_BUILT_AT?.trim() || new Date().toISOString();
-const manifest = createBuildManifest(
-  readJsonObject(publicManifestPath),
-  identity,
-  buildFingerprint,
-  runtimeFingerprint,
-  builtAt,
-);
+const manifest = {
+  ...createBuildManifest(
+    readJsonObject(publicManifestPath),
+    identity,
+    buildFingerprint,
+    runtimeFingerprint,
+    builtAt,
+  ),
+  application_fingerprint: applicationFingerprint,
+  application_fingerprint_algorithm: APPLICATION_FINGERPRINT_ALGORITHM,
+  application_fingerprint_scope: APPLICATION_FINGERPRINT_SCOPE,
+};
 writeFileSync(distManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
 console.log(
-  `[release-identity] ${identity.sourceIdentityState}: ${identity.sourceCommit}; build ${buildFingerprint}; runtime ${runtimeFingerprint} (${htmlFiles.length} HTML files)`,
+  `[release-identity] ${identity.sourceIdentityState}: ${identity.sourceCommit}; build ${buildFingerprint}; runtime ${runtimeFingerprint}; application ${applicationFingerprint} (${htmlFiles.length} HTML files)`,
 );
