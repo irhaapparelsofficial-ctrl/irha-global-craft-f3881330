@@ -3,6 +3,11 @@ project_id = "pvzjiozismyxqrzmtfbi"
 [functions.chat]
 verify_jwt = false
 
+# Public only because the function performs custom high-entropy visitor-token
+# authentication and never grants browser clients direct table access.
+[functions.live-chat]
+verify_jwt = false
+
 [functions.public-lead-gateway]
 verify_jwt = false
 

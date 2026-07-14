@@ -27,6 +27,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LocalizedSeoPage = lazy(() => import("./pages/LocalizedSeoPage"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminLiveChat = lazy(() => import("./pages/AdminLiveChat"));
 const AdminOutreachQuick = lazy(() => import("./pages/AdminOutreachQuick"));
 const AdminWhatsAppQuick = lazy(() => import("./pages/AdminWhatsAppQuick"));
 const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"));
@@ -115,6 +116,7 @@ const App = () => (
 
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/live-chat" element={<AdminLiveChat />} />
               <Route path="/admin/outreach-quick" element={<AdminOutreachQuick />} />
               <Route path="/admin/whatsapp-quick" element={<AdminWhatsAppQuick />} />
               <Route path="/admin/lead-intake" element={<AdminLeadIntake />} />
