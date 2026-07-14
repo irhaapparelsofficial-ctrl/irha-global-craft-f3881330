@@ -1,0 +1,147 @@
+name: Verify Cloudflare Production Bootstrap
+
+run-name: Verify Cloudflare production bootstrap · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-cloudflare-production-bootstrap.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-cloudflare-production-bootstrap
+  cancel-in-progress: true
+
+env:
+  EXPECTED_SOURCE_SHA: 93409f1e6e2a769945361846cae92355d9bbec77
+  PRODUCTION_URL: https://irha-apparels.pages.dev
+
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+
+    steps:
+      - name: Verify Cloudflare project state and unchanged domains
+        id: project
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+
+          test -n "$token"
+          test -n "$account_id"
+          test -n "$project_name"
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
+
+          echo "::add-mask::$token"
+          echo "::add-mask::$account_id"
+
+          project_json="$(curl -sS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+
+          if [ "$(printf '%s' "$project_json" | jq -r '.success // false')" != "true" ]; then
+            echo "Cloudflare Pages project lookup failed"
+            printf '%s' "$project_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
+            exit 1
+          fi
+
+          actual_name="$(printf '%s' "$project_json" | jq -r '.result.name // empty')"
+          production_branch="$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')"
+          latest_deployment_id="$(printf '%s' "$project_json" | jq -r '.result.latest_deployment.id // empty')"
+          domain_count="$(printf '%s' "$project_json" | jq -r '(.result.domains // []) | length')"
+
+          test "$actual_name" = "$project_name"
+          test "$production_branch" = "main"
+          test -n "$latest_deployment_id"
+          test "$domain_count" = "0" || {
+            echo "Custom domains are already attached; expected zero during bootstrap verification, found $domain_count"
+            exit 1
+          }
+
+          echo "latest_deployment_id=$latest_deployment_id" >> "$GITHUB_OUTPUT"
+          echo "Cloudflare project and production branch verified"
+          echo "Custom-domain count remains zero"
+
+      - name: Verify exact pages.dev production release
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+
+          for attempt in $(seq 1 30); do
+            cache_bust="${EXPECTED_SOURCE_SHA::12}-$attempt"
+
+            if curl -fsS \
+              --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/?release_check=$cache_bust" \
+              -o /tmp/home.html \
+              -D /tmp/home.headers \
+              && curl -fsS \
+              --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/build.json?release_check=$cache_bust" \
+              -o /tmp/build.json \
+              && curl -fsS \
+              --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              "$PRODUCTION_URL/cloudflare-deployment.json?release_check=$cache_bust" \
+              -o /tmp/deployment.json; then
+
+              if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/home.headers \
+                && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' /tmp/home.html \
+                && jq -e \
+                  --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
+                  --arg supabase 'pvzjiozismyxqrzmtfbi' \
+                  '.repository == $repo and .supabase_project_id == $supabase' \
+                  /tmp/build.json >/dev/null \
+                && jq -e \
+                  --arg sha "$EXPECTED_SOURCE_SHA" \
+                  --arg repo "$GITHUB_REPOSITORY" \
+                  '.source_sha == $sha and .repository == $repo and .branch == "main"' \
+                  /tmp/deployment.json >/dev/null; then
+                ready=1
+                echo "Exact production source verified on attempt $attempt"
+                break
+              fi
+            fi
+
+            echo "Production release not ready yet (attempt $attempt/30)"
+            sleep 10
+          done
+
+          test "$ready" = "1" || {
+            echo "Exact Cloudflare production release could not be verified"
+            exit 1
+          }
+
+          if grep -Eiq 'Since 2014|MOQ 50|45-Day Delivery|45-day delivery|reply within 12 hours|BSCI Audited|ISO 9001:2015|SEDEX Member' /tmp/home.html; then
+            echo "Blocked legacy production claims are present"
+            exit 1
+          fi
+
+      - name: Record read-only verification result
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare production bootstrap verified"
+            echo "- Source commit: \`$EXPECTED_SOURCE_SHA\`"
+            echo "- Production URL: $PRODUCTION_URL"
+            echo "- Latest Cloudflare deployment ID: \`${{ steps.project.outputs.latest_deployment_id }}\`"
+            echo "- Custom domains/DNS unchanged"
+            echo "- This workflow performed no deployment or mutation"
+          } >> "$GITHUB_STEP_SUMMARY"
