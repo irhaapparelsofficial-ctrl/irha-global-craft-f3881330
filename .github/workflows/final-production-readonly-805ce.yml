@@ -51,7 +51,8 @@ jobs:
             echo "$path -> $code"
             test "$code" = "200"
           done
-          curl -fsSL "$APEX/sitemap.xml" | grep -q '<urlset'
+          curl -fsSL "$APEX/sitemap.xml" -o /tmp/sitemap.xml
+          grep -q '<urlset' /tmp/sitemap.xml
 
       - name: Verify OAuth discovery JSON
         shell: bash
@@ -63,7 +64,8 @@ jobs:
             jq -e 'type == "object"' /tmp/oauth.json >/dev/null
             echo "$path JSON verified"
           done
-          curl -fsS "$APEX/docs/oauth.md" | grep -Fq 'OAuth'
+          curl -fsS "$APEX/docs/oauth.md" -o /tmp/oauth-docs.md
+          grep -Fq 'OAuth' /tmp/oauth-docs.md
 
       - name: Verify exact production source and fingerprint
         shell: bash
