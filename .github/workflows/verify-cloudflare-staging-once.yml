@@ -1,0 +1,55 @@
+name: Verify Cloudflare Staging Once
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/verify-cloudflare-staging-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      STAGING_URL: https://irha-apparels.pages.dev
+      EXPECTED_SHA: 00f42bd9f7d2dbbd806f76112a5e73ee1398f458
+      EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
+      EXPECTED_SUPABASE: pvzjiozismyxqrzmtfbi
+    steps:
+      - name: Wait for exact staging deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 36); do
+            cache_bust="${EXPECTED_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                 "$STAGING_URL/build.json?release_check=$cache_bust" -o /tmp/build.json \
+              && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                 "$STAGING_URL/cloudflare-deployment.json?release_check=$cache_bust" -o /tmp/deployment.json \
+              && jq -e --arg sha "$EXPECTED_SHA" --arg repo "$EXPECTED_REPOSITORY" --arg supabase "$EXPECTED_SUPABASE" \
+                   '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and (.build_fingerprint | test("^[0-9a-f]{64}$"))' \
+                   /tmp/build.json >/dev/null \
+              && fingerprint="$(jq -r '.build_fingerprint' /tmp/build.json)" \
+              && jq -e --arg sha "$EXPECTED_SHA" --arg repo "$EXPECTED_REPOSITORY" --arg fingerprint "$fingerprint" \
+                   '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint and .purpose == "staging-only" and .production_routing_repository == "irhaapparelsofficial-ctrl/irha-global-craft" and .production_routing_policy == "approved-lovable-r11"' \
+                   /tmp/deployment.json >/dev/null; then
+              ready=1
+              echo "Exact Cloudflare staging release verified on attempt $attempt"
+              jq '{source_commit, repository, supabase_project_id, build_fingerprint}' /tmp/build.json
+              jq '{source_sha, branch, purpose, production_routing_repository, production_routing_policy}' /tmp/deployment.json
+              break
+            fi
+            echo "Staging not converged yet (attempt $attempt/36)"
+            sleep 10
+          done
+          test "$ready" = "1" || {
+            echo "Expected staging SHA was not observed"
+            echo "Last build.json:"
+            cat /tmp/build.json 2>/dev/null || true
+            echo "Last cloudflare-deployment.json:"
+            cat /tmp/deployment.json 2>/dev/null || true
+            exit 1
+          }
