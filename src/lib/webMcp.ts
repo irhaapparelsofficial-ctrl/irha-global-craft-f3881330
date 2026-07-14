@@ -58,12 +58,12 @@ const tools: WebMcpTool[] = [
         {
           name: "Bavarian Heritage & Leather",
           description: "Lederhosen, Dirndl, Trachten programs and premium leather apparel.",
-          url: `${SITE_ORIGIN}/collections/bavarian-heritage-leather`,
+          url: `${SITE_ORIGIN}/products/bavarian-trachten-wear`,
         },
         {
           name: "Textile, Streetwear & Active",
           description: "Sportswear, activewear, heavyweight streetwear, leisurewear and nightwear.",
-          url: `${SITE_ORIGIN}/collections/textile-streetwear-active`,
+          url: `${SITE_ORIGIN}/products`,
         },
       ],
     }),
