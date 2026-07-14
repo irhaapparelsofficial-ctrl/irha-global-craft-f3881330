@@ -1,5 +1,5 @@
 const PROTOCOL_VERSION = "2025-06-18";
-const SITE_ORIGIN = "https://www.irhaapparels.com";
+const SITE_ORIGIN = "https://irhaapparels.com";
 
 const tools = [
   {
