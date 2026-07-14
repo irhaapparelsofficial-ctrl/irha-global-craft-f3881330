@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/verify-built-crawler-shell.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "test:watch": "vitest",
     "verify:deployment-source": "node scripts/verify-deployment-source.mjs",
     "verify:secrets": "node scripts/verify-secret-safety.mjs",
@@ -73,7 +73,7 @@
     "recharts": "^3.9.0",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7",
+    "tailwindcss-animate": "^1.0.0",
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
   },
