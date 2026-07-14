@@ -93,7 +93,7 @@ export default function SocialDevOpsPanel() {
         .eq("is_published", true)
         .order("sort_order")
         .limit(500),
-      supabase
+      (supabase as unknown as { from: (t: string) => { select: (s: string) => { order: (c: string) => Promise<{ data: unknown; error: { message: string } | null }> } } })
         .from("social_platform_accounts")
         .select("id,platform,display_name,external_account_id,enabled,verification_status,capabilities,last_verified_at,connection_note")
         .order("platform"),
