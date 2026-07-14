@@ -5,7 +5,8 @@ import { toast } from "@/hooks/use-toast";
 
 const db = supabase as any;
 const FILE_BUCKET = "crm-private-files";
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_EMAIL_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_WHATSAPP_FILE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = new Set([
   "application/pdf",
   "image/jpeg",
@@ -13,6 +14,7 @@ const ALLOWED_FILE_TYPES = new Set([
   "image/webp",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
+const WHATSAPP_FILE_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 const EDITABLE_STATUSES = new Set(["draft", "failed", "manual_required", "rejected"]);
 
 export type CampaignFileRow = {
@@ -30,6 +32,7 @@ type CampaignMessageTarget = {
   id: string;
   lead_id: string;
   recipient_company: string;
+  channel: "email" | "whatsapp";
   status: string;
 };
 
@@ -58,18 +61,28 @@ export default function CampaignPrivateFileFanout({ campaignId, campaignName, me
     }
     return [...byLead.values()];
   }, [messages]);
+  const hasWhatsAppTarget = targets.some((target) => target.channel === "whatsapp");
+  const maxFileBytes = hasWhatsAppTarget ? MAX_WHATSAPP_FILE_BYTES : MAX_EMAIL_FILE_BYTES;
 
   const prepareFile = async (file: File) => {
     if (!campaignId || !targets.length) {
       toast({ title: "Select a campaign with editable drafts", variant: "destructive" });
       return;
     }
-    if (!ALLOWED_FILE_TYPES.has(file.type)) {
-      toast({ title: "Unsupported campaign file", description: "Use PDF, JPG, PNG, WEBP or DOCX.", variant: "destructive" });
+    if (!ALLOWED_FILE_TYPES.has(file.type) || (hasWhatsAppTarget && !WHATSAPP_FILE_TYPES.has(file.type))) {
+      toast({
+        title: "Unsupported campaign file",
+        description: hasWhatsAppTarget ? "This campaign includes WhatsApp drafts. Use PDF, JPG, PNG or WEBP only." : "Use PDF, JPG, PNG, WEBP or DOCX.",
+        variant: "destructive",
+      });
       return;
     }
-    if (file.size <= 0 || file.size > MAX_FILE_BYTES) {
-      toast({ title: "Campaign file is too large", description: "Use a real file up to 10 MB so it remains inside the email attachment safety limit.", variant: "destructive" });
+    if (file.size <= 0 || file.size > maxFileBytes) {
+      toast({
+        title: "Campaign file is too large",
+        description: hasWhatsAppTarget ? "WhatsApp-compatible campaign files must be no larger than 5 MB." : "Use a real file up to 10 MB so it remains inside the email attachment safety limit.",
+        variant: "destructive",
+      });
       return;
     }
     if (!window.confirm(`Prepare one isolated private copy of ${file.name} for ${targets.length} campaign buyer${targets.length === 1 ? "" : "s"}? Nothing will be approved or sent.`)) return;
@@ -130,8 +143,8 @@ export default function CampaignPrivateFileFanout({ campaignId, campaignName, me
       }
     } catch (error) {
       for (const item of [...created].reverse()) {
-        await db.from("crm_files").delete().eq("id", item.id);
-        await supabase.storage.from(FILE_BUCKET).remove([item.object_path]);
+        const metadataDelete = await db.from("crm_files").delete().eq("id", item.id);
+        if (!metadataDelete.error) await supabase.storage.from(FILE_BUCKET).remove([item.object_path]);
       }
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -150,7 +163,7 @@ export default function CampaignPrivateFileFanout({ campaignId, campaignName, me
     if (inputRef.current) inputRef.current.value = "";
     toast({
       title: created.length ? "Private campaign copies prepared" : "Campaign file already prepared",
-      description: `${created.length} new, ${targets.length - created.length} existing. They are selected in the editor only; save each draft to persist attachment selection. Nothing was sent.`,
+      description: `${created.length} new, ${targets.length - created.length} existing. Open each draft below, select the real file, and press Save draft. Nothing was sent.`,
     });
   };
 
@@ -164,7 +177,7 @@ export default function CampaignPrivateFileFanout({ campaignId, campaignName, me
         </div>
         <div className="min-w-[240px] border border-border/60 bg-background/30 p-3 text-xs">
           <p className="flex items-center gap-2"><FileCheck2 size={14} className="text-gold" /> {targets.length} editable buyer{targets.length === 1 ? "" : "s"}</p>
-          <p className="mt-2 text-[10px] text-muted-foreground">PDF/JPG/PNG/WEBP/DOCX · max 10 MB</p>
+          <p className="mt-2 text-[10px] text-muted-foreground">{hasWhatsAppTarget ? "PDF/JPG/PNG/WEBP · max 5 MB" : "PDF/JPG/PNG/WEBP/DOCX · max 10 MB"}</p>
         </div>
       </div>
 
@@ -173,11 +186,11 @@ export default function CampaignPrivateFileFanout({ campaignId, campaignName, me
         <label className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 border border-gold/60 px-4 text-[10px] uppercase tracking-[0.16em] text-gold hover:bg-gold/5 ${busy || !campaignId || !targets.length ? "pointer-events-none opacity-40" : ""}`}>
           {busy ? <Loader2 size={13} className="animate-spin" /> : <UploadCloud size={13} />}
           {busy ? "Preparing copies" : "Choose campaign file"}
-          <input ref={inputRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx" disabled={busy || !campaignId || !targets.length} onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareFile(file); }} />
+          <input ref={inputRef} type="file" className="hidden" accept={hasWhatsAppTarget ? ".pdf,.jpg,.jpeg,.png,.webp" : ".pdf,.jpg,.jpeg,.png,.webp,.docx"} disabled={busy || !campaignId || !targets.length} onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareFile(file); }} />
         </label>
       </div>
 
-      {lastResult && <div className="mt-3 flex items-start gap-2 border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-200"><FileCheck2 size={14} className="mt-0.5 shrink-0" />Prepared: {lastResult.created} new private copies, {lastResult.skipped} existing copies. Open each draft and press Save draft after reviewing its selected file.</div>}
+      {lastResult && <div className="mt-3 flex items-start gap-2 border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-200"><FileCheck2 size={14} className="mt-0.5 shrink-0" />Prepared: {lastResult.created} new private copies, {lastResult.skipped} existing copies. Open each draft below, select the real file, and press Save draft.</div>}
       <div className="mt-3 flex items-start gap-2 text-[10px] text-amber-200"><AlertTriangle size={13} className="mt-0.5 shrink-0" />This tool does not fabricate a catalogue. Upload only a final, truthful file that you have reviewed.</div>
     </section>
   );
