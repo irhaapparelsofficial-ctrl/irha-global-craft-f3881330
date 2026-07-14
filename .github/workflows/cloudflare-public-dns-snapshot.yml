@@ -1,0 +1,64 @@
+name: Cloudflare Public DNS Snapshot
+
+run-name: Read-only DNS snapshot · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/cloudflare-public-dns-snapshot.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Capture public DNS and HTTP routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq dnsutils >/dev/null
+
+          domain='irhaapparels.com'
+          www='www.irhaapparels.com'
+
+          jq -n \
+            --arg domain "$domain" \
+            --argjson ns "$(dig +short NS "$domain" | sed 's/\.$//' | sort -u | jq -R . | jq -s .)" \
+            --argjson apex_a "$(dig +short A "$domain" | sort -u | jq -R . | jq -s .)" \
+            --argjson apex_aaaa "$(dig +short AAAA "$domain" | sort -u | jq -R . | jq -s .)" \
+            --argjson apex_cname "$(dig +short CNAME "$domain" | sed 's/\.$//' | sort -u | jq -R . | jq -s .)" \
+            --argjson www_a "$(dig +short A "$www" | sort -u | jq -R . | jq -s .)" \
+            --argjson www_aaaa "$(dig +short AAAA "$www" | sort -u | jq -R . | jq -s .)" \
+            --argjson www_cname "$(dig +short CNAME "$www" | sed 's/\.$//' | sort -u | jq -R . | jq -s .)" \
+            '{domain:$domain,nameservers:$ns,apex:{a:$apex_a,aaaa:$apex_aaaa,cname:$apex_cname},www:{a:$www_a,aaaa:$www_aaaa,cname:$www_cname}}' \
+            > /tmp/dns-snapshot.json
+
+          for host in "https://$domain/" "https://$www/" "https://irha-apparels.pages.dev/"; do
+            safe="$(printf '%s' "$host" | tr -c 'A-Za-z0-9' '_')"
+            code="$(curl -LsS --connect-timeout 10 --max-time 45 -o "/tmp/${safe}.body" -D "/tmp/${safe}.headers" -w '%{http_code}' "$host")"
+            effective="$(curl -LsS --connect-timeout 10 --max-time 45 -o /dev/null -w '%{url_effective}' "$host")"
+            jq --arg host "$host" --arg code "$code" --arg effective "$effective" '.http += [{host:$host,status:($code|tonumber),effective_url:$effective}]' /tmp/dns-snapshot.json > /tmp/dns-next.json
+            mv /tmp/dns-next.json /tmp/dns-snapshot.json
+          done
+
+          cat /tmp/dns-snapshot.json
+          {
+            echo '## Public DNS snapshot (read-only)'
+            echo '```json'
+            cat /tmp/dns-snapshot.json
+            echo '```'
+            echo 'No DNS, Pages domain, deployment, Supabase or application mutation was performed.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload rollback snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-public-dns-snapshot
+          path: /tmp/dns-snapshot.json
+          retention-days: 7
