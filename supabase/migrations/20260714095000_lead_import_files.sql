@@ -21,7 +21,7 @@ create table if not exists public.lead_import_files (
   staged_row_count integer not null default 0 check (staged_row_count >= 0),
   duplicate_count integer not null default 0 check (duplicate_count >= 0),
   blocked_count integer not null default 0 check (blocked_count >= 0),
-  status text not null default 'uploaded' check (status in ('uploaded','staged','failed','archived')),
+  status text not null default 'pending_upload' check (status in ('pending_upload','uploaded','staged','failed','archived')),
   error text,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
@@ -32,6 +32,14 @@ create index if not exists lead_import_files_campaign_idx
   on public.lead_import_files (campaign_id, created_at desc);
 create index if not exists lead_import_files_status_idx
   on public.lead_import_files (status, updated_at desc);
+create unique index if not exists lead_import_files_identity_unique
+  on public.lead_import_files (checksum_sha256, sheet_name, file_name)
+  where checksum_sha256 is not null;
+
+alter table public.lead_candidates
+  add column if not exists import_fingerprint text;
+create unique index if not exists lead_candidates_campaign_fingerprint_unique
+  on public.lead_candidates (campaign_id, import_fingerprint);
 
 alter table public.lead_import_files enable row level security;
 
