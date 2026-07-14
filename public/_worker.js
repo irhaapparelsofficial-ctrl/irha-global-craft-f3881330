@@ -105,6 +105,7 @@ const PUBLIC_PREFIXES = [
 ];
 
 const BUYER_INTENT_PATH = /^\/[a-z0-9-]*(?:apparel-manufacturer|clothing-manufacturer|sportswear-manufacturer|streetwear-manufacturer|leather-jacket-manufacturer|lederhosen-manufacturer|dirndl-manufacturer|grosshandel|hersteller)[a-z0-9-]*$/;
+const CATEGORY_ROUTE = /^\/products\/[^/]+(?:\/all-products)?$/;
 
 function normalizePath(pathname) {
   if (pathname === "/") return "/";
@@ -124,6 +125,24 @@ export function shouldNoIndex(pathname) {
   const normalized = normalizePath(pathname);
   return PRIVATE_ROUTE_PREFIXES.some(
     (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
+  );
+}
+
+export function shouldNoIndexCategoryQuery(pathname, input) {
+  const normalized = normalizePath(pathname);
+  if (!CATEGORY_ROUTE.test(normalized)) return false;
+
+  const params = input instanceof URLSearchParams
+    ? input
+    : new URLSearchParams(String(input || "").replace(/^\?/, ""));
+  const query = params.get("q")?.trim();
+  const sort = params.get("sort")?.trim();
+  const subcategory = params.get("subcategory")?.trim();
+
+  return Boolean(
+    query ||
+      (sort && sort !== "recommended") ||
+      (subcategory && subcategory !== "all"),
   );
 }
 
@@ -177,10 +196,11 @@ function notFoundResponse(request, pathname) {
   });
 }
 
-function withPrivateRouteHeaders(response) {
+function withNoIndexHeaders(response, reason) {
   const headers = new Headers(response.headers);
   headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+  headers.set("X-Irha-Noindex-Reason", reason);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -210,8 +230,12 @@ export default {
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
-    return shouldNoIndex(pathname)
-      ? withPrivateRouteHeaders(assetResponse)
-      : assetResponse;
+    if (shouldNoIndex(pathname)) {
+      return withNoIndexHeaders(assetResponse, "private-route");
+    }
+    if (shouldNoIndexCategoryQuery(pathname, url.searchParams)) {
+      return withNoIndexHeaders(assetResponse, "functional-category-query");
+    }
+    return assetResponse;
   },
 };
