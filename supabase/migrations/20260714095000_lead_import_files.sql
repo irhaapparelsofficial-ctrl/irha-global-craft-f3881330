@@ -70,7 +70,9 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
-  if auth.uid() is null or not public.has_role(auth.uid(), 'admin') then
+  -- Authenticated callers must be admins. Service-role Edge Functions have no auth.uid()
+  -- and are allowed only because the service key is held in the trusted backend runtime.
+  if auth.uid() is not null and not public.has_role(auth.uid(), 'admin') then
     raise exception 'admin access required' using errcode = '42501';
   end if;
 
