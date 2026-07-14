@@ -113,3 +113,5 @@ jobs:
           name: cloudflare-public-dns-snapshot
           path: /tmp/dns-snapshot.json
           retention-days: 7
+
+# Token-scope recheck after credential rotation: 2026-07-14
