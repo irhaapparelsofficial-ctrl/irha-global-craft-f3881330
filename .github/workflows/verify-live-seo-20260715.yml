@@ -32,7 +32,10 @@ jobs:
             status="$(printf '%s' "$headers" | awk 'NR==1 {print $2}')"
             location="$(printf '%s' "$headers" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
             test "$status" = "301" || { echo "Expected 301 for $source_path, got $status"; printf '%s\n' "$headers"; exit 1; }
-            test "$location" = "$ORIGIN$expected_path" || { echo "Unexpected Location for $source_path: $location"; exit 1; }
+            case "$location" in
+              "$expected_path"|"$ORIGIN$expected_path") ;;
+              *) echo "Unexpected Location for $source_path: $location"; exit 1 ;;
+            esac
             echo "$source_path -> $location ($status)"
           }
 
