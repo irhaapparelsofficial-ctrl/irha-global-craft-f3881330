@@ -30,6 +30,14 @@ describe("buyer interaction classification", () => {
     expect(classifyBuyerInteraction(document.querySelector("#rfq")!)?.name).toBe("begin_inquiry");
   });
 
+  it("tracks catalogue request starts", () => {
+    document.body.innerHTML = '<button id="catalogue"><span>Get Full Catalogue</span></button>';
+    expect(classifyBuyerInteraction(document.querySelector("span")!)).toEqual({
+      name: "begin_catalogue_request",
+      parameters: { source_page: "/products/sportswear", element_type: "button" },
+    });
+  });
+
   it("tracks canonical catalogue and spec-sheet destinations", () => {
     document.body.innerHTML = '<a id="catalogue" href="/catalogue/sportswear">Catalogue</a><a id="spec" href="/products/sportswear/team-kit/spec-sheet">Spec</a>';
     const catalogue = classifyBuyerInteraction(document.querySelector("#catalogue")!);
