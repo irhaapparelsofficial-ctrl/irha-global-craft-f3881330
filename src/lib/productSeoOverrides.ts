@@ -6,6 +6,38 @@ export type ProductSeoOverride = {
   seoDescription: string;
 };
 
+type SportswearOverrideInput = {
+  productName: string;
+  buyerPrograms: string;
+  construction: string;
+  customization: string;
+  seoName?: string;
+};
+
+const sportswearOverride = ({
+  productName,
+  buyerPrograms,
+  construction,
+  customization,
+  seoName,
+}: SportswearOverrideInput): ProductSeoOverride => ({
+  description:
+    `${productName} developed for ${buyerPrograms}, wholesale, OEM and private-label programs. ` +
+    `${construction}, material composition, fabric weight, stretch and recovery where applicable, fit, colour, artwork method, trims, sizing and packing are confirmed against the buyer-approved sample and order specification.`,
+  shortDescription:
+    `Custom ${productName.toLowerCase()} for ${buyerPrograms}, wholesale and private-label programs.`,
+  specs: [
+    construction,
+    "Material composition and fabric weight confirmed by approved sample",
+    customization,
+    "Fit, colour and size grading confirmed by buyer brief",
+    "Private-label labels and packaging available",
+  ],
+  seoTitle: `${seoName ?? productName} Manufacturer & Private Label Supplier | Irha Apparels`,
+  seoDescription:
+    `Custom ${productName.toLowerCase()} manufacturing for ${buyerPrograms}, wholesalers and private-label buyers, with material, construction, artwork, sizing and branding confirmed by specification.`,
+});
+
 export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
   "traditional-dirndl-dress": {
     description:
@@ -183,4 +215,130 @@ export const PRODUCT_SEO_OVERRIDES: Record<string, ProductSeoOverride> = {
     seoDescription:
       "Custom leather bag manufacturing for wholesalers and private-label brands, with shape, material, hardware, lining, branding and packaging developed by specification.",
   },
+  "sublimated-soccer-uniform-kit": sportswearOverride({
+    productName: "Soccer Uniform Kit",
+    buyerPrograms: "clubs, academies and teamwear buyers",
+    construction: "Jersey and short construction developed from the approved team kit brief",
+    customization: "Names, numbers, crests and sponsor artwork applied by the buyer-approved decoration method",
+  }),
+  "cricket-jersey": sportswearOverride({
+    productName: "Cricket Jersey",
+    buyerPrograms: "clubs, schools and cricket apparel buyers",
+    construction: "Collar, placket, sleeve and body construction developed from the approved jersey brief",
+    customization: "Club crests, player details and sponsor artwork applied by the buyer-approved decoration method",
+  }),
+  "cricket-uniform-kit": sportswearOverride({
+    productName: "Cricket Uniform Kit",
+    buyerPrograms: "clubs, schools and teamwear buyers",
+    construction: "Shirt and trouser construction coordinated from the approved cricket kit brief",
+    customization: "Club crests, player details and sponsor artwork applied by the buyer-approved decoration method",
+  }),
+  "baseball-jersey": sportswearOverride({
+    productName: "Baseball Jersey",
+    buyerPrograms: "clubs, schools and baseball apparel buyers",
+    construction: "Button placket, sleeve, hem and body construction developed from the approved jersey brief",
+    customization: "Team marks, names and numbers applied by the buyer-approved decoration method",
+  }),
+  "baseball-uniform-kit": sportswearOverride({
+    productName: "Baseball Uniform Kit",
+    buyerPrograms: "clubs, schools and teamwear buyers",
+    construction: "Jersey and trouser construction coordinated from the approved baseball kit brief",
+    customization: "Team marks, player names and numbers applied by the buyer-approved decoration method",
+  }),
+  "basketball-mesh-jersey": sportswearOverride({
+    productName: "Basketball Jersey",
+    buyerPrograms: "clubs, schools and basketball apparel buyers",
+    construction: "Sleeveless neckline, armhole, panel and hem construction developed from the approved jersey brief",
+    customization: "Team marks, player names and numbers applied by the buyer-approved decoration method",
+  }),
+  "basketball-uniform-kit": sportswearOverride({
+    productName: "Basketball Uniform Kit",
+    buyerPrograms: "clubs, schools and teamwear buyers",
+    construction: "Jersey and short construction coordinated from the approved basketball kit brief",
+    customization: "Team marks, player names and numbers applied by the buyer-approved decoration method",
+  }),
+  "rugby-jersey": sportswearOverride({
+    productName: "Rugby Jersey",
+    buyerPrograms: "clubs, schools and rugby apparel buyers",
+    construction: "Collar, panel, seam and sleeve construction developed from the approved rugby jersey brief",
+    customization: "Club crests, player details and sponsor artwork applied by the buyer-approved decoration method",
+  }),
+  "rugby-uniform-kit": sportswearOverride({
+    productName: "Rugby Uniform Kit",
+    buyerPrograms: "clubs, schools and teamwear buyers",
+    construction: "Jersey and short construction coordinated from the approved rugby kit brief",
+    customization: "Club crests, player details and sponsor artwork applied by the buyer-approved decoration method",
+  }),
+  "athletic-onesie": sportswearOverride({
+    productName: "Athletic Onesie",
+    buyerPrograms: "fitness brands, studios and activewear buyers",
+    construction: "One-piece pattern, neckline, seam and leg opening developed from the approved activewear sample",
+    customization: "Logo placement and decorative treatment confirmed by buyer artwork",
+  }),
+  "compression-performance-top": sportswearOverride({
+    productName: "Compression Performance Top",
+    buyerPrograms: "fitness brands, teams and activewear buyers",
+    construction: "Close-fit pattern, panel and seam layout developed from the approved performance top sample",
+    customization: "Logo placement, panel accents and decorative treatment confirmed by buyer artwork",
+  }),
+  "gym-leggings": sportswearOverride({
+    productName: "Gym Leggings",
+    buyerPrograms: "fitness brands, studios and activewear buyers",
+    construction: "Rise, waistband, seam, pocket and leg profile developed from the approved leggings sample",
+    customization: "Logo placement, panel accents and decorative treatment confirmed by buyer artwork",
+  }),
+  "gym-tank-top": sportswearOverride({
+    productName: "Gym Tank Top",
+    buyerPrograms: "fitness brands, gyms and activewear buyers",
+    construction: "Neckline, armhole, shoulder and body fit developed from the approved tank top sample",
+    customization: "Logo placement and decorative treatment confirmed by buyer artwork",
+  }),
+  "performance-gym-hoodie": sportswearOverride({
+    productName: "Performance Gym Hoodie",
+    buyerPrograms: "fitness brands, teams and activewear buyers",
+    construction: "Hood, pocket, sleeve, cuff and hem construction developed from the approved hoodie sample",
+    customization: "Logo placement, trims and decorative treatment confirmed by buyer artwork",
+  }),
+  "performance-sports-bra": sportswearOverride({
+    productName: "Performance Sports Bra",
+    buyerPrograms: "fitness brands, studios and activewear buyers",
+    construction: "Support level, neckline, strap, underband and seam construction confirmed by the approved sample",
+    customization: "Logo placement, panel accents and decorative treatment confirmed by buyer artwork",
+  }),
+  "performance-tracksuit-set": sportswearOverride({
+    productName: "Performance Tracksuit Set",
+    buyerPrograms: "clubs, teams and activewear buyers",
+    construction: "Jacket and trouser fit, collar, cuff, waistband and pocket construction coordinated from the approved set",
+    customization: "Team branding, logo placement and trims confirmed by buyer artwork",
+  }),
+  "quarter-zip-pullover": sportswearOverride({
+    productName: "Quarter-Zip Pullover",
+    buyerPrograms: "clubs, teams and activewear buyers",
+    construction: "Collar, zip, sleeve, cuff and hem construction developed from the approved pullover sample",
+    customization: "Logo placement, panel accents and trims confirmed by buyer artwork",
+  }),
+  "running-shorts": sportswearOverride({
+    productName: "Running Shorts",
+    buyerPrograms: "running clubs, fitness brands and activewear buyers",
+    construction: "Inseam, waistband, lining, pocket and hem construction developed from the approved shorts sample",
+    customization: "Logo placement, panel accents and reflective details where requested by the buyer",
+  }),
+  "track-pants": sportswearOverride({
+    productName: "Track Pants",
+    buyerPrograms: "clubs, teams and activewear buyers",
+    construction: "Fit, waistband, pocket, cuff and leg opening developed from the approved track pant sample",
+    customization: "Team branding, logo placement, panel accents and trims confirmed by buyer artwork",
+  }),
+  "training-shirt": sportswearOverride({
+    productName: "Training Shirt",
+    buyerPrograms: "clubs, academies and teamwear buyers",
+    construction: "Neckline, sleeve, body fit and seam construction developed from the approved training shirt sample",
+    customization: "Team marks, names, numbers and sponsor artwork applied by the buyer-approved decoration method",
+  }),
+  "zip-up-fleece-jacket": sportswearOverride({
+    productName: "Zip-Up Fleece Jacket",
+    buyerPrograms: "clubs, teams and activewear buyers",
+    construction: "Collar, zip, pocket, sleeve, cuff and hem construction developed from the approved jacket sample",
+    customization: "Team branding, logo placement and trims confirmed by buyer artwork",
+  }),
 };
