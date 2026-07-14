@@ -63,6 +63,47 @@ describe("lead intake parser", () => {
     expect(sheet?.rows[0].blockers).toEqual([]);
   });
 
+  it("accepts a WhatsApp-only lead from a dedicated WhatsApp column", () => {
+    const sheet = normalizeSheet({
+      name: "WhatsApp leads",
+      rows: [
+        ["Company", "Country", "WhatsApp", "Website", "Buyer Type", "Product Fit"],
+        ["WhatsApp Buyer GmbH", "Germany", "+49 151 2345 6789", "https://wa-buyer.example", "Wholesaler", "Sportswear"],
+      ],
+    });
+
+    expect(sheet?.rows[0]).toMatchObject({ email: "", whatsapp: "+49 151 2345 6789" });
+    expect(sheet?.rows[0].blockers).toEqual([]);
+    expect(sheet?.rows[0].fingerprint).toContain("wa:4915123456789");
+  });
+
+  it("treats a combined Phone / WhatsApp column as a WhatsApp route", () => {
+    const sheet = normalizeSheet({
+      name: "Combined contact",
+      rows: [
+        ["Company", "Country", "Phone / WhatsApp", "Website", "Buyer Type", "Product Fit"],
+        ["Combined Buyer GmbH", "Germany", "+49 151 9999 2222", "https://combined-buyer.example", "Distributor", "Teamwear"],
+      ],
+    });
+
+    expect(sheet?.rows[0].phone).toBe("+49 151 9999 2222");
+    expect(sheet?.rows[0].whatsapp).toBe("+49 151 9999 2222");
+    expect(sheet?.rows[0].blockers).toEqual([]);
+  });
+
+  it("normalizes WhatsApp formatting in the dedupe fingerprint", () => {
+    const sheet = normalizeSheet({
+      name: "Duplicate routes",
+      rows: [
+        ["Company", "Country", "WhatsApp", "Website", "Buyer Type", "Product Fit"],
+        ["Same Buyer", "Germany", "+49 151 2345 6789", "https://same-buyer.example", "Retailer", "Activewear"],
+        ["Same Buyer", "Germany", "+49 (151) 2345-6789", "https://same-buyer.example", "Retailer", "Activewear"],
+      ],
+    });
+
+    expect(sheet?.rows[0].fingerprint).toBe(sheet?.rows[1].fingerprint);
+  });
+
   it("extracts the first valid email and URL without treating contact-route prose as verified data", () => {
     expect(firstEmail("info@example.de / contact form")).toBe("info@example.de");
     expect(firstEmail("Use contact form; email protected")).toBe("");
@@ -79,6 +120,6 @@ describe("lead intake parser", () => {
         ["Missing Contact Buyer", "Germany", "https://example.de", "https://example.de/contact"],
       ],
     });
-    expect(sheet?.rows[0].blockers).toEqual(["valid business email", "buyer type", "product fit"]);
+    expect(sheet?.rows[0].blockers).toEqual(["valid business email or WhatsApp", "buyer type", "product fit"]);
   });
 });
