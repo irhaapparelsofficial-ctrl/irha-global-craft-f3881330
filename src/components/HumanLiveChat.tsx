@@ -4,6 +4,7 @@ import { supabasePublishableKey, supabaseRuntimeUrl } from "@/integrations/supab
 
 const SESSION_KEY = "irha:human-chat-session";
 const TOKEN_KEY = "irha:human-chat-token";
+const STARTED_KEY = "irha:human-chat-started";
 
 type ChatMessage = {
   id: string;
@@ -42,10 +43,19 @@ function getCredentials() {
   }
 }
 
+function markStarted() {
+  try {
+    localStorage.setItem(STARTED_KEY, "1");
+  } catch {
+    // The current page state remains active when storage is unavailable.
+  }
+}
+
 function clearCredentials() {
   try {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(STARTED_KEY);
   } catch {
     // Private browsing may block storage; the current page session still works.
   }
@@ -65,7 +75,7 @@ export default function HumanLiveChat() {
   const [open, setOpen] = useState(false);
   const [started, setStarted] = useState(() => {
     try {
-      return Boolean(localStorage.getItem(SESSION_KEY) && localStorage.getItem(TOKEN_KEY));
+      return localStorage.getItem(STARTED_KEY) === "1";
     } catch {
       return false;
     }
@@ -176,6 +186,7 @@ export default function HumanLiveChat() {
         visitor: { name, email, whatsapp, company, country },
         context: { path: window.location.pathname + window.location.search, title: document.title },
       });
+      markStarted();
       setStarted(true);
       setDraft("");
       applyMessages(payload.messages ?? [], payload.status);
