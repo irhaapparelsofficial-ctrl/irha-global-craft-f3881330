@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
+  APPLICATION_FINGERPRINT_ALGORITHM,
+  APPLICATION_FINGERPRINT_SCOPE,
+  computeApplicationFingerprint,
+} from "./application-fingerprint";
+import {
   BUILD_FINGERPRINT_ALGORITHM,
   RUNTIME_FINGERPRINT_SCOPE,
   computeBuildFingerprint,
@@ -29,6 +34,11 @@ const fingerprintAlgorithm = manifest.build_fingerprint_algorithm;
 const manifestRuntimeFingerprint = normalizeBuildFingerprint(manifest.runtime_fingerprint);
 const runtimeFingerprintAlgorithm = manifest.runtime_fingerprint_algorithm;
 const runtimeFingerprintScope = manifest.runtime_fingerprint_scope;
+const manifestApplicationFingerprint = normalizeBuildFingerprint(
+  manifest.application_fingerprint,
+);
+const applicationFingerprintAlgorithm = manifest.application_fingerprint_algorithm;
+const applicationFingerprintScope = manifest.application_fingerprint_scope;
 
 if (sourceCommit !== expectedCommit) {
   throw new Error(`Built source_commit mismatch: expected ${expectedCommit}, received ${String(sourceCommit)}`);
@@ -65,6 +75,21 @@ if (runtimeFingerprintScope !== RUNTIME_FINGERPRINT_SCOPE) {
     `Built runtime fingerprint scope mismatch: expected ${RUNTIME_FINGERPRINT_SCOPE}, received ${String(runtimeFingerprintScope)}`,
   );
 }
+if (!manifestApplicationFingerprint) {
+  throw new Error(
+    `Built application_fingerprint is invalid: ${String(manifest.application_fingerprint)}`,
+  );
+}
+if (applicationFingerprintAlgorithm !== APPLICATION_FINGERPRINT_ALGORITHM) {
+  throw new Error(
+    `Built application fingerprint algorithm mismatch: expected ${APPLICATION_FINGERPRINT_ALGORITHM}, received ${String(applicationFingerprintAlgorithm)}`,
+  );
+}
+if (applicationFingerprintScope !== APPLICATION_FINGERPRINT_SCOPE) {
+  throw new Error(
+    `Built application fingerprint scope mismatch: expected ${APPLICATION_FINGERPRINT_SCOPE}, received ${String(applicationFingerprintScope)}`,
+  );
+}
 
 const recomputedFingerprint = computeBuildFingerprint(distDir);
 if (recomputedFingerprint !== manifestFingerprint) {
@@ -77,6 +102,13 @@ const recomputedRuntimeFingerprint = computeRuntimeFingerprint(distDir);
 if (recomputedRuntimeFingerprint !== manifestRuntimeFingerprint) {
   throw new Error(
     `Runtime fingerprint mismatch: manifest ${manifestRuntimeFingerprint}, recomputed ${recomputedRuntimeFingerprint}`,
+  );
+}
+
+const recomputedApplicationFingerprint = computeApplicationFingerprint(distDir);
+if (recomputedApplicationFingerprint !== manifestApplicationFingerprint) {
+  throw new Error(
+    `Application fingerprint mismatch: manifest ${manifestApplicationFingerprint}, recomputed ${recomputedApplicationFingerprint}`,
   );
 }
 
@@ -142,5 +174,5 @@ for (const htmlPath of htmlFiles) {
 }
 
 console.log(
-  `[release-identity] verified exact Git SHA ${expectedCommit}, build ${manifestFingerprint}, and runtime ${manifestRuntimeFingerprint} across build.json and ${htmlFiles.length} HTML files`,
+  `[release-identity] verified exact Git SHA ${expectedCommit}, build ${manifestFingerprint}, runtime ${manifestRuntimeFingerprint}, and application ${manifestApplicationFingerprint} across build.json and ${htmlFiles.length} HTML files`,
 );
