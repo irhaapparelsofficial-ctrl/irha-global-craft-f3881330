@@ -1,0 +1,138 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Irha Apparels Public Lead Gateway",
+    "version": "1.0.0",
+    "description": "Rate-limited public gateway for B2B inquiries, catalogue requests and signed inquiry-file upload tickets. It does not expose admin data or publish fixed commercial commitments."
+  },
+  "servers": [
+    {
+      "url": "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1"
+    }
+  ],
+  "paths": {
+    "/public-lead-gateway": {
+      "post": {
+        "operationId": "publicLeadGateway",
+        "summary": "Submit a public buyer request or create a signed upload ticket",
+        "description": "Requests are rate-limited, honeypot-protected and server-validated. Side-effecting submissions require buyer review and confirmation.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GatewayRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request accepted or upload ticket created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewaySuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or unsupported request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin not allowed"
+          },
+          "405": {
+            "description": "Method not allowed"
+          },
+          "429": {
+            "description": "Rate limit exceeded; Retry-After is returned"
+          },
+          "500": {
+            "description": "Request could not be processed"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publicLeadGatewayCors",
+        "summary": "CORS preflight",
+        "responses": {
+          "204": {
+            "description": "Preflight accepted"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GatewayRequest": {
+        "type": "object",
+        "required": [
+          "action",
+          "payload"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "submit_inquiry",
+              "submit_catalogue",
+              "create_upload"
+            ]
+          },
+          "payload": {
+            "type": "object",
+            "description": "Validated action-specific buyer data. See the public documentation for field limits and confirmation rules."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GatewaySuccess": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "max_size": {
+            "type": "integer"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

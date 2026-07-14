@@ -27,6 +27,9 @@
   Cache-Control: public, max-age=2592000
 /*.js
   Cache-Control: public, max-age=2592000
+/agent-webmcp.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
 
 # Catalog PDFs
 /catalogs/*
@@ -48,11 +51,53 @@
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
 /llms.txt
+  Content-Type: text/markdown; charset=utf-8
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
 /llms-full.txt
+  Content-Type: text/markdown; charset=utf-8
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+
+# Agent and API discovery
+/.well-known/api-catalog
+  Content-Type: application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+  Link: </.well-known/api-catalog>; rel="api-catalog"
+/.well-known/agent-skills/index.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+/.well-known/mcp/server-card.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+/auth.md
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+/skills/*
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+/docs/*
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+/openapi/*
+  Content-Type: application/vnd.oai.openapi+json;version=3.1
+  Cache-Control: no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Access-Control-Allow-Origin: *
 
 # HTML — always revalidate so deploys go live immediately
 /
@@ -62,10 +107,11 @@
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
 
-# Security headers (safe defaults for the public SPA and owner backend)
+# Security and discovery headers (safe defaults for the public SPA and owner backend)
 /*
+  Link: </.well-known/api-catalog>; rel="api-catalog", </.well-known/mcp/server-card.json>; rel="service-desc", </.well-known/agent-skills/index.json>; rel="service-meta", </auth.md>; rel="authorization"
   Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; upgrade-insecure-requests
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN
-  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
+  Permissions-Policy: tools=(self), geolocation=(), microphone=(), camera=(), payment=(), usb=()
