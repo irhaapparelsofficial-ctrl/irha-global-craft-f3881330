@@ -80,10 +80,12 @@ describe("lead review and CRM activation safety", () => {
     expect(auditMigration).toContain("drop constraint if exists lead_activation_events_lead_id_fkey");
   });
 
-  it("keeps the function JWT protected and browser credentials absent", () => {
+  it("keeps the function JWT protected and uses admin RLS without service-role bypass", () => {
     expect(config).toContain("[functions.lead-activation]\nverify_jwt = true");
-    expect(backend).toContain("auth.auth.getUser()");
+    expect(backend).toContain("db.auth.getUser()");
     expect(backend).toContain('.eq("role", "admin")');
+    expect(backend).toContain('authorization_mode: "admin_jwt_rls"');
+    expect(backend).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
     expect(panel).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
     expect(page).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
   });
