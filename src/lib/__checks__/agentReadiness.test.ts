@@ -8,6 +8,9 @@ const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 const json = <T>(path: string) => JSON.parse(read(path)) as T;
 const sha256 = (value: string) => createHash("sha256").update(value, "utf8").digest("hex");
 
+const OWNER_PROJECT_ORIGIN = "https://pvzjiozismyxqrzmtfbi.supabase.co";
+const OWNER_AUTH_ISSUER = `${OWNER_PROJECT_ORIGIN}/auth/v1`;
+
 describe("agent readiness public contracts", () => {
   it("publishes an API catalog linked to the deployed public gateway", () => {
     const catalog = json<{ linkset: Array<Record<string, unknown>> }>("public/.well-known/api-catalog");
@@ -85,6 +88,9 @@ describe("agent readiness public contracts", () => {
     expect(headers).toContain("application/linkset+json");
     expect(headers).toContain("application/vnd.oai.openapi+json;version=3.1");
     expect(headers).toContain("text/markdown; charset=utf-8");
+    expect(headers).toContain("/.well-known/openid-configuration");
+    expect(headers).toContain("/.well-known/oauth-authorization-server");
+    expect(headers).toContain("/.well-known/oauth-protected-resource");
     expect(headers).toContain('rel="api-catalog"');
     expect(headers).toContain("Permissions-Policy: tools=(self)");
     expect(middleware).toContain('accept.toLowerCase().includes("text/markdown")');
@@ -94,12 +100,45 @@ describe("agent readiness public contracts", () => {
     expect(routes.exclude).toContain("/.well-known/*");
   });
 
-  it("does not publish fake OAuth or autonomous registration metadata", () => {
+  it("publishes the real owner OAuth issuer and protected backend without granting anonymous access", () => {
+    const oidc = json<{
+      issuer: string;
+      authorization_endpoint: string;
+      token_endpoint: string;
+      jwks_uri: string;
+      scopes_supported: string[];
+      grant_types_supported: string[];
+      code_challenge_methods_supported: string[];
+      registration_endpoint?: string;
+    }>("public/.well-known/openid-configuration");
+    const oauth = json<typeof oidc>("public/.well-known/oauth-authorization-server");
+    const resource = json<{
+      resource: string;
+      authorization_servers: string[];
+      scopes_supported: string[];
+      bearer_methods_supported: string[];
+      resource_documentation: string;
+    }>("public/.well-known/oauth-protected-resource");
     const auth = read("public/auth.md");
-    const catalog = read("public/.well-known/api-catalog");
-    expect(auth).toContain("No autonomous public agent registration is currently offered");
-    expect(auth).toContain("require no credentials");
-    expect(catalog).not.toContain("oauth-authorization-server");
-    expect(catalog).not.toContain("oauth-protected-resource");
+    const oauthDocs = read("public/docs/oauth.md");
+
+    expect(oidc.issuer).toBe(OWNER_AUTH_ISSUER);
+    expect(oidc.authorization_endpoint).toBe(`${OWNER_AUTH_ISSUER}/oauth/authorize`);
+    expect(oidc.token_endpoint).toBe(`${OWNER_AUTH_ISSUER}/oauth/token`);
+    expect(oidc.jwks_uri).toBe(`${OWNER_AUTH_ISSUER}/.well-known/jwks.json`);
+    expect(oidc.scopes_supported).toEqual(expect.arrayContaining(["openid", "profile", "email"]));
+    expect(oidc.grant_types_supported).toEqual(expect.arrayContaining(["authorization_code", "refresh_token"]));
+    expect(oidc.code_challenge_methods_supported).toContain("S256");
+    expect(oidc.registration_endpoint).toBeUndefined();
+    expect(oauth).toEqual(oidc);
+
+    expect(resource.resource).toBe(OWNER_PROJECT_ORIGIN);
+    expect(resource.authorization_servers).toEqual([OWNER_AUTH_ISSUER]);
+    expect(resource.bearer_methods_supported).toEqual(["header"]);
+    expect(resource.resource_documentation).toBe("https://irhaapparels.com/docs/oauth.md");
+    expect(auth).toContain(OWNER_AUTH_ISSUER);
+    expect(auth).toContain("No unrestricted autonomous public agent registration is offered");
+    expect(oauthDocs).toContain("row-level security");
+    expect(oauthDocs).toContain("explicit user consent");
   });
 });
