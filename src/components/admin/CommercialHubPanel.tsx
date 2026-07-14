@@ -12,10 +12,14 @@ import CommercialMeetingsPanel from "@/components/admin/commercial/CommercialMee
 import CommercialSamplesPanel from "@/components/admin/commercial/CommercialSamplesPanel";
 import CommercialQuotationsPanel from "@/components/admin/commercial/CommercialQuotationsPanel";
 
-type Tab = "meetings" | "samples" | "quotations";
+export type CommercialHubTab = "meetings" | "samples" | "quotations";
 
-export default function CommercialHubPanel() {
-  const [tab, setTab] = useState<Tab>("meetings");
+export default function CommercialHubPanel({
+  initialTab = "meetings",
+}: {
+  initialTab?: CommercialHubTab;
+}) {
+  const [tab, setTab] = useState<CommercialHubTab>(initialTab);
   const hub = useCommercialHub();
 
   return (
