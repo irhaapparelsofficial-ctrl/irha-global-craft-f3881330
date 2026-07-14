@@ -19,7 +19,7 @@ jobs:
         run: |
           set -euo pipefail
           ORIGIN="https://irhaapparels.com"
-          EXPECTED_SHA="8e60a4f1feb5745955e6f086a9e4943e99622358"
+          EXPECTED_SHA="456e098137017915cc2a1782f8075fc415529746"
 
           build_json="$(curl -fsS --connect-timeout 10 --max-time 40 "$ORIGIN/build.json?live_seo_verify=${GITHUB_SHA::12}")"
           test "$(printf '%s' "$build_json" | jq -r '.source_commit // empty')" = "$EXPECTED_SHA"
