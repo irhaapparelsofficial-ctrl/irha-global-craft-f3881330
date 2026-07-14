@@ -1,0 +1,58 @@
+import { describe, expect, it } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const root = process.cwd();
+const read = (path: string) => readFileSync(resolve(root, path), "utf8");
+
+describe("homepage navigation and B2B conversion journey", () => {
+  it("exposes published product categories in desktop and mobile navigation", () => {
+    const navbar = read("src/components/layout/Navbar.tsx");
+    expect(navbar).toContain('usePublicCatalogTree');
+    expect(navbar).toContain('aria-controls="desktop-collections-menu"');
+    expect(navbar).toContain('to={`/products/${category.slug}`}');
+    expect(navbar).toContain('All collections');
+    expect(navbar).toContain('Search all products');
+    expect(navbar).toContain('category.productCount');
+  });
+
+  it("keeps the original inquiry workflow while preselecting explicit CTA intent at requirements", () => {
+    const entry = read("src/pages/Inquiry.tsx");
+    const base = read("src/pages/InquiryBase.tsx");
+    expect(entry).toContain('const nextStep =');
+    expect(entry).toContain('? 2 : Math.max(2, storedStep)');
+    expect(entry).toContain('categorySlug: params.get("category")');
+    expect(entry).toContain('<InquiryBase />');
+    expect(base).toContain('const INTENTS:');
+    expect(base).toContain('<SecureFileUpload');
+    expect(base).toContain('supabase.from("inquiries").insert');
+    expect(base).toContain('inquiry_ref: ref');
+  });
+
+  it("adds category-aware structured RFQ actions without removing WhatsApp", () => {
+    const desktop = read("src/components/layout/FloatingActions.tsx");
+    const mobile = read("src/components/sections/StickyMobileCTA.tsx");
+    for (const source of [desktop, mobile]) {
+      expect(source).toContain('/inquiry?intent=rfq&category=');
+      expect(source).toContain('settingsWhatsappLink(settings)');
+      expect(source).toContain('categoryFromPath');
+    }
+    expect(desktop).toContain('data-track="category-quote-floating"');
+    expect(mobile).toContain('utm_source=mobile-sticky');
+  });
+
+  it("keeps homepage entry and final calls to action on the structured RFQ route", () => {
+    const hero = read("src/components/HeroCarousel.tsx");
+    const finalCta = read("src/components/sections/StartProgramCTA.tsx");
+    expect(hero).toContain('to="/inquiry?intent=rfq"');
+    expect(finalCta).toContain('to="/inquiry?intent=rfq"');
+    expect(finalCta).toContain('Upload reference');
+    expect(finalCta).toContain('Request catalogue');
+  });
+
+  it("does not ship the one-time patch runner or trigger files", () => {
+    expect(existsSync(resolve(root, "scripts/apply-buyer-conversion-audit.mjs"))).toBe(false);
+    expect(existsSync(resolve(root, "scripts/.run-buyer-conversion-audit"))).toBe(false);
+    expect(existsSync(resolve(root, ".github/workflows/apply-buyer-conversion-audit.yml"))).toBe(false);
+  });
+});
