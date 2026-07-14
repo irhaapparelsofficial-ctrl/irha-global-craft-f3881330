@@ -34,6 +34,14 @@ describe("catalog media bootstrap Edge Function", () => {
     expect(source).toContain('action === "approve_batch"');
     expect(source).not.toContain("publish_items");
   });
+
+  it("upgrades an existing pending catalog placeholder instead of duplicating it", () => {
+    const source = readFileSync(resolve(process.cwd(), "supabase/functions/catalog-media-bootstrap/index.ts"), "utf8");
+    expect(source).toContain('.eq("public_url", candidate.source)');
+    expect(source).toContain('service.from("media_assets").update(metadata).eq("id", placeholder.id)');
+    expect(source).toContain('status: placeholder ? "reconciled_verified" : "imported_verified"');
+    expect(source).toContain('tags: unique([...(placeholder ? stringArray(placeholder.tags) : []), ...tags])');
+  });
 });
 
 describe("social autopilot renderer health", () => {
