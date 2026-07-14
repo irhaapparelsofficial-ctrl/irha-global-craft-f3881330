@@ -28,4 +28,4 @@ No autonomous public agent registration is currently offered. A third-party agen
 
 ## Contact
 
-For an approved integration, use the official inquiry page at `https://www.irhaapparels.com/inquiry` and describe the intended system, requested access and data-handling requirements.
+For an approved integration, use the official inquiry page at `https://irhaapparels.com/inquiry` and describe the intended system, requested access and data-handling requirements.
