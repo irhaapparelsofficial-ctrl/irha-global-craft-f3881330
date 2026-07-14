@@ -12,8 +12,6 @@ on:
         type: string
   push:
     branches: [main]
-    paths:
-      - ".github/workflows/cloudflare-pages-production.yml"
 
 permissions:
   contents: read
@@ -29,8 +27,8 @@ env:
 jobs:
   preflight:
     if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.confirm == 'DEPLOY') ||
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[cloudflare-production-bootstrap]'))
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.confirm == 'DEPLOY')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -165,6 +163,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          npm run verify:release-identity
           test -s dist/index.html
           test -s dist/build.json
           test -s dist/release.txt
@@ -184,12 +183,19 @@ jobs:
             exit 1
           fi
 
+          build_fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
+          [[ "$build_fingerprint" =~ ^[0-9a-f]{64}$ ]] || {
+            echo "Built output is missing a valid deterministic fingerprint"
+            exit 1
+          }
+
           jq -n \
             --arg source_sha "$GITHUB_SHA" \
             --arg repository "$GITHUB_REPOSITORY" \
             --arg branch "$PRODUCTION_BRANCH" \
+            --arg build_fingerprint "$build_fingerprint" \
             --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            '{source_sha: $source_sha, repository: $repository, branch: $branch, generated_at: $generated_at}' \
+            '{source_sha: $source_sha, repository: $repository, branch: $branch, build_fingerprint: $build_fingerprint, generated_at: $generated_at}' \
             > dist/cloudflare-deployment.json
 
       - name: Deploy Cloudflare production branch
@@ -226,20 +232,25 @@ jobs:
               "$PRODUCTION_URL/cloudflare-deployment.json?release_check=$cache_bust" \
               -o /tmp/cloudflare-deployment.json; then
 
+              build_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/production-build.json)"
+
               if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/production-headers \
                 && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' /tmp/production-home.html \
+                && [[ "$build_fingerprint" =~ ^[0-9a-f]{64}$ ]] \
                 && jq -e \
+                  --arg sha "$GITHUB_SHA" \
                   --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
                   --arg supabase 'pvzjiozismyxqrzmtfbi' \
-                  '.repository == $repo and .supabase_project_id == $supabase' \
+                  '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and .build_fingerprint_algorithm == "sha256"' \
                   /tmp/production-build.json >/dev/null \
                 && jq -e \
                   --arg sha "$GITHUB_SHA" \
                   --arg repo "$GITHUB_REPOSITORY" \
-                  '.source_sha == $sha and .repository == $repo and .branch == "main"' \
+                  --arg fingerprint "$build_fingerprint" \
+                  '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint' \
                   /tmp/cloudflare-deployment.json >/dev/null; then
                 ready=1
-                echo "Exact Cloudflare production deployment verified on attempt $attempt"
+                echo "Exact Cloudflare production deployment and fingerprint verified on attempt $attempt"
                 break
               fi
             fi
@@ -280,6 +291,7 @@ jobs:
             echo "- Production URL: $PRODUCTION_URL"
             echo "- Previous deployment ID: \`$PREVIOUS_DEPLOYMENT_ID\`"
             echo "- New deployment ID: \`$latest_deployment_id\`"
+            echo "- Build fingerprint: \`$(jq -r '.build_fingerprint' /tmp/production-build.json)\`"
             echo "- Custom-domain count unchanged: $final_domain_count"
             echo "- DNS/custom domains were not modified by this workflow"
           } >> "$GITHUB_STEP_SUMMARY"
