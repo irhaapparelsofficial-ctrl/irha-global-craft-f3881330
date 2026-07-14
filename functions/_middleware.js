@@ -67,6 +67,7 @@ const PAGE_SUMMARIES = {
 const DISCOVERY_LINKS = [
   `<${SITE_ORIGIN}/.well-known/api-catalog>; rel="api-catalog"`,
   `<${SITE_ORIGIN}/.well-known/mcp/server-card.json>; rel="service-desc"`,
+  `<${SITE_ORIGIN}/.well-known/agent-card.json>; rel="service-desc"`,
   `<${SITE_ORIGIN}/.well-known/agent-skills/index.json>; rel="service-meta"`,
   `<${SITE_ORIGIN}/auth.md>; rel="authorization"`,
 ].join(", ");
@@ -84,7 +85,9 @@ function isPrivateOrMachinePath(pathname) {
     pathname.startsWith("/skills/") ||
     pathname.startsWith("/docs/") ||
     pathname === "/mcp" ||
-    pathname.startsWith("/mcp/");
+    pathname.startsWith("/mcp/") ||
+    pathname === "/a2a" ||
+    pathname.startsWith("/a2a/");
 }
 
 function looksLikeFile(pathname) {
@@ -119,7 +122,7 @@ function markdownFor(pathname) {
   };
   const canonical = `${SITE_ORIGIN}${normalized === "/" ? "/" : normalized}`;
 
-  return `# ${page.title}\n\n> ${page.summary}\n\nCanonical: ${canonical}\n\n## Buyer actions\n\n- [Browse products](${SITE_ORIGIN}/products)\n- [Review manufacturing](${SITE_ORIGIN}/manufacturing)\n- [Buyer trust](${SITE_ORIGIN}/buyer-trust)\n- [Live factory video call](${SITE_ORIGIN}/factory-video-call)\n- [Request a quote or catalogue](${SITE_ORIGIN}/inquiry)\n\n## Commercial accuracy\n\nIrha Apparels is an experienced manufacturer and the current website is newly built. Product feasibility, materials, MOQ, pricing, production timing, shipping and documentation are confirmed after the buyer's requirements are reviewed. Fixed commercial commitments and unverified certification claims are not published.\n\n## Machine-readable resources\n\n- [LLM summary](${SITE_ORIGIN}/llms.txt)\n- [Expanded LLM summary](${SITE_ORIGIN}/llms-full.txt)\n- [API catalog](${SITE_ORIGIN}/.well-known/api-catalog)\n- [MCP server card](${SITE_ORIGIN}/.well-known/mcp/server-card.json)\n- [Agent skills index](${SITE_ORIGIN}/.well-known/agent-skills/index.json)\n`;
+  return `# ${page.title}\n\n> ${page.summary}\n\nCanonical: ${canonical}\n\n## Buyer actions\n\n- [Browse products](${SITE_ORIGIN}/products)\n- [Review manufacturing](${SITE_ORIGIN}/manufacturing)\n- [Buyer trust](${SITE_ORIGIN}/buyer-trust)\n- [Live factory video call](${SITE_ORIGIN}/factory-video-call)\n- [Request a quote or catalogue](${SITE_ORIGIN}/inquiry)\n\n## Commercial accuracy\n\nIrha Apparels is an experienced manufacturer and the current website is newly built. Product feasibility, materials, MOQ, pricing, production timing, shipping and documentation are confirmed after the buyer's requirements are reviewed. Fixed commercial commitments and unverified certification claims are not published.\n\n## Machine-readable resources\n\n- [LLM summary](${SITE_ORIGIN}/llms.txt)\n- [Expanded LLM summary](${SITE_ORIGIN}/llms-full.txt)\n- [API catalog](${SITE_ORIGIN}/.well-known/api-catalog)\n- [MCP server card](${SITE_ORIGIN}/.well-known/mcp/server-card.json)\n- [A2A agent card](${SITE_ORIGIN}/.well-known/agent-card.json)\n- [Agent skills index](${SITE_ORIGIN}/.well-known/agent-skills/index.json)\n`;
 }
 
 function markdownResponse(request, pathname) {
