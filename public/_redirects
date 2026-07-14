@@ -6,3 +6,14 @@
 /buyer-resources /resources 301
 /buyer-faq /faq 301
 /shipping-returns /resources 301
+/germany /markets/germany 301
+/austria /markets/austria 301
+/switzerland /markets/switzerland 301
+/netherlands /markets/netherlands 301
+/usa /markets/united-states 301
+/united-states /markets/united-states 301
+/uk /markets/united-kingdom 301
+/united-kingdom /markets/united-kingdom 301
+/canada /markets/canada 301
+/australia /markets/australia 301
+/new-zealand /markets/new-zealand 301
