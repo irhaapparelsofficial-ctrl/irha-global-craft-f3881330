@@ -71,33 +71,42 @@ Deno.serve(async (req: Request) => {
 });
 
 async function health(service: DbClient) {
-  const [productCount, totalAssets, importedAssets, approvedAssets] = await Promise.all([
+  const [productCount, totalAssets, pendingCatalog, pendingPrimary, importedAssets, verifiedPrimary, approvedAssets] = await Promise.all([
     countRows(service, "products", (query) => query.eq("is_published", true)),
     countRows(service, "media_assets"),
-    countRows(service, "media_assets", (query) => query.contains("tags", ["catalog-bootstrap"])),
+    countRows(service, "media_assets", (query) => query.contains("tags", ["import:published-catalog"]).eq("verification_status", "pending")),
+    countRows(service, "media_assets", (query) => query.contains("tags", ["import:published-catalog", "kind:primary"]).eq("verification_status", "pending")),
+    countRows(service, "media_assets", (query) => query.contains("tags", ["catalog-bootstrap"]).eq("verification_status", "verified")),
+    countRows(service, "media_assets", (query) => query.contains("tags", ["catalog-bootstrap", "kind:primary"]).eq("verification_status", "verified")),
     countRows(service, "media_assets", (query) => query.contains("tags", ["catalog-bootstrap"]).eq("social_approved", true)),
   ]);
+  const checks = [productCount, totalAssets, pendingCatalog, pendingPrimary, importedAssets, verifiedPrimary, approvedAssets];
   return json({
     ok: true,
-    database_ready: [productCount, totalAssets, importedAssets, approvedAssets].every((item) => item.error === null),
+    database_ready: checks.every((item) => item.error === null),
     published_products: productCount.count,
     media_assets: totalAssets.count,
+    pending_catalog_assets: pendingCatalog.count,
+    pending_primary_assets: pendingPrimary.count,
     imported_catalog_assets: importedAssets.count,
+    verified_primary_assets: verifiedPrimary.count,
     approved_catalog_assets: approvedAssets.count,
     max_batch: MAX_BATCH,
-    policy: "Imported assets are technically verified but remain blocked from social use until an admin explicitly approves them.",
-    errors: [productCount, totalAssets, importedAssets, approvedAssets].flatMap((item) => item.error ? [item.error] : []),
+    policy: "Technical verification and owner social approval are separate. Primary-first mode covers one hero image per published product before gallery media.",
+    errors: checks.flatMap((item) => item.error ? [item.error] : []),
   });
 }
 
 async function preview(service: DbClient, body: JsonRecord) {
   const offset = clamp(body.offset, 0, 100_000, 0);
   const limit = clamp(body.limit, 1, MAX_BATCH, 8);
-  const candidates = await loadCandidates(service);
+  const mode = mediaMode(body.mode);
+  const candidates = await loadCandidates(service, mode);
   const slice = candidates.slice(offset, offset + limit);
   return json({
     ok: true,
     total_candidates: candidates.length,
+    mode,
     offset,
     next_offset: offset + slice.length,
     has_more: offset + slice.length < candidates.length,
@@ -116,7 +125,8 @@ async function preview(service: DbClient, body: JsonRecord) {
 async function importBatch(service: DbClient, body: JsonRecord) {
   const offset = clamp(body.offset, 0, 100_000, 0);
   const limit = clamp(body.limit, 1, MAX_BATCH, 8);
-  const candidates = await loadCandidates(service);
+  const mode = mediaMode(body.mode);
+  const candidates = await loadCandidates(service, mode);
   const slice = candidates.slice(offset, offset + limit);
   const outcomes: JsonRecord[] = [];
 
@@ -213,6 +223,7 @@ async function importBatch(service: DbClient, body: JsonRecord) {
   return json({
     ok: failed < outcomes.length,
     total_candidates: candidates.length,
+    mode,
     offset,
     processed: slice.length,
     next_offset: offset + slice.length,
@@ -257,7 +268,7 @@ async function approveBatch(service: DbClient, userId: string, body: JsonRecord)
   });
 }
 
-async function loadCandidates(service: DbClient): Promise<Candidate[]> {
+async function loadCandidates(service: DbClient, mode: "primary" | "all" = "primary"): Promise<Candidate[]> {
   const { data: products, error } = await service.from("products")
     .select("id,name,slug,image_url,gallery,category_id")
     .eq("is_published", true)
@@ -297,7 +308,9 @@ async function loadCandidates(service: DbClient): Promise<Candidate[]> {
       });
     });
   }
-  return [...grouped.values()].sort((left, right) => left.productNames[0].localeCompare(right.productNames[0]) || left.position - right.position || left.source.localeCompare(right.source));
+  const candidates = [...grouped.values()];
+  const selected = mode === "primary" ? candidates.filter((candidate) => candidate.position === 1) : candidates;
+  return selected.sort((left, right) => left.productNames[0].localeCompare(right.productNames[0]) || left.position - right.position || left.source.localeCompare(right.source));
 }
 
 async function fetchFirst(source: string) {
@@ -493,6 +506,10 @@ function unique<T>(values: T[]) {
 function stringArray(value: unknown) {
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean);
   return typeof value === "string" ? value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean) : [];
+}
+
+function mediaMode(value: unknown): "primary" | "all" {
+  return value === "all" ? "all" : "primary";
 }
 
 function clamp(value: unknown, minimum: number, maximum: number, fallback: number) {

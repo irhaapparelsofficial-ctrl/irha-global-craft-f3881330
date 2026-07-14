@@ -8,7 +8,10 @@ type Health = {
   database_ready?: boolean;
   published_products?: number;
   media_assets?: number;
+  pending_catalog_assets?: number;
+  pending_primary_assets?: number;
   imported_catalog_assets?: number;
+  verified_primary_assets?: number;
   approved_catalog_assets?: number;
   max_batch?: number;
   policy?: string;
@@ -28,6 +31,7 @@ type Candidate = {
 type Preview = {
   ok?: boolean;
   total_candidates?: number;
+  mode?: "primary" | "all";
   offset?: number;
   next_offset?: number;
   has_more?: boolean;
@@ -62,6 +66,7 @@ export default function CatalogMediaBootstrapPanel({ onChanged }: Props) {
   const [health, setHealth] = useState<Health | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [offset, setOffset] = useState(0);
+  const [mode, setMode] = useState<"primary" | "all">("primary");
   const [busy, setBusy] = useState<"health" | "preview" | "import" | "approve" | null>(null);
 
   const loadHealth = useCallback(async () => {
@@ -80,7 +85,7 @@ export default function CatalogMediaBootstrapPanel({ onChanged }: Props) {
   const scan = async () => {
     setBusy("preview");
     const { data, error } = await supabase.functions.invoke("catalog-media-bootstrap", {
-      body: { action: "preview", offset, limit: BATCH_SIZE },
+      body: { action: "preview", mode, offset, limit: BATCH_SIZE },
     });
     setBusy(null);
     if (error || !data?.ok) {
@@ -92,10 +97,10 @@ export default function CatalogMediaBootstrapPanel({ onChanged }: Props) {
   };
 
   const importBatch = async () => {
-    if (!window.confirm(`Import and technically verify the next ${BATCH_SIZE} first-party catalog images? They will remain blocked from social use until you approve them.`)) return;
+    if (!window.confirm(`Import and technically verify the next ${BATCH_SIZE} ${mode === "primary" ? "primary product" : "catalog"} images? Existing pending rows will be upgraded in place and remain blocked from social use until you approve them.`)) return;
     setBusy("import");
     const { data, error } = await supabase.functions.invoke("catalog-media-bootstrap", {
-      body: { action: "import_batch", offset, limit: BATCH_SIZE },
+      body: { action: "import_batch", mode, offset, limit: BATCH_SIZE },
     });
     setBusy(null);
     if (error || !data?.ok) {
@@ -151,22 +156,28 @@ export default function CatalogMediaBootstrapPanel({ onChanged }: Props) {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2">
         <Metric icon={<Images size={13} />} label="Published products" value={health?.published_products} />
         <Metric icon={<Database size={13} />} label="Media Library" value={health?.media_assets} />
-        <Metric icon={<BadgeCheck size={13} />} label="Catalog verified" value={health?.imported_catalog_assets} />
+        <Metric icon={<Eye size={13} />} label="Pending catalog" value={health?.pending_catalog_assets} />
+        <Metric icon={<Images size={13} />} label="Pending primary" value={health?.pending_primary_assets} />
+        <Metric icon={<BadgeCheck size={13} />} label="Verified primary" value={health?.verified_primary_assets} />
         <Metric icon={<ShieldCheck size={13} />} label="Social approved" value={health?.approved_catalog_assets} />
       </div>
 
       {health?.error && <div className="border border-amber-500/35 bg-amber-500/5 p-3 text-xs text-amber-200">{health.error}</div>}
       {health?.policy && <p className="text-[10px] text-foreground/50">{health.policy}</p>}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex border border-border/60 p-1">
+          <button type="button" onClick={() => { setMode("primary"); setOffset(0); setPreview(null); }} disabled={busy !== null} className={`min-h-9 px-3 text-[9px] uppercase tracking-[0.13em] ${mode === "primary" ? "bg-cyan-500 text-slate-950" : "text-muted-foreground"}`}>Primary first</button>
+          <button type="button" onClick={() => { setMode("all"); setOffset(0); setPreview(null); }} disabled={busy !== null} className={`min-h-9 px-3 text-[9px] uppercase tracking-[0.13em] ${mode === "all" ? "bg-cyan-500 text-slate-950" : "text-muted-foreground"}`}>All media</button>
+        </div>
         <button type="button" onClick={() => void scan()} disabled={busy !== null || unavailable} className="min-h-11 inline-flex items-center gap-2 border border-cyan-500/45 text-cyan-300 px-4 text-[9px] uppercase tracking-[0.16em] disabled:opacity-40">
-          {busy === "preview" ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />} Scan next {BATCH_SIZE}
+          {busy === "preview" ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />} {mode === "primary" ? "Scan primary" : "Scan media"} {BATCH_SIZE}
         </button>
         <button type="button" onClick={() => void importBatch()} disabled={busy !== null || unavailable} className="min-h-11 inline-flex items-center gap-2 bg-cyan-500 text-slate-950 px-4 text-[9px] uppercase tracking-[0.16em] disabled:opacity-40">
-          {busy === "import" ? <Loader2 size={13} className="animate-spin" /> : <Database size={13} />} Import next {BATCH_SIZE}
+          {busy === "import" ? <Loader2 size={13} className="animate-spin" /> : <Database size={13} />} {mode === "primary" ? "Import primary" : "Import media"} {BATCH_SIZE}
         </button>
         <button type="button" onClick={() => void approveBatch()} disabled={busy !== null || unavailable || waitingApproval === 0} className="min-h-11 inline-flex items-center gap-2 border border-gold/50 text-gold px-4 text-[9px] uppercase tracking-[0.16em] disabled:opacity-40">
           {busy === "approve" ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />} Approve next {Math.min(20, waitingApproval)}
@@ -174,10 +185,10 @@ export default function CatalogMediaBootstrapPanel({ onChanged }: Props) {
         {offset > 0 && <button type="button" onClick={() => { setOffset(0); setPreview(null); }} disabled={busy !== null} className="min-h-11 border border-border/60 px-4 text-[9px] uppercase tracking-[0.14em] disabled:opacity-40">Restart scan</button>}
       </div>
 
-      <p className="text-[10px] text-foreground/50">Current scan offset: {offset}. Imports are atomic per file; a failed source does not roll back successful files in the same small batch.</p>
+      <p className="text-[10px] text-foreground/50">Current mode: {mode === "primary" ? "primary product images" : "all catalog media"} · offset {offset}. Imports are atomic per file; a failed source does not roll back successful files in the same small batch.</p>
 
       {preview && <div className="border border-border/50 bg-background/25 p-3 space-y-2">
-        <div className="flex items-center justify-between gap-3"><p className="text-[9px] uppercase tracking-[0.15em] text-cyan-300">Preview · {preview.total_candidates || 0} unique catalog sources</p><span className="text-[9px] text-muted-foreground">{preview.has_more ? "More batches available" : "Final batch"}</span></div>
+        <div className="flex items-center justify-between gap-3"><p className="text-[9px] uppercase tracking-[0.15em] text-cyan-300">Preview · {preview.total_candidates || 0} {preview.mode === "primary" ? "primary product" : "catalog"} sources</p><span className="text-[9px] text-muted-foreground">{preview.has_more ? "More batches available" : "Final batch"}</span></div>
         <div className="grid md:grid-cols-2 gap-2">
           {(preview.candidates || []).map((candidate, index) => <div key={`${candidate.source}-${index}`} className="border border-border/40 p-3 min-w-0"><p className="text-xs truncate" title={candidate.product_names?.join(", ")}>{candidate.product_names?.join(", ") || "Catalog product"}</p><p className="text-[9px] text-muted-foreground mt-1 truncate" title={candidate.source}>{candidate.source}</p><p className="text-[9px] text-cyan-200 mt-1">Image {candidate.position || index + 1} · {(candidate.category_slugs || []).join(", ") || "category pending"}</p></div>)}
         </div>
