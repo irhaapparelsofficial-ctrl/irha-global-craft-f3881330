@@ -11,3 +11,9 @@ Safety contracts:
 - Email uses deterministic Gmail Message-ID recovery.
 - WhatsApp records a primary attempt before sending and blocks automatic duplicate retries.
 - No candidate activation, external email, WhatsApp message, or production deployment is performed by this commit.
+
+Connector verification:
+- The feature was rebuilt from the then-current `main` head rather than merging the conflicted historical branch.
+- One-time build and diagnostic workflows self-deleted after use.
+- Unrelated `package-lock.json` drift was removed before final CI.
+- Only the reviewed lead intake, candidate activation, private attachment, owner-approved outreach, tests, documentation, Edge Functions and ordered migrations remain in the PR.
