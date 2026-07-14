@@ -1,0 +1,129 @@
+name: Agent Readiness Live
+
+run-name: Live agent-readiness evidence · ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/AGENT_READINESS_SCAN_TRIGGER.md"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: agent-readiness-live
+  cancel-in-progress: false
+
+env:
+  TARGET_URL: https://irhaapparels.com/
+  SCANNER_URL: https://isitagentready.com/api/scan
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Scan live production site
+        id: scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          response=""
+          for attempt in 1 2 3; do
+            if response="$(curl -fsS --connect-timeout 15 --max-time 120 \
+              -X POST "$SCANNER_URL" \
+              -H 'Content-Type: application/json' \
+              -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36' \
+              -H 'Referer: https://isitagentready.com/' \
+              -H 'Origin: https://isitagentready.com' \
+              --data "{\"url\":\"$TARGET_URL\"}")"; then
+              break
+            fi
+            test "$attempt" = "3" && exit 1
+            sleep $((attempt * 10))
+          done
+
+          printf '%s\n' "$response" > scan-result.json
+          jq -e 'type == "object" and (.level | type == "number") and (.levelName | type == "string") and (.checks | type == "object")' scan-result.json >/dev/null
+
+          level="$(jq -r '.level' scan-result.json)"
+          level_name="$(jq -r '.levelName' scan-result.json)"
+          scanned_at="$(jq -r '.scannedAt // "unknown"' scan-result.json)"
+          passed="$(jq '[.. | objects | select(has("status")) | select(.status == "pass")] | length' scan-result.json)"
+          failed="$(jq '[.. | objects | select(has("status")) | select(.status == "fail")] | length' scan-result.json)"
+          neutral="$(jq '[.. | objects | select(has("status")) | select(.status == "neutral")] | length' scan-result.json)"
+
+          {
+            echo "level=$level"
+            echo "level_name=$level_name"
+            echo "scanned_at=$scanned_at"
+            echo "passed=$passed"
+            echo "failed=$failed"
+            echo "neutral=$neutral"
+          } >> "$GITHUB_OUTPUT"
+
+          jq -r '
+            [paths(objects) as $p
+              | getpath($p) as $v
+              | select($v.status? == "pass" or $v.status? == "fail" or $v.status? == "neutral")
+              | {name: ($p | map(tostring) | join(".")), status: $v.status, message: ($v.message // "")}
+            ]
+            | unique_by(.name)
+            | sort_by(.name)
+            | .[]
+            | "- " + (if .status == "pass" then "✅" elif .status == "fail" then "❌" else "⬜" end) + " `" + .name + "` — " + .message
+          ' scan-result.json > check-summary.md
+
+      - name: Upload raw scan evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-readiness-scan-${{ github.run_id }}
+          path: scan-result.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Record result on activation board
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LEVEL: ${{ steps.scan.outputs.level }}
+          LEVEL_NAME: ${{ steps.scan.outputs.level_name }}
+          SCANNED_AT: ${{ steps.scan.outputs.scanned_at }}
+          PASSED: ${{ steps.scan.outputs.passed }}
+          FAILED: ${{ steps.scan.outputs.failed }}
+          NEUTRAL: ${{ steps.scan.outputs.neutral }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = "success" ]; then
+            heading="✅ Agent Readiness live scan completed"
+          else
+            heading="❌ Agent Readiness live scan failed"
+          fi
+
+          {
+            echo "$heading"
+            echo
+            echo "- Production: $TARGET_URL"
+            echo "- Scanner: isitagentready.com"
+            echo "- Level: \`${LEVEL:-unknown}\` — ${LEVEL_NAME:-unknown}"
+            echo "- Checks: ${PASSED:-0} pass / ${FAILED:-0} fail / ${NEUTRAL:-0} neutral"
+            echo "- Scanned: ${SCANNED_AT:-unknown}"
+            echo "- Evidence run: $RUN_URL"
+            echo
+            if [ -s check-summary.md ]; then
+              echo "<details><summary>Per-check evidence</summary>"
+              echo
+              cat check-summary.md
+              echo
+              echo "</details>"
+            fi
+          } > issue-comment.md
+
+          gh issue comment 102 --repo "$GITHUB_REPOSITORY" --body-file issue-comment.md
