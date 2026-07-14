@@ -9,13 +9,16 @@ export const HOST = "irhaapparels.com";
 export const INDEXNOW_KEY = "19d2833c43fe6e05e2a4416f65a53cdc";
 export const INDEXNOW_ENDPOINT = "https://api.indexnow.org/IndexNow";
 
-export const DEFAULT_CHANGED_PATHS = [
+export const CORE_CHANGED_PATHS = [
   "/",
   "/products",
   "/catalogue",
   "/buyer-trust",
   "/factory-video-call",
   "/inquiry",
+];
+
+export const BUYER_INTENT_CHANGED_PATHS = [
   "/germany-apparel-manufacturer",
   "/austria-apparel-manufacturer",
   "/switzerland-apparel-manufacturer",
@@ -33,6 +36,45 @@ export const DEFAULT_CHANGED_PATHS = [
   "/de/lederhosen-hersteller",
   "/de/dirndl-grosshandel",
   "/de/trachten-private-label",
+];
+
+export const MARKET_GUIDE_CHANGED_PATHS = [
+  "/markets",
+  "/markets/germany",
+  "/markets/austria",
+  "/markets/switzerland",
+  "/markets/netherlands",
+  "/markets/united-states",
+  "/markets/united-kingdom",
+  "/markets/canada",
+  "/markets/australia",
+  "/markets/new-zealand",
+];
+
+export const BLOG_CHANGED_PATHS = [
+  "/blog",
+  "/blog/why-source-sportswear-from-pakistan",
+  "/blog/lederhosen-manufacturing-guide",
+  "/blog/private-label-streetwear-manufacturing",
+  "/blog/why-sialkot-is-global-apparel-hub",
+  "/blog/oem-vs-odm-clothing-manufacturing",
+  "/blog/custom-hoodies-manufacturer-pakistan-moq-50",
+  "/blog/lederhosen-wholesale-germany-oktoberfest-supplier",
+  "/blog/private-label-sportswear-fob-sialkot",
+  "/blog/small-batch-clothing-manufacturer-pakistan",
+  "/blog/streetwear-oem-pakistan",
+  "/blog/dirndl-manufacturer-moq-50",
+  "/blog/sublimated-jerseys-wholesale-pakistan",
+  "/blog/leather-jacket-manufacturer-small-order",
+  "/blog/apparel-manufacturer-for-startups-moq-50",
+  "/blog/fob-sialkot-vs-cif-pricing-explained",
+];
+
+export const DEFAULT_CHANGED_PATHS = [
+  ...CORE_CHANGED_PATHS,
+  ...BUYER_INTENT_CHANGED_PATHS,
+  ...MARKET_GUIDE_CHANGED_PATHS,
+  ...BLOG_CHANGED_PATHS,
 ];
 
 function normalizeUrl(value) {
