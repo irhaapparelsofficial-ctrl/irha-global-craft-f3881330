@@ -105,6 +105,78 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+CREATE OR REPLACE FUNCTION public.normalize_social_autopilot_settings()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  total_slots integer;
+  reel_target integer;
+  reel_interval integer;
+  reel_used integer := 0;
+  slot_index integer;
+  non_reel_index integer := 1;
+  reel_selected boolean;
+  non_reel_mix text[];
+  normalized_mix text[] := ARRAY[]::text[];
+  locked_visual_preset jsonb := '{
+    "id":"irha-premium-b2b-v1",
+    "name":"Irha Premium B2B Studio",
+    "background":"Dark charcoal-to-navy seamless studio background with consistent soft directional lighting and clean negative space.",
+    "accents":"Restrained gold accents only; no decorative colours that compete with the product.",
+    "logoPlacement":"Use the official Irha Apparels crest in the top-right only, with safe margins and no replacement logo.",
+    "subjectRules":["Product-only composition; no models or mannequins.","Keep product colour, construction and proportions faithful to verified source media.","Use consistent framing across image, carousel and reel scenes."],
+    "truthRules":["Do not invent text, labels, logos, certifications, client marks, prices, MOQ, materials, delivery claims or production claims.","Generated media remains a draft until an owner verifies the product and brand details."],
+    "imageAspectRatio":"4:5",
+    "reelAspectRatio":"9:16",
+    "reelDurationSeconds":10
+  }'::jsonb;
+BEGIN
+  NEW.timezone := 'Asia/Karachi';
+  NEW.visual_preset := locked_visual_preset;
+
+  reel_selected := 'reel' = ANY(COALESCE(NEW.content_mix, ARRAY[]::text[]));
+  SELECT COALESCE(array_agg(item ORDER BY first_position), ARRAY[]::text[])
+  INTO non_reel_mix
+  FROM (
+    SELECT item, min(position) AS first_position
+    FROM unnest(COALESCE(NEW.content_mix, ARRAY[]::text[])) WITH ORDINALITY AS selected(item, position)
+    WHERE item IN ('single_image','carousel')
+    GROUP BY item
+  ) choices;
+
+  IF cardinality(non_reel_mix) = 0 THEN
+    non_reel_mix := ARRAY['single_image']::text[];
+  END IF;
+
+  total_slots := LEAST(28, GREATEST(1, NEW.horizon_days * NEW.daily_draft_limit));
+  reel_target := CASE WHEN reel_selected THEN LEAST(NEW.weekly_reels, total_slots) ELSE 0 END;
+  reel_interval := CASE WHEN reel_target > 0 THEN GREATEST(1, floor(total_slots::numeric / reel_target)::integer) ELSE total_slots + 1 END;
+
+  FOR slot_index IN 0..(total_slots - 1) LOOP
+    IF reel_used < reel_target AND mod(slot_index, reel_interval) = 0 THEN
+      normalized_mix := array_append(normalized_mix, 'reel');
+      reel_used := reel_used + 1;
+    ELSE
+      normalized_mix := array_append(
+        normalized_mix,
+        non_reel_mix[((non_reel_index - 1) % cardinality(non_reel_mix)) + 1]
+      );
+      non_reel_index := non_reel_index + 1;
+    END IF;
+  END LOOP;
+
+  NEW.content_mix := normalized_mix;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_social_autopilot_settings_normalize ON public.social_autopilot_settings;
+CREATE TRIGGER trg_social_autopilot_settings_normalize
+  BEFORE INSERT OR UPDATE ON public.social_autopilot_settings
+  FOR EACH ROW EXECUTE FUNCTION public.normalize_social_autopilot_settings();
+
 DROP TRIGGER IF EXISTS trg_social_autopilot_settings_updated ON public.social_autopilot_settings;
 CREATE TRIGGER trg_social_autopilot_settings_updated
   BEFORE UPDATE ON public.social_autopilot_settings
