@@ -1,0 +1,43 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const root = process.cwd();
+const read = (path: string) => readFileSync(join(root, path), "utf8");
+
+describe("admin connected-health contracts", () => {
+  it("keeps Cloudflare deployment isolated to the preview branch", () => {
+    const workflow = read(".github/workflows/cloudflare-pages-preview.yml");
+    expect(workflow).toContain("PREVIEW_BRANCH: github-preview");
+    expect(workflow).toContain("PREVIEW_URL: https://github-preview.irha-apparels.pages.dev");
+    expect(workflow).toContain('--branch="$PREVIEW_BRANCH"');
+    expect(workflow).toContain("No custom domain or production branch was changed.");
+    expect(workflow).not.toContain("--branch=main");
+  });
+
+  it("validates Cloudflare credentials before building or deploying", () => {
+    const workflow = read(".github/workflows/cloudflare-pages-preview.yml");
+    expect(workflow).toContain("needs: preflight");
+    expect(workflow).toContain("user/tokens/verify");
+    expect(workflow).toContain("pages/projects/$project_name");
+    expect(workflow).toContain("CLOUDFLARE_ACCOUNT_ID must be the 32-character Account ID only");
+  });
+
+  it("keeps Google Search analytics private and health-aware", () => {
+    const source = read("supabase/functions/gsc-analytics/index.ts");
+    const config = read("supabase/config.toml");
+    expect(config).toContain("[functions.gsc-analytics]\nverify_jwt = true");
+    expect(source).toContain('.eq("role", "admin")');
+    expect(source).toContain('action === "health"');
+    expect(source).toContain("gsc_connection_not_configured");
+    expect(source).toContain("Days must be 28 or 90");
+    expect(source).toContain(".irha-apparels.pages.dev");
+  });
+
+  it("records applied runtime evidence without claiming Google data success", () => {
+    const evidence = read("docs/P0_CONNECTED_HEALTH_EVIDENCE_20260714.md");
+    expect(evidence).toContain("29319117894");
+    expect(evidence).toContain("0 authenticated grants");
+    expect(evidence).toContain("must still be visually accepted from an authenticated owner admin session");
+  });
+});
