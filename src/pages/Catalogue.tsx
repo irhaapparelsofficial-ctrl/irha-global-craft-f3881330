@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, MessageCircle, Send, Share2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SEO from "@/components/SEO";
 import CatalogueLeadForm from "@/components/CatalogueLeadForm";
 import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import ThumbnailImage from "@/components/ThumbnailImage";
-import { CATALOGUE_GROUPS } from "@/lib/catalogueGroups";
+import { supabase } from "@/integrations/supabase/client";
+import { CATALOGUE_GROUPS, matchesCategorySlug } from "@/lib/catalogueGroups";
 import { whatsappLink } from "@/lib/constants";
 import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";
 import leatherHero from "@/assets/og/og-leather.jpg";
@@ -19,7 +20,7 @@ import {
   breadcrumbSchema,
 } from "@/lib/seoSchema";
 
-const GROUP_IMAGES: Record<string, string> = {
+const STATIC_GROUP_IMAGES: Record<string, string> = {
   "bavarian-garments": bavarianHero,
   lederhosen: bavarianHero,
   "dirndl-dresses": bavarianHero,
@@ -33,6 +34,14 @@ const GROUP_IMAGES: Record<string, string> = {
   nightwear: nightwearHero,
 };
 
+const CANONICAL_TOP_SLUGS = new Set([
+  "bavarian-trachten-wear",
+  "premium-leather-apparel",
+  "sportswear",
+  "streetwear-activewear",
+  "leisure-nightwear",
+]);
+
 const HERO_SLIDES = [
   { src: bavarianHero, alt: "Bavarian garments catalogue", fit: "cover" as const },
   { src: sportswearHero, alt: "Sportswear catalogue", fit: "cover" as const },
@@ -41,9 +50,88 @@ const HERO_SLIDES = [
   { src: nightwearHero, alt: "Nightwear catalogue", fit: "cover" as const },
 ];
 
+type CategoryImageRow = {
+  id: string;
+  slug: string;
+  parent_id: string | null;
+};
+
+type ProductImageRow = {
+  category_id: string;
+  image_url: string | null;
+};
+
 export default function Catalogue() {
   const [shareOpen, setShareOpen] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
+  const [groupImages, setGroupImages] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const [categoryResult, productResult] = await Promise.all([
+        supabase
+          .from("categories")
+          .select("id, slug, parent_id")
+          .eq("is_published", true)
+          .order("sort_order", { ascending: true }),
+        supabase
+          .from("products")
+          .select("category_id, image_url")
+          .eq("is_published", true)
+          .not("image_url", "is", null)
+          .order("sort_order", { ascending: true })
+          .limit(500),
+      ]);
+
+      if (cancelled || categoryResult.error || productResult.error) return;
+
+      const categories = (categoryResult.data ?? []) as CategoryImageRow[];
+      const products = (productResult.data ?? []) as ProductImageRow[];
+      const byId = new Map(categories.map((category) => [category.id, category]));
+      const usedImages = new Set<string>();
+      const resolved: Record<string, string> = {};
+
+      for (const group of CATALOGUE_GROUPS) {
+        const specificPatterns = group.categorySlugs.filter((pattern) => !CANONICAL_TOP_SLUGS.has(pattern));
+        const specificChildren = categories.filter(
+          (category) => category.parent_id && matchesCategorySlug(category.slug, specificPatterns),
+        );
+
+        let selectedCategories: CategoryImageRow[];
+        if (specificChildren.length > 0) {
+          selectedCategories = specificChildren;
+        } else {
+          const seeds = categories.filter((category) => matchesCategorySlug(category.slug, group.categorySlugs));
+          const seedIds = new Set(seeds.map((category) => category.id));
+          selectedCategories = categories.filter(
+            (category) => seedIds.has(category.id) || (!!category.parent_id && seedIds.has(category.parent_id)),
+          );
+        }
+
+        const selectedIds = new Set(selectedCategories.map((category) => category.id));
+        const matchingProducts = products.filter(
+          (product) => product.image_url && selectedIds.has(product.category_id),
+        );
+        const representative = matchingProducts.find(
+          (product) => product.image_url && !usedImages.has(product.image_url),
+        ) ?? matchingProducts[0];
+
+        if (representative?.image_url) {
+          resolved[group.slug] = representative.image_url;
+          usedImages.add(representative.image_url);
+        }
+      }
+
+      if (!cancelled) setGroupImages(resolved);
+      void byId;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const shareUrl = `${SITE_URL}/catalogue`;
   const shareText = "Irha Apparels — B2B product catalogue for custom apparel programs in Sialkot, Pakistan.";
@@ -91,14 +179,14 @@ export default function Catalogue() {
               B2B Product <span className="text-gold italic">Catalogue</span>
             </h1>
             <p className="text-foreground/70 mt-6 max-w-2xl text-sm md:text-base leading-relaxed">
-              Browse custom apparel program categories. Materials, construction, branding, MOQ, sampling, pricing, production timing and shipping are confirmed after requirement review.
+              Browse our online product programs or request the full catalogue. Materials, construction, branding, MOQ, sampling, pricing, production timing and shipping are confirmed after requirement review.
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
               <button
                 onClick={() => setLeadOpen(true)}
                 className="inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all"
               >
-                <Send size={14} /> Request Catalogue
+                <Send size={14} /> Get Full Catalogue
               </button>
               <a
                 href={whatsappLink("Hi, I would like to discuss the Irha Apparels product catalogue.")}
@@ -109,7 +197,7 @@ export default function Catalogue() {
                 <MessageCircle size={14} /> WhatsApp
               </a>
               <button
-                onClick={() => setShareOpen((v) => !v)}
+                onClick={() => setShareOpen((value) => !value)}
                 className="inline-flex items-center gap-3 border border-border text-foreground/80 px-7 py-4 text-xs uppercase tracking-[0.3em] hover:border-gold hover:text-gold transition-all"
               >
                 <Share2 size={14} /> Share Catalogue
@@ -145,7 +233,7 @@ export default function Catalogue() {
         <div className="container-luxe">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {CATALOGUE_GROUPS.map((group) => {
-              const image = GROUP_IMAGES[group.slug] ?? bavarianHero;
+              const image = groupImages[group.slug] ?? STATIC_GROUP_IMAGES[group.slug] ?? bavarianHero;
               return (
                 <Link key={group.slug} to={`/catalogue/${group.slug}`} className="group relative block overflow-hidden border border-border/60 bg-card/30 hover:border-gold transition-colors">
                   <div className="relative aspect-[16/9] overflow-hidden bg-card">
@@ -161,6 +249,13 @@ export default function Catalogue() {
                     <h2 className="font-display text-2xl md:text-3xl leading-tight">{group.name}</h2>
                     <p className="text-foreground/60 text-sm mt-3">{group.tagline}</p>
                     <p className="text-foreground/45 text-xs mt-4 leading-relaxed line-clamp-3">{group.description}</p>
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {["Custom manufacturing", "Private-label ready", "Quote after review"].map((chip) => (
+                        <span key={chip} className="border border-border/60 px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] text-foreground/55">
+                          {chip}
+                        </span>
+                      ))}
+                    </div>
                     <div className="mt-5 flex items-center justify-between border-t border-border/40 pt-4">
                       <span className="text-[10px] uppercase tracking-[0.25em] text-foreground/55 group-hover:text-gold transition-colors">View collection</span>
                       <ArrowUpRight size={16} className="text-foreground/55 group-hover:text-gold transition-colors" />
@@ -178,6 +273,8 @@ export default function Catalogue() {
           onClose={() => setLeadOpen(false)}
           catalogueUrl={shareUrl}
           source="catalogue-index"
+          title="Get Full Catalogue"
+          submitLabel="Request catalogue"
         />
       )}
     </>
