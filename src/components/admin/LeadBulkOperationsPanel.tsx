@@ -116,7 +116,7 @@ export default function LeadBulkOperationsPanel({ onDraftsPrepared }: { onDrafts
       return;
     }
 
-    setLeads(rows.filter(isEmailEligible));
+    setLeads(rows);
     setExistingLeadIds(new Set((messageResult.data || []).map((row: { lead_id: string }) => row.lead_id).filter(Boolean)));
     setSelectedIds(new Set());
     setLoading(false);
@@ -133,7 +133,6 @@ export default function LeadBulkOperationsPanel({ onDraftsPrepared }: { onDrafts
     const needle = query.trim().toLowerCase();
     return leads.filter((lead) => {
       if (country && lead.country !== country) return false;
-      if (skipExisting && existingLeadIds.has(lead.id)) return false;
       if (!needle) return true;
       return [lead.company_name, lead.country, lead.email, lead.website, lead.apparel_segment, lead.buyer_type, lead.crm_status]
         .filter(Boolean)
@@ -141,9 +140,13 @@ export default function LeadBulkOperationsPanel({ onDraftsPrepared }: { onDrafts
         .toLowerCase()
         .includes(needle);
     });
-  }, [country, existingLeadIds, leads, query, skipExisting]);
+  }, [country, leads, query]);
 
   const selectedLeads = useMemo(() => leads.filter((lead) => selectedIds.has(lead.id)), [leads, selectedIds]);
+  const emailReadyCount = useMemo(() => leads.filter(isEmailEligible).length, [leads]);
+  const draftCandidates = useMemo(() => (selectedLeads.length ? selectedLeads : filtered)
+    .filter(isEmailEligible)
+    .filter((lead) => !skipExisting || !existingLeadIds.has(lead.id)), [existingLeadIds, filtered, selectedLeads, skipExisting]);
   const previewRows = filtered.slice(0, 150);
 
   const selectFiltered = () => {
@@ -204,9 +207,7 @@ export default function LeadBulkOperationsPanel({ onDraftsPrepared }: { onDrafts
   };
 
   const prepareEmails = async () => {
-    const source = (selectedLeads.length ? selectedLeads : filtered)
-      .filter((lead) => !skipExisting || !existingLeadIds.has(lead.id))
-      .slice(0, MAX_BULK);
+    const source = draftCandidates.slice(0, MAX_BULK);
     if (!source.length) {
       toast({ title: "No email-ready buyers selected", description: skipExisting ? "Every visible buyer already has outreach or no eligible buyer remains." : "Change the filters or select buyers first.", variant: "destructive" });
       return;
@@ -282,10 +283,10 @@ export default function LeadBulkOperationsPanel({ onDraftsPrepared }: { onDrafts
       {error && <div className="flex items-start gap-3 border border-red-500/40 bg-red-500/5 p-4 text-sm text-red-200"><AlertTriangle size={16} className="mt-0.5 shrink-0" />{error}</div>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Metric label="Email-ready buyers" value={leads.length} icon={<Users size={14} />} />
+        <Metric label="Total CRM leads" value={leads.length} icon={<Users size={14} />} />
+        <Metric label="Email-ready" value={emailReadyCount} icon={<MailPlus size={14} />} />
         <Metric label="Current filtered" value={filtered.length} icon={<Search size={14} />} />
         <Metric label="Selected" value={selectedIds.size} icon={<CheckCircle2 size={14} />} />
-        <Metric label="Existing outreach" value={existingLeadIds.size} icon={<MailPlus size={14} />} />
       </div>
 
       <div className="grid xl:grid-cols-12 gap-5">
@@ -294,7 +295,7 @@ export default function LeadBulkOperationsPanel({ onDraftsPrepared }: { onDrafts
             <Field label="Search buyers"><div className="flex min-h-11 items-center gap-2 border border-border/60 bg-background/35 px-3"><Search size={13} className="text-muted-foreground" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Company, email, market…" className="w-full bg-transparent text-xs outline-none" /></div></Field>
             <Field label="Country"><select value={country} onChange={(event) => setCountry(event.target.value)} className="min-h-11 w-full border border-border/60 bg-background/35 px-3 text-xs"><option value="">All countries</option>{countries.map((value) => <option key={value} value={value}>{value}</option>)}</select></Field>
           </div>
-          <label className="flex cursor-pointer items-start gap-3 border border-border/60 bg-background/25 p-3"><input type="checkbox" className="mt-1" checked={skipExisting} onChange={(event) => setSkipExisting(event.target.checked)} /><div><p className="text-xs font-medium">Skip buyers with existing outreach</p><p className="text-[10px] text-muted-foreground mt-1">Prevents accidental duplicate drafts or repeat first-contact emails.</p></div></label>
+          <label className="flex cursor-pointer items-start gap-3 border border-border/60 bg-background/25 p-3"><input type="checkbox" className="mt-1" checked={skipExisting} onChange={(event) => setSkipExisting(event.target.checked)} /><div><p className="text-xs font-medium">Skip buyers with existing outreach</p><p className="text-[10px] text-muted-foreground mt-1">Applies to AI drafting only. CSV export still includes the full selected or filtered lead list.</p></div></label>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={selectFiltered} disabled={!filtered.length || busy !== null} className="min-h-10 border border-gold/50 px-3 text-[9px] uppercase tracking-[0.14em] text-gold disabled:opacity-40">Select filtered</button>
             <button type="button" onClick={() => setSelectedIds(new Set())} disabled={!selectedIds.size || busy !== null} className="min-h-10 border border-border/60 px-3 text-[9px] uppercase tracking-[0.14em] text-muted-foreground disabled:opacity-40">Clear selection</button>
@@ -302,8 +303,8 @@ export default function LeadBulkOperationsPanel({ onDraftsPrepared }: { onDrafts
           </div>
           <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
             {loading && <p className="py-8 text-center text-xs text-muted-foreground">Loading CRM leads…</p>}
-            {!loading && !previewRows.length && <p className="py-8 text-center text-xs text-muted-foreground">No email-ready buyer matches these filters.</p>}
-            {previewRows.map((lead) => <label key={lead.id} className={`flex cursor-pointer items-start gap-3 border p-3 ${selectedIds.has(lead.id) ? "border-gold/60 bg-gold/5" : "border-border/50 bg-background/20"}`}><input type="checkbox" className="mt-1" checked={selectedIds.has(lead.id)} onChange={() => setSelectedIds((current) => toggleSet(current, lead.id, MAX_BULK))} /><div className="min-w-0"><p className="truncate text-xs font-medium">{lead.company_name}</p><p className="truncate text-[10px] text-gold mt-1">{lead.email}</p><p className="text-[9px] text-muted-foreground mt-1">{lead.country} · score {lead.verification_score ?? "—"} · {lead.crm_status || "unreviewed"}</p></div></label>)}
+            {!loading && !previewRows.length && <p className="py-8 text-center text-xs text-muted-foreground">No CRM buyer matches these filters.</p>}
+            {previewRows.map((lead) => <label key={lead.id} className={`flex cursor-pointer items-start gap-3 border p-3 ${selectedIds.has(lead.id) ? "border-gold/60 bg-gold/5" : "border-border/50 bg-background/20"}`}><input type="checkbox" className="mt-1" checked={selectedIds.has(lead.id)} onChange={() => setSelectedIds((current) => toggleSet(current, lead.id, MAX_BULK))} /><div className="min-w-0"><p className="truncate text-xs font-medium">{lead.company_name}</p><p className={`truncate text-[10px] mt-1 ${validEmail(lead.email) ? "text-gold" : "text-muted-foreground"}`}>{validEmail(lead.email) || "No valid email"}</p><p className="text-[9px] text-muted-foreground mt-1">{lead.country} · score {lead.verification_score ?? "—"} · {lead.crm_status || "unreviewed"}</p></div></label>)}
             {filtered.length > previewRows.length && <p className="text-center text-[10px] text-muted-foreground py-2">Showing first {previewRows.length} of {filtered.length}. Select filtered includes up to {MAX_BULK}.</p>}
           </div>
         </div>
@@ -323,7 +324,7 @@ export default function LeadBulkOperationsPanel({ onDraftsPrepared }: { onDrafts
 
           {progress && <div className="border border-border/60 bg-background/25 p-4"><div className="flex items-center justify-between gap-3 text-xs"><span>{busy === "prepare" ? "Preparing email batches…" : "Last bulk run"}</span><span className="text-gold">{progress.current}/{progress.total}</span></div><div className="mt-3 h-2 overflow-hidden bg-muted"><div className="h-full bg-gold transition-all" style={{ width: `${progressPercent}%` }} /></div><p className="mt-2 text-[10px] text-muted-foreground">{progress.created} drafts created · {progress.failedBatches} failed batch{progress.failedBatches === 1 ? "" : "es"}. Failed batches are recorded and never counted as success.</p></div>}
 
-          <button type="button" onClick={() => void prepareEmails()} disabled={busy !== null || loading || (!selectedLeads.length && !filtered.length)} className="min-h-12 w-full inline-flex items-center justify-center gap-2 bg-gradient-gold px-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-foreground disabled:opacity-40">{busy === "prepare" ? <Loader2 size={13} className="animate-spin" /> : <MailPlus size={13} />} Prepare {selectedLeads.length ? `${selectedLeads.length} selected` : `${Math.min(filtered.length, MAX_BULK)} filtered`} email drafts</button>
+          <button type="button" onClick={() => void prepareEmails()} disabled={busy !== null || loading || draftCandidates.length === 0} className="min-h-12 w-full inline-flex items-center justify-center gap-2 bg-gradient-gold px-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-foreground disabled:opacity-40">{busy === "prepare" ? <Loader2 size={13} className="animate-spin" /> : <MailPlus size={13} />} Prepare {Math.min(draftCandidates.length, MAX_BULK)} email-ready drafts</button>
           <p className="text-[10px] leading-relaxed text-muted-foreground">Owner approval remains mandatory. This button creates drafts only; sending still happens one message at a time through the existing Approve & Send popup below.</p>
         </div>
       </div>
