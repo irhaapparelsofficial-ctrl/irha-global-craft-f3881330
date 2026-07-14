@@ -1,148 +1,185 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
+import {
+  GUIDE_SESSION_MESSAGES_KEY,
+  fallbackGuideReply,
+  isIncompleteGuideFragment,
+  parseStoredGuideMessages,
+  redactGuideMessageForSession,
+  shouldSendGuideOnEnter,
+  type GuideMessage,
+  type GuideProvider,
+} from "@/lib/irhaGuide";
 import {
   supabasePublishableKey,
   supabaseRuntimeUrl,
 } from "@/integrations/supabase/client";
 
-type Msg = { role: "user" | "assistant"; content: string };
-type GuideMode = "ai" | "backup";
-
 const QUICK_PROMPTS = [
+  "Do you offer private label?",
   "Show me your Lederhosen range",
-  "What categories do you manufacture?",
   "How does sampling work?",
   "Welche Kollektionen habt ihr?",
 ];
 
-const WELCOME: Msg = {
-  role: "assistant",
-  content:
-    "Hi! I'm Irha Guide — your product and manufacturing assistant. Ask in English or German. For pricing or formal quotations, use the quote form or WhatsApp.\n\nHallo! Ich bin Irha Guide — fragen Sie mich gerne auf Deutsch.",
-};
+const WELCOME_TEXT =
+  "Hi! I'm Irha Guide — your product and manufacturing assistant. Ask in English or German. For pricing or a formal quotation, use the inquiry form or WhatsApp.\n\nHallo! Ich bin Irha Guide — fragen Sie mich gerne auf Deutsch.";
 
-const GERMAN_HINTS = /[äöüß]|\b(wie|welche|preis|kosten|muster|lieferung|fertigung|habt|können|kollektionen)\b/i;
-
-function fallbackReply(text: string): string {
-  const q = text.toLowerCase();
-  const de = GERMAN_HINTS.test(text);
-
-  if (/(price|cost|quote|rate|how much|preis|kosten|angebot|stückpreis)/i.test(q)) {
-    return de
-      ? "Preise werden erst nach Prüfung von Produkt, Material, Menge, Branding, Verpackung und Lieferanforderungen bestätigt. Nutzen Sie bitte die Anfrage oder WhatsApp für ein formelles Angebot."
-      : "Pricing is confirmed only after review of the product, material, quantity, branding, packaging and delivery requirements. Please use the inquiry form or WhatsApp for a formal quotation.";
+function makeId() {
+  try {
+    return globalThis.crypto.randomUUID();
+  } catch {
+    return `guide-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
+}
 
-  if (/(moq|minimum|mindestmenge)/i.test(q)) {
-    return de
-      ? "Die Mindestmenge wird je Produktprogramm nach Prüfung von Material, Konstruktion, Branding und Größen-/Farbmix bestätigt."
-      : "MOQ is confirmed per product program after review of material, construction, branding and the size or color mix.";
+function makeMessage(
+  role: GuideMessage["role"],
+  content: string,
+  provider?: GuideProvider,
+): GuideMessage {
+  return { id: makeId(), role, content, provider };
+}
+
+function initialMessages(): GuideMessage[] {
+  if (typeof window !== "undefined") {
+    const stored = parseStoredGuideMessages(sessionStorage.getItem(GUIDE_SESSION_MESSAGES_KEY));
+    if (stored.length > 0) return stored;
   }
+  return [makeMessage("assistant", WELCOME_TEXT, "idle")];
+}
 
-  if (/(sample|sampling|muster)/i.test(q)) {
-    return de
-      ? "Der Musterprozess richtet sich nach Produkt, Material, Schnittentwicklung, Branding und möglichen Revisionen. Senden Sie eine Skizze, ein Tech-Pack oder ein Referenzbild für die Prüfung."
-      : "The sampling path depends on the product, materials, pattern development, branding and possible revisions. Send a sketch, tech pack or reference image for review.";
+function getSessionId() {
+  if (typeof window === "undefined") return makeId();
+  try {
+    let sessionId = sessionStorage.getItem("irha:chat-sid");
+    if (!sessionId) {
+      sessionId = makeId();
+      sessionStorage.setItem("irha:chat-sid", sessionId);
+    }
+    return sessionId;
+  } catch {
+    return makeId();
   }
+}
 
-  if (/(lederhosen|trachten|bavarian|oktoberfest)/i.test(q)) {
-    return de
-      ? "Wir zeigen kundenspezifische Programme für Lederhosen, Dirndl und Trachten. Öffnen Sie die Kategorie Bavarian & Trachten Wear oder senden Sie Ihre Referenz für eine Prüfung."
-      : "We present custom Lederhosen, Dirndl and Trachten programs. Browse Bavarian & Trachten Wear or send your reference for requirement review.";
-  }
+function isMobileInteraction() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(max-width: 767px), (pointer: coarse)").matches;
+}
 
-  if (/(dirndl|blouse|apron|schürze)/i.test(q)) {
-    return de
-      ? "Dirndl-Programme können Stoff, Mieder, Schürze, Bluse, Verzierungen, Labels und Verpackung umfassen. Die umsetzbare Kombination wird pro Anfrage geprüft."
-      : "Dirndl programs can cover fabric, bodice, apron, blouse, decoration, labels and packaging. The workable combination is reviewed per requirement.";
-  }
+function normalizeProvider(value: string | null): GuideProvider {
+  if (value === "lovable-ai-gateway") return "lovable-ai-gateway";
+  if (value === "gemini") return "gemini";
+  return "deterministic-backup";
+}
 
-  if (/(leather|jacket|leder)/i.test(q)) {
-    return de
-      ? "Wir besprechen kundenspezifische Lederbekleidung wie Jacken und Westen. Lederart, Konstruktion, Futter, Beschläge und Branding werden vor dem Angebot geprüft."
-      : "We discuss custom leather apparel such as jackets and vests. Leather type, construction, lining, hardware and branding are reviewed before quotation.";
-  }
-
-  if (/(sportswear|teamwear|jersey|kit|football|soccer|basketball)/i.test(q)) {
-    return de
-      ? "Sportswear- und Teamwear-Programme werden nach Stoff, Konstruktion, Druck, Stickerei, Größen und Branding geprüft."
-      : "Sportswear and teamwear programs are reviewed around fabric, construction, printing, embroidery, sizing and branding requirements.";
-  }
-
-  if (/(streetwear|activewear|hoodie|tracksuit|gym|nightwear|leisure|sleepwear)/i.test(q)) {
-    return de
-      ? "Wir zeigen Programme für Streetwear, Activewear sowie Leisure- und Nightwear. Senden Sie Ihr Produktbriefing oder eine Referenz für die passende Kategorie."
-      : "We present Streetwear, Activewear, Leisurewear and Nightwear programs. Send your product brief or reference so the right category can be reviewed.";
-  }
-
-  if (/(factory|video call|visit|manufacturing environment|fabrik|videoanruf)/i.test(q)) {
-    return de
-      ? "Eine Live-Videoansicht der Fertigungsumgebung kann während der Anforderungsbesprechung angefragt werden."
-      : "A live video view of the manufacturing environment can be requested during the requirement discussion.";
-  }
-
-  if (/(category|categories|range|products|kollektion|kollektionen|produkte)/i.test(q)) {
-    return de
-      ? "Unsere Hauptprogramme umfassen Bavarian & Trachten Wear, Premium Leather Apparel, Sportswear, Streetwear & Activewear sowie Leisure & Nightwear."
-      : "Our main programs include Bavarian & Trachten Wear, Premium Leather Apparel, Sportswear, Streetwear & Activewear, and Leisure & Nightwear.";
-  }
-
-  return de
-    ? "Ich kann Ihnen zu Produkten, Kategorien, Mustern, Private Label und dem Fertigungsprozess helfen. Für eine genaue Prüfung öffnen Sie die Produkte oder senden Sie eine Anfrage."
-    : "I can help with products, categories, sampling, private label and the manufacturing process. For an exact review, browse the products or send an inquiry.";
+function providerLabel(provider: GuideProvider) {
+  if (provider === "lovable-ai-gateway" || provider === "gemini") return "Smart guide";
+  if (provider === "deterministic-backup") return "Verified backup";
+  return "Ask a question";
 }
 
 export default function LiveChat() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([WELCOME]);
+  const [messages, setMessages] = useState<GuideMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<GuideMode>("ai");
+  const [provider, setProvider] = useState<GuideProvider>(() => {
+    const restored = initialMessages().slice().reverse().find((message) => message.provider && message.provider !== "idle");
+    return restored?.provider ?? "idle";
+  });
+  const [mobileViewportStyle, setMobileViewportStyle] = useState<CSSProperties>();
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
-  const sessionIdRef = useRef<string>("");
+  const sessionIdRef = useRef<string>(getSessionId());
+  const inFlightRef = useRef(false);
+  const messagesRef = useRef(messages);
 
-  if (!sessionIdRef.current) {
+  const commitMessages = useCallback((updater: (previous: GuideMessage[]) => GuideMessage[]) => {
+    setMessages((previous) => {
+      const next = updater(previous);
+      messagesRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const replaceAssistant = useCallback((id: string, content: string, nextProvider: GuideProvider) => {
+    commitMessages((previous) => previous.map((message) => (
+      message.id === id ? { ...message, content, provider: nextProvider } : message
+    )));
+  }, [commitMessages]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
     try {
-      let sessionId = sessionStorage.getItem("irha:chat-sid");
-      if (!sessionId) {
-        sessionId = crypto.randomUUID();
-        sessionStorage.setItem("irha:chat-sid", sessionId);
-      }
-      sessionIdRef.current = sessionId;
+      const safe = messages
+        .filter((message) => message.content.trim())
+        .slice(-20)
+        .map((message) => ({
+          ...message,
+          content: redactGuideMessageForSession(message.content),
+        }));
+      sessionStorage.setItem(GUIDE_SESSION_MESSAGES_KEY, JSON.stringify(safe));
     } catch {
-      sessionIdRef.current = crypto.randomUUID();
+      // Session persistence is optional; chat continues in memory.
     }
-  }
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, loading]);
 
   useEffect(() => {
-    if (open) window.setTimeout(() => inputRef.current?.focus(), 150);
+    if (!open || isMobileInteraction()) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 150);
+    return () => window.clearTimeout(timer);
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
         window.setTimeout(() => launcherRef.current?.focus(), 0);
       }
     };
+
+    const mobile = isMobileInteraction();
+    const previousOverflow = document.body.style.overflow;
+    if (mobile) document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKeyDown);
 
-    const isMobile = window.matchMedia("(max-width: 767px)").matches;
-    const previousOverflow = document.body.style.overflow;
-    if (isMobile) document.body.style.overflow = "hidden";
+    const updateViewport = () => {
+      if (!mobile || !window.visualViewport) {
+        setMobileViewportStyle(undefined);
+        return;
+      }
+      const viewport = window.visualViewport;
+      setMobileViewportStyle({
+        top: Math.max(8, viewport.offsetTop + 8),
+        bottom: "auto",
+        height: Math.max(280, viewport.height - 16),
+      });
+    };
+
+    updateViewport();
+    window.visualViewport?.addEventListener("resize", updateViewport);
+    window.visualViewport?.addEventListener("scroll", updateViewport);
+    window.addEventListener("orientationchange", updateViewport);
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      if (isMobile) document.body.style.overflow = previousOverflow;
+      window.visualViewport?.removeEventListener("resize", updateViewport);
+      window.visualViewport?.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("orientationchange", updateViewport);
+      if (mobile) document.body.style.overflow = previousOverflow;
+      setMobileViewportStyle(undefined);
     };
   }, [open]);
 
@@ -151,20 +188,38 @@ export default function LiveChat() {
     window.setTimeout(() => launcherRef.current?.focus(), 0);
   };
 
-  const useBackup = (next: Msg[], userText: string) => {
-    const reply = fallbackReply(userText);
-    setMode("backup");
-    setMessages([...next, { role: "assistant", content: reply }]);
-  };
+  const send = useCallback(async (rawText: string) => {
+    const text = rawText.trim();
+    if (!text || inFlightRef.current) return;
 
-  const send = async (text: string) => {
-    if (!text.trim() || loading) return;
+    const userMessage = makeMessage("user", text);
+    const assistantId = makeId();
+    const assistantPlaceholder: GuideMessage = {
+      id: assistantId,
+      role: "assistant",
+      content: "",
+      provider: "idle",
+    };
+    const requestHistory = [...messagesRef.current.filter((message) => message.content.trim()), userMessage]
+      .slice(-8)
+      .map((message) => ({ role: message.role, content: message.content }));
 
-    const userMsg: Msg = { role: "user", content: text.trim() };
-    const next = [...messages, userMsg];
-    setMessages([...next, { role: "assistant", content: "" }]);
-    setInput("");
+    inFlightRef.current = true;
     setLoading(true);
+    setInput("");
+    commitMessages((previous) => [...previous, userMessage, assistantPlaceholder]);
+
+    if (isIncompleteGuideFragment(text)) {
+      const reply = fallbackGuideReply(text);
+      replaceAssistant(assistantId, reply, "deterministic-backup");
+      setProvider("deterministic-backup");
+      setLoading(false);
+      inFlightRef.current = false;
+      return;
+    }
+
+    let finalContent = "";
+    let resolvedProvider: GuideProvider = "deterministic-backup";
 
     try {
       const response = await fetch(`${supabaseRuntimeUrl}/functions/v1/chat`, {
@@ -176,55 +231,68 @@ export default function LiveChat() {
         },
         body: JSON.stringify({
           sessionId: sessionIdRef.current,
-          messages: next.map((message) => ({ role: message.role, content: message.content })),
+          messages: requestHistory,
         }),
       });
 
-      if (!response.ok || !response.body) throw new Error("guide-unavailable");
+      if (!response.ok || !response.body) throw new Error(`guide-unavailable-${response.status}`);
 
-      const provider = response.headers.get("X-Irha-AI-Provider");
-      setMode(provider === "deterministic-backup" ? "backup" : "ai");
+      resolvedProvider = normalizeProvider(response.headers.get("X-Irha-AI-Provider"));
+      const contentType = response.headers.get("content-type") || "";
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let accumulated = "";
+      if (contentType.includes("text/event-stream")) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-        for (const line of lines) {
+        const processLine = (line: string) => {
           const valueLine = line.trim();
-          if (!valueLine.startsWith("data:")) continue;
+          if (!valueLine.startsWith("data:")) return;
           const data = valueLine.slice(5).trim();
-          if (data === "[DONE]") continue;
+          if (!data || data === "[DONE]") return;
           try {
             const json = JSON.parse(data);
             const delta = json.choices?.[0]?.delta?.content;
-            if (delta) {
-              accumulated += delta;
-              setMessages((previous) => {
-                const copy = [...previous];
-                copy[copy.length - 1] = { role: "assistant", content: accumulated };
-                return copy;
-              });
+            if (typeof delta === "string" && delta) {
+              finalContent += delta;
+              replaceAssistant(assistantId, finalContent, resolvedProvider);
             }
           } catch {
-            // Ignore streaming keepalives.
+            // Ignore keepalive or malformed non-content events.
           }
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          lines.forEach(processLine);
         }
+        if (buffer.trim()) processLine(buffer);
+      } else {
+        const payload = await response.json().catch(() => ({}));
+        const answer = payload?.answer ?? payload?.choices?.[0]?.message?.content;
+        if (typeof answer === "string") finalContent = answer.trim();
       }
 
-      if (!accumulated) useBackup(next, userMsg.content);
+      if (!finalContent.trim()) {
+        finalContent = fallbackGuideReply(text);
+        resolvedProvider = "deterministic-backup";
+      }
     } catch {
-      useBackup(next, userMsg.content);
+      finalContent = fallbackGuideReply(text);
+      resolvedProvider = "deterministic-backup";
     } finally {
+      replaceAssistant(assistantId, finalContent || fallbackGuideReply(text), resolvedProvider);
+      setProvider(resolvedProvider);
       setLoading(false);
+      inFlightRef.current = false;
     }
-  };
+  }, [commitMessages, replaceAssistant]);
+
+  const showActions = messages.length > 1 && !loading;
 
   return (
     <>
@@ -247,7 +315,8 @@ export default function LiveChat() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="irha-guide-title"
-          className="fixed z-[80] inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(5.25rem+env(safe-area-inset-bottom))] md:inset-auto md:right-6 md:bottom-6 md:w-[400px] md:h-[min(680px,calc(100vh-3rem))] flex flex-col bg-background border border-border shadow-elegant rounded-sm overflow-hidden animate-fade-in"
+          style={mobileViewportStyle}
+          className="fixed z-[80] inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(0.75rem+env(safe-area-inset-bottom))] md:inset-auto md:right-6 md:bottom-6 md:w-[400px] md:h-[min(680px,calc(100vh-3rem))] flex flex-col bg-background border border-border shadow-elegant rounded-sm overflow-hidden animate-fade-in"
         >
           <div className="shrink-0 bg-gradient-to-r from-card to-background border-b border-border/60 px-3 py-3 sm:p-4">
             <div className="flex items-center justify-between gap-2">
@@ -259,7 +328,7 @@ export default function LiveChat() {
                   <p id="irha-guide-title" className="font-display text-base leading-tight">Irha Guide</p>
                   <p className="text-[9px] uppercase tracking-[0.18em] text-foreground/55 flex items-center gap-1.5 whitespace-nowrap">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true" />
-                    Available · {mode === "backup" ? "Smart backup" : "Smart guide"}
+                    Available · {providerLabel(provider)}
                   </p>
                 </div>
               </div>
@@ -292,15 +361,15 @@ export default function LiveChat() {
             aria-live="polite"
             aria-relevant="additions text"
             aria-busy={loading}
-            className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-background"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-3 bg-background"
           >
-            {messages.map((message, index) => (
-              <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+            {messages.map((message) => (
+              <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
                   aria-label={message.role === "user" ? "Your message" : "Irha Guide response"}
                   className={`max-w-[88%] px-3.5 py-2.5 text-[13px] sm:text-sm leading-relaxed whitespace-pre-wrap break-words rounded-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border/60 text-foreground/90"}`}
                 >
-                  {message.content || (loading && index === messages.length - 1 ? (
+                  {message.content || (loading ? (
                     <span className="inline-flex gap-1 py-1" aria-label="Irha Guide is responding">
                       <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse" aria-hidden="true" />
                       <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse [animation-delay:0.2s]" aria-hidden="true" />
@@ -329,7 +398,7 @@ export default function LiveChat() {
               </div>
             )}
 
-            {mode === "backup" && (
+            {showActions && (
               <div className="grid grid-cols-3 gap-2 pt-1">
                 <Link to="/products" onClick={closeChat} className="min-h-11 inline-flex items-center justify-center text-center text-[9px] uppercase tracking-[0.15em] border border-border/60 px-2 py-2.5 hover:border-gold hover:text-gold">Products</Link>
                 <Link to="/inquiry?intent=rfq" onClick={closeChat} className="min-h-11 inline-flex items-center justify-center text-center text-[9px] uppercase tracking-[0.15em] border border-gold/60 text-gold px-2 py-2.5">Get Quote</Link>
@@ -338,20 +407,26 @@ export default function LiveChat() {
             )}
           </div>
 
-          <form onSubmit={(event) => { event.preventDefault(); void send(input); }} className="shrink-0 border-t border-border/60 p-3 bg-card">
+          <form onSubmit={(event) => { event.preventDefault(); void send(input); }} className="shrink-0 border-t border-border/60 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-card">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
+                  if (shouldSendGuideOnEnter({
+                    key: event.key,
+                    shiftKey: event.shiftKey,
+                    isMobile: isMobileInteraction(),
+                    text: input,
+                  })) {
                     event.preventDefault();
                     void send(input);
                   }
                 }}
                 rows={1}
                 maxLength={2000}
+                enterKeyHint="enter"
                 aria-label="Message Irha Guide"
                 placeholder="Ask about products or manufacturing… (EN / DE)"
                 disabled={loading}
