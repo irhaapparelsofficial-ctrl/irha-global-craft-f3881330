@@ -1,0 +1,63 @@
+name: Build Diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: build-diagnostic-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Run build and capture output
+        id: build
+        shell: bash
+        continue-on-error: true
+        run: |
+          set +e
+          npm run build > build.log 2>&1
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          tail -n 160 build.log > build-tail.log
+          exit "$status"
+
+      - name: Comment exact build failure
+        if: steps.build.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          {
+            echo '### Build diagnostic'
+            echo
+            echo '```text'
+            cat build-tail.log
+            echo '```'
+          } > comment.md
+          gh pr comment "$PR_NUMBER" --body-file comment.md
+
+      - name: Fail diagnostic job when build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
