@@ -4,6 +4,7 @@ import AppErrorBoundary from "@/components/AppErrorBoundary";
 import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher";
 import AdminLiveChatLauncher from "@/components/admin/AdminLiveChatLauncher";
 import "./index.css";
+import "./admin-mobile-focus.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
 const CACHE_HEAL_VERSION = "2026-07-13-v2";
