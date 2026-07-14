@@ -1,0 +1,8 @@
+@media (max-width: 767px) {
+  [aria-label="Open AI outreach command center"],
+  [aria-label="Open Buyer Actions"],
+  [aria-label="Open Lead Alerts"],
+  [aria-label="Open human live chat console"] {
+    display: none !important;
+  }
+}
