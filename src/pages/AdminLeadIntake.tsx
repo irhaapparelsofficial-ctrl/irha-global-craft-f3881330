@@ -20,9 +20,19 @@ import { parseLeadWorkbook, type LeadIntakeRow, type LeadWorkbook } from "@/lib/
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const CHUNK_SIZE = 100;
-const PRIVATE_FILE_BUCKET = "crm-private-files";
-const db = supabase as any;
 
+type ImportFileStatus = "pending_upload" | "uploaded" | "staged" | "failed" | "archived";
+type ImportFileRow = {
+  id: string;
+  campaign_id: string;
+  object_path: string;
+  parsed_row_count: number;
+  staged_row_count: number;
+  duplicate_count: number;
+  blocked_count: number;
+  status: ImportFileStatus;
+  error: string | null;
+};
 type StageSummary = {
   received: number;
   staged: number;
@@ -32,24 +42,16 @@ type StageSummary = {
   sourceFileStatus: "staged" | "reused";
   sourceFileRecordId: string | null;
 };
+type FileCheckpoint = { recordId: string; campaignId: string; status: ImportFileStatus };
 
-type ImportFileRow = {
-  id: string;
-  campaign_id: string;
-  object_path: string;
-  parsed_row_count: number;
-  staged_row_count: number;
-  duplicate_count: number;
-  blocked_count: number;
-  status: "uploaded" | "staged" | "failed" | "archived";
-  error: string | null;
-};
-
-type FileCheckpoint = {
-  recordId: string;
-  campaignId: string;
-  objectPath: string;
-  status: ImportFileRow["status"];
+type RegistryResponse = {
+  ok?: boolean;
+  found?: boolean;
+  file?: ImportFileRow | null;
+  upload_required?: boolean;
+  reused?: boolean;
+  signed_url?: string;
+  error?: string;
 };
 
 export default function AdminLeadIntake() {
@@ -89,7 +91,10 @@ export default function AdminLeadIntake() {
       setSourceFile(file);
       setSourceChecksum(checksum);
       setSheetName(parsed.sheets[0]?.name || "");
-      toast({ title: "Lead workbook parsed", description: `${parsed.sheets.length} recognizable lead sheet${parsed.sheets.length === 1 ? "" : "s"} found. The original file will be retained privately only after owner-confirmed staging.` });
+      toast({
+        title: "Lead workbook parsed",
+        description: `${parsed.sheets.length} recognizable lead sheet${parsed.sheets.length === 1 ? "" : "s"} found. The original file will be retained privately after owner-confirmed staging.`,
+      });
     } catch (failure) {
       const message = failure instanceof Error ? failure.message : "Workbook could not be parsed";
       setWorkbook(null);
@@ -105,7 +110,7 @@ export default function AdminLeadIntake() {
   };
 
   const stageWorkbook = async () => {
-    if (!workbook || !sourceFile || !sourceChecksum || !sheet || stageable.length === 0 || staging) return;
+    if (!user || !workbook || !sourceFile || !sourceChecksum || !sheet || stageable.length === 0 || staging) return;
     const confirmed = window.confirm(
       `Stage ${stageable.length} unique companies from ${workbook.filename} / ${sheet.name}?\n\n`
       + `${strictReady.length} are strict-ready and ${needsReview.length} need review. `
@@ -117,29 +122,28 @@ export default function AdminLeadIntake() {
     setStaging(true);
     setProgress(0);
     setError(null);
-    const objectPath = leadImportObjectPath(sourceChecksum, sheet.name, sourceFile.name);
-    let campaignId: string | null = fileCheckpoint?.objectPath === objectPath ? fileCheckpoint.campaignId : null;
-    let importFileId: string | null = fileCheckpoint?.objectPath === objectPath ? fileCheckpoint.recordId : null;
-    let sourceFileStatus: "staged" | "reused" = "staged";
+    let campaignId: string | null = fileCheckpoint?.campaignId || null;
+    let importFileId: string | null = fileCheckpoint?.recordId || null;
+    let sourceFileStatus: "staged" | "reused" = fileCheckpoint ? "reused" : "staged";
     const totals: StageSummary = {
-      received: 0,
+      received: stageable.length,
       staged: 0,
       duplicates: deduped.duplicates.length,
       blocked: blocked.length,
-      campaignId: campaignId,
-      sourceFileStatus: "staged",
+      campaignId,
+      sourceFileStatus,
       sourceFileRecordId: importFileId,
     };
 
     try {
-      const existing = await loadImportFile(objectPath);
+      const existing = await lookupSourceFile(sourceChecksum, sheet.name, sourceFile.name);
       if (existing) {
         campaignId = existing.campaign_id;
         importFileId = existing.id;
         sourceFileStatus = "reused";
-        setFileCheckpoint({ recordId: existing.id, campaignId: existing.campaign_id, objectPath, status: existing.status });
+        setFileCheckpoint({ recordId: existing.id, campaignId: existing.campaign_id, status: existing.status });
         if (existing.status === "staged") {
-          const alreadyStaged: StageSummary = {
+          const reused: StageSummary = {
             received: existing.parsed_row_count,
             staged: existing.staged_row_count,
             duplicates: existing.duplicate_count,
@@ -149,8 +153,8 @@ export default function AdminLeadIntake() {
             sourceFileRecordId: existing.id,
           };
           setProgress(100);
-          setSummary(alreadyStaged);
-          toast({ title: "Workbook already staged", description: "The existing private source-file checkpoint was reused. No duplicate file, candidate import, email or WhatsApp send occurred." });
+          setSummary(reused);
+          toast({ title: "Workbook already staged", description: "The saved private checkpoint was reused. No duplicate file, candidate import, email or WhatsApp send occurred." });
           return;
         }
       }
@@ -171,37 +175,37 @@ export default function AdminLeadIntake() {
         if (invokeError || data?.ok !== true) throw new Error(data?.error || invokeError?.message || `Chunk ${index + 1} failed`);
         campaignId = String(data.campaign_id || campaignId || "") || null;
         if (!campaignId) throw new Error("Candidate campaign was not created");
-
-        totals.received += Number(data.received_count || rows.length);
-        totals.staged += Number(data.staged_count || 0);
-        totals.duplicates += Number(data.duplicate_count || 0);
-        totals.blocked += Number(data.blocked_count || 0);
         totals.campaignId = campaignId;
+        totals.staged += Number(data.staged_count || 0);
+        const retryDuplicates = Array.isArray(data.duplicates)
+          ? data.duplicates.filter((item: Record<string, unknown>) => item.retry_safe === true).length
+          : 0;
+        totals.duplicates += Math.max(0, Number(data.duplicate_count || 0) - retryDuplicates);
+        totals.blocked += Number(data.blocked_count || 0);
 
         if (!importFileId) {
-          const checkpoint = await retainPrivateSourceFile({
+          const prepared = await prepareSourceFile({
+            campaignId,
             file: sourceFile,
             checksum: sourceChecksum,
-            objectPath,
-            campaignId,
             sheetName: sheet.name,
             parsedRowCount: sheet.rawRowCount,
             totals,
-            userId: user.id,
           });
-          importFileId = checkpoint.id;
-          totals.sourceFileRecordId = checkpoint.id;
-          setFileCheckpoint({ recordId: checkpoint.id, campaignId, objectPath, status: checkpoint.status });
+          importFileId = prepared.file?.id || null;
+          if (!importFileId) throw new Error("Private source-file record was not created");
+          if (prepared.upload_required) {
+            if (!prepared.signed_url) throw new Error("Private signed file route was not returned");
+            await sendBinaryToSignedRoute(prepared.signed_url, sourceFile, leadFileMimeType(sourceFile));
+            const confirmedFile = await confirmSourceFile(importFileId, sheet.rawRowCount, totals);
+            setFileCheckpoint({ recordId: confirmedFile.id, campaignId, status: confirmedFile.status });
+          } else if (prepared.file) {
+            setFileCheckpoint({ recordId: prepared.file.id, campaignId, status: prepared.file.status });
+          }
+          totals.sourceFileRecordId = importFileId;
         }
 
-        await updateImportFile(importFileId, {
-          parsed_row_count: sheet.rawRowCount,
-          staged_row_count: totals.staged,
-          duplicate_count: totals.duplicates,
-          blocked_count: totals.blocked,
-          status: "uploaded",
-          error: null,
-        });
+        await saveSourceCheckpoint(importFileId, "uploaded", sheet.rawRowCount, totals, null);
         setProgress(Math.round(((index + 1) / chunks.length) * 100));
       }
 
@@ -210,35 +214,21 @@ export default function AdminLeadIntake() {
         body: { action: "finalize", campaign_id: campaignId },
       });
       if (finalError || finalData?.ok !== true) throw new Error(finalData?.error || finalError?.message || "Campaign finalization failed");
-
-      await updateImportFile(importFileId, {
-        parsed_row_count: sheet.rawRowCount,
-        staged_row_count: totals.staged,
-        duplicate_count: totals.duplicates,
-        blocked_count: totals.blocked,
-        status: "staged",
-        error: null,
-      });
-      setFileCheckpoint({ recordId: importFileId, campaignId, objectPath, status: "staged" });
+      totals.staged = Number(finalData?.campaign?.discovered_count ?? totals.staged);
       totals.sourceFileStatus = sourceFileStatus;
       totals.sourceFileRecordId = importFileId;
+      await saveSourceCheckpoint(importFileId, "staged", sheet.rawRowCount, totals, null);
+      setFileCheckpoint({ recordId: importFileId, campaignId, status: "staged" });
       setSummary(totals);
       toast({
         title: "Lead staging completed",
-        description: `${totals.staged} added to review · ${totals.duplicates} duplicates skipped · ${totals.blocked} blocked. Original workbook retained privately. No message was sent.`,
+        description: `${totals.staged} candidates in review · ${totals.duplicates} duplicates skipped · ${totals.blocked} blocked. Original workbook retained privately. No message was sent.`,
       });
     } catch (failure) {
       const message = failure instanceof Error ? failure.message : "Lead staging failed";
-      if (importFileId) {
-        await updateImportFile(importFileId, {
-          parsed_row_count: sheet.rawRowCount,
-          staged_row_count: totals.staged,
-          duplicate_count: totals.duplicates,
-          blocked_count: totals.blocked,
-          status: "failed",
-          error: message,
-        }, false);
-        if (campaignId) setFileCheckpoint({ recordId: importFileId, campaignId, objectPath, status: "failed" });
+      if (importFileId && sheet) {
+        await saveSourceCheckpoint(importFileId, "failed", sheet.rawRowCount, totals, message, false);
+        if (campaignId) setFileCheckpoint({ recordId: importFileId, campaignId, status: "failed" });
       }
       setError(`${message}${campaignId ? ` Campaign checkpoint: ${campaignId}` : ""}`);
       toast({ title: "Lead staging stopped safely", description: message, variant: "destructive" });
@@ -272,7 +262,7 @@ export default function AdminLeadIntake() {
               <p className="text-[10px] uppercase tracking-[0.22em] text-gold">Owner-only · Candidate staging</p>
               <h1 className="mt-2 font-display text-3xl sm:text-4xl">Bulk Lead Intake Center</h1>
               <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-                Upload a deduplicated XLSX or CSV. The browser previews and normalizes it, then the private backend stages unique companies into the review queue in restartable 100-row chunks. A valid business email or WhatsApp number is accepted as the contact route. CRM promotion and all messaging remain separate owner approvals.
+                Upload an XLSX or CSV. The browser previews and normalizes it, while authenticated Edge Functions retain the original file privately and stage unique companies in restartable 100-row chunks. A valid business email or WhatsApp number is accepted. CRM promotion and all messaging remain separate owner approvals.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -284,7 +274,7 @@ export default function AdminLeadIntake() {
         </header>
 
         <div className="border border-sky-500/30 bg-sky-500/[0.04] p-4 text-sm text-foreground/70">
-          <div className="flex items-start gap-3"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-sky-300" /><p>The original XLSX/CSV is retained only in the private <code>crm-private-files</code> bucket after owner-confirmed staging. It receives no public URL. Checksum-based paths and database checkpoints prevent duplicate uploads on retry. This page cannot import to CRM or send outreach.</p></div>
+          <div className="flex items-start gap-3"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-sky-300" /><p>The original workbook receives a short-lived, checksum-scoped private write route from an admin-only backend function. It never receives a public URL. Checkpoints prevent duplicate files and duplicate candidate rows on retry.</p></div>
         </div>
 
         {error && <div className="border border-red-500/40 bg-red-500/5 p-4 text-sm text-red-200">{error}</div>}
@@ -293,7 +283,7 @@ export default function AdminLeadIntake() {
           <section className="border border-dashed border-border/60 p-12 text-center">
             {parsing ? <Loader2 size={32} className="mx-auto animate-spin text-gold" /> : <FileSpreadsheet size={36} className="mx-auto text-gold" />}
             <h2 className="mt-4 font-display text-2xl">{parsing ? "Reading lead workbook…" : "Choose the master lead file"}</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">The parser recognizes Irha Trachten and International master columns, including title rows before the real header, email-only contacts, WhatsApp-only contacts and combined Phone / WhatsApp columns.</p>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">The parser supports title rows, email-only contacts, WhatsApp-only contacts and combined Phone / WhatsApp columns.</p>
           </section>
         ) : (
           <>
@@ -319,16 +309,13 @@ export default function AdminLeadIntake() {
                   <p>Backend chunk size: {CHUNK_SIZE}</p>
                   <p>Stageable: {stageable.length}</p>
                   <p>Missing source/company: {blocked.length}</p>
-                  <p>Private file: {fileCheckpoint?.status || "not uploaded"}</p>
+                  <p>Private file: {fileCheckpoint?.status || "not retained"}</p>
                 </div>
                 <button type="button" onClick={exportExceptions} disabled={blocked.length + deduped.duplicates.length === 0} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 border border-border/60 px-3 text-[9px] uppercase tracking-[0.14em] hover:border-gold hover:text-gold disabled:opacity-35"><Download size={12} /> Export exceptions</button>
               </aside>
 
               <section className="border border-border/60 bg-card/25">
-                <div className="border-b border-border/60 p-4 sm:p-5">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-gold">Preview · first 100 unique rows</p>
-                  <h2 className="mt-1 font-display text-2xl">Review before staging</h2>
-                </div>
+                <div className="border-b border-border/60 p-4 sm:p-5"><p className="text-[10px] uppercase tracking-[0.16em] text-gold">Preview · first 100 unique rows</p><h2 className="mt-1 font-display text-2xl">Review before staging</h2></div>
                 <div className="max-h-[58vh] divide-y divide-border/50 overflow-y-auto">
                   {deduped.unique.slice(0, 100).map((row) => (
                     <article key={`${row.sourceRow}-${row.fingerprint}`} className="p-4">
@@ -354,7 +341,7 @@ export default function AdminLeadIntake() {
 
         {summary && (
           <section className="border border-emerald-500/35 bg-emerald-500/5 p-5">
-            <div className="flex items-start gap-3"><CheckCircle2 size={20} className="mt-0.5 shrink-0 text-emerald-300" /><div><h2 className="font-display text-2xl">Staging checkpoint completed</h2><p className="mt-2 text-sm text-foreground/70">{summary.staged} candidates added · {summary.duplicates} duplicates skipped · {summary.blocked} blocked. Campaign: <span className="break-all text-gold">{summary.campaignId}</span></p><p className="mt-1 text-xs text-foreground/60">Private source workbook: {summary.sourceFileStatus} · audit record <span className="break-all">{summary.sourceFileRecordId}</span></p><a href="/admin" className="mt-4 inline-flex min-h-11 items-center border border-emerald-500/40 px-4 text-[10px] uppercase tracking-[0.14em] text-emerald-300 hover:bg-emerald-500/10">Open AI Outreach and approve strict-ready companies</a></div></div>
+            <div className="flex items-start gap-3"><CheckCircle2 size={20} className="mt-0.5 shrink-0 text-emerald-300" /><div><h2 className="font-display text-2xl">Staging checkpoint completed</h2><p className="mt-2 text-sm text-foreground/70">{summary.staged} candidates in review · {summary.duplicates} duplicates skipped · {summary.blocked} blocked. Campaign: <span className="break-all text-gold">{summary.campaignId}</span></p><p className="mt-1 text-xs text-foreground/60">Private source workbook: {summary.sourceFileStatus} · audit record <span className="break-all">{summary.sourceFileRecordId}</span></p><a href="/admin" className="mt-4 inline-flex min-h-11 items-center border border-emerald-500/40 px-4 text-[10px] uppercase tracking-[0.14em] text-emerald-300 hover:bg-emerald-500/10">Open AI Outreach and approve strict-ready companies</a></div></div>
           </section>
         )}
       </div>
@@ -362,43 +349,21 @@ export default function AdminLeadIntake() {
   );
 }
 
-async function loadImportFile(objectPath: string): Promise<ImportFileRow | null> {
-  const { data, error } = await db.from("lead_import_files").select("id,campaign_id,object_path,parsed_row_count,staged_row_count,duplicate_count,blocked_count,status,error").eq("object_path", objectPath).maybeSingle();
-  if (error) throw new Error(`Private lead-file registry is not ready: ${error.message}`);
-  return data as ImportFileRow | null;
+async function registry(body: Record<string, unknown>): Promise<RegistryResponse> {
+  const { data, error } = await supabase.functions.invoke("lead-file-registry", { body });
+  if (error || data?.ok !== true) throw new Error(data?.error || error?.message || "Private lead-file operation failed");
+  return data as RegistryResponse;
 }
 
-async function retainPrivateSourceFile(input: {
-  file: File;
-  checksum: string;
-  objectPath: string;
-  campaignId: string;
-  sheetName: string;
-  parsedRowCount: number;
-  totals: StageSummary;
-  userId: string;
-}): Promise<ImportFileRow> {
-  let uploadedNow = false;
-  const upload = await supabase.storage.from(PRIVATE_FILE_BUCKET).upload(input.objectPath, input.file, {
-    upsert: false,
-    contentType: leadFileMimeType(input.file),
-    cacheControl: "3600",
-  });
-  if (upload.error) {
-    const folder = input.objectPath.split("/").slice(0, -1).join("/");
-    const fileName = input.objectPath.split("/").pop() || "";
-    const existing = await supabase.storage.from(PRIVATE_FILE_BUCKET).list(folder, { search: fileName, limit: 10 });
-    if (existing.error || !existing.data?.some((item) => item.name === fileName)) {
-      throw new Error(`Private source-file upload failed: ${upload.error.message}`);
-    }
-  } else {
-    uploadedNow = true;
-  }
+async function lookupSourceFile(checksum: string, sheetName: string, fileName: string) {
+  const data = await registry({ action: "lookup", checksum_sha256: checksum, sheet_name: sheetName, file_name: fileName });
+  return data.found ? data.file || null : null;
+}
 
-  const { data, error } = await db.from("lead_import_files").insert({
+async function prepareSourceFile(input: { campaignId: string; file: File; checksum: string; sheetName: string; parsedRowCount: number; totals: StageSummary }) {
+  return await registry({
+    action: "prepare",
     campaign_id: input.campaignId,
-    bucket: PRIVATE_FILE_BUCKET,
-    object_path: input.objectPath,
     file_name: input.file.name,
     mime_type: leadFileMimeType(input.file),
     size_bytes: input.file.size,
@@ -408,21 +373,42 @@ async function retainPrivateSourceFile(input: {
     staged_row_count: input.totals.staged,
     duplicate_count: input.totals.duplicates,
     blocked_count: input.totals.blocked,
-    status: "uploaded",
-    error: null,
-    created_by: input.userId,
-  }).select("id,campaign_id,object_path,parsed_row_count,staged_row_count,duplicate_count,blocked_count,status,error").single();
-
-  if (error || !data) {
-    if (uploadedNow) await supabase.storage.from(PRIVATE_FILE_BUCKET).remove([input.objectPath]);
-    throw new Error(`Private source-file metadata failed: ${error?.message || "record not created"}`);
-  }
-  return data as ImportFileRow;
+  });
 }
 
-async function updateImportFile(id: string, values: Record<string, unknown>, required = true) {
-  const { error } = await db.from("lead_import_files").update(values).eq("id", id);
-  if (error && required) throw new Error(`Private source-file checkpoint failed: ${error.message}`);
+async function sendBinaryToSignedRoute(signedUrl: string, file: File, mimeType: string) {
+  const response = await fetch(signedUrl, { method: "PUT", headers: { "Content-Type": mimeType, "x-upsert": "false" }, body: file });
+  if (!response.ok) throw new Error(`Private file transfer failed (${response.status})`);
+}
+
+async function confirmSourceFile(fileId: string, parsedRowCount: number, totals: StageSummary): Promise<ImportFileRow> {
+  const data = await registry({
+    action: "confirm",
+    file_id: fileId,
+    parsed_row_count: parsedRowCount,
+    staged_row_count: totals.staged,
+    duplicate_count: totals.duplicates,
+    blocked_count: totals.blocked,
+  });
+  if (!data.file) throw new Error("Private source-file confirmation returned no record");
+  return data.file;
+}
+
+async function saveSourceCheckpoint(fileId: string, status: ImportFileStatus, parsedRowCount: number, totals: StageSummary, errorText: string | null, required = true) {
+  try {
+    await registry({
+      action: "checkpoint",
+      file_id: fileId,
+      status,
+      parsed_row_count: parsedRowCount,
+      staged_row_count: totals.staged,
+      duplicate_count: totals.duplicates,
+      blocked_count: totals.blocked,
+      error: errorText,
+    });
+  } catch (failure) {
+    if (required) throw failure;
+  }
 }
 
 function dedupeRows(rows: LeadIntakeRow[]) {
@@ -460,52 +446,10 @@ function toPayload(row: LeadIntakeRow) {
     fingerprint: row.fingerprint,
   };
 }
-
-function chunk<T>(values: T[], size: number) {
-  const output: T[][] = [];
-  for (let index = 0; index < values.length; index += size) output.push(values.slice(index, index + size));
-  return output;
-}
-
-function leadImportObjectPath(checksum: string, sheetName: string, fileName: string) {
-  return `lead-imports/${checksum}/${safeFilePart(sheetName)}/${safeFilePart(fileName)}`;
-}
-
-function safeFilePart(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 160) || "file";
-}
-
-function leadFileMimeType(file: File) {
-  if (file.name.toLowerCase().endsWith(".csv")) return "text/csv";
-  return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-}
-
-async function sha256(file: File) {
-  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-  return Array.from(new Uint8Array(digest)).map((value) => value.toString(16).padStart(2, "0")).join("");
-}
-
-function csvCell(value: unknown) {
-  const text = value === null || value === undefined ? "" : String(value);
-  const safe = /^[\t\r\n ]*[=+\-@]/.test(text) ? `'${text}` : text;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
-
-function download(filename: string, content: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8" }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-function Metric({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
-  return <div className="border border-border/60 bg-card/30 p-4"><div className="flex items-center gap-2 text-gold">{icon}<p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{label}</p></div><p className="mt-2 font-display text-2xl tabular-nums">{value.toLocaleString()}</p></div>;
-}
-
-function Centered({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-[60vh] flex items-center justify-center text-sm text-muted-foreground">{children}</div>;
-}
+function chunk<T>(values: T[], size: number) { const output: T[][] = []; for (let index = 0; index < values.length; index += size) output.push(values.slice(index, index + size)); return output; }
+function leadFileMimeType(file: File) { return file.name.toLowerCase().endsWith(".csv") ? "text/csv" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; }
+async function sha256(file: File) { const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer()); return Array.from(new Uint8Array(digest)).map((value) => value.toString(16).padStart(2, "0")).join(""); }
+function csvCell(value: unknown) { const text = value === null || value === undefined ? "" : String(value); const safe = /^[\t\r\n ]*[=+\-@]/.test(text) ? `'${text}` : text; return `"${safe.replace(/"/g, '""')}"`; }
+function download(filename: string, content: string) { const url = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename; document.body.appendChild(anchor); anchor.click(); anchor.remove(); URL.revokeObjectURL(url); }
+function Metric({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) { return <div className="border border-border/60 bg-card/30 p-4"><div className="flex items-center gap-2 text-gold">{icon}<p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{label}</p></div><p className="mt-2 font-display text-2xl tabular-nums">{value.toLocaleString()}</p></div>; }
+function Centered({ children }: { children: React.ReactNode }) { return <div className="min-h-[60vh] flex items-center justify-center text-sm text-muted-foreground">{children}</div>; }
