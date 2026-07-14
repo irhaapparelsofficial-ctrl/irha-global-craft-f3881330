@@ -54,6 +54,9 @@ verify_jwt = true
 [functions.social-calendar]
 verify_jwt = true
 
+[functions.social-autopilot]
+verify_jwt = true
+
 [functions.social-multi-sync]
 verify_jwt = true
 
