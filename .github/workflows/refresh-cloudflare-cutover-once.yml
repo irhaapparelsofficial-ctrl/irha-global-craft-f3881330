@@ -1,0 +1,95 @@
+name: Refresh Cloudflare Cutover Once
+
+on:
+  push:
+    branches:
+      - ops/cloudflare-custom-domain-cutover-20260714-v1
+    paths:
+      - ".github/workflows/refresh-cloudflare-cutover-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ops/cloudflare-custom-domain-cutover-20260714-v1
+          fetch-depth: 0
+
+      - name: Make cutover SHA-dynamic and account-safe
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/cloudflare-custom-domain-cutover-v1.yml')
+          source = path.read_text()
+
+          old_sha = '  EXPECTED_MAIN_SHA: dd29d370a5da7a93395e0a3f501f388a1944d7b6'
+          new_sha = '  EXPECTED_MAIN_SHA: ${{ github.event.pull_request.base.sha }}'
+          if old_sha in source:
+              source = source.replace(old_sha, new_sha, 1)
+          elif new_sha not in source:
+              raise SystemExit('expected SHA marker not found')
+
+          old_validation = '          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]\n'
+          if old_validation in source:
+              source = source.replace(old_validation, '', 1)
+
+          verify_marker = '''          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = true\n\n'''
+          resolver_marker = '          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then\n'
+          resolver = '''          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            embedded_account_id="$(printf '%s' "$account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
+            if [[ "$embedded_account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+              account_id="$embedded_account_id"
+              echo 'Normalized Account ID from configured secret'
+            else
+              accounts_json="$(curl -fsS \
+                -H "Authorization: Bearer $token" \
+                -H 'Content-Type: application/json' \
+                'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+              test "$(printf '%s' "$accounts_json" | jq -r '.success // false')" = true
+              account_count="$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')"
+              test "$account_count" = 1 || {
+                echo "Cloudflare token can access $account_count accounts; exact CLOUDFLARE_ACCOUNT_ID is required"
+                exit 1
+              }
+              account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+              echo 'Resolved the only Cloudflare account accessible to this token'
+            fi
+          fi
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {
+            echo 'Cloudflare Account ID could not be resolved safely'
+            exit 1
+          }
+          echo "::add-mask::$account_id"
+
+'''
+          if resolver_marker not in source:
+              if source.count(verify_marker) != 1:
+                  raise SystemExit('token verification insertion marker missing or duplicated')
+              source = source.replace(verify_marker, verify_marker + resolver, 1)
+
+          required = [new_sha, resolver_marker, 'accounts?per_page=50', 'Cloudflare Account ID could not be resolved safely']
+          missing = [item for item in required if item not in source]
+          if missing:
+              raise SystemExit(f'cutover refresh verification failed: {missing}')
+
+          path.write_text(source)
+          PY
+
+      - name: Commit refreshed cutover and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/refresh-cloudflare-cutover-once.yml
+          git config user.name "irhaapparelsofficial-ctrl"
+          git config user.email "irhaapparelsofficial@gmail.com"
+          git add .github/workflows/cloudflare-custom-domain-cutover-v1.yml .github/workflows/refresh-cloudflare-cutover-once.yml
+          git commit -m "fix(ops): refresh guarded Cloudflare cutover"
+          git push origin HEAD:ops/cloudflare-custom-domain-cutover-20260714-v1
