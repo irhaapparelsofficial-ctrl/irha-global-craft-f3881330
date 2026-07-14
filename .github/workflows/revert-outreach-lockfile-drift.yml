@@ -1,0 +1,34 @@
+name: Revert Outreach Lockfile Drift
+
+on:
+  push:
+    branches:
+      - feature/lead-outreach-safe-v3
+    paths:
+      - ".github/workflows/revert-outreach-lockfile-drift.yml"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  revert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/lead-outreach-safe-v3
+          fetch-depth: 0
+      - name: Restore exact latest-main lockfile
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout origin/main -- package-lock.json
+          rm .github/workflows/revert-outreach-lockfile-drift.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json .github/workflows/revert-outreach-lockfile-drift.yml
+          git commit -m "ops: remove unrelated lockfile drift"
+          git push origin HEAD:feature/lead-outreach-safe-v3
