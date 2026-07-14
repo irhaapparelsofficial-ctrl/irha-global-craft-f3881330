@@ -23,6 +23,8 @@ concurrency:
 env:
   PRODUCTION_BRANCH: main
   PRODUCTION_URL: https://irha-apparels.pages.dev
+  CUSTOM_DOMAIN_URL: https://irhaapparels.com
+  WWW_CUSTOM_DOMAIN_URL: https://www.irhaapparels.com
 
 jobs:
   deploy:
@@ -246,6 +248,62 @@ jobs:
             exit 1
           }
 
+      - name: Verify custom domain serves exact release
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_fingerprint="$(jq -r '.build_fingerprint // empty' /tmp/production-build.json)"
+          [[ "$expected_fingerprint" =~ ^[0-9a-f]{64}$ ]]
+
+          for base_url in "$CUSTOM_DOMAIN_URL" "$WWW_CUSTOM_DOMAIN_URL"; do
+            ready=0
+            host="${base_url#https://}"
+            safe_host="$(printf '%s' "$host" | tr -c 'A-Za-z0-9._-' '_')"
+
+            for attempt in $(seq 1 24); do
+              cache_bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
+              home_file="/tmp/${safe_host}-home.html"
+              header_file="/tmp/${safe_host}-headers"
+              build_file="/tmp/${safe_host}-build.json"
+              deployment_file="/tmp/${safe_host}-cloudflare-deployment.json"
+
+              if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                "$base_url/?release_check=$cache_bust" -o "$home_file" -D "$header_file" \
+                && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                "$base_url/build.json?release_check=$cache_bust" -o "$build_file" \
+                && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                "$base_url/cloudflare-deployment.json?release_check=$cache_bust" -o "$deployment_file"; then
+
+                if grep -Eiq '^HTTP/[0-9.]+ (200|301|302|307|308)' "$header_file" \
+                  && grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' "$home_file" \
+                  && grep -Eiq 'Custom Apparel Manufacturer for Global B2B Buyers|Custom Apparel Manufacturing for Global B2B Buyers' "$home_file" \
+                  && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg supabase 'pvzjiozismyxqrzmtfbi' --arg fingerprint "$expected_fingerprint" \
+                    '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == $supabase and .build_fingerprint == $fingerprint' \
+                    "$build_file" >/dev/null \
+                  && jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" --arg fingerprint "$expected_fingerprint" \
+                    '.source_sha == $sha and .repository == $repo and .branch == "main" and .build_fingerprint == $fingerprint' \
+                    "$deployment_file" >/dev/null; then
+                  ready=1
+                  echo "$base_url verified on attempt $attempt"
+                  break
+                fi
+              fi
+
+              echo "$base_url not converged yet (attempt $attempt/24)"
+              sleep 10
+            done
+
+            test "$ready" = "1" || {
+              echo "Custom domain did not converge to the exact production release: $base_url"
+              exit 1
+            }
+
+            if grep -Eiq 'Since 2014|MOQ 50|45-Day Delivery|45-day delivery|reply within 12 hours|BSCI Audited|ISO 9001:2015|SEDEX Member' "/tmp/${safe_host}-home.html"; then
+              echo "Blocked legacy production claims are present on $base_url"
+              exit 1
+            fi
+          done
+
       - name: Verify domain configuration was not changed
         shell: bash
         run: |
@@ -273,5 +331,7 @@ jobs:
             echo "- New deployment ID: \`$latest_deployment_id\`"
             echo "- Build fingerprint: \`$(jq -r '.build_fingerprint' /tmp/production-build.json)\`"
             echo "- Domain count unchanged: $final_domain_count"
+            echo "- Custom domain verified: $CUSTOM_DOMAIN_URL"
+            echo "- WWW domain verified: $WWW_CUSTOM_DOMAIN_URL"
             echo "- DNS/custom domains were not modified by this workflow"
           } >> "$GITHUB_STEP_SUMMARY"
