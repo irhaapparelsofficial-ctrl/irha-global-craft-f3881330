@@ -32,9 +32,10 @@ describe("bulk lead intake safety", () => {
     expect(backend).not.toContain("process-email-queue");
   });
 
-  it("stages candidates for review instead of importing directly to CRM", () => {
+  it("stages candidates idempotently for review instead of importing directly to CRM", () => {
     expect(backend).toContain('verification_status: "needs_review"');
-    expect(backend).toContain('.from("lead_candidates").insert');
+    expect(backend).toContain('db.from("lead_candidates")');
+    expect(backend).toContain('.upsert(inserts, { onConflict: "campaign_id,import_fingerprint", ignoreDuplicates: true })');
     expect(backend).not.toContain('.from("b2b_leads").insert');
   });
 
