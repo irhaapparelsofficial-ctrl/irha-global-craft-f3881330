@@ -1,0 +1,387 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Irha Apparels Public Lead Gateway",
+    "version": "1.0.0",
+    "description": "Rate-limited public gateway for B2B inquiries, catalogue requests and signed inquiry-file upload tickets. This API does not expose admin data and does not publish fixed commercial commitments."
+  },
+  "servers": [
+    {
+      "url": "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1"
+    }
+  ],
+  "paths": {
+    "/public-lead-gateway": {
+      "post": {
+        "operationId": "publicLeadGateway",
+        "summary": "Submit a public buyer request or create a signed upload ticket",
+        "description": "The action field selects one of three validated operations. Requests are rate-limited, honeypot-protected and server-validated. Side-effecting submissions should only be sent after the buyer has reviewed and confirmed the information.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GatewayRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request accepted or upload ticket created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewaySuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or unsupported request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin not allowed"
+          },
+          "405": {
+            "description": "Method not allowed"
+          },
+          "429": {
+            "description": "Rate limit exceeded; Retry-After is returned"
+          },
+          "500": {
+            "description": "Request could not be processed"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publicLeadGatewayCors",
+        "summary": "CORS preflight",
+        "responses": {
+          "204": {
+            "description": "Preflight accepted"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GatewayRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/InquiryRequest"
+          },
+          {
+            "$ref": "#/components/schemas/CatalogueRequest"
+          },
+          {
+            "$ref": "#/components/schemas/UploadTicketRequest"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "action"
+        }
+      },
+      "InquiryRequest": {
+        "type": "object",
+        "required": [
+          "action",
+          "payload"
+        ],
+        "properties": {
+          "action": {
+            "const": "submit_inquiry"
+          },
+          "payload": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "inquiry",
+                  "connect",
+                  "quote",
+                  "mockup"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 100
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "maxLength": 254
+              },
+              "phone": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "whatsapp": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "company": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "country": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "category": {
+                "type": "string",
+                "maxLength": 180
+              },
+              "quantity": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 12000
+              },
+              "inquiry_ref": {
+                "type": "string",
+                "pattern": "^IRQ-[A-Z0-9-]{6,70}$"
+              },
+              "form_started_at": {
+                "type": "number",
+                "description": "Client timestamp used by anti-bot timing checks"
+              },
+              "website": {
+                "type": "string",
+                "description": "Honeypot field; leave empty"
+              },
+              "files": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {
+                  "$ref": "#/components/schemas/UploadedFileReference"
+                }
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "email"
+                ]
+              },
+              {
+                "required": [
+                  "phone"
+                ]
+              },
+              {
+                "required": [
+                  "whatsapp"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "CatalogueRequest": {
+        "type": "object",
+        "required": [
+          "action",
+          "payload"
+        ],
+        "properties": {
+          "action": {
+            "const": "submit_catalogue"
+          },
+          "payload": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 100
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "maxLength": 254
+              },
+              "whatsapp": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "company_name": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "country": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "category_interest": {
+                "type": "string",
+                "maxLength": 180
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 6000
+              },
+              "form_started_at": {
+                "type": "number"
+              },
+              "website": {
+                "type": "string",
+                "description": "Honeypot field; leave empty"
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "email"
+                ]
+              },
+              {
+                "required": [
+                  "whatsapp"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "UploadTicketRequest": {
+        "type": "object",
+        "required": [
+          "action",
+          "payload"
+        ],
+        "properties": {
+          "action": {
+            "const": "create_upload"
+          },
+          "payload": {
+            "type": "object",
+            "required": [
+              "filename",
+              "mime",
+              "size",
+              "purpose"
+            ],
+            "properties": {
+              "filename": {
+                "type": "string",
+                "maxLength": 240
+              },
+              "mime": {
+                "type": "string",
+                "enum": [
+                  "application/pdf",
+                  "image/jpeg",
+                  "image/png",
+                  "image/webp"
+                ]
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10485760
+              },
+              "purpose": {
+                "type": "string",
+                "enum": [
+                  "inquiry",
+                  "mockup"
+                ]
+              },
+              "form_started_at": {
+                "type": "number"
+              },
+              "website": {
+                "type": "string",
+                "description": "Honeypot field; leave empty"
+              }
+            }
+          }
+        }
+      },
+      "UploadedFileReference": {
+        "type": "object",
+        "required": [
+          "path",
+          "name",
+          "size",
+          "mime"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^requests/"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 240
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          },
+          "mime": {
+            "type": "string",
+            "maxLength": 100
+          }
+        }
+      },
+      "GatewaySuccess": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "max_size": {
+            "type": "integer"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
