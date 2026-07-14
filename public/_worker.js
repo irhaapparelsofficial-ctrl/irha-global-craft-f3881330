@@ -26,7 +26,6 @@ const EXACT_PUBLIC_PATHS = new Set([
   "/faq",
   "/blog",
   "/sustainability",
-  "/shipping-returns",
   "/inquiry",
   "/repeat-order",
   "/contact",
@@ -52,7 +51,16 @@ const EXACT_PUBLIC_PATHS = new Set([
   "/seo-indexing",
 ]);
 
-const COUNTRY_ALIASES = new Map([
+const LEGACY_ALIASES = new Map([
+  ["/buyer-trust-center", "/buyer-trust"],
+  ["/buyer-trust-centre", "/buyer-trust"],
+  ["/buyer-resources", "/resources"],
+  ["/buyer-faq", "/faq"],
+  ["/shipping-returns", "/resources"],
+  [
+    "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe",
+    "/products/leisure-nightwear/plush-bathrobe-sleep-robe",
+  ],
   ["/germany", "/markets/germany"],
   ["/austria", "/markets/austria"],
   ["/switzerland", "/markets/switzerland"],
@@ -65,6 +73,17 @@ const COUNTRY_ALIASES = new Map([
   ["/australia", "/markets/australia"],
   ["/new-zealand", "/markets/new-zealand"],
 ]);
+
+const PRIVATE_ROUTE_PREFIXES = [
+  "/admin",
+  "/auth",
+  "/dashboard",
+  "/login",
+  "/log-in",
+  "/signin",
+  "/sign-in",
+  "/seo-indexing",
+];
 
 const PUBLIC_PREFIXES = [
   "/products/",
@@ -95,6 +114,17 @@ function normalizePath(pathname) {
 function looksLikeFile(pathname) {
   const segment = pathname.split("/").pop() || "";
   return segment.includes(".");
+}
+
+export function legacyAliasTarget(pathname) {
+  return LEGACY_ALIASES.get(normalizePath(pathname)) || null;
+}
+
+export function shouldNoIndex(pathname) {
+  const normalized = normalizePath(pathname);
+  return PRIVATE_ROUTE_PREFIXES.some(
+    (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
+  );
 }
 
 export function isKnownHtmlRoute(pathname) {
@@ -128,7 +158,7 @@ function aliasRedirect(request, url, targetPath) {
     headers: {
       Location: target.toString(),
       "Cache-Control": "public, max-age=3600",
-      "X-Irha-Legacy-Redirect": "country-market-canonical",
+      "X-Irha-Legacy-Redirect": "canonical-alias",
     },
   });
 }
@@ -147,6 +177,17 @@ function notFoundResponse(request, pathname) {
   });
 }
 
+function withPrivateRouteHeaders(response) {
+  const headers = new Headers(response.headers);
+  headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -154,7 +195,7 @@ export default {
 
     if (url.hostname === WWW_HOST) return canonicalRedirect(request, url);
 
-    const aliasTarget = COUNTRY_ALIASES.get(pathname);
+    const aliasTarget = legacyAliasTarget(pathname);
     if (aliasTarget) return aliasRedirect(request, url, aliasTarget);
 
     if ((request.method === "GET" || request.method === "HEAD") && !isKnownHtmlRoute(pathname)) {
@@ -168,6 +209,9 @@ export default {
       });
     }
 
-    return env.ASSETS.fetch(request);
+    const assetResponse = await env.ASSETS.fetch(request);
+    return shouldNoIndex(pathname)
+      ? withPrivateRouteHeaders(assetResponse)
+      : assetResponse;
   },
 };
