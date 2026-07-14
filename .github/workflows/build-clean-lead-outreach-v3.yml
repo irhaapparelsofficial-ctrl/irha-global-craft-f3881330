@@ -6,6 +6,9 @@ on:
       - feature/lead-outreach-safe-v3
     paths:
       - ".github/workflows/build-clean-lead-outreach-v3.yml"
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
