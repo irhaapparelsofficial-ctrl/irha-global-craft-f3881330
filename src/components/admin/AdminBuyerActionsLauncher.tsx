@@ -64,7 +64,7 @@ export default function AdminBuyerActionsLauncher() {
         <a
           href="/admin/live-chat"
           className="min-h-12 inline-flex items-center gap-2 rounded-full border border-emerald-500/55 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-emerald-300 shadow-2xl backdrop-blur hover:bg-emerald-500 hover:text-background"
-          aria-label="Open Human Live Chat"
+          aria-label="Open human live chat console"
         >
           <MessageSquare size={17} /> Live Chat
         </a>
