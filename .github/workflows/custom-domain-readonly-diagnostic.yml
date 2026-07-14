@@ -12,43 +12,12 @@ permissions:
 jobs:
   inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
     steps:
-      - name: Inspect apex and www without mutation
-        shell: bash
-        run: |
-          set -u
-          for host in irhaapparels.com www.irhaapparels.com; do
-            echo "=== $host ==="
-            for path in / /build.json /cloudflare-deployment.json; do
-              body="/tmp/${host//./_}${path//\//_}.body"
-              headers="/tmp/${host//./_}${path//\//_}.headers"
-              meta="$(curl -sS -L --connect-timeout 10 --max-time 30 -D "$headers" -o "$body" -w 'code=%{http_code} final=%{url_effective} type=%{content_type}' "https://$host$path?runtime_diag=${GITHUB_RUN_ID}-${RANDOM}" 2>&1)"
-              echo "$path $meta"
-              if [ "$path" = "/" ]; then
-                if grep -Fq 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' "$body" 2>/dev/null; then
-                  echo "home_marker=present"
-                else
-                  echo "home_marker=missing"
-                fi
-                title="$(grep -Eio '<title>[^<]+' "$body" 2>/dev/null | head -n1 | sed 's/<title>//I' || true)"
-                echo "title=${title:-unavailable}"
-              else
-                if jq -e . "$body" >/dev/null 2>&1; then
-                  jq -c '{source_commit,source_sha,repository,branch,supabase_project_id,source_identity_state,build_fingerprint,build_fingerprint_algorithm}' "$body"
-                else
-                  echo -n 'non_json_prefix='
-                  head -c 160 "$body" | tr '\n' ' '
-                  echo
-                fi
-              fi
-            done
-          done
-
       - name: Inspect Cloudflare Pages and DNS state read-only
         shell: bash
         run: |
@@ -61,7 +30,7 @@ jobs:
 
           project_url="https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name"
           project_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "$project_url")"
-          echo 'pages_project_domains:'
+          echo -n 'pages_project_domains='
           printf '%s' "$project_json" | jq -c '.result.domains // []'
 
           for domain in irhaapparels.com www.irhaapparels.com; do
@@ -75,5 +44,5 @@ jobs:
           test -n "$zone_id"
           echo "::add-mask::$zone_id"
           records_json="$(curl -fsS -G -H "Authorization: Bearer $token" -H 'Content-Type: application/json' --data-urlencode 'per_page=100' "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records")"
-          echo 'web_dns_records:'
+          echo -n 'web_dns_records='
           printf '%s' "$records_json" | jq -c '[.result[] | select(.name == "irhaapparels.com" or .name == "www.irhaapparels.com") | {type,name,content,proxied,ttl}] | sort_by(.name)'
