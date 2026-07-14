@@ -1,0 +1,83 @@
+name: Cloudflare Binding Concise Evidence
+
+on:
+  push:
+    branches:
+      - ops/cloudflare-binding-audit-20260714
+    paths:
+      - .github/workflows/cloudflare-binding-concise-20260714.yml
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Post concise production binding evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | grep -Eo '[0-9a-fA-F]{32}' | head -n1 || true)"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+          test -n "$token" && test -n "$project_name"
+          echo "::add-mask::$token"
+          cf_get() { curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "$1"; }
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            accounts="$(cf_get 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+            test "$(jq -r '(.result // []) | length' <<<"$accounts")" = 1
+            account_id="$(jq -r '.result[0].id' <<<"$accounts")"
+          fi
+          echo "::add-mask::$account_id"
+
+          project="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          domains="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name/domains")"
+          deployments="$(cf_get "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name/deployments?per_page=5")"
+          zone="$(cf_get 'https://api.cloudflare.com/client/v4/zones?name=irhaapparels.com&status=active&per_page=10' || true)"
+          zone_id="$(jq -r '.result[0].id // empty' <<<"$zone" 2>/dev/null || true)"
+          dns='{"result":[]}'
+          routes='{"result":[]}'
+          if [[ "$zone_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            echo "::add-mask::$zone_id"
+            dns="$(cf_get "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records?per_page=100" || printf '%s' "$dns")"
+            routes="$(cf_get "https://api.cloudflare.com/client/v4/zones/$zone_id/workers/routes" || printf '%s' "$routes")"
+          fi
+
+          concise="$(jq -n \
+            --argjson project "$project" \
+            --argjson domains "$domains" \
+            --argjson deployments "$deployments" \
+            --argjson dns "$dns" \
+            --argjson routes "$routes" \
+            '{
+              project: {
+                name: ($project.result.name // null),
+                production_branch: ($project.result.production_branch // null),
+                pages_subdomain: ($project.result.subdomain // null),
+                git_source: ($project.result.source.config | {owner, repo_name, production_branch, production_deployments_enabled})
+              },
+              custom_domains: (($domains.result // []) | map({name, status})),
+              newest_deployments: (($deployments.result // []) | .[0:3] | map({id, environment, url, created_on, source: (.source.config | {owner, repo_name, branch, commit_hash}), deploy_status: ([.stages[]? | select(.name=="deploy") | .status][0] // null)})),
+              dns: (($dns.result // []) | map(select(.name=="irhaapparels.com" or .name=="www.irhaapparels.com") | {name, type, content, proxied, ttl})),
+              worker_routes: (($routes.result // []) | map({pattern, script}))
+            }')"
+
+          {
+            echo '## Concise Cloudflare production binding evidence'
+            echo
+            echo '```json'
+            echo "$concise" | jq .
+            echo '```'
+            echo
+            echo 'Read-only audit; no Cloudflare setting changed.'
+          } > /tmp/comment.md
+          cat /tmp/comment.md
+          gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/comment.md
