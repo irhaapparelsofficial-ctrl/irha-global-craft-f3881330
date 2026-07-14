@@ -1,5 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
-# Registered trigger revision: 13
+# Registered trigger revision: 14
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
@@ -23,6 +23,7 @@ concurrency:
 env:
   PAGES_BRANCH: main
   STAGING_URL: https://irha-apparels.pages.dev
+  CANONICAL_ORIGIN: https://irhaapparels.com
   RELEASE_AUDIT_ISSUE: "375"
 
 jobs:
@@ -168,7 +169,7 @@ jobs:
             location="$(printf '%s' "$headers" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
             test "$status" = "301" || { echo "Expected 301 for $source_path, got $status"; exit 1; }
             case "$location" in
-              "$expected_path"|"$STAGING_URL$expected_path") ;;
+              "$expected_path"|"$STAGING_URL$expected_path"|"$CANONICAL_ORIGIN$expected_path") ;;
               *) echo "Unexpected Location for $source_path: $location"; exit 1 ;;
             esac
           }
