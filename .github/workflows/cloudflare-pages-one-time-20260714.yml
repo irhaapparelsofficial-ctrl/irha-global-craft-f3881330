@@ -1,5 +1,5 @@
 name: Cloudflare Pages One-Time Latest Main
-# Registered trigger revision: 4
+# Registered trigger revision: 5
 
 run-name: One-time guarded Cloudflare deploy · ${{ github.sha }}
 
@@ -97,6 +97,10 @@ jobs:
           test -s dist/index.html
           test -s dist/build.json
           test -s dist/release.txt
+          test -s dist/.well-known/agent-card.json
+          test -s dist/.well-known/mcp/server-card.json
+          test -s dist/.well-known/openid-configuration
+          test ! -e dist/_worker.js
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
           grep -F '"repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330"' dist/build.json
           grep -F '"supabase_project_id": "pvzjiozismyxqrzmtfbi"' dist/build.json
@@ -135,3 +139,29 @@ jobs:
           done
           test "$ready" = "1"
           echo "Exact Cloudflare Pages release verified: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify live MCP, A2A and OAuth discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache_bust="${GITHUB_SHA::12}-$RANDOM"
+          curl -fsSL -H 'Cache-Control: no-cache' "$STAGING_URL/.well-known/agent-card.json?verify=$cache_bust" -o /tmp/agent-card.json
+          jq -e '.name == "Irha Apparels Public Buyer Agent" and .supportedInterfaces[0].protocolBinding == "JSONRPC" and .supportedInterfaces[0].protocolVersion == "1.0" and (.skills | length) == 3' /tmp/agent-card.json >/dev/null
+
+          curl -fsSL -H 'Cache-Control: no-cache' "$STAGING_URL/mcp?verify=$cache_bust" -o /tmp/mcp.json
+          jq -e '.name == "irha-apparels-public" and .authentication == "none" and (.tools | length) >= 3' /tmp/mcp.json >/dev/null
+
+          curl -fsSL -X POST "$STAGING_URL/a2a" \
+            -H 'Content-Type: application/a2a+json' \
+            -H 'A2A-Version: 1.0' \
+            --data '{"jsonrpc":"2.0","id":"release-check","method":"SendMessage","params":{"message":{"messageId":"release-check-message","role":"ROLE_USER","parts":[{"text":"Show me your product collections"}]}}}' \
+            -o /tmp/a2a.json
+          jq -e '.jsonrpc == "2.0" and .id == "release-check" and .result.message.role == "ROLE_AGENT" and .result.message.metadata.readOnly == true and .result.message.metadata.submitted == false' /tmp/a2a.json >/dev/null
+
+          curl -fsSL -H 'Cache-Control: no-cache' "$STAGING_URL/.well-known/openid-configuration?verify=$cache_bust" -o /tmp/oidc.json
+          jq -e '.issuer == "https://pvzjiozismyxqrzmtfbi.supabase.co/auth/v1" and .code_challenge_methods_supported | index("S256")' /tmp/oidc.json >/dev/null
+
+          curl -fsSL -H 'Cache-Control: no-cache' "$STAGING_URL/.well-known/oauth-protected-resource?verify=$cache_bust" -o /tmp/resource.json
+          jq -e '.resource == "https://pvzjiozismyxqrzmtfbi.supabase.co" and .authorization_servers == ["https://pvzjiozismyxqrzmtfbi.supabase.co/auth/v1"]' /tmp/resource.json >/dev/null
+
+          echo "MCP, A2A and OAuth discovery verified live on pages.dev." >> "$GITHUB_STEP_SUMMARY"
