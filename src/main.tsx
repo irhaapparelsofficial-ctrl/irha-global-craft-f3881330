@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher";
+import AdminLiveChatLauncher from "@/components/admin/AdminLiveChatLauncher";
 import "./index.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
@@ -50,5 +51,6 @@ createRoot(rootElement).render(
   <AppErrorBoundary>
     <App />
     <AdminBuyerActionsLauncher />
+    <AdminLiveChatLauncher />
   </AppErrorBoundary>,
 );
