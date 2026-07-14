@@ -1,0 +1,51 @@
+den bg-card mb-3">
+-                        {product.image && (
+-                          <img
+-                            src={product.image}
+-                            alt={product.name}
+-                            loading="lazy"
+-                            width={720}
+-                            height={720}
+-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+-                          />
+-                        )}
++                {products.map((product) => {
++                  const saved = shortlist.has(product.slug);
++                  const inCompare = compare.has(product.slug);
++                  const compareFull = !inCompare && compare.items.length >= 4;
++                  const productPath = `/products/${category.slug}/${product.slug}`;
++                  const storedProduct = {
++                    slug: product.slug,
++                    name: product.name,
++                    image: product.image,
++                    categorySlug: category.slug,
++                    categoryName: topName,
++                    addedAt: Date.now(),
++                  };
++
++                  return (
++                    <article key={product.slug} className="group flex min-w-0 flex-col">
++                      <Link to={productPath} className="block">
++                        <div className="aspect-square overflow-hidden bg-card mb-3">
++                          {product.image && (
++                            <img
++                              src={product.image}
++                              alt={product.name}
++                              loading="lazy"
++                              width={720}
++                              height={720}
++                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
++                            />
++                          )}
++                        </div>
++                        <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/45">{audienceName}</p>
++                        <h3 className="font-display text-base md:text-lg mt-1 group-hover:text-primary">{product.name}</h3>
++                      </Link>
++                      <div className="mt-3 flex flex-wrap items-center gap-2">
++                        <button
++                          type="button"
++                          onClick={() => shortlist.toggle(storedProduct)}
++                          aria-pressed={saved}
++                          aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
++                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
++              
