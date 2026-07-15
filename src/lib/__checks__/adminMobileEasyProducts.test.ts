@@ -23,13 +23,15 @@ describe("mobile admin easy products mode", () => {
     expect(css).toContain("display: none !important");
   });
 
-  it("keeps advanced product checks collapsed until the owner opens them", () => {
+  it("surfaces the priority queue while keeping detailed catalog checks collapsible", () => {
     const source = read("src/components/admin/CatalogReleaseStatus.tsx");
 
-    expect(source.match(/<details/g)?.length).toBe(2);
-    expect(source).toContain("Optional product check");
+    expect(source.match(/<details/g)?.length).toBe(3);
+    expect(source).toContain("Active remediation queue");
+    expect(source).toContain("Product information check");
     expect(source).toContain("Advanced catalog check");
+    expect(source).toContain("<CatalogPriorityAuditPanel />");
     expect(source).toContain("<ProductQualityCenter />");
-    expect(source).not.toContain("<ProductQualityCenter />\n      <section");
+    expect(source).toContain('className="group mb-4 border border-red-500/30 bg-card/25" open');
   });
 });
