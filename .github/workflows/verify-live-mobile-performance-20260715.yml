@@ -2,11 +2,10 @@ name: Verify live mobile performance
 
 on:
   push:
-    branches: [main]
+    branches:
+      - verify/lighthouse-detail-20260715
     paths:
       - ".github/workflows/verify-live-mobile-performance-20260715.yml"
-  issue_comment:
-    types: [created]
 
 permissions:
   contents: read
@@ -14,20 +13,15 @@ permissions:
 
 jobs:
   lighthouse:
-    if: >-
-      github.event_name == 'push' ||
-      (github.event.issue.number == 375 &&
-       github.event.comment.body == '/verify-mobile-performance' &&
-       github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Run mobile Lighthouse against live Germany page
+      - name: Run detailed mobile Lighthouse against live Germany page
         shell: bash
         run: |
           set -euo pipefail
           npx --yes lighthouse@12.8.2 \
-            "https://irhaapparels.com/de/bekleidungshersteller-deutschland?lh_verify=${GITHUB_SHA::12}" \
+            "https://irhaapparels.com/de/bekleidungshersteller-deutschland?lh_detail=${GITHUB_SHA::12}" \
             --output=json \
             --output-path=/tmp/lighthouse.json \
             --only-categories=performance,seo,accessibility,best-practices \
@@ -39,9 +33,12 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync('/tmp/lighthouse.json', 'utf8'));
+          const audits = report.audits || {};
           const score = (id) => Math.round((report.categories[id]?.score ?? 0) * 100);
-          const metric = (id) => report.audits[id]?.displayValue ?? 'n/a';
-          const waste = (id) => report.audits[id]?.details?.overallSavingsBytes ?? 0;
+          const metric = (id) => audits[id]?.displayValue ?? 'n/a';
+          const kb = (bytes) => `${Math.round((bytes || 0) / 1024)} KiB`;
+          const esc = (v) => String(v ?? '').replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
+
           const summary = [
             `Performance: ${score('performance')}`,
             `Accessibility: ${score('accessibility')}`,
@@ -52,24 +49,70 @@ jobs:
             `TBT: ${metric('total-blocking-time')}`,
             `CLS: ${metric('cumulative-layout-shift')}`,
             `Speed Index: ${metric('speed-index')}`,
-            `Unused JS savings: ${Math.round(waste('unused-javascript') / 1024)} KiB`,
-            `Unused CSS savings: ${Math.round(waste('unused-css-rules') / 1024)} KiB`,
+            `TTFB/server response: ${metric('server-response-time')}`,
+            `Main-thread work: ${metric('mainthread-work-breakdown')}`,
+            `JavaScript execution: ${metric('bootup-time')}`,
             `Total transfer: ${metric('total-byte-weight')}`,
           ];
-          const markdown = `## Live mobile Lighthouse — Germany SEO page\n\nRelease tested: \`${report.finalDisplayedUrl}\`\n\n${summary.map((x) => `- ${x}`).join('\n')}\n`;
-          console.log(summary.join('\n'));
-          fs.writeFileSync('/tmp/lighthouse-summary.md', markdown);
+
+          const unusedJs = (audits['unused-javascript']?.details?.items || [])
+            .map((item) => ({ url: item.url, total: item.totalBytes, waste: item.wastedBytes }))
+            .sort((a, b) => (b.waste || 0) - (a.waste || 0))
+            .slice(0, 12);
+          const unusedCss = (audits['unused-css-rules']?.details?.items || [])
+            .map((item) => ({ url: item.url, total: item.totalBytes, waste: item.wastedBytes }))
+            .sort((a, b) => (b.waste || 0) - (a.waste || 0))
+            .slice(0, 8);
+          const network = (audits['network-requests']?.details?.items || [])
+            .map((item) => ({ url: item.url, transfer: item.transferSize, resourceType: item.resourceType, start: item.startTime, end: item.endTime }))
+            .sort((a, b) => (b.transfer || 0) - (a.transfer || 0))
+            .slice(0, 15);
+
+          const lcpItem = audits['largest-contentful-paint-element']?.details?.items?.[0]?.items?.[0]
+            || audits['largest-contentful-paint-element']?.details?.items?.[0]
+            || null;
+          const lcpSnippet = lcpItem?.node?.snippet || lcpItem?.snippet || 'not exposed by this Lighthouse version';
+
+          const insightIds = Object.keys(audits)
+            .filter((id) => /(lcp|render-block|font|server-response|network-dependency|document-latency)/i.test(id))
+            .sort();
+          const insightLines = insightIds.map((id) => {
+            const a = audits[id];
+            const savingsMs = a?.details?.overallSavingsMs;
+            const savingsBytes = a?.details?.overallSavingsBytes;
+            const extra = [
+              Number.isFinite(savingsMs) ? `saving ${Math.round(savingsMs)} ms` : '',
+              Number.isFinite(savingsBytes) ? `saving ${kb(savingsBytes)}` : '',
+            ].filter(Boolean).join(', ');
+            return `- \`${id}\`: ${esc(a?.title)} — ${esc(a?.displayValue || '')}${extra ? ` (${extra})` : ''}`;
+          });
+
+          let markdown = `## Detailed live mobile Lighthouse — Germany SEO page\n\n`;
+          markdown += `Release URL: \`${report.finalDisplayedUrl}\`\n\n`;
+          markdown += summary.map((x) => `- ${x}`).join('\n');
+          markdown += `\n\n### LCP element\n\n\`${esc(lcpSnippet).slice(0, 700)}\`\n`;
+          markdown += `\n### Relevant Lighthouse audits\n\n${insightLines.join('\n') || '- None exposed'}\n`;
+          markdown += `\n### Largest unused JavaScript files\n\n| URL | Total | Potential saving |\n|---|---:|---:|\n`;
+          markdown += unusedJs.map((x) => `| ${esc(x.url).slice(-120)} | ${kb(x.total)} | ${kb(x.waste)} |`).join('\n') || '| none | 0 | 0 |';
+          markdown += `\n\n### Largest unused CSS files\n\n| URL | Total | Potential saving |\n|---|---:|---:|\n`;
+          markdown += unusedCss.map((x) => `| ${esc(x.url).slice(-120)} | ${kb(x.total)} | ${kb(x.waste)} |`).join('\n') || '| none | 0 | 0 |';
+          markdown += `\n\n### Largest network transfers\n\n| Resource | Type | Transfer |\n|---|---|---:|\n`;
+          markdown += network.map((x) => `| ${esc(x.url).slice(-120)} | ${esc(x.resourceType)} | ${kb(x.transfer)} |`).join('\n') || '| none | — | 0 |';
+          markdown += '\n';
+
+          console.log(markdown);
+          fs.writeFileSync('/tmp/lighthouse-detail.md', markdown);
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown);
           NODE
 
       - name: Upload Lighthouse JSON
         uses: actions/upload-artifact@v4
         with:
-          name: live-mobile-lighthouse
+          name: detailed-live-mobile-lighthouse
           path: /tmp/lighthouse.json
           retention-days: 3
 
-      - name: Record audit evidence
+      - name: Record detailed audit evidence
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/lighthouse-summary.md
+        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/lighthouse-detail.md
