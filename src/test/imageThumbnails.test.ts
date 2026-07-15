@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   originalImageUrl,
+  RESPONSIVE_IMAGE_WIDTHS,
   responsiveImageAttributes,
   responsiveVariantObjectPath,
   thumbnailObjectPath,
@@ -32,12 +33,18 @@ describe("image thumbnail and responsive routing", () => {
     expect(thumbnailUrl(source)).toBe(source);
   });
 
+  it("uses the complete mobile-to-retina width set", () => {
+    expect(RESPONSIVE_IMAGE_WIDTHS).toEqual([360, 720, 1200, 1600, 2400]);
+  });
+
   it("builds storage variant object paths without collisions", () => {
     expect(thumbnailObjectPath("2026/07/item.png")).toBe("thumbnails/2026/07/item.png.webp");
     expect(thumbnailObjectPath("thumbnails/2026/07/item.png.webp")).toBe("thumbnails/2026/07/item.png.webp");
     expect(responsiveVariantObjectPath("2026/07/item.png", 360)).toBe("responsive/360/2026/07/item.png.webp");
     expect(responsiveVariantObjectPath("2026/07/item.png", 720)).toBe("thumbnails/2026/07/item.png.webp");
     expect(responsiveVariantObjectPath("2026/07/item.png", 1200)).toBe("responsive/1200/2026/07/item.png.webp");
+    expect(responsiveVariantObjectPath("2026/07/item.png", 1600)).toBe("responsive/1600/2026/07/item.png.webp");
+    expect(responsiveVariantObjectPath("2026/07/item.png", 2400)).toBe("responsive/2400/2026/07/item.png.webp");
   });
 
   it("provides browser-selectable widths for committed public images", () => {
@@ -46,6 +53,8 @@ describe("image thumbnail and responsive routing", () => {
     expect(result.srcSet).toContain("/responsive/360/product-media/style/01-hero-front.webp.webp 360w");
     expect(result.srcSet).toContain("/thumbnails/product-media/style/01-hero-front.webp.webp 720w");
     expect(result.srcSet).toContain("/responsive/1200/product-media/style/01-hero-front.webp.webp 1200w");
+    expect(result.srcSet).toContain("/responsive/1600/product-media/style/01-hero-front.webp.webp 1600w");
+    expect(result.srcSet).toContain("/responsive/2400/product-media/style/01-hero-front.webp.webp 2400w");
   });
 
   it("provides deterministic responsive storage paths for site-media", () => {
@@ -55,18 +64,20 @@ describe("image thumbnail and responsive routing", () => {
     expect(result.srcSet).toContain("site-media/responsive/360/2026/07/item.png.webp 360w");
     expect(result.srcSet).toContain("site-media/thumbnails/2026/07/item.png.webp 720w");
     expect(result.srcSet).toContain("site-media/responsive/1200/2026/07/item.png.webp 1200w");
+    expect(result.srcSet).toContain("site-media/responsive/1600/2026/07/item.png.webp 1600w");
+    expect(result.srcSet).toContain("site-media/responsive/2400/2026/07/item.png.webp 2400w");
   });
 
   it("can recover original public and site-media URLs", () => {
     expect(originalImageUrl("/thumbnails/product-media/style/01.webp.webp"))
       .toBe("/product-media/style/01.webp");
-    expect(originalImageUrl("/responsive/360/product-media/style/01.webp.webp"))
+    expect(originalImageUrl("/responsive/1600/product-media/style/01.webp.webp"))
       .toBe("/product-media/style/01.webp");
     expect(originalImageUrl(
       "https://example.supabase.co/storage/v1/object/public/site-media/thumbnails/2026/07/item.png.webp",
     )).toBe("https://example.supabase.co/storage/v1/object/public/site-media/2026/07/item.png");
     expect(originalImageUrl(
-      "https://example.supabase.co/storage/v1/object/public/site-media/responsive/1200/2026/07/item.png.webp",
+      "https://example.supabase.co/storage/v1/object/public/site-media/responsive/2400/2026/07/item.png.webp",
     )).toBe("https://example.supabase.co/storage/v1/object/public/site-media/2026/07/item.png");
   });
 });
