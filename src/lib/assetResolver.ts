@@ -1,6 +1,6 @@
 // Resolves catalog and legacy asset paths to production-safe Vite URLs.
 // Full remote URLs and public-root assets remain unchanged.
-const assets = import.meta.glob("/src/assets/**/*.{jpg,jpeg,png,webp,svg}", {
+const assets = import.meta.glob("/src/assets/**/*.{avif,jpg,jpeg,png,webp,svg}", {
   eager: true,
   import: "default",
 }) as Record<string, string>;
