@@ -1,0 +1,73 @@
+name: Deploy GSC Daily Sitemap Automation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-gsc-daily-sitemap-20260716.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: deploy-gsc-daily-sitemap
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  RELEASE_AUDIT_ISSUE: "375"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout exact current main
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Confirm exact current main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$GITHUB_SHA"
+
+      - name: Verify sitemap automation source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}"
+          grep -F 'const PROJECT_SITE = "https://irhaapparels.com"' supabase/functions/operations-orchestrator/index.ts
+          grep -F 'submitCanonicalSitemap(url, serviceKey)' supabase/functions/operations-orchestrator/index.ts
+          grep -F '/functions/v1/sitemap-ping' supabase/functions/operations-orchestrator/index.ts
+          grep -F 'sitemap_submission: sitemapSubmission' supabase/functions/operations-orchestrator/index.ts
+          grep -F 'gsc: Boolean(Deno.env.get("LOVABLE_API_KEY"))' supabase/functions/operations-orchestrator/index.ts
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy only operations orchestrator
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions deploy operations-orchestrator --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions list --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Record deployment evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Daily Search Console sitemap automation deployed from exact main source \`$GITHUB_SHA\`. Only \`operations-orchestrator\` was deployed; no database migration or other Edge Function was changed."
