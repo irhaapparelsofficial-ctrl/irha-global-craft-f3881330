@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   lighthouse:
@@ -55,8 +56,10 @@ jobs:
             `Unused CSS savings: ${Math.round(waste('unused-css-rules') / 1024)} KiB`,
             `Total transfer: ${metric('total-byte-weight')}`,
           ];
+          const markdown = `## Live mobile Lighthouse — Germany SEO page\n\nRelease tested: \`${report.finalDisplayedUrl}\`\n\n${summary.map((x) => `- ${x}`).join('\n')}\n`;
           console.log(summary.join('\n'));
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Live mobile Lighthouse\n\n${summary.map((x) => `- ${x}`).join('\n')}\n`);
+          fs.writeFileSync('/tmp/lighthouse-summary.md', markdown);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown);
           NODE
 
       - name: Upload Lighthouse JSON
@@ -65,3 +68,8 @@ jobs:
           name: live-mobile-lighthouse
           path: /tmp/lighthouse.json
           retention-days: 3
+
+      - name: Record audit evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/lighthouse-summary.md
