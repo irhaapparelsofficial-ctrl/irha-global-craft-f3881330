@@ -10,6 +10,11 @@ import { CATEGORIES, type Product as LegacyProduct } from "@/lib/categories";
 import { CATALOG, type CategoryGroup, type SubCategory } from "@/lib/catalog";
 import { CATEGORY_SEO } from "@/lib/categorySeo";
 import { PRODUCT_SEO_OVERRIDES } from "@/lib/productSeoOverrides";
+import {
+  keywordLedProductName,
+  keywordLedSubcategoryName,
+  keywordLedTopCategoryName,
+} from "@/lib/catalogSearchNames";
 import { createSupplementalProductsForSubcategory } from "@/lib/supplementalCatalog";
 import { createSupplementalBatch02ProductsForSubcategory } from "@/lib/supplementalCatalogBatch02";
 import { createSupplementalBatch03ProductsForSubcategory } from "@/lib/supplementalCatalogBatch03";
@@ -78,11 +83,36 @@ const BLOCKED_PUBLIC_TERMS = [
 ];
 
 const TOP_CONFIG = [
-  { slug: "bavarian-trachten-wear", name: "Bavarian Trachten Wear", short: "Lederhosen, Dirndls & Trachten", sources: ["bavarian"] },
-  { slug: "premium-leather-apparel", name: "Premium Leather Apparel", short: "Custom Leather Garments", sources: ["leatherwear"] },
-  { slug: "sportswear", name: "Sportswear", short: "Custom Teamwear & Performance Apparel", sources: ["sportswear"] },
-  { slug: "streetwear-activewear", name: "Streetwear & Activewear", short: "Private-Label Urban & Performance Apparel", sources: ["streetwear"] },
-  { slug: "leisure-nightwear", name: "Leisurewear & Nightwear", short: "Casual, Lounge & Sleepwear Programs", sources: ["leisurewear", "nightwear"] },
+  {
+    slug: "bavarian-trachten-wear",
+    name: "Bavarian & Trachten Wear",
+    short: "Lederhosen, Dirndl & Trachten Manufacturer",
+    sources: ["bavarian"],
+  },
+  {
+    slug: "premium-leather-apparel",
+    name: "Premium Leather Apparel",
+    short: "Custom Leather Jackets, Garments & Accessories",
+    sources: ["leatherwear"],
+  },
+  {
+    slug: "sportswear",
+    name: "Custom Sportswear & Teamwear",
+    short: "Custom Team Uniforms, Jerseys & Performance Wear",
+    sources: ["sportswear"],
+  },
+  {
+    slug: "streetwear-activewear",
+    name: "Streetwear & Activewear",
+    short: "Private Label Hoodies, T-Shirts, Joggers & Activewear",
+    sources: ["streetwear"],
+  },
+  {
+    slug: "leisure-nightwear",
+    name: "Leisurewear & Nightwear",
+    short: "Private Label Casualwear, Loungewear & Sleepwear",
+    sources: ["leisurewear", "nightwear"],
+  },
 ] as const;
 
 function hasBlockedPublicTerm(value: string): boolean {
@@ -99,6 +129,7 @@ function uniqueStrings(values: string[]): string[] {
 }
 
 function sanitizePublicProduct(product: DbProduct): DbProduct {
+  const name = keywordLedProductName(product.slug, product.name);
   const details = (Array.isArray(product.details) ? product.details : []).filter(
     (detail) => !hasBlockedPublicTerm(`${detail.label} ${detail.value}`),
   );
@@ -108,6 +139,7 @@ function sanitizePublicProduct(product: DbProduct): DbProduct {
   const gallery = uniqueStrings((Array.isArray(product.gallery) ? product.gallery : []).filter(Boolean));
   return {
     ...product,
+    name,
     image_url: product.image_url ?? gallery[0] ?? null,
     gallery,
     details,
@@ -121,6 +153,7 @@ function sanitizePublicProduct(product: DbProduct): DbProduct {
 
 function legacyProductToDb(product: LegacyProduct, categoryId: string, sortOrder: number): DbProduct {
   const productSlug = slugify(product.name);
+  const productName = keywordLedProductName(productSlug, product.name);
   const gallery = uniqueStrings([product.image, ...(product.gallery ?? [])].filter(Boolean));
   const override = PRODUCT_SEO_OVERRIDES[productSlug];
 
@@ -128,17 +161,17 @@ function legacyProductToDb(product: LegacyProduct, categoryId: string, sortOrder
     id: `local-product-${categoryId}-${productSlug}`,
     category_id: categoryId,
     slug: productSlug,
-    name: product.name,
+    name: productName,
     description: override?.description ?? product.description ?? null,
     image_url: gallery[0] ?? null,
     gallery,
     specs: override?.specs ?? product.specs ?? [],
     details: override ? [] : Array.isArray(product.details) ? product.details : [],
     material_specifications: null,
-    seo_title: override?.seoTitle ?? `${product.name} Manufacturer | Irha Apparels`,
+    seo_title: override?.seoTitle ?? `${productName} Manufacturer | Irha Apparels`,
     seo_description:
       override?.seoDescription ??
-      `${product.name} for wholesale, OEM and private-label buyer programs from Irha Apparels, an experienced B2B garment manufacturer in Sialkot, Pakistan.`,
+      `${productName} for wholesale, OEM and private-label buyer programs from Irha Apparels, an experienced B2B garment manufacturer in Sialkot, Pakistan.`,
     sort_order: sortOrder,
     is_published: true,
     sku: null,
@@ -195,7 +228,8 @@ function buildSubCategory(
 ): PublicSubCategory {
   const slug = canonicalSubSlug(group.slug, sub.slug, mergedTop);
   const id = `local-category-${top.slug}-${slug}`;
-  const name = mergedTop ? `${group.name}: ${sub.name}` : sub.name;
+  const sourceName = mergedTop ? `${group.name}: ${sub.name}` : sub.name;
+  const name = keywordLedSubcategoryName(top.slug, slug, sourceName);
   const category: DbCategory = {
     id,
     parent_id: top.id,
@@ -312,6 +346,8 @@ function mergeRelease(release: CatalogRelease): PublicTopCategory[] {
         directProducts: [],
       };
 
+      top.name = keywordLedTopCategoryName(top.slug, top.name);
+
       const topReleasedSubs = releasedSubs.filter((category) => category.parent_slug === top.slug);
       const matchedReleasedIds = new Set<string>();
 
@@ -337,12 +373,14 @@ function mergeRelease(release: CatalogRelease): PublicTopCategory[] {
         }
 
         products.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-        top.subs.push({
+        const mergedSub: PublicSubCategory = {
           ...localSub,
           ...(releasedSub || {}),
           parent_id: top.id,
           products,
-        });
+        };
+        mergedSub.name = keywordLedSubcategoryName(top.slug, categorySlug, mergedSub.name);
+        top.subs.push(mergedSub);
       }
 
       for (const releasedSub of topReleasedSubs) {
@@ -351,7 +389,12 @@ function mergeRelease(release: CatalogRelease): PublicTopCategory[] {
           .filter((product) => product.category_slug === releasedSub.slug)
           .map(sanitizePublicProduct)
           .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-        top.subs.push({ ...releasedSub, parent_id: top.id, products });
+        top.subs.push({
+          ...releasedSub,
+          parent_id: top.id,
+          name: keywordLedSubcategoryName(top.slug, releasedSub.slug, releasedSub.name),
+          products,
+        });
       }
 
       top.directProducts = release.products
