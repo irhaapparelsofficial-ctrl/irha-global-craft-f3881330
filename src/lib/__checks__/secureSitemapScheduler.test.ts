@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const edge = readFileSync("supabase/functions/scheduled-sitemap-submit/index.ts", "utf8");
-const migration = readFileSync("supabase/migrations/20260716034000_secure_sitemap_scheduler.sql", "utf8");
+const controlMigration = readFileSync("supabase/migrations/20260716034000_secure_sitemap_scheduler.sql", "utf8");
+const queueMigration = readFileSync("supabase/migrations/20260716035000_queue_and_finalize_sitemap_submission.sql", "utf8");
 const config = readFileSync("supabase/config.toml", "utf8");
 
 describe("secure scheduled sitemap submission", () => {
@@ -12,28 +13,40 @@ describe("secure scheduled sitemap submission", () => {
     expect(edge).not.toContain("www.irhaapparels.com");
   });
 
-  it("uses a separate high-entropy scheduler token and database claim", () => {
+  it("uses the same working connector contract as the authenticated sitemap tool", () => {
+    expect(edge).toContain('const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console"');
+    expect(edge).toContain('Deno.env.get("LOVABLE_API_KEY")');
+    expect(edge).toContain('Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY")');
+    expect(edge).toContain('"X-Connection-Api-Key": gscKey');
+  });
+
+  it("verifies the high-entropy Vault token twice without storing the raw value in source", () => {
     expect(edge).toContain('req.headers.get("x-irha-sitemap-token")');
     expect(edge).toContain('/^[A-Za-z0-9_-]{40,120}$/');
-    expect(edge).toContain('supabase.rpc("claim_sitemap_submission"');
-    expect(edge).toContain('supabase.rpc("record_sitemap_submission_result"');
+    expect(edge).toContain("sha256Hex(token)");
+    expect(edge).toContain("constantTimeEqual(providedHash, SCHEDULER_TOKEN_HASH)");
     expect(config).toContain("[functions.scheduled-sitemap-submit]");
     expect(config).toContain("verify_jwt = false");
+    expect(controlMigration).toContain("token_hash text not null");
+    expect(controlMigration).toContain("extensions.digest(_token, 'sha256')");
   });
 
-  it("stores only the token hash and enforces bounded submission frequency", () => {
-    expect(migration).toContain("token_hash text not null");
-    expect(migration).toContain("extensions.digest(_token, 'sha256')");
-    expect(migration).toContain("interval '20 hours'");
-    expect(migration).toContain("interval '30 minutes'");
-    expect(migration).toContain("enable row level security");
-    expect(migration).toContain("revoke all on table public.sitemap_submission_control");
+  it("rate-limits, queues and finalizes database-audited submissions", () => {
+    expect(controlMigration).toContain("interval '20 hours'");
+    expect(controlMigration).toContain("interval '30 minutes'");
+    expect(controlMigration).toContain("enable row level security");
+    expect(queueMigration).toContain("public.queue_sitemap_submission");
+    expect(queueMigration).toContain("public.finalize_sitemap_submission");
+    expect(queueMigration).toContain("last_request_id bigint");
+    expect(queueMigration).toContain("net.http_post");
+    expect(queueMigration).toContain("net._http_response");
   });
 
-  it("returns minimal results without exposing provider response bodies", () => {
+  it("returns minimal results without exposing provider response bodies or keys", () => {
     expect(edge).toContain('error: "google_submission_failed"');
     expect(edge).toContain('error: "submission_request_failed"');
     expect(edge).not.toContain("response_body");
-    expect(edge).not.toContain("gatewayKey,");
+    expect(edge).not.toContain("lovableKey,");
+    expect(edge).not.toContain("gscKey,");
   });
 });
