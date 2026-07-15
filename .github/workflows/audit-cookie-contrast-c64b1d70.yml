@@ -1,0 +1,160 @@
+name: Audit live cookie contrast c64b1d70
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_SOURCE_SHA: c64b1d70c9aad0804d12a0978d9fa35eb6015ae5
+      LIVE_ORIGIN: https://irhaapparels.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for exact production release
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=0
+          for attempt in $(seq 1 90); do
+            cache_bust="${EXPECTED_SOURCE_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$LIVE_ORIGIN/build.json?audit=$cache_bust" -o live-build.json \
+              && jq -e --arg sha "$EXPECTED_SOURCE_SHA" '.source_commit==$sha and .source_identity_state=="verified"' live-build.json >/dev/null; then
+              matched=1
+              echo "Exact production source verified on attempt $attempt"
+              break
+            fi
+            echo "Production not converged yet ($attempt/90)"
+            sleep 10
+          done
+          test "$matched" = "1"
+          cat live-build.json
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Verify mobile buyer experience
+        shell: bash
+        run: |
+          cat > audit-live.mjs <<'EOF'
+          import { chromium, devices } from 'playwright';
+          import { writeFile } from 'node:fs/promises';
+
+          const origin = process.env.LIVE_ORIGIN;
+          const expectedSource = process.env.EXPECTED_SOURCE_SHA;
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ ...devices['iPhone 13'], locale: 'en-GB' });
+          const page = await context.newPage();
+          const consoleErrors = [];
+          const failures = [];
+          page.on('console', (message) => {
+            if (message.type() === 'error') consoleErrors.push(message.text());
+          });
+
+          async function open(path) {
+            const response = await page.goto(`${origin}${path}${path.includes('?') ? '&' : '?'}audit=${Date.now()}`, {
+              waitUntil: 'domcontentloaded',
+              timeout: 90000,
+            });
+            await page.waitForTimeout(1800);
+            return { status: response?.status() ?? null, finalUrl: page.url(), title: await page.title() };
+          }
+
+          async function anyVisible(locator) {
+            const count = await locator.count();
+            for (let index = 0; index < count; index += 1) {
+              if (await locator.nth(index).isVisible().catch(() => false)) return true;
+            }
+            return false;
+          }
+
+          let report;
+          try {
+            const home = await open('/');
+            const dialog = page.getByRole('dialog', { name: 'Optional cookies' });
+            await dialog.waitFor({ state: 'visible', timeout: 15000 });
+            const cookieStyle = await dialog.evaluate((element) => {
+              const style = getComputedStyle(element);
+              return {
+                backgroundColor: style.backgroundColor,
+                color: style.color,
+                borderColor: style.borderColor,
+              };
+            });
+            const rgba = cookieStyle.backgroundColor.match(/[\d.]+/g)?.map(Number) ?? [];
+            const backgroundIsDark = rgba.length >= 3 && rgba[0] <= 25 && rgba[1] <= 25 && rgba[2] <= 25 && (rgba[3] ?? 1) >= 0.9;
+            const logoVisible = await page.locator('img[src="/irha-brand-mark.svg"]').first().isVisible().catch(() => false);
+            const quoteVisible = await anyVisible(page.getByText(/Request quote/i));
+            const h1 = await page.locator('h1').first().textContent().catch(() => null);
+
+            await page.screenshot({ path: 'cookie-visible-iphone.png' });
+            await page.getByRole('button', { name: 'Essential only' }).click();
+            await dialog.waitFor({ state: 'hidden', timeout: 10000 });
+            await page.screenshot({ path: 'homepage-clean-iphone.png' });
+
+            for (let step = 0; step < 40; step += 1) {
+              const state = await page.evaluate(() => ({ y: scrollY, height: document.body.scrollHeight, viewport: innerHeight }));
+              if (state.y + state.viewport >= state.height - 4) break;
+              await page.evaluate((nextY) => scrollTo(0, nextY), Math.min(state.y + 600, state.height));
+              await page.waitForTimeout(220);
+            }
+            await page.waitForTimeout(700);
+            await page.screenshot({ path: 'homepage-full-iphone.png', fullPage: true });
+
+            const routes = {};
+            for (const path of ['/products', '/inquiry', '/catalogue']) routes[path] = await open(path);
+
+            if (home.status !== 200) failures.push(`home status ${home.status}`);
+            if (!h1) failures.push('homepage H1 missing');
+            if (!logoVisible) failures.push('brand mark not visible');
+            if (!quoteVisible) failures.push('no visible Request quote action');
+            if (!backgroundIsDark) failures.push(`cookie background is not dark: ${cookieStyle.backgroundColor}`);
+            for (const [path, result] of Object.entries(routes)) {
+              if (result.status !== 200) failures.push(`${path} status ${result.status}`);
+            }
+
+            report = {
+              expectedSource,
+              home,
+              h1,
+              logoVisible,
+              quoteVisible,
+              cookieStyle,
+              backgroundIsDark,
+              routes,
+              consoleErrors: consoleErrors.slice(0, 20),
+              failures,
+            };
+          } catch (error) {
+            failures.push(error instanceof Error ? error.message : String(error));
+            report = { expectedSource, consoleErrors: consoleErrors.slice(0, 20), failures };
+          } finally {
+            await writeFile('live-cookie-audit.json', JSON.stringify(report, null, 2));
+            console.log(JSON.stringify(report, null, 2));
+            await browser.close();
+          }
+
+          if (failures.length) process.exitCode = 1;
+          EOF
+          node audit-live.mjs
+      - name: Upload live audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-cookie-contrast-c64b1d70
+          if-no-files-found: warn
+          path: |
+            live-build.json
+            live-cookie-audit.json
+            cookie-visible-iphone.png
+            homepage-clean-iphone.png
+            homepage-full-iphone.png
+          retention-days: 2
