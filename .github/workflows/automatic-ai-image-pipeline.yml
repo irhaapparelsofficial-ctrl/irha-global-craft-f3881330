@@ -1,0 +1,180 @@
+name: Automatic AI Image Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "public/**/*.jpg"
+      - "public/**/*.jpeg"
+      - "public/**/*.png"
+      - "public/**/*.webp"
+      - "public/**/*.avif"
+      - "scripts/image-ai/**"
+      - "supabase/functions/image-processing-gateway/**"
+      - "supabase/migrations/*automatic_ai_image_pipeline.sql"
+      - ".github/workflows/automatic-ai-image-pipeline.yml"
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: automatic-ai-image-pipeline-main
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.11"
+  IRHA_EDSR_MODEL: models/EDSR_x2.pb
+  IRHA_REMBG_MODEL: isnet-general-use
+  IMAGE_GATEWAY_URL: https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/image-processing-gateway
+
+jobs:
+  committed-images:
+    name: Normalize committed source images
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[image-ai-generated]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout exact source with previous commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: scripts/image-ai/requirements.txt
+
+      - name: Cache AI models
+        uses: actions/cache@v4
+        with:
+          path: |
+            models/EDSR_x2.pb
+            ~/.u2net
+          key: irha-image-models-v2-${{ runner.os }}
+
+      - name: Install locked image dependencies
+        run: python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements.txt
+
+      - name: Download Apache-2.0 EDSR x2 model when absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p models
+          if [ ! -s "$IRHA_EDSR_MODEL" ]; then
+            curl --fail --location --retry 4 --retry-all-errors \
+              --output "$IRHA_EDSR_MODEL.tmp" \
+              https://github.com/Saafke/EDSR_Tensorflow/raw/master/models/EDSR_x2.pb
+            test "$(wc -c < "$IRHA_EDSR_MODEL.tmp")" -gt 1000000
+            mv "$IRHA_EDSR_MODEL.tmp" "$IRHA_EDSR_MODEL"
+          fi
+
+      - name: Process new or changed public images
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          python scripts/image-ai/process_static_changes.py \
+            --before "${GITHUB_EVENT_BEFORE:-}" \
+            --head "$GITHUB_SHA" \
+            --edsr-model "$IRHA_EDSR_MODEL" \
+            --rembg-model "$IRHA_REMBG_MODEL"
+
+      - name: Commit only verified AI studio masters and review manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add public/ai-master public/ai-review 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No AI image outputs changed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(images): publish guarded AI studio outputs [image-ai-generated]"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; retrying after latest-main rebase."
+            sleep $((attempt * 4))
+          done
+          echo "Could not publish generated outputs without overwriting newer main changes."
+          exit 1
+
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-ai-static-failures-${{ github.run_id }}
+          path: image-ai-static-failures.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  admin-media-queue:
+    name: Process protected Admin Media queue
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[image-ai-generated]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout exact workflow source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: scripts/image-ai/requirements.txt
+
+      - name: Cache AI models
+        uses: actions/cache@v4
+        with:
+          path: |
+            models/EDSR_x2.pb
+            ~/.u2net
+          key: irha-image-models-v2-${{ runner.os }}
+
+      - name: Install locked image dependencies
+        run: python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements.txt
+
+      - name: Download Apache-2.0 EDSR x2 model when absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p models
+          if [ ! -s "$IRHA_EDSR_MODEL" ]; then
+            curl --fail --location --retry 4 --retry-all-errors \
+              --output "$IRHA_EDSR_MODEL.tmp" \
+              https://github.com/Saafke/EDSR_Tensorflow/raw/master/models/EDSR_x2.pb
+            test "$(wc -c < "$IRHA_EDSR_MODEL.tmp")" -gt 1000000
+            mv "$IRHA_EDSR_MODEL.tmp" "$IRHA_EDSR_MODEL"
+          fi
+
+      - name: Request short-lived GitHub OIDC token
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="$(curl --fail --silent --show-error \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=irha-image-pipeline")"
+          token="$(printf '%s' "$response" | python -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          test -n "$token"
+          echo "::add-mask::$token"
+          echo "IRHA_GITHUB_OIDC_TOKEN=$token" >> "$GITHUB_ENV"
+
+      - name: Process a failure-isolated production batch
+        env:
+          IRHA_IMAGE_BATCH_LIMIT: "2"
+        run: python scripts/image-ai/run_queue.py
