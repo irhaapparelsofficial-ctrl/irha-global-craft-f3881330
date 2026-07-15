@@ -56,16 +56,16 @@ describe("runtime incident safety", () => {
     expect(claimOneTimeAssetRecovery("/products", 1_000 + 5 * 60 * 1000, storage)).toBe(true);
   });
 
-  it("reports through the owner Supabase RPC without loading the app client", async () => {
+  it("reports through the public Edge gateway without loading the app client", async () => {
     const secret = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJK";
     const mockedFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(String(input)).toBe(
-        "https://pvzjiozismyxqrzmtfbi.supabase.co/rest/v1/rpc/record_public_app_incident",
+        "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/report-app-incident",
       );
       expect(init?.method).toBe("POST");
       const headers = new Headers(init?.headers);
       expect(headers.get("apikey")).toMatch(/^sb_publishable_/);
-      expect(headers.has("authorization")).toBe(false);
+      expect(headers.get("authorization")).toMatch(/^Bearer sb_publishable_/);
       expect(headers.get("content-type")).toBe("application/json");
 
       const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
@@ -97,9 +97,10 @@ describe("runtime incident integration contract", () => {
     expect(boundary).toContain("reportRuntimeIncident");
     expect(boundary).toContain("claimOneTimeAssetRecovery");
     expect(boundary).toContain("Copy ref");
-    expect(reporter).toContain("/rest/v1/rpc/record_public_app_incident");
+    expect(reporter).toContain("/functions/v1/report-app-incident");
+    expect(reporter).not.toContain("/rest/v1/rpc/record_public_app_incident");
     expect(reporter).not.toContain('import("@/integrations/supabase/client")');
-    expect(reporter).not.toContain("authorization");
+    expect(reporter).toContain("authorization");
   });
 
   it("keeps incident rows private and the public reporter rate limited", () => {
@@ -111,6 +112,11 @@ describe("runtime incident integration contract", () => {
     expect(migration).toContain("REVOKE ALL ON TABLE public.app_runtime_incidents FROM anon, authenticated");
     expect(migration).toContain("'report_app_error', 900, 3");
     expect(migration).toContain("GRANT EXECUTE ON FUNCTION public.record_public_app_incident");
+    const serviceGrant = readFileSync(
+      "supabase/migrations/20260716030000_allow_service_role_runtime_incident_reporting.sql",
+      "utf8",
+    );
+    expect(serviceGrant).toContain("TO anon, authenticated, service_role");
     expect(migration).toContain("'system'");
   });
 });

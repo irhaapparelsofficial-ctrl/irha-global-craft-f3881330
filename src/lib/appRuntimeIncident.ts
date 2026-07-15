@@ -5,7 +5,7 @@ import {
 
 const RECOVERY_TTL_MS = 5 * 60 * 1000;
 const RECOVERY_PREFIX = "irha:recoverable-asset-error:";
-const INCIDENT_RPC_URL = `${OWNER_SUPABASE_URL}/rest/v1/rpc/record_public_app_incident`;
+const INCIDENT_REPORT_URL = `${OWNER_SUPABASE_URL}/functions/v1/report-app-incident`;
 
 export type RuntimeIncidentPayload = {
   incidentId: string;
@@ -61,10 +61,11 @@ export function claimOneTimeAssetRecovery(
 
 export async function reportRuntimeIncident(payload: RuntimeIncidentPayload): Promise<boolean> {
   try {
-    const response = await fetch(INCIDENT_RPC_URL, {
+    const response = await fetch(INCIDENT_REPORT_URL, {
       method: "POST",
       headers: {
         apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
+        authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
         "content-type": "application/json",
         accept: "application/json",
       },
