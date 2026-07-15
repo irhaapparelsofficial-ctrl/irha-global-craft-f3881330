@@ -72,6 +72,7 @@ export default function HeroCarousel() {
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
+                sizes="(max-width: 639px) 92vw, (max-width: 1023px) 56vw, 32vw"
                 width={1000}
                 height={1250}
                 className="h-full w-full object-contain p-3 transition-transform duration-700 group-hover:scale-[1.025] sm:p-7"
@@ -91,6 +92,7 @@ export default function HeroCarousel() {
                 loading="lazy"
                 fetchPriority="low"
                 decoding="async"
+                sizes="(max-width: 639px) 46vw, (max-width: 1023px) 40vw, 22vw"
                 width={720}
                 height={720}
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
@@ -106,6 +108,7 @@ export default function HeroCarousel() {
                 loading="lazy"
                 fetchPriority="low"
                 decoding="async"
+                sizes="(max-width: 639px) 46vw, (max-width: 1023px) 40vw, 22vw"
                 width={720}
                 height={720}
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
