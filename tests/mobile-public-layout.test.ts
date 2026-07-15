@@ -19,10 +19,11 @@ describe("mobile public layout", () => {
     expect(layout).toContain("pb-[calc(5.75rem+env(safe-area-inset-bottom))]");
   });
 
-  it("does not show duplicate mobile WhatsApp, AI and human chat launchers", () => {
+  it("mounts one human chat without duplicate mobile WhatsApp or AI launchers", () => {
     const layout = read("src/components/layout/Layout.tsx");
     const dock = read("src/components/sections/StickyMobileCTA.tsx");
     const human = read("src/components/HumanLiveChat.tsx");
+    expect(layout).toContain("<HumanLiveChat />");
     expect(layout).not.toContain("<LiveChat />");
     expect(dock).toContain("Live Chat");
     expect(dock).not.toContain("WhatsApp");
