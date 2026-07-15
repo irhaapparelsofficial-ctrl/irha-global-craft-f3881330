@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { createIrhaFetch } from "../../lib/inquiryTransportFetch";
 import {
   OWNER_SUPABASE_PROJECT_ID,
   OWNER_SUPABASE_PUBLISHABLE_KEY,
@@ -17,6 +18,9 @@ export const supabase = createClient<Database>(
   supabaseRuntimeUrl,
   supabasePublishableKey,
   {
+    global: {
+      fetch: createIrhaFetch(supabaseRuntimeUrl),
+    },
     auth: {
       storage: localStorage,
       persistSession: true,
