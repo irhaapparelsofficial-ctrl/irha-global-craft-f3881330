@@ -1,1 +1,62 @@
-placeholder
+name: Verify live mobile performance
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    if: >-
+      github.event.issue.number == 375 &&
+      github.event.comment.body == '/verify-mobile-performance' &&
+      github.event.comment.user.login == 'irhaapparelsofficial-ctrl'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Run mobile Lighthouse against live Germany page
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes lighthouse@12.8.2 \
+            "https://irhaapparels.com/de/bekleidungshersteller-deutschland?lh_verify=${GITHUB_SHA::12}" \
+            --output=json \
+            --output-path=/tmp/lighthouse.json \
+            --only-categories=performance,seo,accessibility,best-practices \
+            --form-factor=mobile \
+            --screenEmulation.mobile=true \
+            --throttling-method=simulate \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"
+
+          node <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('/tmp/lighthouse.json', 'utf8'));
+          const score = (id) => Math.round((report.categories[id]?.score ?? 0) * 100);
+          const metric = (id) => report.audits[id]?.displayValue ?? 'n/a';
+          const waste = (id) => report.audits[id]?.details?.overallSavingsBytes ?? 0;
+          const summary = [
+            `Performance: ${score('performance')}`,
+            `Accessibility: ${score('accessibility')}`,
+            `Best Practices: ${score('best-practices')}`,
+            `SEO: ${score('seo')}`,
+            `FCP: ${metric('first-contentful-paint')}`,
+            `LCP: ${metric('largest-contentful-paint')}`,
+            `TBT: ${metric('total-blocking-time')}`,
+            `CLS: ${metric('cumulative-layout-shift')}`,
+            `Speed Index: ${metric('speed-index')}`,
+            `Unused JS savings: ${Math.round(waste('unused-javascript') / 1024)} KiB`,
+            `Unused CSS savings: ${Math.round(waste('unused-css-rules') / 1024)} KiB`,
+            `Total transfer: ${metric('total-byte-weight')}`,
+          ];
+          console.log(summary.join('\n'));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Live mobile Lighthouse\n\n${summary.map((x) => `- ${x}`).join('\n')}\n`);
+          NODE
+
+      - name: Upload Lighthouse JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-mobile-lighthouse
+          path: /tmp/lighthouse.json
+          retention-days: 3
