@@ -22,10 +22,8 @@ describe("plain owner admin", () => {
 
   it("uses the same five owner sections in mobile navigation", () => {
     const mobile = between(shell, "const MOBILE_NAV", "function groupTitle");
-    for (const label of ["Dashboard", "Buyers", "Inbox", "Sales", "Catalogue"]) {
-      expect(mobile).toContain(`label: "${label}"`);
-    }
-    expect((mobile.match(/label:/g) || []).length).toBe(5);
+    const entries = [...mobile.matchAll(/\{ key: "[^"]+", label: "([^"]+)"/g)].map((match) => match[1]);
+    expect(entries).toEqual(["Dashboard", "Buyers", "Inbox", "Sales", "Catalogue"]);
   });
 
   it("keeps detailed tools hidden behind an explicit Advanced Tools toggle", () => {
