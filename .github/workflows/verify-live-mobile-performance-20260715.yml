@@ -1,4 +1,5 @@
 name: Verify live mobile performance
+# Verification revision: 6
 
 on:
   push:
