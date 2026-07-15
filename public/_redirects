@@ -1,4 +1,7 @@
-# Cloudflare Pages legacy buyer-route redirects.
+# Cloudflare Pages favicon and legacy buyer-route redirects.
+# Keep the legacy /favicon.ico request on the branded crawlable asset.
+/favicon.ico /favicon.svg 301
+
 # SPA fallback is intentionally omitted because Pages handles React SPA routes
 # automatically when no top-level 404.html exists.
 /buyer-trust-center /buyer-trust 301

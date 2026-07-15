@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Irha Apparels</title>
+  <desc id="desc">Navy and gold Irha Apparels crest</desc>
+  <rect width="160" height="160" rx="32" fill="#0b2747"/>
+  <circle cx="80" cy="80" r="66" fill="#0b2747" stroke="#d5ad4d" stroke-width="7"/>
+  <circle cx="80" cy="80" r="54" fill="none" stroke="#d5ad4d" stroke-width="2.5" opacity=".95"/>
+  <path d="M80 31 112 50v39c0 23-14 37-32 47-18-10-32-24-32-47V50z" fill="#102f55" stroke="#d5ad4d" stroke-width="4"/>
+  <path d="M59 57h12v47H59zM89 57h12v47H89z" fill="#d5ad4d"/>
+  <path d="M71 57h18L80 76zM71 104h18L80 85z" fill="#d5ad4d"/>
+</svg>
