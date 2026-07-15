@@ -1,6 +1,38 @@
 const APEX_ORIGIN = "https://irhaapparels.com";
 const WWW_HOST = "www.irhaapparels.com";
 
+const VALID_ROBOTS_TXT = `# Irha Apparels public B2B website
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /login
+Disallow: /log-in
+Disallow: /signin
+Disallow: /sign-in
+Disallow: /seo-indexing
+Disallow: /catalogs/
+
+Sitemap: https://irhaapparels.com/sitemap.xml
+`;
+
+const STATIC_BUYER_CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'self'",
+  "form-action 'self'",
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com",
+  "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://static.cloudflareinsights.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
+  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const MARKET_PATHS = new Set([
   "/markets",
   "/markets/germany",
@@ -140,6 +172,10 @@ function looksLikeFile(pathname) {
   return segment.includes(".");
 }
 
+export function robotsText() {
+  return VALID_ROBOTS_TXT;
+}
+
 export function legacyAliasTarget(pathname) {
   return LEGACY_ALIASES.get(normalizePath(pathname)) || null;
 }
@@ -228,6 +264,19 @@ function canonicalPathRedirect(request, url, pathname) {
   });
 }
 
+function robotsResponse(request) {
+  return new Response(request.method === "HEAD" ? null : VALID_ROBOTS_TXT, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-store, no-transform, max-age=0, must-revalidate",
+      "CDN-Cache-Control": "no-store, no-transform",
+      "X-Content-Type-Options": "nosniff",
+      "X-Irha-Robots-Source": "worker-valid",
+    },
+  });
+}
+
 function notFoundResponse(request, pathname) {
   const safePath = pathname.replace(/[&<>"']/g, "");
   const body = request.method === "HEAD" ? null : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page Not Found — Irha Apparels</title></head><body style="margin:0;background:#0a0a0a;color:#f5f1e8;font-family:Arial,sans-serif"><main style="max-width:760px;margin:0 auto;padding:96px 24px"><p style="color:#c9a45c;text-transform:uppercase;letter-spacing:.18em">404 — Page not found</p><h1 style="font-size:48px;line-height:1.05">This page does not exist.</h1><p style="color:#c9c1b5;line-height:1.7">The requested path <code>${safePath}</code> is not a published Irha Apparels page.</p><p><a href="/products" style="color:#e8c477">Browse products</a> · <a href="/markets" style="color:#e8c477">International markets</a> · <a href="/inquiry" style="color:#e8c477">Request a quote</a></p></main></body></html>`;
@@ -288,6 +337,7 @@ async function staticBuyerResponse(request, env, pathname) {
   headers.delete("Location");
   headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Content-Location", `${APEX_ORIGIN}${pathname}`);
+  headers.set("Content-Security-Policy", STATIC_BUYER_CSP);
   headers.set("X-Irha-Static-Buyer-Shell", "runtime-free");
   headers.set("X-Irha-Static-Buyer-Asset", assetPath);
   headers.set("Cache-Control", "public, max-age=300, must-revalidate");
@@ -303,6 +353,10 @@ export default {
     const pathname = normalizePath(url.pathname);
 
     if (url.hostname === WWW_HOST) return canonicalRedirect(request, url);
+
+    if ((request.method === "GET" || request.method === "HEAD") && pathname === "/robots.txt") {
+      return robotsResponse(request);
+    }
 
     const aliasTarget = legacyAliasTarget(pathname);
     if (aliasTarget) return aliasRedirect(request, url, aliasTarget);
