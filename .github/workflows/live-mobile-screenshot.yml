@@ -1,0 +1,35 @@
+name: Live Mobile Screenshot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Chromium
+        run: npx -y playwright@1.52.0 install --with-deps chromium
+      - name: Capture current live homepage
+        run: |
+          npx -y playwright@1.52.0 screenshot --device="iPhone 13" --wait-for-timeout=10000 https://irhaapparels.com live-home-viewport.png
+          npx -y playwright@1.52.0 screenshot --device="iPhone 13" --wait-for-timeout=10000 --full-page https://irhaapparels.com live-home-full.png
+      - name: Record live release identity
+        run: |
+          curl -fsSL https://irhaapparels.com/build.json -o live-build.json
+          cat live-build.json
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-mobile-homepage
+          path: |
+            live-home-viewport.png
+            live-home-full.png
+            live-build.json
+          retention-days: 1
