@@ -1,0 +1,105 @@
+name: Recursive Lovable runtime lock bootstrap
+
+on:
+  push:
+    branches: [fix/lovable-free-runtime-recursive-20260716]
+    paths:
+      - ".github/workflows/lovable-runtime-recursive-bootstrap-20260716.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lovable-free-runtime-recursive-20260716
+          fetch-depth: 0
+      - name: Apply recursive default-deny runtime gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          helper = '''\nfunction irhaLovableRuntimeKey(): string | undefined {\n  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;\n  return Deno.env.get("LOVABLE_API_KEY") || undefined;\n}\n'''
+
+          changed = []
+          for path in sorted(Path('supabase/functions').rglob('*')):
+              if not path.is_file() or path.suffix not in {'.ts', '.js'}:
+                  continue
+              text = path.read_text()
+              if 'Deno.env.get("LOVABLE_API_KEY")' not in text and "Deno.env.get('LOVABLE_API_KEY')" not in text:
+                  continue
+              if 'function irhaLovableRuntimeKey()' in text:
+                  continue
+              text = text.replace('Deno.env.get("LOVABLE_API_KEY")', 'irhaLovableRuntimeKey()')
+              text = text.replace("Deno.env.get('LOVABLE_API_KEY')", 'irhaLovableRuntimeKey()')
+              imports = list(re.finditer(r'^import .*?;\s*$', text, flags=re.M))
+              if imports:
+                  pos = imports[-1].end()
+                  text = text[:pos] + helper + text[pos:]
+              else:
+                  text = helper.lstrip() + '\n' + text
+              path.write_text(text)
+              changed.append(str(path))
+
+          replacements = {
+              'src/lib/__checks__/gscDailySitemapAutomation.test.ts': [
+                  ('gsc: Boolean(Deno.env.get("LOVABLE_API_KEY"))', 'gsc: Boolean(irhaLovableRuntimeKey())'),
+              ],
+              'src/lib/__checks__/secureSitemapScheduler.test.ts': [
+                  ('expect(edge).toContain(\'Deno.env.get("LOVABLE_API_KEY")\');', 'expect(edge).toContain("irhaLovableRuntimeKey()");\n    expect(edge).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");'),
+              ],
+              'src/test/publicPlatformContracts.test.ts': [
+                  ('expect(chatFunction).toContain("ai.gateway.lovable.dev/v1/chat/completions");', 'expect(chatFunction).toContain("ai.gateway.lovable.dev/v1/chat/completions");\n    expect(chatFunction).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");'),
+              ],
+          }
+          for name, pairs in replacements.items():
+              path = Path(name)
+              if not path.exists():
+                  continue
+              text = path.read_text()
+              for old, new in pairs:
+                  if old in text and new not in text:
+                      text = text.replace(old, new, 1)
+              path.write_text(text)
+
+          Path('src/lib/__checks__/lovableRuntimeDefaultDeny.test.ts').write_text('''import { readdirSync, readFileSync, statSync } from "node:fs";\nimport { join } from "node:path";\nimport { describe, expect, it } from "vitest";\n\nfunction filesUnder(root: string): string[] {\n  return readdirSync(root).flatMap((name) => {\n    const path = join(root, name);\n    return statSync(path).isDirectory() ? filesUnder(path) : [path];\n  });\n}\n\ndescribe("Lovable runtime is explicit opt-in only", () => {\n  it("recursively gates every Edge Function key read", () => {\n    const sources = filesUnder("supabase/functions").filter((path) => /\\.(ts|js)$/.test(path));\n    const consumers = sources.filter((path) => readFileSync(path, "utf8").includes("LOVABLE_API_KEY"));\n    expect(consumers.length).toBeGreaterThan(0);\n    for (const path of consumers) {\n      const source = readFileSync(path, "utf8");\n      const directReads = source.match(/Deno\\.env\\.get\\(["']LOVABLE_API_KEY["']\\)/g) ?? [];\n      expect(source, path).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");\n      expect(source, path).toContain("function irhaLovableRuntimeKey()");\n      expect(directReads.length, path).toBe(1);\n      expect(source, path).toContain('Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true"');\n    }\n  });\n\n  it("covers the modular public chat provider source", () => {\n    const provider = readFileSync("supabase/functions/chat/providers.ts", "utf8");\n    expect(provider).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");\n    expect(provider).toContain("irhaLovableRuntimeKey()");\n  });\n\n  it("preserves Vault-authorized sitemap-ping and locks scheduler RPCs", () => {\n    const scheduler = readFileSync("supabase/functions/sitemap-ping/index.ts", "utf8");\n    const queue = readFileSync("supabase/migrations/20260716035000_queue_and_finalize_sitemap_submission.sql", "utf8");\n    const lock = readFileSync("supabase/migrations/20260716036000_lock_sitemap_scheduler_rpcs.sql", "utf8");\n    expect(scheduler).toContain("SCHEDULER_TOKEN_HASH");\n    expect(scheduler).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");\n    expect(queue).toContain("/functions/v1/sitemap-ping");\n    expect(lock).toContain("FROM anon, authenticated");\n    expect(lock).toContain("TO service_role");\n  });\n});\n''')
+
+          Path('supabase/migrations/20260716036000_lock_sitemap_scheduler_rpcs.sql').write_text('''-- The Vault-authorized sitemap queue/finalizer is internal.\n-- Browsers and generic signed-in sessions must not call its SECURITY DEFINER\n-- implementation functions directly.\n\nBEGIN;\n\nREVOKE EXECUTE ON FUNCTION public.claim_sitemap_submission(text) FROM anon, authenticated;\nREVOKE EXECUTE ON FUNCTION public.record_sitemap_submission_result(text, boolean, integer, text) FROM anon, authenticated;\nREVOKE EXECUTE ON FUNCTION public.queue_sitemap_submission(text, boolean) FROM anon, authenticated;\nREVOKE EXECUTE ON FUNCTION public.finalize_sitemap_submission() FROM anon, authenticated;\n\nGRANT EXECUTE ON FUNCTION public.claim_sitemap_submission(text) TO service_role;\nGRANT EXECUTE ON FUNCTION public.record_sitemap_submission_result(text, boolean, integer, text) TO service_role;\nGRANT EXECUTE ON FUNCTION public.queue_sitemap_submission(text, boolean) TO service_role;\nGRANT EXECUTE ON FUNCTION public.finalize_sitemap_submission() TO service_role;\n\nCOMMIT;\n''')
+
+          Path('docs/LOVABLE_RUNTIME_LOCK_RECURSIVE_20260716.md').write_text(
+              '# Recursive Lovable runtime default-deny lock — 2026-07-16\n\n'
+              '- Every TypeScript/JavaScript file under `supabase/functions` is scanned recursively.\n'
+              '- `LOVABLE_API_KEY` is unavailable unless `IRHA_ENABLE_LOVABLE_RUNTIME=true` is explicitly configured.\n'
+              '- The normal production configuration does not include that opt-in.\n'
+              '- Modular chat provider files are covered.\n'
+              '- Existing non-Lovable fallback paths remain unchanged.\n'
+              '- Sitemap implementation RPCs become service-role-only.\n\n'
+              f'Patched source files: {len(changed)}\n'
+          )
+
+          Path('.github/workflows/lovable-runtime-recursive-bootstrap-20260716.yml').unlink()
+          PY
+      - name: Validate source contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e .github/workflows/lovable-runtime-recursive-bootstrap-20260716.yml
+          test -f src/lib/__checks__/lovableRuntimeDefaultDeny.test.ts
+          test -f supabase/migrations/20260716036000_lock_sitemap_scheduler_rpcs.sql
+          grep -RIl 'IRHA_ENABLE_LOVABLE_RUNTIME' supabase/functions | grep -q .
+      - name: Commit lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "security(runtime): gate Lovable providers recursively"
+          git push origin HEAD:fix/lovable-free-runtime-recursive-20260716
