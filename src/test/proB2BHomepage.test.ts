@@ -10,6 +10,8 @@ const footer = read("src/components/layout/Footer.tsx");
 const consent = read("src/components/CookieConsent.tsx");
 const capabilities = read("src/components/sections/CapabilityStrip.tsx");
 const categories = read("src/components/sections/HomeCategoryUniverse.tsx");
+const process = read("src/components/sections/ProcessTimeline.tsx");
+const manufacturing = read("src/components/sections/HomeManufacturingEditorial.tsx");
 const decision = read("src/components/sections/BuyerDecisionSection.tsx");
 const sticky = read("src/components/sections/StickyMobileCTA.tsx");
 const styles = read("src/index.css");
@@ -17,15 +19,14 @@ const brand = read("public/irha-brand-mark.svg");
 
 describe("polished B2B homepage", () => {
   it("identifies the business, buyers and next actions immediately", () => {
-    expect(hero).toContain("Custom Apparel Manufacturing for Brands &amp; Wholesalers");
-    expect(hero).toContain("B2B buyers only");
-    expect(hero).toContain("OEM / ODM / private label");
+    expect(hero).toContain("B2B Apparel Manufacturer for Brands &amp; Wholesalers");
+    expect(hero).toContain("Sialkot · Made to order · B2B buyers");
     expect(hero).toContain("Request quote");
     expect(hero).toContain("View products");
     expect(hero).toContain("irha:open-human-chat");
   });
 
-  it("presents multiple reliable manufacturing visuals", () => {
+  it("presents multiple reliable manufacturing visuals with one LCP image", () => {
     expect(hero).toContain("Bavarian &amp; Trachten");
     expect(hero).toContain("Sportswear");
     expect(hero).toContain("Leatherwear");
@@ -50,12 +51,23 @@ describe("polished B2B homepage", () => {
     expect(home).not.toContain("BuyerTrustSection");
   });
 
+  it("uses compact swipeable mobile buyer sections without autoplay", () => {
+    for (const source of [capabilities, categories, process]) {
+      expect(source).toContain("snap-x");
+      expect(source).toContain("overflow-x-auto");
+      expect(source).not.toContain("setInterval");
+    }
+    expect(categories).toContain("Swipe to compare programs");
+    expect(process).toContain("Swipe through the order process");
+  });
+
   it("uses buyer language, stable category images and clear proof", () => {
     expect(capabilities).toContain("OEM, ODM & Private Label");
     expect(capabilities).toContain("Sample Before Bulk");
-    expect(categories).toContain("Start with the product line your business needs");
+    expect(categories).toContain("Choose the product line your business needs");
     expect(categories).not.toContain("resolveAsset");
     expect(categories).not.toContain("featuredProductRank");
+    expect(manufacturing).toContain("Review the process behind the product");
     expect(decision).toContain("Requirement-based quotation");
     expect(decision).toContain("Approval before bulk");
     expect(decision).toContain("Factory verification");
@@ -70,11 +82,12 @@ describe("polished B2B homepage", () => {
     expect(brand).toContain("MANUFACTURING SPECIALISTS");
   });
 
-  it("keeps mobile consent and contact actions from covering each other", () => {
-    expect(consent).toContain("Your privacy choice");
+  it("keeps mobile consent compact and prevents it covering contact actions", () => {
+    expect(consent).toContain("Optional cookies");
     expect(consent).toContain("Essential only");
     expect(consent).toContain("Accept optional");
     expect(consent).toContain("cookieConsentOpen");
+    expect(consent).not.toContain("ShieldCheck");
     expect(sticky).toContain("sticky-mobile-cta");
     expect(styles).toContain('html[data-cookie-consent-open="true"] .sticky-mobile-cta');
   });
