@@ -12,6 +12,7 @@ describe("buyer route image performance contracts", () => {
     expect(catalogue).not.toContain("groupImages");
     expect(catalogue).toContain("?w=960&format=webp&quality=68");
     expect(catalogue).toContain("STATIC_GROUP_IMAGES[group.slug]");
+    expect(catalogue).toContain("const HERO_SLIDES = [");
   });
 
   it("uses category thumbnails rather than originals in the products hero", () => {
