@@ -21,7 +21,7 @@ jobs:
       - name: Capture current live homepage
         shell: bash
         run: |
-          cat > /tmp/capture.mjs <<'EOF'
+          cat > capture-live.mjs <<'EOF'
           import { chromium, devices } from 'playwright';
           import { writeFile } from 'node:fs/promises';
           const browser = await chromium.launch({ headless: true });
@@ -46,12 +46,13 @@ jobs:
           console.log(JSON.stringify(info, null, 2));
           await browser.close();
           EOF
-          node /tmp/capture.mjs
+          node capture-live.mjs
       - name: Record live release identity
         run: |
           curl -fsSL https://irhaapparels.com/build.json -o live-build.json
           cat live-build.json
       - name: Upload screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: live-b2b-polish
@@ -60,4 +61,5 @@ jobs:
             live-polished-full.png
             live-view.json
             live-build.json
+          if-no-files-found: warn
           retention-days: 1
