@@ -1,5 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -76,7 +81,7 @@ async function health(service: Db) {
   return json({
     ok: true,
     database_ready: databaseReady,
-    ai_ready: Boolean(Deno.env.get("LOVABLE_API_KEY")) && databaseReady,
+    ai_ready: Boolean(irhaLovableRuntimeKey()) && databaseReady,
     gmail_ready: gmail.ok && databaseReady,
     gmail_error: gmail.error || null,
     whatsapp_ready: Object.values(whatsappConfig).every(Boolean) && databaseReady,
@@ -88,7 +93,7 @@ async function health(service: Db) {
 }
 
 async function generate(service: Db, userId: string, body: JsonRecord) {
-  if (!Deno.env.get("LOVABLE_API_KEY")) return json({ error: "AI gateway is not configured" }, 503);
+  if (!irhaLovableRuntimeKey()) return json({ error: "AI gateway is not configured" }, 503);
   const leadIds = stringArray(body.lead_ids).slice(0, MAX_GENERATE);
   if (!leadIds.length) return json({ error: "lead_ids[] required" }, 400);
   const campaignInput = record(body.campaign);
@@ -586,7 +591,7 @@ ${JSON.stringify(leads.map((lead, index) => ({ index, channel: lead.selected_cha
 }
 
 async function aiJson(prompt: string): Promise<JsonRecord> {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = irhaLovableRuntimeKey();
   if (!key) throw new Error("LOVABLE_API_KEY missing");
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -637,11 +642,11 @@ function buildEmailMime(input: { to: string; subject: string; body: string; mess
 }
 
 async function gmailHealth(): Promise<{ ok: boolean; error?: string }> {
-  if (!Deno.env.get("LOVABLE_API_KEY") || !Deno.env.get("GOOGLE_MAIL_API_KEY")) return { ok: false, error: "Gmail connector runtime keys are missing" };
+  if (!irhaLovableRuntimeKey() || !Deno.env.get("GOOGLE_MAIL_API_KEY")) return { ok: false, error: "Gmail connector runtime keys are missing" };
   try { const response = await gmailFetch("/profile", { method: "GET" }); return response.ok ? { ok: true } : { ok: false, error: apiError(await safeJson(response), `Gmail profile returned ${response.status}`) }; }
   catch (error) { return { ok: false, error: errorText(error) }; }
 }
-async function gmailFetch(path: string, init: RequestInit) { const key = Deno.env.get("LOVABLE_API_KEY"); const gmail = Deno.env.get("GOOGLE_MAIL_API_KEY"); if (!key || !gmail) throw new Error("Gmail connector runtime keys are missing"); const headers = new Headers(init.headers || {}); headers.set("Authorization", `Bearer ${key}`); headers.set("X-Connection-Api-Key", gmail); return await fetch(`${GMAIL_BASE}${path}`, { ...init, headers }); }
+async function gmailFetch(path: string, init: RequestInit) { const key = irhaLovableRuntimeKey(); const gmail = Deno.env.get("GOOGLE_MAIL_API_KEY"); if (!key || !gmail) throw new Error("Gmail connector runtime keys are missing"); const headers = new Headers(init.headers || {}); headers.set("Authorization", `Bearer ${key}`); headers.set("X-Connection-Api-Key", gmail); return await fetch(`${GMAIL_BASE}${path}`, { ...init, headers }); }
 async function findEmailByMessageId(messageId: string): Promise<any | null> { try { const response = await gmailFetch(`/messages?q=${encodeURIComponent(`rfc822msgid:${messageId}`)}&maxResults=1`, { method: "GET" }); const payload = await safeJson(response); return response.ok && isRecord(payload) && Array.isArray(payload.messages) && payload.messages.length ? payload.messages[0] : null; } catch { return null; } }
 
 function whatsappConfig(): any { const token = Deno.env.get("WHATSAPP_ACCESS_TOKEN") || ""; const phoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || ""; const version = Deno.env.get("META_GRAPH_API_VERSION") || ""; const windowHours = validWindowHours(); if (!token || !phoneId || !version || windowHours === null) return { ok: false, error: "WhatsApp Cloud API runtime configuration is incomplete" }; return { ok: true, token, phoneId, version, windowHours }; }

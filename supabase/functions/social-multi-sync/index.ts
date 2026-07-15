@@ -5,6 +5,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -79,7 +84,7 @@ Deno.serve(async (req: Request) => {
   const caption = `${product.name}\n\n${product.description ?? ""}\n\nFactory direct from Sialkot · ${productUrl}\n#ApparelManufacturer #B2BExports #IrhaApparels`;
 
   const results: Record<string, ChannelResult> = {};
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const lovableKey = irhaLovableRuntimeKey();
 
   // ── LinkedIn (connector gateway) ──────────────────────────────
   if (body.channels.includes("linkedin")) {

@@ -3,6 +3,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -39,7 +44,7 @@ Deno.serve(async (req) => {
     if (!roleRow) return json({ error: "Admin only" }, 403);
 
     const service = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY") || "";
+    const lovableKey = irhaLovableRuntimeKey() || "";
     const linkedinKey = Deno.env.get("LINKEDIN_API_KEY") || "";
     const tiktokKey = Deno.env.get("TIKTOK_API_KEY") || "";
     const metaToken = Deno.env.get("META_ACCESS_TOKEN") || Deno.env.get("META_PAGE_ACCESS_TOKEN") || "";
