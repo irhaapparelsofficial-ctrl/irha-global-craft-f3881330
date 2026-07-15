@@ -1,6 +1,6 @@
 // Resolves catalog and legacy asset paths to production-safe Vite URLs.
 // Full remote URLs and public-root assets remain unchanged.
-const assets = import.meta.glob("/src/assets/**/*.{jpg,jpeg,png,webp,svg}", {
+const assets = import.meta.glob("/src/assets/**/*.{avif,jpg,jpeg,png,webp,svg}", {
   eager: true,
   import: "default",
 }) as Record<string, string>;
@@ -14,14 +14,32 @@ const importedThumbnails = import.meta.glob("/src/assets/**/*.{avif,jpg,jpeg,png
   query: {
     w: "720",
     format: "webp",
-    quality: "72",
+    quality: "68",
+  },
+}) as Record<string, string>;
+
+// One import produces all browser-selectable widths. The browser downloads only
+// the best candidate for the rendered size instead of a desktop-sized image on
+// every mobile card.
+const importedResponsiveSrcSets = import.meta.glob("/src/assets/**/*.{avif,jpg,jpeg,png,webp}", {
+  eager: true,
+  import: "default",
+  query: {
+    w: "360;720;1200",
+    format: "webp",
+    quality: "68",
+    as: "srcset",
   },
 }) as Record<string, string>;
 
 const resolvedThumbnailByAssetUrl = new Map<string, string>();
+const resolvedResponsiveSrcSetByAssetUrl = new Map<string, string>();
 for (const [assetPath, resolvedUrl] of Object.entries(assets)) {
   const thumbnailUrl = importedThumbnails[assetPath];
   if (thumbnailUrl) resolvedThumbnailByAssetUrl.set(resolvedUrl, thumbnailUrl);
+
+  const responsiveSrcSet = importedResponsiveSrcSets[assetPath];
+  if (responsiveSrcSet) resolvedResponsiveSrcSetByAssetUrl.set(resolvedUrl, responsiveSrcSet);
 }
 
 const PLACEHOLDER = "/placeholder.svg";
@@ -43,6 +61,11 @@ export function resolveAsset(assetPath?: string | null): string {
 export function resolveImportedThumbnail(assetUrl?: string | null): string | null {
   if (!assetUrl) return null;
   return resolvedThumbnailByAssetUrl.get(assetUrl) ?? null;
+}
+
+export function resolveImportedResponsiveSrcSet(assetUrl?: string | null): string | null {
+  if (!assetUrl) return null;
+  return resolvedResponsiveSrcSetByAssetUrl.get(assetUrl) ?? null;
 }
 
 export function resolveGallery(items?: string[] | null): string[] {
