@@ -20,12 +20,13 @@ jobs:
           set -euo pipefail
           ORIGIN="https://irhaapparels.com"
           APP_SHA="71dc6a4aa97e78061dc06669bc5a7bdb26c0334a"
+          PARALLEL_SHA="096cfb4b9108f1e7754656e8be85d4749adc1687"
           DEPLOY_SHA="9e71dbdcf93e7847dc0bc505857afa4a7d3c781d"
 
           build_json="$(curl -fsS --connect-timeout 10 --max-time 40 "$ORIGIN/build.json?verify_live=${GITHUB_SHA::12}")"
           served_sha="$(printf '%s' "$build_json" | jq -r '.source_commit // empty')"
           case "$served_sha" in
-            "$APP_SHA"|"$DEPLOY_SHA") ;;
+            "$APP_SHA"|"$PARALLEL_SHA"|"$DEPLOY_SHA") ;;
             *) echo "Unexpected live source SHA: $served_sha"; exit 1 ;;
           esac
           test "$(printf '%s' "$build_json" | jq -r '.source_identity_state // empty')" = "verified"
