@@ -3,6 +3,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -81,7 +86,7 @@ async function health(service: DbClient) {
     }),
   );
   const databaseReady = checks.every((item) => item.ready);
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY") || "";
+  const lovableKey = irhaLovableRuntimeKey() || "";
   const linkedinKey = Deno.env.get("LINKEDIN_API_KEY") || "";
   const tiktokKey = Deno.env.get("TIKTOK_API_KEY") || "";
   const meta = metaCredentials();
@@ -133,7 +138,7 @@ async function health(service: DbClient) {
 }
 
 async function generateContent(service: DbClient, userId: string, body: JsonRecord) {
-  if (!Deno.env.get("LOVABLE_API_KEY")) return json({ error: "Lovable AI gateway is not configured" }, 503);
+  if (!irhaLovableRuntimeKey()) return json({ error: "Lovable AI gateway is not configured" }, 503);
 
   const campaignInput = isRecord(body.campaign) ? body.campaign : body;
   const platforms = stringArray(campaignInput.platforms).filter((value) => PLATFORMS.has(value)).slice(0, 4);
@@ -538,7 +543,7 @@ async function deliverInstagram(item: JsonRecord) {
 }
 
 async function deliverLinkedIn(item: JsonRecord) {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const lovableKey = irhaLovableRuntimeKey();
   const linkedinKey = Deno.env.get("LINKEDIN_API_KEY");
   if (!lovableKey || !linkedinKey) throw new Error("LinkedIn connector runtime keys are missing");
   let author = Deno.env.get("LINKEDIN_ORG_URN") || "";
@@ -596,7 +601,7 @@ async function deliverLinkedIn(item: JsonRecord) {
 }
 
 async function deliverTikTok(_item: JsonRecord) {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const lovableKey = irhaLovableRuntimeKey();
   const tiktokKey = Deno.env.get("TIKTOK_API_KEY");
   if (!lovableKey || !tiktokKey) {
     return {
@@ -713,7 +718,7 @@ Return strict JSON:
 }
 
 async function aiJson(prompt: string): Promise<JsonRecord> {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = irhaLovableRuntimeKey();
   if (!key) throw new Error("LOVABLE_API_KEY missing");
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",

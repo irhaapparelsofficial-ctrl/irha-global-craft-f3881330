@@ -1,6 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const SITE_PROPERTY = "sc-domain:irhaapparels.com";
 const SITEMAP_URL = "https://irhaapparels.com/sitemap.xml";
 
@@ -21,11 +26,11 @@ Deno.serve(async (req: Request) => {
   if (!/^[A-Za-z0-9_-]{40,120}$/.test(token)) return json({ error: "unauthorized" }, 401);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-  const gatewayKey = Deno.env.get("LOVABLE_API_KEY") || "";
-  if (!supabaseUrl || !anonKey || !gatewayKey) return json({ error: "runtime_not_configured" }, 500);
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const gatewayKey = irhaLovableRuntimeKey() || "";
+  if (!supabaseUrl || !serviceRoleKey || !gatewayKey) return json({ error: "runtime_not_configured" }, 500);
 
-  const supabase = createClient(supabaseUrl, anonKey, {
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 

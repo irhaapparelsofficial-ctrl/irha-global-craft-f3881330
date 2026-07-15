@@ -3,6 +3,11 @@
 // remain supported for a future secure scheduler. Submission is idempotent.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -72,7 +77,7 @@ Deno.serve(async (req) => {
   const denied = await authorize(req);
   if (denied) return denied;
 
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const lovableKey = irhaLovableRuntimeKey();
   const gscKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
   if (!lovableKey || !gscKey) return json({ error: "Google Search Console connection is not configured" }, 503);
 

@@ -3,6 +3,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -81,7 +86,7 @@ Deno.serve(async (req) => {
 });
 
 async function health(service: DbClient) {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY") || "";
+  const lovableKey = irhaLovableRuntimeKey() || "";
   const gmailKey = Deno.env.get("GOOGLE_MAIL_API_KEY") || "";
   const tables = await Promise.all(
     ["outreach_campaigns", "outreach_messages", "outreach_events"].map(async (table) => {
@@ -134,7 +139,7 @@ async function health(service: DbClient) {
 }
 
 async function generateDrafts(service: DbClient, userId: string, body: JsonRecord) {
-  if (!Deno.env.get("LOVABLE_API_KEY")) {
+  if (!irhaLovableRuntimeKey()) {
     return json({ error: "Lovable AI gateway is not configured" }, 503);
   }
   const leadIds = stringArray(body.lead_ids).slice(0, MAX_GENERATE);
@@ -550,7 +555,7 @@ async function syncReplies(service: DbClient, userId: string, body: JsonRecord) 
 }
 
 async function generateFollowUps(service: DbClient, userId: string, body: JsonRecord) {
-  if (!Deno.env.get("LOVABLE_API_KEY")) {
+  if (!irhaLovableRuntimeKey()) {
     return json({ error: "Lovable AI gateway is not configured" }, 503);
   }
   const campaignId = typeof body.campaign_id === "string" ? body.campaign_id : "";
@@ -805,7 +810,7 @@ function isEligibleLead(lead: JsonRecord) {
 }
 
 async function verifyGmail(): Promise<{ ok: boolean; error?: string }> {
-  if (!Deno.env.get("LOVABLE_API_KEY") || !Deno.env.get("GOOGLE_MAIL_API_KEY")) {
+  if (!irhaLovableRuntimeKey() || !Deno.env.get("GOOGLE_MAIL_API_KEY")) {
     return { ok: false, error: "Gmail connector runtime keys are missing" };
   }
   try {
@@ -823,7 +828,7 @@ async function verifyGmail(): Promise<{ ok: boolean; error?: string }> {
 }
 
 async function gmailFetch(path: string, init: RequestInit) {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const lovableKey = irhaLovableRuntimeKey();
   const gmailKey = Deno.env.get("GOOGLE_MAIL_API_KEY");
   if (!lovableKey || !gmailKey) throw new Error("Gmail connector runtime keys are missing");
   const headers = new Headers(init.headers || {});
@@ -892,7 +897,7 @@ function encodeHeader(value: string) {
 }
 
 async function aiJson(prompt: string): Promise<JsonRecord> {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = irhaLovableRuntimeKey();
   if (!key) throw new Error("LOVABLE_API_KEY missing");
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",

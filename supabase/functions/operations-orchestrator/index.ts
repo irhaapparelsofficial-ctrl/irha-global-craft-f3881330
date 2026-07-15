@@ -1,6 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const PROJECT_SITE = "https://irhaapparels.com";
 const ALLOWED_ACTIONS = new Set(["health", "heartbeat", "daily", "email_queue", "cleanup", "manual_test"]);
 type Json = Record<string, unknown>;
@@ -185,8 +190,8 @@ async function heartbeat(service: any, runId: string, control: any, recover: boo
   const accounts = socialAccounts.data || [];
   const connectedSocial = accounts.filter((row: any) => row.enabled && row.verification_status === "verified").length;
   const providerConfig = {
-    ai_gateway: Boolean(Deno.env.get("LOVABLE_API_KEY")),
-    gsc: Boolean(Deno.env.get("LOVABLE_API_KEY")),
+    ai_gateway: Boolean(irhaLovableRuntimeKey()),
+    gsc: Boolean(irhaLovableRuntimeKey()),
     social_renderer: Boolean(Deno.env.get("SOCIAL_RENDER_PROVIDER") && Deno.env.get("SOCIAL_RENDER_API_URL") && Deno.env.get("SOCIAL_RENDER_API_KEY")),
     whatsapp: Boolean(Deno.env.get("WHATSAPP_ACCESS_TOKEN") && Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")),
   };
