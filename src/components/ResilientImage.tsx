@@ -25,9 +25,11 @@ export default function ResilientImage({
   );
   const sourceKey = candidates.join("|");
   const [sourceIndex, setSourceIndex] = useState(0);
+  const [responsiveFailed, setResponsiveFailed] = useState(false);
 
   useEffect(() => {
     setSourceIndex(0);
+    setResponsiveFailed(false);
   }, [sourceKey]);
 
   const currentSource = candidates[sourceIndex] ?? "/placeholder.svg";
@@ -38,7 +40,10 @@ export default function ResilientImage({
     }
     return responsiveImageAttributes(currentSource);
   }, [candidates, currentSource]);
-  const useResponsiveSet = responsive && sourceIndex === 0 && Boolean(srcSet || responsiveAttributes.srcSet);
+  const useResponsiveSet = responsive
+    && !responsiveFailed
+    && sourceIndex === 0
+    && Boolean(srcSet || responsiveAttributes.srcSet);
 
   return (
     <img
@@ -50,7 +55,12 @@ export default function ResilientImage({
       decoding={decoding}
       fetchPriority={fetchPriority ?? (loading === "eager" ? "high" : "low")}
       data-responsive-image={useResponsiveSet ? "true" : undefined}
+      data-responsive-fallback={responsiveFailed ? "true" : undefined}
       onError={(event) => {
+        if (useResponsiveSet) {
+          setResponsiveFailed(true);
+          return;
+        }
         if (sourceIndex + 1 < candidates.length) {
           setSourceIndex((current) => current + 1);
           return;
