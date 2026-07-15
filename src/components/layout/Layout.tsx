@@ -84,7 +84,7 @@ function DeferredSupportRuntime() {
   return (
     <Suspense fallback={null}>
       <LiveChat />
-      <HumanLiveChat showLauncher={false} />
+      <HumanLiveChat />
     </Suspense>
   );
 }
