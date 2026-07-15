@@ -1,0 +1,66 @@
+name: Live B2B Polish Screenshot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Capture current live homepage
+        shell: bash
+        run: |
+          cat > /tmp/capture.mjs <<'EOF'
+          import { chromium, devices } from 'playwright';
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({
+            ...devices['iPhone 13'],
+            locale: 'en-GB',
+          });
+          const page = await context.newPage();
+          const response = await page.goto('https://irhaapparels.com/', { waitUntil: 'networkidle', timeout: 90000 });
+          await page.screenshot({ path: 'live-polished-viewport.png' });
+          await page.screenshot({ path: 'live-polished-full.png', fullPage: true });
+          const info = {
+            status: response?.status(),
+            finalUrl: page.url(),
+            title: await page.title(),
+            h1: await page.locator('h1').first().textContent(),
+            logoVisible: await page.locator('img[src="/irha-brand-mark.svg"]').first().isVisible().catch(() => false),
+            cookieVisible: await page.getByText('Your privacy choice', { exact: true }).isVisible().catch(() => false),
+            viewport: await page.viewportSize(),
+          };
+          await Bun.write?.('live-view.json', JSON.stringify(info, null, 2));
+          if (typeof Bun === 'undefined') {
+            const { writeFile } = await import('node:fs/promises');
+            await writeFile('live-view.json', JSON.stringify(info, null, 2));
+          }
+          console.log(JSON.stringify(info, null, 2));
+          await browser.close();
+          EOF
+          node /tmp/capture.mjs
+      - name: Record live release identity
+        run: |
+          curl -fsSL https://irhaapparels.com/build.json -o live-build.json
+          cat live-build.json
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-b2b-polish
+          path: |
+            live-polished-viewport.png
+            live-polished-full.png
+            live-view.json
+            live-build.json
+          retention-days: 1
