@@ -14,12 +14,27 @@ const MARKET_PATHS = new Set([
   "/markets/new-zealand",
 ]);
 
-const STATIC_BUYER_PATHS = new Set([
-  "/de/bekleidungshersteller-deutschland",
-  "/custom-sportswear-manufacturer-germany",
-  "/de/sportbekleidung-hersteller",
-  "/leather-apparel-manufacturer-germany",
-  "/de/lederbekleidung-hersteller",
+const STATIC_BUYER_ASSETS = new Map([
+  [
+    "/de/bekleidungshersteller-deutschland",
+    "/_seo-static/de--bekleidungshersteller-deutschland.irha",
+  ],
+  [
+    "/custom-sportswear-manufacturer-germany",
+    "/_seo-static/custom-sportswear-manufacturer-germany.irha",
+  ],
+  [
+    "/de/sportbekleidung-hersteller",
+    "/_seo-static/de--sportbekleidung-hersteller.irha",
+  ],
+  [
+    "/leather-apparel-manufacturer-germany",
+    "/_seo-static/leather-apparel-manufacturer-germany.irha",
+  ],
+  [
+    "/de/lederbekleidung-hersteller",
+    "/_seo-static/de--lederbekleidung-hersteller.irha",
+  ],
 ]);
 
 const EXACT_PUBLIC_PATHS = new Set([
@@ -129,8 +144,12 @@ export function legacyAliasTarget(pathname) {
   return LEGACY_ALIASES.get(normalizePath(pathname)) || null;
 }
 
+export function staticBuyerAssetPath(pathname) {
+  return STATIC_BUYER_ASSETS.get(normalizePath(pathname)) || null;
+}
+
 export function isStaticBuyerPath(pathname) {
-  return STATIC_BUYER_PATHS.has(normalizePath(pathname));
+  return Boolean(staticBuyerAssetPath(pathname));
 }
 
 export function shouldNoIndex(pathname) {
@@ -160,7 +179,7 @@ export function shouldNoIndexCategoryQuery(pathname, input) {
 
 export function isKnownHtmlRoute(pathname) {
   const normalized = normalizePath(pathname);
-  if (STATIC_BUYER_PATHS.has(normalized)) return true;
+  if (STATIC_BUYER_ASSETS.has(normalized)) return true;
   if (MARKET_PATHS.has(normalized) || EXACT_PUBLIC_PATHS.has(normalized)) return true;
   if (normalized.startsWith("/markets/")) return false;
   if (BUYER_INTENT_PATH.test(normalized)) return true;
@@ -235,18 +254,45 @@ function withNoIndexHeaders(response, reason) {
   });
 }
 
-async function staticBuyerResponse(request, env, url, pathname) {
+async function staticBuyerResponse(request, env, pathname) {
+  const assetPath = staticBuyerAssetPath(pathname);
+  if (!assetPath) {
+    return new Response("Static buyer asset mapping unavailable", {
+      status: 503,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
   const assetUrl = new URL(request.url);
-  assetUrl.pathname = `${pathname}/index.html`;
-  const assetRequest = new Request(assetUrl.toString(), request);
-  const assetResponse = await env.ASSETS.fetch(assetRequest);
+  assetUrl.pathname = assetPath;
+  assetUrl.search = "";
+  assetUrl.hash = "";
+  const assetResponse = await env.ASSETS.fetch(
+    new Request(assetUrl.toString(), {
+      method: "GET",
+      headers: { Accept: "text/html" },
+    }),
+  );
+
+  if (!assetResponse.ok) {
+    return new Response("Static buyer asset unavailable", {
+      status: 503,
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Irha-Static-Buyer-Asset-Status": String(assetResponse.status),
+      },
+    });
+  }
+
   const headers = new Headers(assetResponse.headers);
+  headers.delete("Location");
+  headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Content-Location", `${APEX_ORIGIN}${pathname}`);
-  headers.set("X-Irha-Static-Buyer-Shell", "runtime-free");
+  headers.set("X-Irha-Static-Buyer-Shell", "runtime-free-flat-asset");
+  headers.set("X-Irha-Static-Buyer-Asset", assetPath);
   headers.set("Cache-Control", "public, max-age=300, must-revalidate");
   return new Response(request.method === "HEAD" ? null : assetResponse.body, {
-    status: assetResponse.status,
-    statusText: assetResponse.statusText,
+    status: 200,
     headers,
   });
 }
@@ -277,7 +323,7 @@ export default {
     }
 
     if ((request.method === "GET" || request.method === "HEAD") && isStaticBuyerPath(pathname)) {
-      return staticBuyerResponse(request, env, url, pathname);
+      return staticBuyerResponse(request, env, pathname);
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
