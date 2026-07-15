@@ -1,0 +1,111 @@
+name: Live Final Polish Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_SOURCE_SHA: 94c0b4faed2d3bc7051170ea8f0058db04e51222
+      LIVE_ORIGIN: https://irhaapparels.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for exact production source
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=0
+          for attempt in $(seq 1 60); do
+            cache_bust="${EXPECTED_SOURCE_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$LIVE_ORIGIN/build.json?audit=$cache_bust" -o live-build.json \
+              && jq -e --arg sha "$EXPECTED_SOURCE_SHA" '.source_commit==$sha and .source_identity_state=="verified"' live-build.json >/dev/null; then
+              matched=1
+              echo "Exact live source verified on attempt $attempt"
+              break
+            fi
+            echo "Production not converged yet ($attempt/60)"
+            sleep 10
+          done
+          test "$matched" = "1"
+          cat live-build.json
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Capture live iPhone audit
+        shell: bash
+        run: |
+          cat > capture-live-final.mjs <<'EOF'
+          import { chromium, devices } from 'playwright';
+          import { writeFile } from 'node:fs/promises';
+
+          const origin = process.env.LIVE_ORIGIN;
+          const expectedSource = process.env.EXPECTED_SOURCE_SHA;
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ ...devices['iPhone 13'], locale: 'en-GB' });
+          const page = await context.newPage();
+          const consoleErrors = [];
+          page.on('console', (message) => {
+            if (message.type() === 'error') consoleErrors.push(message.text());
+          });
+
+          const homeResponse = await page.goto(`${origin}/?live_audit=${Date.now()}`, { waitUntil: 'networkidle', timeout: 90000 });
+          await page.screenshot({ path: 'live-final-viewport.png' });
+
+          for (let y = 0; y < await page.evaluate(() => document.body.scrollHeight); y += 600) {
+            await page.evaluate((nextY) => window.scrollTo(0, nextY), y);
+            await page.waitForTimeout(180);
+          }
+          await page.evaluate(() => window.scrollTo(0, 0));
+          await page.waitForTimeout(500);
+          await page.screenshot({ path: 'live-final-full.png', fullPage: true });
+
+          const routeResults = {};
+          for (const path of ['/products', '/inquiry', '/catalogue']) {
+            const response = await page.goto(`${origin}${path}?live_audit=${Date.now()}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+            routeResults[path] = { status: response?.status(), finalUrl: page.url() };
+          }
+
+          await page.goto(`${origin}/?live_audit=summary-${Date.now()}`, { waitUntil: 'networkidle', timeout: 90000 });
+          const info = {
+            expectedSource,
+            homeStatus: homeResponse?.status(),
+            finalUrl: page.url(),
+            title: await page.title(),
+            h1: await page.locator('h1').first().textContent(),
+            logoVisible: await page.locator('img[src="/irha-brand-mark.svg"]').first().isVisible().catch(() => false),
+            requestQuoteVisible: await page.getByText('Request quote', { exact: false }).first().isVisible().catch(() => false),
+            cookieVisible: await page.getByText('Optional cookies', { exact: true }).isVisible().catch(() => false),
+            viewport: await page.viewportSize(),
+            routeResults,
+            consoleErrors: consoleErrors.slice(0, 20),
+          };
+          await writeFile('live-final-view.json', JSON.stringify(info, null, 2));
+          console.log(JSON.stringify(info, null, 2));
+
+          if (info.homeStatus !== 200 || !info.logoVisible || !info.requestQuoteVisible) process.exitCode = 1;
+          for (const result of Object.values(routeResults)) {
+            if (result.status !== 200) process.exitCode = 1;
+          }
+          await browser.close();
+          EOF
+          node capture-live-final.mjs
+      - name: Upload final live evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-final-polish-audit
+          path: |
+            live-build.json
+            live-final-view.json
+            live-final-viewport.png
+            live-final-full.png
+          retention-days: 2
