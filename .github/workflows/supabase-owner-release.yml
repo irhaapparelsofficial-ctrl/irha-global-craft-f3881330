@@ -80,19 +80,16 @@ jobs:
           npm run verify:secrets
           npm run verify:migrations
 
-      - name: Link owner Supabase project
+      - name: Link owner database for migration scope
+        if: inputs.scope == 'database' || inputs.scope == 'both'
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ inputs.scope }}" = "database" ] || [ "${{ inputs.scope }}" = "both" ]; then
-            test -n "${SUPABASE_DB_PASSWORD:-}" || {
-              echo "SUPABASE_DB_PASSWORD is missing"
-              exit 1
-            }
-            supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
-          else
-            supabase link --project-ref "$SUPABASE_PROJECT_ID"
-          fi
+          test -n "${SUPABASE_DB_PASSWORD:-}" || {
+            echo "SUPABASE_DB_PASSWORD is missing"
+            exit 1
+          }
+          supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Preview pending database migrations
         if: inputs.scope == 'database' || inputs.scope == 'both'
