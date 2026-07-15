@@ -16,29 +16,27 @@ export default function StickyMobileCTA() {
     ? `/inquiry?intent=rfq&category=${encodeURIComponent(categorySlug)}&utm_source=mobile-dock&utm_content=${encodeURIComponent(pathname)}`
     : settings.ctas.quoteHref;
 
-  const openLiveChat = () => {
-    window.dispatchEvent(new CustomEvent("irha:open-human-chat"));
-  };
+  const openLiveChat = () => window.dispatchEvent(new CustomEvent("irha:open-human-chat"));
 
   return (
     <div
-      className="md:hidden fixed left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[70] grid grid-cols-[1.35fr_1fr] overflow-hidden rounded-full border border-gold/45 bg-background/95 shadow-elegant backdrop-blur"
+      className="sticky-mobile-cta fixed bottom-[max(.55rem,env(safe-area-inset-bottom))] left-3 right-3 z-[70] grid grid-cols-2 overflow-hidden rounded-xl border border-gold/35 bg-background/96 shadow-[0_16px_48px_rgba(0,0,0,.58)] backdrop-blur-xl md:hidden"
       aria-label="Primary contact actions"
     >
       <button
         type="button"
         onClick={openLiveChat}
         aria-label="Open live chat with the Irha Apparels team"
-        className="flex min-h-14 items-center justify-center gap-2 bg-gradient-gold px-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground"
+        className="flex min-h-[50px] items-center justify-center gap-2 border-r border-border/60 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground"
       >
-        <Headphones size={17} /> Live Chat
+        <Headphones size={16} className="text-emerald-400" /> Live chat
       </button>
       <Link
         to={quoteHref}
         aria-label={categorySlug ? "Request a quote for this category" : "Request a quote"}
-        className="flex min-h-14 items-center justify-center gap-2 border-l border-border/60 px-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground"
+        className="flex min-h-[50px] items-center justify-center gap-2 bg-gradient-gold px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground"
       >
-        <FileText size={15} className="text-gold" /> Quote
+        <FileText size={15} /> Request quote
       </Link>
     </div>
   );

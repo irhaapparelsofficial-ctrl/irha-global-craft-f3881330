@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" role="img" aria-labelledby="title desc">
+  <title id="title">Irha Apparels</title>
+  <desc id="desc">Navy and gold Irha Apparels manufacturing specialists wordmark</desc>
+  <g fill="none" fill-rule="evenodd">
+    <circle cx="80" cy="80" r="69" fill="#0b2747" stroke="#d5ad4d" stroke-width="5"/>
+    <circle cx="80" cy="80" r="57" stroke="#d5ad4d" stroke-width="1.8" opacity=".9"/>
+    <path d="M80 34 111 52v36c0 22-13 34-31 44-18-10-31-22-31-44V52z" fill="#102f55" stroke="#d5ad4d" stroke-width="2.5"/>
+    <path d="M61 57h9v45h-9zM90 57h9v45h-9z" fill="#d5ad4d"/>
+    <path d="M70 57h20l-10 18zM70 102h20l-10-18z" fill="#d5ad4d" opacity=".95"/>
+    <text x="80" y="23" fill="#d5ad4d" font-family="Arial, sans-serif" font-size="8.5" font-weight="700" letter-spacing="2.2" text-anchor="middle">IRHA APPARELS</text>
+    <text x="80" y="145" fill="#d5ad4d" font-family="Arial, sans-serif" font-size="7.2" font-weight="700" letter-spacing="1.35" text-anchor="middle">MANUFACTURING SPECIALISTS</text>
+    <text x="175" y="72" fill="#f3eee3" font-family="Georgia, serif" font-size="54" font-weight="600" letter-spacing="1">Irha Apparels</text>
+    <text x="178" y="111" fill="#d5ad4d" font-family="Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="5">B2B CUSTOM MANUFACTURING</text>
+  </g>
+</svg>

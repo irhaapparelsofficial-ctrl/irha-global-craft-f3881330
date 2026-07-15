@@ -2,10 +2,9 @@ import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
 import CapabilityStrip from "@/components/sections/CapabilityStrip";
 import HomeCategoryUniverse from "@/components/sections/HomeCategoryUniverse";
-import BuyerTrustSection from "@/components/sections/BuyerTrustSection";
-import HomeProductShowcase from "@/components/sections/HomeProductShowcase";
 import ProcessTimeline from "@/components/sections/ProcessTimeline";
 import HomeManufacturingEditorial from "@/components/sections/HomeManufacturingEditorial";
+import BuyerDecisionSection from "@/components/sections/BuyerDecisionSection";
 import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import {
   ORGANIZATION_ID,
@@ -41,14 +40,12 @@ export default function Home() {
         path="/"
         jsonLd={jsonLd}
       />
-
       <HeroCarousel />
       <CapabilityStrip />
       <HomeCategoryUniverse />
       <HomeManufacturingEditorial />
       <ProcessTimeline />
-      <BuyerTrustSection />
-      <HomeProductShowcase />
+      <BuyerDecisionSection />
       <StartProgramCTA />
     </>
   );

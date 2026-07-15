@@ -1,306 +1,133 @@
-import { Link, NavLink, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Bookmark, ChevronDown, Menu, X } from "lucide-react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { Bookmark, ChevronRight, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import MockupRequestButton from "@/components/MockupRequestButton";
-import irhaLogo from "@/assets/irha-logo.png.asset.json";
 import { useShortlist } from "@/lib/shortlist";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
+
+const CORE_NAV = [
+  { label: "Products", href: "/products" },
+  { label: "Manufacturing", href: "/manufacturing" },
+  { label: "How it works", href: "/#process", anchor: true },
+  { label: "Buyer trust", href: "/buyer-trust" },
+] as const;
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const { pathname } = useLocation();
   const shortlist = useShortlist();
   const { data: settings } = useSiteSettings();
-  const { data: catalogTree = [] } = usePublicCatalogTree();
-  const collectionCategories = catalogTree
-    .filter((category) => category.is_published)
-    .map((category) => ({
-      slug: category.slug,
-      name: category.name,
-      productCount:
-        category.directProducts.filter((product) => product.is_published).length +
-        category.subs.reduce(
-          (total, subCategory) =>
-            total + subCategory.products.filter((product) => product.is_published).length,
-          0,
-        ),
-    }))
-    .filter((category) => category.productCount > 0)
-    .slice(0, 6);
   const savedCount = shortlist.items.length;
-  const mainLinks = settings.navigation.main.filter((link) => link.enabled);
-  const moreLinks = settings.navigation.more.filter((link) => link.enabled);
-  const tailLinks = settings.navigation.tail.filter((link) => link.enabled);
-  const logoSrc = settings.brand.logoUrl || irhaLogo.url;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 18);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    setOpen(false);
-    setMoreOpen(false);
-    setCollectionsOpen(false);
-  }, [pathname]);
+  useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => {
+    const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
-    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", closeOnEscape);
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keydown", closeOnEscape);
     };
   }, [open]);
+
+  const headerSolid = scrolled || open || pathname !== "/";
 
   return (
     <header
       className={cn(
-        "fixed top-0 inset-x-0 z-50 transition-all duration-500",
-        scrolled || open
-          ? "bg-background/92 backdrop-blur-xl border-b border-border/60 py-3"
-          : "bg-transparent py-6",
+        "fixed inset-x-0 top-0 z-50 border-b transition-all duration-300",
+        headerSolid
+          ? "border-border/70 bg-background/96 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,.22)] backdrop-blur-xl"
+          : "border-transparent bg-gradient-to-b from-black/75 to-transparent py-3.5",
       )}
     >
-      <div className="container-luxe flex items-center justify-between">
+      <div className="container-luxe flex min-h-14 items-center justify-between gap-5">
         <Link
           to="/"
-          className="group flex items-center shrink-0 mr-8"
+          className="group flex min-w-0 shrink-0 items-center"
           aria-label={`${settings.brand.name} — home`}
         >
           <img
-            src={logoSrc}
-            alt={settings.brand.name}
-            className="h-9 md:h-12 w-auto object-contain transition-transform group-hover:scale-[1.04]"
+            src="/irha-brand-mark.svg"
+            alt="Irha Apparels — B2B custom manufacturing"
+            className="h-12 w-auto max-w-[232px] object-contain transition-transform group-hover:scale-[1.015] sm:h-14 sm:max-w-[290px]"
             loading="eager"
             decoding="async"
           />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-8" aria-label="Primary navigation">
-          {mainLinks.map((link) => {
-            if (link.href !== "/products") {
-              return (
-                <NavLink
-                  key={link.href}
-                  to={link.href}
-                  end={link.href === "/"}
-                  className={({ isActive }) =>
-                    cn(
-                      "text-[11px] uppercase tracking-[0.25em] hover-gold-underline transition-colors",
-                      isActive ? "text-primary" : "text-foreground/80 hover:text-foreground",
-                    )
-                  }
-                >
-                  {link.label}
-                </NavLink>
-              );
-            }
-
-            return (
-              <div
-                key={link.href}
-                className="relative"
-                onMouseEnter={() => setCollectionsOpen(true)}
-                onMouseLeave={() => setCollectionsOpen(false)}
-                onBlur={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                    setCollectionsOpen(false);
-                  }
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
-                    setCollectionsOpen(false);
-                    (event.currentTarget.querySelector("button") as HTMLButtonElement | null)?.focus();
-                  }
-                }}
-              >
-                <div className="flex items-center gap-1">
-                  <NavLink
-                    to={link.href}
-                    className={({ isActive }) =>
-                      cn(
-                        "text-[11px] uppercase tracking-[0.25em] hover-gold-underline transition-colors",
-                        isActive ? "text-primary" : "text-foreground/80 hover:text-foreground",
-                      )
-                    }
-                  >
-                    {link.label}
-                  </NavLink>
-                  <button
-                    type="button"
-                    onClick={() => setCollectionsOpen((value) => !value)}
-                    aria-label="Open collections menu"
-                    aria-expanded={collectionsOpen}
-                    aria-haspopup="menu"
-                    aria-controls="desktop-collections-menu"
-                    className="inline-flex min-h-11 min-w-8 items-center justify-center text-foreground/70 transition-colors hover:text-primary"
-                  >
-                    <ChevronDown
-                      size={12}
-                      className={cn("transition-transform", collectionsOpen && "rotate-180")}
-                    />
-                  </button>
-                </div>
-
-                {collectionsOpen && (
-                  <div className="absolute left-1/2 top-full -translate-x-1/2 pt-3 animate-fade-in">
-                    <div
-                      id="desktop-collections-menu"
-                      role="menu"
-                      className="min-w-[390px] border border-border/60 bg-background p-2 shadow-elegant"
-                    >
-                      <NavLink
-                        to="/products"
-                        role="menuitem"
-                        className="flex items-center justify-between gap-4 border-b border-border/60 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary hover:bg-card"
-                      >
-                        <span>All collections</span>
-                        <span aria-hidden="true">→</span>
-                      </NavLink>
-                      {collectionCategories.map((category) => (
-                        <NavLink
-                          key={category.slug}
-                          to={`/products/${category.slug}`}
-                          role="menuitem"
-                          className={({ isActive }) =>
-                            cn(
-                              "flex items-center justify-between gap-5 px-4 py-3 text-sm transition-colors hover:bg-card hover:text-primary",
-                              isActive ? "text-primary" : "text-foreground/78",
-                            )
-                          }
-                        >
-                          <span>{category.name}</span>
-                          <span className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
-                            {category.productCount} products
-                          </span>
-                        </NavLink>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {moreLinks.length > 0 && (
-            <div
-              className="relative"
-              onMouseEnter={() => setMoreOpen(true)}
-              onMouseLeave={() => setMoreOpen(false)}
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setMoreOpen(false);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  setMoreOpen(false);
-                  (event.currentTarget.querySelector("button") as HTMLButtonElement | null)?.focus();
-                }
-              }}
+        <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary navigation">
+          {CORE_NAV.map((item) => item.anchor ? (
+            <a
+              key={item.href}
+              href={item.href}
+              className="min-h-11 inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.2em] text-foreground/72 transition-colors hover:text-primary"
             >
-              <button
-                type="button"
-                onClick={() => setMoreOpen((value) => !value)}
-                aria-expanded={moreOpen}
-                aria-haspopup="menu"
-                aria-controls="desktop-more-menu"
-                className="min-h-11 flex items-center gap-1 text-[11px] uppercase tracking-[0.25em] text-foreground/80 hover:text-foreground transition-colors"
-              >
-                More
-                <ChevronDown
-                  size={12}
-                  className={cn("transition-transform", moreOpen && "rotate-180")}
-                />
-              </button>
-              {moreOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 animate-fade-in">
-                  <div
-                    id="desktop-more-menu"
-                    role="menu"
-                    className="bg-background border border-border/60 shadow-elegant min-w-[240px] py-2"
-                  >
-                    {moreLinks.map((link) => (
-                      <NavLink
-                        key={link.href}
-                        to={link.href}
-                        role="menuitem"
-                        className={({ isActive }) =>
-                          cn(
-                            "block px-5 py-3 text-[11px] uppercase tracking-[0.25em] transition-colors",
-                            isActive
-                              ? "text-primary"
-                              : "text-foreground/75 hover:text-primary hover:bg-card",
-                          )
-                        }
-                      >
-                        {link.label}
-                      </NavLink>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {tailLinks.map((link) => (
+              {item.label}
+            </a>
+          ) : (
             <NavLink
-              key={link.href}
-              to={link.href}
-              className={({ isActive }) =>
-                cn(
-                  "text-[11px] uppercase tracking-[0.25em] hover-gold-underline transition-colors",
-                  isActive ? "text-primary" : "text-foreground/80 hover:text-foreground",
-                )
-              }
+              key={item.href}
+              to={item.href}
+              className={({ isActive }) => cn(
+                "min-h-11 inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.2em] transition-colors",
+                isActive ? "text-primary" : "text-foreground/72 hover:text-primary",
+              )}
             >
-              {link.label}
+              {item.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-3">
-          <MockupRequestButton variant="nav">{settings.ctas.mockupLabel}</MockupRequestButton>
+        <div className="hidden items-center gap-2 lg:flex">
           <Link
             to="/shortlist"
-            aria-label={`Shortlist (${savedCount} saved)`}
-            className="relative min-h-11 min-w-11 inline-flex items-center justify-center text-foreground/80 hover:text-primary transition-colors"
+            aria-label={`Saved products (${savedCount})`}
+            className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border/70 text-foreground/70 transition-colors hover:border-primary hover:text-primary"
           >
-            <Bookmark size={18} />
+            <Bookmark size={17} />
             {savedCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center">
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
                 {savedCount}
               </span>
             )}
           </Link>
           <Link
-            to={settings.ctas.quoteHref}
-            className="min-h-11 inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em] font-medium hover:shadow-gold transition-all"
+            to="/factory-video-call"
+            className="inline-flex min-h-11 items-center px-4 text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/70 transition-colors hover:text-primary"
           >
-            {settings.ctas.quoteLabel}
+            Factory call
+          </Link>
+          <Link
+            to={settings.ctas.quoteHref || "/inquiry?intent=rfq"}
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-gradient-gold px-5 text-[10px] font-semibold uppercase tracking-[0.19em] text-primary-foreground transition-all hover:shadow-gold"
+          >
+            Request quote <ChevronRight size={14} />
           </Link>
         </div>
 
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="lg:hidden min-h-11 min-w-11 inline-flex items-center justify-center text-foreground"
+          className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-white/15 bg-black/25 text-foreground lg:hidden"
           aria-label={open ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={open}
           aria-controls="mobile-navigation"
         >
-          {open ? <X size={22} /> : <Menu size={22} />}
+          {open ? <X size={22} /> : <Menu size={23} />}
         </button>
       </div>
 
@@ -308,73 +135,55 @@ export default function Navbar() {
         <nav
           id="mobile-navigation"
           aria-label="Mobile navigation"
-          className="lg:hidden container-luxe pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-5 animate-fade-in max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain"
+          className="container-luxe max-h-[calc(100dvh-76px)] overflow-y-auto pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:hidden"
         >
-          {mainLinks.map((link) => (
-            <div key={link.href} className="flex flex-col">
-              <NavLink
-                to={link.href}
-                end={link.href === "/"}
-                className={({ isActive }) =>
-                  cn(
-                    "min-h-11 inline-flex items-center text-sm uppercase tracking-[0.22em]",
-                    isActive ? "text-primary" : "text-foreground/80",
-                  )
-                }
+          <div className="overflow-hidden rounded-xl border border-border/70 bg-card/95 shadow-elegant">
+            {CORE_NAV.map((item) => item.anchor ? (
+              <a
+                key={item.href}
+                href={item.href}
+                className="flex min-h-14 items-center justify-between border-b border-border/60 px-5 text-sm font-medium text-foreground/85 last:border-b-0"
               >
-                {link.label}
+                {item.label}<ChevronRight size={16} className="text-primary" />
+              </a>
+            ) : (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                className={({ isActive }) => cn(
+                  "flex min-h-14 items-center justify-between border-b border-border/60 px-5 text-sm font-medium last:border-b-0",
+                  isActive ? "bg-primary/8 text-primary" : "text-foreground/85",
+                )}
+              >
+                {item.label}<ChevronRight size={16} className="text-primary" />
               </NavLink>
-              {link.href === "/products" && collectionCategories.length > 0 && (
-                <div className="ml-3 flex flex-col border-l border-border/60 pl-4">
-                  {collectionCategories.map((category) => (
-                    <NavLink
-                      key={category.slug}
-                      to={`/products/${category.slug}`}
-                      className={({ isActive }) =>
-                        cn(
-                          "min-h-10 inline-flex items-center justify-between gap-4 py-2 text-xs",
-                          isActive ? "text-primary" : "text-foreground/65",
-                        )
-                      }
-                    >
-                      <span>{category.name}</span>
-                      <span className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
-                        {category.productCount}
-                      </span>
-                    </NavLink>
-                  ))}
-                  <NavLink
-                    to="/products/all"
-                    className="min-h-10 inline-flex items-center py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"
-                  >
-                    Search all products
-                  </NavLink>
-                </div>
-              )}
-            </div>
-          ))}
-          {[...moreLinks, ...tailLinks].map((link) => (
-            <NavLink
-              key={link.href}
-              to={link.href}
-              className={({ isActive }) =>
-                cn(
-                  "min-h-11 inline-flex items-center text-sm uppercase tracking-[0.22em]",
-                  isActive ? "text-primary" : "text-foreground/80",
-                )
-              }
+            ))}
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link
+              to="/factory-video-call"
+              className="inline-flex min-h-12 items-center justify-center rounded-md border border-border/70 px-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/75"
             >
-              {link.label}
-            </NavLink>
-          ))}
-          <MockupRequestButton variant="navMobile">{settings.ctas.mockupLabel}</MockupRequestButton>
+              Factory call
+            </Link>
+            <Link
+              to="/shortlist"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-border/70 px-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/75"
+            >
+              <Bookmark size={14} /> Saved {savedCount || ""}
+            </Link>
+          </div>
+
           <Link
-            to={settings.ctas.quoteHref}
-            className="mt-1 min-h-11 inline-flex w-fit items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-2.5 text-[11px] uppercase tracking-[0.25em]"
+            to={settings.ctas.quoteHref || "/inquiry?intent=rfq"}
+            className="mt-3 inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-gradient-gold px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground"
           >
-            {settings.ctas.quoteLabel}
+            Request a quote <ChevronRight size={15} />
           </Link>
-          <p className="text-xs text-muted-foreground pt-2">{settings.brand.phoneDisplay}</p>
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            {settings.brand.phoneDisplay || "Sialkot, Pakistan · B2B manufacturing"}
+          </p>
         </nav>
       )}
     </header>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ChevronDown, ShieldCheck, X } from "lucide-react";
 
 const STORAGE_KEY = "irha_cookie_consent_v1";
 const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
@@ -35,29 +36,23 @@ const applyConsent = (categories: Categories) => {
 
 const ensureGoogleTags = (categories: Categories) => {
   if ((!categories.analytics && !categories.ads) || typeof window.gtag !== "function") return;
-
   if (!window.__irhaGtagBootstrapped) {
     window.gtag("js", new Date());
     window.__irhaGtagBootstrapped = true;
   }
-
   if (categories.analytics && !window.__irhaGoogleAnalyticsConfigured) {
     window.gtag("config", GOOGLE_ANALYTICS_ID, { send_page_view: false });
     window.__irhaGoogleAnalyticsConfigured = true;
   }
-
   if (categories.ads && !window.__irhaGoogleAdsConfigured) {
     window.gtag("config", GOOGLE_ADS_ID);
     window.__irhaGoogleAdsConfigured = true;
   }
-
   if (!document.getElementById(GOOGLE_TAG_SCRIPT_ID)) {
     const script = document.createElement("script");
     script.id = GOOGLE_TAG_SCRIPT_ID;
     script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${
-      categories.analytics ? GOOGLE_ANALYTICS_ID : GOOGLE_ADS_ID
-    }`;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${categories.analytics ? GOOGLE_ANALYTICS_ID : GOOGLE_ADS_ID}`;
     document.head.appendChild(script);
   }
 };
@@ -98,6 +93,11 @@ export default function CookieConsent() {
   const [ads, setAds] = useState(false);
 
   useEffect(() => {
+    document.documentElement.dataset.cookieConsentOpen = visible ? "true" : "false";
+    return () => { delete document.documentElement.dataset.cookieConsentOpen; };
+  }, [visible]);
+
+  useEffect(() => {
     const open = () => {
       const stored = readStored();
       setAnalytics(stored?.categories.analytics ?? false);
@@ -119,30 +119,32 @@ export default function CookieConsent() {
     setVisible(true);
   }, []);
 
+  const close = useCallback(() => {
+    setVisible(false);
+    setCustomizing(false);
+  }, []);
+
   const acceptAll = useCallback(() => {
     const categories = { analytics: true, ads: true };
     save(categories);
     applyAndLoad(categories);
-    setVisible(false);
-    setCustomizing(false);
-  }, []);
+    close();
+  }, [close]);
 
   const rejectAll = useCallback(() => {
     const categories = { analytics: false, ads: false };
     save(categories);
     applyConsent(categories);
     window.dispatchEvent(new Event(ANALYTICS_CONSENT_EVENT));
-    setVisible(false);
-    setCustomizing(false);
-  }, []);
+    close();
+  }, [close]);
 
   const savePrefs = useCallback(() => {
     const categories = { analytics, ads };
     save(categories);
     applyAndLoad(categories);
-    setVisible(false);
-    setCustomizing(false);
-  }, [analytics, ads]);
+    close();
+  }, [analytics, ads, close]);
 
   if (!visible) return null;
 
@@ -152,78 +154,60 @@ export default function CookieConsent() {
       aria-labelledby="cookie-consent-title"
       aria-describedby="cookie-consent-description"
       aria-live="polite"
-      className="fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+3.75rem)] z-[100] rounded-lg bg-black/95 text-white shadow-[0_-4px_24px_rgba(0,0,0,0.35)] backdrop-blur md:inset-x-auto md:right-6 md:bottom-6 md:max-w-md"
+      className="fixed inset-x-3 bottom-[max(.75rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[520px] overflow-hidden rounded-xl border border-white/15 bg-[#090909]/98 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl"
     >
-      <div className="flex flex-col gap-3 px-4 py-3.5">
-        <h2 id="cookie-consent-title" className="text-sm font-semibold text-white">Cookie choices</h2>
-        <p id="cookie-consent-description" className="text-[13px] leading-snug text-white/90">
-          We use optional analytics and advertising cookies only after your choice.{" "}
-          <Link to="/privacy-policy" className="underline underline-offset-2 hover:text-white">
-            Privacy Policy
-          </Link>
-          .
-        </p>
+      <div className="p-3.5 sm:p-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-primary/10 text-primary">
+            <ShieldCheck size={16} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <h2 id="cookie-consent-title" className="font-sans text-sm font-semibold text-white">Your privacy choice</h2>
+              {customizing && (
+                <button type="button" onClick={() => setCustomizing(false)} className="inline-flex h-8 w-8 items-center justify-center text-white/55 hover:text-white" aria-label="Close cookie preferences">
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+            <p id="cookie-consent-description" className="mt-1 text-[11px] leading-5 text-white/68 sm:text-xs">
+              Essential cookies keep the site working. Analytics and advertising stay off until you choose.{" "}
+              <Link to="/privacy-policy" className="text-white/88 underline underline-offset-2 hover:text-primary">Privacy Policy</Link>
+            </p>
+          </div>
+        </div>
 
         {customizing && (
-          <div className="grid gap-1.5 rounded-md border border-white/15 bg-white/5 p-2.5 text-xs">
-            <label className="min-h-10 flex items-center justify-between gap-3 opacity-70">
-              <span>Essential <span className="text-white/50">(always on)</span></span>
-              <input type="checkbox" checked readOnly aria-label="Essential cookies always on" className="h-5 w-5 accent-[#16a34a]" />
+          <div className="mt-3 grid gap-1 rounded-lg border border-white/12 bg-white/[0.035] p-2 text-xs">
+            <label className="flex min-h-10 items-center justify-between gap-3 rounded-md px-2 text-white/55">
+              <span>Essential <span className="text-white/35">· always on</span></span>
+              <input type="checkbox" checked readOnly aria-label="Essential cookies always on" className="h-5 w-5 accent-[#d5ad4d]" />
             </label>
-            <label className="min-h-10 flex items-center justify-between gap-3">
+            <label className="flex min-h-10 items-center justify-between gap-3 rounded-md px-2 hover:bg-white/5">
               <span>Analytics</span>
-              <input
-                type="checkbox"
-                checked={analytics}
-                onChange={(event) => setAnalytics(event.target.checked)}
-                className="h-5 w-5 accent-[#16a34a]"
-              />
+              <input type="checkbox" checked={analytics} onChange={(event) => setAnalytics(event.target.checked)} className="h-5 w-5 accent-[#d5ad4d]" />
             </label>
-            <label className="min-h-10 flex items-center justify-between gap-3">
+            <label className="flex min-h-10 items-center justify-between gap-3 rounded-md px-2 hover:bg-white/5">
               <span>Advertising</span>
-              <input
-                type="checkbox"
-                checked={ads}
-                onChange={(event) => setAds(event.target.checked)}
-                className="h-5 w-5 accent-[#16a34a]"
-              />
+              <input type="checkbox" checked={ads} onChange={(event) => setAds(event.target.checked)} className="h-5 w-5 accent-[#d5ad4d]" />
             </label>
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={acceptAll}
-            className="min-h-11 flex-1 rounded-md bg-[#16a34a] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#15803d]"
-          >
-            Accept All
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button type="button" onClick={rejectAll} className="min-h-11 rounded-md border border-white/25 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/85 transition hover:border-white/50 hover:bg-white/5">
+            Essential only
           </button>
-          <button
-            type="button"
-            onClick={rejectAll}
-            className="min-h-11 flex-1 rounded-md border border-white/40 px-3 py-2 text-xs font-medium text-white hover:bg-white/10"
-          >
-            Reject Optional
+          <button type="button" onClick={customizing ? savePrefs : acceptAll} className="min-h-11 rounded-md bg-gradient-gold px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:shadow-gold">
+            {customizing ? "Save choices" : "Accept optional"}
           </button>
-          {!customizing ? (
-            <button
-              type="button"
-              onClick={() => setCustomizing(true)}
-              className="min-h-11 inline-flex items-center px-2 text-[11px] text-white/70 underline underline-offset-2 hover:text-white"
-            >
-              Customize
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={savePrefs}
-              className="min-h-11 inline-flex items-center px-2 text-[11px] text-white/90 underline underline-offset-2 hover:text-white"
-            >
-              Save Preferences
-            </button>
-          )}
         </div>
+
+        {!customizing && (
+          <button type="button" onClick={() => setCustomizing(true)} className="mt-2 inline-flex min-h-9 w-full items-center justify-center gap-1 text-[10px] font-medium text-white/55 hover:text-white">
+            Customize <ChevronDown size={13} />
+          </button>
+        )}
       </div>
     </section>
   );
