@@ -4,9 +4,10 @@ import OccasionBanner from "@/components/OccasionBanner";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import ViewportDeferred from "@/components/performance/ViewportDeferred";
 
+const loadHumanLiveChat = () => import("@/components/HumanLiveChat");
 const Footer = lazy(() => import("./Footer"));
 const FloatingActions = lazy(() => import("./FloatingActions"));
-const HumanLiveChat = lazy(() => import("@/components/HumanLiveChat"));
+const HumanLiveChat = lazy(loadHumanLiveChat);
 const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock"));
 
 const OPEN_HUMAN_CHAT_EVENT = "irha:open-human-chat";
@@ -14,7 +15,8 @@ const OPEN_HUMAN_CHAT_EVENT = "irha:open-human-chat";
 function DeferredSupportRuntime() {
   const [ready, setReady] = useState(false);
   const readyRef = useRef(false);
-  const pendingOpenRef = useRef(false);
+  const humanModuleReadyRef = useRef(false);
+  const replayingRef = useRef(false);
 
   useEffect(() => {
     readyRef.current = ready;
@@ -23,9 +25,22 @@ function DeferredSupportRuntime() {
   useEffect(() => {
     const activate = () => setReady(true);
     const openChat = () => {
-      if (readyRef.current) return;
-      pendingOpenRef.current = true;
-      setReady(true);
+      if (replayingRef.current) return;
+      if (readyRef.current && humanModuleReadyRef.current) return;
+
+      void loadHumanLiveChat()
+        .then(() => {
+          humanModuleReadyRef.current = true;
+          setReady(true);
+          for (const delay of [50, 220]) {
+            window.setTimeout(() => {
+              replayingRef.current = true;
+              window.dispatchEvent(new CustomEvent(OPEN_HUMAN_CHAT_EVENT));
+              replayingRef.current = false;
+            }, delay);
+          }
+        })
+        .catch(() => setReady(true));
     };
 
     window.addEventListener(OPEN_HUMAN_CHAT_EVENT, openChat);
@@ -40,15 +55,6 @@ function DeferredSupportRuntime() {
       window.clearTimeout(fallback);
     };
   }, []);
-
-  useEffect(() => {
-    if (!ready || !pendingOpenRef.current) return;
-    pendingOpenRef.current = false;
-    const replay = window.setTimeout(() => {
-      window.dispatchEvent(new CustomEvent(OPEN_HUMAN_CHAT_EVENT));
-    }, 0);
-    return () => window.clearTimeout(replay);
-  }, [ready]);
 
   if (!ready) return null;
 
