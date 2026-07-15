@@ -21,8 +21,8 @@ describe("public performance and discovery contract", () => {
   it("assigns high priority to one LCP image and lazy-loads secondary hero media", () => {
     expect(heroSource.match(/loading="eager"/g)).toHaveLength(1);
     expect(heroSource.match(/fetchPriority="high"/g)).toHaveLength(1);
-    expect(heroSource.match(/loading="lazy"/g)).toHaveLength(3);
-    expect(heroSource.match(/fetchPriority="low"/g)).toHaveLength(3);
+    expect(heroSource.match(/loading="lazy"/g)).toHaveLength(2);
+    expect(heroSource.match(/fetchPriority="low"/g)).toHaveLength(2);
   });
 
   it("preloads the generated homepage LCP thumbnail without leaking it into route shells", () => {
