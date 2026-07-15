@@ -39,7 +39,7 @@ const SEO_RELEASE_URLS = [
 function verdictBadge(v?: string) {
   if (!v) return <Badge variant="secondary">Unknown</Badge>;
   if (v === "PASS") return <Badge className="bg-green-600 hover:bg-green-700"><CheckCircle2 className="w-3 h-3 mr-1" />Indexed</Badge>;
-  if (v === "FAIL") return <Badge variant="destructive"><XCircle2 className="w-3 h-3 mr-1" />Not indexed</Badge>;
+  if (v === "FAIL") return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Not indexed</Badge>;
   if (v === "PARTIAL") return <Badge className="bg-yellow-500 hover:bg-yellow-600"><AlertTriangle className="w-3 h-3 mr-1" />Partial</Badge>;
   return <Badge variant="secondary">{v}</Badge>;
 }
