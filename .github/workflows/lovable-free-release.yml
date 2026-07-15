@@ -1,0 +1,104 @@
+name: Lovable-Free Release Kickoff
+
+run-name: Lovable-free release kickoff · ${{ github.ref_name }} · #${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type RELEASE_CURRENT_MAIN to re-run the exact current-main Quality Gate and unlock the GitHub-to-Cloudflare production release
+        required: true
+        default: "NO"
+        type: string
+      expected_sha:
+        description: Optional exact 40-character main SHA safety lock; leave blank to use current main
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: lovable-free-release-kickoff
+  cancel-in-progress: false
+
+jobs:
+  kickoff:
+    if: inputs.confirm == 'RELEASE_CURRENT_MAIN'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resolve exact current main and its push Quality Gate
+        id: resolve
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          set -euo pipefail
+
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          [[ "$latest_main" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "Could not resolve an exact current main SHA"
+            exit 1
+          }
+
+          expected_sha="$(printf '%s' "${EXPECTED_SHA:-}" | tr -d '[:space:]')"
+          if [ -n "$expected_sha" ] && [ "$expected_sha" != "$latest_main" ]; then
+            echo "Safety lock failed: expected $expected_sha but current main is $latest_main"
+            exit 1
+          fi
+
+          runs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/quality.yml/runs?branch=main&status=completed&per_page=100")"
+          quality_run_id="$(printf '%s' "$runs_json" | jq -r --arg sha "$latest_main" '
+            [
+              .workflow_runs[]
+              | select(
+                  .head_sha == $sha
+                  and .event == "push"
+                  and .head_branch == "main"
+                  and (.conclusion == "success" or .conclusion == "failure" or .conclusion == "cancelled")
+                )
+            ]
+            | sort_by(.run_number, .run_attempt)
+            | last
+            | .id // empty
+          ')"
+
+          test -n "$quality_run_id" || {
+            echo "No completed push-triggered Quality Gate exists for exact current main $latest_main. Missing status is unverified, not a failure."
+            exit 1
+          }
+
+          quality_conclusion="$(printf '%s' "$runs_json" | jq -r --argjson id "$quality_run_id" '.workflow_runs[] | select(.id == $id) | .conclusion')"
+
+          echo "source_sha=$latest_main" >> "$GITHUB_OUTPUT"
+          echo "quality_run_id=$quality_run_id" >> "$GITHUB_OUTPUT"
+          echo "Previous exact-main Quality Gate conclusion: $quality_conclusion"
+
+      - name: Re-run exact current-main Quality Gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUALITY_RUN_ID: ${{ steps.resolve.outputs.quality_run_id }}
+        run: |
+          set -euo pipefail
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$QUALITY_RUN_ID/rerun"
+          echo "Quality Gate rerun requested for workflow run $QUALITY_RUN_ID"
+
+      - name: Record release-chain handoff
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
+          QUALITY_RUN_ID: ${{ steps.resolve.outputs.quality_run_id }}
+        run: |
+          {
+            echo "## Lovable-free release kickoff"
+            echo "- Exact current main: \`$SOURCE_SHA\`"
+            echo "- Quality Gate run re-triggered: \`$QUALITY_RUN_ID\`"
+            echo "- Next automatic stage: \`Cloudflare Production After Quality Gate\`"
+            echo "- Lovable credits and Lovable Publish are not used."
+            echo "- Production will deploy only if the rerun completes green and the SHA is still exact current main."
+          } >> "$GITHUB_STEP_SUMMARY"
