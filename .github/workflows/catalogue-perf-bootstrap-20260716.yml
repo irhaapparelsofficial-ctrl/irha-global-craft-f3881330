@@ -1,0 +1,92 @@
+name: Catalogue performance bootstrap
+
+on:
+  push:
+    branches: [perf/mobile-buyer-routes-20260716]
+    paths:
+      - ".github/workflows/catalogue-perf-bootstrap-20260716.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/mobile-buyer-routes-20260716
+          fetch-depth: 0
+      - name: Apply static responsive catalogue media patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/pages/Catalogue.tsx')
+          text = path.read_text()
+          text = text.replace('import { useEffect, useState } from "react";', 'import { useState } from "react";')
+          text = text.replace('import { supabase } from "@/integrations/supabase/client";\n', '')
+          text = text.replace(
+              'import { CATALOGUE_GROUPS, matchesCategorySlug } from "@/lib/catalogueGroups";',
+              'import { CATALOGUE_GROUPS } from "@/lib/catalogueGroups";',
+          )
+          replacements = {
+              'import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";': 'import bavarianHero from "@/assets/og/og-bavarian-hero.jpg?w=960&format=webp&quality=68";',
+              'import leatherHero from "@/assets/og/og-leather.jpg";': 'import leatherHero from "@/assets/og/og-leather.jpg?w=960&format=webp&quality=68";',
+              'import sportswearHero from "@/assets/og/og-sportswear.jpg";': 'import sportswearHero from "@/assets/og/og-sportswear.jpg?w=960&format=webp&quality=68";',
+              'import streetwearHero from "@/assets/og/og-streetwear.jpg";': 'import streetwearHero from "@/assets/og/og-streetwear.jpg?w=960&format=webp&quality=68";',
+              'import nightwearHero from "@/assets/og/og-nightwear.jpg";': 'import nightwearHero from "@/assets/og/og-nightwear.jpg?w=960&format=webp&quality=68";',
+          }
+          for old, new in replacements.items():
+              if old not in text and new not in text:
+                  raise SystemExit(f'missing catalogue import anchor: {old}')
+              text = text.replace(old, new)
+
+          text, count = re.subn(
+              r'\nconst CANONICAL_TOP_SLUGS = new Set\(\[[\s\S]*?type ProductImageRow = \{\n  category_id: string;\n  image_url: string \| null;\n\};\n',
+              '\n',
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit(f'expected one catalogue dynamic metadata block, got {count}')
+
+          text = text.replace('  const [groupImages, setGroupImages] = useState<Record<string, string>>({});\n', '')
+          text, count = re.subn(
+              r'\n  useEffect\(\(\) => \{[\s\S]*?\n  \}, \[\]\);\n',
+              '\n',
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit(f'expected one catalogue remote image effect, got {count}')
+
+          old_image = 'const image = groupImages[group.slug] ?? STATIC_GROUP_IMAGES[group.slug] ?? bavarianHero;'
+          new_image = 'const image = STATIC_GROUP_IMAGES[group.slug] ?? bavarianHero;'
+          if old_image not in text:
+              raise SystemExit('catalogue group image anchor missing')
+          text = text.replace(old_image, new_image, 1)
+
+          if 'groupImages' in text or 'supabase' in text or 'matchesCategorySlug' in text:
+              raise SystemExit('dynamic catalogue media dependency remains')
+          path.write_text(text)
+
+          test = Path('src/lib/__checks__/buyerRouteImagePerformance.test.ts')
+          test.write_text('''import { readFileSync } from "node:fs";\nimport { describe, expect, it } from "vitest";\n\nconst catalogue = readFileSync("src/pages/Catalogue.tsx", "utf8");\nconst products = readFileSync("src/pages/GlobalCollectionsPage.tsx", "utf8");\nconst slideshow = readFileSync("src/components/HeroMediaSlideshow.tsx", "utf8");\n\ndescribe("buyer route image performance contracts", () => {\n  it("keeps the catalogue index static and optimized above the fold", () => {\n    expect(catalogue).not.toContain("@/integrations/supabase/client");\n    expect(catalogue).not.toContain("groupImages");\n    expect(catalogue).toContain("?w=960&format=webp&quality=68");\n    expect(catalogue).toContain("STATIC_GROUP_IMAGES[group.slug]");\n  });\n\n  it("uses category thumbnails rather than originals in the products hero", () => {\n    expect(products).toContain("src: category.image");\n    expect(products).not.toContain("src: category.originalImage");\n    expect(products).toContain("<ThumbnailImage");\n  });\n\n  it("does not mount every slideshow image during the initial viewport", () => {\n    expect(slideshow).toContain("loadedIndexes.has(slideIndex)");\n    expect(slideshow).toContain("intervalMs = 9_000");\n    expect(slideshow).toContain("<ThumbnailImage");\n  });\n});\n''')
+
+          workflow = Path('.github/workflows/catalogue-perf-bootstrap-20260716.yml')
+          workflow.unlink()
+          PY
+      - name: Commit patch and remove one-time workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "perf(catalogue): remove oversized initial media"
+          git push origin HEAD:perf/mobile-buyer-routes-20260716
