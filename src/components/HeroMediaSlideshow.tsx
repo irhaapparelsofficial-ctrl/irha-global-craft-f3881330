@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import ThumbnailImage from "@/components/ThumbnailImage";
 
 export type HeroMediaSlide = {
   src: string;
@@ -23,7 +24,7 @@ type HeroMediaSlideshowProps = {
 
 export default function HeroMediaSlideshow({
   slides,
-  intervalMs = 5200,
+  intervalMs = 9_000,
   className = "absolute inset-0",
   imageClassName = "",
   controlsClassName = "bottom-5 right-5",
@@ -42,6 +43,7 @@ export default function HeroMediaSlideshow({
   }, [slides]);
 
   const [index, setIndex] = useState(0);
+  const [loadedIndexes, setLoadedIndexes] = useState<Set<number>>(() => new Set([0]));
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -57,7 +59,17 @@ export default function HeroMediaSlideshow({
 
   useEffect(() => {
     setIndex((current) => (count > 0 ? Math.min(current, count - 1) : 0));
-  }, [count]);
+    setLoadedIndexes(new Set([0]));
+  }, [count, normalizedSlides]);
+
+  useEffect(() => {
+    setLoadedIndexes((current) => {
+      if (current.has(index)) return current;
+      const next = new Set(current);
+      next.add(index);
+      return next;
+    });
+  }, [index]);
 
   const go = useCallback((next: number) => {
     if (count < 2) return;
@@ -100,21 +112,25 @@ export default function HeroMediaSlideshow({
         <div
           key={slide.src}
           aria-hidden={slideIndex !== index}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            slideIndex === index ? "opacity-100" : "opacity-0"
+          className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+            slideIndex === index ? "opacity-100" : "pointer-events-none opacity-0"
           } ${slide.backgroundClassName ?? ""}`}
         >
-          <img
-            src={slide.src}
-            alt={slide.alt}
-            width={1920}
-            height={1280}
-            loading={priority && slideIndex === 0 ? "eager" : "lazy"}
-            fetchPriority={priority && slideIndex === 0 ? "high" : "auto"}
-            decoding="async"
-            className={`h-full w-full ${slide.fit === "contain" ? "object-contain" : "object-cover"} ${imageClassName}`}
-            style={slide.position ? { objectPosition: slide.position } : undefined}
-          />
+          {loadedIndexes.has(slideIndex) && (
+            <ThumbnailImage
+              src={slide.src}
+              originalSrc={slide.src}
+              alt={slide.alt}
+              width={1280}
+              height={960}
+              loading={priority && slideIndex === 0 ? "eager" : "lazy"}
+              fetchPriority={priority && slideIndex === 0 ? "high" : "low"}
+              decoding="async"
+              sizes="(max-width: 767px) 92vw, (max-width: 1279px) 48vw, 38vw"
+              className={`h-full w-full ${slide.fit === "contain" ? "object-contain" : "object-cover"} ${imageClassName}`}
+              style={slide.position ? { objectPosition: slide.position } : undefined}
+            />
+          )}
         </div>
       ))}
 

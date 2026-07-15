@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
 import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
 import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
+import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicCategories } from "@/hooks/usePublicCategoryData";
 import { buildCategoryTaxonomy } from "@/lib/globalCategoryTaxonomy";
 import { whatsappLink } from "@/lib/constants";
-import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";
-import sportswearHero from "@/assets/og/og-sportswear.jpg";
-import leatherHero from "@/assets/og/og-leather.jpg";
+import bavarianHero from "@/assets/og/og-bavarian-hero.jpg?w=960&format=webp&quality=68";
+import sportswearHero from "@/assets/og/og-sportswear.jpg?w=960&format=webp&quality=68";
+import leatherHero from "@/assets/og/og-leather.jpg?w=960&format=webp&quality=68";
 
 const SITE = "https://irhaapparels.com";
 const FALLBACK_HERO_IMAGES = [bavarianHero, sportswearHero, leatherHero];
@@ -17,7 +18,7 @@ export default function GlobalCollectionsPage() {
   const { categories, isLoading } = usePublicCategories();
   const totalProducts = categories.reduce((total, category) => total + category.productCount, 0);
   const categoryHeroImages = categories
-    .map((category) => ({ src: category.originalImage || category.image, alt: category.name }))
+    .map((category) => ({ src: category.image, alt: category.name }))
     .filter((item): item is { src: string; alt: string } => Boolean(item.src))
     .slice(0, 5);
   const heroImages = FALLBACK_HERO_IMAGES.map((fallback, index) =>
@@ -103,7 +104,7 @@ export default function GlobalCollectionsPage() {
 
       <section className="py-16">
         <div className="container-luxe space-y-20">
-          {categories.map((category, index) => {
+          {categories.map((category) => {
             const taxonomy = buildCategoryTaxonomy(category);
             const audienceCount = taxonomy.audiences.length;
             const collectionCount = taxonomy.audiences.reduce((total, audience) => total + audience.collections.length, 0);
@@ -113,10 +114,15 @@ export default function GlobalCollectionsPage() {
                   <Link to={`/products/${category.slug}`} className="lg:col-span-4 block group">
                     <div className="aspect-[4/3] overflow-hidden bg-card">
                       {category.image && (
-                        <img
+                        <ThumbnailImage
                           src={category.image}
+                          originalSrc={category.originalImage}
                           alt={category.name}
-                          loading={index === 0 ? "eager" : "lazy"}
+                          loading="lazy"
+                          fetchPriority="low"
+                          width={960}
+                          height={720}
+                          sizes="(max-width: 1023px) 92vw, 30vw"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       )}

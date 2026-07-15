@@ -14,6 +14,10 @@ const CRITICAL_BUYER_INTENT_PATHS = new Set([
   "/de/lederbekleidung-hersteller",
 ]);
 
+type IdleWindow = Window & {
+  requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+};
+
 async function healLegacyClientCacheOnce() {
   let alreadyHealed = false;
   try {
@@ -44,6 +48,16 @@ async function healLegacyClientCacheOnce() {
   }
 }
 
+function scheduleLegacyClientCacheHeal() {
+  const run = () => void healLegacyClientCacheOnce();
+  const idleWindow = window as IdleWindow;
+  if (typeof idleWindow.requestIdleCallback === "function") {
+    idleWindow.requestIdleCallback(run, { timeout: 5_000 });
+    return;
+  }
+  window.setTimeout(run, 3_000);
+}
+
 function normalizedPathname() {
   const pathname = window.location.pathname;
   return pathname === "/" ? "/" : pathname.replace(/\/+$/, "") || "/";
@@ -70,8 +84,6 @@ function allowStaticShellPaint() {
 }
 
 async function bootstrap() {
-  void healLegacyClientCacheOnce();
-
   const rootElement = document.getElementById("root");
   if (!rootElement) throw new Error("Irha application root is missing");
 
@@ -93,6 +105,7 @@ async function bootstrap() {
       <App />
     </AppErrorBoundary>,
   );
+  scheduleLegacyClientCacheHeal();
 }
 
 void bootstrap();

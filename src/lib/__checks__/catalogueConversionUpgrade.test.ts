@@ -6,12 +6,14 @@ const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("catalogue conversion upgrade", () => {
-  it("uses published product imagery for catalogue group cards with safe fallbacks", () => {
+  it("uses optimized representative programme imagery without an initial product-media query", () => {
     const catalogue = read("src/pages/Catalogue.tsx");
-    expect(catalogue).toContain('from("products")');
-    expect(catalogue).toContain('select("category_id, image_url")');
-    expect(catalogue).toContain("groupImages[group.slug]");
+    expect(catalogue).not.toContain('from("products")');
+    expect(catalogue).not.toContain('select("category_id, image_url")');
+    expect(catalogue).not.toContain("groupImages[group.slug]");
     expect(catalogue).toContain("STATIC_GROUP_IMAGES[group.slug]");
+    expect(catalogue).toContain("?w=960&format=webp&quality=68");
+    expect(catalogue).toContain("<ThumbnailImage");
   });
 
   it("shows buyer-facing manufacturing chips from real product fields", () => {

@@ -1,18 +1,17 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, MessageCircle, Send, Share2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SEO from "@/components/SEO";
 import CatalogueLeadForm from "@/components/CatalogueLeadForm";
 import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import ThumbnailImage from "@/components/ThumbnailImage";
-import { supabase } from "@/integrations/supabase/client";
-import { CATALOGUE_GROUPS, matchesCategorySlug } from "@/lib/catalogueGroups";
+import { CATALOGUE_GROUPS } from "@/lib/catalogueGroups";
 import { whatsappLink } from "@/lib/constants";
-import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";
-import leatherHero from "@/assets/og/og-leather.jpg";
-import sportswearHero from "@/assets/og/og-sportswear.jpg";
-import streetwearHero from "@/assets/og/og-streetwear.jpg";
-import nightwearHero from "@/assets/og/og-nightwear.jpg";
+import bavarianHero from "@/assets/og/og-bavarian-hero.jpg?w=960&format=webp&quality=68";
+import leatherHero from "@/assets/og/og-leather.jpg?w=960&format=webp&quality=68";
+import sportswearHero from "@/assets/og/og-sportswear.jpg?w=960&format=webp&quality=68";
+import streetwearHero from "@/assets/og/og-streetwear.jpg?w=960&format=webp&quality=68";
+import nightwearHero from "@/assets/og/og-nightwear.jpg?w=960&format=webp&quality=68";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -34,14 +33,6 @@ const STATIC_GROUP_IMAGES: Record<string, string> = {
   nightwear: nightwearHero,
 };
 
-const CANONICAL_TOP_SLUGS = new Set([
-  "bavarian-trachten-wear",
-  "premium-leather-apparel",
-  "sportswear",
-  "streetwear-activewear",
-  "leisure-nightwear",
-]);
-
 const HERO_SLIDES = [
   { src: bavarianHero, alt: "Bavarian garments catalogue", fit: "cover" as const },
   { src: sportswearHero, alt: "Sportswear catalogue", fit: "cover" as const },
@@ -50,88 +41,9 @@ const HERO_SLIDES = [
   { src: nightwearHero, alt: "Nightwear catalogue", fit: "cover" as const },
 ];
 
-type CategoryImageRow = {
-  id: string;
-  slug: string;
-  parent_id: string | null;
-};
-
-type ProductImageRow = {
-  category_id: string;
-  image_url: string | null;
-};
-
 export default function Catalogue() {
   const [shareOpen, setShareOpen] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
-  const [groupImages, setGroupImages] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void (async () => {
-      const [categoryResult, productResult] = await Promise.all([
-        supabase
-          .from("categories")
-          .select("id, slug, parent_id")
-          .eq("is_published", true)
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("products")
-          .select("category_id, image_url")
-          .eq("is_published", true)
-          .not("image_url", "is", null)
-          .order("sort_order", { ascending: true })
-          .limit(500),
-      ]);
-
-      if (cancelled || categoryResult.error || productResult.error) return;
-
-      const categories = (categoryResult.data ?? []) as CategoryImageRow[];
-      const products = (productResult.data ?? []) as ProductImageRow[];
-      const byId = new Map(categories.map((category) => [category.id, category]));
-      const usedImages = new Set<string>();
-      const resolved: Record<string, string> = {};
-
-      for (const group of CATALOGUE_GROUPS) {
-        const specificPatterns = group.categorySlugs.filter((pattern) => !CANONICAL_TOP_SLUGS.has(pattern));
-        const specificChildren = categories.filter(
-          (category) => category.parent_id && matchesCategorySlug(category.slug, specificPatterns),
-        );
-
-        let selectedCategories: CategoryImageRow[];
-        if (specificChildren.length > 0) {
-          selectedCategories = specificChildren;
-        } else {
-          const seeds = categories.filter((category) => matchesCategorySlug(category.slug, group.categorySlugs));
-          const seedIds = new Set(seeds.map((category) => category.id));
-          selectedCategories = categories.filter(
-            (category) => seedIds.has(category.id) || (!!category.parent_id && seedIds.has(category.parent_id)),
-          );
-        }
-
-        const selectedIds = new Set(selectedCategories.map((category) => category.id));
-        const matchingProducts = products.filter(
-          (product) => product.image_url && selectedIds.has(product.category_id),
-        );
-        const representative = matchingProducts.find(
-          (product) => product.image_url && !usedImages.has(product.image_url),
-        ) ?? matchingProducts[0];
-
-        if (representative?.image_url) {
-          resolved[group.slug] = representative.image_url;
-          usedImages.add(representative.image_url);
-        }
-      }
-
-      if (!cancelled) setGroupImages(resolved);
-      void byId;
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const shareUrl = `${SITE_URL}/catalogue`;
   const shareText = "Irha Apparels — B2B product catalogue for custom apparel programs in Sialkot, Pakistan.";
@@ -233,13 +145,16 @@ export default function Catalogue() {
         <div className="container-luxe">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {CATALOGUE_GROUPS.map((group) => {
-              const image = groupImages[group.slug] ?? STATIC_GROUP_IMAGES[group.slug] ?? bavarianHero;
+              const image = STATIC_GROUP_IMAGES[group.slug] ?? bavarianHero;
               return (
                 <Link key={group.slug} to={`/catalogue/${group.slug}`} className="group relative block overflow-hidden border border-border/60 bg-card/30 hover:border-gold transition-colors">
                   <div className="relative aspect-[16/9] overflow-hidden bg-card">
                     <ThumbnailImage
                       src={image}
                       alt={`${group.name} catalogue`}
+                      loading="lazy"
+                      fetchPriority="low"
+                      sizes="(max-width: 639px) 92vw, (max-width: 1023px) 46vw, 30vw"
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
