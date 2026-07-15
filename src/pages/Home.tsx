@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
 import CapabilityStrip from "@/components/sections/CapabilityStrip";
+import ViewportDeferred from "@/components/performance/ViewportDeferred";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -45,31 +46,41 @@ export default function Home() {
       <HeroCarousel />
       <CapabilityStrip />
 
-      <Suspense fallback={<div aria-hidden className="min-h-[360px]" />}>
-        <div className="[content-visibility:auto] [contain-intrinsic-size:760px]">
-          <HomeCategoryUniverse />
-        </div>
-      </Suspense>
-      <Suspense fallback={<div aria-hidden className="min-h-[280px]" />}>
-        <div className="[content-visibility:auto] [contain-intrinsic-size:620px]">
-          <HomeManufacturingEditorial />
-        </div>
-      </Suspense>
-      <Suspense fallback={<div aria-hidden className="min-h-[240px]" />}>
-        <div className="[content-visibility:auto] [contain-intrinsic-size:520px]">
-          <ProcessTimeline />
-        </div>
-      </Suspense>
-      <Suspense fallback={<div aria-hidden className="min-h-[260px]" />}>
-        <div className="[content-visibility:auto] [contain-intrinsic-size:560px]">
-          <BuyerDecisionSection />
-        </div>
-      </Suspense>
-      <Suspense fallback={<div aria-hidden className="min-h-[180px]" />}>
-        <div className="[content-visibility:auto] [contain-intrinsic-size:360px]">
-          <StartProgramCTA />
-        </div>
-      </Suspense>
+      <ViewportDeferred minHeight={760} rootMargin="180px 0px">
+        <Suspense fallback={<div aria-hidden className="min-h-[360px]" />}>
+          <div className="[content-visibility:auto] [contain-intrinsic-size:760px]">
+            <HomeCategoryUniverse />
+          </div>
+        </Suspense>
+      </ViewportDeferred>
+      <ViewportDeferred minHeight={620} rootMargin="220px 0px">
+        <Suspense fallback={<div aria-hidden className="min-h-[280px]" />}>
+          <div className="[content-visibility:auto] [contain-intrinsic-size:620px]">
+            <HomeManufacturingEditorial />
+          </div>
+        </Suspense>
+      </ViewportDeferred>
+      <ViewportDeferred minHeight={520} rootMargin="220px 0px">
+        <Suspense fallback={<div aria-hidden className="min-h-[240px]" />}>
+          <div className="[content-visibility:auto] [contain-intrinsic-size:520px]">
+            <ProcessTimeline />
+          </div>
+        </Suspense>
+      </ViewportDeferred>
+      <ViewportDeferred minHeight={560} rootMargin="220px 0px">
+        <Suspense fallback={<div aria-hidden className="min-h-[260px]" />}>
+          <div className="[content-visibility:auto] [contain-intrinsic-size:560px]">
+            <BuyerDecisionSection />
+          </div>
+        </Suspense>
+      </ViewportDeferred>
+      <ViewportDeferred minHeight={360} rootMargin="220px 0px">
+        <Suspense fallback={<div aria-hidden className="min-h-[180px]" />}>
+          <div className="[content-visibility:auto] [contain-intrinsic-size:360px]">
+            <StartProgramCTA />
+          </div>
+        </Suspense>
+      </ViewportDeferred>
     </>
   );
 }
