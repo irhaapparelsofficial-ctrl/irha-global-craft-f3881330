@@ -1,0 +1,144 @@
+name: Clean live homepage mobile speed audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/audit-live-home-speed-clean-20260715.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PERFORMANCE_BASE_SHA: cc153c30219f94a57f12e5ed7cc1c8407bcb38e0
+    steps:
+      - name: Wait for verified deployed performance descendant
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          for attempt in $(seq 1 90); do
+            cache_bust="${PERFORMANCE_BASE_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
+              "https://irhaapparels.com/build.json?speed_audit=$cache_bust" -o /tmp/build.json; then
+              live_sha="$(jq -r '.source_commit // empty' /tmp/build.json)"
+              identity="$(jq -r '.source_identity_state // empty' /tmp/build.json)"
+              relation="unknown"
+              if [[ "$live_sha" =~ ^[0-9a-f]{40}$ ]]; then
+                relation="$(gh api "repos/$GITHUB_REPOSITORY/compare/$PERFORMANCE_BASE_SHA...$live_sha" --jq '.status' 2>/dev/null || true)"
+              fi
+              echo "attempt=$attempt live_sha=$live_sha identity=$identity relation=$relation"
+              if [ "$identity" = "verified" ] && [ "$relation" = "ahead" ]; then
+                found=1
+              fi
+              if [ "$identity" = "verified" ] && [ "$relation" = "identical" ]; then
+                found=1
+              fi
+              if [ "$found" = "1" ]; then
+                echo "LIVE_SHA=$live_sha" >> "$GITHUB_ENV"
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$found" = "1"
+          cat /tmp/build.json
+
+      - name: Run three cold simulated-mobile Lighthouse audits
+        shell: bash
+        run: |
+          set -euo pipefail
+          for run_number in 1 2 3; do
+            npx --yes lighthouse@12.8.2 \
+              "https://irhaapparels.com/?speed_audit=${LIVE_SHA::12}-${GITHUB_RUN_ID}-$run_number" \
+              --output=json \
+              --output-path="/tmp/lighthouse-$run_number.json" \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --form-factor=mobile \
+              --screenEmulation.mobile=true \
+              --throttling-method=simulate \
+              --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --incognito"
+          done
+
+      - name: Build median evidence
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const reports = [1, 2, 3].map((n) => JSON.parse(fs.readFileSync(`/tmp/lighthouse-${n}.json`, 'utf8')));
+          const getAudit = (report, id) => report.audits?.[id] ?? {};
+          const getNumeric = (report, id) => getAudit(report, id).numericValue ?? null;
+          const getScore = (report, id) => Math.round((report.categories?.[id]?.score ?? 0) * 100);
+          const median = (values) => {
+            const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+            return sorted.length ? sorted[Math.floor(sorted.length / 2)] : null;
+          };
+          const runs = reports.map((report, index) => ({
+            run: index + 1,
+            performance: getScore(report, 'performance'),
+            accessibility: getScore(report, 'accessibility'),
+            best_practices: getScore(report, 'best-practices'),
+            seo: getScore(report, 'seo'),
+            fcp_ms: getNumeric(report, 'first-contentful-paint'),
+            lcp_ms: getNumeric(report, 'largest-contentful-paint'),
+            speed_index_ms: getNumeric(report, 'speed-index'),
+            tbt_ms: getNumeric(report, 'total-blocking-time'),
+            interactive_ms: getNumeric(report, 'interactive'),
+            cls: getNumeric(report, 'cumulative-layout-shift'),
+            bytes: getAudit(report, 'total-byte-weight').numericValue ?? null,
+            unused_js_bytes: getAudit(report, 'unused-javascript').details?.overallSavingsBytes ?? 0,
+            main_thread_ms: getNumeric(report, 'mainthread-work-breakdown'),
+            bootup_ms: getNumeric(report, 'bootup-time'),
+          }));
+          const network = getAudit(reports[0], 'network-requests').details?.items ?? [];
+          const resourceTotals = Object.fromEntries(
+            ['Document', 'Stylesheet', 'Script', 'Image', 'Font', 'Other'].map((type) => {
+              const rows = network.filter((item) => item.resourceType === type);
+              return [type.toLowerCase(), {
+                count: rows.length,
+                transfer_bytes: rows.reduce((sum, item) => sum + (item.transferSize ?? 0), 0),
+              }];
+            }),
+          );
+          const evidence = {
+            live_source_commit: process.env.LIVE_SHA,
+            performance_base_commit: process.env.PERFORMANCE_BASE_SHA,
+            runs,
+            median: {
+              performance: median(runs.map((run) => run.performance)),
+              fcp_ms: median(runs.map((run) => run.fcp_ms)),
+              lcp_ms: median(runs.map((run) => run.lcp_ms)),
+              speed_index_ms: median(runs.map((run) => run.speed_index_ms)),
+              tbt_ms: median(runs.map((run) => run.tbt_ms)),
+              interactive_ms: median(runs.map((run) => run.interactive_ms)),
+              cls: median(runs.map((run) => run.cls)),
+              bytes: median(runs.map((run) => run.bytes)),
+              unused_js_bytes: median(runs.map((run) => run.unused_js_bytes)),
+              main_thread_ms: median(runs.map((run) => run.main_thread_ms)),
+              bootup_ms: median(runs.map((run) => run.bootup_ms)),
+            },
+            first_run_resource_totals: resourceTotals,
+          };
+          fs.writeFileSync('/tmp/live-home-speed-evidence.json', JSON.stringify(evidence, null, 2));
+          console.log('LIVE_HOME_SPEED_EVIDENCE_START');
+          console.log(JSON.stringify(evidence, null, 2));
+          console.log('LIVE_HOME_SPEED_EVIDENCE_END');
+          NODE
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-live-home-speed-evidence
+          path: |
+            /tmp/build.json
+            /tmp/lighthouse-1.json
+            /tmp/lighthouse-2.json
+            /tmp/lighthouse-3.json
+            /tmp/live-home-speed-evidence.json
+          retention-days: 7
