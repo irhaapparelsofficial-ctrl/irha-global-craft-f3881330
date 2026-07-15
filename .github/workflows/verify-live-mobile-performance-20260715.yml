@@ -1,6 +1,10 @@
 name: Verify live mobile performance
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-live-mobile-performance-20260715.yml"
   issue_comment:
     types: [created]
 
@@ -10,9 +14,10 @@ permissions:
 jobs:
   lighthouse:
     if: >-
-      github.event.issue.number == 375 &&
-      github.event.comment.body == '/verify-mobile-performance' &&
-      github.event.comment.user.login == 'irhaapparelsofficial-ctrl'
+      github.event_name == 'push' ||
+      (github.event.issue.number == 375 &&
+       github.event.comment.body == '/verify-mobile-performance' &&
+       github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
