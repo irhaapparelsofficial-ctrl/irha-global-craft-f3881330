@@ -1,11 +1,7 @@
+import { lazy, Suspense } from "react";
 import SEO from "@/components/SEO";
 import HeroCarousel from "@/components/HeroCarousel";
 import CapabilityStrip from "@/components/sections/CapabilityStrip";
-import HomeCategoryUniverse from "@/components/sections/HomeCategoryUniverse";
-import ProcessTimeline from "@/components/sections/ProcessTimeline";
-import HomeManufacturingEditorial from "@/components/sections/HomeManufacturingEditorial";
-import BuyerDecisionSection from "@/components/sections/BuyerDecisionSection";
-import StartProgramCTA from "@/components/sections/StartProgramCTA";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -13,6 +9,12 @@ import {
   organizationSchema,
   websiteSchema,
 } from "@/lib/seoSchema";
+
+const HomeCategoryUniverse = lazy(() => import("@/components/sections/HomeCategoryUniverse"));
+const HomeManufacturingEditorial = lazy(() => import("@/components/sections/HomeManufacturingEditorial"));
+const ProcessTimeline = lazy(() => import("@/components/sections/ProcessTimeline"));
+const BuyerDecisionSection = lazy(() => import("@/components/sections/BuyerDecisionSection"));
+const StartProgramCTA = lazy(() => import("@/components/sections/StartProgramCTA"));
 
 export default function Home() {
   const jsonLd = [
@@ -42,11 +44,32 @@ export default function Home() {
       />
       <HeroCarousel />
       <CapabilityStrip />
-      <HomeCategoryUniverse />
-      <HomeManufacturingEditorial />
-      <ProcessTimeline />
-      <BuyerDecisionSection />
-      <StartProgramCTA />
+
+      <Suspense fallback={<div aria-hidden className="min-h-[360px]" />}>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:760px]">
+          <HomeCategoryUniverse />
+        </div>
+      </Suspense>
+      <Suspense fallback={<div aria-hidden className="min-h-[280px]" />}>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:620px]">
+          <HomeManufacturingEditorial />
+        </div>
+      </Suspense>
+      <Suspense fallback={<div aria-hidden className="min-h-[240px]" />}>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:520px]">
+          <ProcessTimeline />
+        </div>
+      </Suspense>
+      <Suspense fallback={<div aria-hidden className="min-h-[260px]" />}>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:560px]">
+          <BuyerDecisionSection />
+        </div>
+      </Suspense>
+      <Suspense fallback={<div aria-hidden className="min-h-[180px]" />}>
+        <div className="[content-visibility:auto] [contain-intrinsic-size:360px]">
+          <StartProgramCTA />
+        </div>
+      </Suspense>
     </>
   );
 }
