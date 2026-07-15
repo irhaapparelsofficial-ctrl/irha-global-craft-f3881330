@@ -1,0 +1,48 @@
+name: Diagnose PR test failure
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'fix/public-runtime-lcp-20260715'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Capture exact failures
+        id: tests
+        shell: bash
+        run: |
+          set +e
+          npm test -- --reporter=verbose > /tmp/test-output.txt 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          tail -n 180 /tmp/test-output.txt > /tmp/test-tail.txt
+          exit 0
+      - name: Post diagnostic comment
+        if: steps.tests.outputs.status != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          {
+            echo '## Exact test failure diagnostic'
+            echo
+            echo '```text'
+            cat /tmp/test-tail.txt
+            echo '```'
+          } > /tmp/comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --body-file /tmp/comment.md
+      - name: Mark diagnostic result
+        if: steps.tests.outputs.status != '0'
+        run: exit 1
