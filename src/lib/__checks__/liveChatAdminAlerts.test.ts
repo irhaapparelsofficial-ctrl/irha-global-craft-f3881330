@@ -6,10 +6,11 @@ const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("human live chat admin alerts", () => {
-  it("keeps AI Guide and human chat mounted independently", () => {
+  it("mounts one clear human chat and keeps the fallback AI guide off the public layout", () => {
     const layout = read("src/components/layout/Layout.tsx");
-    expect(layout).toContain("<LiveChat />");
     expect(layout).toContain("<HumanLiveChat />");
+    expect(layout).not.toContain("<LiveChat />");
+    expect(layout).not.toContain('import LiveChat from "@/components/LiveChat"');
   });
 
   it("preserves the desktop launcher and adds a mobile-only protected inbox shortcut", () => {
