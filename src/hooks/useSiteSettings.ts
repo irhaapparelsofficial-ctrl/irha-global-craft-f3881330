@@ -1,5 +1,5 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   DEFAULT_GLOBAL_SITE_SETTINGS,
   GLOBAL_SITE_SETTINGS_KEY,
@@ -7,10 +7,10 @@ import {
   type GlobalSiteSettings,
 } from "@/lib/siteSettings";
 
-const db = supabase as any;
-
 async function fetchSiteSettings(): Promise<GlobalSiteSettings> {
   try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const db = supabase as any;
     const { data, error } = await db.rpc("cms_get_published_document", {
       _key: GLOBAL_SITE_SETTINGS_KEY,
     });
@@ -21,10 +21,26 @@ async function fetchSiteSettings(): Promise<GlobalSiteSettings> {
   }
 }
 
-export function useSiteSettings() {
+type UseSiteSettingsOptions = {
+  deferMs?: number;
+};
+
+export function useSiteSettings({ deferMs = 0 }: UseSiteSettingsOptions = {}) {
+  const [enabled, setEnabled] = useState(deferMs <= 0);
+
+  useEffect(() => {
+    if (deferMs <= 0) {
+      setEnabled(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setEnabled(true), deferMs);
+    return () => window.clearTimeout(timer);
+  }, [deferMs]);
+
   const query = useQuery({
     queryKey: ["cms", GLOBAL_SITE_SETTINGS_KEY, "published"],
     queryFn: fetchSiteSettings,
+    enabled,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     placeholderData: DEFAULT_GLOBAL_SITE_SETTINGS,
