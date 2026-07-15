@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const PROJECT_SITE = "https://www.irhaapparels.com";
+const PROJECT_SITE = "https://irhaapparels.com";
 const ALLOWED_ACTIONS = new Set(["health", "heartbeat", "daily", "email_queue", "cleanup", "manual_test"]);
 type Json = Record<string, unknown>;
 
@@ -52,7 +52,7 @@ Deno.serve(async (req: Request) => {
     let result: Json;
     if (action === "email_queue") result = await processEmailQueue(service, url, serviceKey);
     else if (action === "cleanup") result = await cleanup(service);
-    else if (action === "daily") result = await daily(service, run.id, control);
+    else if (action === "daily") result = await daily(service, run.id, control, url, serviceKey);
     else result = await heartbeat(service, run.id, control, action !== "health");
 
     const status = result.ok === false ? "partial" : "completed";
@@ -86,18 +86,65 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function daily(service: any, runId: string, control: any): Promise<Json> {
+async function daily(service: any, runId: string, control: any, url: string, serviceKey: string): Promise<Json> {
   const { data: planningId, error: planningError } = await service.rpc("create_automation_planning_cycle", { _trigger_source: "system" });
-  const health = await heartbeat(service, runId, control, true);
+  const [health, sitemapSubmission] = await Promise.all([
+    heartbeat(service, runId, control, true),
+    submitCanonicalSitemap(url, serviceKey),
+  ]);
+  const ok = !planningError && health.ok !== false && sitemapSubmission.ok !== false;
   return {
-    ok: !planningError && health.ok !== false,
+    ok,
+    error: ok ? null : "daily_operations_degraded",
     planning_run_id: planningId || null,
     planning_error: planningError?.message || null,
+    sitemap_submission: sitemapSubmission,
     health,
     external_messages_sent: false,
     external_posts_published: false,
     owner_approval_preserved: true,
   };
+}
+
+async function submitCanonicalSitemap(url: string, serviceKey: string): Promise<Json> {
+  try {
+    const response = await fetch(`${url}/functions/v1/sitemap-ping`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${serviceKey}`,
+        apikey: serviceKey,
+        "content-type": "application/json",
+      },
+      body: "{}",
+      signal: AbortSignal.timeout(45_000),
+    });
+    const text = await response.text();
+    let payload: unknown = text;
+    try { payload = JSON.parse(text); } catch { payload = text.slice(0, 2000); }
+    const result = payload && typeof payload === "object" ? payload as Json : {};
+    if (!response.ok || result.ok !== true) {
+      return {
+        ok: false,
+        status: response.status,
+        error: "sitemap_submission_failed",
+        response: payload,
+      };
+    }
+    return {
+      ok: true,
+      status: response.status,
+      site_property: result.site_property || "sc-domain:irhaapparels.com",
+      sitemap: result.sitemap || `${PROJECT_SITE}/sitemap.xml`,
+      submitted_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      error: "sitemap_submission_request_failed",
+      detail: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 async function heartbeat(service: any, runId: string, control: any, recover: boolean): Promise<Json> {
@@ -139,7 +186,7 @@ async function heartbeat(service: any, runId: string, control: any, recover: boo
   const connectedSocial = accounts.filter((row: any) => row.enabled && row.verification_status === "verified").length;
   const providerConfig = {
     ai_gateway: Boolean(Deno.env.get("LOVABLE_API_KEY")),
-    gsc: Boolean(Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY")),
+    gsc: Boolean(Deno.env.get("LOVABLE_API_KEY")),
     social_renderer: Boolean(Deno.env.get("SOCIAL_RENDER_PROVIDER") && Deno.env.get("SOCIAL_RENDER_API_URL") && Deno.env.get("SOCIAL_RENDER_API_KEY")),
     whatsapp: Boolean(Deno.env.get("WHATSAPP_ACCESS_TOKEN") && Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")),
   };
