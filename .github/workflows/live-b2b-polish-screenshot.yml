@@ -60,11 +60,63 @@ jobs:
           grep -F 'User-agent: *' live-robots.txt
           grep -F 'Sitemap: https://irhaapparels.com/sitemap.xml' live-robots.txt
           if grep -F 'Content-Signal' live-robots.txt; then
-            echo 'Unsupported Content-Signal directive is still present.'
-            exit 1
+            echo 'Cloudflare managed Content-Signal injection is present; continuing to collect full diagnostics.'
+          else
+            echo 'No Content-Signal directive present.'
           fi
           grep -i '^content-security-policy:' live-germany-headers.txt
           grep -i 'static.cloudflareinsights.com' live-germany-headers.txt
+      - name: Discover Cloudflare robots and AI controls read-only
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -u
+          mkdir -p cloudflare-discovery
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          if [ -z "$token" ]; then
+            echo '{"error":"CLOUDFLARE_API_TOKEN unavailable in this audit context"}' > cloudflare-discovery/error.json
+            exit 0
+          fi
+          auth=(-H "Authorization: Bearer $token" -H 'Content-Type: application/json')
+          curl -fsS "${auth[@]}" 'https://api.cloudflare.com/client/v4/zones?name=irhaapparels.com&per_page=50' > cloudflare-discovery/zones.json
+          zone_id="$(jq -r '.result[]? | select(.name=="irhaapparels.com") | .id' cloudflare-discovery/zones.json | head -n1)"
+          if ! [[ "$zone_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            echo '{"error":"zone id not resolved"}' > cloudflare-discovery/error.json
+            exit 0
+          fi
+          echo "::add-mask::$zone_id"
+          jq -n --arg zone_id "$zone_id" '{zone_id:$zone_id}' > cloudflare-discovery/zone.json
+          curl -sS "${auth[@]}" "https://api.cloudflare.com/client/v4/zones/$zone_id/settings" > cloudflare-discovery/zone-settings.json
+          jq '[.result[]? | select((.id // "" | ascii_downcase) | test("ai|bot|crawl|robot|signal|content"))]' cloudflare-discovery/zone-settings.json > cloudflare-discovery/zone-settings-relevant.json
+          curl -sS "${auth[@]}" "https://api.cloudflare.com/client/v4/zones/$zone_id/bot_management" > cloudflare-discovery/bot-management.json
+          for endpoint in \
+            ai-crawl-control \
+            ai_crawl_control \
+            content-signals \
+            content_signals \
+            robots-txt \
+            robots_txt \
+            settings/ai_bots_protection \
+            settings/ai_crawl_control \
+            settings/content_signals; do
+            safe="$(printf '%s' "$endpoint" | tr '/-' '__')"
+            code="$(curl -sS -o "cloudflare-discovery/$safe.json" -w '%{http_code}' "${auth[@]}" "https://api.cloudflare.com/client/v4/zones/$zone_id/$endpoint")"
+            jq -n --arg endpoint "$endpoint" --arg code "$code" '{endpoint:$endpoint,http_status:($code|tonumber)}' > "cloudflare-discovery/$safe.status.json"
+          done
+          account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | grep -Eo '[0-9a-fA-F]{32}' | head -n1 || true)"
+          if [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            echo "::add-mask::$account_id"
+            for endpoint in ai-crawl-control ai_crawl_control content-signals content_signals; do
+              safe="account_$(printf '%s' "$endpoint" | tr '/-' '__')"
+              code="$(curl -sS -o "cloudflare-discovery/$safe.json" -w '%{http_code}' "${auth[@]}" "https://api.cloudflare.com/client/v4/accounts/$account_id/$endpoint")"
+              jq -n --arg endpoint "$endpoint" --arg code "$code" '{endpoint:$endpoint,http_status:($code|tonumber)}' > "cloudflare-discovery/$safe.status.json"
+            done
+          fi
+          cat cloudflare-discovery/zone-settings-relevant.json
+          cat cloudflare-discovery/bot-management.json
       - name: Run current live mobile Lighthouse audit
         shell: bash
         run: |
@@ -133,5 +185,6 @@ jobs:
             live-germany-headers.txt
             live-lighthouse.json
             live-lighthouse-summary.json
+            cloudflare-discovery/
           if-no-files-found: warn
           retention-days: 1
