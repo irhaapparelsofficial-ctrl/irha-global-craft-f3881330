@@ -60,4 +60,18 @@ describe("final Lighthouse SEO and best-practices contract", () => {
     expect(csp).toContain("frame-ancestors 'self'");
     expect(csp).toContain("upgrade-insecure-requests");
   });
+
+  it("keeps the document CSP compatible with the Cloudflare beacon", () => {
+    const indexHtml = readFileSync("index.html", "utf8");
+    const match = indexHtml.match(
+      /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]+)"\s*\/>/,
+    );
+    const csp = match?.[1] || "";
+
+    expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+    expect(csp).toContain("script-src-elem 'self' 'unsafe-inline'");
+    expect(csp).toContain("https://static.cloudflareinsights.com");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("upgrade-insecure-requests");
+  });
 });
