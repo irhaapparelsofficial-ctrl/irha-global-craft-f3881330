@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      EXPECTED_SOURCE_SHA: 52171df5c028dd1dff775ca7454341b6559b0051
+      EXPECTED_SOURCE_SHA: 2b0f3c72e527efa28a8c905211456db75b07417b
       LIVE_ORIGIN: https://irhaapparels.com
     steps:
       - uses: actions/checkout@v4
