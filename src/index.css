@@ -90,6 +90,18 @@
 
 html[data-cookie-consent-open="true"] .sticky-mobile-cta { display: none; }
 
+@media (min-width: 768px) {
+  button[aria-label="Open live chat with the Irha Apparels team"] {
+    left: auto !important;
+    right: 1.5rem !important;
+  }
+
+  section[data-chat-kind="human"] {
+    left: auto !important;
+    right: 1.5rem !important;
+  }
+}
+
 @media (max-width: 768px) {
   .animate-marquee,
   [class*="animate-[kenburns"],
