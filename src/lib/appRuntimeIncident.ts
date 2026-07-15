@@ -1,0 +1,81 @@
+import { supabase } from "@/integrations/supabase/client";
+
+const RECOVERY_TTL_MS = 5 * 60 * 1000;
+const RECOVERY_PREFIX = "irha:recoverable-asset-error:";
+
+export type RuntimeIncidentPayload = {
+  incidentId: string;
+  route: string;
+  errorName: string;
+  errorMessage?: string | null;
+  componentStack?: string | null;
+  userAgent?: string | null;
+  sourceSha?: string | null;
+};
+
+type StorageLike = Pick<Storage, "getItem" | "setItem">;
+
+type RpcResult = {
+  error: { message?: string } | null;
+};
+
+type RpcClient = {
+  rpc: (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
+};
+
+export function sanitizeRuntimeErrorMessage(value: unknown, max = 1000): string {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/[A-Za-z0-9_.-]{32,}/g, "[redacted]")
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+export function isRecoverableAssetError(error: Pick<Error, "name" | "message">): boolean {
+  const text = `${error.name} ${error.message}`.toLowerCase();
+  return [
+    "chunkloaderror",
+    "loading chunk",
+    "failed to fetch dynamically imported module",
+    "error loading dynamically imported module",
+    "importing a module script failed",
+    "failed to load module script",
+  ].some((needle) => text.includes(needle));
+}
+
+export function claimOneTimeAssetRecovery(
+  route: string,
+  now = Date.now(),
+  storage?: StorageLike,
+): boolean {
+  try {
+    const target = storage ?? window.sessionStorage;
+    const key = `${RECOVERY_PREFIX}${route || "/"}`;
+    const previous = Number(target.getItem(key));
+    if (Number.isFinite(previous) && now - previous < RECOVERY_TTL_MS) return false;
+    target.setItem(key, String(now));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function reportRuntimeIncident(payload: RuntimeIncidentPayload): Promise<boolean> {
+  const client = supabase as unknown as RpcClient;
+  try {
+    const { error } = await client.rpc("record_public_app_incident", {
+      _incident_id: payload.incidentId,
+      _route: payload.route || "/",
+      _error_name: payload.errorName || "Error",
+      _error_message: sanitizeRuntimeErrorMessage(payload.errorMessage),
+      _component_stack: sanitizeRuntimeErrorMessage(payload.componentStack, 4000),
+      _user_agent: sanitizeRuntimeErrorMessage(payload.userAgent, 500),
+      _source_sha: payload.sourceSha ?? null,
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
