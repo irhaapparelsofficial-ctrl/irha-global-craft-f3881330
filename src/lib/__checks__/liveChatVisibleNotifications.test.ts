@@ -47,7 +47,7 @@ describe("visible owner notifications", () => {
 
   it("relies on database triggers for unread inquiry and live-chat records", () => {
     const chatMigration = read("supabase/migrations/20260714185530_live_chat_admin_notifications.sql");
-    const inquiryMigration = read("supabase/migrations/20260713152000_add_buyer_crm_core_actions.sql");
+    const inquiryMigration = read("supabase/migrations/20260714230000_lead_engine_notifications.sql");
     expect(chatMigration).toContain("new.role = 'user'");
     expect(chatMigration).toContain("'Live chat waiting'");
     expect(chatMigration).toContain("new.role = 'admin'");
