@@ -59,8 +59,16 @@ jobs:
           if (!routes.include?.includes('/*')) throw new Error('Pages worker catch-all include is missing');
           if (routes.exclude?.includes('/robots.txt')) throw new Error('robots.txt is still excluded from Pages worker');
           const worker = fs.readFileSync('dist/_worker.js', 'utf8');
-          for (const required of ['X-Irha-Robots-Source', 'worker-valid', 'Content-Signal']) {
+          for (const required of [
+            'X-Irha-Robots-Source',
+            'worker-valid',
+            'no-transform',
+            'Sitemap: https://irhaapparels.com/sitemap.xml',
+          ]) {
             if (!worker.includes(required)) throw new Error(`Worker robots contract missing ${required}`);
+          }
+          if (/Content-Signal:/i.test(worker)) {
+            throw new Error('Built worker must not emit a Content-Signal directive');
           }
           NODE
 
