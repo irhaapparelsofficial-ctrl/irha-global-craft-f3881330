@@ -25,7 +25,13 @@ type UseSiteSettingsOptions = {
   deferMs?: number;
 };
 
-export function useSiteSettings({ deferMs = 0 }: UseSiteSettingsOptions = {}) {
+function defaultPublicDelay() {
+  if (typeof window === "undefined") return 0;
+  return window.location.pathname.startsWith("/admin") ? 0 : 8_000;
+}
+
+export function useSiteSettings(options: UseSiteSettingsOptions = {}) {
+  const deferMs = options.deferMs ?? defaultPublicDelay();
   const [enabled, setEnabled] = useState(deferMs <= 0);
 
   useEffect(() => {
