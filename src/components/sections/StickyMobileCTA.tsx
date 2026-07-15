@@ -18,16 +18,16 @@ export default function StickyMobileCTA() {
 
   return (
     <div
-      className="sticky-mobile-cta fixed bottom-[max(.55rem,env(safe-area-inset-bottom))] left-3 right-3 z-[70] grid grid-cols-2 overflow-hidden rounded-xl border border-gold/35 bg-background/96 shadow-[0_16px_48px_rgba(0,0,0,.58)] backdrop-blur-xl md:hidden"
+      className="sticky-mobile-cta fixed bottom-[max(.55rem,env(safe-area-inset-bottom))] left-3 right-3 z-[70] grid grid-cols-2 overflow-hidden rounded-xl border border-primary/40 bg-black/95 shadow-[0_16px_48px_rgba(0,0,0,.58)] backdrop-blur-xl md:hidden"
       aria-label="Primary contact actions"
     >
       <button
         type="button"
         onClick={openLiveChat}
         aria-label="Open live chat with the Irha Apparels team"
-        className="flex min-h-[50px] items-center justify-center gap-2 border-r border-border/60 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground"
+        className="flex min-h-[50px] items-center justify-center gap-2 border-r border-white/20 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition-colors hover:bg-white/5"
       >
-        <Headphones size={16} className="text-emerald-400" /> Live chat
+        <Headphones size={16} className="text-emerald-300" /> Live chat
       </button>
       <Link
         to={quoteHref}
