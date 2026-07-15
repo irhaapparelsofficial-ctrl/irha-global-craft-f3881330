@@ -102,21 +102,23 @@ async function main() {
   }
 
   const requiredWorkflowLines = [
+    "workflow_dispatch:",
     `default: ${EXPECTED.origin}`,
     `IRHA_EXPECTED_ORIGIN: ${EXPECTED.origin}`,
     `IRHA_PRIMARY_URL: ${EXPECTED.origin}`,
     `IRHA_DOMAIN_ALIASES: ${EXPECTED.alias}`,
     `default: ${EXPECTED.release}`,
     `default: ${EXPECTED.releaseText}`,
-    "push:",
-    "- main",
-    "contains(github.event.head_commit.message, '[production-smoke]')",
-    `inputs.base_url || '${EXPECTED.origin}'`,
-    `inputs.expected_release || '${EXPECTED.release}'`,
+    "Trigger: manual deep audit only",
+    "Automatic duplicate live audits: disabled",
+    "node scripts/wait-for-production-release.mjs",
+    "node scripts/verify-production-domains.mjs",
+    "node scripts/production-smoke-v2.mjs",
   ];
   for (const line of requiredWorkflowLines) {
     assert(workflow.includes(line), `production-smoke workflow missing or stale: ${line}`);
   }
+  assert(!workflow.includes("\n  push:"), "production-smoke must not run automatically on every main push");
   assert(
     !workflow.includes(`IRHA_EXPECTED_ORIGIN: ${EXPECTED.alias}`) &&
       !workflow.includes(`IRHA_PRIMARY_URL: ${EXPECTED.alias}`),
