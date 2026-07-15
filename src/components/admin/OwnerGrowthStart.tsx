@@ -80,7 +80,7 @@ export default function OwnerGrowthStart({ go }: OwnerGrowthStartProps) {
           title="Review Ready Leads"
           description="Website, buyer fit, contact evidence aur duplicates check karke sirf useful leads select karein."
           icon={<ListChecks size={23} />}
-          onClick={() => go("lead_engine")}
+          href="/admin/lead-review"
         />
         <ActionCard
           step="3 · Start contact"
