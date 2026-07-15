@@ -1,4 +1,4 @@
-name: Audit exact live desktop e2764b32
+name: Audit exact live desktop 07dccf54
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      EXPECTED_SOURCE_SHA: e2764b32ab872942510b529b2914c69a71021c5a
+      EXPECTED_SOURCE_SHA: 07dccf5463cf77aa86b6715437764f82765c0cfd
       LIVE_ORIGIN: https://irhaapparels.com
     steps:
       - uses: actions/checkout@v4
@@ -115,7 +115,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-e2764b32-audit
+          name: desktop-07dccf54-audit
           path: |
             live-build.json
             desktop-audit.json
