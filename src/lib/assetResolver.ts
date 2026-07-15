@@ -14,20 +14,19 @@ const importedThumbnails = import.meta.glob("/src/assets/**/*.{avif,jpg,jpeg,png
   query: {
     w: "720",
     format: "webp",
-    quality: "68",
+    quality: "78",
   },
 }) as Record<string, string>;
 
-// One import produces all browser-selectable widths. The browser downloads only
-// the best candidate for the rendered size instead of a desktop-sized image on
-// every mobile card.
+// One import produces all browser-selectable widths, including high-DPI and
+// zoom candidates. The browser still downloads only the best rendered size.
 const importedResponsiveSrcSets = import.meta.glob("/src/assets/**/*.{avif,jpg,jpeg,png,webp}", {
   eager: true,
   import: "default",
   query: {
-    w: "360;720;1200",
+    w: "360;720;1200;1600;2400",
     format: "webp",
-    quality: "68",
+    quality: "82",
     as: "srcset",
   },
 }) as Record<string, string>;
@@ -37,7 +36,6 @@ const resolvedResponsiveSrcSetByAssetUrl = new Map<string, string>();
 for (const [assetPath, resolvedUrl] of Object.entries(assets)) {
   const thumbnailUrl = importedThumbnails[assetPath];
   if (thumbnailUrl) resolvedThumbnailByAssetUrl.set(resolvedUrl, thumbnailUrl);
-
   const responsiveSrcSet = importedResponsiveSrcSets[assetPath];
   if (responsiveSrcSet) resolvedResponsiveSrcSetByAssetUrl.set(resolvedUrl, responsiveSrcSet);
 }
@@ -47,13 +45,8 @@ const PLACEHOLDER = "/placeholder.svg";
 export function resolveAsset(assetPath?: string | null): string {
   if (!assetPath) return PLACEHOLDER;
   if (/^https?:\/\//i.test(assetPath)) return assetPath;
-
-  if (assetPath.startsWith("/src/assets/")) {
-    return assets[assetPath] ?? PLACEHOLDER;
-  }
-
+  if (assetPath.startsWith("/src/assets/")) return assets[assetPath] ?? PLACEHOLDER;
   if (assetPath.startsWith("/")) return assetPath;
-
   const key = `/src/assets/${assetPath}`;
   return assets[key] ?? PLACEHOLDER;
 }
