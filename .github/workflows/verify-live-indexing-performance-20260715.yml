@@ -12,32 +12,56 @@ permissions:
 jobs:
   verify-live:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Verify live source, crawler links and LCP asset contract
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           ORIGIN="https://irhaapparels.com"
-          APP_SHA="71dc6a4aa97e78061dc06669bc5a7bdb26c0334a"
-          PARALLEL_SHA="096cfb4b9108f1e7754656e8be85d4749adc1687"
-          DEPLOY_SHA="9e71dbdcf93e7847dc0bc505857afa4a7d3c781d"
+          REQUIRED_FIX_SHA="c0c418266e5d1c73a509bb53a8fcf638637c273a"
+          CORRECT_LCP_PATH="/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp.webp"
 
-          build_json="$(curl -fsS --connect-timeout 10 --max-time 40 "$ORIGIN/build.json?verify_live=${GITHUB_SHA::12}")"
-          served_sha="$(printf '%s' "$build_json" | jq -r '.source_commit // empty')"
-          case "$served_sha" in
-            "$APP_SHA"|"$PARALLEL_SHA"|"$DEPLOY_SHA") ;;
-            *) echo "Unexpected live source SHA: $served_sha"; exit 1 ;;
-          esac
-          test "$(printf '%s' "$build_json" | jq -r '.source_identity_state // empty')" = "verified"
-          echo "PASS source identity: $served_sha"
+          ready=0
+          served_sha=""
+          for attempt in $(seq 1 72); do
+            cache_bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
+            if build_json="$(curl -fsS --connect-timeout 10 --max-time 40 "$ORIGIN/build.json?verify_live=$cache_bust")"; then
+              served_sha="$(printf '%s' "$build_json" | jq -r '.source_commit // empty')"
+              identity="$(printf '%s' "$build_json" | jq -r '.source_identity_state // empty')"
+              contains_fix=0
+              if test "$served_sha" = "$REQUIRED_FIX_SHA"; then
+                contains_fix=1
+              elif test -n "$served_sha"; then
+                compare_json="$(curl -fsS --connect-timeout 10 --max-time 40 \
+                  -H "Authorization: Bearer $GH_TOKEN" \
+                  -H 'Accept: application/vnd.github+json' \
+                  "https://api.github.com/repos/$GITHUB_REPOSITORY/compare/$REQUIRED_FIX_SHA...$served_sha" || true)"
+                compare_status="$(printf '%s' "$compare_json" | jq -r '.status // empty' 2>/dev/null || true)"
+                case "$compare_status" in
+                  ahead|identical) contains_fix=1 ;;
+                esac
+              fi
+              if test "$identity" = "verified" && test "$contains_fix" = "1"; then
+                ready=1
+                break
+              fi
+            fi
+            echo "Waiting for corrected release; currently served: ${served_sha:-unknown} (attempt $attempt)"
+            sleep 10
+          done
+          test "$ready" = "1" || { echo "Corrected LCP release did not become live"; exit 1; }
+          echo "PASS source contains corrected preload commit: $served_sha"
 
           curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/?verify_live=${GITHUB_SHA::12}" -o /tmp/home.html
-          grep -F 'data-irha-home-lcp' /tmp/home.html >/dev/null
+          grep -F "data-irha-home-lcp" /tmp/home.html >/dev/null
+          grep -F "href=\"$CORRECT_LCP_PATH\"" /tmp/home.html >/dev/null
           grep -F '/de/bekleidungshersteller-deutschland' /tmp/home.html >/dev/null
           grep -F '/de/sportbekleidung-hersteller' /tmp/home.html >/dev/null
           grep -F '/de/lederbekleidung-hersteller' /tmp/home.html >/dev/null
-          echo "PASS homepage preload and German crawler links"
+          echo "PASS corrected homepage preload and German crawler links"
 
           curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/de/bekleidungshersteller-deutschland?verify_live=${GITHUB_SHA::12}" -o /tmp/germany.html
           grep -F '<link rel="canonical" href="https://irhaapparels.com/de/bekleidungshersteller-deutschland"' /tmp/germany.html >/dev/null
@@ -52,16 +76,16 @@ jobs:
           grep -F '<loc>https://irhaapparels.com/de/bekleidungshersteller-deutschland</loc>' /tmp/sitemap.xml >/dev/null
           echo "PASS sitemap coverage"
 
-          image_result="$(curl -sS -L --connect-timeout 10 --max-time 40 -o /tmp/lcp.webp -w '%{http_code} %{content_type} %{size_download}' "$ORIGIN/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp")"
-          read -r image_status image_type image_size <<< "$image_result"
+          image_result="$(curl -sS -L --connect-timeout 10 --max-time 40 -o /tmp/lcp.webp -w '%{http_code}|%{content_type}|%{size_download}' "$ORIGIN$CORRECT_LCP_PATH")"
+          IFS='|' read -r image_status image_type image_size <<< "$image_result"
           echo "LCP asset result: status=$image_status type=$image_type bytes=$image_size"
           test "$image_status" = "200" || { echo "LCP thumbnail returned $image_status"; exit 1; }
           test "$image_type" = "image/webp" || { echo "Unexpected LCP content type: $image_type"; exit 1; }
           test "$image_size" -gt 1000 || { echo "LCP thumbnail payload is unexpectedly small: $image_size"; exit 1; }
 
           echo "Live indexing and performance release verified for $served_sha" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Homepage-only LCP preload: present" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Correct homepage LCP preload: present" >> "$GITHUB_STEP_SUMMARY"
+          echo "- LCP asset: HTTP 200 image/webp" >> "$GITHUB_STEP_SUMMARY"
           echo "- Germany route preload leakage: absent" >> "$GITHUB_STEP_SUMMARY"
           echo "- Direct Germany crawler links: present" >> "$GITHUB_STEP_SUMMARY"
           echo "- Canonical static Germany HTML and sitemap entry: present" >> "$GITHUB_STEP_SUMMARY"
-          echo "- LCP thumbnail: HTTP 200 WebP" >> "$GITHUB_STEP_SUMMARY"
