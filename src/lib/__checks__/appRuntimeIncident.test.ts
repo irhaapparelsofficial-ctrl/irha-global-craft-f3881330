@@ -63,6 +63,11 @@ describe("runtime incident safety", () => {
         "https://pvzjiozismyxqrzmtfbi.supabase.co/rest/v1/rpc/record_public_app_incident",
       );
       expect(init?.method).toBe("POST");
+      const headers = new Headers(init?.headers);
+      expect(headers.get("apikey")).toMatch(/^sb_publishable_/);
+      expect(headers.has("authorization")).toBe(false);
+      expect(headers.get("content-type")).toBe("application/json");
+
       const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
       expect(body._incident_id).toBe("IRHA-QATEST02-ABC123");
       expect(body._route).toBe("/products");
@@ -94,6 +99,7 @@ describe("runtime incident integration contract", () => {
     expect(boundary).toContain("Copy ref");
     expect(reporter).toContain("/rest/v1/rpc/record_public_app_incident");
     expect(reporter).not.toContain('import("@/integrations/supabase/client")');
+    expect(reporter).not.toContain("authorization");
   });
 
   it("keeps incident rows private and the public reporter rate limited", () => {
