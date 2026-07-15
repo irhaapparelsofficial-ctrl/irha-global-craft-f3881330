@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { MessageCircle, Send } from "lucide-react";
+import { FileText, Headphones } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { settingsWhatsappLink } from "@/lib/siteSettings";
 
 function categoryFromPath(pathname: string): string | null {
   const match = pathname.match(/^(?:\/products|\/intl\/[^/]+\/products)\/([^/]+)/);
@@ -14,30 +13,33 @@ export default function StickyMobileCTA() {
   const { pathname } = useLocation();
   const categorySlug = categoryFromPath(pathname);
   const quoteHref = categorySlug
-    ? `/inquiry?intent=rfq&category=${encodeURIComponent(categorySlug)}&utm_source=mobile-sticky&utm_content=${encodeURIComponent(pathname)}`
+    ? `/inquiry?intent=rfq&category=${encodeURIComponent(categorySlug)}&utm_source=mobile-dock&utm_content=${encodeURIComponent(pathname)}`
     : settings.ctas.quoteHref;
+
+  const openLiveChat = () => {
+    window.dispatchEvent(new CustomEvent("irha:open-human-chat"));
+  };
 
   return (
     <div
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-2 border-t border-border/60 bg-background/95 backdrop-blur"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      className="md:hidden fixed left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[70] grid grid-cols-[1.35fr_1fr] overflow-hidden rounded-full border border-gold/45 bg-background/95 shadow-elegant backdrop-blur"
+      aria-label="Primary contact actions"
     >
+      <button
+        type="button"
+        onClick={openLiveChat}
+        aria-label="Open live chat with the Irha Apparels team"
+        className="flex min-h-14 items-center justify-center gap-2 bg-gradient-gold px-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground"
+      >
+        <Headphones size={17} /> Live Chat
+      </button>
       <Link
         to={quoteHref}
         aria-label={categorySlug ? "Request a quote for this category" : "Request a quote"}
-        className="flex items-center justify-center gap-2 bg-gradient-gold text-primary-foreground py-3.5 text-[11px] uppercase tracking-[0.25em] font-medium min-h-11"
+        className="flex min-h-14 items-center justify-center gap-2 border-l border-border/60 px-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground"
       >
-        <Send size={14} /> {settings.ctas.quoteLabel}
+        <FileText size={15} className="text-gold" /> Quote
       </Link>
-      <a
-        href={settingsWhatsappLink(settings)}
-        target="_blank"
-        rel="noreferrer noopener"
-        aria-label="Chat on WhatsApp"
-        className="flex items-center justify-center gap-2 bg-card border-l border-border/60 py-3.5 text-[11px] uppercase tracking-[0.25em] font-medium text-foreground min-h-11"
-      >
-        <MessageCircle size={14} className="text-[#25D366]" /> {settings.ctas.whatsappLabel}
-      </a>
     </div>
   );
 }
