@@ -1,10 +1,20 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error Cloudflare Pages worker is intentionally plain JavaScript.
 import worker, { robotsText } from "../../../public/_worker.js";
 
 const BUYER_PATH = "/de/bekleidungshersteller-deutschland";
+const routes = JSON.parse(readFileSync("public/_routes.json", "utf8")) as {
+  include: string[];
+  exclude: string[];
+};
 
 describe("final Lighthouse SEO and best-practices contract", () => {
+  it("routes robots.txt through the Pages worker instead of the managed static layer", () => {
+    expect(routes.include).toContain("/*");
+    expect(routes.exclude).not.toContain("/robots.txt");
+  });
+
   it("serves a standards-valid robots.txt directly from the worker", async () => {
     const response = await worker.fetch(
       new Request("https://irhaapparels.com/robots.txt"),
