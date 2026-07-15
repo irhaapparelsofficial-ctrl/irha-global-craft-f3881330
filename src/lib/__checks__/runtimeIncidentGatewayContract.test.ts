@@ -17,6 +17,7 @@ describe("runtime incident Edge gateway contract", () => {
     expect(gateway).toContain("SUPABASE_SERVICE_ROLE_KEY");
     expect(gateway).toContain("ALLOWED_ORIGINS");
     expect(gateway).toContain("MAX_BODY_BYTES");
+    expect(gateway).toContain("Record<string, string>");
     expect(gateway).toContain("/rest/v1/rpc/record_public_app_incident");
     expect(gateway).not.toContain("Access-Control-Allow-Origin: *");
   });
