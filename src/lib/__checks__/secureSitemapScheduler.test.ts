@@ -42,11 +42,12 @@ describe("secure scheduled sitemap submission", () => {
     expect(queueMigration).toContain("net._http_response");
   });
 
-  it("returns minimal results without exposing provider response bodies or keys", () => {
+  it("returns minimal results without exposing provider response bodies or credential values", () => {
     expect(edge).toContain('error: "google_submission_failed"');
     expect(edge).toContain('error: "submission_request_failed"');
     expect(edge).not.toContain("response_body");
-    expect(edge).not.toContain("lovableKey,");
-    expect(edge).not.toContain("gscKey,");
+    expect(edge).not.toContain("lovable_api_key:");
+    expect(edge).not.toContain("google_search_console_api_key:");
+    expect(edge).not.toContain("token_value:");
   });
 });
