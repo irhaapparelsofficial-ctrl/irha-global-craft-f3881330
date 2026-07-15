@@ -288,7 +288,7 @@ async function staticBuyerResponse(request, env, pathname) {
   headers.delete("Location");
   headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Content-Location", `${APEX_ORIGIN}${pathname}`);
-  headers.set("X-Irha-Static-Buyer-Shell", "runtime-free-flat-asset");
+  headers.set("X-Irha-Static-Buyer-Shell", "runtime-free");
   headers.set("X-Irha-Static-Buyer-Asset", assetPath);
   headers.set("Cache-Control", "public, max-age=300, must-revalidate");
   return new Response(request.method === "HEAD" ? null : assetResponse.body, {
