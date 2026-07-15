@@ -6,14 +6,20 @@ const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("homepage navigation and B2B conversion journey", () => {
-  it("exposes published product categories in desktop and mobile navigation", () => {
+  it("uses a focused desktop and mobile buyer navigation with products as the catalogue entry", () => {
     const navbar = read("src/components/layout/Navbar.tsx");
-    expect(navbar).toContain("usePublicCatalogTree");
-    expect(navbar).toContain('aria-controls="desktop-collections-menu"');
-    expect(navbar).toContain('to={`/products/${category.slug}`}');
-    expect(navbar).toContain("All collections");
-    expect(navbar).toContain("Search all products");
-    expect(navbar).toContain("category.productCount");
+    for (const item of [
+      '{ label: "Products", href: "/products" }',
+      '{ label: "Manufacturing", href: "/manufacturing" }',
+      '{ label: "How it works", href: "/#process", anchor: true }',
+      '{ label: "Buyer trust", href: "/buyer-trust" }',
+    ]) expect(navbar).toContain(item);
+    expect(navbar).toContain('aria-label="Primary navigation"');
+    expect(navbar).toContain('aria-label="Mobile navigation"');
+    expect(navbar).toContain("Request quote");
+    expect(navbar).toContain('to="/shortlist"');
+    expect(navbar).not.toContain("usePublicCatalogTree");
+    expect(navbar).not.toContain("desktop-collections-menu");
   });
 
   it("keeps the original inquiry workflow while preselecting explicit CTA intent at requirements", () => {
