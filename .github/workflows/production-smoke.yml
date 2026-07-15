@@ -11,37 +11,31 @@ on:
         default: https://irhaapparels.com
         type: string
       propagation_minutes:
-        description: Maximum minutes to wait for Lovable/CDN propagation
+        description: Maximum minutes to wait for CDN propagation
         required: true
         default: "20"
         type: string
       expected_release:
-        description: Release ID expected after the explicit Lovable publish
+        description: Expected release ID
         required: true
         default: frontend-live-2026-07-13-r11
         type: string
       expected_release_text:
-        description: Plain-text release marker expected after publish
+        description: Expected plain-text release marker
         required: true
         default: IRHA_FRONTEND_LIVE_2026_07_13_R11
         type: string
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
-  issues: write
 
-# Every push has its own group so unrelated main updates cannot cancel an active smoke.
-# Re-runs of the same published commit remain mutually exclusive.
 concurrency:
-  group: production-smoke-${{ github.sha }}
+  group: production-smoke
   cancel-in-progress: true
 
 env:
-  IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release || 'frontend-live-2026-07-13-r11' }}
-  IRHA_EXPECTED_RELEASE_TEXT: ${{ inputs.expected_release_text || 'IRHA_FRONTEND_LIVE_2026_07_13_R11' }}
+  IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release }}
+  IRHA_EXPECTED_RELEASE_TEXT: ${{ inputs.expected_release_text }}
   IRHA_EXPECTED_PROJECT_ID: da72a40a-7df3-44c3-a72d-f180d9ffcd25
   IRHA_EXPECTED_SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
   IRHA_EXPECTED_REPOSITORY: irhaapparelsofficial-ctrl/irha-global-craft-f3881330
@@ -51,24 +45,25 @@ env:
 
 jobs:
   smoke:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[production-smoke]')
     runs-on: ubuntu-latest
     timeout-minutes: 35
+
     steps:
-      - name: Checkout published source branch
+      - name: Checkout current main verification scripts
         uses: actions/checkout@v4
         with:
           ref: main
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Wait for explicitly published release and source identity
+      - name: Wait for exact release and source identity
         env:
-          IRHA_BASE_URL: ${{ inputs.base_url || 'https://irhaapparels.com' }}
-          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes || '20' }}
+          IRHA_BASE_URL: ${{ inputs.base_url }}
+          IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes }}
         run: node scripts/wait-for-production-release.mjs
 
       - name: Verify apex and www domain consistency
@@ -76,35 +71,17 @@ jobs:
 
       - name: Verify production pages, crawler controls and owner backend
         env:
-          IRHA_BASE_URL: ${{ inputs.base_url || 'https://irhaapparels.com' }}
+          IRHA_BASE_URL: ${{ inputs.base_url }}
         run: node scripts/production-smoke-v2.mjs
 
-      - name: Record verification contract
+      - name: Record explicit audit contract
         if: always()
+        shell: bash
         run: |
-          echo "This workflow is explicit and strict." >> "$GITHUB_STEP_SUMMARY"
-          echo "It runs after manual dispatch or an approved [production-smoke] main commit marker." >> "$GITHUB_STEP_SUMMARY"
-          echo "Normal pull requests remain gated by deterministic typecheck, tests and build—not by the live domain." >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Record result on activation board
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SMOKE_STATUS: ${{ job.status }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          COMMIT_SHA: ${{ github.sha }}
-        run: |
-          if [ "$SMOKE_STATUS" = "success" ]; then
-            heading="✅ Production Smoke passed"
-          elif [ "$SMOKE_STATUS" = "cancelled" ]; then
-            heading="⚠️ Production Smoke cancelled"
-          else
-            heading="❌ Production Smoke failed"
-          fi
-
-          body=$(printf '%s\n\n- Workflow: Production Smoke\n- Status: `%s`\n- Commit: `%s`\n- Run: %s\n- Production: https://irhaapparels.com\n' \
-            "$heading" "$SMOKE_STATUS" "$COMMIT_SHA" "$RUN_URL")
-
-          gh issue comment 102 \
-            --repo "$GITHUB_REPOSITORY" \
-            --body "$body"
+          {
+            echo "## Production Smoke"
+            echo "- Trigger: manual deep audit only"
+            echo "- Normal pushes: handled by Quality Gate and Cloudflare production verification"
+            echo "- Automatic duplicate live audits: disabled"
+            echo "- Target: \`${{ inputs.base_url }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
