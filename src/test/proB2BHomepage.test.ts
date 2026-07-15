@@ -5,65 +5,85 @@ import { resolve } from "node:path";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 const hero = read("src/components/HeroCarousel.tsx");
 const home = read("src/pages/Home.tsx");
+const navbar = read("src/components/layout/Navbar.tsx");
+const footer = read("src/components/layout/Footer.tsx");
+const consent = read("src/components/CookieConsent.tsx");
 const capabilities = read("src/components/sections/CapabilityStrip.tsx");
 const categories = read("src/components/sections/HomeCategoryUniverse.tsx");
-const trust = read("src/components/sections/BuyerTrustSection.tsx");
-const products = read("src/components/sections/HomeProductShowcase.tsx");
+const decision = read("src/components/sections/BuyerDecisionSection.tsx");
+const sticky = read("src/components/sections/StickyMobileCTA.tsx");
 const styles = read("src/index.css");
+const brand = read("public/irha-brand-mark.svg");
 
-describe("professional B2B homepage", () => {
-  it("identifies the business and target buyers immediately", () => {
-    expect(hero).toContain("B2B Apparel Manufacturing");
-    expect(hero).toContain("Brands · Wholesalers · Importers");
-    expect(hero).toContain("OEM, ODM and private-label production");
-    expect(hero).toContain("Request a quote");
-    expect(hero).toContain("Explore collections");
+describe("polished B2B homepage", () => {
+  it("identifies the business, buyers and next actions immediately", () => {
+    expect(hero).toContain("Custom Apparel Manufacturing for Brands &amp; Wholesalers");
+    expect(hero).toContain("B2B buyers only");
+    expect(hero).toContain("OEM / ODM / private label");
+    expect(hero).toContain("Request quote");
+    expect(hero).toContain("View products");
     expect(hero).toContain("irha:open-human-chat");
   });
 
-  it("presents multiple manufacturing categories instead of a retail-only hero", () => {
-    expect(hero).toContain("Bavarian &amp; Trachten Wear");
+  it("presents multiple reliable manufacturing visuals", () => {
+    expect(hero).toContain("Bavarian &amp; Trachten");
     expect(hero).toContain("Sportswear");
-    expect(hero).toContain("Leather Apparel");
-    expect(hero).not.toContain("usePublishedCmsDocument");
+    expect(hero).toContain("Leatherwear");
+    expect(hero.match(/loading=\"eager\"/g)).toHaveLength(1);
+    expect(hero.match(/loading=\"lazy\"/g)).toHaveLength(2);
   });
 
-  it("orders the page around trust, manufacturing and buyer decisions", () => {
+  it("keeps the homepage short and ordered around buyer tasks", () => {
     const expectedOrder = [
       "<HeroCarousel />",
       "<CapabilityStrip />",
       "<HomeCategoryUniverse />",
       "<HomeManufacturingEditorial />",
       "<ProcessTimeline />",
-      "<BuyerTrustSection />",
-      "<HomeProductShowcase />",
+      "<BuyerDecisionSection />",
       "<StartProgramCTA />",
     ];
     const positions = expectedOrder.map((marker) => home.indexOf(marker));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    expect(home).not.toContain("HomeProductShowcase");
+    expect(home).not.toContain("BuyerTrustSection");
   });
 
-  it("uses buyer language and explicit manufacturing proof", () => {
+  it("uses buyer language, stable category images and clear proof", () => {
     expect(capabilities).toContain("OEM, ODM & Private Label");
     expect(capabilities).toContain("Sample Before Bulk");
-    expect(capabilities).toContain("Custom Branding");
-    expect(categories).toContain("Choose the product line you want manufactured");
-    expect(trust).toContain("Verify the program before you commit to bulk production");
-    expect(trust).toContain("Factory verification");
+    expect(categories).toContain("Start with the product line your business needs");
+    expect(categories).not.toContain("resolveAsset");
+    expect(categories).not.toContain("featuredProductRank");
+    expect(decision).toContain("Requirement-based quotation");
+    expect(decision).toContain("Approval before bulk");
+    expect(decision).toContain("Factory verification");
   });
 
-  it("uses a stable product reference grid rather than a retail autoplay carousel", () => {
-    expect(products).toContain("Selected product references");
-    expect(products).toContain("grid-cols-[40%_60%]");
-    expect(products).not.toContain("setInterval");
-    expect(products).not.toContain('aria-roledescription="carousel"');
-    expect(products).not.toContain("AUTOPLAY_MS");
+  it("uses a reliable local brand mark in header and footer", () => {
+    expect(navbar).toContain('src="/irha-brand-mark.svg"');
+    expect(footer).toContain('src="/irha-brand-mark.svg"');
+    expect(navbar).not.toContain("irha-logo.png.asset.json");
+    expect(footer).not.toContain("irha-logo.png.asset.json");
+    expect(brand).toContain("IRHA APPARELS");
+    expect(brand).toContain("MANUFACTURING SPECIALISTS");
   });
 
-  it("keeps the official brand mark readable on mobile", () => {
-    expect(styles).toContain('header a[aria-label$="— home"] img');
-    expect(styles).toContain("height: 2.75rem");
-    expect(styles).toContain("height: 3.5rem");
+  it("keeps mobile consent and contact actions from covering each other", () => {
+    expect(consent).toContain("Your privacy choice");
+    expect(consent).toContain("Essential only");
+    expect(consent).toContain("Accept optional");
+    expect(consent).toContain("cookieConsentOpen");
+    expect(sticky).toContain("sticky-mobile-cta");
+    expect(styles).toContain('html[data-cookie-consent-open="true"] .sticky-mobile-cta');
+  });
+
+  it("uses a simple B2B primary navigation", () => {
+    for (const label of ["Products", "Manufacturing", "How it works", "Buyer trust"]) {
+      expect(navbar).toContain(`label: \"${label}\"`);
+    }
+    expect(navbar).toContain("Request quote");
+    expect(navbar).not.toContain("MockupRequestButton");
   });
 });
