@@ -1,5 +1,5 @@
 name: Verify live mobile performance
-# Verification revision: 6
+# Verification revision: 7
 
 on:
   push:
@@ -198,3 +198,169 @@ jobs:
         run: |
           cat /tmp/static-proof.md /tmp/lighthouse-summary.md > /tmp/combined-evidence.md
           gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/combined-evidence.md
+
+  homepage_lighthouse:
+    if: >-
+      github.event_name == 'issue_comment' &&
+      github.event.issue.number == 375 &&
+      github.event.comment.body == '/verify-home-performance' &&
+      github.event.comment.user.login == 'irhaapparelsofficial-ctrl'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ORIGIN: https://irhaapparels.com
+      PERFORMANCE_BASE_SHA: cc153c30219f94a57f12e5ed7cc1c8407bcb38e0
+    steps:
+      - name: Wait for verified deployed performance descendant
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          for attempt in $(seq 1 90); do
+            cache_bust="${PERFORMANCE_BASE_SHA:0:12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
+              "$ORIGIN/build.json?home_speed_check=$cache_bust" -o /tmp/build.json; then
+              live_sha="$(jq -r '.source_commit // empty' /tmp/build.json)"
+              identity="$(jq -r '.source_identity_state // empty' /tmp/build.json)"
+              relation="unknown"
+              if [[ "$live_sha" =~ ^[0-9a-f]{40}$ ]]; then
+                relation="$(gh api "repos/$GITHUB_REPOSITORY/compare/$PERFORMANCE_BASE_SHA...$live_sha" --jq '.status' 2>/dev/null || true)"
+              fi
+              echo "attempt=$attempt live_sha=$live_sha identity=$identity relation=$relation"
+              if [ "$identity" = "verified" ] && { [ "$relation" = "ahead" ] || [ "$relation" = "identical" ]; }; then
+                found=1
+                echo "LIVE_SHA=$live_sha" >> "$GITHUB_ENV"
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$found" = "1" || { echo "Verified deployed performance descendant not found"; exit 1; }
+          cat /tmp/build.json
+
+      - name: Run three cold mobile homepage audits
+        shell: bash
+        run: |
+          set -euo pipefail
+          live_short="${LIVE_SHA:0:12}"
+          for run_number in 1 2 3; do
+            npx --yes lighthouse@12.8.2 \
+              "$ORIGIN/?home_speed=$live_short-${GITHUB_RUN_ID}-$run_number" \
+              --output=json \
+              --output-path="/tmp/home-lighthouse-$run_number.json" \
+              --only-categories=performance,seo,accessibility,best-practices \
+              --form-factor=mobile \
+              --screenEmulation.mobile=true \
+              --throttling-method=simulate \
+              --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --incognito"
+          done
+
+      - name: Build homepage median evidence
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const reports = [1, 2, 3].map((n) => JSON.parse(fs.readFileSync(`/tmp/home-lighthouse-${n}.json`, 'utf8')));
+          const audit = (report, id) => report.audits?.[id] ?? {};
+          const numeric = (report, id) => audit(report, id).numericValue ?? null;
+          const categoryScore = (report, id) => Math.round((report.categories?.[id]?.score ?? 0) * 100);
+          const median = (values) => {
+            const sorted = values.filter((value) => typeof value === 'number' && Number.isFinite(value)).sort((a, b) => a - b);
+            return sorted.length ? sorted[Math.floor(sorted.length / 2)] : null;
+          };
+          const runs = reports.map((report, index) => ({
+            run: index + 1,
+            performance: categoryScore(report, 'performance'),
+            accessibility: categoryScore(report, 'accessibility'),
+            best_practices: categoryScore(report, 'best-practices'),
+            seo: categoryScore(report, 'seo'),
+            fcp_ms: numeric(report, 'first-contentful-paint'),
+            lcp_ms: numeric(report, 'largest-contentful-paint'),
+            speed_index_ms: numeric(report, 'speed-index'),
+            tbt_ms: numeric(report, 'total-blocking-time'),
+            interactive_ms: numeric(report, 'interactive'),
+            cls: numeric(report, 'cumulative-layout-shift'),
+            bytes: audit(report, 'total-byte-weight').numericValue ?? null,
+            unused_js_bytes: audit(report, 'unused-javascript').details?.overallSavingsBytes ?? 0,
+            main_thread_ms: numeric(report, 'mainthread-work-breakdown'),
+            bootup_ms: numeric(report, 'bootup-time'),
+          }));
+          const network = audit(reports[0], 'network-requests').details?.items ?? [];
+          const resourceTypes = ['Document', 'Stylesheet', 'Script', 'Image', 'Font', 'Other'];
+          const resources = Object.fromEntries(resourceTypes.map((type) => {
+            const rows = network.filter((item) => item.resourceType === type);
+            return [type.toLowerCase(), {
+              count: rows.length,
+              transfer_bytes: rows.reduce((sum, item) => sum + (item.transferSize ?? 0), 0),
+            }];
+          }));
+          const result = {
+            live_source_commit: process.env.LIVE_SHA,
+            performance_base_commit: process.env.PERFORMANCE_BASE_SHA,
+            runs,
+            median: {
+              performance: median(runs.map((run) => run.performance)),
+              accessibility: median(runs.map((run) => run.accessibility)),
+              best_practices: median(runs.map((run) => run.best_practices)),
+              seo: median(runs.map((run) => run.seo)),
+              fcp_ms: median(runs.map((run) => run.fcp_ms)),
+              lcp_ms: median(runs.map((run) => run.lcp_ms)),
+              speed_index_ms: median(runs.map((run) => run.speed_index_ms)),
+              tbt_ms: median(runs.map((run) => run.tbt_ms)),
+              interactive_ms: median(runs.map((run) => run.interactive_ms)),
+              cls: median(runs.map((run) => run.cls)),
+              bytes: median(runs.map((run) => run.bytes)),
+              unused_js_bytes: median(runs.map((run) => run.unused_js_bytes)),
+              main_thread_ms: median(runs.map((run) => run.main_thread_ms)),
+              bootup_ms: median(runs.map((run) => run.bootup_ms)),
+            },
+            first_run_resources: resources,
+          };
+          fs.writeFileSync('/tmp/home-performance.json', JSON.stringify(result, null, 2));
+          const m = result.median;
+          const summary = [
+            '## Live mobile Lighthouse — homepage median of 3 cold runs',
+            '',
+            `- Live source: \`${result.live_source_commit}\``,
+            `- Performance release included: \`${result.performance_base_commit}\``,
+            `- Performance: **${m.performance}**`,
+            `- Accessibility: ${m.accessibility}`,
+            `- Best Practices: ${m.best_practices}`,
+            `- SEO: ${m.seo}`,
+            `- FCP: ${(m.fcp_ms / 1000).toFixed(2)} s`,
+            `- LCP: ${(m.lcp_ms / 1000).toFixed(2)} s`,
+            `- Speed Index: ${(m.speed_index_ms / 1000).toFixed(2)} s`,
+            `- TBT: ${Math.round(m.tbt_ms)} ms`,
+            `- TTI: ${(m.interactive_ms / 1000).toFixed(2)} s`,
+            `- CLS: ${m.cls}`,
+            `- Total transfer: ${(m.bytes / 1024).toFixed(0)} KiB`,
+            `- Unused JS estimate: ${(m.unused_js_bytes / 1024).toFixed(0)} KiB`,
+            `- Main-thread work: ${(m.main_thread_ms / 1000).toFixed(2)} s`,
+            `- JS bootup: ${(m.bootup_ms / 1000).toFixed(2)} s`,
+            '',
+            `- First-run resource transfer: document ${(resources.document.transfer_bytes / 1024).toFixed(0)} KiB · CSS ${(resources.stylesheet.transfer_bytes / 1024).toFixed(0)} KiB · JS ${(resources.script.transfer_bytes / 1024).toFixed(0)} KiB · images ${(resources.image.transfer_bytes / 1024).toFixed(0)} KiB · fonts ${(resources.font.transfer_bytes / 1024).toFixed(0)} KiB`,
+            '',
+          ].join('\n');
+          fs.writeFileSync('/tmp/home-performance.md', summary);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+
+      - name: Upload homepage Lighthouse evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-homepage-mobile-lighthouse
+          path: |
+            /tmp/build.json
+            /tmp/home-lighthouse-1.json
+            /tmp/home-lighthouse-2.json
+            /tmp/home-lighthouse-3.json
+            /tmp/home-performance.json
+          retention-days: 7
+
+      - name: Record homepage evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/home-performance.md
