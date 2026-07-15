@@ -1,123 +1,146 @@
-# Irha Apparels — Owner Supabase Cutover R11
+# Irha Apparels — Owner Supabase Cutover and Rollback Runbook
 
-_Last verified during preparation: 2026-07-13_
+_Last verified: 2026-07-16_
 
 ## 1. Purpose
 
-Move the website runtime from Lovable Cloud Supabase to the existing Supabase project owned by Irha Apparels, without deleting the Lovable Cloud source. The source remains the rollback and historical archive until the owner login, public forms, live website and explicit post-publish smoke test all pass.
+Irha Apparels production runs on the Supabase project owned by Irha Apparels and is released through GitHub Actions to Cloudflare Pages. Lovable may remain an editor/reference, but Lovable credits, Lovable Update and Lovable Publish are not required for the approved production path.
 
-## 2. Verified identities
+The old Lovable Cloud backend remains untouched as a historical archive and emergency comparison source until the final migration checklist is closed.
+
+## 2. Immutable identities
 
 - Lovable project: `da72a40a-7df3-44c3-a72d-f180d9ffcd25`
 - GitHub repository: `irhaapparelsofficial-ctrl/irha-global-craft-f3881330`
-- Source Lovable Cloud database: `mlefxgyaqoisvdmoiapq`
-- Target owner Supabase project: `pvzjiozismyxqrzmtfbi`
-- Production origin: `https://www.irhaapparels.com`
+- Historical Lovable Cloud database: `mlefxgyaqoisvdmoiapq`
+- Owner Supabase project: `pvzjiozismyxqrzmtfbi`
+- Canonical production origin: `https://irhaapparels.com`
+- Cloudflare Pages project: `irha-apparels`
 - Release marker: `frontend-live-2026-07-13-r11`
+- Known-good production rollback branch: `release/approved-production-20260716`
+- Known-good production source on that branch: `6853ae7fdd0d59f0fa6757ad778c1a4ee85d862a`
 
-Only the public/publishable Supabase credential belongs in frontend code. Service-role credentials, passwords and provider secrets must never be committed.
+Only the publishable Supabase client credential may be present in frontend code. Service-role credentials, passwords, provider tokens and OAuth secrets must remain in managed secret stores and must never be committed, printed or copied into public issues.
 
-## 3. Target database state prepared before publish
+## 3. Verified owner-backend state
 
-The target database contains the current Irha schema and security policies, including:
+Evidence collected on 2026-07-16 confirms:
 
-- owner roles and RLS
-- inquiries, catalogue leads and secure public-submission rate limits
-- 26 categories and 64 published products
-- Buyer CRM fields and history
-- one DACH/NL lead campaign and 23 evidence-backed candidates in review state
-- email queue infrastructure and suppression records schema
-- AI command center and guarded business rules
-- lead acquisition and approval-based outreach
-- social calendar with delivery guards
-- multilingual SEO registry and draft workflow
-- sample/production/QC/shipping workflow
-- WhatsApp Business inbox foundation
-- guarded automation settings, two historical planning runs and eight review tasks
-- daily internal planning scheduler
+- all 129 public tables have Row Level Security enabled;
+- the owner Auth user exists and has the single required admin role;
+- owner-context admin insert, read, update and delete operations pass RLS;
+- the public inquiry and catalogue gateway writes to owner Supabase;
+- synthetic inquiry and catalogue records were verified and removed;
+- public browser execution was revoked from internal trigger helper functions;
+- intended anonymous read RPCs remain available;
+- unindexed public foreign-key audit returned no uncovered foreign keys;
+- core runtime Edge Functions are deployed and ACTIVE;
+- `operations-orchestrator` version 2 uses the apex origin and passed an authenticated one-time health request;
+- public health checks for `/`, `/products/` and `/sitemap.xml` returned HTTP 200;
+- the health-test token, run and snapshot were removed after verification.
 
-All copied catalogue content was rechecked after transfer. Fixed MOQ, fixed production timing and unsupported certification claims were removed or converted to requirement-led wording.
+Current provider readiness remains truthful and independent of core website health. Google Search Console gateway, WhatsApp Cloud API, social renderer and connected social accounts must not be described as connected until their provider secrets and live account identities are verified.
 
 ## 4. Authentication model
 
-The private admin application accepts only `irhaapparelsofficial@gmail.com`.
+The private admin application is restricted to the approved Irha Apparels owner account.
 
-The first owner session must:
+Verified state:
 
-1. open `/auth` after R11 is published;
-2. enter a new private password;
-3. choose **Initialize owner account**;
-4. confirm the newest Supabase email if email confirmation is requested;
-5. sign in again;
-6. let `claim_owner_admin()` create and verify the single admin role.
+- one confirmed owner Auth user;
+- one matching admin role;
+- successful owner sign-in history;
+- admin RLS guard verified with `authenticated` role context.
 
-The password is sent directly to Supabase Auth and is never stored in the repository. Any password previously typed in a chat or shared channel must be treated as exposed and replaced with a new one.
+Google OAuth is a separate optional provider gate. It requires valid Google OAuth credentials plus the production Site URL and redirect allow-list in owner Supabase. Email/password owner access remains the verified recovery method until Google OAuth is explicitly tested.
 
-## 5. Edge Functions prepared
+## 5. Public and protected Edge Functions
 
-Publish-critical functions deployed to the target project:
+Public functions may have platform JWT verification disabled only when their source implements a reviewed custom validation or webhook-signature contract. Protected admin functions must retain JWT verification or an equivalent reviewed one-time-token contract.
 
-- `public-lead-gateway` — ACTIVE; inquiry, catalogue lead and signed-upload gateway; custom validation and rate limiting; public JWT verification intentionally disabled because the function performs its own validation.
-- `chat` — ACTIVE; public website assistant endpoint. Gemini requires a target-project `GEMINI_API_KEY` or `GOOGLE_AI_API_KEY`. Without that secret the endpoint returns a truthful unavailable response and the frontend deterministic fallback remains available.
+Verified examples:
 
-Admin and connector functions that depend on Google, Meta, WhatsApp, email-provider or other secrets must be deployed and activated only after their target-project secrets and external account identities are verified.
+- `public-lead-gateway` — public custom validation and rate limiting; live inquiry/catalogue round trip passed;
+- `operations-orchestrator` — custom single-use `x-irha-ops-token`; version 2 ACTIVE; one-time health test passed;
+- protected admin, outreach, SEO, social and WhatsApp functions — deployed ACTIVE, but each external provider remains blocked until its own credential and live-account health test passes.
 
-## 6. Storage parity
+A function being ACTIVE proves deployment, not provider readiness. Never convert a missing provider credential into a fake green state.
 
-Created as private target buckets:
+## 6. Approved release process without Lovable credits
 
-- `inquiry-uploads`
-- `mockup-cache`
-- `mockup-uploads`
-- `social-uploads`
+1. Resolve the exact latest `main` SHA.
+2. Run the required Quality Gate for that exact SHA.
+3. Classify missing CI as `no run–unverified`, not failure.
+4. Proceed only when source lock, secret scan, migration order, typecheck, tests, build, release identity and legacy-claim guard are green.
+5. Deploy through the guarded GitHub-to-Cloudflare production workflow.
+6. Verify cache-busted `build.json` and `cloudflare-deployment.json` on both the Pages host and canonical custom domain.
+7. Require exact source SHA and build-fingerprint parity.
+8. Verify canonical redirects, public routes, sitemap and private-route noindex behavior.
+9. Record sanitized evidence only; never publish raw secrets or diagnostic dumps.
 
-Private source objects were not blindly exposed or claimed as migrated. The source currently remains the archive for historical mockup cache, one social upload and the private database backup. New buyer uploads after cutover write to the target project. Cache assets can be regenerated as required.
+Lovable Update/Publish must not be used as a substitute for this release chain.
 
-## 7. Data intentionally not copied
+## 7. Database and Storage safety
 
-- source Auth sessions and users — the target owner account is initialized fresh;
-- historical page-view rows — source stays the analytics archive;
-- private storage object bytes — retained in the source until a verified private transfer is performed;
-- external provider secrets — must be configured directly in the target Supabase secret store;
-- unverified outbound sends or public posts — none were executed during migration.
+- Keep the historical Lovable Cloud project unchanged until migration sign-off.
+- Do not bulk-copy or delete storage objects without a manifest, checksum evidence and rollback checkpoint.
+- Do not delete owner Supabase records during a frontend rollback.
+- New buyer records must always be exported or reconciled before any backend rollback.
+- Synthetic QA records must use unique markers and be removed immediately after evidence is captured.
 
-## 8. Smoke-test architecture
+## 8. Rollback procedure
 
-PR and normal commit checks are deterministic only:
+### 8.1 Preflight
 
-- install
-- typecheck
-- unit tests
-- production build
-- repository/business-claim guards
+1. Stop new production changes and outbound automation.
+2. Resolve and record current `main`, current production source SHA and build fingerprint.
+3. Confirm the known-good branch `release/approved-production-20260716` still points to `6853ae7fdd0d59f0fa6757ad778c1a4ee85d862a`.
+4. Export or reconcile any buyer records created after the known-good release.
+5. Create a new backup branch from the current `main` before changing code.
 
-The live-domain Production Smoke workflow is manual and strict. It must run only after the owner explicitly publishes Lovable. It polls for the R11 release marker for a bounded period, then verifies domains, crawler controls, critical pages and the public lead gateway.
+### 8.2 Restore safely
 
-This separation permanently prevents an unpublished or slowly propagating Lovable release from failing unrelated pull requests.
+1. Do not force-reset shared history.
+2. Create a normal revert/restore commit on `main` that restores the known-good application tree while preserving subsequent database migrations that are already applied.
+3. Run the exact-current-main Quality Gate.
+4. Deploy only after the restored commit is green.
+5. Verify cache-busted production source identity and fingerprint.
+6. Smoke-test home, products, catalogue, inquiry, admin authentication, public lead submission and sitemap.
 
-## 9. Publish gate
+### 8.3 Abort conditions
 
-Do not publish until the R11 pull request is green and merged.
+Abort rollback and investigate if:
 
-After merge:
+- current buyer records have not been reconciled;
+- the restored build points to the historical Lovable database;
+- current-main Quality Gate is not green;
+- production source identity is unverified;
+- a required migration would be reversed destructively;
+- public forms or owner admin access fail.
 
-1. press Lovable **Update** and then **Publish**;
-2. verify `/build.json`, `/release.txt` and the HTML release/Supabase identity markers;
-3. initialize the owner account at `/auth` with a new password;
-4. confirm one target Auth user and one admin role;
-5. submit owner-only QA inquiry/catalogue/upload checks and remove or label QA records;
-6. dispatch **Production Smoke** with the R11 release values;
-7. inspect Gmail for Supabase confirmation and GitHub workflow results;
-8. keep the source Lovable Cloud database intact until all checks pass.
+## 9. Repository privacy and credential rotation
 
-## 10. Rollback
+The temporary public-repository phase is only for completing the current work while GitHub-hosted Actions are available. Before the next private development phase:
 
-If the live release fails before new buyer data is accepted:
+1. finish and verify the current task batch;
+2. change the repository back to private;
+3. rotate any Cloudflare or Supabase privileged credential that may have appeared in public logs, issues or history;
+4. update managed GitHub/Supabase secrets;
+5. run a fresh secret scan and a protected deployment smoke test;
+6. keep the repository private for subsequent work.
 
-1. do not delete or alter the source Lovable Cloud project;
-2. revert the R11 runtime configuration commit to the last R10 source configuration;
-3. publish the reverted main branch through Lovable;
-4. run the explicit R10/R11-appropriate live smoke contract;
-5. preserve target database records for investigation.
+Repository privacy does not invalidate copies or forks made while it was public, so credential rotation is mandatory even after visibility is changed.
 
-If new buyer records have already reached the target, export or reconcile them before any rollback so no lead is lost.
+## 10. Final sign-off gate
+
+Do not declare the migration fully complete until all of the following are proven:
+
+- exact latest `main` Quality Gate is green;
+- production serves the approved exact source and fingerprint;
+- owner Auth and admin RLS work;
+- inquiry, quote and catalogue flows write only to owner Supabase;
+- required protected functions are health-tested with their real provider credentials;
+- storage parity or an approved archive decision is documented;
+- rollback procedure has a non-destructive dry-run record;
+- repository is private again;
+- exposed privileged credentials have been rotated.
