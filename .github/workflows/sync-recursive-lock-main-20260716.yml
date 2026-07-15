@@ -1,0 +1,32 @@
+name: Sync recursive runtime lock with latest main
+
+on:
+  push:
+    branches: [fix/lovable-free-runtime-recursive-20260716]
+    paths:
+      - ".github/workflows/sync-recursive-lock-main-20260716.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lovable-free-runtime-recursive-20260716
+          fetch-depth: 0
+      - name: Merge latest main and remove workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git merge --no-edit origin/main
+          rm .github/workflows/sync-recursive-lock-main-20260716.yml
+          git add -A
+          git commit -m "chore: remove one-time recursive lock sync workflow"
+          git push origin HEAD:fix/lovable-free-runtime-recursive-20260716
