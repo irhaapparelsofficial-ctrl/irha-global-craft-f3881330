@@ -1,0 +1,162 @@
+name: Audit Live Support V3
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/audit-live-support-v3.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Resolve exact current main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          expected_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          echo "EXPECTED_MAIN=$expected_main" >> "$GITHUB_ENV"
+
+      - name: Verify live frontend and two-turn AI support
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          const expectedMain = process.env.EXPECTED_MAIN;
+          const site = 'https://irhaapparels.com';
+          const functionUrl = 'https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/chat';
+          const runtimeSource = fs.readFileSync('src/integrations/supabase/ownerRuntime.ts', 'utf8');
+          const key = runtimeSource.match(/OWNER_SUPABASE_PUBLISHABLE_KEY\s*=\s*\n?\s*"([^"]+)"/)?.[1];
+          if (!key) throw new Error('Owner publishable key not found');
+
+          const evidence = {
+            checked_at: new Date().toISOString(),
+            expected_main: expectedMain,
+            frontend: {},
+            chat: {},
+          };
+
+          const normalize = (value) => value.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+          const parseSse = (text) => {
+            let answer = '';
+            for (const line of text.split('\n')) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+              const data = trimmed.slice(5).trim();
+              if (!data || data === '[DONE]') continue;
+              try {
+                const payload = JSON.parse(data);
+                answer += payload?.choices?.[0]?.delta?.content || '';
+              } catch {}
+            }
+            return answer.trim();
+          };
+
+          async function postChat(messages, sessionId, origin = site) {
+            const response = await fetch(functionUrl, {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                'origin': origin,
+                'apikey': key,
+                'authorization': `Bearer ${key}`,
+              },
+              body: JSON.stringify({
+                sessionId,
+                pageContext: { path: '/products/sportswear', title: 'Sportswear Manufacturer' },
+                messages,
+              }),
+            });
+            const text = await response.text();
+            return {
+              status: response.status,
+              provider: response.headers.get('x-irha-ai-provider'),
+              conversation_version: response.headers.get('x-irha-conversation-version'),
+              answer: parseSse(text),
+              raw: text.slice(0, 4000),
+            };
+          }
+
+          (async () => {
+            const buildResponse = await fetch(`${site}/build.json?audit=${Date.now()}`, { redirect: 'follow' });
+            const buildText = await buildResponse.text();
+            evidence.frontend.build_status = buildResponse.status;
+            evidence.frontend.build_body = buildText.slice(0, 3000);
+            if (buildResponse.status !== 200) throw new Error(`build.json returned ${buildResponse.status}`);
+            if (!buildText.includes(expectedMain)) throw new Error(`Production source is not exact current main ${expectedMain}`);
+
+            const homeResponse = await fetch(`${site}/?support_audit=${Date.now()}`, { redirect: 'follow' });
+            evidence.frontend.home_status = homeResponse.status;
+            if (homeResponse.status !== 200) throw new Error(`Homepage returned ${homeResponse.status}`);
+
+            const sessionId = `audit-support-v3-${Date.now()}`;
+            const firstUser = 'We need 100 custom football jerseys with embroidered logos for a UK club. Can you help?';
+            const first = await postChat([{ role: 'user', content: firstUser }], sessionId);
+            evidence.chat.first = first;
+            if (first.status !== 200) throw new Error(`First chat turn returned ${first.status}`);
+            if (first.conversation_version !== '3') throw new Error(`Expected conversation version 3, got ${first.conversation_version}`);
+            if (!first.provider) throw new Error('AI provider header missing');
+            if (first.answer.length < 25) throw new Error('First answer is empty or too short');
+
+            const followUp = 'What about pricing for the same order, and what exact details do you still need from us?';
+            const second = await postChat([
+              { role: 'user', content: firstUser },
+              { role: 'assistant', content: first.answer },
+              { role: 'user', content: followUp },
+            ], sessionId);
+            evidence.chat.second = second;
+            if (second.status !== 200) throw new Error(`Second chat turn returned ${second.status}`);
+            if (second.conversation_version !== '3') throw new Error('Second turn lost conversation version 3');
+            if (second.answer.length < 25) throw new Error('Second answer is empty or too short');
+            if (normalize(second.answer) === normalize(first.answer)) throw new Error('AI repeated the exact same answer');
+            if (/^(hello|hi|hallo)\b/i.test(second.answer)) throw new Error('AI incorrectly restarted the conversation');
+            if (!/(price|pricing|quotation|quote|review|quantity|destination|branding|material|packaging)/i.test(second.answer)) {
+              throw new Error('Second answer did not address the commercial follow-up');
+            }
+
+            const denied = await postChat([{ role: 'user', content: 'Test' }], `${sessionId}-denied`, 'https://example.com');
+            evidence.chat.invalid_origin_status = denied.status;
+            if (denied.status !== 403) throw new Error(`Invalid origin was not rejected; got ${denied.status}`);
+
+            evidence.result = 'success';
+            fs.writeFileSync('live-support-v3-audit.json', JSON.stringify(evidence, null, 2));
+            console.log(JSON.stringify({
+              result: evidence.result,
+              expected_main: expectedMain,
+              first_provider: first.provider,
+              first_answer: first.answer,
+              second_provider: second.provider,
+              second_answer: second.answer,
+              invalid_origin_status: denied.status,
+            }, null, 2));
+          })().catch((error) => {
+            evidence.result = 'failure';
+            evidence.error = error instanceof Error ? error.message : String(error);
+            fs.writeFileSync('live-support-v3-audit.json', JSON.stringify(evidence, null, 2));
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-support-v3-audit
+          path: live-support-v3-audit.json
+          if-no-files-found: error
+          retention-days: 3
