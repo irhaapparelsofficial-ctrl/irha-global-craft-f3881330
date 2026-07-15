@@ -23,11 +23,13 @@ verify_jwt = true
 [functions.gsc-analytics]
 verify_jwt = true
 
+# The function itself authorizes either an authenticated admin/service JWT or
+# the separate high-entropy Vault scheduler token before contacting Google.
 [functions.sitemap-ping]
-verify_jwt = true
+verify_jwt = false
 
-# Public gateway verification is disabled because this function uses a
-# separate high-entropy Vault token plus a rate-limited SECURITY DEFINER claim.
+# Retained as an inactive compatibility function; production cron targets
+# sitemap-ping so the existing Search Console connection binding is reused.
 [functions.scheduled-sitemap-submit]
 verify_jwt = false
 

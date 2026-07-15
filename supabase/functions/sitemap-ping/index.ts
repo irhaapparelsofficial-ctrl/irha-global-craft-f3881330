@@ -1,17 +1,19 @@
 // Re-submits the canonical sitemap to Google Search Console.
-// Admin users can trigger it from the private SEO monitor; service-role callers
-// remain supported for a future secure scheduler. Submission is idempotent.
+// Admin users can trigger it from the private SEO monitor. The daily scheduler
+// uses a separate high-entropy Vault token whose SHA-256 digest is safe to keep
+// in source; the raw token never leaves Vault or the protected cron request.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-irha-sitemap-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 const SITE_PROPERTY = "sc-domain:irhaapparels.com";
 const SITEMAP_URL = "https://irhaapparels.com/sitemap.xml";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
+const SCHEDULER_TOKEN_HASH = "c2afdce4118bd4604f4090fe17fb7f4b4e54ca7f45ba8b069b1ab9fa7ec33368";
 
 function json(payload: unknown, status: number) {
   return new Response(JSON.stringify(payload), {
@@ -38,6 +40,12 @@ function parseJwtRole(token: string): string | null {
 }
 
 async function authorize(req: Request): Promise<Response | null> {
+  const schedulerToken = req.headers.get("x-irha-sitemap-token") || "";
+  if (/^[A-Za-z0-9_-]{40,120}$/.test(schedulerToken)) {
+    const providedHash = await sha256Hex(schedulerToken);
+    if (constantTimeEqual(providedHash, SCHEDULER_TOKEN_HASH)) return null;
+  }
+
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
   if (!token) return json({ error: "Unauthorized" }, 401);
@@ -113,3 +121,18 @@ Deno.serve(async (req) => {
     return json({ error: "Sitemap submission failed" }, 500);
   }
 });
+
+async function sha256Hex(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function constantTimeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) return false;
+  let diff = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    diff |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return diff === 0;
+}

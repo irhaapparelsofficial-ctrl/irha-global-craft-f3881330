@@ -73,7 +73,13 @@ describe("buyer-critical public platform contracts", () => {
 
   it("keeps website chat on the owner runtime with server-side persistence", () => {
     const liveChat = source("src/components/LiveChat.tsx");
-    const chatFunction = source("supabase/functions/chat/index.ts");
+    const chatFunction = [
+      "index.ts",
+      "core.ts",
+      "data.ts",
+      "prompt.ts",
+      "providers.ts",
+    ].map((file) => source(`supabase/functions/chat/${file}`)).join("\n");
 
     expect(liveChat).toContain("supabaseRuntimeUrl");
     expect(liveChat).toContain("supabasePublishableKey");
@@ -89,6 +95,8 @@ describe("buyer-critical public platform contracts", () => {
     expect(chatFunction).toContain("resolveSessionId(body.sessionId, req)");
     expect(chatFunction).toContain("isAllowedOrigin(origin)");
     expect(chatFunction).toContain("ai.gateway.lovable.dev/v1/chat/completions");
+    expect(chatFunction).toContain('"X-Irha-Conversation-Version": "3"');
+    expect(chatFunction).toContain("isTooSimilar");
   });
 
   it("keeps Custom Lab independent of the paid Lovable AI gateway", () => {
