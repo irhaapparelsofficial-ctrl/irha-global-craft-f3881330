@@ -15,7 +15,8 @@ describe("secure scheduled sitemap submission", () => {
 
   it("uses the same working connector contract as the authenticated sitemap tool", () => {
     expect(edge).toContain('const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console"');
-    expect(edge).toContain('Deno.env.get("LOVABLE_API_KEY")');
+    expect(edge).toContain("irhaLovableRuntimeKey()");
+    expect(edge).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
     expect(edge).toContain('Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY")');
     expect(edge).toContain('"X-Connection-Api-Key": gscKey');
   });

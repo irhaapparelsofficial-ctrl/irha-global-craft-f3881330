@@ -3,6 +3,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -82,8 +87,8 @@ async function health(service: DbClient) {
     ok: true,
     database_ready: databaseReady,
     tables: checks,
-    ai_gateway_configured: Boolean(Deno.env.get("LOVABLE_API_KEY")),
-    ready_to_generate: Boolean(databaseReady && Deno.env.get("LOVABLE_API_KEY")),
+    ai_gateway_configured: Boolean(irhaLovableRuntimeKey()),
+    ready_to_generate: Boolean(databaseReady && irhaLovableRuntimeKey()),
     locale_count: localeCount ?? 0,
     active_locale_count: activeCount ?? 0,
     published_page_count: publishedCount ?? 0,
@@ -464,7 +469,7 @@ function buildJsonLd(locale: string, path: string, page: ReturnType<typeof norma
 }
 
 async function aiJson(prompt: string): Promise<JsonRecord> {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = irhaLovableRuntimeKey();
   if (!key) throw new Error("LOVABLE_API_KEY missing");
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",

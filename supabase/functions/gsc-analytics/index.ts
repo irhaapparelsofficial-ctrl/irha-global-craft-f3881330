@@ -2,6 +2,11 @@
 // Read-only: validates the caller, checks admin role and returns exact connector results.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const DEFAULT_SITE_URL = "https://irhaapparels.com/";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
 const ALLOWED_DIMENSIONS = new Set(["query", "page", "country", "device"]);
@@ -64,7 +69,7 @@ async function requireAdmin(req: Request, headers: Record<string, string>) {
 }
 
 function connectionState() {
-  const connectorGatewayKey = Boolean(Deno.env.get("LOVABLE_API_KEY"));
+  const connectorGatewayKey = Boolean(irhaLovableRuntimeKey());
   const searchConsoleConnectionKey = Boolean(Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY"));
   const siteUrl = (Deno.env.get("GSC_SITE_URL") || DEFAULT_SITE_URL).trim();
   return {
@@ -120,7 +125,7 @@ Deno.serve(async (req) => {
     const end = new Date();
     const start = new Date(end.getTime() - days * 86_400_000);
     const formatDate = (date: Date) => date.toISOString().slice(0, 10);
-    const connectorToken = Deno.env.get("LOVABLE_API_KEY")!;
+    const connectorToken = irhaLovableRuntimeKey()!;
     const connectionKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY")!;
     const endpoint = `${GATEWAY}/webmasters/v3/sites/${encodeURIComponent(state.site_url)}/searchAnalytics/query`;
 
