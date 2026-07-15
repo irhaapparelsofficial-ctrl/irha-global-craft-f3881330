@@ -1,0 +1,144 @@
+name: External audit hardening once
+
+on:
+  push:
+    branches: [ops/external-hardening-20260716]
+    paths:
+      - ".github/workflows/external-hardening-once-20260716.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: pvzjiozismyxqrzmtfbi
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_NAME: irhaapparels.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ops/external-hardening-20260716
+          fetch-depth: 0
+
+      - name: Apply settings and write sanitized evidence
+        shell: bash
+        run: |
+          set -u
+          mkdir -p docs
+
+          supabase_token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          cloudflare_token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          [ -n "$supabase_token" ] && echo "::add-mask::$supabase_token"
+          [ -n "$cloudflare_token" ] && echo "::add-mask::$cloudflare_token"
+
+          hibp_before="unknown"
+          hibp_after="unknown"
+          hibp_patch_http="not-attempted"
+          hibp_result="blocked"
+
+          if [ -n "$supabase_token" ]; then
+            sb_auth=(-H "Authorization: Bearer $supabase_token" -H 'Content-Type: application/json')
+            sb_get_http="$(curl -sS -o /tmp/sb-auth-before.json -w '%{http_code}' \
+              "${sb_auth[@]}" \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth" || true)"
+            if [ "$sb_get_http" = "200" ]; then
+              hibp_before="$(jq -r 'if .password_hibp_enabled == true then "true" elif .password_hibp_enabled == false then "false" else "unknown" end' /tmp/sb-auth-before.json 2>/dev/null || echo unknown)"
+              if [ "$hibp_before" = "true" ]; then
+                hibp_after="true"
+                hibp_patch_http="already-enabled"
+                hibp_result="verified"
+              else
+                hibp_patch_http="$(curl -sS -o /tmp/sb-auth-patch.json -w '%{http_code}' -X PATCH \
+                  "${sb_auth[@]}" \
+                  --data '{"password_hibp_enabled":true}' \
+                  "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth" || true)"
+                sb_verify_http="$(curl -sS -o /tmp/sb-auth-after.json -w '%{http_code}' \
+                  "${sb_auth[@]}" \
+                  "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth" || true)"
+                if [ "$sb_verify_http" = "200" ]; then
+                  hibp_after="$(jq -r 'if .password_hibp_enabled == true then "true" elif .password_hibp_enabled == false then "false" else "unknown" end' /tmp/sb-auth-after.json 2>/dev/null || echo unknown)"
+                fi
+                if [ "$hibp_after" = "true" ]; then hibp_result="verified"; fi
+              fi
+            else
+              hibp_patch_http="get-$sb_get_http"
+            fi
+          else
+            hibp_patch_http="missing-secret"
+          fi
+
+          cf_get_http="not-attempted"
+          cf_update_http="not-attempted"
+          cf_live_clean="false"
+          cf_result="blocked"
+
+          if [ -n "$cloudflare_token" ]; then
+            cf_auth=(-H "Authorization: Bearer $cloudflare_token" -H 'Content-Type: application/json')
+            cf_get_http="$(curl -sS -o /tmp/cf-zones.json -w '%{http_code}' \
+              "${cf_auth[@]}" \
+              "https://api.cloudflare.com/client/v4/zones?name=$CLOUDFLARE_ZONE_NAME&status=active&per_page=10" || true)"
+            zone_count="$(jq -r 'if .success == true then (.result | length) else 0 end' /tmp/cf-zones.json 2>/dev/null || echo 0)"
+            if [ "$cf_get_http" = "200" ] && [ "$zone_count" = "1" ]; then
+              zone_id="$(jq -r '.result[0].id' /tmp/cf-zones.json)"
+              echo "::add-mask::$zone_id"
+              cf_update_http="$(curl -sS -o /tmp/cf-update.json -w '%{http_code}' -X PUT \
+                "${cf_auth[@]}" \
+                --data '{"is_robots_txt_managed":false,"cf_robots_variant":"off"}' \
+                "https://api.cloudflare.com/client/v4/zones/$zone_id/bot_management" || true)"
+            fi
+
+            for attempt in $(seq 1 12); do
+              audit_url="https://irhaapparels.com/robots.txt?external_hardening=20260716-$attempt-$RANDOM"
+              if curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' "$audit_url" -o /tmp/live-robots.txt; then
+                if ! grep -qiE 'content-signal|BEGIN Cloudflare Managed|content signals policy' /tmp/live-robots.txt \
+                   && grep -Fq 'Sitemap: https://irhaapparels.com/sitemap.xml' /tmp/live-robots.txt; then
+                  cf_live_clean="true"
+                  cf_result="verified"
+                  break
+                fi
+              fi
+              sleep 5
+            done
+          else
+            cf_get_http="missing-secret"
+          fi
+
+          cat > docs/EXTERNAL_HARDENING_RESULT_20260716.md <<EOF
+          # External hardening result — 2026-07-16
+
+          This file contains sanitized booleans and HTTP result classes only. No tokens, project secrets, zone IDs, or configuration payloads are stored.
+
+          ## Supabase Auth
+          - Leaked-password protection before: \`$hibp_before\`
+          - PATCH result: \`$hibp_patch_http\`
+          - Leaked-password protection after: \`$hibp_after\`
+          - Final state: **$hibp_result**
+
+          ## Cloudflare robots policy
+          - Zone lookup result: \`$cf_get_http\`
+          - Managed robots update result: \`$cf_update_http\`
+          - Live robots free of managed Content-Signal block: \`$cf_live_clean\`
+          - Final state: **$cf_result**
+
+          ## Interpretation
+          - \`verified\` means the live/current setting was read back successfully.
+          - \`blocked\` means the existing credential or account entitlement did not permit the change; no workaround or secret escalation was attempted.
+          EOF
+
+          rm -f /tmp/sb-auth-before.json /tmp/sb-auth-patch.json /tmp/sb-auth-after.json \
+                /tmp/cf-zones.json /tmp/cf-update.json /tmp/live-robots.txt
+          rm .github/workflows/external-hardening-once-20260716.yml
+
+      - name: Commit sanitized result and remove one-time workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs(ops): record sanitized external hardening result"
+          git push origin HEAD:ops/external-hardening-20260716
