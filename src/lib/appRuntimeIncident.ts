@@ -1,5 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
-
 const RECOVERY_TTL_MS = 5 * 60 * 1000;
 const RECOVERY_PREFIX = "irha:recoverable-asset-error:";
 
@@ -63,8 +61,9 @@ export function claimOneTimeAssetRecovery(
 }
 
 export async function reportRuntimeIncident(payload: RuntimeIncidentPayload): Promise<boolean> {
-  const client = supabase as unknown as RpcClient;
   try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const client = supabase as unknown as RpcClient;
     const { error } = await client.rpc("record_public_app_incident", {
       _incident_id: payload.incidentId,
       _route: payload.route || "/",
