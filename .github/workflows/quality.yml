@@ -12,21 +12,46 @@ on:
       - "docs/**"
       - "**/*.md"
   workflow_dispatch:
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
 
 concurrency:
-  group: quality-${{ github.event.pull_request.number || github.ref }}
+  group: quality-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   quality:
+    if: >-
+      github.event_name != 'issue_comment' ||
+      (github.event.issue.number == 375 &&
+       github.event.comment.body == '/quality-current-main' &&
+       github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout
+      - name: Checkout exact event source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'issue_comment' && 'main' || github.sha }}
+          persist-credentials: false
+
+      - name: Confirm owner-command source is exact current main
+        if: github.event_name == 'issue_comment'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          checked_out="$(git rev-parse HEAD)"
+          test "$checked_out" = "$latest_main" || {
+            echo "Checked out $checked_out but current main is $latest_main"
+            exit 1
+          }
+          echo "Exact current main confirmed: $latest_main"
 
       - name: Setup Node
         uses: actions/setup-node@v4
