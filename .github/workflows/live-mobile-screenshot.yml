@@ -14,17 +14,33 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Install Chromium
-        run: npx -y playwright@1.52.0 install --with-deps chromium
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.52.0
+          npx playwright install --with-deps chromium
       - name: Capture current live homepage
+        shell: bash
         run: |
-          npx -y playwright@1.52.0 screenshot --device="iPhone 13" --wait-for-timeout=10000 https://irhaapparels.com live-home-viewport.png
-          npx -y playwright@1.52.0 screenshot --device="iPhone 13" --wait-for-timeout=10000 --full-page https://irhaapparels.com live-home-full.png
+          set -o pipefail
+          node --input-type=module <<'NODE' 2>&1 | tee live-screenshot.log
+          import { chromium, devices } from 'playwright';
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ ...devices['iPhone 13'] });
+          const page = await context.newPage();
+          await page.goto('https://irhaapparels.com', { waitUntil: 'domcontentloaded', timeout: 120000 });
+          await page.waitForTimeout(12000);
+          console.log(JSON.stringify({ url: page.url(), title: await page.title() }));
+          await page.screenshot({ path: 'live-home-viewport.png', fullPage: false });
+          await page.screenshot({ path: 'live-home-full.png', fullPage: true });
+          await browser.close();
+          NODE
       - name: Record live release identity
+        if: always()
         run: |
-          curl -fsSL https://irhaapparels.com/build.json -o live-build.json
-          cat live-build.json
-      - name: Upload screenshots
+          curl -fsSL https://irhaapparels.com/build.json -o live-build.json || true
+          cat live-build.json 2>/dev/null || true
+      - name: Upload screenshots and diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: live-mobile-homepage
@@ -32,4 +48,6 @@ jobs:
             live-home-viewport.png
             live-home-full.png
             live-build.json
+            live-screenshot.log
+          if-no-files-found: warn
           retention-days: 1
