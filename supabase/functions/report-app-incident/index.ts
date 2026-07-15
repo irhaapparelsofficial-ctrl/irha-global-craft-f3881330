@@ -6,7 +6,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 const MAX_BODY_BYTES = 16_384;
 
-function corsHeaders(origin: string): HeadersInit {
+function corsHeaders(origin: string): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Headers": "apikey, authorization, content-type, x-client-info",
