@@ -5,9 +5,11 @@ import worker, {
   legacyAliasTarget,
   shouldNoIndex,
   shouldNoIndexCategoryQuery,
+  staticBuyerAssetPath,
 } from "../../public/_worker.js";
 
 const GERMANY_BUYER_PATH = "/de/bekleidungshersteller-deutschland";
+const GERMANY_BUYER_ASSET = "/_seo-static/de--bekleidungshersteller-deutschland.irha";
 
 describe("Cloudflare SEO routing", () => {
   it("maps legacy buyer and UUID URLs to canonical paths", () => {
@@ -37,27 +39,40 @@ describe("Cloudflare SEO routing", () => {
     );
   });
 
-  it("recognizes the five runtime-free Germany buyer pages", () => {
+  it("recognizes and maps the five runtime-free Germany buyer pages", () => {
     expect(isStaticBuyerPath(GERMANY_BUYER_PATH)).toBe(true);
     expect(isStaticBuyerPath(`${GERMANY_BUYER_PATH}/`)).toBe(true);
-    expect(isStaticBuyerPath("/custom-sportswear-manufacturer-germany")).toBe(true);
-    expect(isStaticBuyerPath("/de/sportbekleidung-hersteller")).toBe(true);
-    expect(isStaticBuyerPath("/leather-apparel-manufacturer-germany")).toBe(true);
-    expect(isStaticBuyerPath("/de/lederbekleidung-hersteller")).toBe(true);
+    expect(staticBuyerAssetPath(GERMANY_BUYER_PATH)).toBe(GERMANY_BUYER_ASSET);
+    expect(staticBuyerAssetPath(`${GERMANY_BUYER_PATH}/`)).toBe(GERMANY_BUYER_ASSET);
+    expect(staticBuyerAssetPath("/custom-sportswear-manufacturer-germany")).toBe(
+      "/_seo-static/custom-sportswear-manufacturer-germany.irha",
+    );
+    expect(staticBuyerAssetPath("/de/sportbekleidung-hersteller")).toBe(
+      "/_seo-static/de--sportbekleidung-hersteller.irha",
+    );
+    expect(staticBuyerAssetPath("/leather-apparel-manufacturer-germany")).toBe(
+      "/_seo-static/leather-apparel-manufacturer-germany.irha",
+    );
+    expect(staticBuyerAssetPath("/de/lederbekleidung-hersteller")).toBe(
+      "/_seo-static/de--lederbekleidung-hersteller.irha",
+    );
     expect(isStaticBuyerPath("/products/sportswear")).toBe(false);
+    expect(staticBuyerAssetPath("/products/sportswear")).toBeNull();
   });
 
-  it("serves the canonical no-slash buyer URL directly from its static index asset", async () => {
+  it("serves the canonical no-slash buyer URL as HTTP 200 from a flat asset", async () => {
     let fetchedUrl = "";
+    let fetchedMethod = "";
     const response = await worker.fetch(
       new Request(`https://irhaapparels.com${GERMANY_BUYER_PATH}?utm_source=gsc`),
       {
         ASSETS: {
           fetch: async (request: Request) => {
             fetchedUrl = request.url;
+            fetchedMethod = request.method;
             return new Response("<html>Static Germany buyer page</html>", {
               status: 200,
-              headers: { "content-type": "text/html; charset=utf-8" },
+              headers: { "content-type": "application/octet-stream" },
             });
           },
         },
@@ -65,13 +80,32 @@ describe("Cloudflare SEO routing", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(new URL(fetchedUrl).pathname).toBe(`${GERMANY_BUYER_PATH}/index.html`);
-    expect(new URL(fetchedUrl).searchParams.get("utm_source")).toBe("gsc");
+    expect(fetchedMethod).toBe("GET");
+    expect(new URL(fetchedUrl).pathname).toBe(GERMANY_BUYER_ASSET);
+    expect(new URL(fetchedUrl).search).toBe("");
+    expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
     expect(response.headers.get("content-location")).toBe(
       `https://irhaapparels.com${GERMANY_BUYER_PATH}`,
     );
     expect(response.headers.get("x-irha-static-buyer-shell")).toBe("runtime-free");
+    expect(response.headers.get("x-irha-static-buyer-asset")).toBe(
+      GERMANY_BUYER_ASSET,
+    );
     expect(await response.text()).toContain("Static Germany buyer page");
+  });
+
+  it("returns a safe 503 instead of a redirect when the mapped asset is unavailable", async () => {
+    const response = await worker.fetch(
+      new Request(`https://irhaapparels.com${GERMANY_BUYER_PATH}`),
+      {
+        ASSETS: {
+          fetch: async () => new Response("Not found", { status: 404 }),
+        },
+      },
+    );
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("x-irha-static-buyer-asset-status")).toBe("404");
   });
 
   it("permanently redirects the trailing-slash duplicate to the canonical buyer URL", async () => {
