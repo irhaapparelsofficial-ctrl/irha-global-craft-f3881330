@@ -75,11 +75,15 @@ describe("polished B2B homepage", () => {
     expect(brand).toContain("MANUFACTURING SPECIALISTS");
   });
 
-  it("keeps mobile consent compact and prevents it covering contact actions", () => {
+  it("keeps mobile consent compact, readable and clear of contact actions", () => {
     expect(consent).toContain("Optional cookies");
     expect(consent).toContain("Essential only");
     expect(consent).toContain("Accept optional");
     expect(consent).toContain("cookieConsentOpen");
+    expect(consent).toContain("bg-black/95");
+    expect(consent).toContain("text-white/70");
+    expect(consent).not.toContain("bg-[#090909]/98");
+    expect(consent).not.toContain("text-white/62");
     expect(consent).not.toContain("ShieldCheck");
     expect(sticky).toContain("sticky-mobile-cta");
     expect(styles).toContain('html[data-cookie-consent-open="true"] .sticky-mobile-cta');
