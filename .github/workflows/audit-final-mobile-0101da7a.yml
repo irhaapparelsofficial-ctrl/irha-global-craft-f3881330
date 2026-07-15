@@ -1,0 +1,177 @@
+name: Audit final live mobile 0101da7a
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_SOURCE_SHA: 0101da7a178e9aa138670263a82eac6c72c10a5a
+      LIVE_ORIGIN: https://irhaapparels.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for exact production release
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=0
+          for attempt in $(seq 1 90); do
+            cache_bust="${EXPECTED_SOURCE_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' "$LIVE_ORIGIN/build.json?audit=$cache_bust" -o live-build.json \
+              && jq -e --arg sha "$EXPECTED_SOURCE_SHA" '.source_commit==$sha and .source_identity_state=="verified"' live-build.json >/dev/null; then
+              matched=1
+              echo "Exact production source verified on attempt $attempt"
+              break
+            fi
+            echo "Production not converged yet ($attempt/90)"
+            sleep 10
+          done
+          test "$matched" = "1"
+          cat live-build.json
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Verify final mobile buyer experience
+        shell: bash
+        run: |
+          cat > audit-final-mobile.mjs <<'EOF'
+          import { chromium, devices } from 'playwright';
+          import { writeFile } from 'node:fs/promises';
+
+          const origin = process.env.LIVE_ORIGIN;
+          const expectedSource = process.env.EXPECTED_SOURCE_SHA;
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ ...devices['iPhone 13'], locale: 'en-GB' });
+          const page = await context.newPage();
+          const consoleErrors = [];
+          const failures = [];
+          page.on('console', (message) => {
+            if (message.type() === 'error') consoleErrors.push(message.text());
+          });
+
+          async function open(path) {
+            const response = await page.goto(`${origin}${path}${path.includes('?') ? '&' : '?'}audit=${Date.now()}`, {
+              waitUntil: 'domcontentloaded',
+              timeout: 90000,
+            });
+            await page.waitForTimeout(1800);
+            return { status: response?.status() ?? null, finalUrl: page.url(), title: await page.title() };
+          }
+
+          async function anyVisible(locator) {
+            const count = await locator.count();
+            for (let index = 0; index < count; index += 1) {
+              if (await locator.nth(index).isVisible().catch(() => false)) return true;
+            }
+            return false;
+          }
+
+          function isDark(backgroundColor) {
+            const rgba = backgroundColor.match(/[\d.]+/g)?.map(Number) ?? [];
+            return rgba.length >= 3 && rgba[0] <= 25 && rgba[1] <= 25 && rgba[2] <= 25 && (rgba[3] ?? 1) >= 0.9;
+          }
+
+          let report;
+          try {
+            const home = await open('/');
+            const h1 = await page.locator('h1').first().textContent().catch(() => null);
+            const logoVisible = await page.locator('img[src="/irha-brand-mark.svg"]').first().isVisible().catch(() => false);
+            const quoteVisible = await anyVisible(page.getByText(/Request quote/i));
+
+            const cookie = page.getByRole('dialog', { name: 'Optional cookies' });
+            await cookie.waitFor({ state: 'visible', timeout: 15000 });
+            const cookieStyle = await cookie.evaluate((element) => {
+              const style = getComputedStyle(element);
+              return { backgroundColor: style.backgroundColor, color: style.color, borderColor: style.borderColor };
+            });
+            await page.screenshot({ path: '01-cookie-visible-iphone.png' });
+            await page.getByRole('button', { name: 'Essential only' }).click();
+            await cookie.waitFor({ state: 'hidden', timeout: 10000 });
+
+            const dock = page.locator('.sticky-mobile-cta');
+            await dock.waitFor({ state: 'visible', timeout: 10000 });
+            const dockStyle = await dock.evaluate((element) => {
+              const style = getComputedStyle(element);
+              return { backgroundColor: style.backgroundColor, borderColor: style.borderColor };
+            });
+            const liveChatVisible = await anyVisible(dock.getByText(/Live chat/i));
+            const dockQuoteVisible = await anyVisible(dock.getByText(/Request quote/i));
+            await page.screenshot({ path: '02-home-clean-iphone.png' });
+
+            const programs = page.locator('#programs');
+            await programs.scrollIntoViewIfNeeded().catch(() => undefined);
+            await page.waitForTimeout(1200);
+            await page.screenshot({ path: '03-programs-iphone.png' });
+
+            const process = page.locator('#process');
+            await process.scrollIntoViewIfNeeded().catch(() => undefined);
+            await page.waitForTimeout(1200);
+            await page.screenshot({ path: '04-process-iphone.png' });
+
+            const routes = {};
+            for (const path of ['/products', '/inquiry', '/catalogue']) routes[path] = await open(path);
+
+            if (home.status !== 200) failures.push(`home status ${home.status}`);
+            if (!h1) failures.push('homepage H1 missing');
+            if (!logoVisible) failures.push('brand mark not visible');
+            if (!quoteVisible) failures.push('no visible Request quote action');
+            if (!isDark(cookieStyle.backgroundColor)) failures.push(`cookie background not dark: ${cookieStyle.backgroundColor}`);
+            if (!isDark(dockStyle.backgroundColor)) failures.push(`mobile dock background not dark: ${dockStyle.backgroundColor}`);
+            if (!liveChatVisible) failures.push('mobile dock Live Chat is not visible');
+            if (!dockQuoteVisible) failures.push('mobile dock Request Quote is not visible');
+            for (const [path, result] of Object.entries(routes)) {
+              if (result.status !== 200) failures.push(`${path} status ${result.status}`);
+            }
+
+            report = {
+              expectedSource,
+              home,
+              h1,
+              logoVisible,
+              quoteVisible,
+              cookieStyle,
+              cookieBackgroundIsDark: isDark(cookieStyle.backgroundColor),
+              dockStyle,
+              dockBackgroundIsDark: isDark(dockStyle.backgroundColor),
+              liveChatVisible,
+              dockQuoteVisible,
+              routes,
+              consoleErrors: consoleErrors.slice(0, 20),
+              failures,
+            };
+          } catch (error) {
+            failures.push(error instanceof Error ? error.message : String(error));
+            report = { expectedSource, consoleErrors: consoleErrors.slice(0, 20), failures };
+          } finally {
+            await writeFile('final-mobile-audit.json', JSON.stringify(report, null, 2));
+            console.log(JSON.stringify(report, null, 2));
+            await browser.close();
+          }
+
+          if (failures.length) process.exitCode = 1;
+          EOF
+          node audit-final-mobile.mjs
+      - name: Upload final mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-mobile-0101da7a
+          if-no-files-found: warn
+          path: |
+            live-build.json
+            final-mobile-audit.json
+            01-cookie-visible-iphone.png
+            02-home-clean-iphone.png
+            03-programs-iphone.png
+            04-process-iphone.png
+          retention-days: 2
