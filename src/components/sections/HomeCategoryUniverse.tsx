@@ -49,20 +49,20 @@ export default function HomeCategoryUniverse() {
       <div className="container-luxe relative">
         <div className="mb-6 grid gap-4 lg:mb-8 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-8">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-primary sm:text-[10px]">Manufacturing range</p>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-primary sm:text-[10px]">Manufacturing programs</p>
             <h2 className="mt-2 max-w-3xl font-display text-2xl leading-[1.08] sm:mt-3 sm:text-4xl lg:text-5xl">
-              Start with the product family that matches your program.
+              Choose the product line you want manufactured.
             </h2>
           </div>
           <div className="lg:col-span-4">
             <p className="text-sm leading-6 text-foreground/65 sm:leading-7">
-              Each collection opens into buyer groups, product types and individual styles with quotation-led product pages.
+              Review product types and reference styles, then send the target material, quantity, branding and destination for a formal manufacturing assessment.
             </p>
             <Link
               to="/products"
               className="mt-3 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-primary hover:text-foreground sm:mt-4 sm:text-[10px]"
             >
-              Browse all collections <ArrowRight size={13} />
+              Browse all manufacturing programs <ArrowRight size={13} />
             </Link>
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function HomeCategoryUniverse() {
                   <ResilientImage
                     sources={[previewImage, originalImage, fallbackImage]}
                     alt={featured ? `${featured.name} — ${category.name}` : category.name}
-                    loading={index === 0 ? "eager" : "lazy"}
+                    loading="lazy"
                     decoding="async"
                     width={1200}
                     height={800}
@@ -108,7 +108,7 @@ export default function HomeCategoryUniverse() {
                   />
                   <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/70 to-transparent sm:h-20" />
                   <span className="absolute bottom-2 left-2 text-[7px] font-semibold uppercase tracking-[0.16em] text-white/80 sm:bottom-3 sm:left-4 sm:text-[8px] sm:tracking-[0.2em]">
-                    {products.length} products
+                    {products.length} published styles
                   </span>
                 </div>
 
@@ -125,7 +125,7 @@ export default function HomeCategoryUniverse() {
                   )}
 
                   <span className="mt-3 inline-flex text-[8px] font-semibold uppercase tracking-[0.16em] text-primary sm:mt-4 sm:text-[9px] sm:tracking-[0.2em]">
-                    View collection
+                    Review program
                   </span>
                 </div>
               </Link>

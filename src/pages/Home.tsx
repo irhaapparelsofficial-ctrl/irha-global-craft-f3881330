@@ -24,9 +24,9 @@ export default function Home() {
       "@type": "WebPage",
       "@id": `${SITE_URL}/#webpage`,
       url: `${SITE_URL}/`,
-      name: "Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers",
+      name: "Irha Apparels — B2B Custom Apparel Manufacturer",
       description:
-        "OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan for brands, wholesalers and importers worldwide.",
+        "Made-to-order OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan for brands, wholesalers and importers.",
       isPartOf: { "@id": WEBSITE_ID },
       about: { "@id": ORGANIZATION_ID },
       inLanguage: "en",
@@ -36,19 +36,19 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers"
-        description="OEM, ODM and private-label apparel manufacturer in Sialkot, Pakistan. Custom cut & sew, embroidery, printing, private label and export support for brands and importers worldwide."
+        title="Irha Apparels — B2B Custom Apparel Manufacturer"
+        description="Made-to-order OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan. Bavarian wear, sportswear, leatherwear, streetwear and leisure apparel for brands, wholesalers and importers."
         path="/"
         jsonLd={jsonLd}
       />
 
       <HeroCarousel />
-      <HomeCategoryUniverse />
       <CapabilityStrip />
+      <HomeCategoryUniverse />
+      <HomeManufacturingEditorial />
+      <ProcessTimeline />
       <BuyerTrustSection />
       <HomeProductShowcase />
-      <ProcessTimeline />
-      <HomeManufacturingEditorial />
       <StartProgramCTA />
     </>
   );
