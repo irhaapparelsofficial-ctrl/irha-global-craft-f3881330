@@ -23,6 +23,7 @@ jobs:
         run: |
           cat > /tmp/capture.mjs <<'EOF'
           import { chromium, devices } from 'playwright';
+          import { writeFile } from 'node:fs/promises';
           const browser = await chromium.launch({ headless: true });
           const context = await browser.newContext({
             ...devices['iPhone 13'],
@@ -41,11 +42,7 @@ jobs:
             cookieVisible: await page.getByText('Your privacy choice', { exact: true }).isVisible().catch(() => false),
             viewport: await page.viewportSize(),
           };
-          await Bun.write?.('live-view.json', JSON.stringify(info, null, 2));
-          if (typeof Bun === 'undefined') {
-            const { writeFile } = await import('node:fs/promises');
-            await writeFile('live-view.json', JSON.stringify(info, null, 2));
-          }
+          await writeFile('live-view.json', JSON.stringify(info, null, 2));
           console.log(JSON.stringify(info, null, 2));
           await browser.close();
           EOF
