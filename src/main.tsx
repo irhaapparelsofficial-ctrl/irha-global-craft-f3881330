@@ -1,14 +1,18 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
-import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher";
-import AdminLiveChatLauncher from "@/components/admin/AdminLiveChatLauncher";
-import AdminLiveChatNotification from "@/components/admin/AdminLiveChatNotification";
 import "./index.css";
-import "./admin-mobile-focus.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
 const CACHE_HEAL_VERSION = "2026-07-13-v2";
+const INITIAL_ROUTE_PRELOAD_TIMEOUT_MS = 1_800;
+const CRITICAL_BUYER_INTENT_PATHS = new Set([
+  "/de/bekleidungshersteller-deutschland",
+  "/custom-sportswear-manufacturer-germany",
+  "/de/sportbekleidung-hersteller",
+  "/leather-apparel-manufacturer-germany",
+  "/de/lederbekleidung-hersteller",
+]);
 
 async function healLegacyClientCacheOnce() {
   let alreadyHealed = false;
@@ -40,20 +44,55 @@ async function healLegacyClientCacheOnce() {
   }
 }
 
-void healLegacyClientCacheOnce();
+function normalizedPathname() {
+  const pathname = window.location.pathname;
+  return pathname === "/" ? "/" : pathname.replace(/\/+$/, "") || "/";
+}
 
-const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error("Irha application root is missing");
+function preloadInitialRoute(pathname: string): Promise<unknown> | null {
+  if (pathname === "/") return import("./pages/Home");
+  if (CRITICAL_BUYER_INTENT_PATHS.has(pathname)) {
+    return import("./pages/BuyerIntentLandingPage");
+  }
+  return null;
+}
 
-// The build ships an honest progressive-enhancement shell for no-JS crawlers.
-// Remove it before React renders the same public experience interactively.
-rootElement.replaceChildren();
+function delay(ms: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+}
 
-createRoot(rootElement).render(
-  <AppErrorBoundary>
-    <App />
-    <AdminBuyerActionsLauncher />
-    <AdminLiveChatLauncher />
-    <AdminLiveChatNotification />
-  </AppErrorBoundary>,
-);
+function allowStaticShellPaint() {
+  return new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
+async function bootstrap() {
+  void healLegacyClientCacheOnce();
+
+  const rootElement = document.getElementById("root");
+  if (!rootElement) throw new Error("Irha application root is missing");
+
+  // Keep the route-specific static HTML visible while the critical page chunk
+  // downloads. This avoids replacing useful content with a loading spinner and
+  // lets the browser paint the crawler-ready H1 before React takes over.
+  const initialRoute = preloadInitialRoute(normalizedPathname());
+  if (initialRoute) {
+    await Promise.race([
+      initialRoute.catch(() => undefined),
+      delay(INITIAL_ROUTE_PRELOAD_TIMEOUT_MS),
+    ]);
+  }
+  await allowStaticShellPaint();
+
+  rootElement.replaceChildren();
+  createRoot(rootElement).render(
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>,
+  );
+}
+
+void bootstrap();
