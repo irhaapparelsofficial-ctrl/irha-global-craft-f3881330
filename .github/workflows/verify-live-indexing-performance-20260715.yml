@@ -29,12 +29,14 @@ jobs:
             *) echo "Unexpected live source SHA: $served_sha"; exit 1 ;;
           esac
           test "$(printf '%s' "$build_json" | jq -r '.source_identity_state // empty')" = "verified"
+          echo "PASS source identity: $served_sha"
 
           curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/?verify_live=${GITHUB_SHA::12}" -o /tmp/home.html
           grep -F 'data-irha-home-lcp' /tmp/home.html >/dev/null
           grep -F '/de/bekleidungshersteller-deutschland' /tmp/home.html >/dev/null
           grep -F '/de/sportbekleidung-hersteller' /tmp/home.html >/dev/null
           grep -F '/de/lederbekleidung-hersteller' /tmp/home.html >/dev/null
+          echo "PASS homepage preload and German crawler links"
 
           curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/de/bekleidungshersteller-deutschland?verify_live=${GITHUB_SHA::12}" -o /tmp/germany.html
           grep -F '<link rel="canonical" href="https://irhaapparels.com/de/bekleidungshersteller-deutschland"' /tmp/germany.html >/dev/null
@@ -43,14 +45,18 @@ jobs:
             echo "Homepage-only preload leaked into Germany route"
             exit 1
           fi
+          echo "PASS canonical German static HTML without homepage preload"
 
           curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/sitemap.xml?verify_live=${GITHUB_SHA::12}" -o /tmp/sitemap.xml
           grep -F '<loc>https://irhaapparels.com/de/bekleidungshersteller-deutschland</loc>' /tmp/sitemap.xml >/dev/null
+          echo "PASS sitemap coverage"
 
-          image_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$ORIGIN/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp")"
-          status="$(printf '%s' "$image_headers" | awk 'NR==1 {print $2}')"
-          test "$status" = "200" || { echo "LCP thumbnail returned $status"; exit 1; }
-          printf '%s\n' "$image_headers" | grep -Eiq '^content-type:[[:space:]]*image/webp'
+          image_result="$(curl -sS -L --connect-timeout 10 --max-time 40 -o /tmp/lcp.webp -w '%{http_code} %{content_type} %{size_download}' "$ORIGIN/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp")"
+          read -r image_status image_type image_size <<< "$image_result"
+          echo "LCP asset result: status=$image_status type=$image_type bytes=$image_size"
+          test "$image_status" = "200" || { echo "LCP thumbnail returned $image_status"; exit 1; }
+          test "$image_type" = "image/webp" || { echo "Unexpected LCP content type: $image_type"; exit 1; }
+          test "$image_size" -gt 1000 || { echo "LCP thumbnail payload is unexpectedly small: $image_size"; exit 1; }
 
           echo "Live indexing and performance release verified for $served_sha" >> "$GITHUB_STEP_SUMMARY"
           echo "- Homepage-only LCP preload: present" >> "$GITHUB_STEP_SUMMARY"
