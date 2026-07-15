@@ -1,0 +1,53 @@
+name: Performance branch test diagnostic once
+
+on:
+  push:
+    branches: [perf/mobile-buyer-routes-20260716]
+    paths:
+      - ".github/workflows/perf-test-diagnostic-once-20260716.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/mobile-buyer-routes-20260716
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Capture concise failure evidence
+        shell: bash
+        run: |
+          set +e
+          npm test -- --reporter=verbose > /tmp/test-output.log 2>&1
+          status=$?
+          set -e
+          mkdir -p docs
+          {
+            echo '# Performance branch test diagnostic — 2026-07-16'
+            echo
+            echo "- Test exit status: \`$status\`"
+            echo
+            echo '```text'
+            grep -E -B 3 -A 12 'FAIL|AssertionError|expected .* to|Test Files|Tests ' /tmp/test-output.log | tail -n 180 || tail -n 180 /tmp/test-output.log
+            echo '```'
+          } > docs/PERF_TEST_FAILURE_20260716.md
+          rm -f /tmp/test-output.log
+          rm .github/workflows/perf-test-diagnostic-once-20260716.yml
+      - name: Commit sanitized diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs(test): record performance branch failure"
+          git push origin HEAD:perf/mobile-buyer-routes-20260716
