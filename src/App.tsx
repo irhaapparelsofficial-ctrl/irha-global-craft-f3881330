@@ -5,14 +5,11 @@ import { useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
-import Home from "./pages/Home";
 import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
 import GlobalInteractionTracker from "@/components/GlobalInteractionTracker";
-import AdminOutreachCommandCenter from "@/components/admin/AdminOutreachCommandCenter";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import { SEO_BUYER_INTENT_LANDING_PAGES } from "@/lib/buyerIntentSeoPages";
 
+const Home = lazy(() => import("./pages/Home"));
 const About = lazy(() => import("./pages/About"));
 const AllProductsPage = lazy(() => import("./pages/AllProductsPage"));
 const GlobalCollectionsPage = lazy(() => import("./pages/GlobalCollectionsPage"));
@@ -42,6 +39,7 @@ const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
 const Compliance = lazy(() => import("./pages/Compliance"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Catalogue = lazy(() => import("./pages/Catalogue"));
@@ -54,6 +52,7 @@ const BuyerResources = lazy(() => import("./pages/BuyerResources"));
 const FactoryVideoCall = lazy(() => import("./pages/FactoryVideoCall"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const AdminOutreachCommandCenter = lazy(() => import("@/components/admin/AdminOutreachCommandCenter"));
 
 const queryClient = new QueryClient();
 
@@ -104,6 +103,16 @@ function ScrollToTop() {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [pathname]);
   return null;
+}
+
+function AdminOnlyCommandCenter() {
+  const { pathname } = useLocation();
+  if (!pathname.startsWith("/admin")) return null;
+  return (
+    <Suspense fallback={null}>
+      <AdminOutreachCommandCenter />
+    </Suspense>
+  );
 }
 
 const PageFallback = () => (
@@ -185,9 +194,8 @@ const App = () => (
                       <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
-                      {SEO_BUYER_INTENT_LANDING_PAGES.map((page) => (
-                        <Route key={page.path} path={page.path} element={<BuyerIntentLandingPage />} />
-                      ))}
+                      <Route path="/de/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
+                      <Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
                       <Route path="/studio" element={<Studio />} />
                       <Route path="/shortlist" element={<Shortlist />} />
                       <Route path="/compare" element={<Compare />} />
@@ -209,7 +217,7 @@ const App = () => (
               />
             </Routes>
           </Suspense>
-          <AdminOutreachCommandCenter />
+          <AdminOnlyCommandCenter />
           <CookieConsent />
         </BrowserRouter>
       </TooltipProvider>
