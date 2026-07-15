@@ -25,7 +25,7 @@ jobs:
       ORIGIN: https://irhaapparels.com
       BUYER_PATH: /de/bekleidungshersteller-deutschland
     steps:
-      - name: Verify canonical HTTP and runtime-free HTML contract
+      - name: Collect raw canonical and slash responses
         shell: bash
         run: |
           set -euo pipefail
@@ -36,7 +36,7 @@ jobs:
             "$ORIGIN$BUYER_PATH?static_verify=$cache_bust"
           curl -sS --connect-timeout 10 --max-time 40 \
             -D /tmp/slash.headers \
-            -o /dev/null \
+            -o /tmp/slash.html \
             "$ORIGIN$BUYER_PATH/?static_verify=$cache_bust"
 
           node <<'NODE'
@@ -45,31 +45,76 @@ jobs:
           const path = process.env.BUYER_PATH;
           const canonicalHeaders = fs.readFileSync('/tmp/canonical.headers', 'utf8');
           const slashHeaders = fs.readFileSync('/tmp/slash.headers', 'utf8');
-          const html = fs.readFileSync('/tmp/canonical.html', 'utf8');
+          const canonicalHtml = fs.readFileSync('/tmp/canonical.html', 'utf8');
+          const slashHtml = fs.readFileSync('/tmp/slash.html', 'utf8');
 
-          const status = (headers) => {
-            const matches = [...headers.matchAll(/^HTTP\/\S+\s+(\d+)/gmi)];
-            return Number(matches.at(-1)?.[1] || 0);
-          };
+          const statusChain = (headers) => [...headers.matchAll(/^HTTP\/\S+\s+(\d+)/gmi)].map((m) => Number(m[1]));
           const header = (headers, name) => {
             const re = new RegExp(`^${name}:\\s*(.+)$`, 'gmi');
             const matches = [...headers.matchAll(re)];
             return (matches.at(-1)?.[1] || '').trim();
           };
+          const bool = (value) => value ? 'yes' : 'no';
+          const canonicalStatuses = statusChain(canonicalHeaders);
+          const slashStatuses = statusChain(slashHeaders);
+          const canonicalStatus = canonicalStatuses.at(-1) || 0;
+          const slashStatus = slashStatuses.at(-1) || 0;
+          const diagnostic = [
+            '## Raw static Germany route diagnostic',
+            '',
+            `- Tested canonical: \`${origin}${path}\``,
+            `- Canonical status chain: \`${canonicalStatuses.join(' → ') || 'none'}\``,
+            `- Canonical Location: \`${header(canonicalHeaders, 'location') || 'none'}\``,
+            `- Canonical Content-Location: \`${header(canonicalHeaders, 'content-location') || 'none'}\``,
+            `- Canonical static marker: \`${header(canonicalHeaders, 'x-irha-static-buyer-shell') || 'none'}\``,
+            `- Canonical route marker: \`${header(canonicalHeaders, 'x-irha-route-status') || 'none'}\``,
+            `- Canonical content type: \`${header(canonicalHeaders, 'content-type') || 'none'}\``,
+            `- Canonical HTML bytes: ${Buffer.byteLength(canonicalHtml)}`,
+            `- Canonical static HTML marker present: ${bool(canonicalHtml.includes('data-irha-static-buyer-shell="true"'))}`,
+            `- Canonical German H1 present: ${bool(canonicalHtml.includes('Bekleidungshersteller für deutsche B2B-Einkäufer'))}`,
+            `- Canonical application script present: ${bool(/<script\b(?![^>]*type=["']application\/ld\+json["'])/i.test(canonicalHtml))}`,
+            '',
+            `- Tested slash duplicate: \`${origin}${path}/\``,
+            `- Slash status chain: \`${slashStatuses.join(' → ') || 'none'}\``,
+            `- Slash Location: \`${header(slashHeaders, 'location') || 'none'}\``,
+            `- Slash canonical marker: \`${header(slashHeaders, 'x-irha-canonical-redirect') || 'none'}\``,
+            `- Slash HTML bytes: ${Buffer.byteLength(slashHtml)}`,
+            '',
+          ].join('\n');
+          fs.writeFileSync('/tmp/http-diagnostic.md', diagnostic);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, diagnostic);
+          fs.writeFileSync('/tmp/http-values.json', JSON.stringify({
+            canonicalStatus,
+            slashStatus,
+            slashLocation: header(slashHeaders, 'location'),
+            staticMarker: header(canonicalHeaders, 'x-irha-static-buyer-shell'),
+          }));
+          NODE
 
-          const canonicalStatus = status(canonicalHeaders);
-          const slashStatus = status(slashHeaders);
-          const slashLocation = header(slashHeaders, 'location');
-          const staticMarker = header(canonicalHeaders, 'x-irha-static-buyer-shell');
-          if (canonicalStatus !== 200) throw new Error(`Canonical buyer URL returned ${canonicalStatus}, expected 200`);
-          if (slashStatus !== 301) throw new Error(`Slash duplicate returned ${slashStatus}, expected 301`);
-          if (!slashLocation.startsWith(`${origin}${path}?`)) throw new Error(`Unexpected slash redirect: ${slashLocation}`);
-          if (staticMarker !== 'runtime-free') throw new Error(`Missing static buyer marker: ${staticMarker}`);
+      - name: Record raw diagnostic before assertions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/http-diagnostic.md
+
+      - name: Assert canonical HTTP and runtime-free HTML contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const origin = process.env.ORIGIN;
+          const path = process.env.BUYER_PATH;
+          const values = JSON.parse(fs.readFileSync('/tmp/http-values.json', 'utf8'));
+          const html = fs.readFileSync('/tmp/canonical.html', 'utf8');
+
+          if (values.canonicalStatus !== 200) throw new Error(`Canonical buyer URL returned ${values.canonicalStatus}, expected 200`);
+          if (values.slashStatus !== 301) throw new Error(`Slash duplicate returned ${values.slashStatus}, expected 301`);
+          if (!values.slashLocation.startsWith(`${origin}${path}?`)) throw new Error(`Unexpected slash redirect: ${values.slashLocation}`);
+          if (values.staticMarker !== 'runtime-free') throw new Error(`Missing static buyer marker: ${values.staticMarker}`);
           if (!html.includes('data-irha-static-buyer-shell="true"')) throw new Error('Static buyer HTML marker missing');
           if (!html.includes(`<link rel="canonical" href="${origin}${path}"`)) throw new Error('Canonical tag missing or incorrect');
           if (!html.includes('Bekleidungshersteller für deutsche B2B-Einkäufer')) throw new Error('German buyer H1 missing');
           if (!html.includes('application/ld+json')) throw new Error('JSON-LD missing');
-
           const withoutJsonLd = html.replace(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '');
           if (/<script\b/i.test(withoutJsonLd)) throw new Error('Application JavaScript leaked into static buyer HTML');
           if (/rel=["'](?:stylesheet|modulepreload)["']/i.test(html)) throw new Error('Application CSS/module preload leaked into static buyer HTML');
@@ -77,10 +122,10 @@ jobs:
           const proof = [
             '## Static Germany buyer-page HTTP proof',
             '',
-            `- Canonical URL: HTTP ${canonicalStatus}`,
-            `- Static response marker: \`${staticMarker}\``,
-            `- Trailing-slash duplicate: HTTP ${slashStatus}`,
-            `- Slash redirect target: \`${slashLocation}\``,
+            '- Canonical URL: HTTP 200',
+            '- Static response marker: `runtime-free`',
+            '- Trailing-slash duplicate: HTTP 301',
+            `- Slash redirect target: \`${values.slashLocation}\``,
             `- HTML transfer: ${Buffer.byteLength(html)} bytes`,
             '- Application JavaScript: 0',
             '- Application stylesheets/module preloads: 0',
