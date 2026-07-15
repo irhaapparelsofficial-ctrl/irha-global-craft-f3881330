@@ -52,7 +52,7 @@ const BuyerResources = lazy(() => import("./pages/BuyerResources"));
 const FactoryVideoCall = lazy(() => import("./pages/FactoryVideoCall"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
-const AdminOutreachCommandCenter = lazy(() => import("@/components/admin/AdminOutreachCommandCenter"));
+const AdminRuntime = lazy(() => import("@/components/admin/AdminRuntime"));
 
 const queryClient = new QueryClient();
 
@@ -105,12 +105,12 @@ function ScrollToTop() {
   return null;
 }
 
-function AdminOnlyCommandCenter() {
+function AdminRuntimeGate() {
   const { pathname } = useLocation();
   if (!pathname.startsWith("/admin")) return null;
   return (
     <Suspense fallback={null}>
-      <AdminOutreachCommandCenter />
+      <AdminRuntime />
     </Suspense>
   );
 }
@@ -217,7 +217,7 @@ const App = () => (
               />
             </Routes>
           </Suspense>
-          <AdminOnlyCommandCenter />
+          <AdminRuntimeGate />
           <CookieConsent />
         </BrowserRouter>
       </TooltipProvider>

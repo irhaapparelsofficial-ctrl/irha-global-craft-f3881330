@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const appSource = readFileSync("src/App.tsx", "utf8");
+const mainSource = readFileSync("src/main.tsx", "utf8");
+const adminRuntimeSource = readFileSync("src/components/admin/AdminRuntime.tsx", "utf8");
 const heroSource = readFileSync("src/components/HeroCarousel.tsx", "utf8");
 const indexSource = readFileSync("index.html", "utf8");
 const packageSource = readFileSync("package.json", "utf8");
@@ -10,9 +12,11 @@ const cleanupSource = readFileSync("scripts/remove-home-lcp-preload-from-route-s
 describe("public performance and discovery contract", () => {
   it("keeps home, buyer-intent content and admin tools out of the initial public bundle", () => {
     expect(appSource).toContain('const Home = lazy(() => import("./pages/Home"))');
-    expect(appSource).toContain('const AdminOutreachCommandCenter = lazy(() => import("@/components/admin/AdminOutreachCommandCenter"))');
+    expect(appSource).toContain('const AdminRuntime = lazy(() => import("@/components/admin/AdminRuntime"))');
     expect(appSource).toContain('if (!pathname.startsWith("/admin")) return null');
     expect(appSource).not.toContain('import AdminOutreachCommandCenter from');
+    expect(mainSource).not.toContain("AdminOutreachCommandCenter");
+    expect(adminRuntimeSource).toContain("<AdminOutreachCommandCenter />");
     expect(appSource).not.toContain('import { SEO_BUYER_INTENT_LANDING_PAGES }');
     expect(appSource).toContain('<Route path="/de/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />');
     expect(appSource).toContain('<Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />');

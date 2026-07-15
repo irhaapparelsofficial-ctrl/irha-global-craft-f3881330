@@ -6,10 +6,15 @@ const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("visible human live-chat notifications", () => {
-  it("mounts the admin notification layer globally", () => {
+  it("mounts the admin notification layer only in the admin runtime", () => {
+    const app = read("src/App.tsx");
+    const runtime = read("src/components/admin/AdminRuntime.tsx");
     const main = read("src/main.tsx");
-    expect(main).toContain("AdminLiveChatNotification");
-    expect(main).toContain("<AdminLiveChatNotification />");
+
+    expect(app).toContain('if (!pathname.startsWith("/admin")) return null');
+    expect(runtime).toContain("AdminLiveChatNotification");
+    expect(runtime).toContain("<AdminLiveChatNotification />");
+    expect(main).not.toContain("AdminLiveChatNotification");
   });
 
   it("uses an admin-only realtime stream with a polling fallback", () => {

@@ -8,9 +8,13 @@ const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 describe("mobile admin easy products mode", () => {
   it("keeps floating admin launchers off the mobile editing surface", () => {
     const main = read("src/main.tsx");
+    const app = read("src/App.tsx");
+    const runtime = read("src/components/admin/AdminRuntime.tsx");
     const css = read("src/admin-mobile-focus.css");
 
-    expect(main).toContain('import "./admin-mobile-focus.css"');
+    expect(main).not.toContain("admin-mobile-focus.css");
+    expect(app).toContain('if (!pathname.startsWith("/admin")) return null');
+    expect(runtime).toContain('import "@/admin-mobile-focus.css"');
     expect(css).toContain('@media (max-width: 767px)');
     expect(css).toContain('[aria-label="Open AI outreach command center"]');
     expect(css).toContain('[aria-label="Open Buyer Actions"]');

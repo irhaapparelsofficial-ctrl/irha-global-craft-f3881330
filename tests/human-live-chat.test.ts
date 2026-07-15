@@ -35,15 +35,18 @@ describe("secure human website live chat", () => {
     expect(widget).toContain('data-chat-kind="human"');
   });
 
-  it("provides a protected admin route, reply console and one-tap launcher", () => {
+  it("provides a protected admin route, reply console and route-gated launcher", () => {
     const app = read("src/App.tsx");
     const main = read("src/main.tsx");
+    const adminRuntime = read("src/components/admin/AdminRuntime.tsx");
     const admin = read("src/pages/AdminLiveChat.tsx");
     const launcher = read("src/components/admin/AdminLiveChatLauncher.tsx");
     expect(app).toContain('const AdminLiveChat = lazy(() => import("./pages/AdminLiveChat"))');
     expect(app).toContain('path="/admin/live-chat"');
-    expect(main).toContain('import AdminLiveChatLauncher from "@/components/admin/AdminLiveChatLauncher"');
-    expect(main).toContain("<AdminLiveChatLauncher />");
+    expect(app).toContain('const AdminRuntime = lazy(() => import("@/components/admin/AdminRuntime"))');
+    expect(app).toContain('if (!pathname.startsWith("/admin")) return null');
+    expect(adminRuntime).toContain("<AdminLiveChatLauncher />");
+    expect(main).not.toContain("AdminLiveChatLauncher");
     expect(launcher).toContain('href="/admin/live-chat"');
     expect(launcher).toContain('.eq("role", "admin")');
     expect(admin).toContain("if (!user) return <Navigate");
@@ -75,7 +78,7 @@ describe("secure human website live chat", () => {
     expect(edge).toContain("invalid_session_token");
     expect(edge).toContain("origin_not_allowed");
     expect(edge).toContain('channel: "human"');
-    expect(edge).toContain('client_message_id: clientMessageId');
+    expect(edge).toContain("client_message_id: clientMessageId");
   });
 
   it("polls safely and never auto-generates commercial promises", () => {
