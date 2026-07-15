@@ -5,22 +5,26 @@ import { resolve } from "node:path";
 const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
-describe("secure human website live chat", () => {
-  it("mounts one clear human chat and does not expose the fallback AI guide as a second launcher", () => {
+describe("secure website live support", () => {
+  it("mounts one professional support entry with AI guide and human escalation", () => {
     const layout = read("src/components/layout/Layout.tsx");
-    expect(layout).toContain('import HumanLiveChat from "@/components/HumanLiveChat"');
+    const guide = read("src/components/LiveChat.tsx");
+    expect(layout).toContain('const loadGuide = () => import("@/components/LiveChat")');
+    expect(layout).toContain('const loadHumanLiveChat = () => import("@/components/HumanLiveChat")');
+    expect(layout).toContain("<LiveChat />");
     expect(layout).toContain("<HumanLiveChat />");
-    expect(layout).not.toContain('import LiveChat from "@/components/LiveChat"');
-    expect(layout).not.toContain("<LiveChat />");
+    expect(guide).toContain("Irha Live Support");
+    expect(guide).toContain("AI answers now · Human team one tap away");
+    expect(guide).toContain('const OPEN_HUMAN_EVENT = "irha:open-human-chat"');
   });
 
-  it("uses one labelled mobile contact dock for real chat and quote", () => {
+  it("uses one labelled mobile contact dock for live support and quote", () => {
     const dock = read("src/components/sections/StickyMobileCTA.tsx");
-    expect(dock).toContain('new CustomEvent("irha:open-human-chat")');
-    expect(dock).toContain("Live Chat");
-    expect(dock).toContain("Quote");
+    expect(dock).toContain('new CustomEvent("irha:open-irha-guide")');
+    expect(dock).toContain("Live support");
+    expect(dock).toContain("AI guide + human team");
+    expect(dock).toContain("Request quote");
     expect(dock).not.toContain("settingsWhatsappLink");
-    expect(dock).not.toContain("whatsappLabel");
   });
 
   it("makes human support unmistakable and keeps visitor entry simple", () => {

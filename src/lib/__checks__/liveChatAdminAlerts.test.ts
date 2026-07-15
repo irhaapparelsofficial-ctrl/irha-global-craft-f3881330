@@ -6,11 +6,13 @@ const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("human live chat admin alerts", () => {
-  it("mounts one clear human chat and keeps the fallback AI guide off the public layout", () => {
+  it("mounts unified public support while preserving the real human channel", () => {
     const layout = read("src/components/layout/Layout.tsx");
+    const guide = read("src/components/LiveChat.tsx");
+    expect(layout).toContain("<LiveChat />");
     expect(layout).toContain("<HumanLiveChat />");
-    expect(layout).not.toContain("<LiveChat />");
-    expect(layout).not.toContain('import LiveChat from "@/components/LiveChat"');
+    expect(guide).toContain('const OPEN_HUMAN_EVENT = "irha:open-human-chat"');
+    expect(guide).toContain("Human Team");
   });
 
   it("preserves protected admin launchers without shipping them through the public entry", () => {

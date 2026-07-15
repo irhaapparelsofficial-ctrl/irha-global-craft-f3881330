@@ -4,17 +4,21 @@ import OccasionBanner from "@/components/OccasionBanner";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import ViewportDeferred from "@/components/performance/ViewportDeferred";
 
+const loadGuide = () => import("@/components/LiveChat");
 const loadHumanLiveChat = () => import("@/components/HumanLiveChat");
 const Footer = lazy(() => import("./Footer"));
 const FloatingActions = lazy(() => import("./FloatingActions"));
+const LiveChat = lazy(loadGuide);
 const HumanLiveChat = lazy(loadHumanLiveChat);
 const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock"));
 
+const OPEN_GUIDE_EVENT = "irha:open-irha-guide";
 const OPEN_HUMAN_CHAT_EVENT = "irha:open-human-chat";
 
 function DeferredSupportRuntime() {
   const [ready, setReady] = useState(false);
   const readyRef = useRef(false);
+  const guideModuleReadyRef = useRef(false);
   const humanModuleReadyRef = useRef(false);
   const replayingRef = useRef(false);
 
@@ -24,7 +28,31 @@ function DeferredSupportRuntime() {
 
   useEffect(() => {
     const activate = () => setReady(true);
-    const openChat = () => {
+
+    const replay = (eventName: string) => {
+      for (const delay of [50, 220]) {
+        window.setTimeout(() => {
+          replayingRef.current = true;
+          window.dispatchEvent(new CustomEvent(eventName));
+          replayingRef.current = false;
+        }, delay);
+      }
+    };
+
+    const openGuide = () => {
+      if (replayingRef.current) return;
+      if (readyRef.current && guideModuleReadyRef.current) return;
+
+      void loadGuide()
+        .then(() => {
+          guideModuleReadyRef.current = true;
+          setReady(true);
+          replay(OPEN_GUIDE_EVENT);
+        })
+        .catch(() => setReady(true));
+    };
+
+    const openHumanChat = () => {
       if (replayingRef.current) return;
       if (readyRef.current && humanModuleReadyRef.current) return;
 
@@ -32,24 +60,20 @@ function DeferredSupportRuntime() {
         .then(() => {
           humanModuleReadyRef.current = true;
           setReady(true);
-          for (const delay of [50, 220]) {
-            window.setTimeout(() => {
-              replayingRef.current = true;
-              window.dispatchEvent(new CustomEvent(OPEN_HUMAN_CHAT_EVENT));
-              replayingRef.current = false;
-            }, delay);
-          }
+          replay(OPEN_HUMAN_CHAT_EVENT);
         })
         .catch(() => setReady(true));
     };
 
-    window.addEventListener(OPEN_HUMAN_CHAT_EVENT, openChat);
+    window.addEventListener(OPEN_GUIDE_EVENT, openGuide);
+    window.addEventListener(OPEN_HUMAN_CHAT_EVENT, openHumanChat);
     window.addEventListener("pointerdown", activate, { passive: true, once: true });
     window.addEventListener("keydown", activate, { once: true });
     const fallback = window.setTimeout(activate, 8_000);
 
     return () => {
-      window.removeEventListener(OPEN_HUMAN_CHAT_EVENT, openChat);
+      window.removeEventListener(OPEN_GUIDE_EVENT, openGuide);
+      window.removeEventListener(OPEN_HUMAN_CHAT_EVENT, openHumanChat);
       window.removeEventListener("pointerdown", activate);
       window.removeEventListener("keydown", activate);
       window.clearTimeout(fallback);
@@ -61,6 +85,7 @@ function DeferredSupportRuntime() {
   return (
     <Suspense fallback={null}>
       <FloatingActions />
+      <LiveChat />
       <HumanLiveChat />
     </Suspense>
   );
@@ -91,7 +116,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <main
         id="main-content"
         tabIndex={-1}
-        className="flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0 outline-none"
+        className="flex-1 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-0 outline-none"
       >
         {children}
       </main>

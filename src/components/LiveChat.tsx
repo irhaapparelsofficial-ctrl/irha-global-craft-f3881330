@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { ChevronRight, Headphones, MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 import {
   GUIDE_SESSION_MESSAGES_KEY,
   fallbackGuideReply,
+  isGuideReplyDuplicate,
   isIncompleteGuideFragment,
   parseStoredGuideMessages,
   redactGuideMessageForSession,
@@ -18,14 +19,17 @@ import {
 } from "@/integrations/supabase/client";
 
 const QUICK_PROMPTS = [
-  "Do you offer private label?",
-  "Show me your Lederhosen range",
-  "How does sampling work?",
-  "Welche Kollektionen habt ihr?",
+  "Which product program fits my brand?",
+  "How does private-label sampling work?",
+  "What details do you need for a quote?",
+  "Show me your Lederhosen and Dirndl range",
 ];
 
 const WELCOME_TEXT =
-  "Hi! I'm Irha Guide — your product and manufacturing assistant. Ask in English or German. For pricing or a formal quotation, use the inquiry form or WhatsApp.\n\nHallo! Ich bin Irha Guide — fragen Sie mich gerne auf Deutsch.";
+  "Welcome to Irha Live Support. I’m the AI guide and can answer product, manufacturing, private-label and sampling questions now. For a direct handover, tap Human Team at any time.";
+
+const OPEN_EVENT = "irha:open-irha-guide";
+const OPEN_HUMAN_EVENT = "irha:open-human-chat";
 
 function makeId() {
   try {
@@ -77,9 +81,17 @@ function normalizeProvider(value: string | null): GuideProvider {
 }
 
 function providerLabel(provider: GuideProvider) {
-  if (provider === "lovable-ai-gateway" || provider === "gemini") return "Smart guide";
-  if (provider === "deterministic-backup") return "Verified backup";
-  return "Ask a question";
+  if (provider === "lovable-ai-gateway" || provider === "gemini") return "AI guide active";
+  if (provider === "deterministic-backup") return "Verified knowledge mode";
+  return "Ready to assist";
+}
+
+function currentPageContext() {
+  if (typeof window === "undefined") return { path: "/", title: "Irha Apparels" };
+  return {
+    path: window.location.pathname.slice(0, 300),
+    title: document.title.slice(0, 240),
+  };
 }
 
 export default function LiveChat() {
@@ -115,11 +127,17 @@ export default function LiveChat() {
   }, [commitMessages]);
 
   useEffect(() => {
+    const openGuide = () => setOpen(true);
+    window.addEventListener(OPEN_EVENT, openGuide);
+    return () => window.removeEventListener(OPEN_EVENT, openGuide);
+  }, []);
+
+  useEffect(() => {
     messagesRef.current = messages;
     try {
       const safe = messages
         .filter((message) => message.content.trim())
-        .slice(-20)
+        .slice(-24)
         .map((message) => ({
           ...message,
           content: redactGuideMessageForSession(message.content),
@@ -162,9 +180,9 @@ export default function LiveChat() {
       }
       const viewport = window.visualViewport;
       setMobileViewportStyle({
-        top: Math.max(8, viewport.offsetTop + 8),
+        top: Math.max(6, viewport.offsetTop + 6),
         bottom: "auto",
-        height: Math.max(280, viewport.height - 16),
+        height: Math.max(320, viewport.height - 12),
       });
     };
 
@@ -188,10 +206,21 @@ export default function LiveChat() {
     window.setTimeout(() => launcherRef.current?.focus(), 0);
   };
 
+  const openHumanTeam = () => {
+    setOpen(false);
+    for (const delay of [0, 180]) {
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent(OPEN_HUMAN_EVENT)), delay);
+    }
+  };
+
   const send = useCallback(async (rawText: string) => {
     const text = rawText.trim();
     if (!text || inFlightRef.current) return;
 
+    const previousAssistantReplies = messagesRef.current
+      .filter((message) => message.role === "assistant" && message.content.trim())
+      .map((message) => message.content)
+      .slice(-4);
     const userMessage = makeMessage("user", text);
     const assistantId = makeId();
     const assistantPlaceholder: GuideMessage = {
@@ -201,7 +230,7 @@ export default function LiveChat() {
       provider: "idle",
     };
     const requestHistory = [...messagesRef.current.filter((message) => message.content.trim()), userMessage]
-      .slice(-8)
+      .slice(-12)
       .map((message) => ({ role: message.role, content: message.content }));
 
     inFlightRef.current = true;
@@ -210,7 +239,7 @@ export default function LiveChat() {
     commitMessages((previous) => [...previous, userMessage, assistantPlaceholder]);
 
     if (isIncompleteGuideFragment(text)) {
-      const reply = fallbackGuideReply(text);
+      const reply = fallbackGuideReply(text, previousAssistantReplies);
       replaceAssistant(assistantId, reply, "deterministic-backup");
       setProvider("deterministic-backup");
       setLoading(false);
@@ -232,6 +261,8 @@ export default function LiveChat() {
         body: JSON.stringify({
           sessionId: sessionIdRef.current,
           messages: requestHistory,
+          pageContext: currentPageContext(),
+          clientVersion: "irha-live-support-v3",
         }),
       });
 
@@ -277,15 +308,15 @@ export default function LiveChat() {
         if (typeof answer === "string") finalContent = answer.trim();
       }
 
-      if (!finalContent.trim()) {
-        finalContent = fallbackGuideReply(text);
+      if (!finalContent.trim() || isGuideReplyDuplicate(finalContent, previousAssistantReplies)) {
+        finalContent = fallbackGuideReply(text, previousAssistantReplies);
         resolvedProvider = "deterministic-backup";
       }
     } catch {
-      finalContent = fallbackGuideReply(text);
+      finalContent = fallbackGuideReply(text, previousAssistantReplies);
       resolvedProvider = "deterministic-backup";
     } finally {
-      replaceAssistant(assistantId, finalContent || fallbackGuideReply(text), resolvedProvider);
+      replaceAssistant(assistantId, finalContent || fallbackGuideReply(text, previousAssistantReplies), resolvedProvider);
       setProvider(resolvedProvider);
       setLoading(false);
       inFlightRef.current = false;
@@ -301,12 +332,19 @@ export default function LiveChat() {
           ref={launcherRef}
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Open Irha Guide"
+          aria-label="Open Irha Live Support — AI guide and human team"
           aria-haspopup="dialog"
-          className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:right-[11.5rem] md:bottom-6 z-[60] group min-h-11 inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground rounded-full pl-3 pr-4 py-3 shadow-gold hover:scale-105 transition-transform"
+          className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-6 md:right-24 md:w-[20rem]"
         >
-          <Sparkles size={20} />
-          <span className="text-[11px] font-medium uppercase tracking-[0.2em] hidden sm:inline">Irha Guide</span>
+          <span className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-gold text-primary-foreground shadow-gold">
+            <MessageCircle size={20} />
+            <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-black bg-emerald-400" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">Irha Live Support</span>
+            <span className="mt-1 block text-[11px] leading-snug text-white/75">AI answers now · Human team one tap away</span>
+          </span>
+          <ChevronRight size={18} className="shrink-0 text-gold" />
         </button>
       )}
 
@@ -315,45 +353,48 @@ export default function LiveChat() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="irha-guide-title"
+          data-chat-kind="ai-guide"
           style={mobileViewportStyle}
-          className="fixed z-[80] inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(0.75rem+env(safe-area-inset-bottom))] md:inset-auto md:right-6 md:bottom-6 md:w-[400px] md:h-[min(680px,calc(100vh-3rem))] flex flex-col bg-background border border-border shadow-elegant rounded-sm overflow-hidden animate-fade-in"
+          className="fixed z-[80] inset-x-2 top-[calc(env(safe-area-inset-top)+0.4rem)] bottom-[calc(0.4rem+env(safe-area-inset-bottom))] flex flex-col overflow-hidden rounded-2xl border border-gold/35 bg-background shadow-[0_24px_80px_rgba(0,0,0,.78)] animate-fade-in md:inset-auto md:bottom-6 md:right-6 md:h-[min(720px,calc(100vh-3rem))] md:w-[430px]"
         >
-          <div className="shrink-0 bg-gradient-to-r from-card to-background border-b border-border/60 px-3 py-3 sm:p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center shrink-0" aria-hidden="true">
-                  <Sparkles size={15} className="text-primary-foreground" />
-                </div>
+          <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-card via-card to-background px-3 py-3 sm:p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-gold text-primary-foreground">
+                  <Sparkles size={18} />
+                  <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-card bg-emerald-400" aria-hidden="true" />
+                </span>
                 <div className="min-w-0">
-                  <p id="irha-guide-title" className="font-display text-base leading-tight">Irha Guide</p>
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-foreground/55 flex items-center gap-1.5 whitespace-nowrap">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true" />
-                    Available · {providerLabel(provider)}
+                  <h2 id="irha-guide-title" className="font-display text-lg leading-tight">Irha Live Support</h2>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+                    {providerLabel(provider)}
                   </p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={whatsappLink()}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  aria-label="Chat on WhatsApp"
-                  className="min-h-10 flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] bg-[#25D366] text-white px-2.5 py-2 rounded-full"
-                >
-                  <MessageCircle size={12} /> <span className="hidden xs:inline">WhatsApp</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={closeChat}
-                  aria-label="Close Irha Guide"
-                  className="min-w-11 min-h-11 inline-flex items-center justify-center border border-border/60 text-foreground/70 hover:text-foreground hover:border-gold transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={closeChat}
+                aria-label="Close Irha Live Support"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border/60 text-foreground/70 hover:border-gold hover:text-foreground"
+              >
+                <X size={18} />
+              </button>
             </div>
-          </div>
+
+            <div className="mt-3 grid grid-cols-2 overflow-hidden rounded-xl border border-border/60 bg-background/70">
+              <div className="flex min-h-12 items-center justify-center gap-2 bg-gold/10 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-gold">
+                <Sparkles size={14} /> AI Guide
+              </div>
+              <button
+                type="button"
+                onClick={openHumanTeam}
+                className="flex min-h-12 items-center justify-center gap-2 border-l border-border/60 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/80 hover:bg-emerald-400/10 hover:text-emerald-300"
+              >
+                <Headphones size={14} /> Human Team
+              </button>
+            </div>
+          </header>
 
           <div
             ref={scrollRef}
@@ -361,19 +402,23 @@ export default function LiveChat() {
             aria-live="polite"
             aria-relevant="additions text"
             aria-busy={loading}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-3 bg-background"
+            className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-background p-3 sm:p-4"
           >
+            <div className="rounded-xl border border-gold/25 bg-gold/[0.06] px-3.5 py-3 text-xs leading-relaxed text-foreground/75">
+              Ask naturally. The guide remembers this conversation, uses the live catalogue and avoids repeating previous answers. Commercial terms are confirmed by the human team.
+            </div>
+
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div
-                  aria-label={message.role === "user" ? "Your message" : "Irha Guide response"}
-                  className={`max-w-[88%] px-3.5 py-2.5 text-[13px] sm:text-sm leading-relaxed whitespace-pre-wrap break-words rounded-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border/60 text-foreground/90"}`}
-                >
+                <div className={`max-w-[90%] rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap break-words sm:text-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "border border-border/60 bg-card text-foreground/90"}`}>
+                  {message.role === "assistant" && (
+                    <p className="mb-1.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-gold">Irha AI Guide</p>
+                  )}
                   {message.content || (loading ? (
                     <span className="inline-flex gap-1 py-1" aria-label="Irha Guide is responding">
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse" aria-hidden="true" />
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse [animation-delay:0.2s]" aria-hidden="true" />
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-pulse [animation-delay:0.4s]" aria-hidden="true" />
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground/40" aria-hidden="true" />
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground/40 [animation-delay:0.2s]" aria-hidden="true" />
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground/40 [animation-delay:0.4s]" aria-hidden="true" />
                     </span>
                   ) : null)}
                 </div>
@@ -381,15 +426,15 @@ export default function LiveChat() {
             ))}
 
             {messages.length === 1 && !loading && (
-              <div className="pt-1 space-y-2">
-                <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/50">Quick questions</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-2 pt-1">
+                <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/50">Popular questions</p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {QUICK_PROMPTS.map((question) => (
                     <button
                       key={question}
                       type="button"
                       onClick={() => void send(question)}
-                      className="min-h-10 text-[11px] px-3 py-1.5 border border-border/60 hover:border-primary hover:text-primary transition-colors rounded-sm"
+                      className="min-h-11 rounded-lg border border-border/60 px-3 py-2 text-left text-[11px] leading-snug transition-colors hover:border-gold hover:text-gold"
                     >
                       {question}
                     </button>
@@ -400,14 +445,14 @@ export default function LiveChat() {
 
             {showActions && (
               <div className="grid grid-cols-3 gap-2 pt-1">
-                <Link to="/products" onClick={closeChat} className="min-h-11 inline-flex items-center justify-center text-center text-[9px] uppercase tracking-[0.15em] border border-border/60 px-2 py-2.5 hover:border-gold hover:text-gold">Products</Link>
-                <Link to="/inquiry?intent=rfq" onClick={closeChat} className="min-h-11 inline-flex items-center justify-center text-center text-[9px] uppercase tracking-[0.15em] border border-gold/60 text-gold px-2 py-2.5">Get Quote</Link>
-                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="min-h-11 inline-flex items-center justify-center text-center text-[9px] uppercase tracking-[0.15em] border border-[#25D366]/60 text-[#25D366] px-2 py-2.5">WhatsApp</a>
+                <Link to="/products" onClick={closeChat} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border/60 px-2 py-2.5 text-center text-[9px] uppercase tracking-[0.13em] hover:border-gold hover:text-gold">Products</Link>
+                <Link to="/inquiry?intent=rfq" onClick={closeChat} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gold/60 px-2 py-2.5 text-center text-[9px] uppercase tracking-[0.13em] text-gold">Get Quote</Link>
+                <button type="button" onClick={openHumanTeam} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-emerald-400/50 px-2 py-2.5 text-center text-[9px] uppercase tracking-[0.13em] text-emerald-300">Human Team</button>
               </div>
             )}
           </div>
 
-          <form onSubmit={(event) => { event.preventDefault(); void send(input); }} className="shrink-0 border-t border-border/60 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-card">
+          <form onSubmit={(event) => { event.preventDefault(); void send(input); }} className="shrink-0 border-t border-border/60 bg-card p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -426,24 +471,25 @@ export default function LiveChat() {
                 }}
                 rows={1}
                 maxLength={2000}
-                enterKeyHint="enter"
-                aria-label="Message Irha Guide"
-                placeholder="Ask about products or manufacturing… (EN / DE)"
+                enterKeyHint="send"
+                aria-label="Message Irha AI Guide"
+                placeholder="Ask about a product, sample, branding or quotation…"
                 disabled={loading}
-                className="min-h-11 min-w-0 flex-1 resize-none bg-background border border-border/60 focus:border-primary outline-none text-sm px-3 py-2.5 rounded-sm max-h-24"
+                className="min-h-12 max-h-28 min-w-0 flex-1 resize-none rounded-xl border border-border/60 bg-background px-3 py-3 text-sm outline-none focus:border-gold disabled:opacity-60"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                aria-label="Send message"
-                className="min-h-11 min-w-11 shrink-0 inline-flex items-center justify-center bg-gradient-gold text-primary-foreground rounded-sm disabled:opacity-40 hover:shadow-gold transition-all"
+                aria-label="Send message to Irha Guide"
+                className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-gold text-primary-foreground transition-all hover:shadow-gold disabled:opacity-40"
               >
-                <Send size={16} />
+                <Send size={17} />
               </button>
             </div>
-            <p className="text-[8px] uppercase tracking-[0.16em] text-foreground/40 mt-2 text-center">
-              Messages may be stored for service follow-up · Answers are non-binding
-            </p>
+            <div className="mt-2 flex items-center justify-between gap-3 text-[8px] uppercase tracking-[0.12em] text-foreground/40">
+              <span>Conversation-aware AI guidance</span>
+              <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-[#25D366] hover:underline"><MessageCircle size={11} /> WhatsApp</a>
+            </div>
           </form>
         </section>
       )}
