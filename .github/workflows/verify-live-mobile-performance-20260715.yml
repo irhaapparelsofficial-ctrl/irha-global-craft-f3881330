@@ -21,13 +21,82 @@ jobs:
        github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      ORIGIN: https://irhaapparels.com
+      BUYER_PATH: /de/bekleidungshersteller-deutschland
     steps:
-      - name: Run detailed mobile Lighthouse against live Germany page
+      - name: Verify canonical HTTP and runtime-free HTML contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache_bust="${GITHUB_SHA::12}-$RANDOM"
+          curl -sS --connect-timeout 10 --max-time 40 \
+            -D /tmp/canonical.headers \
+            -o /tmp/canonical.html \
+            "$ORIGIN$BUYER_PATH?static_verify=$cache_bust"
+          curl -sS --connect-timeout 10 --max-time 40 \
+            -D /tmp/slash.headers \
+            -o /dev/null \
+            "$ORIGIN$BUYER_PATH/?static_verify=$cache_bust"
+
+          node <<'NODE'
+          const fs = require('fs');
+          const origin = process.env.ORIGIN;
+          const path = process.env.BUYER_PATH;
+          const canonicalHeaders = fs.readFileSync('/tmp/canonical.headers', 'utf8');
+          const slashHeaders = fs.readFileSync('/tmp/slash.headers', 'utf8');
+          const html = fs.readFileSync('/tmp/canonical.html', 'utf8');
+
+          const status = (headers) => {
+            const matches = [...headers.matchAll(/^HTTP\/\S+\s+(\d+)/gmi)];
+            return Number(matches.at(-1)?.[1] || 0);
+          };
+          const header = (headers, name) => {
+            const re = new RegExp(`^${name}:\\s*(.+)$`, 'gmi');
+            const matches = [...headers.matchAll(re)];
+            return (matches.at(-1)?.[1] || '').trim();
+          };
+
+          const canonicalStatus = status(canonicalHeaders);
+          const slashStatus = status(slashHeaders);
+          const slashLocation = header(slashHeaders, 'location');
+          const staticMarker = header(canonicalHeaders, 'x-irha-static-buyer-shell');
+          if (canonicalStatus !== 200) throw new Error(`Canonical buyer URL returned ${canonicalStatus}, expected 200`);
+          if (slashStatus !== 301) throw new Error(`Slash duplicate returned ${slashStatus}, expected 301`);
+          if (!slashLocation.startsWith(`${origin}${path}?`)) throw new Error(`Unexpected slash redirect: ${slashLocation}`);
+          if (staticMarker !== 'runtime-free') throw new Error(`Missing static buyer marker: ${staticMarker}`);
+          if (!html.includes('data-irha-static-buyer-shell="true"')) throw new Error('Static buyer HTML marker missing');
+          if (!html.includes(`<link rel="canonical" href="${origin}${path}"`)) throw new Error('Canonical tag missing or incorrect');
+          if (!html.includes('Bekleidungshersteller für deutsche B2B-Einkäufer')) throw new Error('German buyer H1 missing');
+          if (!html.includes('application/ld+json')) throw new Error('JSON-LD missing');
+
+          const withoutJsonLd = html.replace(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '');
+          if (/<script\b/i.test(withoutJsonLd)) throw new Error('Application JavaScript leaked into static buyer HTML');
+          if (/rel=["'](?:stylesheet|modulepreload)["']/i.test(html)) throw new Error('Application CSS/module preload leaked into static buyer HTML');
+
+          const proof = [
+            '## Static Germany buyer-page HTTP proof',
+            '',
+            `- Canonical URL: HTTP ${canonicalStatus}`,
+            `- Static response marker: \`${staticMarker}\``,
+            `- Trailing-slash duplicate: HTTP ${slashStatus}`,
+            `- Slash redirect target: \`${slashLocation}\``,
+            `- HTML transfer: ${Buffer.byteLength(html)} bytes`,
+            '- Application JavaScript: 0',
+            '- Application stylesheets/module preloads: 0',
+            '- Canonical, German H1 and JSON-LD: present',
+            '',
+          ].join('\n');
+          fs.writeFileSync('/tmp/static-proof.md', proof);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, proof);
+          NODE
+
+      - name: Run mobile Lighthouse against canonical static page
         shell: bash
         run: |
           set -euo pipefail
           npx --yes lighthouse@12.8.2 \
-            "https://irhaapparels.com/de/bekleidungshersteller-deutschland?lh_detail=${GITHUB_SHA::12}" \
+            "$ORIGIN$BUYER_PATH?lh_verify=${GITHUB_SHA::12}" \
             --output=json \
             --output-path=/tmp/lighthouse.json \
             --only-categories=performance,seo,accessibility,best-practices \
@@ -42,79 +111,44 @@ jobs:
           const audits = report.audits || {};
           const score = (id) => Math.round((report.categories[id]?.score ?? 0) * 100);
           const metric = (id) => audits[id]?.displayValue ?? 'n/a';
-          const kb = (bytes) => `${Math.round((bytes || 0) / 1024)} KiB`;
-          const clean = (value) => String(value ?? '').replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
-
-          const unusedJs = (audits['unused-javascript']?.details?.items || [])
-            .map((item) => ({ url: item.url, total: item.totalBytes, waste: item.wastedBytes }))
-            .sort((a, b) => (b.waste || 0) - (a.waste || 0))
-            .slice(0, 12);
-          const unusedCss = (audits['unused-css-rules']?.details?.items || [])
-            .map((item) => ({ url: item.url, total: item.totalBytes, waste: item.wastedBytes }))
-            .sort((a, b) => (b.waste || 0) - (a.waste || 0))
-            .slice(0, 8);
-          const network = (audits['network-requests']?.details?.items || [])
-            .map((item) => ({ url: item.url, transfer: item.transferSize, type: item.resourceType }))
-            .sort((a, b) => (b.transfer || 0) - (a.transfer || 0))
-            .slice(0, 15);
-          const lcpItem = audits['largest-contentful-paint-element']?.details?.items?.[0]?.items?.[0]
-            || audits['largest-contentful-paint-element']?.details?.items?.[0]
-            || null;
-          const lcpSnippet = lcpItem?.node?.snippet || lcpItem?.snippet || 'not exposed';
-          const insightIds = Object.keys(audits)
-            .filter((id) => /(lcp|render-block|font|server-response|document-latency|network-dependency)/i.test(id))
-            .sort();
-
-          let markdown = '## Detailed live mobile Lighthouse — Germany SEO page\n\n';
-          markdown += `Release tested: \`${report.finalDisplayedUrl}\`\n\n`;
-          markdown += [
-            `Performance: ${score('performance')}`,
-            `Accessibility: ${score('accessibility')}`,
-            `Best Practices: ${score('best-practices')}`,
-            `SEO: ${score('seo')}`,
-            `FCP: ${metric('first-contentful-paint')}`,
-            `LCP: ${metric('largest-contentful-paint')}`,
-            `TBT: ${metric('total-blocking-time')}`,
-            `CLS: ${metric('cumulative-layout-shift')}`,
-            `Speed Index: ${metric('speed-index')}`,
-            `TTFB/server response: ${metric('server-response-time')}`,
-            `Main-thread work: ${metric('mainthread-work-breakdown')}`,
-            `JavaScript execution: ${metric('bootup-time')}`,
-            `Total transfer: ${metric('total-byte-weight')}`,
-          ].map((x) => `- ${x}`).join('\n');
-          markdown += `\n\n### LCP element\n\n\`${clean(lcpSnippet).slice(0, 700)}\`\n`;
-          markdown += '\n### Relevant audits\n\n';
-          markdown += insightIds.map((id) => {
-            const audit = audits[id];
-            const ms = audit?.details?.overallSavingsMs;
-            const bytes = audit?.details?.overallSavingsBytes;
-            const savings = [
-              Number.isFinite(ms) ? `${Math.round(ms)} ms` : '',
-              Number.isFinite(bytes) ? kb(bytes) : '',
-            ].filter(Boolean).join(', ');
-            return `- \`${id}\`: ${clean(audit?.title)} — ${clean(audit?.displayValue)}${savings ? `; saving ${savings}` : ''}`;
-          }).join('\n') || '- None exposed';
-          markdown += '\n\n### Largest unused JavaScript files\n\n| Resource | Total | Saving |\n|---|---:|---:|\n';
-          markdown += unusedJs.map((x) => `| ${clean(x.url).slice(-120)} | ${kb(x.total)} | ${kb(x.waste)} |`).join('\n') || '| none | 0 | 0 |';
-          markdown += '\n\n### Largest unused CSS files\n\n| Resource | Total | Saving |\n|---|---:|---:|\n';
-          markdown += unusedCss.map((x) => `| ${clean(x.url).slice(-120)} | ${kb(x.total)} | ${kb(x.waste)} |`).join('\n') || '| none | 0 | 0 |';
-          markdown += '\n\n### Largest network transfers\n\n| Resource | Type | Transfer |\n|---|---|---:|\n';
-          markdown += network.map((x) => `| ${clean(x.url).slice(-120)} | ${clean(x.type)} | ${kb(x.transfer)} |`).join('\n') || '| none | — | 0 |';
-          markdown += '\n';
-
-          console.log(markdown);
-          fs.writeFileSync('/tmp/lighthouse-summary.md', markdown);
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown);
+          const waste = (id) => Math.round((audits[id]?.details?.overallSavingsBytes || 0) / 1024);
+          const summary = [
+            '## Live mobile Lighthouse — runtime-free Germany page',
+            '',
+            `Release tested: \`${report.finalDisplayedUrl}\``,
+            '',
+            `- Performance: ${score('performance')}`,
+            `- Accessibility: ${score('accessibility')}`,
+            `- Best Practices: ${score('best-practices')}`,
+            `- SEO: ${score('seo')}`,
+            `- FCP: ${metric('first-contentful-paint')}`,
+            `- LCP: ${metric('largest-contentful-paint')}`,
+            `- TBT: ${metric('total-blocking-time')}`,
+            `- CLS: ${metric('cumulative-layout-shift')}`,
+            `- Speed Index: ${metric('speed-index')}`,
+            `- TTFB: ${metric('server-response-time')}`,
+            `- Main-thread work: ${metric('mainthread-work-breakdown')}`,
+            `- JavaScript execution: ${metric('bootup-time')}`,
+            `- Unused JS savings: ${waste('unused-javascript')} KiB`,
+            `- Unused CSS savings: ${waste('unused-css-rules')} KiB`,
+            `- Total transfer: ${metric('total-byte-weight')}`,
+            '',
+          ].join('\n');
+          fs.writeFileSync('/tmp/lighthouse-summary.md', summary);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
           NODE
 
       - name: Upload Lighthouse JSON
         uses: actions/upload-artifact@v4
         with:
-          name: detailed-live-mobile-lighthouse
+          name: runtime-free-live-mobile-lighthouse
           path: /tmp/lighthouse.json
           retention-days: 3
 
-      - name: Record audit evidence
+      - name: Record verified evidence
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/lighthouse-summary.md
+        shell: bash
+        run: |
+          cat /tmp/static-proof.md /tmp/lighthouse-summary.md > /tmp/combined-evidence.md
+          gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/combined-evidence.md
