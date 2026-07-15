@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SITE_URL = "https://www.irhaapparels.com/";
+const DEFAULT_SITE_URL = "sc-domain:irhaapparels.com";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
 
 function jsonResp(payload: unknown, status: number) {
@@ -16,6 +16,10 @@ function jsonResp(payload: unknown, status: number) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function searchConsoleProperty() {
+  return (Deno.env.get("GSC_SITE_URL") || DEFAULT_SITE_URL).trim();
 }
 
 async function requireAdmin(req: Request): Promise<Response | null> {
@@ -61,7 +65,7 @@ async function inspect(url: string): Promise<InspectResult> {
       },
       body: JSON.stringify({
         inspectionUrl: url,
-        siteUrl: SITE_URL,
+        siteUrl: searchConsoleProperty(),
       }),
     });
     if (!res.ok) {
@@ -103,7 +107,7 @@ Deno.serve(async (req) => {
       .filter((u: unknown): u is string => typeof u === "string" && u.startsWith("https://"))
       .slice(0, 25);
 
-    // Sequential to respect GSC quota (≈ 600/min, conservative here).
+    // Sequential to respect GSC quota (approximately 600/minute; conservative here).
     const results: InspectResult[] = [];
     for (const u of safe) {
       results.push(await inspect(u));
