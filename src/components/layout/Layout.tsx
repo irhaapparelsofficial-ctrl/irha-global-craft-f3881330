@@ -1,11 +1,37 @@
-import { ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import Navbar from "./Navbar";
-import Footer from "./Footer";
-import FloatingActions from "./FloatingActions";
-import HumanLiveChat from "@/components/HumanLiveChat";
-import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import OccasionBanner from "@/components/OccasionBanner";
-import InternalLinksBlock from "@/components/content/InternalLinksBlock";
+
+const Footer = lazy(() => import("./Footer"));
+const FloatingActions = lazy(() => import("./FloatingActions"));
+const HumanLiveChat = lazy(() => import("@/components/HumanLiveChat"));
+const StickyMobileCTA = lazy(() => import("@/components/sections/StickyMobileCTA"));
+const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock"));
+
+function DeferredPageChrome() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setReady(true), 250);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  if (!ready) return null;
+
+  return (
+    <>
+      <Suspense fallback={null}>
+        <InternalLinksBlock />
+        <Footer />
+      </Suspense>
+      <Suspense fallback={null}>
+        <FloatingActions />
+        <HumanLiveChat />
+        <StickyMobileCTA />
+      </Suspense>
+    </>
+  );
+}
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
@@ -25,11 +51,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
-      <InternalLinksBlock />
-      <Footer />
-      <FloatingActions />
-      <HumanLiveChat />
-      <StickyMobileCTA />
+      <DeferredPageChrome />
     </div>
   );
 }
