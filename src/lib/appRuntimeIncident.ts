@@ -1,5 +1,11 @@
+import {
+  OWNER_SUPABASE_PUBLISHABLE_KEY,
+  OWNER_SUPABASE_URL,
+} from "@/integrations/supabase/ownerRuntime";
+
 const RECOVERY_TTL_MS = 5 * 60 * 1000;
 const RECOVERY_PREFIX = "irha:recoverable-asset-error:";
+const INCIDENT_RPC_URL = `${OWNER_SUPABASE_URL}/rest/v1/rpc/record_public_app_incident`;
 
 export type RuntimeIncidentPayload = {
   incidentId: string;
@@ -12,14 +18,6 @@ export type RuntimeIncidentPayload = {
 };
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
-
-type RpcResult = {
-  error: { message?: string } | null;
-};
-
-type RpcClient = {
-  rpc: (name: string, args: Record<string, unknown>) => Promise<RpcResult>;
-};
 
 export function sanitizeRuntimeErrorMessage(value: unknown, max = 1000): string {
   if (typeof value !== "string") return "";
@@ -63,18 +61,26 @@ export function claimOneTimeAssetRecovery(
 
 export async function reportRuntimeIncident(payload: RuntimeIncidentPayload): Promise<boolean> {
   try {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const client = supabase as unknown as RpcClient;
-    const { error } = await client.rpc("record_public_app_incident", {
-      _incident_id: payload.incidentId,
-      _route: payload.route || "/",
-      _error_name: payload.errorName || "Error",
-      _error_message: sanitizeRuntimeErrorMessage(payload.errorMessage),
-      _component_stack: sanitizeRuntimeErrorMessage(payload.componentStack, 4000),
-      _user_agent: sanitizeRuntimeErrorMessage(payload.userAgent, 500),
-      _source_sha: payload.sourceSha ?? null,
+    const response = await fetch(INCIDENT_RPC_URL, {
+      method: "POST",
+      headers: {
+        apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
+        authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        _incident_id: payload.incidentId,
+        _route: payload.route || "/",
+        _error_name: payload.errorName || "Error",
+        _error_message: sanitizeRuntimeErrorMessage(payload.errorMessage),
+        _component_stack: sanitizeRuntimeErrorMessage(payload.componentStack, 4000),
+        _user_agent: sanitizeRuntimeErrorMessage(payload.userAgent, 500),
+        _source_sha: payload.sourceSha ?? null,
+      }),
     });
-    return !error;
+    if (!response.ok) return false;
+    return (await response.json().catch(() => false)) === true;
   } catch {
     return false;
   }
