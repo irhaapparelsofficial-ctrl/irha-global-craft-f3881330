@@ -65,7 +65,6 @@ export async function reportRuntimeIncident(payload: RuntimeIncidentPayload): Pr
       method: "POST",
       headers: {
         apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
-        authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
         "content-type": "application/json",
         accept: "application/json",
       },
