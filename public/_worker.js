@@ -14,6 +14,14 @@ const MARKET_PATHS = new Set([
   "/markets/new-zealand",
 ]);
 
+const STATIC_BUYER_PATHS = new Set([
+  "/de/bekleidungshersteller-deutschland",
+  "/custom-sportswear-manufacturer-germany",
+  "/de/sportbekleidung-hersteller",
+  "/leather-apparel-manufacturer-germany",
+  "/de/lederbekleidung-hersteller",
+]);
+
 const EXACT_PUBLIC_PATHS = new Set([
   "/",
   "/about",
@@ -121,6 +129,10 @@ export function legacyAliasTarget(pathname) {
   return LEGACY_ALIASES.get(normalizePath(pathname)) || null;
 }
 
+export function isStaticBuyerPath(pathname) {
+  return STATIC_BUYER_PATHS.has(normalizePath(pathname));
+}
+
 export function shouldNoIndex(pathname) {
   const normalized = normalizePath(pathname);
   return PRIVATE_ROUTE_PREFIXES.some(
@@ -148,6 +160,7 @@ export function shouldNoIndexCategoryQuery(pathname, input) {
 
 export function isKnownHtmlRoute(pathname) {
   const normalized = normalizePath(pathname);
+  if (STATIC_BUYER_PATHS.has(normalized)) return true;
   if (MARKET_PATHS.has(normalized) || EXACT_PUBLIC_PATHS.has(normalized)) return true;
   if (normalized.startsWith("/markets/")) return false;
   if (BUYER_INTENT_PATH.test(normalized)) return true;
@@ -182,6 +195,20 @@ function aliasRedirect(request, url, targetPath) {
   });
 }
 
+function canonicalPathRedirect(request, url, pathname) {
+  const target = new URL(pathname, APEX_ORIGIN);
+  target.search = url.search;
+  const status = request.method === "GET" || request.method === "HEAD" ? 301 : 308;
+  return new Response(null, {
+    status,
+    headers: {
+      Location: target.toString(),
+      "Cache-Control": "public, max-age=3600",
+      "X-Irha-Canonical-Redirect": "remove-trailing-slash",
+    },
+  });
+}
+
 function notFoundResponse(request, pathname) {
   const safePath = pathname.replace(/[&<>"']/g, "");
   const body = request.method === "HEAD" ? null : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page Not Found — Irha Apparels</title></head><body style="margin:0;background:#0a0a0a;color:#f5f1e8;font-family:Arial,sans-serif"><main style="max-width:760px;margin:0 auto;padding:96px 24px"><p style="color:#c9a45c;text-transform:uppercase;letter-spacing:.18em">404 — Page not found</p><h1 style="font-size:48px;line-height:1.05">This page does not exist.</h1><p style="color:#c9c1b5;line-height:1.7">The requested path <code>${safePath}</code> is not a published Irha Apparels page.</p><p><a href="/products" style="color:#e8c477">Browse products</a> · <a href="/markets" style="color:#e8c477">International markets</a> · <a href="/inquiry" style="color:#e8c477">Request a quote</a></p></main></body></html>`;
@@ -208,6 +235,22 @@ function withNoIndexHeaders(response, reason) {
   });
 }
 
+async function staticBuyerResponse(request, env, url, pathname) {
+  const assetUrl = new URL(request.url);
+  assetUrl.pathname = `${pathname}/index.html`;
+  const assetRequest = new Request(assetUrl.toString(), request);
+  const assetResponse = await env.ASSETS.fetch(assetRequest);
+  const headers = new Headers(assetResponse.headers);
+  headers.set("Content-Location", `${APEX_ORIGIN}${pathname}`);
+  headers.set("X-Irha-Static-Buyer-Shell", "runtime-free");
+  headers.set("Cache-Control", "public, max-age=300, must-revalidate");
+  return new Response(request.method === "HEAD" ? null : assetResponse.body, {
+    status: assetResponse.status,
+    statusText: assetResponse.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -218,6 +261,10 @@ export default {
     const aliasTarget = legacyAliasTarget(pathname);
     if (aliasTarget) return aliasRedirect(request, url, aliasTarget);
 
+    if (isStaticBuyerPath(pathname) && url.pathname !== pathname) {
+      return canonicalPathRedirect(request, url, pathname);
+    }
+
     if ((request.method === "GET" || request.method === "HEAD") && !isKnownHtmlRoute(pathname)) {
       return notFoundResponse(request, pathname);
     }
@@ -227,6 +274,10 @@ export default {
         status: 503,
         headers: { "Cache-Control": "no-store" },
       });
+    }
+
+    if ((request.method === "GET" || request.method === "HEAD") && isStaticBuyerPath(pathname)) {
+      return staticBuyerResponse(request, env, url, pathname);
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
