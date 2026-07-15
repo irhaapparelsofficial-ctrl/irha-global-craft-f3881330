@@ -1,8 +1,0 @@
-base=24c3d6ef932ba6c2923bd26405b0b8c0921e117f
-runtime_hotfix=restore_safe_public_inquiry_compatibility_20260716
-isolated_typecheck=passed
-transport_tests=3/3_passed
-anon_insert_runtime=passed
-crm_notification_runtime=passed
-qa_cleanup=passed
-github_actions=blocked_by_account_minutes
