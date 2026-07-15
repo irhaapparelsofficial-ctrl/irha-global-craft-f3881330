@@ -51,7 +51,8 @@ export function claimOneTimeAssetRecovery(
   try {
     const target = storage ?? window.sessionStorage;
     const key = `${RECOVERY_PREFIX}${route || "/"}`;
-    const previous = Number(target.getItem(key));
+    const stored = target.getItem(key);
+    const previous = stored === null ? Number.NaN : Number(stored);
     if (Number.isFinite(previous) && now - previous < RECOVERY_TTL_MS) return false;
     target.setItem(key, String(now));
     return true;
