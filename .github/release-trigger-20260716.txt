@@ -1,0 +1,3 @@
+Lovable-free production release trigger.
+
+Purpose: start the exact current-main Quality Gate after temporary public-repository quota recovery. The existing Cloudflare Production After Quality Gate workflow may deploy only if this exact commit is still current main and the Quality Gate completes successfully.
