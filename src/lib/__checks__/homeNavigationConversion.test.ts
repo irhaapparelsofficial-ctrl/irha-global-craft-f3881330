@@ -35,9 +35,10 @@ describe("homepage navigation and B2B conversion journey", () => {
     expect(base).toContain("inquiry_ref: ref");
   });
 
-  it("adds category-aware RFQ actions and keeps WhatsApp as an urgent human-chat fallback", () => {
+  it("adds category-aware RFQ actions and keeps human support and WhatsApp escalation", () => {
     const desktop = read("src/components/layout/FloatingActions.tsx");
     const mobile = read("src/components/sections/StickyMobileCTA.tsx");
+    const guide = read("src/components/LiveChat.tsx");
     const humanChat = read("src/components/HumanLiveChat.tsx");
 
     for (const source of [desktop, mobile]) {
@@ -47,7 +48,9 @@ describe("homepage navigation and B2B conversion journey", () => {
     expect(desktop).toContain("settingsWhatsappLink(settings)");
     expect(desktop).toContain('data-track="category-quote-floating"');
     expect(mobile).toContain("utm_source=mobile-dock");
-    expect(mobile).toContain('new CustomEvent("irha:open-human-chat")');
+    expect(mobile).toContain('new CustomEvent("irha:open-irha-guide")');
+    expect(guide).toContain('const OPEN_HUMAN_EVENT = "irha:open-human-chat"');
+    expect(guide).toContain("Human Team");
     expect(humanChat).toContain("whatsappLink()");
     expect(humanChat).toContain("Urgent? WhatsApp");
   });

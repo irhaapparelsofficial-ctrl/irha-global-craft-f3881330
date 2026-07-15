@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   fallbackGuideReply,
+  isGuideReplyDuplicate,
   isIncompleteGuideFragment,
   parseStoredGuideMessages,
   redactGuideMessageForSession,
@@ -12,7 +13,7 @@ describe("Irha Guide verified fallback", () => {
     const privateLabel = fallbackGuideReply("Do you offer private label?");
     const moq = fallbackGuideReply("MOQ?");
 
-    expect(privateLabel).toContain("private-label");
+    expect(privateLabel).toContain("Private-label");
     expect(privateLabel).toContain("custom labels");
     expect(moq).toContain("MOQ is confirmed");
     expect(privateLabel).not.toBe(moq);
@@ -31,8 +32,17 @@ describe("Irha Guide verified fallback", () => {
   });
 
   it("keeps greeting and branding responses specific", () => {
-    expect(fallbackGuideReply("Hello")).toContain("What would you like to review?");
+    expect(fallbackGuideReply("Hello")).toContain("Which product are you reviewing?");
     expect(fallbackGuideReply("Can you add woven labels and embroidery?")).toContain("woven labels");
+  });
+
+  it("detects repeated assistant answers and changes the next fallback", () => {
+    const first = fallbackGuideReply("How much will it cost?");
+    expect(isGuideReplyDuplicate(first, [first])).toBe(true);
+
+    const next = fallbackGuideReply("What about price?", [first]);
+    expect(next).not.toBe(first);
+    expect(next).toContain("next step");
   });
 });
 

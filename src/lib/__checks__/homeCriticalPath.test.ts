@@ -31,28 +31,31 @@ describe("homepage critical-path performance contract", () => {
     expect(categorySource).toContain("PROGRAMS.map");
   });
 
-  it("gates footer by viewport and support runtime by interaction or a bounded fallback", () => {
+  it("gates footer and both support channels by interaction or a bounded fallback", () => {
     expect(layoutSource).toContain('const Footer = lazy(() => import("./Footer"))');
+    expect(layoutSource).toContain('const loadGuide = () => import("@/components/LiveChat")');
     expect(layoutSource).toContain('const loadHumanLiveChat = () => import("@/components/HumanLiveChat")');
     expect(layoutSource).toContain('const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock"))');
     expect(layoutSource).toContain('<ViewportDeferred minHeight={520} rootMargin="600px 0px" fallbackDelayMs={30_000}>');
     expect(layoutSource).toContain('window.addEventListener("pointerdown", activate');
     expect(layoutSource).toContain("window.setTimeout(activate, 8_000)");
+    expect(layoutSource).toContain("guideModuleReadyRef");
     expect(layoutSource).toContain("humanModuleReadyRef");
     expect(layoutSource).toContain("replayingRef");
     expect(layoutSource).toContain("<StickyMobileCTA />");
   });
 
-  it("keeps the mobile quote action immediate without loading CMS or Supabase", () => {
+  it("keeps mobile quote and support actions immediate without CMS or Supabase reads", () => {
     expect(mobileCtaSource).not.toContain("useSiteSettings");
     expect(mobileCtaSource).toContain('"/inquiry?intent=rfq"');
-    expect(mobileCtaSource).toContain("irha:open-human-chat");
+    expect(mobileCtaSource).toContain("irha:open-irha-guide");
+    expect(mobileCtaSource).toContain("AI guide + human team");
   });
 
   it("dynamically imports the CMS client and delays public settings fetches", () => {
     expect(settingsSource).not.toContain('import { supabase } from "@/integrations/supabase/client"');
     expect(settingsSource).toContain('await import("@/integrations/supabase/client")');
-    expect(settingsSource).toContain("window.location.pathname.startsWith(\"/admin\") ? 0 : 8_000");
+    expect(settingsSource).toContain('window.location.pathname.startsWith("/admin") ? 0 : 8_000');
     expect(settingsSource).toContain("enabled,");
   });
 });

@@ -1,19 +1,19 @@
 // Irha Guide — public B2B website assistant.
-// Provider order: Lovable AI gateway -> Gemini -> deterministic verified backup.
-// Buyer and assistant messages are persisted server-side so public RLS never needs INSERT access.
+// Provider order: Lovable AI gateway -> Gemini -> conversation-aware verified backup.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SITE_URL = "https://irhaapparels.com";
 const WHATSAPP = "+92 320 411 0066";
 const WA_LINK = "https://wa.me/923204110066";
-const MAX_BODY_BYTES = 24_000;
+const MAX_BODY_BYTES = 32_000;
 const MAX_MESSAGE_CHARS = 2_000;
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 8;
+const RATE_LIMIT_MAX = 10;
 
 type ChatRole = "user" | "assistant";
 type SafeMessage = { role: ChatRole; content: string };
 type Provider = "lovable-ai-gateway" | "gemini" | "deterministic-backup";
+type PageContext = { path?: string; title?: string };
 
 const securityHeaders = {
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
@@ -58,41 +58,42 @@ function json(body: Record<string, unknown>, status: number, headers: Record<str
   });
 }
 
-const BASE_PROMPT = `You are "Irha Guide", the official website assistant for Irha Apparels, a B2B custom apparel manufacturer based in Sialkot, Pakistan.
+const BASE_PROMPT = `You are "Irha Guide", the official live website assistant for Irha Apparels, an experienced B2B custom apparel manufacturer based in Sialkot, Pakistan.
 
-LANGUAGE POLICY:
-- Reply only in English or German.
-- Mirror the visitor's language.
-- If the visitor writes in another language, politely offer English or German.
+LANGUAGE:
+- Mirror the visitor's language when it is English or German.
+- If the visitor writes in another language, politely continue in clear English and mention that German is also available.
 
-SCOPE:
-- Published products and categories.
-- Bavarian & Trachten Wear.
+YOUR JOB:
+- Answer the buyer's exact question using the live catalogue and verified facts.
+- Remember the conversation. Resolve words such as "it", "that", "this product", "same design" and "what about price" from previous messages.
+- Give the direct answer first. Use short bullets only when they improve clarity.
+- Ask no more than one focused follow-up question, and only when information is genuinely missing.
+- If the visitor has already supplied product, quantity, target market, material or branding, acknowledge and use those details.
+- Never restart with a welcome after the conversation has begun.
+- Never repeat an earlier answer or lightly paraphrase the same generic paragraph.
+- Do not answer a follow-up as if it were a new conversation.
+
+SUPPORTED TOPICS:
+- Published product categories and products.
+- Bavarian & Trachten Wear, Lederhosen, Dirndl and accessories.
 - Premium Leather Apparel.
-- Sportswear.
-- Streetwear & Activewear.
-- Leisure & Nightwear.
-- OEM, ODM, private label, sampling, materials, construction, branding, packaging, requirement review and live video calls.
-- Use only facts from CATALOG DATA and VERIFIED FACTS below.
+- Sportswear and teamwear.
+- Streetwear, Activewear, Leisurewear and Nightwear.
+- OEM, ODM, private label, sampling, materials, construction, branding, labels, packaging, requirement review and live factory video calls.
 
-COMMERCIAL SAFETY — STRICT:
-- Never invent or estimate price, sample fee, shipping cost, MOQ, production timing or delivery timing.
+COMMERCIAL SAFETY:
+- Never invent or estimate price, sample fee, shipping cost, MOQ, production time or delivery time.
 - Never promise a response deadline.
-- Never claim a certification, audit, export market, shipping method or document unless explicitly verified in CATALOG DATA.
-- For price or quotation questions, explain that pricing is confirmed after review of product, material, quantity, branding, packaging and delivery requirements.
-- Direct visitors to the inquiry form or WhatsApp ${WHATSAPP} (${WA_LINK}) for formal commercial review.
-
-STYLE:
-- Concise, warm and professional.
-- Answer the actual question and give one useful next step.
-- Avoid repeating the same generic paragraph.
-- If a message is incomplete, ask the visitor to complete it.
-- Never negotiate, decide discounts or issue a final quotation.
+- Never claim a certification, audit, export market, shipping method or document unless it appears in live catalogue data.
+- Explain that commercial terms are confirmed after review of product, material, quantity, branding, packaging and destination.
+- For a formal quotation, direct the buyer to the inquiry form or WhatsApp ${WHATSAPP} (${WA_LINK}).
+- Never negotiate discounts or issue a final quotation.
 
 VERIFIED FACTS:
-- Irha Apparels is based in Sialkot, Pakistan.
-- The website is B2B and request-a-quote based.
-- Irha Apparels supports custom/private-label manufacturing subject to requirement review.
+- Irha Apparels is based in Sialkot, Pakistan and serves B2B buyers.
+- The company supports custom, OEM, ODM and private-label manufacturing subject to requirement review.
+- The website is request-a-quote based; prices are not public.
 - A live video view of the manufacturing environment can be requested during requirement discussion.
 - Contact: WhatsApp ${WHATSAPP} · irhaapparelsofficial@gmail.com · irhaapparels.com
 `;
@@ -118,7 +119,7 @@ async function buildCatalogSummary(): Promise<string> {
         .select("name, slug, category_id, categories!inner(slug, name)")
         .eq("is_published", true)
         .order("sort_order")
-        .limit(250),
+        .limit(300),
     ]);
 
     const categoryLines = (categories.data ?? [])
@@ -133,10 +134,10 @@ async function buildCatalogSummary(): Promise<string> {
     }
 
     const productLines = Array.from(grouped.entries())
-      .map(([category, names]) => `• ${category}: ${names.slice(0, 14).join(", ")}${names.length > 14 ? ` …(+${names.length - 14} more)` : ""}`)
+      .map(([category, names]) => `• ${category}: ${names.slice(0, 20).join(", ")}${names.length > 20 ? ` …(+${names.length - 20} more)` : ""}`)
       .join("\n");
 
-    return `\nCATALOG DATA (live from database — only reference these facts):\n\nCATEGORIES:\n${categoryLines}\n\nPRODUCTS BY CATEGORY:\n${productLines}\n`;
+    return `\nLIVE CATALOGUE DATA — reference only these published items:\n\nCATEGORIES:\n${categoryLines}\n\nPRODUCTS BY CATEGORY:\n${productLines}\n`;
   } catch (error) {
     console.warn("catalog summary failed", error);
     return "";
@@ -173,10 +174,42 @@ function redactForExternalAi(value: string): string {
 }
 
 function externalMessages(messages: SafeMessage[]) {
-  return messages.slice(-8).map((message) => ({
+  return messages.slice(-12).map((message) => ({
     role: message.role,
     content: redactForExternalAi(message.content),
   }));
+}
+
+function normalizeWords(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2);
+}
+
+function isTooSimilar(answer: string, previousAssistantAnswers: string[]) {
+  const compactAnswer = answer.trim().toLowerCase().replace(/\s+/g, " ");
+  const answerWords = new Set(normalizeWords(answer));
+  if (!compactAnswer) return true;
+
+  return previousAssistantAnswers.slice(-4).some((previous) => {
+    const compactPrevious = previous.trim().toLowerCase().replace(/\s+/g, " ");
+    if (!compactPrevious) return false;
+    if (compactAnswer === compactPrevious) return true;
+    if (compactAnswer.length > 100 && compactPrevious.length > 100) {
+      if (compactAnswer.includes(compactPrevious) || compactPrevious.includes(compactAnswer)) return true;
+    }
+
+    const previousWords = new Set(normalizeWords(previous));
+    if (answerWords.size < 5 || previousWords.size < 5) return false;
+    let intersection = 0;
+    answerWords.forEach((word) => {
+      if (previousWords.has(word)) intersection += 1;
+    });
+    const union = new Set([...answerWords, ...previousWords]).size;
+    return union > 0 && intersection / union >= 0.78;
+  });
 }
 
 const GERMAN_HINTS = /[äöüß]|\b(wie|welche|was|preis|kosten|muster|lieferung|fertigung|habt|können|kollektionen|anfrage|kontakt|etikett|stickerei)\b/i;
@@ -186,89 +219,86 @@ function isIncompleteFragment(text: string): boolean {
   return compact.length > 0 && compact.length <= 2;
 }
 
-function fallbackReply(text: string): string {
+function fallbackReply(text: string, messages: SafeMessage[]): string {
   const query = text.trim();
   const lower = query.toLowerCase();
   const german = GERMAN_HINTS.test(query);
+  const previousAssistantAnswers = messages.filter((message) => message.role === "assistant").map((message) => message.content);
+  let answer: string;
 
   if (isIncompleteFragment(query)) {
-    return german
-      ? "Bitte vervollständigen Sie Ihre Frage, damit ich Ihnen gezielt helfen kann."
-      : "Please complete your question so I can help you accurately.";
+    answer = german
+      ? "Bitte vervollständigen Sie Ihre Frage, damit ich gezielt antworten kann."
+      : "Please complete your question so I can answer accurately.";
+  } else if (/^(hi|hello|hey|hallo|guten\s*(tag|morgen|abend)|salam|assalam)/i.test(query)) {
+    answer = previousAssistantAnswers.length > 0
+      ? (german
+        ? "Willkommen zurück. Was möchten Sie jetzt klären: Produkt, Muster, Branding, Menge oder Angebot?"
+        : "Welcome back. What would you like to clarify now: product, sampling, branding, quantity or quotation?")
+      : (german
+        ? "Hallo! Welches Produkt oder Fertigungsthema möchten Sie prüfen?"
+        : "Hello! Which product or manufacturing topic would you like to review?");
+  } else if (/(price|cost|quote|rate|how much|preis|kosten|angebot|stückpreis)/i.test(lower)) {
+    answer = german
+      ? "Preise werden nach Prüfung von Produkt, Material, Menge, Branding, Verpackung und Lieferziel bestätigt. Nennen Sie Produkt, geschätzte Menge und Zielland."
+      : "Pricing is confirmed after reviewing product, material, quantity, branding, packaging and destination. Share the product, estimated quantity and destination country.";
+  } else if (/(sample|sampling|prototype|muster)/i.test(lower)) {
+    answer = german
+      ? "Der Musterweg hängt von Produkt, Material, Schnitt, Branding und Revisionen ab. Haben Sie ein Referenzbild, eine Skizze oder ein Tech-Pack?"
+      : "The sampling path depends on product, material, pattern, branding and revisions. Do you have a reference image, sketch or tech pack?";
+  } else if (/(private\s*label|white\s*label|oem|odm|own\s*brand|eigene\s*marke|privatmarke)/i.test(lower)) {
+    answer = german
+      ? "Ja. Private-Label-, OEM- und ODM-Programme können Muster, kundenspezifische Labels, Stickerei oder Druck und Serienfertigung umfassen. Welches Produkt planen Sie?"
+      : "Yes. Private-label, OEM and ODM programs can include sampling, custom labels, embroidery or printing, and bulk production. Which product are you planning?";
+  } else if (/(moq|minimum|minimum order|mindestmenge)/i.test(lower)) {
+    answer = german
+      ? "Die Mindestmenge wird je Produktprogramm anhand von Material, Konstruktion, Branding sowie Größen- und Farbmix bestätigt. Um welches Produkt geht es?"
+      : "MOQ is confirmed per product program based on material, construction, branding, and the size or color mix. Which product are you considering?";
+  } else if (/(lederhosen|trachten|bavarian|oktoberfest|dirndl)/i.test(lower)) {
+    answer = german
+      ? "Wir zeigen kundenspezifische Programme für Lederhosen, Dirndl und Trachten. Suchen Sie Herren-Lederhosen, Damen-Dirndl oder Accessoires?"
+      : "We present custom Lederhosen, Dirndl and Trachten programs. Are you looking for men's Lederhosen, women's Dirndl or accessories?";
+  } else if (/(sportswear|teamwear|jersey|football|soccer|basketball|rugby|cricket)/i.test(lower)) {
+    answer = german
+      ? "Sportswear- und Teamwear-Programme werden nach Stoff, Konstruktion, Druck, Stickerei, Größen und Branding geprüft. Für welche Sportart und Teamgröße?"
+      : "Sportswear and teamwear programs are reviewed around fabric, construction, printing, embroidery, sizing and branding. Which sport and approximate team size?";
+  } else if (/(label|tag|branding|logo|embroidery|print|dtf|sublimation|etikett|stickerei|druck)/i.test(lower)) {
+    answer = german
+      ? "Branding kann Weblabels, Pflegeetiketten, Hangtags, Stickerei, DTF oder ein materialgeeignetes Druckverfahren umfassen. Welches Produkt und welche Logo-Größe?"
+      : "Branding can include woven labels, care labels, hangtags, embroidery, DTF or a material-suitable print method. Which product and logo size?";
+  } else {
+    answer = german
+      ? "Damit ich gezielt antworte, nennen Sie bitte Produkt, geschätzte Menge und die Entscheidung, bei der Sie Hilfe brauchen."
+      : "To answer precisely, share the product, estimated quantity and the decision you need help with.";
   }
-  if (/^(hi|hello|hey|hallo|guten\s*(tag|morgen|abend)|salam|assalam)/i.test(query)) {
-    return german
-      ? "Hallo! Ich helfe Ihnen gern bei Produkten, Private Label, Mustern, Branding und dem Fertigungsprozess. Was möchten Sie prüfen?"
-      : "Hello! I can help with products, private label, sampling, branding and the manufacturing process. What would you like to review?";
-  }
-  if (/(private\s*label|white\s*label|oem|odm|own\s*brand|eigene\s*marke|privatmarke)/i.test(lower)) {
-    return german
-      ? "Ja. Wir prüfen Private-Label-, OEM- und ODM-Programme einschließlich Musterentwicklung, kundenspezifischer Labels, Stickerei oder Druck sowie Großserienfertigung. Senden Sie Produkt, Material, Menge und Branding-Anforderungen für die genaue Prüfung."
-      : "Yes. We review private-label, OEM and ODM programs including sampling, custom labels, embroidery or printing, and bulk production. Share the product, material, quantity and branding requirements for an exact review.";
-  }
-  if (/(price|cost|quote|rate|how much|preis|kosten|angebot|stückpreis)/i.test(lower)) {
-    return german
-      ? "Preise werden erst nach Prüfung von Produkt, Material, Menge, Branding, Verpackung und Lieferanforderungen bestätigt. Nutzen Sie bitte die Anfrage oder WhatsApp für ein formelles Angebot."
-      : "Pricing is confirmed only after review of the product, material, quantity, branding, packaging and delivery requirements. Please use the inquiry form or WhatsApp for a formal quotation.";
-  }
-  if (/(moq|minimum|minimum order|mindestmenge)/i.test(lower)) {
-    return german
-      ? "Die Mindestmenge wird je Produktprogramm nach Prüfung von Material, Konstruktion, Branding sowie Größen- und Farbmix bestätigt."
-      : "MOQ is confirmed per product program after review of material, construction, branding, and the size or color mix.";
-  }
-  if (/(sample|sampling|prototype|muster)/i.test(lower)) {
-    return german
-      ? "Der Musterprozess richtet sich nach Produkt, Material, Schnittentwicklung, Branding und möglichen Revisionen. Senden Sie eine Skizze, ein Tech-Pack oder ein Referenzbild für die Prüfung."
-      : "The sampling path depends on the product, materials, pattern development, branding and possible revisions. Send a sketch, tech pack or reference image for review.";
-  }
-  if (/(label|tag|branding|logo|embroidery|embroider|print|dtf|sublimation|etikett|stickerei|druck)/i.test(lower)) {
-    return german
-      ? "Branding kann je nach Produkt kundenspezifische Weblabels, Pflegeetiketten, Hangtags, Stickerei, DTF oder andere geeignete Druckverfahren umfassen. Die umsetzbare Methode wird nach Material und Design geprüft."
-      : "Branding can include custom woven labels, care labels, hangtags, embroidery, DTF or another suitable print method depending on the product. The workable method is confirmed after reviewing the material and design.";
-  }
-  if (/(lederhosen|trachten|bavarian|oktoberfest)/i.test(lower)) {
-    return german
-      ? "Wir zeigen kundenspezifische Programme für Lederhosen, Dirndl und Trachten. Öffnen Sie die Kategorie Bavarian & Trachten Wear oder senden Sie Ihre Referenz für eine Prüfung."
-      : "We present custom Lederhosen, Dirndl and Trachten programs. Browse Bavarian & Trachten Wear or send your reference for requirement review.";
-  }
-  if (/(dirndl|blouse|apron|schürze)/i.test(lower)) {
-    return german
-      ? "Dirndl-Programme können Stoff, Mieder, Schürze, Bluse, Verzierungen, Labels und Verpackung umfassen. Die umsetzbare Kombination wird pro Anfrage geprüft."
-      : "Dirndl programs can cover fabric, bodice, apron, blouse, decoration, labels and packaging. The workable combination is reviewed per requirement.";
-  }
-  if (/(leather|jacket|vest|leder|weste)/i.test(lower)) {
-    return german
-      ? "Wir besprechen kundenspezifische Lederbekleidung wie Jacken und Westen. Lederart, Konstruktion, Futter, Beschläge und Branding werden vor dem Angebot geprüft."
-      : "We discuss custom leather apparel such as jackets and vests. Leather type, construction, lining, hardware and branding are reviewed before quotation.";
-  }
-  if (/(sportswear|teamwear|jersey|kit|football|soccer|basketball|rugby|cricket)/i.test(lower)) {
-    return german
-      ? "Sportswear- und Teamwear-Programme werden nach Stoff, Konstruktion, Druck, Stickerei, Größen und Branding geprüft."
-      : "Sportswear and teamwear programs are reviewed around fabric, construction, printing, embroidery, sizing and branding requirements.";
-  }
-  if (/(streetwear|activewear|hoodie|tracksuit|gym|nightwear|leisure|sleepwear)/i.test(lower)) {
-    return german
-      ? "Wir zeigen Programme für Streetwear, Activewear sowie Leisure- und Nightwear. Senden Sie Ihr Produktbriefing oder eine Referenz für die passende Kategorie."
-      : "We present Streetwear, Activewear, Leisurewear and Nightwear programs. Send your product brief or reference so the right category can be reviewed.";
-  }
-  if (/(factory|video call|visit|manufacturing environment|fabrik|videoanruf)/i.test(lower)) {
-    return german
-      ? "Eine Live-Videoansicht der Fertigungsumgebung kann während der Anforderungsbesprechung angefragt werden."
-      : "A live video view of the manufacturing environment can be requested during the requirement discussion.";
-  }
-  if (/(contact|inquiry|enquiry|whatsapp|email|anfrage|kontakt)/i.test(lower)) {
-    return german
-      ? "Für eine genaue Prüfung senden Sie bitte die Anfrage mit Produkt, Material, Menge, Größen, Branding und Zielmarkt. Alternativ können Sie uns über WhatsApp kontaktieren."
-      : "For an exact review, send an inquiry with the product, material, quantity, sizes, branding and target market. You can also contact us on WhatsApp.";
-  }
-  if (/(category|categories|range|products|collection|kollektion|kollektionen|produkte)/i.test(lower)) {
-    return german
-      ? "Unsere Hauptprogramme umfassen Bavarian & Trachten Wear, Premium Leather Apparel, Sportswear, Streetwear & Activewear sowie Leisure & Nightwear."
-      : "Our main programs include Bavarian & Trachten Wear, Premium Leather Apparel, Sportswear, Streetwear & Activewear, and Leisure & Nightwear.";
-  }
+
+  if (!isTooSimilar(answer, previousAssistantAnswers)) return answer;
   return german
-    ? "Ich kann Ihnen zu Produkten, Kategorien, Mustern, Private Label, Branding und dem Fertigungsprozess helfen. Nennen Sie bitte das Produkt und Ihre Anforderung."
-    : "I can help with products, categories, sampling, private label, branding and the manufacturing process. Please tell me the product and your requirement.";
+    ? "Ich behalte den bisherigen Kontext. Was möchten Sie als Nächstes klären: Material, Branding, Muster, Menge oder formelle Anfrage?"
+    : "I have the earlier context. What should we clarify next: material, branding, sample, quantity or the formal inquiry?";
+}
+
+function safePageContext(value: unknown): PageContext {
+  if (!value || typeof value !== "object") return {};
+  const input = value as Record<string, unknown>;
+  return {
+    path: typeof input.path === "string" ? input.path.slice(0, 300) : undefined,
+    title: typeof input.title === "string" ? input.title.slice(0, 240) : undefined,
+  };
+}
+
+function conversationInstructions(messages: SafeMessage[], pageContext: PageContext) {
+  const previousAssistantAnswers = messages
+    .filter((message) => message.role === "assistant")
+    .map((message) => redactForExternalAi(message.content))
+    .slice(-4);
+  const previousBlock = previousAssistantAnswers.length > 0
+    ? `\nPREVIOUS ASSISTANT ANSWERS — do not repeat or lightly paraphrase these:\n${previousAssistantAnswers.map((answer, index) => `${index + 1}. ${answer}`).join("\n")}\n`
+    : "";
+  const pageBlock = pageContext.path || pageContext.title
+    ? `\nCURRENT WEBSITE PAGE:\n- Path: ${pageContext.path || "/"}\n- Title: ${pageContext.title || "Irha Apparels"}\nUse this only as navigation context; do not invent page facts.\n`
+    : "";
+  return `${pageBlock}${previousBlock}\nBefore answering, identify the latest buyer intent and relevant facts already supplied. Respond with new, specific value. If the latest question is a follow-up, connect it explicitly to the earlier topic.`;
 }
 
 function extractOpenAiText(payload: any): string {
@@ -296,8 +326,8 @@ async function tryLovable(messages: SafeMessage[], systemPrompt: string): Promis
     headers: { "Lovable-API-Key": key, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: Deno.env.get("IRHA_GUIDE_MODEL") || "google/gemini-3-flash-preview",
-      temperature: 0.25,
-      max_tokens: 500,
+      temperature: 0.35,
+      max_tokens: 650,
       messages: [
         { role: "system", content: systemPrompt },
         ...externalMessages(messages),
@@ -326,7 +356,7 @@ async function tryGemini(messages: SafeMessage[], systemPrompt: string): Promise
           role: message.role === "assistant" ? "model" : "user",
           parts: [{ text: message.content }],
         })),
-        generationConfig: { temperature: 0.25, maxOutputTokens: 500 },
+        generationConfig: { temperature: 0.35, maxOutputTokens: 650 },
       }),
     },
   );
@@ -336,28 +366,36 @@ async function tryGemini(messages: SafeMessage[], systemPrompt: string): Promise
   return extractGeminiText(payload);
 }
 
-async function generateAnswer(messages: SafeMessage[], latestUser: string): Promise<{ answer: string; provider: Provider }> {
+async function generateAnswer(messages: SafeMessage[], latestUser: string, pageContext: PageContext): Promise<{ answer: string; provider: Provider }> {
   if (isIncompleteFragment(latestUser)) {
-    return { answer: fallbackReply(latestUser), provider: "deterministic-backup" };
+    return { answer: fallbackReply(latestUser, messages), provider: "deterministic-backup" };
   }
 
-  const systemPrompt = BASE_PROMPT + (await getCatalog());
+  const previousAssistantAnswers = messages.filter((message) => message.role === "assistant").map((message) => message.content);
+  const systemPrompt = BASE_PROMPT + (await getCatalog()) + conversationInstructions(messages, pageContext);
 
   try {
     const answer = await tryLovable(messages, systemPrompt);
-    if (answer) return { answer, provider: "lovable-ai-gateway" };
+    if (answer && !isTooSimilar(answer, previousAssistantAnswers)) {
+      return { answer, provider: "lovable-ai-gateway" };
+    }
+    if (answer) console.warn("Lovable response rejected as repetitive");
   } catch (error) {
     console.error("Lovable AI request failed", error);
   }
 
   try {
-    const answer = await tryGemini(messages, systemPrompt);
-    if (answer) return { answer, provider: "gemini" };
+    const repairPrompt = `${systemPrompt}\nThe first provider was unavailable or repetitive. Produce a fresh answer that directly addresses the latest user message without repeating prior assistant wording.`;
+    const answer = await tryGemini(messages, repairPrompt);
+    if (answer && !isTooSimilar(answer, previousAssistantAnswers)) {
+      return { answer, provider: "gemini" };
+    }
+    if (answer) console.warn("Gemini response rejected as repetitive");
   } catch (error) {
     console.error("Gemini request failed", error);
   }
 
-  return { answer: fallbackReply(latestUser), provider: "deterministic-backup" };
+  return { answer: fallbackReply(latestUser, messages), provider: "deterministic-backup" };
 }
 
 async function resolveSessionId(value: unknown, req: Request) {
@@ -403,6 +441,7 @@ function openAiCompatibleSse(text: string, provider: Provider, headers: Record<s
       "Cache-Control": "no-cache, no-store",
       "Connection": "keep-alive",
       "X-Irha-AI-Provider": provider,
+      "X-Irha-Conversation-Version": "3",
     },
   });
 }
@@ -428,7 +467,7 @@ Deno.serve(async (req: Request) => {
   try {
     const raw = await req.text();
     if (raw.length > MAX_BODY_BYTES) return json({ error: "request_too_large" }, 413, headers);
-    const body = JSON.parse(raw) as { messages?: unknown; sessionId?: unknown };
+    const body = JSON.parse(raw) as { messages?: unknown; sessionId?: unknown; pageContext?: unknown };
     if (!Array.isArray(body.messages) || body.messages.length === 0) {
       return json({ error: "messages_required" }, 400, headers);
     }
@@ -440,14 +479,15 @@ Deno.serve(async (req: Request) => {
         content: (message.content as string).trim().slice(0, MAX_MESSAGE_CHARS),
       }))
       .filter((message) => message.content.length > 0)
-      .slice(-8);
+      .slice(-12);
 
     const latestUser = [...safeMessages].reverse().find((message) => message.role === "user")?.content;
     if (!latestUser) return json({ error: "user_message_required" }, 400, headers);
 
     const sessionId = await resolveSessionId(body.sessionId, req);
-    const { answer, provider } = await generateAnswer(safeMessages, latestUser);
-    const safeAnswer = answer.trim() || fallbackReply(latestUser);
+    const pageContext = safePageContext(body.pageContext);
+    const { answer, provider } = await generateAnswer(safeMessages, latestUser, pageContext);
+    const safeAnswer = answer.trim() || fallbackReply(latestUser, safeMessages);
     await persistExchange(sessionId, latestUser, safeAnswer);
 
     return openAiCompatibleSse(safeAnswer, provider, headers);

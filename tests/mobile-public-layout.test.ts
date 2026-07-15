@@ -14,19 +14,25 @@ describe("mobile public layout", () => {
     expect(categories).toContain("line-clamp-2");
   });
 
-  it("reserves mobile content space for the compact contact dock", () => {
+  it("reserves mobile content space for the professional support dock", () => {
     const layout = read("src/components/layout/Layout.tsx");
-    expect(layout).toContain("pb-[calc(5.75rem+env(safe-area-inset-bottom))]");
+    expect(layout).toContain("pb-[calc(6.5rem+env(safe-area-inset-bottom))]");
   });
 
-  it("mounts one human chat without duplicate mobile WhatsApp or AI launchers", () => {
+  it("shows one clear live-support entry with AI and human handoff", () => {
     const layout = read("src/components/layout/Layout.tsx");
     const dock = read("src/components/sections/StickyMobileCTA.tsx");
+    const guide = read("src/components/LiveChat.tsx");
     const human = read("src/components/HumanLiveChat.tsx");
+
+    expect(layout).toContain("<LiveChat />");
     expect(layout).toContain("<HumanLiveChat />");
-    expect(layout).not.toContain("<LiveChat />");
-    expect(dock).toContain("Live Chat");
+    expect(dock).toContain("Live support");
+    expect(dock).toContain("AI guide + human team");
     expect(dock).not.toContain("WhatsApp");
+    expect(guide).toContain("Irha Live Support");
+    expect(guide).toContain("Human Team");
+    expect(guide).toContain('new CustomEvent(OPEN_HUMAN_EVENT)');
     expect(human).toContain("hidden min-h-12");
     expect(human).toContain("md:inline-flex");
   });
