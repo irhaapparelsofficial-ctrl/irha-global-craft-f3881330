@@ -6,7 +6,6 @@ import ViewportDeferred from "@/components/performance/ViewportDeferred";
 
 const loadHumanLiveChat = () => import("@/components/HumanLiveChat");
 const Footer = lazy(() => import("./Footer"));
-const FloatingActions = lazy(() => import("./FloatingActions"));
 const HumanLiveChat = lazy(loadHumanLiveChat);
 const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock"));
 
@@ -60,7 +59,6 @@ function DeferredSupportRuntime() {
 
   return (
     <Suspense fallback={null}>
-      <FloatingActions />
       <HumanLiveChat />
     </Suspense>
   );
