@@ -1,0 +1,147 @@
+name: Owner Supabase Guarded Release
+
+run-name: Guarded Supabase ${{ inputs.scope }} release · ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Select the owner-backend release scope
+        required: true
+        default: functions
+        type: choice
+        options:
+          - functions
+          - database
+          - both
+      confirm:
+        description: Type APPLY_SUPABASE_RELEASE to continue
+        required: true
+        default: NO
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: owner-supabase-release
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  RELEASE_AUDIT_ISSUE: "375"
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'APPLY_SUPABASE_RELEASE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+    steps:
+      - name: Checkout exact approved main commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Confirm workflow is running on exact current main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$GITHUB_SHA" || {
+            echo "Refusing superseded release: workflow SHA $GITHUB_SHA, current main $latest_main"
+            exit 1
+          }
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Verify repository and owner-project lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}" || {
+            echo "SUPABASE_ACCESS_TOKEN is missing"
+            exit 1
+          }
+          grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
+          npm install --legacy-peer-deps --no-audit --no-fund
+          npm run verify:deployment-source
+          npm run verify:secrets
+          npm run verify:migrations
+
+      - name: Link owner Supabase project
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.scope }}" = "database" ] || [ "${{ inputs.scope }}" = "both" ]; then
+            test -n "${SUPABASE_DB_PASSWORD:-}" || {
+              echo "SUPABASE_DB_PASSWORD is missing"
+              exit 1
+            }
+            supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
+          else
+            supabase link --project-ref "$SUPABASE_PROJECT_ID"
+          fi
+
+      - name: Preview pending database migrations
+        if: inputs.scope == 'database' || inputs.scope == 'both'
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase migration list --linked
+          supabase db push --linked --dry-run
+
+      - name: Apply pending database migrations exactly once
+        if: inputs.scope == 'database' || inputs.scope == 'both'
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase db push --linked
+          supabase migration list --linked
+
+      - name: Deploy repository Edge Functions with config.toml JWT policy
+        if: inputs.scope == 'functions' || inputs.scope == 'both'
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions list --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Record verified owner-backend release evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          generated_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          body=$(cat <<EOF
+          ## Verified owner Supabase release
+
+          - Delivery authority: GitHub Actions + Supabase CLI; Lovable was not used.
+          - Source SHA: \`$GITHUB_SHA\`
+          - Scope: \`${{ inputs.scope }}\`
+          - Project: \`$SUPABASE_PROJECT_ID\`
+          - Verified at: \`$generated_at\`
+          - Safety: exact-current-main guard, repository source lock, secret scan, migration-order check, typed manual approval and serialized production environment.
+          EOF
+          )
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "$body"
+
+      - name: Record failed owner-backend release attempt
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Guarded owner Supabase release failed for source \`$GITHUB_SHA\`, scope \`${{ inputs.scope }}\`. No success evidence was recorded. Inspect workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
