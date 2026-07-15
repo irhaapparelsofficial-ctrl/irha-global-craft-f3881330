@@ -90,6 +90,21 @@
 
 html[data-cookie-consent-open="true"] .sticky-mobile-cta { display: none; }
 
+/* Human chat is an internal handover from the single Irha Live Support surface. */
+button[aria-label="Open live chat with the Irha Apparels team"] { display: none !important; }
+
+@media (min-width: 768px) {
+  section[data-chat-kind="human"] {
+    left: auto !important;
+    right: 1.5rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Mobile uses the persistent Live Support / Request Quote dock, not a second launcher. */
+  button[aria-label="Open Irha Live Support — AI guide and human team"] { display: none !important; }
+}
+
 @media (max-width: 768px) {
   .animate-marquee,
   [class*="animate-[kenburns"],
