@@ -1,0 +1,60 @@
+name: Verify live indexing and performance release
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-live-indexing-performance-20260715.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify live source, crawler links and LCP asset contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          ORIGIN="https://irhaapparels.com"
+          APP_SHA="71dc6a4aa97e78061dc06669bc5a7bdb26c0334a"
+          DEPLOY_SHA="9e71dbdcf93e7847dc0bc505857afa4a7d3c781d"
+
+          build_json="$(curl -fsS --connect-timeout 10 --max-time 40 "$ORIGIN/build.json?verify_live=${GITHUB_SHA::12}")"
+          served_sha="$(printf '%s' "$build_json" | jq -r '.source_commit // empty')"
+          case "$served_sha" in
+            "$APP_SHA"|"$DEPLOY_SHA") ;;
+            *) echo "Unexpected live source SHA: $served_sha"; exit 1 ;;
+          esac
+          test "$(printf '%s' "$build_json" | jq -r '.source_identity_state // empty')" = "verified"
+
+          curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/?verify_live=${GITHUB_SHA::12}" -o /tmp/home.html
+          grep -F 'data-irha-home-lcp' /tmp/home.html >/dev/null
+          grep -F '/de/bekleidungshersteller-deutschland' /tmp/home.html >/dev/null
+          grep -F '/de/sportbekleidung-hersteller' /tmp/home.html >/dev/null
+          grep -F '/de/lederbekleidung-hersteller' /tmp/home.html >/dev/null
+
+          curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/de/bekleidungshersteller-deutschland?verify_live=${GITHUB_SHA::12}" -o /tmp/germany.html
+          grep -F '<link rel="canonical" href="https://irhaapparels.com/de/bekleidungshersteller-deutschland"' /tmp/germany.html >/dev/null
+          grep -F 'Bekleidungshersteller für deutsche B2B-Einkäufer' /tmp/germany.html >/dev/null
+          if grep -F 'data-irha-home-lcp' /tmp/germany.html >/dev/null; then
+            echo "Homepage-only preload leaked into Germany route"
+            exit 1
+          fi
+
+          curl -fsSL --connect-timeout 10 --max-time 40 "$ORIGIN/sitemap.xml?verify_live=${GITHUB_SHA::12}" -o /tmp/sitemap.xml
+          grep -F '<loc>https://irhaapparels.com/de/bekleidungshersteller-deutschland</loc>' /tmp/sitemap.xml >/dev/null
+
+          image_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$ORIGIN/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp")"
+          status="$(printf '%s' "$image_headers" | awk 'NR==1 {print $2}')"
+          test "$status" = "200" || { echo "LCP thumbnail returned $status"; exit 1; }
+          printf '%s\n' "$image_headers" | grep -Eiq '^content-type:[[:space:]]*image/webp'
+
+          echo "Live indexing and performance release verified for $served_sha" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Homepage-only LCP preload: present" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Germany route preload leakage: absent" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Direct Germany crawler links: present" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Canonical static Germany HTML and sitemap entry: present" >> "$GITHUB_STEP_SUMMARY"
+          echo "- LCP thumbnail: HTTP 200 WebP" >> "$GITHUB_STEP_SUMMARY"
