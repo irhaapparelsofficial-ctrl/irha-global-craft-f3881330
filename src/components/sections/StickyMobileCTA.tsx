@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { FileText, Headphones } from "lucide-react";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 function categoryFromPath(pathname: string): string | null {
   const match = pathname.match(/^(?:\/products|\/intl\/[^/]+\/products)\/([^/]+)/);
@@ -9,12 +8,11 @@ function categoryFromPath(pathname: string): string | null {
 }
 
 export default function StickyMobileCTA() {
-  const { data: settings } = useSiteSettings();
   const { pathname } = useLocation();
   const categorySlug = categoryFromPath(pathname);
   const quoteHref = categorySlug
     ? `/inquiry?intent=rfq&category=${encodeURIComponent(categorySlug)}&utm_source=mobile-dock&utm_content=${encodeURIComponent(pathname)}`
-    : settings.ctas.quoteHref;
+    : "/inquiry?intent=rfq";
 
   const openLiveChat = () => window.dispatchEvent(new CustomEvent("irha:open-human-chat"));
 
