@@ -112,6 +112,8 @@ const LEGACY_ALIASES = new Map([
   ["/buyer-resources", "/resources"],
   ["/buyer-faq", "/faq"],
   ["/shipping-returns", "/resources"],
+  ["/privacy", "/privacy-policy"],
+  ["/terms", "/terms-of-service"],
   [
     "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe",
     "/products/leisure-nightwear/plush-bathrobe-sleep-robe",
