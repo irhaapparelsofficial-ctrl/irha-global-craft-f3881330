@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 const hero = read("src/components/HeroCarousel.tsx");
 const home = read("src/pages/Home.tsx");
 const navbar = read("src/components/layout/Navbar.tsx");
+const layout = read("src/components/layout/Layout.tsx");
 const footer = read("src/components/layout/Footer.tsx");
 const consent = read("src/components/CookieConsent.tsx");
 const capabilities = read("src/components/sections/CapabilityStrip.tsx");
@@ -13,6 +14,7 @@ const categories = read("src/components/sections/HomeCategoryUniverse.tsx");
 const processSource = read("src/components/sections/ProcessTimeline.tsx");
 const manufacturing = read("src/components/sections/HomeManufacturingEditorial.tsx");
 const decision = read("src/components/sections/BuyerDecisionSection.tsx");
+const finalCta = read("src/components/sections/StartProgramCTA.tsx");
 const sticky = read("src/components/sections/StickyMobileCTA.tsx");
 const styles = read("src/index.css");
 const brand = read("public/irha-brand-mark.svg");
@@ -26,12 +28,16 @@ describe("polished B2B homepage", () => {
     expect(hero).toContain("irha:open-human-chat");
   });
 
-  it("presents multiple reliable manufacturing visuals with one LCP image", () => {
+  it("presents consistent product-first hero media with one LCP image", () => {
     expect(hero).toContain("Bavarian &amp; Trachten");
     expect(hero).toContain("Sportswear");
     expect(hero).toContain("Leatherwear");
+    expect(hero).toContain("SPORTS_PRODUCT_IMAGE");
+    expect(hero).toContain("LEATHER_PRODUCT_IMAGE");
     expect(hero.match(/loading=\"eager\"/g)).toHaveLength(1);
     expect(hero.match(/loading=\"lazy\"/g)).toHaveLength(2);
+    expect(hero).not.toContain("sportswearThumb");
+    expect(hero).not.toContain("leatherThumb");
   });
 
   it("keeps the homepage short and ordered around buyer tasks", () => {
@@ -53,17 +59,30 @@ describe("polished B2B homepage", () => {
     expect(processSource).toContain("Swipe through the order process");
   });
 
-  it("uses buyer language, stable category images and clear proof", () => {
+  it("uses buyer language, stable category images and evidence-led proof", () => {
     expect(capabilities).toContain("OEM, ODM & Private Label");
     expect(capabilities).toContain("Sample Before Bulk");
     expect(categories).toContain("Choose the product line your business needs");
     expect(categories).not.toContain("usePublicCatalogTree");
     expect(categories).not.toContain("resolveAsset");
     expect(categories).not.toContain("featuredProductRank");
-    expect(manufacturing).toContain("Review the process behind the product");
+    expect(manufacturing).toContain("See what can be verified before bulk production");
+    expect(manufacturing).toContain("Live factory view");
+    expect(manufacturing).toContain("Website visuals are references");
     expect(decision).toContain("Requirement-based quotation");
     expect(decision).toContain("Approval before bulk");
     expect(decision).toContain("Factory verification");
+  });
+
+  it("uses one clear human contact system with WhatsApp only as an in-chat fallback", () => {
+    expect(layout).toContain("<HumanLiveChat />");
+    expect(layout).not.toContain("FloatingActions");
+    expect(styles).toContain('button[aria-label="Open live chat with the Irha Apparels team"]');
+    expect(styles).toContain('section[data-chat-kind="human"]');
+    expect(finalCta).toContain("Chat with Irha team");
+    expect(finalCta).toContain("Human sales review · no automatic pricing or commercial commitment");
+    expect(finalCta).not.toContain("whatsappLink");
+    expect(finalCta).not.toContain("MessageCircle");
   });
 
   it("uses a reliable local brand mark in header and footer", () => {
