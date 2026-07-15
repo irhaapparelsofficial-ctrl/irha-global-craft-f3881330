@@ -25,9 +25,10 @@ describe("public performance and discovery contract", () => {
     expect(heroSource.match(/fetchPriority="low"/g)).toHaveLength(3);
   });
 
-  it("preloads the homepage LCP asset without leaking it into route shells", () => {
+  it("preloads the generated homepage LCP thumbnail without leaking it into route shells", () => {
     expect(indexSource).toContain("data-irha-home-lcp");
-    expect(indexSource).toContain("/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp");
+    expect(indexSource).toContain("/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp.webp");
+    expect(indexSource).not.toContain('href="/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp"');
     expect(packageSource).toContain("remove-home-lcp-preload-from-route-shells.mjs");
     expect(cleanupSource).toContain("if (file === ROOT_INDEX) continue");
     expect(cleanupSource).toContain("HOME_LCP_PRELOAD");
