@@ -10,7 +10,7 @@ const footer = read("src/components/layout/Footer.tsx");
 const consent = read("src/components/CookieConsent.tsx");
 const capabilities = read("src/components/sections/CapabilityStrip.tsx");
 const categories = read("src/components/sections/HomeCategoryUniverse.tsx");
-const process = read("src/components/sections/ProcessTimeline.tsx");
+const processSource = read("src/components/sections/ProcessTimeline.tsx");
 const manufacturing = read("src/components/sections/HomeManufacturingEditorial.tsx");
 const decision = read("src/components/sections/BuyerDecisionSection.tsx");
 const sticky = read("src/components/sections/StickyMobileCTA.tsx");
@@ -52,13 +52,13 @@ describe("polished B2B homepage", () => {
   });
 
   it("uses compact swipeable mobile buyer sections without autoplay", () => {
-    for (const source of [capabilities, categories, process]) {
+    for (const source of [capabilities, categories, processSource]) {
       expect(source).toContain("snap-x");
       expect(source).toContain("overflow-x-auto");
       expect(source).not.toContain("setInterval");
     }
     expect(categories).toContain("Swipe to compare programs");
-    expect(process).toContain("Swipe through the order process");
+    expect(processSource).toContain("Swipe through the order process");
   });
 
   it("uses buyer language, stable category images and clear proof", () => {
