@@ -1,0 +1,103 @@
+name: Mobile Lighthouse diagnostics once
+
+on:
+  push:
+    branches: [ops/external-hardening-20260716]
+    paths:
+      - ".github/workflows/lighthouse-diagnostics-once-20260716.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ops/external-hardening-20260716
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Capture diagnostics for slow buyer routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          test -n "$chrome"
+          export CHROME_PATH="$chrome"
+          mkdir -p /tmp/lh docs
+          for label_path in 'home:/' 'products:/products' 'catalogue:/catalogue'; do
+            label="${label_path%%:*}"
+            path="${label_path#*:}"
+            npx --yes lighthouse@12.8.2 "https://irhaapparels.com${path}?lh_diag=$RANDOM" \
+              --output=json --output-path="/tmp/lh/$label.json" \
+              --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+              --form-factor=mobile --screenEmulation.mobile=true \
+              --throttling-method=simulate --only-categories=performance --quiet
+          done
+          node <<'NODE'
+          const fs = require('node:fs');
+          const labels = ['home','products','catalogue'];
+          const lines = ['# Mobile Lighthouse bottleneck diagnostics — 2026-07-16',''];
+          for (const label of labels) {
+            const r = JSON.parse(fs.readFileSync(`/tmp/lh/${label}.json`, 'utf8'));
+            const a = r.audits;
+            const score = Math.round((r.categories.performance.score ?? 0) * 100);
+            lines.push(`## ${label} — ${score}/100`, '');
+            const ids = [
+              'largest-contentful-paint','first-contentful-paint','speed-index','total-blocking-time','cumulative-layout-shift',
+              'mainthread-work-breakdown','bootup-time','unused-javascript','unused-css-rules','render-blocking-resources',
+              'uses-responsive-images','uses-optimized-images','modern-image-formats','offscreen-images','network-requests',
+              'largest-contentful-paint-element','lcp-lazy-loaded','prioritize-lcp-image','third-party-summary','dom-size'
+            ];
+            for (const id of ids) {
+              const x = a[id];
+              if (!x) continue;
+              const savingsMs = x.details?.overallSavingsMs;
+              const savingsBytes = x.details?.overallSavingsBytes;
+              const extra = [
+                Number.isFinite(savingsMs) ? `saving ${Math.round(savingsMs)} ms` : '',
+                Number.isFinite(savingsBytes) ? `saving ${Math.round(savingsBytes/1024)} KiB` : '',
+              ].filter(Boolean).join(', ');
+              lines.push(`- **${id}**: ${x.displayValue ?? x.title ?? 'n/a'}${extra ? ` (${extra})` : ''}`);
+              if (id === 'largest-contentful-paint-element') {
+                const item = x.details?.items?.[0]?.items?.[0] ?? x.details?.items?.[0];
+                const snippet = item?.node?.snippet || item?.node?.nodeLabel;
+                if (snippet) lines.push(`  - LCP element: \`${String(snippet).replace(/`/g,'').slice(0,300)}\``);
+              }
+            }
+            const requests = a['network-requests']?.details?.items ?? [];
+            const biggest = [...requests]
+              .filter((x) => Number.isFinite(x.transferSize))
+              .sort((x,y) => y.transferSize - x.transferSize)
+              .slice(0,8);
+            if (biggest.length) {
+              lines.push('', 'Largest transferred resources:');
+              for (const req of biggest) lines.push(`- ${Math.round(req.transferSize/1024)} KiB — ${String(req.url).slice(0,180)}`);
+            }
+            const boot = a['bootup-time']?.details?.items ?? [];
+            const costly = [...boot]
+              .filter((x) => Number.isFinite(x.total))
+              .sort((x,y) => y.total - x.total)
+              .slice(0,8);
+            if (costly.length) {
+              lines.push('', 'Largest JS execution costs:');
+              for (const item of costly) lines.push(`- ${Math.round(item.total)} ms total / ${Math.round(item.scripting ?? 0)} ms scripting — ${String(item.url).slice(0,180)}`);
+            }
+            lines.push('');
+          }
+          fs.writeFileSync('docs/LIGHTHOUSE_BOTTLENECKS_20260716.md', lines.join('\n'));
+          NODE
+      - name: Commit diagnostics and remove workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/lighthouse-diagnostics-once-20260716.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs(perf): record mobile Lighthouse bottlenecks"
+          git push origin HEAD:ops/external-hardening-20260716
