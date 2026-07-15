@@ -33,11 +33,17 @@ const STATIC_GROUP_IMAGES: Record<string, string> = {
   nightwear: nightwearHero,
 };
 
+const HERO_SLIDES = [
+  { src: bavarianHero, alt: "Bavarian garments catalogue", fit: "cover" as const },
+  { src: sportswearHero, alt: "Sportswear catalogue", fit: "cover" as const },
+  { src: leatherHero, alt: "Leather garments catalogue", fit: "cover" as const },
+  { src: streetwearHero, alt: "Streetwear and activewear catalogue", fit: "cover" as const },
+  { src: nightwearHero, alt: "Nightwear catalogue", fit: "cover" as const },
+];
 
 export default function Catalogue() {
   const [shareOpen, setShareOpen] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
-
 
   const shareUrl = `${SITE_URL}/catalogue`;
   const shareText = "Irha Apparels — B2B product catalogue for custom apparel programs in Sialkot, Pakistan.";
@@ -146,6 +152,9 @@ export default function Catalogue() {
                     <ThumbnailImage
                       src={image}
                       alt={`${group.name} catalogue`}
+                      loading="lazy"
+                      fetchPriority="low"
+                      sizes="(max-width: 639px) 92vw, (max-width: 1023px) 46vw, 30vw"
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
