@@ -8,24 +8,29 @@ const ROOT = process.cwd();
 const PUBLIC_DIR = path.join(ROOT, "public");
 const THUMBNAIL_DIR = path.join(PUBLIC_DIR, "thumbnails");
 const RESPONSIVE_DIR = path.join(PUBLIC_DIR, "responsive");
+const AI_MASTER_DIR = path.join(PUBLIC_DIR, "ai-master");
 const STAGE_ROOT = path.join(PUBLIC_DIR, `.image-build-${process.pid}`);
 const STAGE_THUMBNAIL_DIR = path.join(STAGE_ROOT, "thumbnails");
 const STAGE_RESPONSIVE_DIR = path.join(STAGE_ROOT, "responsive");
 const BACKUP_ROOT = path.join(PUBLIC_DIR, `.image-backup-${process.pid}`);
 const SUPPORTED = new Set([".avif", ".gif", ".jpeg", ".jpg", ".png", ".webp"]);
-const WIDTHS = [360, 720, 1200];
+const WIDTHS = [360, 720, 1200, 1600, 2400];
 const CONCURRENCY = Math.max(1, Math.min(4, Number(process.env.THUMBNAIL_CONCURRENCY || 4)));
 
 function qualityFor(width) {
-  if (width <= 360) return 62;
-  if (width <= 720) return 68;
-  return 72;
+  if (width <= 360) return 68;
+  if (width <= 720) return 74;
+  if (width <= 1200) return 80;
+  if (width <= 1600) return 84;
+  return 88;
 }
 
 function shouldSkip(relativePath) {
   const normalized = relativePath.split(path.sep).join("/");
   return normalized.startsWith("thumbnails/")
     || normalized.startsWith("responsive/")
+    || normalized.startsWith("ai-master/")
+    || normalized.startsWith("ai-review/")
     || normalized.startsWith("catalogs/thumbs/")
     || normalized.startsWith(".image-build-")
     || normalized.startsWith(".image-backup-");
@@ -34,21 +39,17 @@ function shouldSkip(relativePath) {
 async function collectFiles(directory, prefix = "") {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
-
   for (const entry of entries) {
     const relativePath = prefix ? path.join(prefix, entry.name) : entry.name;
     if (shouldSkip(relativePath)) continue;
     const absolutePath = path.join(directory, entry.name);
-
     if (entry.isDirectory()) {
       files.push(...await collectFiles(absolutePath, relativePath));
       continue;
     }
-
     if (!entry.isFile() || !SUPPORTED.has(path.extname(entry.name).toLowerCase())) continue;
     files.push(relativePath);
   }
-
   return files.sort((a, b) => a.localeCompare(b));
 }
 
@@ -81,11 +82,23 @@ function escapeXml(value) {
     .replaceAll("'", "&apos;");
 }
 
+async function pathExists(value) {
+  try {
+    await stat(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function sourceMetadata(relativePath) {
   const sourcePath = path.join(PUBLIC_DIR, relativePath);
+  const aiMasterPath = path.join(AI_MASTER_DIR, `${relativePath}.webp`);
   const sourceBuffer = await readFile(sourcePath);
   const sourceInfo = await stat(sourcePath);
-  return { sourceBuffer, sourceInfo };
+  const usesAiMaster = await pathExists(aiMasterPath);
+  const processingBuffer = usesAiMaster ? await readFile(aiMasterPath) : sourceBuffer;
+  return { sourceBuffer, sourceInfo, processingBuffer, usesAiMaster };
 }
 
 async function encodeVariants(inputBuffer) {
@@ -96,9 +109,10 @@ async function encodeVariants(inputBuffer) {
       .resize({
         width,
         fit: "inside",
+        withoutEnlargement: true,
         fastShrinkOnLoad: true,
       })
-      .webp({ quality: qualityFor(width), effort: 4, smartSubsample: true })
+      .webp({ quality: qualityFor(width), effort: 5, smartSubsample: true })
       .toBuffer();
     variants.push({ width, outputBuffer });
   }
@@ -125,10 +139,9 @@ async function writeVariants(relativePath, encodedVariants) {
 }
 
 async function buildOne(relativePath) {
-  const { sourceBuffer, sourceInfo } = await sourceMetadata(relativePath);
-  const variants = await writeVariants(relativePath, await encodeVariants(sourceBuffer));
+  const { sourceBuffer, sourceInfo, processingBuffer, usesAiMaster } = await sourceMetadata(relativePath);
+  const variants = await writeVariants(relativePath, await encodeVariants(processingBuffer));
   const thumbnail = variants.find((variant) => variant.width === 720);
-
   return {
     source: `/${relativePath.split(path.sep).join("/")}`,
     thumbnail: thumbnail?.url ?? null,
@@ -137,8 +150,10 @@ async function buildOne(relativePath) {
     width: thumbnail?.renderedWidth ?? null,
     height: thumbnail?.renderedHeight ?? null,
     sourceSha256: sha256(sourceBuffer),
+    processingSha256: sha256(processingBuffer),
     thumbnailSha256: thumbnail?.sha256 ?? null,
     variants,
+    aiMaster: usesAiMaster,
     fallback: false,
   };
 }
@@ -148,7 +163,7 @@ async function buildFallback(relativePath, sourceError) {
   const label = escapeXml(path.basename(relativePath).replace(/[-_]+/g, " ").slice(0, 58));
   const fallbackSvg = Buffer.from(`
     <svg width="1200" height="1200" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
-      <rect width="1200" height="1200" fill="#101010"/>
+      <rect width="1200" height="1200" fill="#101722"/>
       <rect x="56" y="56" width="1088" height="1088" fill="none" stroke="#b9944a" stroke-width="3"/>
       <circle cx="600" cy="475" r="145" fill="none" stroke="#b9944a" stroke-width="10"/>
       <path d="M506 520l64-70 58 60 50-48 76 87H464z" fill="#b9944a" opacity="0.82"/>
@@ -159,7 +174,6 @@ async function buildFallback(relativePath, sourceError) {
   `);
   const variants = await writeVariants(relativePath, await encodeVariants(fallbackSvg));
   const thumbnail = variants.find((variant) => variant.width === 720);
-
   return {
     source: `/${relativePath.split(path.sep).join("/")}`,
     thumbnail: thumbnail?.url ?? null,
@@ -168,34 +182,24 @@ async function buildFallback(relativePath, sourceError) {
     width: thumbnail?.renderedWidth ?? 720,
     height: thumbnail?.renderedHeight ?? 720,
     sourceSha256: sha256(sourceBuffer),
+    processingSha256: sha256(fallbackSvg),
     thumbnailSha256: thumbnail?.sha256 ?? null,
     variants,
+    aiMaster: false,
     fallback: true,
     sourceError,
   };
 }
 
-async function pathExists(value) {
-  try {
-    await stat(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 async function swapGeneratedDirectories() {
   await rm(BACKUP_ROOT, { recursive: true, force: true });
   await mkdir(BACKUP_ROOT, { recursive: true });
-
   const thumbnailBackup = path.join(BACKUP_ROOT, "thumbnails");
   const responsiveBackup = path.join(BACKUP_ROOT, "responsive");
   const hadThumbnails = await pathExists(THUMBNAIL_DIR);
   const hadResponsive = await pathExists(RESPONSIVE_DIR);
-
   if (hadThumbnails) await rename(THUMBNAIL_DIR, thumbnailBackup);
   if (hadResponsive) await rename(RESPONSIVE_DIR, responsiveBackup);
-
   try {
     await rename(STAGE_THUMBNAIL_DIR, THUMBNAIL_DIR);
     await rename(STAGE_RESPONSIVE_DIR, RESPONSIVE_DIR);
@@ -215,7 +219,6 @@ async function main() {
   await rm(STAGE_ROOT, { recursive: true, force: true });
   await mkdir(STAGE_THUMBNAIL_DIR, { recursive: true });
   await mkdir(STAGE_RESPONSIVE_DIR, { recursive: true });
-
   const files = await collectFiles(PUBLIC_DIR);
   const results = new Array(files.length);
   const fatalFailures = [];
@@ -246,7 +249,6 @@ async function main() {
   }
 
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
-
   if (fatalFailures.length > 0) {
     await rm(STAGE_ROOT, { recursive: true, force: true });
     console.error("Responsive image generation failed. Originals and the previous optimized image set were not changed.");
@@ -259,12 +261,14 @@ async function main() {
   }
 
   const fallbackEntries = results.filter((item) => item.fallback);
+  const aiMasterEntries = results.filter((item) => item.aiMaster);
   const manifest = {
-    version: 3,
+    version: 4,
     generatedAt: new Date().toISOString(),
     widths: WIDTHS,
     quality: Object.fromEntries(WIDTHS.map((width) => [width, qualityFor(width)])),
     sourceCount: files.length,
+    aiMasterCount: aiMasterEntries.length,
     fallbackCount: fallbackEntries.length,
     fallbacks: fallbackEntries.map((item) => ({ source: item.source, error: item.sourceError })),
     images: results,
@@ -276,7 +280,7 @@ async function main() {
   const originalBytes = results.reduce((total, item) => total + item.sourceBytes, 0);
   const thumbnailBytes = results.reduce((total, item) => total + (item.thumbnailBytes || 0), 0);
   const reduction = originalBytes > 0 ? Math.round((1 - thumbnailBytes / originalBytes) * 100) : 0;
-  console.log(`Generated ${results.length} responsive image sets at ${WIDTHS.join("/")}px (${reduction}% smaller 720px previews in aggregate; ${fallbackEntries.length} safe fallbacks).`);
+  console.log(`Generated ${results.length} responsive image sets at ${WIDTHS.join("/")}px (${reduction}% smaller 720px previews; ${aiMasterEntries.length} AI masters; ${fallbackEntries.length} safe fallbacks).`);
 }
 
 await main();
