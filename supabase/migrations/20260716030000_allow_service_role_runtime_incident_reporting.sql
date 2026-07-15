@@ -1,6 +1,7 @@
 -- Phase 1 of runtime-incident RPC hardening.
 -- The old browser client remains compatible during rollout; the Edge gateway
 -- receives an explicit service-role grant before the frontend switches over.
+-- This grant-only phase is idempotent and does not alter stored customer data.
 
 BEGIN;
 
