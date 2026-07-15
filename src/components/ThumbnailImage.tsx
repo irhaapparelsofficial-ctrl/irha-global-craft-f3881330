@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ImgHTMLAttributes, type SyntheticEvent } from "react";
-import { thumbnailUrl } from "@/lib/imageThumbnails";
+import { responsiveImageAttributes, thumbnailUrl } from "@/lib/imageThumbnails";
 import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";
 import leatherHero from "@/assets/og/og-leather.jpg";
 import sportswearHero from "@/assets/og/og-sportswear.jpg";
@@ -10,7 +10,10 @@ type ThumbnailImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src?: string | null;
   originalSrc?: string | null;
   fallbackSrc?: string;
+  responsive?: boolean;
 };
+
+const DEFAULT_RESPONSIVE_SIZES = "(max-width: 640px) 92vw, (max-width: 1024px) 48vw, 33vw";
 
 function semanticFallback(alt?: string): string | undefined {
   const value = alt?.toLowerCase() ?? "";
@@ -29,12 +32,20 @@ export default function ThumbnailImage({
   onError,
   loading = "lazy",
   decoding = "async",
+  fetchPriority,
+  sizes,
+  srcSet,
+  responsive = true,
   ...props
 }: ThumbnailImageProps) {
   const fallback = fallbackSrc || semanticFallback(props.alt) || "/placeholder.svg";
   const original = originalSrc || src || fallback;
   const requested = src || original;
   const candidate = useMemo(() => thumbnailUrl(requested) || requested, [requested]);
+  const responsiveAttributes = useMemo(
+    () => responsiveImageAttributes(original),
+    [original],
+  );
   const sources = useMemo(
     () => Array.from(new Set([candidate, original, fallback].filter((value): value is string => Boolean(value)))),
     [candidate, fallback, original],
@@ -44,6 +55,7 @@ export default function ThumbnailImage({
   useEffect(() => setSourceIndex(0), [sources]);
 
   const currentSrc = sources[Math.min(sourceIndex, Math.max(0, sources.length - 1))] || fallback;
+  const useResponsiveSet = responsive && sourceIndex === 0 && Boolean(responsiveAttributes.srcSet || srcSet);
 
   const handleError = (event: SyntheticEvent<HTMLImageElement>) => {
     if (sourceIndex < sources.length - 1) {
@@ -57,10 +69,14 @@ export default function ThumbnailImage({
     <img
       {...props}
       src={currentSrc}
+      srcSet={useResponsiveSet ? srcSet || responsiveAttributes.srcSet : undefined}
+      sizes={useResponsiveSet ? sizes || DEFAULT_RESPONSIVE_SIZES : sizes}
       loading={loading}
       decoding={decoding}
+      fetchPriority={fetchPriority ?? (loading === "eager" ? "high" : "low")}
       onError={handleError}
       data-thumbnail-source={candidate !== original ? original : undefined}
+      data-responsive-image={useResponsiveSet ? "true" : undefined}
       data-fallback-active={currentSrc === fallback && fallback !== original ? "true" : undefined}
     />
   );
