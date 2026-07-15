@@ -1,46 +1,48 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import ResilientImage from "@/components/ResilientImage";
-import { usePublicCatalogTree } from "@/hooks/usePublicCatalog";
 import bavarianImage from "@/assets/og/og-bavarian-hero.jpg";
 import leatherImage from "@/assets/og/og-leather.jpg";
 import sportswearImage from "@/assets/og/og-sportswear.jpg";
 import streetwearImage from "@/assets/og/og-streetwear.jpg";
 import nightwearImage from "@/assets/og/og-nightwear.jpg";
 
-const ORDER = [
-  "bavarian-trachten-wear",
-  "sportswear",
-  "premium-leather-apparel",
-  "streetwear-activewear",
-  "leisure-nightwear",
+const PROGRAMS = [
+  {
+    slug: "bavarian-trachten-wear",
+    name: "Bavarian & Trachten Wear",
+    description: "Lederhosen, dirndl, shirts, vests and accessories",
+    image: bavarianImage,
+  },
+  {
+    slug: "sportswear",
+    name: "Sportswear",
+    description: "Team uniforms, tracksuits, training and club programs",
+    image: sportswearImage,
+  },
+  {
+    slug: "premium-leather-apparel",
+    name: "Premium Leather Apparel",
+    description: "Biker jackets, bombers, vests and leather bottoms",
+    image: leatherImage,
+  },
+  {
+    slug: "streetwear-activewear",
+    name: "Streetwear & Activewear",
+    description: "Hoodies, tees, joggers and private-label sets",
+    image: streetwearImage,
+  },
+  {
+    slug: "leisure-nightwear",
+    name: "Leisure & Nightwear",
+    description: "Sleepwear, loungewear and custom leisure programs",
+    image: nightwearImage,
+  },
 ] as const;
-
-const IMAGES: Record<string, string> = {
-  "bavarian-trachten-wear": bavarianImage,
-  "premium-leather-apparel": leatherImage,
-  sportswear: sportswearImage,
-  "streetwear-activewear": streetwearImage,
-  "leisure-nightwear": nightwearImage,
-};
-
-const DESCRIPTIONS: Record<string, string> = {
-  "bavarian-trachten-wear": "Lederhosen, dirndl, shirts, vests and accessories",
-  sportswear: "Team uniforms, tracksuits, training and club programs",
-  "premium-leather-apparel": "Biker jackets, bombers, vests and leather bottoms",
-  "streetwear-activewear": "Hoodies, tees, joggers and private-label sets",
-  "leisure-nightwear": "Sleepwear, loungewear and custom leisure programs",
-};
 
 const LAYOUTS = ["lg:col-span-7", "lg:col-span-5", "lg:col-span-4", "lg:col-span-4", "lg:col-span-4"] as const;
 
 export default function HomeCategoryUniverse() {
-  const { data: tree = [] } = usePublicCatalogTree();
-  const categories = ORDER.map((slug) => tree.find((category) => category.slug === slug && category.is_published))
-    .filter((category): category is NonNullable<typeof category> => Boolean(category));
-
-  if (categories.length === 0) return null;
-
   return (
     <section id="programs" className="relative overflow-hidden bg-background py-12 text-foreground md:py-18">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,hsl(var(--primary)/0.08),transparent_28%)]" />
@@ -63,11 +65,8 @@ export default function HomeCategoryUniverse() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-12">
-          {categories.map((category, index) => {
-            const count = category.directProducts.filter((product) => product.is_published).length +
-              category.subs.reduce((total, sub) => total + sub.products.filter((product) => product.is_published).length, 0);
+          {PROGRAMS.map((category, index) => {
             const featuredRow = index < 2;
-            const image = IMAGES[category.slug] ?? bavarianImage;
 
             return (
               <Link
@@ -77,7 +76,7 @@ export default function HomeCategoryUniverse() {
               >
                 <div className={`relative h-full min-h-[156px] overflow-hidden bg-black sm:min-h-0 ${featuredRow ? "sm:aspect-[16/9]" : "sm:aspect-[4/3]"}`}>
                   <ResilientImage
-                    sources={[image]}
+                    sources={[category.image]}
                     alt={`${category.name} custom manufacturing program`}
                     loading="lazy"
                     decoding="async"
@@ -87,7 +86,7 @@ export default function HomeCategoryUniverse() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/5 to-transparent" />
                   <span className="absolute bottom-2 left-2 text-[7px] font-semibold uppercase tracking-[0.14em] text-white/80 sm:bottom-3 sm:left-4 sm:text-[8px]">
-                    {count} published styles
+                    Made-to-order program
                   </span>
                 </div>
 
@@ -99,7 +98,7 @@ export default function HomeCategoryUniverse() {
                     <ArrowRight size={15} className="mt-1 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
                   </div>
                   <p className="mt-2 line-clamp-2 text-[10px] leading-5 text-foreground/58 sm:text-xs sm:leading-6">
-                    {DESCRIPTIONS[category.slug] ?? "Custom product development and private-label manufacturing"}
+                    {category.description}
                   </p>
                   <span className="mt-3 inline-flex text-[8px] font-semibold uppercase tracking-[0.16em] text-primary sm:mt-4 sm:text-[9px]">Review program</span>
                 </div>
