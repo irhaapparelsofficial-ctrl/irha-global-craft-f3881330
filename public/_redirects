@@ -9,17 +9,10 @@
 /products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe /products/leisure-nightwear/plush-bathrobe-sleep-robe 301
 /products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe/ /products/leisure-nightwear/plush-bathrobe-sleep-robe 301
 
-# Canonical no-trailing-slash URLs for priority buyer pages.
-/products/ /products 301
-/catalogue/ /catalogue 301
-/buyer-trust/ /buyer-trust 301
-/factory-video-call/ /factory-video-call 301
-/inquiry/ /inquiry 301
-/products/bavarian-trachten-wear/ /products/bavarian-trachten-wear 301
-/products/premium-leather-apparel/ /products/premium-leather-apparel 301
-/products/sportswear/ /products/sportswear 301
-/products/streetwear-activewear/ /products/streetwear-activewear 301
-/products/leisure-nightwear/ /products/leisure-nightwear 301
+# Do not add "/route/ -> /route" redirects for generated route shells.
+# The build writes those pages as dist/<route>/index.html and Cloudflare Pages
+# may canonicalize /route to /route/. A reverse redirect creates an infinite
+# /route <-> /route/ loop. The Pages asset layer owns directory canonicalization.
 
 # Country sourcing-guide aliases.
 /germany /markets/germany 301
