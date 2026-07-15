@@ -5,22 +5,22 @@ const ITEMS = [
   {
     icon: FileCheck2,
     title: "Commercial scope",
-    text: "MOQ, pricing, timeline and shipping terms are confirmed for the exact product, quantity and destination.",
+    text: "MOQ, price, sample route, timing and shipping terms are confirmed for the exact style, quantity and destination.",
   },
   {
     icon: Workflow,
-    title: "Sampling route",
-    text: "The sample path, revisions and approval checkpoints are agreed before a bulk commitment.",
+    title: "Approval checkpoints",
+    text: "Sample, revisions, material, measurements and branding are aligned before a bulk production commitment.",
   },
   {
     icon: Tags,
-    title: "Customization scope",
-    text: "Materials, colours, decoration, labels, packaging and branding are reviewed per order.",
+    title: "Private-label scope",
+    text: "Woven labels, care labels, hangtags, embroidery, printing and packaging are reviewed per product.",
   },
   {
     icon: ShieldCheck,
-    title: "Documentation review",
-    text: "Testing, material, packing and export documents are confirmed only where the actual program requires them.",
+    title: "Factory verification",
+    text: "Buyers can request a scheduled live video view of the manufacturing environment during requirement review.",
   },
 ];
 
@@ -30,12 +30,12 @@ export default function BuyerTrustSection() {
       <div className="container-luxe">
         <div className="mb-8 grid gap-6 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-8">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Buyer decision essentials</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">Buyer confidence</p>
             <h2 className="mt-3 max-w-3xl font-display text-3xl leading-[1.08] sm:text-4xl lg:text-5xl">
-              Know what will be confirmed before you place the order.
+              Verify the program before you commit to bulk production.
             </h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-foreground/65 md:text-base">
-              Every manufacturing program is scoped around the actual style and destination. Broad website claims do not replace product-specific confirmation.
+              Serious B2B orders need clear specifications, approval checkpoints and commercial terms. Irha Apparels confirms these against the actual buyer brief instead of relying on broad website promises.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 lg:col-span-4 lg:justify-end">
@@ -46,15 +46,15 @@ export default function BuyerTrustSection() {
               Buyer trust center <ArrowRight size={13} />
             </Link>
             <Link
-              to="/resources"
+              to="/factory-video-call"
               className="inline-flex min-h-11 items-center gap-2 border border-border/70 px-5 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground transition-colors hover:border-primary hover:text-primary"
             >
-              Buyer resources
+              Factory video call
             </Link>
           </div>
         </div>
 
-        <div className="grid gap-px border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-px overflow-hidden rounded-xl border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-4 sm:rounded-none">
           {ITEMS.map(({ icon: Icon, title, text }) => (
             <article key={title} className="bg-background p-5 md:p-6">
               <Icon className="text-primary" size={19} strokeWidth={1.6} />
