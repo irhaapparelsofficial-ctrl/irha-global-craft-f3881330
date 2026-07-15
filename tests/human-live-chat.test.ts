@@ -6,12 +6,33 @@ const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("secure human website live chat", () => {
-  it("mounts a separate customer widget without replacing the AI guide", () => {
+  it("mounts one clear human chat and does not expose the fallback AI guide as a second launcher", () => {
     const layout = read("src/components/layout/Layout.tsx");
-    expect(layout).toContain('import LiveChat from "@/components/LiveChat"');
     expect(layout).toContain('import HumanLiveChat from "@/components/HumanLiveChat"');
-    expect(layout).toContain("<LiveChat />");
     expect(layout).toContain("<HumanLiveChat />");
+    expect(layout).not.toContain('import LiveChat from "@/components/LiveChat"');
+    expect(layout).not.toContain("<LiveChat />");
+  });
+
+  it("uses one labelled mobile contact dock for real chat and quote", () => {
+    const dock = read("src/components/sections/StickyMobileCTA.tsx");
+    expect(dock).toContain('new CustomEvent("irha:open-human-chat")');
+    expect(dock).toContain("Live Chat");
+    expect(dock).toContain("Quote");
+    expect(dock).not.toContain("settingsWhatsappLink");
+    expect(dock).not.toContain("whatsappLabel");
+  });
+
+  it("makes human support unmistakable and keeps visitor entry simple", () => {
+    const widget = read("src/components/HumanLiveChat.tsx");
+    expect(widget).toContain("Live Chat — Irha Team");
+    expect(widget).toContain("Real human support");
+    expect(widget).toContain("Your message goes directly to the admin dashboard");
+    expect(widget).toContain('const OPEN_EVENT = "irha:open-human-chat"');
+    expect(widget).toContain("Company (optional)");
+    expect(widget).toContain("if (!started && !visitorName.trim())");
+    expect(widget).not.toContain("!visitorCompany.trim()");
+    expect(widget).toContain('data-chat-kind="human"');
   });
 
   it("provides a protected admin route, reply console and one-tap launcher", () => {

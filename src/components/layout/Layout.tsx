@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import FloatingActions from "./FloatingActions";
-import LiveChat from "@/components/LiveChat";
 import HumanLiveChat from "@/components/HumanLiveChat";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import OccasionBanner from "@/components/OccasionBanner";
@@ -22,14 +21,13 @@ export default function Layout({ children }: { children: ReactNode }) {
       <main
         id="main-content"
         tabIndex={-1}
-        className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 outline-none"
+        className="flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0 outline-none"
       >
         {children}
       </main>
       <InternalLinksBlock />
       <Footer />
       <FloatingActions />
-      <LiveChat />
       <HumanLiveChat />
       <StickyMobileCTA />
     </div>
