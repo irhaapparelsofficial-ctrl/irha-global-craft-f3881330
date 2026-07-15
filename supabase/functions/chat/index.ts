@@ -2,6 +2,11 @@
 // Provider order: Lovable AI gateway -> Gemini -> conversation-aware verified backup.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const SITE_URL = "https://irhaapparels.com";
 const WHATSAPP = "+92 320 411 0066";
 const WA_LINK = "https://wa.me/923204110066";
@@ -318,7 +323,7 @@ function extractGeminiText(payload: any): string {
 }
 
 async function tryLovable(messages: SafeMessage[], systemPrompt: string): Promise<string> {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = irhaLovableRuntimeKey();
   if (!key) return "";
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

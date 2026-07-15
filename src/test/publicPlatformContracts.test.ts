@@ -89,6 +89,7 @@ describe("buyer-critical public platform contracts", () => {
     expect(chatFunction).toContain("resolveSessionId(body.sessionId, req)");
     expect(chatFunction).toContain("isAllowedOrigin(origin)");
     expect(chatFunction).toContain("ai.gateway.lovable.dev/v1/chat/completions");
+    expect(chatFunction).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
   });
 
   it("keeps Custom Lab independent of the paid Lovable AI gateway", () => {
