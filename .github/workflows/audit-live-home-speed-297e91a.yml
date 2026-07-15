@@ -1,4 +1,4 @@
-name: Live homepage speed audit latest main
+name: Live homepage speed audit latest deployed descendant
 
 on:
   pull_request:
@@ -9,33 +9,43 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: live-home-speed-audit
+  cancel-in-progress: true
+
 jobs:
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Wait for exact optimized source on production
+      - name: Wait for a verified deployed descendant of the performance release
         shell: bash
         env:
-          EXPECTED_SHA: cc153c30219f94a57f12e5ed7cc1c8407bcb38e0
+          GH_TOKEN: ${{ github.token }}
+          PERFORMANCE_BASE_SHA: cc153c30219f94a57f12e5ed7cc1c8407bcb38e0
         run: |
           set -euo pipefail
           ready=0
-          for attempt in $(seq 1 72); do
-            cache_bust="${EXPECTED_SHA::12}-$attempt-$RANDOM"
+          for attempt in $(seq 1 90); do
+            cache_bust="${PERFORMANCE_BASE_SHA::12}-$attempt-$RANDOM"
             if curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
                  "https://irhaapparels.com/build.json?speed_audit=$cache_bust" -o /tmp/build.json; then
               live_sha="$(jq -r '.source_commit // empty' /tmp/build.json)"
               identity="$(jq -r '.source_identity_state // empty' /tmp/build.json)"
-              echo "attempt=$attempt live_sha=$live_sha identity=$identity"
-              if [ "$live_sha" = "$EXPECTED_SHA" ] && [ "$identity" = "verified" ]; then
+              relation="unknown"
+              if [[ "$live_sha" =~ ^[0-9a-f]{40}$ ]]; then
+                relation="$(gh api "repos/$GITHUB_REPOSITORY/compare/$PERFORMANCE_BASE_SHA...$live_sha" --jq '.status' 2>/dev/null || true)"
+              fi
+              echo "attempt=$attempt live_sha=$live_sha identity=$identity relation=$relation"
+              if [ "$identity" = "verified" ] && { [ "$relation" = "ahead" ] || [ "$relation" = "identical" ]; }; then
                 ready=1
+                echo "LIVE_SHA=$live_sha" >> "$GITHUB_ENV"
                 break
               fi
             fi
             sleep 10
           done
-          test "$ready" = "1" || { echo "Optimized source did not converge on production"; exit 1; }
+          test "$ready" = "1" || { echo "A verified deployed descendant of the performance release was not found"; exit 1; }
           cat /tmp/build.json
 
       - name: Run three cold mobile Lighthouse audits
@@ -44,7 +54,7 @@ jobs:
           set -euo pipefail
           for run in 1 2 3; do
             npx --yes lighthouse@12.8.2 \
-              "https://irhaapparels.com/?speed_audit=cc153c30-${GITHUB_RUN_ID}-$run" \
+              "https://irhaapparels.com/?speed_audit=${LIVE_SHA::12}-${GITHUB_RUN_ID}-$run" \
               --output=json \
               --output-path="/tmp/lighthouse-$run.json" \
               --only-categories=performance,accessibility,best-practices,seo \
@@ -56,6 +66,8 @@ jobs:
 
       - name: Print median performance evidence
         shell: bash
+        env:
+          PERFORMANCE_BASE_SHA: cc153c30219f94a57f12e5ed7cc1c8407bcb38e0
         run: |
           node <<'NODE'
           const fs = require('fs');
@@ -94,11 +106,8 @@ jobs:
             .map(item => ({ url: item.url, transferSize: item.transferSize ?? 0, resourceSize: item.resourceSize ?? 0 }))
             .sort((a, b) => b.transferSize - a.transferSize);
           const evidence = {
-            source_commit: 'cc153c30219f94a57f12e5ed7cc1c8407bcb38e0',
-            includes_speed_commits: [
-              '297e91a168e6e99c380de4085d4c659d09c174d6',
-              'cc153c30219f94a57f12e5ed7cc1c8407bcb38e0'
-            ],
+            source_commit: process.env.LIVE_SHA,
+            performance_base_commit: process.env.PERFORMANCE_BASE_SHA,
             runs: runEvidence,
             median: {
               performance_score: median(runEvidence.map(run => run.scores.performance)),
@@ -125,7 +134,7 @@ jobs:
       - name: Upload Lighthouse evidence
         uses: actions/upload-artifact@v4
         with:
-          name: live-home-speed-cc153c30
+          name: live-home-speed-descendant
           path: |
             /tmp/build.json
             /tmp/lighthouse-1.json
