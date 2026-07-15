@@ -52,6 +52,8 @@ describe("visible owner notifications", () => {
     expect(chatMigration).toContain("'Live chat waiting'");
     expect(chatMigration).toContain("new.role = 'admin'");
     expect(chatMigration).toContain("status = 'read'");
-    expect(inquiryMigration).toContain("New buyer inquiry");
+    expect(inquiryMigration).toContain("crm_new_public_lead_notification");
+    expect(inquiryMigration).toContain("crm_new_inquiry_notification_trigger");
+    expect(inquiryMigration).toContain("'buyer inquiry'");
   });
 });
