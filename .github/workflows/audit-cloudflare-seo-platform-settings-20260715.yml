@@ -55,73 +55,68 @@ jobs:
           echo "::add-mask::$zone_id"
           echo "::add-mask::$account_id"
 
-          curl -fsS "${auth[@]}" "https://api.cloudflare.com/client/v4/zones/$zone_id/settings" > /tmp/zone-settings.json
-          curl -fsS "${auth[@]}" "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project" > /tmp/pages-project.json
-
-          # Candidate product endpoints are probed read-only. HTTP status and sanitized JSON are recorded.
-          declare -A candidates=(
-            [bot_management]="https://api.cloudflare.com/client/v4/zones/$zone_id/bot_management"
-            [ai_crawl_control]="https://api.cloudflare.com/client/v4/zones/$zone_id/ai-crawl-control"
-            [ai_crawl_control_settings]="https://api.cloudflare.com/client/v4/zones/$zone_id/ai-crawl-control/settings"
-            [content_signals]="https://api.cloudflare.com/client/v4/zones/$zone_id/content-signals"
-            [content_signals_settings]="https://api.cloudflare.com/client/v4/zones/$zone_id/content-signals/settings"
-            [browser_insights]="https://api.cloudflare.com/client/v4/zones/$zone_id/settings/browser_insights"
-          )
-          : > /tmp/candidate-status.tsv
-          for name in "${!candidates[@]}"; do
-            url="${candidates[$name]}"
+          : > /tmp/endpoint-status.tsv
+          capture() {
+            name="$1"
+            url="$2"
             status="$(curl -sS -o "/tmp/$name.json" -w '%{http_code}' "${auth[@]}" "$url" || true)"
-            printf '%s\t%s\n' "$name" "$status" >> /tmp/candidate-status.tsv
-          done
+            printf '%s\t%s\n' "$name" "$status" >> /tmp/endpoint-status.tsv
+          }
+
+          capture zone_settings "https://api.cloudflare.com/client/v4/zones/$zone_id/settings"
+          capture pages_project "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project"
+          capture browser_insights "https://api.cloudflare.com/client/v4/zones/$zone_id/settings/browser_insights"
+          capture bot_management "https://api.cloudflare.com/client/v4/zones/$zone_id/bot_management"
+          capture ai_crawl_control "https://api.cloudflare.com/client/v4/zones/$zone_id/ai-crawl-control"
+          capture ai_crawl_control_settings "https://api.cloudflare.com/client/v4/zones/$zone_id/ai-crawl-control/settings"
+          capture content_signals "https://api.cloudflare.com/client/v4/zones/$zone_id/content-signals"
+          capture content_signals_settings "https://api.cloudflare.com/client/v4/zones/$zone_id/content-signals/settings"
 
           node <<'NODE'
           const fs = require('fs');
-          const zone = JSON.parse(fs.readFileSync('/tmp/zone-settings.json', 'utf8'));
-          const pages = JSON.parse(fs.readFileSync('/tmp/pages-project.json', 'utf8'));
-          const matches = (zone.result || []).filter((setting) =>
+          const parse = (path) => {
+            try { return JSON.parse(fs.readFileSync(path, 'utf8')); } catch { return null; }
+          };
+          const zone = parse('/tmp/zone_settings.json');
+          const pages = parse('/tmp/pages_project.json');
+          const matches = (zone?.result || []).filter((setting) =>
             /(browser|insight|analytic|robot|content|signal|ai|bot)/i.test(`${setting.id} ${setting.title || ''}`)
-          );
-          const safeSetting = (s) => ({
+          ).map((s) => ({
             id: s.id,
             value: s.value,
             editable: s.editable,
             modified_on: s.modified_on || null,
-          });
-          const project = pages.result || {};
-          const safeProject = {
+          }));
+          const project = pages?.result || {};
+          const safeProject = pages?.success ? {
             name: project.name,
             production_branch: project.production_branch,
             subdomain: project.subdomain,
             source_type: project.source?.type || null,
-            deployment_configs: project.deployment_configs
-              ? {
-                  production: {
-                    compatibility_date: project.deployment_configs.production?.compatibility_date || null,
-                    compatibility_flags: project.deployment_configs.production?.compatibility_flags || [],
-                    always_use_latest_compatibility_date: project.deployment_configs.production?.always_use_latest_compatibility_date || false,
-                  },
-                }
-              : null,
-          };
+            deployment_configs: project.deployment_configs ? {
+              production: {
+                compatibility_date: project.deployment_configs.production?.compatibility_date || null,
+                compatibility_flags: project.deployment_configs.production?.compatibility_flags || [],
+                always_use_latest_compatibility_date: project.deployment_configs.production?.always_use_latest_compatibility_date || false,
+              },
+            } : null,
+          } : null;
 
-          const statuses = fs.readFileSync('/tmp/candidate-status.tsv', 'utf8').trim().split('\n').filter(Boolean);
+          const statuses = fs.readFileSync('/tmp/endpoint-status.tsv', 'utf8').trim().split('\n').filter(Boolean);
           let md = '## Cloudflare SEO platform override audit\n\n';
           md += 'Read-only audit; no Cloudflare setting was changed.\n\n';
           md += '### Matching zone settings\n\n```json\n';
-          md += JSON.stringify(matches.map(safeSetting), null, 2);
+          md += JSON.stringify(matches, null, 2);
           md += '\n```\n\n### Pages project summary\n\n```json\n';
           md += JSON.stringify(safeProject, null, 2);
-          md += '\n```\n\n### Candidate endpoint status\n\n| Endpoint | HTTP | Sanitized result |\n|---|---:|---|\n';
+          md += '\n```\n\n### Endpoint status and sanitized result\n\n| Endpoint | HTTP | Result |\n|---|---:|---|\n';
           for (const line of statuses) {
             const [name, status] = line.split('\t');
-            let summary = 'not read';
-            try {
-              const raw = JSON.parse(fs.readFileSync(`/tmp/${name}.json`, 'utf8'));
-              const result = raw.result;
-              summary = JSON.stringify(result ?? { success: raw.success, errors: raw.errors }, null, 0)
-                .replace(/\|/g, '\\|')
-                .slice(0, 900);
-            } catch {}
+            const raw = parse(`/tmp/${name}.json`);
+            let summary = raw
+              ? JSON.stringify(raw.result ?? { success: raw.success, errors: raw.errors }, null, 0)
+              : 'unreadable response';
+            summary = summary.replace(/\|/g, '\\|').replace(/`/g, '').slice(0, 1200);
             md += `| \`${name}\` | ${status} | \`${summary}\` |\n`;
           }
           fs.writeFileSync('/tmp/cloudflare-seo-audit.md', md);
