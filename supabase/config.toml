@@ -26,6 +26,11 @@ verify_jwt = true
 [functions.sitemap-ping]
 verify_jwt = true
 
+# Public gateway verification is disabled because this function uses a
+# separate high-entropy Vault token plus a rate-limited SECURITY DEFINER claim.
+[functions.scheduled-sitemap-submit]
+verify_jwt = false
+
 [functions.admin-chat]
 verify_jwt = true
 
