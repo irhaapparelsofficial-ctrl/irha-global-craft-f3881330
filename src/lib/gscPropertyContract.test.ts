@@ -3,14 +3,24 @@ import { describe, expect, it } from "vitest";
 
 const appSource = readFileSync("src/App.tsx", "utf8");
 const monitorSource = readFileSync("src/pages/SeoIndexing.tsx", "utf8");
-const functionSource = readFileSync("supabase/functions/gsc-inspect/index.ts", "utf8");
+const inspectionFunctionSource = readFileSync("supabase/functions/gsc-inspect/index.ts", "utf8");
+const sitemapFunctionSource = readFileSync("supabase/functions/sitemap-ping/index.ts", "utf8");
 
 describe("Google Search Console inspection contract", () => {
   it("uses the verified domain property for canonical apex URLs", () => {
     expect(monitorSource).toContain('const SITE_PROPERTY = "sc-domain:irhaapparels.com"');
-    expect(functionSource).toContain('const DEFAULT_SITE_URL = "sc-domain:irhaapparels.com"');
-    expect(functionSource).toContain('Deno.env.get("GSC_SITE_URL")');
-    expect(functionSource).not.toContain('const SITE_URL = "https://www.irhaapparels.com/"');
+    expect(inspectionFunctionSource).toContain('const DEFAULT_SITE_URL = "sc-domain:irhaapparels.com"');
+    expect(inspectionFunctionSource).toContain('Deno.env.get("GSC_SITE_URL")');
+    expect(inspectionFunctionSource).not.toContain('const SITE_URL = "https://www.irhaapparels.com/"');
+  });
+
+  it("submits the apex sitemap against the domain property", () => {
+    expect(sitemapFunctionSource).toContain('const SITE_PROPERTY = "sc-domain:irhaapparels.com"');
+    expect(sitemapFunctionSource).toContain('const SITEMAP_URL = "https://irhaapparels.com/sitemap.xml"');
+    expect(sitemapFunctionSource).not.toContain("https://www.irhaapparels.com/sitemap.xml");
+    expect(sitemapFunctionSource).toContain('.eq("role", "admin")');
+    expect(monitorSource).toContain('supabase.functions.invoke("sitemap-ping"');
+    expect(monitorSource).toContain("Submit sitemap to Google");
   });
 
   it("keeps the monitor private and reachable for admins", () => {

@@ -20,6 +20,7 @@ import leatherThumb from "@/assets/og/og-leather.jpg?w=720&format=webp&quality=7
 
 const BAVARIAN_PRODUCT_IMAGE =
   "/product-media/distressed-brown-short-lederhosen/01-hero-front.webp";
+const BAVARIAN_PRODUCT_THUMBNAIL = thumbnailUrl(BAVARIAN_PRODUCT_IMAGE);
 
 const PROOF_POINTS = [
   "OEM, ODM and private-label development",
@@ -105,9 +106,10 @@ export default function HeroCarousel() {
               className="group relative isolate min-h-[420px] min-w-0 overflow-hidden border border-primary/30 bg-[#eee8dc] shadow-elegant sm:row-span-2"
             >
               <ResilientImage
-                sources={[thumbnailUrl(BAVARIAN_PRODUCT_IMAGE), BAVARIAN_PRODUCT_IMAGE, bavarianCover]}
+                sources={[BAVARIAN_PRODUCT_THUMBNAIL, BAVARIAN_PRODUCT_IMAGE, bavarianCover]}
                 alt="Distressed brown Lederhosen with suspenders by Irha Apparels"
                 loading="eager"
+                fetchPriority="high"
                 decoding="async"
                 width={1000}
                 height={1250}
@@ -137,7 +139,8 @@ export default function HeroCarousel() {
               <ResilientImage
                 sources={[bavarianThumb, bavarianCover]}
                 alt="Bavarian and Trachten manufacturing collection"
-                loading="eager"
+                loading="lazy"
+                fetchPriority="low"
                 decoding="async"
                 width={900}
                 height={560}
@@ -158,7 +161,8 @@ export default function HeroCarousel() {
                 <ResilientImage
                   sources={[sportswearThumb, sportswearCover]}
                   alt="Custom sportswear manufacturing"
-                  loading="eager"
+                  loading="lazy"
+                  fetchPriority="low"
                   decoding="async"
                   width={720}
                   height={720}
@@ -174,7 +178,8 @@ export default function HeroCarousel() {
                 <ResilientImage
                   sources={[leatherThumb, leatherCover]}
                   alt="Premium leather apparel manufacturing"
-                  loading="eager"
+                  loading="lazy"
+                  fetchPriority="low"
                   decoding="async"
                   width={720}
                   height={720}

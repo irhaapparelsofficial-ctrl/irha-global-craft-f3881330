@@ -1,0 +1,41 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+
+const appSource = readFileSync("src/App.tsx", "utf8");
+const heroSource = readFileSync("src/components/HeroCarousel.tsx", "utf8");
+const indexSource = readFileSync("index.html", "utf8");
+const packageSource = readFileSync("package.json", "utf8");
+const cleanupSource = readFileSync("scripts/remove-home-lcp-preload-from-route-shells.mjs", "utf8");
+
+describe("public performance and discovery contract", () => {
+  it("keeps home, buyer-intent content and admin tools out of the initial public bundle", () => {
+    expect(appSource).toContain('const Home = lazy(() => import("./pages/Home"))');
+    expect(appSource).toContain('const AdminOutreachCommandCenter = lazy(() => import("@/components/admin/AdminOutreachCommandCenter"))');
+    expect(appSource).toContain('if (!pathname.startsWith("/admin")) return null');
+    expect(appSource).not.toContain('import AdminOutreachCommandCenter from');
+    expect(appSource).not.toContain('import { SEO_BUYER_INTENT_LANDING_PAGES }');
+    expect(appSource).toContain('<Route path="/de/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />');
+    expect(appSource).toContain('<Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />');
+  });
+
+  it("assigns high priority to one LCP image and lazy-loads secondary hero media", () => {
+    expect(heroSource.match(/loading="eager"/g)).toHaveLength(1);
+    expect(heroSource.match(/fetchPriority="high"/g)).toHaveLength(1);
+    expect(heroSource.match(/loading="lazy"/g)).toHaveLength(3);
+    expect(heroSource.match(/fetchPriority="low"/g)).toHaveLength(3);
+  });
+
+  it("preloads the homepage LCP asset without leaking it into route shells", () => {
+    expect(indexSource).toContain("data-irha-home-lcp");
+    expect(indexSource).toContain("/thumbnails/product-media/distressed-brown-short-lederhosen/01-hero-front.webp");
+    expect(packageSource).toContain("remove-home-lcp-preload-from-route-shells.mjs");
+    expect(cleanupSource).toContain("if (file === ROOT_INDEX) continue");
+    expect(cleanupSource).toContain("HOME_LCP_PRELOAD");
+  });
+
+  it("gives Google direct static links to the Germany transaction pages", () => {
+    expect(indexSource).toContain('/de/bekleidungshersteller-deutschland');
+    expect(indexSource).toContain('/de/sportbekleidung-hersteller');
+    expect(indexSource).toContain('/de/lederbekleidung-hersteller');
+  });
+});

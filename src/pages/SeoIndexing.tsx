@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, ExternalLink, CheckCircle2, XCircle, AlertTriangle, RefreshCw } from "lucide-react";
+import { Loader2, ExternalLink, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Send } from "lucide-react";
 import { toast } from "sonner";
 
 interface InspectResult {
@@ -27,6 +27,7 @@ interface InspectResult {
 const GSC_BASE = "https://search.google.com/search-console";
 const SITE_PROPERTY = "sc-domain:irhaapparels.com";
 const CANONICAL_ORIGIN = "https://irhaapparels.com";
+const CANONICAL_SITEMAP = `${CANONICAL_ORIGIN}/sitemap.xml`;
 const SEO_RELEASE_URLS = [
   `${CANONICAL_ORIGIN}/de/bekleidungshersteller-deutschland`,
   `${CANONICAL_ORIGIN}/custom-sportswear-manufacturer-germany`,
@@ -57,6 +58,7 @@ export default function SeoIndexing() {
   const [sitemapUrls, setSitemapUrls] = useState<string[]>([]);
   const [results, setResults] = useState<Record<string, InspectResult>>({});
   const [loading, setLoading] = useState(false);
+  const [submittingSitemap, setSubmittingSitemap] = useState(false);
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
@@ -83,6 +85,20 @@ export default function SeoIndexing() {
       errors: r.filter((x) => x.error).length,
     };
   }, [results]);
+
+  async function submitSitemap() {
+    setSubmittingSitemap(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sitemap-ping", { body: {} });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Google did not accept the sitemap submission");
+      toast.success("Canonical sitemap submitted to Google Search Console");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sitemap submission failed");
+    } finally {
+      setSubmittingSitemap(false);
+    }
+  }
 
   async function inspectBatch(urls: string[]) {
     if (urls.length === 0) return;
@@ -133,7 +149,7 @@ export default function SeoIndexing() {
           <h2 className="font-semibold mb-3">Indexing Checklist</h2>
           <ul className="space-y-2 text-sm">
             <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" /> Verified Search Console domain property: <code>{SITE_PROPERTY}</code></li>
-            <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" /> Sitemap submitted: <a className="underline" href={`${GSC_BASE}/sitemaps?resource_id=${encodeURIComponent(SITE_PROPERTY)}`} target="_blank" rel="noreferrer">open Sitemaps report</a></li>
+            <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" /> Canonical sitemap: <a className="underline" href={CANONICAL_SITEMAP} target="_blank" rel="noreferrer">{CANONICAL_SITEMAP}</a></li>
             <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" /> robots.txt allows canonical pages: <a className="underline" href="/robots.txt" target="_blank" rel="noreferrer">view</a></li>
             <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" /> Canonical tags and crawler-ready static HTML are deployed.</li>
             <li className="flex gap-2"><AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" /> The API can inspect index status only. Open a URL in Search Console and press <strong>Request indexing</strong> manually after the live test passes.</li>
@@ -155,6 +171,14 @@ export default function SeoIndexing() {
             onChange={(e) => setFilter(e.target.value)}
             className="max-w-xs"
           />
+          <Button
+            variant="outline"
+            onClick={submitSitemap}
+            disabled={submittingSitemap}
+          >
+            {submittingSitemap ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+            Submit sitemap to Google
+          </Button>
           <Button
             onClick={() => inspectBatch(SEO_RELEASE_URLS)}
             disabled={loading}
