@@ -1,0 +1,54 @@
+name: Discover Cloudflare managed robots API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/discover-cloudflare-robots-api-20260715.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Inspect official Cloudflare SDK package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cf-sdk
+          cd /tmp/cf-sdk
+          npm pack cloudflare@latest --silent > /tmp/package-name.txt
+          package="$(cat /tmp/package-name.txt)"
+          tar -xzf "$package"
+
+          {
+            echo '## Official Cloudflare SDK managed robots discovery'
+            echo
+            echo 'No Cloudflare credentials were used.'
+            echo
+            echo '### Matching SDK declarations and request paths'
+            echo
+            echo '```text'
+            grep -RniE --include='*.ts' --include='*.d.ts' --include='*.md' --include='*.json' \
+              'managed.?robots|robots.?txt|content.?signal|ai.?bots.?protection|instruct.?bot|block.?training' \
+              package/src package 2>/dev/null \
+              | sed 's#^package/##' \
+              | head -n 400 \
+              | sed -E 's/(api[_-]?token|service[_-]?role|secret|authorization)[^ ,;]*/\1=[REDACTED]/Ig'
+            echo '```'
+          } > /tmp/discovery.md
+
+          test "$(wc -c < /tmp/discovery.md)" -gt 150
+
+      - name: Record discovery
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/discovery.md
