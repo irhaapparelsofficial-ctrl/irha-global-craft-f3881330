@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Headphones, MessageCircle, RefreshCw, Send, X } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 import { supabasePublishableKey, supabaseRuntimeUrl } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ type ApiResponse = {
 const SESSION_KEY = "irha:human-chat-session";
 const TOKEN_KEY = "irha:human-chat-token";
 const STARTED_KEY = "irha:human-chat-started";
+const OPEN_EVENT = "irha:open-human-chat";
 
 function randomToken() {
   const bytes = new Uint8Array(32);
@@ -67,9 +68,14 @@ function wasStarted() {
 }
 
 function statusLabel(status: ConversationStatus) {
-  if (status === "active") return "Team joined";
+  if (status === "active") return "Irha team joined";
   if (status === "closed") return "Conversation closed";
-  return "Waiting for team";
+  return "Message sent · waiting for team";
+}
+
+function isMobileInteraction() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(max-width: 767px), (pointer: coarse)").matches;
 }
 
 export default function HumanLiveChat() {
@@ -88,6 +94,7 @@ export default function HumanLiveChat() {
   const [sending, setSending] = useState(false);
   const [polling, setPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mobileViewportStyle, setMobileViewportStyle] = useState<CSSProperties>();
 
   const callApi = useCallback(async (payload: Record<string, unknown>) => {
     const response = await fetch(`${supabaseRuntimeUrl}/functions/v1/live-chat`, {
@@ -126,11 +133,17 @@ export default function HumanLiveChat() {
         setStarted(false);
         try { sessionStorage.removeItem(STARTED_KEY); } catch { /* no-op */ }
       }
-      setError("Team chat could not refresh. Your message box is still available; retry in a moment or use WhatsApp.");
+      setError("Live chat could not refresh. Retry in a moment or use WhatsApp for urgent contact.");
     } finally {
       if (showSpinner) setPolling(false);
     }
   }, [callApi, started]);
+
+  useEffect(() => {
+    const openHumanChat = () => setOpen(true);
+    window.addEventListener(OPEN_EVENT, openHumanChat);
+    return () => window.removeEventListener(OPEN_EVENT, openHumanChat);
+  }, []);
 
   useEffect(() => {
     if (!started || !open) return;
@@ -144,24 +157,51 @@ export default function HumanLiveChat() {
   }, [messages, sending]);
 
   useEffect(() => {
-    if (open) window.setTimeout(() => inputRef.current?.focus(), 150);
+    if (!open) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 150);
+    return () => window.clearTimeout(timer);
   }, [open, started]);
 
   useEffect(() => {
     if (!open) return;
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
         window.setTimeout(() => launcherRef.current?.focus(), 0);
       }
     };
-    window.addEventListener("keydown", onKeyDown);
-    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+
+    const mobile = isMobileInteraction();
     const previousOverflow = document.body.style.overflow;
-    if (isMobile) document.body.style.overflow = "hidden";
+    if (mobile) document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    const updateViewport = () => {
+      if (!mobile || !window.visualViewport) {
+        setMobileViewportStyle(undefined);
+        return;
+      }
+      const viewport = window.visualViewport;
+      setMobileViewportStyle({
+        top: Math.max(6, viewport.offsetTop + 6),
+        bottom: "auto",
+        height: Math.max(300, viewport.height - 12),
+      });
+    };
+
+    updateViewport();
+    window.visualViewport?.addEventListener("resize", updateViewport);
+    window.visualViewport?.addEventListener("scroll", updateViewport);
+    window.addEventListener("orientationchange", updateViewport);
+
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      if (isMobile) document.body.style.overflow = previousOverflow;
+      window.visualViewport?.removeEventListener("resize", updateViewport);
+      window.visualViewport?.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("orientationchange", updateViewport);
+      if (mobile) document.body.style.overflow = previousOverflow;
+      setMobileViewportStyle(undefined);
     };
   }, [open]);
 
@@ -174,8 +214,8 @@ export default function HumanLiveChat() {
     event.preventDefault();
     const message = input.trim();
     if (!message || sending || status === "closed") return;
-    if (!started && (!visitorName.trim() || !visitorCompany.trim())) {
-      setError("Please add your name and company so the team knows who is contacting them.");
+    if (!started && !visitorName.trim()) {
+      setError("Please add your name so the Irha team knows who is contacting them.");
       return;
     }
 
@@ -237,12 +277,12 @@ export default function HumanLiveChat() {
           ref={launcherRef}
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Open live team chat"
+          aria-label="Open live chat with the Irha Apparels team"
           aria-haspopup="dialog"
-          className="fixed left-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:left-6 md:bottom-6 z-[61] min-h-11 inline-flex items-center gap-2 rounded-full border border-gold/70 bg-card/95 px-3.5 py-3 text-gold shadow-elegant backdrop-blur hover:bg-gold hover:text-background transition-colors"
+          className="fixed bottom-6 left-6 z-[61] hidden min-h-12 items-center gap-2 rounded-full border border-gold/70 bg-gold px-5 text-background shadow-elegant transition-transform hover:scale-[1.02] md:inline-flex"
         >
-          <Headphones size={19} />
-          <span className="hidden sm:inline text-[10px] uppercase tracking-[0.18em]">Live Team</span>
+          <Headphones size={18} />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]">Chat with Irha Team</span>
         </button>
       )}
 
@@ -251,56 +291,62 @@ export default function HumanLiveChat() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="live-team-title"
-          className="fixed z-[81] inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-[calc(5.25rem+env(safe-area-inset-bottom))] md:inset-auto md:left-6 md:bottom-6 md:w-[410px] md:h-[min(700px,calc(100vh-3rem))] flex flex-col overflow-hidden rounded-sm border border-border bg-background shadow-elegant animate-fade-in"
+          data-chat-kind="human"
+          style={mobileViewportStyle}
+          className="fixed z-[90] inset-x-2 top-[calc(env(safe-area-inset-top)+0.4rem)] bottom-[calc(0.4rem+env(safe-area-inset-bottom))] flex flex-col overflow-hidden rounded-xl border border-gold/35 bg-background shadow-elegant animate-fade-in md:inset-auto md:left-6 md:bottom-6 md:h-[min(700px,calc(100vh-3rem))] md:w-[410px]"
         >
           <header className="shrink-0 border-b border-border/60 bg-card px-3 py-3 sm:p-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gold/15 text-gold shrink-0" aria-hidden="true"><Headphones size={17} /></span>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold text-background" aria-hidden="true"><Headphones size={18} /></span>
                 <div className="min-w-0">
-                  <h2 id="live-team-title" className="font-display text-base leading-tight">Irha Live Team</h2>
-                  <p className="mt-0.5 text-[9px] uppercase tracking-[0.16em] text-muted-foreground flex items-center gap-1.5">
-                    <span className={`h-1.5 w-1.5 rounded-full ${status === "active" ? "bg-emerald-500" : status === "closed" ? "bg-muted-foreground" : "bg-amber-400"}`} />
-                    {started ? statusLabel(status) : "Direct message to admin"}
+                  <h2 id="live-team-title" className="font-display text-lg leading-tight">Live Chat — Irha Team</h2>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Real human support
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {started && (
-                  <button type="button" onClick={() => void poll(true)} disabled={polling} aria-label="Refresh conversation" className="min-h-11 min-w-11 inline-flex items-center justify-center border border-border/60 text-muted-foreground hover:text-gold hover:border-gold disabled:opacity-50">
+                  <button type="button" onClick={() => void poll(true)} disabled={polling} aria-label="Refresh conversation" className="inline-flex min-h-11 min-w-11 items-center justify-center border border-border/60 text-muted-foreground hover:border-gold hover:text-gold disabled:opacity-50">
                     <RefreshCw size={16} className={polling ? "animate-spin" : ""} />
                   </button>
                 )}
-                <button type="button" onClick={close} aria-label="Close live team chat" className="min-h-11 min-w-11 inline-flex items-center justify-center border border-border/60 text-muted-foreground hover:text-foreground"><X size={18} /></button>
+                <button type="button" onClick={close} aria-label="Close live team chat" className="inline-flex min-h-11 min-w-11 items-center justify-center border border-border/60 text-muted-foreground hover:text-foreground"><X size={18} /></button>
               </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-background/45 px-3 py-2 text-[10px] leading-relaxed text-foreground/65">
+              <span>{started ? statusLabel(status) : "Your message goes directly to the admin dashboard"}</span>
+              <span className="shrink-0 font-semibold text-gold">HUMAN</span>
             </div>
           </header>
 
-          <div ref={scrollRef} role="log" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
-            <div className="max-w-[90%] rounded-sm border border-border/60 bg-card px-3.5 py-3 text-sm leading-relaxed text-foreground/85">
-              Send your product or order question directly to the Irha Apparels admin team. Pricing remains subject to formal requirement review. For urgent contact, WhatsApp is available below.
+          <div ref={scrollRef} role="log" aria-live="polite" className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
+            <div className="max-w-[94%] rounded-lg border border-gold/30 bg-gold/[0.07] px-3.5 py-3 text-sm leading-relaxed text-foreground/85">
+              This is a real human chat. Send your product, quantity or order question and it will appear in the Irha Apparels admin dashboard. Pricing remains subject to formal requirement review.
             </div>
 
             {!started && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
                 <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                   Your name *
-                  <input value={visitorName} onChange={(event) => setVisitorName(event.target.value)} maxLength={160} autoComplete="name" className="mt-1 min-h-11 w-full border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" />
+                  <input value={visitorName} onChange={(event) => setVisitorName(event.target.value)} maxLength={160} autoComplete="name" placeholder="Your name" className="mt-1 min-h-11 w-full rounded-md border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" />
                 </label>
                 <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                  Company *
-                  <input value={visitorCompany} onChange={(event) => setVisitorCompany(event.target.value)} maxLength={160} autoComplete="organization" className="mt-1 min-h-11 w-full border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" />
+                  Company (optional)
+                  <input value={visitorCompany} onChange={(event) => setVisitorCompany(event.target.value)} maxLength={160} autoComplete="organization" placeholder="Company or brand" className="mt-1 min-h-11 w-full rounded-md border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" />
                 </label>
-                <label className="sm:col-span-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground sm:col-span-2">
                   Business email (optional)
-                  <input type="email" value={visitorEmail} onChange={(event) => setVisitorEmail(event.target.value)} maxLength={254} autoComplete="email" className="mt-1 min-h-11 w-full border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" />
+                  <input type="email" value={visitorEmail} onChange={(event) => setVisitorEmail(event.target.value)} maxLength={254} autoComplete="email" placeholder="name@company.com" className="mt-1 min-h-11 w-full rounded-md border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" />
                 </label>
               </div>
             )}
 
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[88%] rounded-sm px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${message.role === "user" ? "bg-primary text-primary-foreground" : "border border-gold/35 bg-gold/10 text-foreground"}`}>
+                <div className={`max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${message.role === "user" ? "bg-primary text-primary-foreground" : "border border-gold/35 bg-gold/10 text-foreground"}`}>
                   <p>{message.message}</p>
                   <p className={`mt-1.5 text-[9px] ${message.role === "user" ? "text-primary-foreground/60" : "text-muted-foreground"}`}>{message.role === "admin" ? "Irha Team · " : "You · "}{new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
                 </div>
@@ -312,13 +358,13 @@ export default function HumanLiveChat() {
             )}
           </div>
 
-          <footer className="shrink-0 border-t border-border/60 bg-card p-3">
-            {error && <p role="alert" className="mb-2 border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-200">{error}</p>}
+          <footer className="shrink-0 border-t border-border/60 bg-card p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {error && <p role="alert" className="mb-2 rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-200">{error}</p>}
 
             {status === "closed" ? (
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={startNewConversation} className="min-h-11 border border-gold/60 px-3 text-[10px] uppercase tracking-[0.14em] text-gold hover:bg-gold hover:text-background">New conversation</button>
-                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="min-h-11 inline-flex items-center justify-center gap-2 border border-[#25D366]/60 px-3 text-[10px] uppercase tracking-[0.14em] text-[#25D366]"><MessageCircle size={14} /> WhatsApp</a>
+                <button type="button" onClick={startNewConversation} className="min-h-11 rounded-md border border-gold/60 px-3 text-[10px] uppercase tracking-[0.14em] text-gold hover:bg-gold hover:text-background">New conversation</button>
+                <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[#25D366]/60 px-3 text-[10px] uppercase tracking-[0.14em] text-[#25D366]"><MessageCircle size={14} /> WhatsApp</a>
               </div>
             ) : (
               <form onSubmit={submit}>
@@ -328,26 +374,27 @@ export default function HumanLiveChat() {
                     value={input}
                     onChange={(event) => setInput(event.target.value)}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
+                      if (event.key === "Enter" && !event.shiftKey && !isMobileInteraction()) {
                         event.preventDefault();
                         event.currentTarget.form?.requestSubmit();
                       }
                     }}
                     rows={1}
                     maxLength={2_000}
-                    placeholder={started ? "Reply to the Irha team…" : "Describe the product, quantity or requirement…"}
+                    enterKeyHint="send"
+                    placeholder={started ? "Reply to the Irha team…" : "Describe product, quantity or requirement…"}
                     aria-label="Message the Irha live team"
                     disabled={sending}
-                    className="min-h-11 max-h-28 min-w-0 flex-1 resize-none border border-border/60 bg-background px-3 py-2.5 text-sm outline-none focus:border-gold disabled:opacity-60"
+                    className="min-h-11 max-h-28 min-w-0 flex-1 resize-none rounded-md border border-border/60 bg-background px-3 py-2.5 text-sm outline-none focus:border-gold disabled:opacity-60"
                   />
-                  <button type="submit" disabled={sending || !input.trim()} aria-label="Send live team message" className="min-h-11 min-w-11 inline-flex items-center justify-center bg-gold text-background disabled:opacity-40"><Send size={16} /></button>
+                  <button type="submit" disabled={sending || !input.trim()} aria-label="Send live team message" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md bg-gold text-background disabled:opacity-40"><Send size={16} /></button>
                 </div>
               </form>
             )}
 
             <div className="mt-2 flex items-center justify-between gap-3 text-[8px] uppercase tracking-[0.12em] text-muted-foreground">
               <span>Secure session · admin replies appear here</span>
-              <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="text-[#25D366] hover:underline">WhatsApp</a>
+              <a href={whatsappLink()} target="_blank" rel="noreferrer noopener" className="text-[#25D366] hover:underline">Urgent? WhatsApp</a>
             </div>
           </footer>
         </section>
