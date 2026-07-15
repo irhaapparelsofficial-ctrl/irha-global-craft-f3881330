@@ -1,4 +1,4 @@
-name: Live homepage speed audit 297e91a
+name: Live homepage speed audit latest main
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ jobs:
       - name: Wait for exact optimized source on production
         shell: bash
         env:
-          EXPECTED_SHA: 297e91a168e6e99c380de4085d4c659d09c174d6
+          EXPECTED_SHA: cd8ed4480e04e291bcd4c56143042f730f634d1f
         run: |
           set -euo pipefail
           ready=0
@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           npx --yes lighthouse@12.8.2 \
-            "https://irhaapparels.com/?speed_audit=297e91a-${GITHUB_RUN_ID}" \
+            "https://irhaapparels.com/?speed_audit=cd8ed448-${GITHUB_RUN_ID}" \
             --output=json \
             --output-path=/tmp/lighthouse.json \
             --only-categories=performance,accessibility,best-practices,seo \
@@ -67,7 +67,8 @@ jobs:
             .map(item => ({ url: item.url, transferSize: item.transferSize ?? 0, resourceSize: item.resourceSize ?? 0 }))
             .sort((a, b) => b.transferSize - a.transferSize);
           const evidence = {
-            source_commit: '297e91a168e6e99c380de4085d4c659d09c174d6',
+            source_commit: 'cd8ed4480e04e291bcd4c56143042f730f634d1f',
+            includes_speed_commit: '297e91a168e6e99c380de4085d4c659d09c174d6',
             scores: {
               performance: score('performance'),
               accessibility: score('accessibility'),
@@ -98,7 +99,7 @@ jobs:
       - name: Upload Lighthouse evidence
         uses: actions/upload-artifact@v4
         with:
-          name: live-home-speed-297e91a
+          name: live-home-speed-cd8ed448
           path: |
             /tmp/build.json
             /tmp/lighthouse.json
