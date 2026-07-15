@@ -17,20 +17,18 @@ on:
       confirm:
         description: Type APPLY_SUPABASE_RELEASE to continue
         required: true
-        default: NO
+        default: "NO"
         type: string
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
-  group: owner-supabase-release
+  group: irha-production-mutation
   cancel-in-progress: false
 
 env:
   SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
-  RELEASE_AUDIT_ISSUE: "375"
 
 jobs:
   release:
@@ -43,30 +41,38 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
     steps:
-      - name: Checkout exact approved main commit
+      - name: Checkout exact dispatch source
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Confirm workflow is running on exact current main
+      - name: Confirm exact current main after acquiring production lock
+        id: freshness
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
-          test "$latest_main" = "$GITHUB_SHA" || {
-            echo "Refusing superseded release: workflow SHA $GITHUB_SHA, current main $latest_main"
-            exit 1
-          }
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          checked_out="$(git rev-parse HEAD)"
+          if [ "$checked_out" = "$latest_main" ]; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+            echo "SOURCE_SHA=$latest_main" >> "$GITHUB_ENV"
+            echo "Exact current main confirmed: $latest_main"
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "Superseded Supabase release skipped safely: checked out $checked_out, current main $latest_main"
+          fi
 
       - name: Setup Supabase CLI
+        if: steps.freshness.outputs.fresh == 'true'
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Verify repository and owner-project lock
+        if: steps.freshness.outputs.fresh == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -75,13 +81,13 @@ jobs:
             exit 1
           }
           grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
-          npm install --legacy-peer-deps --no-audit --no-fund
+          bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
           npm run verify:deployment-source
           npm run verify:secrets
           npm run verify:migrations
 
       - name: Link owner database for migration scope
-        if: inputs.scope == 'database' || inputs.scope == 'both'
+        if: steps.freshness.outputs.fresh == 'true' && (inputs.scope == 'database' || inputs.scope == 'both')
         shell: bash
         run: |
           set -euo pipefail
@@ -89,56 +95,59 @@ jobs:
             echo "SUPABASE_DB_PASSWORD is missing"
             exit 1
           }
-          supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
+          bash scripts/ci/retry.sh 3 5 -- supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Preview pending database migrations
-        if: inputs.scope == 'database' || inputs.scope == 'both'
+        if: steps.freshness.outputs.fresh == 'true' && (inputs.scope == 'database' || inputs.scope == 'both')
         shell: bash
         run: |
           set -euo pipefail
           supabase migration list --linked
           supabase db push --linked --dry-run
 
+      - name: Reconfirm current main immediately before backend mutation
+        if: steps.freshness.outputs.fresh == 'true'
+        id: mutation_freshness
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          if [ "$SOURCE_SHA" = "$latest_main" ]; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "Source $SOURCE_SHA was superseded by $latest_main; backend mutation skipped without failure"
+          fi
+
       - name: Apply pending database migrations exactly once
-        if: inputs.scope == 'database' || inputs.scope == 'both'
+        if: steps.mutation_freshness.outputs.fresh == 'true' && (inputs.scope == 'database' || inputs.scope == 'both')
         shell: bash
         run: |
           set -euo pipefail
           supabase db push --linked
           supabase migration list --linked
 
-      - name: Deploy repository Edge Functions with config.toml JWT policy
-        if: inputs.scope == 'functions' || inputs.scope == 'both'
+      - name: Deploy repository Edge Functions with bounded retry
+        if: steps.mutation_freshness.outputs.fresh == 'true' && (inputs.scope == 'functions' || inputs.scope == 'both')
         shell: bash
         run: |
           set -euo pipefail
-          supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
-          supabase functions list --project-ref "$SUPABASE_PROJECT_ID"
+          bash scripts/ci/retry.sh 3 8 -- supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+          bash scripts/ci/retry.sh 3 5 -- supabase functions list --project-ref "$SUPABASE_PROJECT_ID"
 
-      - name: Record verified owner-backend release evidence
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Record control-plane outcome
+        if: always()
         shell: bash
         run: |
-          set -euo pipefail
-          generated_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          body=$(cat <<EOF
-          ## Verified owner Supabase release
-
-          - Delivery authority: GitHub Actions + Supabase CLI; Lovable was not used.
-          - Source SHA: \`$GITHUB_SHA\`
-          - Scope: \`${{ inputs.scope }}\`
-          - Project: \`$SUPABASE_PROJECT_ID\`
-          - Verified at: \`$generated_at\`
-          - Safety: exact-current-main guard, repository source lock, secret scan, migration-order check, typed manual approval and serialized production environment.
-          EOF
-          )
-          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "$body"
-
-      - name: Record failed owner-backend release attempt
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Guarded owner Supabase release failed for source \`$GITHUB_SHA\`, scope \`${{ inputs.scope }}\`. No success evidence was recorded. Inspect workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          {
+            echo "## Owner Supabase guarded release"
+            echo "- Source: \`${SOURCE_SHA:-$GITHUB_SHA}\`"
+            echo "- Scope: \`${{ inputs.scope }}\`"
+            echo "- Project: \`$SUPABASE_PROJECT_ID\`"
+            echo "- Shared production lock: \`irha-production-mutation\`"
+            echo "- Fresh at lock acquisition: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
+            echo "- Fresh at mutation time: \`${{ steps.mutation_freshness.outputs.fresh || 'not-reached' }}\`"
+            echo "- Database push policy: dry-run then one exact apply; no blind retry"
+          } >> "$GITHUB_STEP_SUMMARY"
