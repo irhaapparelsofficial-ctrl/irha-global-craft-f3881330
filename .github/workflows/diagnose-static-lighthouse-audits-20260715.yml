@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/diagnose-static-lighthouse-audits-20260715.yml"
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
@@ -12,6 +14,11 @@ permissions:
 
 jobs:
   diagnose:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.issue.number == 375 &&
+       github.event.comment.body == '/diagnose-static-lighthouse' &&
+       github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
