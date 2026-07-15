@@ -1,0 +1,106 @@
+name: Live homepage speed audit 297e91a
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/audit-live-home-speed-297e91a.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for exact optimized source on production
+        shell: bash
+        env:
+          EXPECTED_SHA: 297e91a168e6e99c380de4085d4c659d09c174d6
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 72); do
+            cache_bust="${EXPECTED_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
+                 "https://irhaapparels.com/build.json?speed_audit=$cache_bust" -o /tmp/build.json; then
+              live_sha="$(jq -r '.source_commit // empty' /tmp/build.json)"
+              identity="$(jq -r '.source_identity_state // empty' /tmp/build.json)"
+              echo "attempt=$attempt live_sha=$live_sha identity=$identity"
+              if [ "$live_sha" = "$EXPECTED_SHA" ] && [ "$identity" = "verified" ]; then
+                ready=1
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$ready" = "1" || { echo "Optimized source did not converge on production"; exit 1; }
+          cat /tmp/build.json
+
+      - name: Run cold mobile Lighthouse audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes lighthouse@12.8.2 \
+            "https://irhaapparels.com/?speed_audit=297e91a-${GITHUB_RUN_ID}" \
+            --output=json \
+            --output-path=/tmp/lighthouse.json \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --form-factor=mobile \
+            --screenEmulation.mobile=true \
+            --throttling-method=simulate \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --incognito"
+
+      - name: Print exact performance evidence
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('/tmp/lighthouse.json', 'utf8'));
+          const score = id => Math.round((report.categories?.[id]?.score ?? 0) * 100);
+          const audit = id => report.audits?.[id] ?? {};
+          const numeric = id => audit(id).numericValue ?? null;
+          const requests = audit('network-requests').details?.items ?? [];
+          const scripts = requests
+            .filter(item => item.resourceType === 'Script')
+            .map(item => ({ url: item.url, transferSize: item.transferSize ?? 0, resourceSize: item.resourceSize ?? 0 }))
+            .sort((a, b) => b.transferSize - a.transferSize);
+          const evidence = {
+            source_commit: '297e91a168e6e99c380de4085d4c659d09c174d6',
+            scores: {
+              performance: score('performance'),
+              accessibility: score('accessibility'),
+              best_practices: score('best-practices'),
+              seo: score('seo'),
+            },
+            timings_ms: {
+              first_contentful_paint: numeric('first-contentful-paint'),
+              largest_contentful_paint: numeric('largest-contentful-paint'),
+              speed_index: numeric('speed-index'),
+              total_blocking_time: numeric('total-blocking-time'),
+              time_to_interactive: numeric('interactive'),
+            },
+            cumulative_layout_shift: numeric('cumulative-layout-shift'),
+            total_byte_weight: audit('total-byte-weight').numericValue ?? null,
+            unused_javascript_bytes: audit('unused-javascript').details?.overallSavingsBytes ?? 0,
+            main_thread_work_ms: numeric('mainthread-work-breakdown'),
+            bootup_time_ms: numeric('bootup-time'),
+            script_count: scripts.length,
+            largest_scripts: scripts.slice(0, 12),
+          };
+          console.log('LIVE_HOME_SPEED_EVIDENCE_START');
+          console.log(JSON.stringify(evidence, null, 2));
+          console.log('LIVE_HOME_SPEED_EVIDENCE_END');
+          fs.writeFileSync('/tmp/live-home-speed-evidence.json', JSON.stringify(evidence, null, 2));
+          NODE
+
+      - name: Upload Lighthouse evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-home-speed-297e91a
+          path: |
+            /tmp/build.json
+            /tmp/lighthouse.json
+            /tmp/live-home-speed-evidence.json
+          retention-days: 7
