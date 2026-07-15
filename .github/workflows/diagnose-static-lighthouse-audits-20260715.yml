@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Run Lighthouse and list failed audits
+      - name: Run Lighthouse and capture exact failed audit payloads
         shell: bash
         run: |
           set -euo pipefail
           npx --yes lighthouse@12.8.2 \
-            "https://irhaapparels.com/de/bekleidungshersteller-deutschland?audit_failures=${GITHUB_SHA::12}" \
+            "https://irhaapparels.com/de/bekleidungshersteller-deutschland?audit_payload=${GITHUB_SHA::12}" \
             --output=json \
             --output-path=/tmp/lighthouse.json \
             --only-categories=seo,best-practices,accessibility,performance \
@@ -32,34 +32,25 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync('/tmp/lighthouse.json', 'utf8'));
-          const rows = [];
-          for (const [categoryId, category] of Object.entries(report.categories || {})) {
-            for (const ref of category.auditRefs || []) {
-              const audit = report.audits?.[ref.id];
-              if (!audit || audit.score === null || audit.score === 1 || ref.weight === 0) continue;
-              rows.push({
-                category: categoryId,
-                id: ref.id,
-                score: audit.score,
-                weight: ref.weight,
-                title: audit.title,
-                display: audit.displayValue || '',
-                explanation: audit.explanation || '',
-              });
-            }
+          const ids = ['robots-txt', 'errors-in-console', 'inspector-issues'];
+          const clean = (value) => String(value ?? '').replace(/```/g, '').replace(/\r/g, '');
+          let markdown = '## Exact remaining Lighthouse audit payloads\n\n';
+          for (const id of ids) {
+            const audit = report.audits?.[id];
+            markdown += `### \`${id}\`\n\n`;
+            markdown += `- Score: ${audit?.score}\n`;
+            markdown += `- Title: ${clean(audit?.title)}\n`;
+            markdown += `- Display: ${clean(audit?.displayValue || 'none')}\n`;
+            markdown += `- Explanation: ${clean(audit?.explanation || 'none')}\n\n`;
+            markdown += '```json\n';
+            markdown += JSON.stringify(audit?.details || null, null, 2).slice(0, 12000);
+            markdown += '\n```\n\n';
           }
-          rows.sort((a, b) => a.category.localeCompare(b.category) || b.weight - a.weight);
-          let markdown = '## Remaining Lighthouse audit failures — runtime-free Germany page\n\n';
-          markdown += '| Category | Audit | Score | Weight | Detail |\n|---|---|---:|---:|---|\n';
-          markdown += rows.length
-            ? rows.map((row) => `| ${row.category} | \`${row.id}\` — ${String(row.title).replace(/\|/g, '\\|')} | ${row.score} | ${row.weight} | ${String(row.display || row.explanation).replace(/\|/g, '\\|').replace(/\s+/g, ' ').slice(0, 500)} |`).join('\n')
-            : '| all | none | 1 | — | All weighted audits passed |';
-          markdown += '\n';
-          fs.writeFileSync('/tmp/audit-failures.md', markdown);
+          fs.writeFileSync('/tmp/audit-payloads.md', markdown);
           console.log(markdown);
           NODE
 
       - name: Record diagnostics
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/audit-failures.md
+        run: gh issue comment 375 --repo "$GITHUB_REPOSITORY" --body-file /tmp/audit-payloads.md
