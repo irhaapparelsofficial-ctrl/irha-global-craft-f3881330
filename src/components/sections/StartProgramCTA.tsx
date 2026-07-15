@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, CheckCircle2, FileText, Headphones, MessageCircle, Upload } from "lucide-react";
-import { whatsappLink } from "@/lib/constants";
+import { ArrowRight, BookOpen, CheckCircle2, FileText, Headphones, Upload } from "lucide-react";
 
-const REQUIREMENTS = ["Product or reference", "Approximate quantity", "Delivery destination"];
+const REQUIREMENTS = ["Product or reference", "Approximate quantity", "Material or quality level", "Branding needs", "Delivery destination"];
+const RESPONSE = ["Requirement review", "Sample route", "Commercial quotation"];
 
 export default function StartProgramCTA() {
   const openLiveChat = () => window.dispatchEvent(new CustomEvent("irha:open-human-chat"));
@@ -15,7 +15,7 @@ export default function StartProgramCTA() {
           <div className="relative lg:col-span-8">
             <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-primary sm:text-[10px]">Start your manufacturing request</p>
             <h2 className="mt-3 max-w-3xl font-display text-3xl leading-[1.08] sm:text-4xl lg:text-5xl">
-              Send the product, quantity and destination for a scoped response.
+              Send the product brief and receive a scoped manufacturing response.
             </h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65">
               Material, construction, customization, branding, packaging and shipping requirements are reviewed before a quotation is prepared.
@@ -53,14 +53,14 @@ export default function StartProgramCTA() {
             >
               <Headphones size={14} /> Chat with Irha team
             </button>
-            <a
-              href={whatsappLink("Hi, I'd like to discuss a B2B apparel manufacturing program. I can share the product, approximate quantity and destination.")}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="inline-flex min-h-9 items-center justify-center gap-2 text-[9px] font-medium text-white/48 transition-colors hover:text-emerald-300"
-            >
-              <MessageCircle size={13} /> WhatsApp fallback
-            </a>
+
+            <div className="mt-2 rounded-lg border border-white/12 bg-white/[0.035] p-3">
+              <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-primary">What the response covers</p>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5 text-[9px] text-white/58">
+                {RESPONSE.map((item) => <span key={item}>• {item}</span>)}
+              </div>
+              <p className="mt-2 text-[9px] leading-4 text-white/42">Human sales review · no automatic pricing or commercial commitment</p>
+            </div>
           </div>
         </div>
       </div>
