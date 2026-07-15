@@ -87,9 +87,7 @@ describe("Cloudflare SEO routing", () => {
     expect(response.headers.get("content-location")).toBe(
       `https://irhaapparels.com${GERMANY_BUYER_PATH}`,
     );
-    expect(response.headers.get("x-irha-static-buyer-shell")).toBe(
-      "runtime-free-flat-asset",
-    );
+    expect(response.headers.get("x-irha-static-buyer-shell")).toBe("runtime-free");
     expect(response.headers.get("x-irha-static-buyer-asset")).toBe(
       GERMANY_BUYER_ASSET,
     );
