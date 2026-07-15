@@ -51,13 +51,24 @@ export default function ThumbnailImage({
     [candidate, fallback, original],
   );
   const [sourceIndex, setSourceIndex] = useState(0);
+  const [responsiveFailed, setResponsiveFailed] = useState(false);
 
-  useEffect(() => setSourceIndex(0), [sources]);
+  useEffect(() => {
+    setSourceIndex(0);
+    setResponsiveFailed(false);
+  }, [sources]);
 
   const currentSrc = sources[Math.min(sourceIndex, Math.max(0, sources.length - 1))] || fallback;
-  const useResponsiveSet = responsive && sourceIndex === 0 && Boolean(responsiveAttributes.srcSet || srcSet);
+  const useResponsiveSet = responsive
+    && !responsiveFailed
+    && sourceIndex === 0
+    && Boolean(responsiveAttributes.srcSet || srcSet);
 
   const handleError = (event: SyntheticEvent<HTMLImageElement>) => {
+    if (useResponsiveSet) {
+      setResponsiveFailed(true);
+      return;
+    }
     if (sourceIndex < sources.length - 1) {
       setSourceIndex((index) => Math.min(index + 1, sources.length - 1));
       return;
@@ -77,6 +88,7 @@ export default function ThumbnailImage({
       onError={handleError}
       data-thumbnail-source={candidate !== original ? original : undefined}
       data-responsive-image={useResponsiveSet ? "true" : undefined}
+      data-responsive-fallback={responsiveFailed ? "true" : undefined}
       data-fallback-active={currentSrc === fallback && fallback !== original ? "true" : undefined}
     />
   );
