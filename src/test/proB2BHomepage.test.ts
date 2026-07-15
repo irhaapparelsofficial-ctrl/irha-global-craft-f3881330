@@ -89,6 +89,14 @@ describe("polished B2B homepage", () => {
     expect(styles).toContain('html[data-cookie-consent-open="true"] .sticky-mobile-cta');
   });
 
+  it("keeps the mobile contact dock dark and readable over product media", () => {
+    expect(sticky).toContain("bg-black/95");
+    expect(sticky).toContain("text-white");
+    expect(sticky).toContain("text-emerald-300");
+    expect(sticky).not.toContain("bg-background/96");
+    expect(sticky).not.toContain("border-gold/35");
+  });
+
   it("uses a simple B2B primary navigation", () => {
     for (const label of ["Products", "Manufacturing", "How it works", "Buyer trust"]) expect(navbar).toContain(`label: \"${label}\"`);
     expect(navbar).toContain("Request quote");
