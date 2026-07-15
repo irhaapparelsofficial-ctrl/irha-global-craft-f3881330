@@ -38,6 +38,7 @@ const AdminWhatsAppQuick = lazy(() => import("./pages/AdminWhatsAppQuick"));
 const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"));
 const AdminLeadReview = lazy(() => import("./pages/AdminLeadReview"));
 const AdminOutreachApproval = lazy(() => import("./pages/AdminOutreachApproval"));
+const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
 const Compliance = lazy(() => import("./pages/Compliance"));
@@ -136,6 +137,7 @@ const App = () => (
               <Route path="/admin/lead-intake" element={<AdminLeadIntake />} />
               <Route path="/admin/lead-review" element={<AdminLeadReview />} />
               <Route path="/admin/outreach-approval" element={<AdminOutreachApproval />} />
+              <Route path="/seo-indexing" element={<SeoIndexing />} />
 
               <Route
                 path="*"
@@ -182,7 +184,6 @@ const App = () => (
                       <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
-                      <Route path="/seo-indexing" element={<Navigate to="/admin" replace />} />
                       <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
                       {SEO_BUYER_INTENT_LANDING_PAGES.map((page) => (
                         <Route key={page.path} path={page.path} element={<BuyerIntentLandingPage />} />
