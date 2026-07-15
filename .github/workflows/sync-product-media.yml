@@ -19,24 +19,36 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
+
+concurrency:
+  group: irha-repository-mutation
+  cancel-in-progress: false
+
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+
     steps:
-      - name: Check out repository
+      - name: Check out exact source branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ env.SOURCE_SHA }}
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install image dependency
-        run: python -m pip install --disable-pip-version-check --no-cache-dir Pillow==11.3.0
+      - name: Install image dependency with bounded retry
+        run: bash scripts/ci/retry.sh 3 5 -- python -m pip install --disable-pip-version-check --no-cache-dir Pillow==11.3.0
 
       - name: Fetch and optimize product media
         run: python scripts/sync_product_media.py
@@ -45,17 +57,33 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: product-media-validation
+          name: product-media-validation-${{ env.SOURCE_SHA }}
           path: public/product-media
           if-no-files-found: error
+          retention-days: 3
 
-      - name: Commit validated media to PR branch
-        if: github.event_name == 'pull_request'
+      - name: Confirm source branch is still fresh before repository mutation
+        id: freshness
         env:
-          HEAD_REF: ${{ github.head_ref }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          git fetch origin "$HEAD_REF"
-          git checkout -B "$HEAD_REF" "origin/$HEAD_REF"
+          set -euo pipefail
+          latest="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_BRANCH" --jq '.sha')"
+          if [ "$latest" = "$SOURCE_SHA" ]; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+            echo "Source branch is unchanged: $SOURCE_SHA"
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "Source branch advanced from $SOURCE_SHA to $latest; generated commit skipped without failure"
+          fi
+
+      - name: Commit validated media to source branch
+        if: steps.freshness.outputs.fresh == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -B "$SOURCE_BRANCH" "$SOURCE_SHA"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/product-media
@@ -64,17 +92,16 @@ jobs:
             exit 0
           fi
           git commit -m "Sync first-party product media"
-          git push origin "HEAD:$HEAD_REF"
+          git push origin "HEAD:$SOURCE_BRANCH"
 
-      - name: Commit first-party media assets
-        if: github.event_name == 'push'
+      - name: Record mutation outcome
+        if: always()
+        shell: bash
         run: |
-          if git diff --quiet -- public/product-media; then
-            echo "No media changes to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/product-media
-          git commit -m "Sync first-party product media"
-          git push
+          {
+            echo "## Product media synchronization"
+            echo "- Source branch: \`$SOURCE_BRANCH\`"
+            echo "- Source SHA: \`$SOURCE_SHA\`"
+            echo "- Fresh before push: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
+            echo "- Repository mutation lock: \`irha-repository-mutation\`"
+          } >> "$GITHUB_STEP_SUMMARY"
