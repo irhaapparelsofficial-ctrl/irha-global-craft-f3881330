@@ -7,7 +7,7 @@ import {
 
 describe("buyer-facing product gallery authority", () => {
   it("uses only the exact committed media set when a slug has first-party media", () => {
-    const slug = "classic-biker-leather-jacket";
+    const slug = "traditional-lederhosen";
     const exact = PRODUCT_REAL_MEDIA[slug]?.gallery ?? [];
     expect(exact.length).toBeGreaterThan(0);
 
