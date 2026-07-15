@@ -1,0 +1,119 @@
+name: Final live Lighthouse audit once
+
+on:
+  push:
+    branches: [ops/external-hardening-20260716]
+    paths:
+      - ".github/workflows/live-lighthouse-final-once-20260716.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      EXPECTED_SOURCE_SHA: 48180f558dbddedd2b5c724c5e82724657af5092
+      LIVE_ORIGIN: https://irhaapparels.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ops/external-hardening-20260716
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Wait for exact verified live source
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=0
+          for attempt in $(seq 1 120); do
+            cache_bust="${EXPECTED_SOURCE_SHA::12}-$attempt-$RANDOM"
+            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                 "$LIVE_ORIGIN/build.json?lighthouse_wait=$cache_bust" -o /tmp/live-build.json \
+              && jq -e --arg sha "$EXPECTED_SOURCE_SHA" \
+                   '.source_commit==$sha and .source_identity_state=="verified"' /tmp/live-build.json >/dev/null; then
+              matched=1
+              break
+            fi
+            sleep 10
+          done
+          test "$matched" = "1"
+
+      - name: Run mobile Lighthouse on buyer routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          test -n "$chrome" || { echo 'Chrome executable unavailable'; exit 1; }
+          export CHROME_PATH="$chrome"
+          mkdir -p /tmp/lighthouse docs
+
+          routes=(home products catalogue inquiry)
+          paths=(/ /products /catalogue /inquiry)
+          for i in "${!routes[@]}"; do
+            label="${routes[$i]}"
+            path="${paths[$i]}"
+            npx --yes lighthouse@12.8.2 "$LIVE_ORIGIN$path?lh_final=${EXPECTED_SOURCE_SHA::12}-$RANDOM" \
+              --output=json \
+              --output-path="/tmp/lighthouse/$label.json" \
+              --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+              --form-factor=mobile \
+              --screenEmulation.mobile=true \
+              --throttling-method=simulate \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --quiet
+          done
+
+          node <<'NODE'
+          const { readFileSync, writeFileSync } = require('node:fs');
+          const labels = ['home', 'products', 'catalogue', 'inquiry'];
+          const rows = labels.map((label) => {
+            const report = JSON.parse(readFileSync(`/tmp/lighthouse/${label}.json`, 'utf8'));
+            const c = report.categories;
+            const a = report.audits;
+            const pct = (value) => Math.round((value ?? 0) * 100);
+            const metric = (id) => a[id]?.displayValue ?? 'n/a';
+            return {
+              label,
+              performance: pct(c.performance?.score),
+              accessibility: pct(c.accessibility?.score),
+              bestPractices: pct(c['best-practices']?.score),
+              seo: pct(c.seo?.score),
+              fcp: metric('first-contentful-paint'),
+              lcp: metric('largest-contentful-paint'),
+              tbt: metric('total-blocking-time'),
+              cls: metric('cumulative-layout-shift'),
+            };
+          });
+          const lines = [
+            '# Exact live mobile Lighthouse audit — 2026-07-16',
+            '',
+            `- Expected and verified source: \`${process.env.EXPECTED_SOURCE_SHA}\``,
+            '- Form factor: Lighthouse mobile, simulated throttling',
+            '',
+            '| Route | Performance | Accessibility | Best Practices | SEO | FCP | LCP | TBT | CLS |',
+            '|---|---:|---:|---:|---:|---:|---:|---:|---:|',
+            ...rows.map((r) => `| ${r.label} | ${r.performance} | ${r.accessibility} | ${r.bestPractices} | ${r.seo} | ${r.fcp} | ${r.lcp} | ${r.tbt} | ${r.cls} |`),
+            '',
+            'These are lab measurements from one GitHub-hosted mobile run; field Core Web Vitals require real-user data.',
+            '',
+          ];
+          writeFileSync('docs/LIVE_LIGHTHOUSE_FINAL_20260716.md', lines.join('\n'));
+          NODE
+
+      - name: Remove one-time workflow and commit evidence
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/live-lighthouse-final-once-20260716.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs(perf): record exact live mobile Lighthouse audit"
+          git push origin HEAD:ops/external-hardening-20260716
