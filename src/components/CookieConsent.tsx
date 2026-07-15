@@ -154,7 +154,7 @@ export default function CookieConsent() {
       aria-labelledby="cookie-consent-title"
       aria-describedby="cookie-consent-description"
       aria-live="polite"
-      className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/15 bg-[#090909]/98 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl"
+      className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl"
     >
       <div className="p-3 sm:p-3.5">
         <div className="flex items-start justify-between gap-3">
@@ -162,20 +162,20 @@ export default function CookieConsent() {
             <h2 id="cookie-consent-title" className="font-sans text-xs font-semibold text-white sm:text-sm">
               Optional cookies
             </h2>
-            <p id="cookie-consent-description" className="mt-0.5 text-[10px] leading-4 text-white/62 sm:text-[11px] sm:leading-5">
+            <p id="cookie-consent-description" className="mt-0.5 text-[10px] leading-4 text-white/70 sm:text-[11px] sm:leading-5">
               Analytics and advertising remain off until accepted. Essential cookies are always on.{" "}
-              <Link to="/privacy-policy" className="text-white/82 underline underline-offset-2 hover:text-primary">Privacy</Link>
+              <Link to="/privacy-policy" className="text-white/90 underline underline-offset-2 hover:text-primary">Privacy</Link>
             </p>
           </div>
           {customizing && (
-            <button type="button" onClick={() => setCustomizing(false)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-white/55 hover:text-white" aria-label="Close cookie preferences">
+            <button type="button" onClick={() => setCustomizing(false)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-white/60 hover:text-white" aria-label="Close cookie preferences">
               <X size={14} />
             </button>
           )}
         </div>
 
         {customizing && (
-          <div className="mt-2 grid gap-1 rounded-lg border border-white/12 bg-white/[0.035] p-1.5 text-[11px]">
+          <div className="mt-2 grid gap-1 rounded-lg border border-white/10 bg-white/[0.035] p-1.5 text-[11px]">
             <label className="flex min-h-9 items-center justify-between gap-3 rounded-md px-2 text-white/50">
               <span>Essential · always on</span>
               <input type="checkbox" checked readOnly aria-label="Essential cookies always on" className="h-4 w-4 accent-[#d5ad4d]" />
@@ -192,7 +192,7 @@ export default function CookieConsent() {
         )}
 
         <div className="mt-2 grid grid-cols-[1fr_1.15fr] gap-2">
-          <button type="button" onClick={rejectAll} className="min-h-10 rounded-md border border-white/25 px-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-white/82 transition hover:border-white/50 hover:bg-white/5 sm:text-[10px]">
+          <button type="button" onClick={rejectAll} className="min-h-10 rounded-md border border-white/25 px-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-white/90 transition hover:border-white/50 hover:bg-white/5 sm:text-[10px]">
             Essential only
           </button>
           <button type="button" onClick={customizing ? savePrefs : acceptAll} className="min-h-10 rounded-md bg-gradient-gold px-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-primary-foreground transition hover:shadow-gold sm:text-[10px]">
@@ -201,7 +201,7 @@ export default function CookieConsent() {
         </div>
 
         {!customizing && (
-          <button type="button" onClick={() => setCustomizing(true)} className="mt-1 inline-flex min-h-7 w-full items-center justify-center gap-1 text-[9px] font-medium text-white/48 hover:text-white">
+          <button type="button" onClick={() => setCustomizing(true)} className="mt-1 inline-flex min-h-7 w-full items-center justify-center gap-1 text-[9px] font-medium text-white/50 hover:text-white">
             Settings <ChevronDown size={11} />
           </button>
         )}
