@@ -17,7 +17,7 @@ jobs:
       - name: Wait for exact optimized source on production
         shell: bash
         env:
-          EXPECTED_SHA: cd8ed4480e04e291bcd4c56143042f730f634d1f
+          EXPECTED_SHA: cc153c30219f94a57f12e5ed7cc1c8407bcb38e0
         run: |
           set -euo pipefail
           ready=0
@@ -38,57 +38,83 @@ jobs:
           test "$ready" = "1" || { echo "Optimized source did not converge on production"; exit 1; }
           cat /tmp/build.json
 
-      - name: Run cold mobile Lighthouse audit
+      - name: Run three cold mobile Lighthouse audits
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes lighthouse@12.8.2 \
-            "https://irhaapparels.com/?speed_audit=cd8ed448-${GITHUB_RUN_ID}" \
-            --output=json \
-            --output-path=/tmp/lighthouse.json \
-            --only-categories=performance,accessibility,best-practices,seo \
-            --form-factor=mobile \
-            --screenEmulation.mobile=true \
-            --throttling-method=simulate \
-            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --incognito"
+          for run in 1 2 3; do
+            npx --yes lighthouse@12.8.2 \
+              "https://irhaapparels.com/?speed_audit=cc153c30-${GITHUB_RUN_ID}-$run" \
+              --output=json \
+              --output-path="/tmp/lighthouse-$run.json" \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --form-factor=mobile \
+              --screenEmulation.mobile=true \
+              --throttling-method=simulate \
+              --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --incognito"
+          done
 
-      - name: Print exact performance evidence
+      - name: Print median performance evidence
         shell: bash
         run: |
           node <<'NODE'
           const fs = require('fs');
-          const report = JSON.parse(fs.readFileSync('/tmp/lighthouse.json', 'utf8'));
-          const score = id => Math.round((report.categories?.[id]?.score ?? 0) * 100);
-          const audit = id => report.audits?.[id] ?? {};
-          const numeric = id => audit(id).numericValue ?? null;
-          const requests = audit('network-requests').details?.items ?? [];
-          const scripts = requests
+          const reports = [1, 2, 3].map(i => JSON.parse(fs.readFileSync(`/tmp/lighthouse-${i}.json`, 'utf8')));
+          const score = (report, id) => Math.round((report.categories?.[id]?.score ?? 0) * 100);
+          const audit = (report, id) => report.audits?.[id] ?? {};
+          const numeric = (report, id) => audit(report, id).numericValue ?? null;
+          const median = values => {
+            const valid = values.filter(value => typeof value === 'number' && Number.isFinite(value)).sort((a, b) => a - b);
+            return valid.length ? valid[Math.floor(valid.length / 2)] : null;
+          };
+          const runEvidence = reports.map((report, index) => ({
+            run: index + 1,
+            scores: {
+              performance: score(report, 'performance'),
+              accessibility: score(report, 'accessibility'),
+              best_practices: score(report, 'best-practices'),
+              seo: score(report, 'seo'),
+            },
+            timings_ms: {
+              first_contentful_paint: numeric(report, 'first-contentful-paint'),
+              largest_contentful_paint: numeric(report, 'largest-contentful-paint'),
+              speed_index: numeric(report, 'speed-index'),
+              total_blocking_time: numeric(report, 'total-blocking-time'),
+              time_to_interactive: numeric(report, 'interactive'),
+            },
+            cumulative_layout_shift: numeric(report, 'cumulative-layout-shift'),
+            total_byte_weight: audit(report, 'total-byte-weight').numericValue ?? null,
+            unused_javascript_bytes: audit(report, 'unused-javascript').details?.overallSavingsBytes ?? 0,
+            main_thread_work_ms: numeric(report, 'mainthread-work-breakdown'),
+            bootup_time_ms: numeric(report, 'bootup-time'),
+          }));
+          const firstRequests = audit(reports[0], 'network-requests').details?.items ?? [];
+          const scripts = firstRequests
             .filter(item => item.resourceType === 'Script')
             .map(item => ({ url: item.url, transferSize: item.transferSize ?? 0, resourceSize: item.resourceSize ?? 0 }))
             .sort((a, b) => b.transferSize - a.transferSize);
           const evidence = {
-            source_commit: 'cd8ed4480e04e291bcd4c56143042f730f634d1f',
-            includes_speed_commit: '297e91a168e6e99c380de4085d4c659d09c174d6',
-            scores: {
-              performance: score('performance'),
-              accessibility: score('accessibility'),
-              best_practices: score('best-practices'),
-              seo: score('seo'),
+            source_commit: 'cc153c30219f94a57f12e5ed7cc1c8407bcb38e0',
+            includes_speed_commits: [
+              '297e91a168e6e99c380de4085d4c659d09c174d6',
+              'cc153c30219f94a57f12e5ed7cc1c8407bcb38e0'
+            ],
+            runs: runEvidence,
+            median: {
+              performance_score: median(runEvidence.map(run => run.scores.performance)),
+              first_contentful_paint_ms: median(runEvidence.map(run => run.timings_ms.first_contentful_paint)),
+              largest_contentful_paint_ms: median(runEvidence.map(run => run.timings_ms.largest_contentful_paint)),
+              speed_index_ms: median(runEvidence.map(run => run.timings_ms.speed_index)),
+              total_blocking_time_ms: median(runEvidence.map(run => run.timings_ms.total_blocking_time)),
+              time_to_interactive_ms: median(runEvidence.map(run => run.timings_ms.time_to_interactive)),
+              cumulative_layout_shift: median(runEvidence.map(run => run.cumulative_layout_shift)),
+              total_byte_weight: median(runEvidence.map(run => run.total_byte_weight)),
+              unused_javascript_bytes: median(runEvidence.map(run => run.unused_javascript_bytes)),
+              main_thread_work_ms: median(runEvidence.map(run => run.main_thread_work_ms)),
+              bootup_time_ms: median(runEvidence.map(run => run.bootup_time_ms)),
             },
-            timings_ms: {
-              first_contentful_paint: numeric('first-contentful-paint'),
-              largest_contentful_paint: numeric('largest-contentful-paint'),
-              speed_index: numeric('speed-index'),
-              total_blocking_time: numeric('total-blocking-time'),
-              time_to_interactive: numeric('interactive'),
-            },
-            cumulative_layout_shift: numeric('cumulative-layout-shift'),
-            total_byte_weight: audit('total-byte-weight').numericValue ?? null,
-            unused_javascript_bytes: audit('unused-javascript').details?.overallSavingsBytes ?? 0,
-            main_thread_work_ms: numeric('mainthread-work-breakdown'),
-            bootup_time_ms: numeric('bootup-time'),
-            script_count: scripts.length,
-            largest_scripts: scripts.slice(0, 12),
+            first_run_script_count: scripts.length,
+            first_run_largest_scripts: scripts.slice(0, 12),
           };
           console.log('LIVE_HOME_SPEED_EVIDENCE_START');
           console.log(JSON.stringify(evidence, null, 2));
@@ -99,9 +125,11 @@ jobs:
       - name: Upload Lighthouse evidence
         uses: actions/upload-artifact@v4
         with:
-          name: live-home-speed-cd8ed448
+          name: live-home-speed-cc153c30
           path: |
             /tmp/build.json
-            /tmp/lighthouse.json
+            /tmp/lighthouse-1.json
+            /tmp/lighthouse-2.json
+            /tmp/lighthouse-3.json
             /tmp/live-home-speed-evidence.json
           retention-days: 7
