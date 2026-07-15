@@ -49,9 +49,76 @@ jobs:
           node capture-live.mjs
       - name: Record live release identity
         run: |
-          curl -fsSL https://irhaapparels.com/build.json -o live-build.json
+          curl -fsSL -H 'Cache-Control: no-cache' "https://irhaapparels.com/build.json?audit=${GITHUB_SHA::12}" -o live-build.json
           cat live-build.json
-      - name: Upload screenshots
+      - name: Capture live robots and CSP evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL -D live-robots-headers.txt -H 'Cache-Control: no-cache' "https://irhaapparels.com/robots.txt?audit=${GITHUB_SHA::12}" -o live-robots.txt
+          curl -fsSI -H 'Cache-Control: no-cache' "https://irhaapparels.com/de/bekleidungshersteller-deutschland?audit=${GITHUB_SHA::12}" > live-germany-headers.txt
+          grep -F 'User-agent: *' live-robots.txt
+          grep -F 'Sitemap: https://irhaapparels.com/sitemap.xml' live-robots.txt
+          if grep -F 'Content-Signal' live-robots.txt; then
+            echo 'Unsupported Content-Signal directive is still present.'
+            exit 1
+          fi
+          grep -i '^content-security-policy:' live-germany-headers.txt
+          grep -i 'static.cloudflareinsights.com' live-germany-headers.txt
+      - name: Run current live mobile Lighthouse audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes lighthouse@12.8.2 \
+            "https://irhaapparels.com/de/bekleidungshersteller-deutschland?audit_artifact=${GITHUB_SHA::12}" \
+            --output=json \
+            --output-path=live-lighthouse.json \
+            --only-categories=seo,best-practices,accessibility,performance \
+            --form-factor=mobile \
+            --screenEmulation.mobile=true \
+            --throttling-method=simulate \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --quiet
+          node <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('live-lighthouse.json', 'utf8'));
+          const categoryScore = (id) => Math.round((report.categories?.[id]?.score ?? 0) * 100);
+          const auditSummary = (id) => {
+            const audit = report.audits?.[id] || {};
+            return {
+              score: audit.score,
+              displayValue: audit.displayValue || null,
+              explanation: audit.explanation || null,
+              details: audit.details || null,
+            };
+          };
+          const summary = {
+            requestedUrl: report.requestedUrl,
+            finalUrl: report.finalUrl,
+            fetchTime: report.fetchTime,
+            scores: {
+              performance: categoryScore('performance'),
+              accessibility: categoryScore('accessibility'),
+              bestPractices: categoryScore('best-practices'),
+              seo: categoryScore('seo'),
+            },
+            metrics: {
+              firstContentfulPaint: report.audits?.['first-contentful-paint']?.displayValue || null,
+              largestContentfulPaint: report.audits?.['largest-contentful-paint']?.displayValue || null,
+              totalBlockingTime: report.audits?.['total-blocking-time']?.displayValue || null,
+              cumulativeLayoutShift: report.audits?.['cumulative-layout-shift']?.displayValue || null,
+              speedIndex: report.audits?.['speed-index']?.displayValue || null,
+            },
+            selectedAudits: {
+              robotsTxt: auditSummary('robots-txt'),
+              errorsInConsole: auditSummary('errors-in-console'),
+              inspectorIssues: auditSummary('inspector-issues'),
+            },
+          };
+          fs.writeFileSync('live-lighthouse-summary.json', JSON.stringify(summary, null, 2));
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+      - name: Upload live audit evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -61,5 +128,10 @@ jobs:
             live-polished-full.png
             live-view.json
             live-build.json
+            live-robots.txt
+            live-robots-headers.txt
+            live-germany-headers.txt
+            live-lighthouse.json
+            live-lighthouse-summary.json
           if-no-files-found: warn
           retention-days: 1
