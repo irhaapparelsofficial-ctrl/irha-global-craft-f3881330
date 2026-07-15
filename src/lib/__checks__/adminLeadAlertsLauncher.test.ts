@@ -6,10 +6,16 @@ const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("admin lead alerts launcher", () => {
-  it("keeps the existing global admin launcher mounted", () => {
+  it("keeps the admin launcher mounted through the admin-only runtime", () => {
+    const app = read("src/App.tsx");
+    const runtime = read("src/components/admin/AdminRuntime.tsx");
     const main = read("src/main.tsx");
-    expect(main).toContain('import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher"');
-    expect(main).toContain("<AdminBuyerActionsLauncher />");
+
+    expect(app).toContain('const AdminRuntime = lazy(() => import("@/components/admin/AdminRuntime"))');
+    expect(app).toContain('if (!pathname.startsWith("/admin")) return null');
+    expect(runtime).toContain('import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher"');
+    expect(runtime).toContain("<AdminBuyerActionsLauncher />");
+    expect(main).not.toContain("AdminBuyerActionsLauncher");
   });
 
   it("exposes lead alerts without changing admin routing", () => {
