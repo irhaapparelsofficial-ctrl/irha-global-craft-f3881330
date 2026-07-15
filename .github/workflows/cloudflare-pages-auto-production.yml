@@ -1,0 +1,283 @@
+name: Cloudflare Production After Quality Gate
+
+run-name: Guarded production deploy · ${{ github.event.workflow_run.head_sha }}
+
+on:
+  workflow_run:
+    workflows: ["Quality Gate"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+concurrency:
+  group: cloudflare-pages-production
+  cancel-in-progress: true
+
+env:
+  PAGES_BRANCH: main
+  PAGES_URL: https://irha-apparels.pages.dev
+  CANONICAL_ORIGIN: https://irhaapparels.com
+  WWW_ORIGIN: https://www.irhaapparels.com
+  RELEASE_AUDIT_ISSUE: "375"
+
+jobs:
+  preflight:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.current.outputs.should_deploy }}
+      source_sha: ${{ steps.current.outputs.source_sha }}
+    steps:
+      - name: Confirm successful run belongs to current main
+        id: current
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          latest_main="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          test -n "$latest_main"
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          if [ "$latest_main" = "$SOURCE_SHA" ]; then
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+            echo "Current main is exactly $SOURCE_SHA"
+          else
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping superseded successful run $SOURCE_SHA; current main is $latest_main"
+          fi
+
+  deploy:
+    needs: preflight
+    if: needs.preflight.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+
+    steps:
+      - name: Checkout exact green main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Resolve Cloudflare account and verify Pages project
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+
+          test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
+          test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
+          [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {
+            echo "CLOUDFLARE_PROJECT_NAME contains invalid characters"
+            exit 1
+          }
+
+          echo "::add-mask::$token"
+          verify_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = "true" || {
+            echo "Cloudflare API token verification failed"
+            exit 1
+          }
+
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
+          fi
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            accounts_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+            test "$(printf '%s' "$accounts_json" | jq -r '.success // false')" = "true"
+            test "$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')" = "1" || {
+              echo "Set CLOUDFLARE_ACCOUNT_ID to the exact 32-character account ID"
+              exit 1
+            }
+            account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+          fi
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {
+            echo "Cloudflare Account ID could not be resolved safely"
+            exit 1
+          }
+
+          echo "::add-mask::$account_id"
+          project_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true"
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
+          test "$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')" = "$PAGES_BRANCH"
+
+          {
+            echo "CLOUDFLARE_API_TOKEN=$token"
+            echo "CLOUDFLARE_ACCOUNT_ID=$account_id"
+            echo "CLOUDFLARE_PROJECT_NAME=$project_name"
+          } >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Re-run deterministic release checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run verify:deployment-source
+          npm run verify:secrets
+          npm run verify:migrations
+          npx tsc --noEmit
+          npm test -- --passWithNoTests
+          npm run build
+          npm run verify:release-identity
+          INDEXNOW_DRY_RUN=1 INDEXNOW_STRICT=1 npm run notify:search
+
+      - name: Verify immutable release output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/build.json
+          test -s dist/release.txt
+          test -s dist/_redirects
+          test -s dist/_headers
+          grep -F '"repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330"' dist/build.json
+          grep -F '"supabase_project_id": "pvzjiozismyxqrzmtfbi"' dist/build.json
+          grep -F '"expected_origin": "https://irhaapparels.com"' dist/build.json
+
+          if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
+            echo "Retired Lovable Cloud database identity found in deployable output"
+            exit 1
+          fi
+
+          if grep -R -nE --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' \
+            'Since 2014|MOQ 50|45-Day Delivery|45-day delivery|reply within 12 hours|BSCI Audited|ISO 9001:2015|SEDEX Member' dist; then
+            echo "Blocked legacy claim found"
+            exit 1
+          fi
+
+          fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
+          [[ "$fingerprint" =~ ^[0-9a-f]{64}$ ]] || {
+            echo "Built output is missing a valid deterministic fingerprint"
+            exit 1
+          }
+          echo "RELEASE_FINGERPRINT=$fingerprint" >> "$GITHUB_ENV"
+
+          jq -n \
+            --arg source_sha "$SOURCE_SHA" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg branch "$PAGES_BRANCH" \
+            --arg build_fingerprint "$fingerprint" \
+            --arg purpose "automatic-production-after-green-main" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{source_sha:$source_sha,repository:$repository,branch:$branch,build_fingerprint:$build_fingerprint,purpose:$purpose,generated_at:$generated_at}' \
+            > dist/cloudflare-deployment.json
+
+      - name: Deploy exact build to Cloudflare Pages production branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 pages deploy dist \
+            --project-name="$CLOUDFLARE_PROJECT_NAME" \
+            --branch="$PAGES_BRANCH"
+
+      - name: Verify pages.dev and custom domain serve exact release
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_fingerprint="$RELEASE_FINGERPRINT"
+
+          verify_origin() {
+            origin="$1"
+            ready=0
+            for attempt in $(seq 1 36); do
+              cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
+              if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                   "$origin/build.json?release_check=$cache_bust" -o /tmp/build.json \
+                && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                   "$origin/cloudflare-deployment.json?release_check=$cache_bust" -o /tmp/deployment.json \
+                && jq -e --arg sha "$SOURCE_SHA" --arg repo "$GITHUB_REPOSITORY" \
+                     --arg fingerprint "$expected_fingerprint" \
+                     '.source_commit==$sha and .source_identity_state=="verified" and .repository==$repo and .supabase_project_id=="pvzjiozismyxqrzmtfbi" and .build_fingerprint==$fingerprint' \
+                     /tmp/build.json >/dev/null \
+                && jq -e --arg sha "$SOURCE_SHA" --arg repo "$GITHUB_REPOSITORY" \
+                     --arg fingerprint "$expected_fingerprint" \
+                     '.source_sha==$sha and .repository==$repo and .branch=="main" and .build_fingerprint==$fingerprint and .purpose=="automatic-production-after-green-main"' \
+                     /tmp/deployment.json >/dev/null; then
+                ready=1
+                echo "$origin verified on attempt $attempt"
+                break
+              fi
+              echo "$origin not converged yet (attempt $attempt/36)"
+              sleep 10
+            done
+            test "$ready" = "1" || {
+              echo "Exact release verification failed for $origin"
+              exit 1
+            }
+          }
+
+          verify_origin "$PAGES_URL"
+          verify_origin "$CANONICAL_ORIGIN"
+
+          www_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$WWW_ORIGIN/")"
+          www_status="$(printf '%s' "$www_headers" | awk 'NR==1 {print $2}')"
+          www_location="$(printf '%s' "$www_headers" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
+          case "$www_status" in 301|308) ;; *) echo "Expected www redirect, got $www_status"; exit 1 ;; esac
+          case "$www_location" in "$CANONICAL_ORIGIN"|"$CANONICAL_ORIGIN/"|"$CANONICAL_ORIGIN"/*) ;; *) echo "Unexpected www redirect: $www_location"; exit 1 ;; esac
+
+          admin_headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$CANONICAL_ORIGIN/admin")"
+          robots_value="$(printf '%s\n' "$admin_headers" | awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
+          test "$robots_value" = "noindex, nofollow, noarchive" || {
+            echo "Unexpected admin X-Robots-Tag: $robots_value"
+            exit 1
+          }
+
+      - name: Notify IndexNow after verified production release
+        continue-on-error: true
+        env:
+          INDEXNOW_STRICT: "1"
+        run: npm run notify:search
+
+      - name: Record verified Lovable-free release evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          generated_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          body=$(cat <<EOF
+          ## Verified automatic Cloudflare production release
+
+          - Delivery authority: GitHub Actions + Cloudflare Pages; Lovable publish was not used.
+          - Source SHA: \`$SOURCE_SHA\`
+          - Branch: \`$PAGES_BRANCH\`
+          - Pages project: \`$CLOUDFLARE_PROJECT_NAME\`
+          - Build fingerprint: \`$RELEASE_FINGERPRINT\`
+          - Pages URL: \`$PAGES_URL\`
+          - Canonical origin: \`$CANONICAL_ORIGIN\`
+          - Verified at: \`$generated_at\`
+          - Checks: exact current-main guard, Quality Gate success, fresh deterministic build, source identity, owner Supabase identity, pages.dev parity, custom-domain parity, www redirect and private-route noindex.
+          EOF
+          )
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "$body"
+
+      - name: Record failed production attempt
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Automatic Lovable-free production deployment failed for source \`$SOURCE_SHA\`. No success evidence was recorded. Inspect workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
