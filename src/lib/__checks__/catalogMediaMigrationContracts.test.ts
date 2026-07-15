@@ -27,7 +27,8 @@ describe("catalog media production migration contracts", () => {
     expect(expansion).toContain("Reference Style");
     expect(expansion).toContain("count(DISTINCT id) > 1");
     expect(expansion).toContain("asset_count <> 6 OR primary_count <> 1");
-    expect(expansion).toContain("jsonb_array_length");
+    expect(expansion).toContain("private.catalog_public_release_cache");
+    expect(expansion).toContain("private.build_catalog_public_release()");
   });
 
   it("keeps the media security trigger enabled and uses only a local service claim", () => {
