@@ -34,7 +34,7 @@ begin
   end if;
 
   select net.http_post(
-    url := 'https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/scheduled-sitemap-submit',
+    url := 'https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/sitemap-ping',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-irha-sitemap-token', _token
@@ -110,6 +110,6 @@ grant execute on function public.queue_sitemap_submission(text, boolean) to serv
 grant execute on function public.finalize_sitemap_submission() to service_role;
 
 comment on function public.queue_sitemap_submission(text, boolean) is
-  'Validates the Vault token, applies the database rate limit, queues the protected sitemap Edge Function call and records its pg_net request id.';
+  'Validates the Vault token, applies the database rate limit, queues the connected sitemap-ping function and records its pg_net request id.';
 comment on function public.finalize_sitemap_submission() is
   'Reads the queued pg_net response and records the sanitized Google sitemap submission outcome.';
