@@ -1,35 +1,73 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import Navbar from "./Navbar";
 import OccasionBanner from "@/components/OccasionBanner";
+import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
+import ViewportDeferred from "@/components/performance/ViewportDeferred";
 
 const Footer = lazy(() => import("./Footer"));
 const FloatingActions = lazy(() => import("./FloatingActions"));
 const HumanLiveChat = lazy(() => import("@/components/HumanLiveChat"));
-const StickyMobileCTA = lazy(() => import("@/components/sections/StickyMobileCTA"));
 const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock"));
 
-function DeferredPageChrome() {
+const OPEN_HUMAN_CHAT_EVENT = "irha:open-human-chat";
+
+function DeferredSupportRuntime() {
   const [ready, setReady] = useState(false);
+  const readyRef = useRef(false);
+  const pendingOpenRef = useRef(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setReady(true), 250);
-    return () => window.clearTimeout(timer);
+    readyRef.current = ready;
+  }, [ready]);
+
+  useEffect(() => {
+    const activate = () => setReady(true);
+    const openChat = () => {
+      if (readyRef.current) return;
+      pendingOpenRef.current = true;
+      setReady(true);
+    };
+
+    window.addEventListener(OPEN_HUMAN_CHAT_EVENT, openChat);
+    window.addEventListener("pointerdown", activate, { passive: true, once: true });
+    window.addEventListener("keydown", activate, { once: true });
+    const fallback = window.setTimeout(activate, 8_000);
+
+    return () => {
+      window.removeEventListener(OPEN_HUMAN_CHAT_EVENT, openChat);
+      window.removeEventListener("pointerdown", activate);
+      window.removeEventListener("keydown", activate);
+      window.clearTimeout(fallback);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!ready || !pendingOpenRef.current) return;
+    pendingOpenRef.current = false;
+    const replay = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(OPEN_HUMAN_CHAT_EVENT));
+    }, 0);
+    return () => window.clearTimeout(replay);
+  }, [ready]);
 
   if (!ready) return null;
 
   return (
-    <>
-      <Suspense fallback={null}>
+    <Suspense fallback={null}>
+      <FloatingActions />
+      <HumanLiveChat />
+    </Suspense>
+  );
+}
+
+function DeferredFooterChrome() {
+  return (
+    <ViewportDeferred minHeight={520} rootMargin="600px 0px" fallbackDelayMs={30_000}>
+      <Suspense fallback={<div aria-hidden className="min-h-[420px]" />}>
         <InternalLinksBlock />
         <Footer />
       </Suspense>
-      <Suspense fallback={null}>
-        <FloatingActions />
-        <HumanLiveChat />
-        <StickyMobileCTA />
-      </Suspense>
-    </>
+    </ViewportDeferred>
   );
 }
 
@@ -51,7 +89,9 @@ export default function Layout({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
-      <DeferredPageChrome />
+      <DeferredFooterChrome />
+      <StickyMobileCTA />
+      <DeferredSupportRuntime />
     </div>
   );
 }
