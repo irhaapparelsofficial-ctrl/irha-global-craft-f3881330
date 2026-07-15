@@ -33,12 +33,13 @@ describe("homepage critical-path performance contract", () => {
 
   it("gates footer by viewport and support runtime by interaction or a bounded fallback", () => {
     expect(layoutSource).toContain('const Footer = lazy(() => import("./Footer"))');
-    expect(layoutSource).toContain('const HumanLiveChat = lazy(() => import("@/components/HumanLiveChat"))');
+    expect(layoutSource).toContain('const loadHumanLiveChat = () => import("@/components/HumanLiveChat")');
     expect(layoutSource).toContain('const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock"))');
     expect(layoutSource).toContain('<ViewportDeferred minHeight={520} rootMargin="600px 0px" fallbackDelayMs={30_000}>');
     expect(layoutSource).toContain('window.addEventListener("pointerdown", activate');
     expect(layoutSource).toContain("window.setTimeout(activate, 8_000)");
-    expect(layoutSource).toContain("pendingOpenRef");
+    expect(layoutSource).toContain("humanModuleReadyRef");
+    expect(layoutSource).toContain("replayingRef");
     expect(layoutSource).toContain("<StickyMobileCTA />");
   });
 
