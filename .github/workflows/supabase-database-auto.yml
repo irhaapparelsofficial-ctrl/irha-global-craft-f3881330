@@ -115,14 +115,29 @@ jobs:
           echo "workflow_changed=$workflow_changed" >> "$GITHUB_OUTPUT"
           echo "Head commit contains migration files: $migrations_changed"
           echo "Head commit changes the database workflow: $workflow_changed"
-          echo "Repository migrations are always reconciled against linked production state."
+          echo "Repository migration reconciliation runs only when the exact head commit changes supabase/migrations."
+
+      - name: Record non-migration skip without failure
+        if: steps.changes.outputs.migrations_changed != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Supabase database safe skip"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Reason: no file under \`supabase/migrations/\` changed in the exact head commit"
+            echo "- Result: no database connection, dry-run, history repair, or mutation attempted"
+            echo "- Existing migration-history drift remains an explicit blocker for the next real migration commit"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "No migration file changed; database reconciliation skipped without failure."
 
       - name: Setup Supabase CLI
+        if: steps.changes.outputs.migrations_changed == 'true'
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Validate source and link owner database
+        if: steps.changes.outputs.migrations_changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -132,6 +147,7 @@ jobs:
           bash scripts/ci/retry.sh 3 5 -- supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Reconcile repository migrations against linked owner database
+        if: steps.changes.outputs.migrations_changed == 'true'
         shell: bash
         run: |
           set -o pipefail
@@ -140,6 +156,7 @@ jobs:
 
       - name: Reconfirm current main immediately before database mutation
         id: freshness
+        if: steps.changes.outputs.migrations_changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -154,7 +171,7 @@ jobs:
           fi
 
       - name: Apply pending migrations exactly once
-        if: steps.freshness.outputs.fresh == 'true'
+        if: steps.changes.outputs.migrations_changed == 'true' && steps.freshness.outputs.fresh == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -163,7 +180,7 @@ jobs:
           supabase db push --linked --dry-run 2>&1 | tee /tmp/migration-post-apply-dry-run.txt
 
       - name: Preserve database sync evidence
-        if: always()
+        if: always() && steps.changes.outputs.migrations_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: supabase-database-evidence-${{ env.SOURCE_SHA }}
@@ -185,9 +202,10 @@ jobs:
             echo "- Project: \`$SUPABASE_PROJECT_ID\`"
             echo "- Head commit migration files: \`${{ steps.changes.outputs.migrations_changed || 'not-reached' }}\`"
             echo "- Head commit workflow change: \`${{ steps.changes.outputs.workflow_changed || 'not-reached' }}\`"
-            echo "- Reconciliation policy: every exact-current-main green release checks repository migrations against linked production"
+            echo "- Reconciliation policy: only exact-current-main commits containing \`supabase/migrations/\` changes may connect or mutate"
+            echo "- Known drift policy: migration-history mismatch fails before mutation and requires a separate reviewed repair"
             echo "- Shared production lock: \`irha-production-mutation\`"
-            echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
+            echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-required' }}\`"
             echo "- Apply policy: linked dry-run first, then one exact non-retried idempotent apply"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -204,7 +222,7 @@ jobs:
           case "$DATABASE_JOB_STATUS" in
             success)
               state=success
-              description="Supabase database sync passed"
+              description="Supabase database sync passed or safely skipped"
               ;;
             failure)
               state=failure
