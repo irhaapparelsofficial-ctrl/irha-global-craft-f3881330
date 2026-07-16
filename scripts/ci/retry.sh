@@ -18,7 +18,7 @@ fi
 
 attempt=1
 while true; do
-  echo "[retry] attempt $attempt/$attempts: $*"
+  echo "[retry] attempt $attempt/$attempts: $*" >&2
   if "$@"; then
     exit 0
   fi
