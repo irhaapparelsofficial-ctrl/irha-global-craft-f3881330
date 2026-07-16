@@ -114,7 +114,9 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          deno check supabase/functions/image-processing-gateway/index.ts 2>&1 | tee /tmp/image-gateway-deno-check.log
+          deno check --config supabase/functions/image-processing-gateway/deno.json \
+            supabase/functions/image-processing-gateway/index.ts \
+            2>&1 | tee /tmp/image-gateway-deno-check.log
 
       - name: Preserve compiler diagnostics
         if: always()
