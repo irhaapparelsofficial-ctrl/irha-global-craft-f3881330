@@ -77,7 +77,7 @@ describe("Irha CI control plane", () => {
     }
   });
 
-  it("syncs Supabase functions and reconciles repository migrations only from exact green main", () => {
+  it("syncs functions and checksum-led database migrations only from exact green main", () => {
     const functions = read(".github/workflows/supabase-functions-auto.yml");
     const database = read(".github/workflows/supabase-database-auto.yml");
     expect(functions).toContain("Supabase Functions After Quality Gate");
@@ -85,22 +85,43 @@ describe("Irha CI control plane", () => {
     expect(functions).toContain("No Edge Function source changed; unrelated commit skipped without failure");
     expect(functions).toContain("function sync skipped without failure");
     expect(database).toContain("Supabase Database After Quality Gate");
-    expect(database).toContain("Reconcile repository migrations against linked owner database");
-    expect(database).toContain("Repository migrations are always reconciled against linked production state.");
-    expect(database).toContain("supabase db push --linked --dry-run");
-    expect(database).toContain("Apply pending migrations exactly once");
-    expect(database).not.toContain("steps.changes.outputs.migrations_changed == 'true'");
-    expect(database).not.toContain("npm install");
-    expect(database).not.toContain("retry.sh 3 8 -- supabase db push --linked");
+    expect(database).toContain("Confirm exact current main and Management API readiness");
+    expect(database).toContain("Validate manifest and transactionally dry-run pending migrations");
+    expect(database).toContain("Apply pending repository migrations exactly once");
+    expect(database).toContain("Verify private repository migration ledger parity");
+    expect(database).toContain("official Supabase Management API database/query endpoint");
+    expect(database).not.toContain("SUPABASE_DB_PASSWORD");
+    expect(database).not.toContain("supabase db push");
+    expect(database).not.toContain("supabase migration repair");
   });
 
-  it("preserves Supabase parity evidence and publishes an exact-commit status", () => {
+  it("uses a private manifest and exact Git blob checksums instead of rewriting legacy history", () => {
     const database = read(".github/workflows/supabase-database-auto.yml");
-    expect(database).toContain("Record repository change context");
-    expect(database).not.toContain("validation_required");
+    const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
+    const manifest = JSON.parse(read("supabase/repository-migrations.json"));
+    expect(database).toContain("private.irha_repository_migration_ledger");
+    expect(database).toContain("Legacy drifted \\`supabase_migrations\\` history: preserved, not deleted or rewritten");
+    expect(reconciler).toContain("gitBlobSha");
+    expect(reconciler).toContain("Every migration at or after");
+    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
+    expect(reconciler).toContain("github_management_api_transaction");
+    expect(reconciler).toContain("Current main advanced before database mutation");
+    expect(reconciler).not.toContain("migration repair");
+    expect(manifest.project_id).toBe("pvzjiozismyxqrzmtfbi");
+    expect(manifest.cutover_version).toBe("20260717000000");
+    expect(manifest.migrations).toHaveLength(2);
+    for (const migration of manifest.migrations) {
+      expect(migration.git_blob_sha).toMatch(/^[0-9a-f]{40}$/);
+      expect(migration.transactional_dry_run).toBe(true);
+    }
+  });
+
+  it("preserves repository migration evidence and publishes exact-commit status", () => {
+    const database = read(".github/workflows/supabase-database-auto.yml");
     expect(database).toContain("if: always()");
-    expect(database).toContain("migration-post-apply-dry-run.txt");
-    expect(database).toContain("supabase-database-evidence-${{ env.SOURCE_SHA }}");
+    expect(database).toContain("repository-migration-plan.json");
+    expect(database).toContain("repository-migration-evidence.json");
+    expect(database).toContain("supabase-repository-migration-evidence-${{ env.SOURCE_SHA }}");
     expect(database).toContain("Publish exact commit database status");
     expect(database).toContain('context="Irha Supabase Database Sync"');
     expect(database).toContain("statuses: write");
