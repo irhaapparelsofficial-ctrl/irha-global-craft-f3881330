@@ -73,7 +73,7 @@ export const DEFAULT_GLOBAL_SITE_SETTINGS: GlobalSiteSettings = {
     tagline: "B2B Custom Apparel Manufacturer",
     location: "Sialkot, Pakistan",
     address: "Sialkot, Punjab, Pakistan",
-    email: "irhaapparelsofficial@gmail.com",
+    email: "info@irhaapparels.com",
     phone: "+923204110066",
     phoneDisplay: "+92 320 411 0066",
     whatsappNumber: "923204110066",
