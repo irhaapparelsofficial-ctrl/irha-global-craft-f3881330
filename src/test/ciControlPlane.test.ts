@@ -50,6 +50,8 @@ describe("Irha CI control plane", () => {
     expect(production).toContain("authoritative release parity verified");
     expect(production).toContain("deployment marker is absent or was replaced by another valid same-source deploy");
     expect(production).toContain("www canonical GET redirect verified");
+    expect(production).toContain("stale deploy skipped without failure");
+    expect(production).toContain("Superseded release verification skipped without failure");
     expect(production).toContain("--max-redirs 0");
     expect(production).not.toContain("npm run build");
   });
@@ -79,6 +81,8 @@ describe("Irha CI control plane", () => {
     const functions = read(".github/workflows/supabase-functions-auto.yml");
     const database = read(".github/workflows/supabase-database-auto.yml");
     expect(functions).toContain("Supabase Functions After Quality Gate");
+    expect(functions).toContain("Detect whether Edge Functions changed");
+    expect(functions).toContain("No Edge Function source changed; unrelated commit skipped without failure");
     expect(functions).toContain("function sync skipped without failure");
     expect(database).toContain("Supabase Database After Quality Gate");
     expect(database).toContain("supabase db push --linked --dry-run");
