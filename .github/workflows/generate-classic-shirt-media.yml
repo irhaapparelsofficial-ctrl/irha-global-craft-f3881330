@@ -163,7 +163,6 @@ jobs:
           PY
 
       - name: Commit generated files to branch
-        if: github.event_name == 'push'
         shell: bash
         run: |
           set -euo pipefail
