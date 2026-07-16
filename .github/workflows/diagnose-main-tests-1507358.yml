@@ -1,0 +1,37 @@
+name: Diagnose main tests 1507358
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Capture exact test output
+        shell: bash
+        run: |
+          set +e
+          npm test -- --run > exact-test.log 2>&1
+          code=$?
+          printf '%s\n' "$code" > exact-test-exit-code.txt
+          tail -n 500 exact-test.log
+          exit 0
+      - name: Upload exact test evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-main-test-log-1507358
+          path: |
+            exact-test.log
+            exact-test-exit-code.txt
+          retention-days: 1
