@@ -46,8 +46,29 @@ jobs:
       - name: Verify deployment source lock
         run: npm run verify:deployment-source
 
-      - name: Verify secret safety
-        run: npm run verify:secrets
+      - name: Capture secret-safety result
+        id: secret_safety
+        shell: bash
+        run: |
+          set +e
+          npm run verify:secrets > secret-safety-diagnostics.log 2>&1
+          code=$?
+          cat secret-safety-diagnostics.log
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload secret-safety diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workers-ai-secret-safety-diagnostics
+          path: secret-safety-diagnostics.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Preserve secret-safety result
+        shell: bash
+        run: exit "${{ steps.secret_safety.outputs.exit_code }}"
 
       - name: Verify migration order
         run: npm run verify:migrations
