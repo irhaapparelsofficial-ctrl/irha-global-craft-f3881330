@@ -11,6 +11,11 @@ type NotificationConfig = {
   email_provider_configured: boolean;
 };
 
+type NavigatorWithStandalone = Navigator & {
+  standalone?: boolean;
+  userAgentData?: { platform?: string };
+};
+
 function base64UrlToUint8Array(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -23,13 +28,14 @@ function isIos() {
 }
 
 function isStandalone() {
-  return window.matchMedia("(display-mode: standalone)").matches ||
-    Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+  const browserNavigator = window.navigator as NavigatorWithStandalone;
+  return window.matchMedia("(display-mode: standalone)").matches || Boolean(browserNavigator.standalone);
 }
 
 function platformLabel() {
   if (isIos()) return isStandalone() ? "ios-pwa" : "ios-safari";
-  return window.navigator.userAgentData?.platform || window.navigator.platform || "web";
+  const browserNavigator = window.navigator as NavigatorWithStandalone;
+  return browserNavigator.userAgentData?.platform || browserNavigator.platform || "web";
 }
 
 export default function AdminPushNotificationSetup() {
