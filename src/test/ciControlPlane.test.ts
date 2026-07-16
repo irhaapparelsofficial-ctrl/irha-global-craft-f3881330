@@ -77,7 +77,7 @@ describe("Irha CI control plane", () => {
     }
   });
 
-  it("syncs Supabase functions and migrations only from exact green main", () => {
+  it("syncs Supabase functions and reconciles repository migrations only from exact green main", () => {
     const functions = read(".github/workflows/supabase-functions-auto.yml");
     const database = read(".github/workflows/supabase-database-auto.yml");
     expect(functions).toContain("Supabase Functions After Quality Gate");
@@ -85,16 +85,21 @@ describe("Irha CI control plane", () => {
     expect(functions).toContain("No Edge Function source changed; unrelated commit skipped without failure");
     expect(functions).toContain("function sync skipped without failure");
     expect(database).toContain("Supabase Database After Quality Gate");
+    expect(database).toContain("Reconcile repository migrations against linked owner database");
+    expect(database).toContain("Repository migrations are always reconciled against linked production state.");
     expect(database).toContain("supabase db push --linked --dry-run");
     expect(database).toContain("Apply pending migrations exactly once");
+    expect(database).not.toContain("steps.changes.outputs.migrations_changed == 'true'");
+    expect(database).not.toContain("npm install");
     expect(database).not.toContain("retry.sh 3 8 -- supabase db push --linked");
   });
 
   it("preserves Supabase parity evidence and publishes an exact-commit status", () => {
     const database = read(".github/workflows/supabase-database-auto.yml");
-    expect(database).toContain("Detect database validation scope");
-    expect(database).toContain("validation_required");
-    expect(database).toContain("if: always() && steps.changes.outputs.validation_required == 'true'");
+    expect(database).toContain("Record repository change context");
+    expect(database).not.toContain("validation_required");
+    expect(database).toContain("if: always()");
+    expect(database).toContain("migration-post-apply-dry-run.txt");
     expect(database).toContain("supabase-database-evidence-${{ env.SOURCE_SHA }}");
     expect(database).toContain("Publish exact commit database status");
     expect(database).toContain('context="Irha Supabase Database Sync"');

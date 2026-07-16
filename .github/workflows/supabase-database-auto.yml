@@ -80,7 +80,7 @@ jobs:
     needs: preflight
     if: needs.preflight.outputs.should_sync == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
     environment: production
     env:
       SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
@@ -95,7 +95,7 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
-      - name: Detect database validation scope
+      - name: Record repository change context
         id: changes
         shell: bash
         run: |
@@ -111,47 +111,27 @@ jobs:
             workflow_changed=true
           fi
 
-          validation_required=false
-          if [ "$migrations_changed" = true ] || [ "$workflow_changed" = true ]; then
-            validation_required=true
-          fi
-
           echo "migrations_changed=$migrations_changed" >> "$GITHUB_OUTPUT"
           echo "workflow_changed=$workflow_changed" >> "$GITHUB_OUTPUT"
-          echo "validation_required=$validation_required" >> "$GITHUB_OUTPUT"
-          echo "Repository migrations changed: $migrations_changed"
-          echo "Database workflow changed: $workflow_changed"
-          echo "Database parity validation required: $validation_required"
-
-      - name: Setup Node
-        if: steps.changes.outputs.validation_required == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
+          echo "Head commit contains migration files: $migrations_changed"
+          echo "Head commit changes the database workflow: $workflow_changed"
+          echo "Repository migrations are always reconciled against linked production state."
 
       - name: Setup Supabase CLI
-        if: steps.changes.outputs.validation_required == 'true'
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Validate source and link owner database
-        if: steps.changes.outputs.validation_required == 'true'
         shell: bash
         run: |
           set -euo pipefail
           test -n "$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
           test -n "$(printf '%s' "${SUPABASE_DB_PASSWORD:-}" | tr -d '[:space:]')"
           grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
-          bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
-          npm run verify:deployment-source
-          npm run verify:secrets
-          npm run verify:migrations
           bash scripts/ci/retry.sh 3 5 -- supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
-      - name: Preview pending migrations and capture rollback evidence
-        if: steps.changes.outputs.validation_required == 'true'
+      - name: Reconcile repository migrations against linked owner database
         shell: bash
         run: |
           set -o pipefail
@@ -159,7 +139,6 @@ jobs:
           supabase db push --linked --dry-run 2>&1 | tee /tmp/migration-dry-run.txt
 
       - name: Reconfirm current main immediately before database mutation
-        if: steps.changes.outputs.migrations_changed == 'true'
         id: freshness
         env:
           GH_TOKEN: ${{ github.token }}
@@ -175,15 +154,16 @@ jobs:
           fi
 
       - name: Apply pending migrations exactly once
-        if: steps.changes.outputs.migrations_changed == 'true' && steps.freshness.outputs.fresh == 'true'
+        if: steps.freshness.outputs.fresh == 'true'
         shell: bash
         run: |
           set -euo pipefail
           supabase db push --linked
           supabase migration list --linked | tee /tmp/migrations-after.txt
+          supabase db push --linked --dry-run 2>&1 | tee /tmp/migration-post-apply-dry-run.txt
 
       - name: Preserve database sync evidence
-        if: always() && steps.changes.outputs.validation_required == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: supabase-database-evidence-${{ env.SOURCE_SHA }}
@@ -191,6 +171,7 @@ jobs:
             /tmp/migrations-before.txt
             /tmp/migration-dry-run.txt
             /tmp/migrations-after.txt
+            /tmp/migration-post-apply-dry-run.txt
           if-no-files-found: warn
           retention-days: 14
 
@@ -202,12 +183,12 @@ jobs:
             echo "## Supabase database control plane"
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Project: \`$SUPABASE_PROJECT_ID\`"
-            echo "- Migration files changed: \`${{ steps.changes.outputs.migrations_changed || 'not-reached' }}\`"
-            echo "- Workflow changed: \`${{ steps.changes.outputs.workflow_changed || 'not-reached' }}\`"
-            echo "- Validation required: \`${{ steps.changes.outputs.validation_required || 'not-reached' }}\`"
+            echo "- Head commit migration files: \`${{ steps.changes.outputs.migrations_changed || 'not-reached' }}\`"
+            echo "- Head commit workflow change: \`${{ steps.changes.outputs.workflow_changed || 'not-reached' }}\`"
+            echo "- Reconciliation policy: every exact-current-main green release checks repository migrations against linked production"
             echo "- Shared production lock: \`irha-production-mutation\`"
-            echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-needed' }}\`"
-            echo "- Apply policy: dry-run first, then one exact non-retried apply"
+            echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
+            echo "- Apply policy: linked dry-run first, then one exact non-retried idempotent apply"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact commit database status
