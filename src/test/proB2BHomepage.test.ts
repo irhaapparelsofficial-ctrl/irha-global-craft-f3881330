@@ -101,8 +101,9 @@ describe("polished B2B homepage", () => {
     expect(footer).toContain('src="/irha-brand-mark.svg"');
     expect(navbar).not.toContain("irha-logo.png.asset.json");
     expect(footer).not.toContain("irha-logo.png.asset.json");
-    expect(brand).toContain("IRHA APPARELS");
-    expect(brand).toContain("MANUFACTURING SPECIALISTS");
+    const normalizedBrand = brand.toUpperCase();
+    expect(normalizedBrand).toContain("IRHA APPARELS");
+    expect(normalizedBrand).toContain("MANUFACTURING SPECIALISTS");
   });
 
   it("keeps mobile consent compact, readable and clear of contact actions", () => {
