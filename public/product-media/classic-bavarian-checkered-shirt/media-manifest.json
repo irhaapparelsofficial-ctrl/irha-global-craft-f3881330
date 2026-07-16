@@ -1,0 +1,125 @@
+{
+  "product": "Classic Bavarian Checkered Shirt",
+  "design": "01",
+  "logo_sha256": "8d958b6aec7a589afc3644a99b97faaa318d909ef94b79dd38e3bd8f47ca58e1",
+  "logo_rule": "Exact official raster; deterministic overlay only; no AI redraw",
+  "normalization": "Square sources of at least 1200px are normalized to 2048x2048 with Lanczos before branding",
+  "views": [
+    {
+      "view": "front",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/classic-bavarian-checkered-shirt/classic-bavarian-checkered-shirt-design-01-front-clean-2048.png",
+      "source_sha256": "acc042be65d25cec3e873cb656fe6ad1f16c6119be796b941faa75ee8695bef0",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "clean_path": "public/product-media/classic-bavarian-checkered-shirt/clean/classic-bavarian-checkered-shirt-design-01-front-clean-2048.png",
+      "branded_path": "public/product-media/classic-bavarian-checkered-shirt/branded/classic-bavarian-checkered-shirt-design-01-front-branded-2048.png",
+      "web_path": "public/product-media/classic-bavarian-checkered-shirt/web/classic-bavarian-checkered-shirt-design-01-front-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_sha256": "a0e9a20e330f8e25ed27d2a3ad86fa7954d9270987848697ebb9255429a28c0a",
+      "branded_sha256": "a9cad276d478bc51b3cbf552757c4a0a5fdbedaad3558ddd712da24cf53dc0eb",
+      "web_sha256": "04a48ebd7fffbede9bbebc5a91f0af044706bee78e9267e705f50bc68bf60a69"
+    },
+    {
+      "view": "three-quarter",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/classic-bavarian-checkered-shirt/classic-bavarian-checkered-shirt-design-01-three-quarter-clean-2048.png",
+      "source_sha256": "b13086b4077d76b9a53c41dfec6e4de0d00e4b00220eaf260b9cefbfe8dea0ca",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "clean_path": "public/product-media/classic-bavarian-checkered-shirt/clean/classic-bavarian-checkered-shirt-design-01-three-quarter-clean-2048.png",
+      "branded_path": "public/product-media/classic-bavarian-checkered-shirt/branded/classic-bavarian-checkered-shirt-design-01-three-quarter-branded-2048.png",
+      "web_path": "public/product-media/classic-bavarian-checkered-shirt/web/classic-bavarian-checkered-shirt-design-01-three-quarter-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_sha256": "61619ce0d82ff7edb7564ecd4d2090c2eaa50ff23f6c2316063442aa979b3805",
+      "branded_sha256": "d7cdefc6bb7956dd50066bc88e550d1a63bf95247ec84e95bb4908ba276c7def",
+      "web_sha256": "408e363569911292eb82ee1ec27b93f64cf1777d5e0e05468a288913d96fa9d3"
+    },
+    {
+      "view": "side",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/classic-bavarian-checkered-shirt/classic-bavarian-checkered-shirt-design-01-side-clean-2048.png",
+      "source_sha256": "77c42da1443b1b295e7408d50f0f087f09d6366d898fbd7e1640970f38dddd15",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "clean_path": "public/product-media/classic-bavarian-checkered-shirt/clean/classic-bavarian-checkered-shirt-design-01-side-clean-2048.png",
+      "branded_path": "public/product-media/classic-bavarian-checkered-shirt/branded/classic-bavarian-checkered-shirt-design-01-side-branded-2048.png",
+      "web_path": "public/product-media/classic-bavarian-checkered-shirt/web/classic-bavarian-checkered-shirt-design-01-side-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_sha256": "0c3c6c70ad8e13b4a5ab382cd1c73607bea4610e33ae605beaa64c7c98c523c3",
+      "branded_sha256": "5201f917a52fa5bf2ac4ca11f8c84b6d20841d6315aad36ad67d179096b712fa",
+      "web_sha256": "9b9b15a33efc5f29bbabf136905f1f5110a687bb22945a25030f5d9136e00a24"
+    },
+    {
+      "view": "back",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/classic-bavarian-checkered-shirt/classic-bavarian-checkered-shirt-design-01-back-clean-2048.png",
+      "source_sha256": "a3ecb75177bb9602d55c39763551cf9b71c1cd0d4bf7b9c4c94fae4a33a94aa2",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "clean_path": "public/product-media/classic-bavarian-checkered-shirt/clean/classic-bavarian-checkered-shirt-design-01-back-clean-2048.png",
+      "branded_path": "public/product-media/classic-bavarian-checkered-shirt/branded/classic-bavarian-checkered-shirt-design-01-back-branded-2048.png",
+      "web_path": "public/product-media/classic-bavarian-checkered-shirt/web/classic-bavarian-checkered-shirt-design-01-back-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_sha256": "5b2ff91551292c5cd31a741916a9e1b623a9574bb5c236f1416fc2921f3230ba",
+      "branded_sha256": "5377652794829582bb90323fbfd9347e00c3619c90bafa8ca55d1d47c63adcbc",
+      "web_sha256": "291fe1a93f09d1ed9ccb777fa127cf3d86ccd08244faf9bc7e98471110530429"
+    }
+  ]
+}
