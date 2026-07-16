@@ -1,4 +1,5 @@
 import SEO from "@/components/SEO";
+import { BRAND } from "@/lib/constants";
 
 export default function PrivacyPolicy() {
   return (
@@ -57,7 +58,7 @@ export default function PrivacyPolicy() {
         <section className="border-t border-border/60 pt-7">
           <h2 className="font-display text-2xl text-foreground">Contact</h2>
           <p className="mt-3">
-            Privacy questions can be sent to <a className="underline" href="mailto:irhaapparelsofficial@gmail.com">irhaapparelsofficial@gmail.com</a>.
+            Privacy questions can be sent to <a className="underline" href={`mailto:${BRAND.email}`}>{BRAND.email}</a>.
           </p>
         </section>
       </div>
