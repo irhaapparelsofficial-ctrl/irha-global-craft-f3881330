@@ -94,12 +94,18 @@ describe("Irha CI control plane", () => {
     expect(guardian).toContain("Database migration workflow is never blindly rerun");
   });
 
-  it("removes obsolete duplicate production deployers", () => {
+  it("keeps obsolete duplicate and one-time workflows removed", () => {
     for (const path of [
       ".github/workflows/cloudflare-pages-auto-production.yml",
       ".github/workflows/cloudflare-pages-one-time-20260714.yml",
       ".github/workflows/cloudflare-pages-staging-once.yml",
       ".github/workflows/deploy-robots-worker-fix-20260715.yml",
+      ".github/workflows/purge-cloudflare-audit-logs-20260715.yml",
+      ".github/workflows/diagnose-static-lighthouse-audits-20260715.yml",
+      ".github/workflows/diagnose-live-edge-overrides-20260715.yml",
+      ".github/workflows/agent-readiness-live-once-20260715.yml",
+      ".github/workflows/verify-live-mobile-performance-20260715.yml",
+      ".github/workflows/discover-cloudflare-robots-api-20260715.yml",
     ]) {
       expect(existsSync(resolve(process.cwd(), path))).toBe(false);
     }
