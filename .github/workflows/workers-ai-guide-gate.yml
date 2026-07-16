@@ -1,0 +1,74 @@
+name: Workers AI Guide Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "public/_worker-guide.js"
+      - "scripts/install-cloudflare-ai-guide.mjs"
+      - "scripts/prepare-cloudflare-ai-pages-config.mjs"
+      - "scripts/smoke-cloudflare-ai-guide.mjs"
+      - "src/components/LiveChat.tsx"
+      - "src/lib/__checks__/cloudflareWorkersAiGuide.test.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/workers-ai-guide-gate.yml"
+      - ".github/workflows/deploy-workers-ai-guide-current-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workers-ai-guide-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact event source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify deployment source lock
+        run: npm run verify:deployment-source
+
+      - name: Verify secret safety
+        run: npm run verify:secrets
+
+      - name: Verify migration order
+        run: npm run verify:migrations
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test -- --passWithNoTests
+
+      - name: Build immutable release
+        run: npm run build
+
+      - name: Verify release and Workers AI route
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run verify:release-identity
+          grep -F 'import { handleIrhaGuideRequest } from "./_worker-guide.js";' dist/_worker.js
+          grep -F 'pathname === "/api/guide"' dist/_worker.js
+          grep -F 'env.AI.run' dist/_worker-guide.js
+          grep -F 'cloudflare-workers-ai' dist/_worker-guide.js
+          test "$(grep -Fc 'pathname === "/api/guide"' dist/_worker.js)" = "1"
+          test "$(grep -Fc 'handleIrhaGuideRequest' dist/_worker.js)" = "2"
