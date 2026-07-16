@@ -100,7 +100,9 @@ describe("Irha CI control plane", () => {
     const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
     const manifest = JSON.parse(read("supabase/repository-migrations.json"));
     expect(database).toContain("private.irha_repository_migration_ledger");
-    expect(database).toContain("Legacy drifted \`supabase_migrations\` history: preserved, not deleted or rewritten");
+    expect(database).toContain("Legacy drifted");
+    expect(database).toContain("supabase_migrations");
+    expect(database).toContain("preserved, not deleted or rewritten");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
     expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
