@@ -18,10 +18,12 @@ import {
 } from "./release-identity";
 
 const distDir = path.resolve(process.cwd(), "dist");
-const expectedCommit = normalizeCommitSha(process.env.GITHUB_SHA);
+const expectedCommit = normalizeCommitSha(
+  process.env.SOURCE_SHA?.trim() || process.env.GITHUB_SHA,
+);
 
 if (!expectedCommit) {
-  throw new Error("GITHUB_SHA must be an exact 40-character Git SHA for release verification");
+  throw new Error("SOURCE_SHA or GITHUB_SHA must be an exact 40-character Git SHA for release verification");
 }
 
 const manifest = readJsonObject(path.join(distDir, "build.json"));
