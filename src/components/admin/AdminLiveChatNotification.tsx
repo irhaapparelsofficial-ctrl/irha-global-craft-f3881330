@@ -28,10 +28,21 @@ function alertKind(alert: OwnerAlert): AlertKind | null {
   return null;
 }
 
+function liveChatEvent(alert: OwnerAlert) {
+  return typeof alert.metadata?.event === "string" ? alert.metadata.event : "message";
+}
+
 function alertEventKey(alert: OwnerAlert) {
   if (alertKind(alert) === "live_chat") {
+    const event = liveChatEvent(alert);
+    if (event === "presence") {
+      const presenceId = typeof alert.metadata?.presence_event_id === "string"
+        ? alert.metadata.presence_event_id
+        : alert.created_at;
+      return `live_chat:${alert.id}:presence:${presenceId}`;
+    }
     const messageId = typeof alert.metadata?.message_id === "string" ? alert.metadata.message_id : alert.updated_at;
-    return `live_chat:${alert.id}:${messageId}`;
+    return `live_chat:${alert.id}:message:${messageId}`;
   }
   return `inquiry:${alert.id}`;
 }
@@ -88,8 +99,17 @@ export default function AdminLiveChatNotification() {
 
   const announce = useCallback((alert: OwnerAlert) => {
     const kind = alertKind(alert);
-    const title = kind === "live_chat" ? "New website live-chat message" : "New buyer inquiry";
-    const description = alert.body || (kind === "live_chat" ? "A buyer is waiting in Live Chat." : "A new inquiry is waiting in Buyer Inbox.");
+    const presence = kind === "live_chat" && liveChatEvent(alert) === "presence";
+    const title = presence
+      ? "Live Chat visitor arrived"
+      : kind === "live_chat"
+        ? "New website live-chat message"
+        : "New buyer inquiry";
+    const description = alert.body || (presence
+      ? "A website visitor opened Live Chat."
+      : kind === "live_chat"
+        ? "A buyer is waiting in Live Chat."
+        : "A new inquiry is waiting in Buyer Inbox.");
 
     toast({ title, description });
     playChime();
@@ -183,13 +203,13 @@ export default function AdminLiveChatNotification() {
     window.localStorage.setItem(SOUND_PREFERENCE_KEY, "on");
     setSoundEnabled(true);
     new Notification("Irha owner alerts enabled", {
-      body: "New inquiries and live-chat messages will alert this device while the admin session is active.",
+      body: "New inquiries, visitor arrivals and live-chat messages will alert this device while the admin session is active.",
       icon: "/favicon.ico",
       tag: "irha-owner-alerts-enabled",
     });
     toast({
       title: "Owner alerts enabled",
-      description: "Inquiry and live-chat alerts are active on this device.",
+      description: "Inquiry and live-chat visitor alerts are active on this device.",
     });
   }, []);
 
@@ -279,7 +299,7 @@ export default function AdminLiveChatNotification() {
           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold"><Bell size={18} /></span>
           <div>
             <p className="text-sm font-medium">Enable owner notifications</p>
-            <p className="mt-1 text-xs leading-relaxed text-foreground/60">Get inquiry and live-chat alerts on this device while your admin session is active.</p>
+            <p className="mt-1 text-xs leading-relaxed text-foreground/60">Get inquiry, visitor-arrival and live-chat alerts on this device while your admin session is active.</p>
           </div>
         </div>
       )}
