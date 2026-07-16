@@ -193,6 +193,9 @@ describe("Cloudflare Workers AI guide", () => {
     const identityGenerator = read("scripts/generate-release-identity.ts");
     expect(identityGenerator).toContain("GITHUB_SHA: process.env.SOURCE_SHA?.trim() || process.env.GITHUB_SHA");
 
+    const identityVerifier = read("scripts/verify-built-release-identity.ts");
+    expect(identityVerifier).toContain("process.env.SOURCE_SHA?.trim() || process.env.GITHUB_SHA");
+
     const smoke = read("scripts/smoke-cloudflare-ai-guide.mjs");
     expect(smoke).toContain("What about sampling for that same jersey?");
     expect(smoke).toContain('provider !== "cloudflare-workers-ai"');
