@@ -89,19 +89,27 @@ jobs:
               "design": "01",
               "logo_sha256": hashlib.sha256(logo_bytes).hexdigest(),
               "logo_rule": "Exact official raster; deterministic overlay only; no AI redraw",
+              "normalization": "Square sources of at least 1200px are normalized to 2048x2048 with Lanczos before branding",
               "views": [],
           }
 
           for view, source_url in sources.items():
               print(f"Downloading and processing {view}: {source_url}", flush=True)
               source_bytes = download(source_url)
-              clean_path = clean_dir / f"classic-bavarian-checkered-shirt-design-01-{view}-clean-2048.png"
-              clean_path.write_bytes(source_bytes)
+              source_image = Image.open(io.BytesIO(source_bytes)).convert("RGBA")
+              original_size = source_image.size
+              print(f"{view} source dimensions: {original_size}; bytes: {len(source_bytes)}", flush=True)
+              if source_image.width != source_image.height or min(source_image.size) < 1200:
+                  raise RuntimeError(f"Unusable {view} source dimensions: {original_size}")
 
-              base = Image.open(io.BytesIO(source_bytes)).convert("RGBA")
-              print(f"{view} dimensions: {base.size}; bytes: {len(source_bytes)}", flush=True)
-              if base.size != (2048, 2048):
-                  raise RuntimeError(f"Unexpected {view} dimensions: {base.size}")
+              if source_image.size == (2048, 2048):
+                  base = source_image
+              else:
+                  base = source_image.resize((2048, 2048), Image.Resampling.LANCZOS)
+                  print(f"{view} normalized to {base.size}", flush=True)
+
+              clean_path = clean_dir / f"classic-bavarian-checkered-shirt-design-01-{view}-clean-2048.png"
+              base.save(clean_path, format="PNG", compress_level=6)
 
               logo = logo_master.copy()
               target_width = 220
@@ -127,12 +135,14 @@ jobs:
                   "view": view,
                   "source_url": source_url,
                   "source_sha256": hashlib.sha256(source_bytes).hexdigest(),
+                  "source_dimensions": list(original_size),
                   "clean_path": str(clean_path),
                   "branded_path": str(branded_path),
                   "web_path": str(web_path),
                   "master_dimensions": list(branded.size),
                   "web_dimensions": list(web.size),
                   "logo_box": [x, y, logo.width, logo.height],
+                  "clean_sha256": hashlib.sha256(clean_path.read_bytes()).hexdigest(),
                   "branded_sha256": hashlib.sha256(branded_path.read_bytes()).hexdigest(),
                   "web_sha256": hashlib.sha256(web_path.read_bytes()).hexdigest(),
               })
@@ -159,6 +169,8 @@ jobs:
           manifest = json.loads((base / 'media-manifest.json').read_text())
           assert len(manifest['views']) == 4
           for row in manifest['views']:
+              with Image.open(row['clean_path']) as image:
+                  assert image.size == (2048, 2048)
               with Image.open(row['branded_path']) as image:
                   assert image.size == (2048, 2048)
               with Image.open(row['web_path']) as image:
