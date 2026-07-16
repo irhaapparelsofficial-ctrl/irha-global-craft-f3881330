@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+// Initial launch alerts the authenticated owner only; buyer auto-mail stays gated.
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 const runtime = read("src/components/admin/AdminRuntime.tsx");
 const setup = read("src/components/admin/AdminPushNotificationSetup.tsx");
