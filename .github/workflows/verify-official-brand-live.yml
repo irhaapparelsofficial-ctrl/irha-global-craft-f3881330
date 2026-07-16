@@ -1,0 +1,111 @@
+name: Verify Official Brand Live
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-official-brand-live.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: verify-official-brand-live-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  verify-brand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Publish pending live-brand status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state=pending \
+            -f context="Irha Brand Live" \
+            -f description="Checking official header logo and favicon on production" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
+
+      - name: Verify official logo and favicon on production
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin="https://irhaapparels.com"
+          ready=false
+
+          for attempt in $(seq 1 36); do
+            cache_bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
+            brand_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -o /tmp/irha-brand-mark.svg -w '%{http_code}' \
+              "$origin/irha-brand-mark.svg?brand_check=$cache_bust" || true)"
+            favicon_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -o /tmp/favicon.svg -w '%{http_code}' \
+              "$origin/favicon.svg?brand_check=$cache_bust" || true)"
+            home_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -o /tmp/home.html -w '%{http_code}' \
+              "$origin/?brand_check=$cache_bust" || true)"
+
+            if [ "$brand_status" = "200" ] \
+              && [ "$favicon_status" = "200" ] \
+              && [ "$home_status" = "200" ] \
+              && grep -Fq 'Official owner-supplied Irha Apparels Manufacturing Specialists logo' /tmp/irha-brand-mark.svg \
+              && grep -Fq 'data:image/webp;base64,' /tmp/irha-brand-mark.svg \
+              && grep -Fq 'Irha Apparels' /tmp/irha-brand-mark.svg \
+              && grep -Fq 'Official owner-supplied Irha Apparels Manufacturing Specialists crest' /tmp/favicon.svg \
+              && grep -Fq 'data:image/webp;base64,' /tmp/favicon.svg \
+              && grep -Fq 'href="/favicon.svg"' /tmp/home.html; then
+              ready=true
+              echo "Official Irha header logo and favicon verified live on attempt $attempt."
+              break
+            fi
+
+            echo "Brand assets not converged yet: brand=$brand_status favicon=$favicon_status home=$home_status attempt=$attempt/36"
+            sleep 10
+          done
+
+          test "$ready" = "true" || {
+            echo "Official Irha brand assets were not verified on production."
+            echo "--- brand head ---"
+            head -c 400 /tmp/irha-brand-mark.svg 2>/dev/null || true
+            echo
+            echo "--- favicon head ---"
+            head -c 400 /tmp/favicon.svg 2>/dev/null || true
+            echo
+            exit 1
+          }
+
+      - name: Publish final live-brand status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          state=failure
+          description="Official Irha brand assets are not verified live"
+          if [ "$VERIFY_OUTCOME" = "success" ]; then
+            state=success
+            description="Official Irha header logo and favicon verified live"
+          fi
+
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context="Irha Brand Live" \
+            -f description="$description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
