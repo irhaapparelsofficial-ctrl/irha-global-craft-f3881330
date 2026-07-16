@@ -102,17 +102,25 @@ Deno.serve(async (req) => {
 
     const blockers: string[] = [];
     if (!github.latest_main_sha) blockers.push("latest_github_main_unavailable");
+    if (production.home_status !== 200) blockers.push("production_home_not_200");
+    if (production.build_status !== 200) blockers.push("production_build_identity_not_200");
     if (!production.source_sha) blockers.push("production_source_sha_unavailable");
+    if (production.source_identity_state !== "verified") blockers.push("production_source_identity_unverified");
+    if (production.source_branch !== "main") blockers.push("production_source_branch_not_main");
+    if (production.repository !== REPOSITORY) blockers.push("production_repository_identity_mismatch");
     if (!parity) blockers.push("production_main_sha_mismatch_or_unproven");
     if (!production.www_redirect.ok) blockers.push("www_canonical_redirect_failed");
     if (!production.not_found.ok) blockers.push("real_404_failed");
     if (!criticalHeadersReady) blockers.push("security_headers_incomplete");
+    if (!production.sitemap.ok || production.sitemap.url_count === 0) blockers.push("sitemap_missing_or_empty");
     if (production.supabase_project_ref !== OWNER_PROJECT_REF) blockers.push("wrong_production_supabase_project");
 
     const warnings: string[] = [];
     if (github.quality_gate?.conclusion !== "success") warnings.push("latest_quality_gate_not_green");
-    if (github.dependency_security && github.dependency_security.conclusion !== "success") warnings.push("dependency_security_not_green");
-    if (github.production_smoke && github.production_smoke.conclusion !== "success") warnings.push("production_smoke_not_green");
+    if (github.dependency_security?.conclusion !== "success") warnings.push("dependency_security_missing_or_not_green");
+    if (github.production_smoke?.conclusion !== "success") warnings.push("production_smoke_missing_or_not_green");
+    if (github.cloudflare_release?.conclusion !== "success") warnings.push("cloudflare_release_missing_or_not_green");
+    if (!database.read_ok) warnings.push("database_release_evidence_incomplete");
     if (!database.sitemap.last_success_at) warnings.push("search_console_sitemap_never_succeeded");
     if (database.backup.status !== "verified") warnings.push("fresh_backup_unverified");
     if (database.operations.overall_status && database.operations.overall_status !== "ready") warnings.push("operations_health_degraded");
@@ -189,11 +197,11 @@ async function collectProductionEvidence() {
   const stamp = Date.now();
   const randomPath = `/__irha-release-health-not-found-${stamp}`;
   const [home, build, www, notFound, sitemap] = await Promise.all([
-    fetch(`${APEX_ORIGIN}/?release_health=${stamp}`, { redirect: "manual", cache: "no-store" }),
-    fetch(`${APEX_ORIGIN}/build.json?release_health=${stamp}`, { redirect: "manual", cache: "no-store" }),
-    fetch(`${WWW_ORIGIN}/products/sportswear?release_health=${stamp}`, { redirect: "manual", cache: "no-store" }),
-    fetch(`${APEX_ORIGIN}${randomPath}`, { redirect: "manual", cache: "no-store" }),
-    fetch(`${APEX_ORIGIN}/sitemap.xml?release_health=${stamp}`, { redirect: "manual", cache: "no-store" }),
+    fetchWithTimeout(`${APEX_ORIGIN}/?release_health=${stamp}`, { redirect: "manual" }, 12_000),
+    fetchWithTimeout(`${APEX_ORIGIN}/build.json?release_health=${stamp}`, { redirect: "manual" }, 12_000),
+    fetchWithTimeout(`${WWW_ORIGIN}/products/sportswear?release_health=${stamp}`, { redirect: "manual" }, 12_000),
+    fetchWithTimeout(`${APEX_ORIGIN}${randomPath}`, { redirect: "manual" }, 12_000),
+    fetchWithTimeout(`${APEX_ORIGIN}/sitemap.xml?release_health=${stamp}`, { redirect: "manual" }, 12_000),
   ]);
 
   const manifest = build.ok ? await safeResponseJson(build) : {};
@@ -212,7 +220,7 @@ async function collectProductionEvidence() {
 
   const location = www.headers.get("location");
   const wwwRedirectOk = (www.status === 301 || www.status === 308)
-    && Boolean(location?.startsWith(`${APEX_ORIGIN}/products/sportswear`));
+    && Boolean(resolveUrl(location, WWW_ORIGIN)?.startsWith(`${APEX_ORIGIN}/products/sportswear`));
 
   return {
     home_status: home.status,
@@ -228,7 +236,7 @@ async function collectProductionEvidence() {
     www_redirect: {
       ok: wwwRedirectOk,
       status: www.status,
-      location: location ? sanitizeUrl(location) : null,
+      location: location ? resolveUrl(location, WWW_ORIGIN) : null,
       marker: sanitizeHeader(www.headers.get("x-irha-canonical-redirect")),
     },
     not_found: {
@@ -323,7 +331,7 @@ function compactRun(run: WorkflowRun | null) {
     run_number: run.run_number ?? null,
     created_at: run.created_at ?? null,
     updated_at: run.updated_at ?? null,
-    url: run.html_url ? sanitizeUrl(run.html_url) : null,
+    url: run.html_url ? resolveUrl(run.html_url, "https://github.com") : null,
   };
 }
 
@@ -384,9 +392,10 @@ function sanitizeHeader(value: string | null) {
   return value.replace(/[\r\n]/g, " ").slice(0, 500);
 }
 
-function sanitizeUrl(value: string) {
+function resolveUrl(value: string | null, base: string) {
+  if (!value) return null;
   try {
-    const url = new URL(value);
+    const url = new URL(value, base);
     url.username = "";
     url.password = "";
     return url.toString().slice(0, 500);
@@ -398,7 +407,7 @@ function sanitizeUrl(value: string) {
 function redact(value: string) {
   return value
     .replace(/Bearer\s+[A-Za-z0-9._~-]+/gi, "Bearer [redacted]")
-    .replace(/(?:api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]")
+    .replace(/((?:api[_-]?key|token|secret|password))\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]")
     .slice(0, 500);
 }
 
