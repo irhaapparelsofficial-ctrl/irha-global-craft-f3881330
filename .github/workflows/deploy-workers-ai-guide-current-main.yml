@@ -184,18 +184,23 @@ jobs:
       - name: Verify preview source and two-turn real AI conversation
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           preview_sha=""
           for attempt in {1..18}; do
             preview_sha="$(curl -fsS "$PREVIEW_URL/build.json" | jq -r '.source_commit // empty' 2>/dev/null || true)"
             [ "$preview_sha" = "$SOURCE_SHA" ] && break
             sleep 5
           done
-          test "$preview_sha" = "$SOURCE_SHA" || {
-            echo "Preview source mismatch: expected $SOURCE_SHA, got ${preview_sha:-missing}"
+          if [ "$preview_sha" != "$SOURCE_SHA" ]; then
+            echo "Preview source mismatch: expected $SOURCE_SHA, got ${preview_sha:-missing}" | tee /tmp/preview-smoke.log
             exit 1
-          }
-          node scripts/smoke-cloudflare-ai-guide.mjs "$PREVIEW_URL"
+          fi
+          node scripts/smoke-cloudflare-ai-guide.mjs "$PREVIEW_URL" 2>&1 | tee /tmp/preview-smoke.log
+          smoke_code="${PIPESTATUS[0]}"
+          if [ "$smoke_code" -ne 0 ]; then
+            echo "Preview smoke failed with exit code $smoke_code"
+            exit "$smoke_code"
+          fi
 
       - name: Reconfirm exact current main before production
         shell: bash
@@ -222,7 +227,7 @@ jobs:
       - name: Verify apex, pages.dev and real AI production contract
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           apex_sha=""
           pages_sha=""
           for attempt in {1..24}; do
@@ -231,9 +236,16 @@ jobs:
             if [ "$apex_sha" = "$SOURCE_SHA" ] && [ "$pages_sha" = "$SOURCE_SHA" ]; then break; fi
             sleep 5
           done
-          test "$apex_sha" = "$SOURCE_SHA"
-          test "$pages_sha" = "$SOURCE_SHA"
-          node scripts/smoke-cloudflare-ai-guide.mjs "$CANONICAL_ORIGIN"
+          if [ "$apex_sha" != "$SOURCE_SHA" ] || [ "$pages_sha" != "$SOURCE_SHA" ]; then
+            echo "Production source mismatch: expected $SOURCE_SHA, apex=${apex_sha:-missing}, pages=${pages_sha:-missing}" | tee /tmp/production-smoke.log
+            exit 1
+          fi
+          node scripts/smoke-cloudflare-ai-guide.mjs "$CANONICAL_ORIGIN" 2>&1 | tee /tmp/production-smoke.log
+          smoke_code="${PIPESTATUS[0]}"
+          if [ "$smoke_code" -ne 0 ]; then
+            echo "Production smoke failed with exit code $smoke_code"
+            exit "$smoke_code"
+          fi
 
       - name: Record verified Workers AI release evidence
         shell: bash
@@ -250,18 +262,39 @@ jobs:
         run: |
           set -euo pipefail
           report=/tmp/workers-ai-release-failure.md
+          sanitize() {
+            sed -E $'s/\033\[[0-9;]*[mK]//g; s/[0-9a-fA-F]{32}/[masked-32hex]/g; s/(Bearer[[:space:]]+)[A-Za-z0-9._~-]+/\1[masked]/g'
+          }
           {
             echo "Workers AI guide release failed for source \`${SOURCE_SHA:-unknown}\`."
             echo
             echo "Preview-first safeguards prevented an unverified production claim."
             echo
             echo "Inspect: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            if [ -s /tmp/preview-smoke.log ]; then
+              echo
+              echo "Sanitized preview smoke output:"
+              echo
+              echo '```text'
+              sanitize < /tmp/preview-smoke.log | tail -n 80 | head -c 8000
+              echo
+              echo '```'
+            fi
+            if [ -s /tmp/production-smoke.log ]; then
+              echo
+              echo "Sanitized production smoke output:"
+              echo
+              echo '```text'
+              sanitize < /tmp/production-smoke.log | tail -n 80 | head -c 8000
+              echo
+              echo '```'
+            fi
             if [ -s /tmp/preview-deploy.log ]; then
               echo
               echo "Sanitized preview deploy tail:"
               echo
               echo '```text'
-              sed -E $'s/\033\[[0-9;]*[mK]//g; s/[0-9a-fA-F]{32}/[masked-32hex]/g; s/(Bearer[[:space:]]+)[A-Za-z0-9._~-]+/\1[masked]/g' /tmp/preview-deploy.log | tail -n 80 | head -c 8000
+              sanitize < /tmp/preview-deploy.log | tail -n 80 | head -c 8000
               echo
               echo '```'
             fi
