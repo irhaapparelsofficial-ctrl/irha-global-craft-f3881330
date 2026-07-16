@@ -1,0 +1,120 @@
+name: Irha CI Guardian
+
+run-name: CI Guardian · ${{ github.event.workflow_run.name }} · ${{ github.event.workflow_run.id }}
+
+on:
+  workflow_run:
+    workflows:
+      - Quality Gate
+      - Cloudflare Production After Quality Gate
+      - Supabase Functions After Quality Gate
+      - Supabase Database After Quality Gate
+      - Secret Bootstrap Controller
+      - Owner Supabase Guarded Release
+      - Production Smoke
+      - Live crawler parity
+      - Deploy Chat Function Current Main
+      - Sync Product Media
+      - Agent Readiness Live
+    types: [completed]
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: ci-guardian-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  classify-and-heal:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+      WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+      HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      EVENT_NAME: ${{ github.event.workflow_run.event }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout guardian source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Collect exact run evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs?filter=latest&per_page=100" > /tmp/jobs.json
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/failed.log 2>&1 || true
+
+          jq -n \
+            --arg workflowName "$WORKFLOW_NAME" \
+            --arg conclusion "failure" \
+            --arg headBranch "$HEAD_BRANCH" \
+            --arg headSha "$HEAD_SHA" \
+            --arg latestMain "$latest_main" \
+            --argjson runAttempt "${RUN_ATTEMPT:-1}" \
+            --slurpfile jobs /tmp/jobs.json \
+            '{workflowName:$workflowName,conclusion:$conclusion,headBranch:$headBranch,headSha:$headSha,latestMain:$latestMain,runAttempt:$runAttempt,jobs:$jobs[0]}' \
+            > /tmp/context.json
+
+          node scripts/ci/classify-failure.mjs /tmp/context.json /tmp/failed.log > /tmp/classification.json
+          cat /tmp/classification.json
+
+      - name: Decide safe automatic recovery
+        id: decision
+        shell: bash
+        run: |
+          set -euo pipefail
+          classification="$(jq -r '.classification' /tmp/classification.json)"
+          retryable="$(jq -r '.retryable' /tmp/classification.json)"
+          reason="$(jq -r '.reason' /tmp/classification.json)"
+          allowed=false
+
+          case "$WORKFLOW_NAME" in
+            "Quality Gate"|"Cloudflare Production After Quality Gate"|"Supabase Functions After Quality Gate"|"Secret Bootstrap Controller"|"Production Smoke"|"Live crawler parity"|"Deploy Chat Function Current Main"|"Sync Product Media"|"Agent Readiness Live")
+              allowed=true
+              ;;
+          esac
+
+          echo "classification=$classification" >> "$GITHUB_OUTPUT"
+          echo "retryable=$retryable" >> "$GITHUB_OUTPUT"
+          echo "allowed=$allowed" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Irha CI Guardian"
+            echo "- Workflow: \`$WORKFLOW_NAME\`"
+            echo "- Run: \`$RUN_ID\` attempt \`${RUN_ATTEMPT:-1}\`"
+            echo "- Source: \`${HEAD_BRANCH:-unknown}\` / \`${HEAD_SHA:-unknown}\`"
+            echo "- Classification: \`$classification\`"
+            echo "- Reason: $reason"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Re-run one transient failure
+        if: steps.decision.outputs.retryable == 'true' && steps.decision.outputs.allowed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ci/retry.sh 3 5 -- gh api \
+            --method POST \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/rerun-failed-jobs"
+          echo "- Recovery: one automatic failed-job rerun requested" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Suppress stale or non-retryable duplicate noise
+        if: steps.decision.outputs.retryable != 'true' || steps.decision.outputs.allowed != 'true'
+        shell: bash
+        run: |
+          {
+            echo "- Recovery: no blind rerun performed"
+            echo "- Notification policy: stale/superseded failures are treated as resolved noise; capacity and deterministic failures remain available for exact inspection"
+            echo "- Database migration workflow is never blindly rerun because an interrupted apply requires ledger inspection first"
+          } >> "$GITHUB_STEP_SUMMARY"

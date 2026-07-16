@@ -1,0 +1,166 @@
+name: Supabase Functions After Quality Gate
+
+run-name: Guarded functions sync · ${{ github.event.workflow_run.head_sha }}
+
+on:
+  workflow_run:
+    workflows: ["Quality Gate"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irha-production-mutation
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+
+jobs:
+  preflight:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    outputs:
+      should_sync: ${{ steps.ready.outputs.should_sync }}
+      source_sha: ${{ steps.ready.outputs.source_sha }}
+      secrets_ready: ${{ steps.ready.outputs.secrets_ready }}
+
+    steps:
+      - name: Confirm exact current main and Supabase secret readiness
+        id: ready
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          secrets_ready=false
+          [ -n "$token" ] && secrets_ready=true
+
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "secrets_ready=$secrets_ready" >> "$GITHUB_OUTPUT"
+
+          if [ "$latest_main" != "$SOURCE_SHA" ]; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "Superseded green run skipped safely: $SOURCE_SHA; current main is $latest_main"
+          elif [ "$secrets_ready" != "true" ]; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "Exact current main is green, but SUPABASE_ACCESS_TOKEN is not ready. Waiting without failure."
+          else
+            echo "should_sync=true" >> "$GITHUB_OUTPUT"
+            echo "Exact current main is green and Supabase token is available: $SOURCE_SHA"
+          fi
+
+      - name: Record waiting state without a red failure
+        if: steps.ready.outputs.secrets_ready != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Supabase functions waiting state"
+            echo "- Quality Gate: green"
+            echo "- Source: \`${{ steps.ready.outputs.source_sha }}\`"
+            echo "- Status: waiting for \`SUPABASE_ACCESS_TOKEN\`"
+            echo "- Result: no backend mutation attempted and no failure raised"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  sync-functions:
+    needs: preflight
+    if: needs.preflight.outputs.should_sync == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout exact green main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Validate source and owner project
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          echo "::add-mask::$token"
+          grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
+          bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
+          npm run verify:deployment-source
+          npm run verify:secrets
+          npm run verify:migrations
+
+          project_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID")"
+          test "$(printf '%s' "$project_json" | jq -r '.id // empty')" = "$SUPABASE_PROJECT_ID"
+
+      - name: Reconfirm current main after acquiring production lock
+        id: freshness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          if [ "$latest_main" = "$SOURCE_SHA" ]; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "Source $SOURCE_SHA was superseded by $latest_main while waiting for the production lock; function sync skipped without failure"
+          fi
+
+      - name: Deploy repository Edge Functions with bounded retry
+        if: steps.freshness.outputs.fresh == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ci/retry.sh 3 8 -- supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+          bash scripts/ci/retry.sh 3 5 -- supabase functions list --project-ref "$SUPABASE_PROJECT_ID" | tee /tmp/functions.txt
+          test -s /tmp/functions.txt
+
+      - name: Preserve functions sync evidence
+        if: steps.freshness.outputs.fresh == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-functions-evidence-${{ env.SOURCE_SHA }}
+          path: /tmp/functions.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Record control-plane outcome
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Supabase functions control plane"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Project: \`$SUPABASE_PROJECT_ID\`"
+            echo "- Shared production lock: \`irha-production-mutation\`"
+            echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
+            echo "- Database migrations: not auto-applied by this workflow"
+          } >> "$GITHUB_STEP_SUMMARY"
