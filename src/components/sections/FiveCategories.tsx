@@ -42,7 +42,7 @@ export default function FiveCategories() {
               Five categories, <span className="text-gold italic">one atelier</span>.
             </h2>
             <p className="mt-5 text-sm md:text-base leading-relaxed text-foreground/70">
-              Each category now opens with real product media from the live buyer catalogue.
+              Each category opens with buyer-facing product media from the current catalogue release.
             </p>
           </div>
           <Link
@@ -56,7 +56,6 @@ export default function FiveCategories() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {cats.map((c) => {
             const products = [...c.directProducts, ...c.subs.flatMap((sub) => sub.products)];
-            const productCount = products.length;
             const featuredProduct = products.find(
               (product) => product.is_published && Boolean(product.image_url || product.gallery?.[0]),
             );
@@ -90,7 +89,7 @@ export default function FiveCategories() {
                     {c.name}
                   </h3>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-white/60">
-                    {productCount > 0 ? `${productCount} products` : "View Collection"}
+                    Requirement-led program
                   </p>
                   <span className="mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.28em] text-gold opacity-80 transition-opacity group-hover:opacity-100">
                     View Collection <ArrowUpRight size={12} />
