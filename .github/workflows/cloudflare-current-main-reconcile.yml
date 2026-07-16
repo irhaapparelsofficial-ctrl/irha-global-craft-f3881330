@@ -87,7 +87,6 @@ jobs:
     if: needs.preflight.outputs.should_reconcile == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: production
     env:
       SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
       QUALITY_RUN_ID: ${{ needs.preflight.outputs.quality_run_id }}
