@@ -24,7 +24,7 @@ import {
 
 export default function ProductDetail() {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
-  const { data, isLoading, error } = usePublicProduct(categorySlug, productSlug);
+  const { data, isLoading, isFetching, error } = usePublicProduct(categorySlug, productSlug);
   const [activeImg, setActiveImg] = useState(0);
   const shortlist = useShortlist();
   const compare = useCompare();
@@ -42,7 +42,7 @@ export default function ProductDetail() {
     });
   }, [data]);
 
-  if (isLoading) {
+  if (isLoading || (isFetching && !data)) {
     return <div className="pt-40 pb-20 container-luxe text-sm text-muted-foreground">Loading product…</div>;
   }
   if (error || !data) {
