@@ -49,7 +49,13 @@ export default defineConfig(({ mode }) => ({
     ...(mode === "development" ? [mcpPlugin(), componentTagger()] : []),
   ],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: [
+      {
+        find: "@/lib/globalCategoryTaxonomy",
+        replacement: path.resolve(__dirname, "./src/lib/runtimeCategoryTaxonomy.ts"),
+      },
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+    ],
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
   build: {
