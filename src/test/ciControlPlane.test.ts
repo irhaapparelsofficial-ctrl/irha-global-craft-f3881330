@@ -50,12 +50,22 @@ describe("Irha CI control plane", () => {
   it("automatically activates exact-main verification and core sync jobs after secrets appear", () => {
     const bootstrap = read(".github/workflows/secret-bootstrap-controller.yml");
     expect(bootstrap).toContain('cron: "17 * * * *"');
-    expect(bootstrap).toContain("Required repository Quality Gate: remains secrets-independent");
+    expect(bootstrap).toContain("workflow_dispatch:");
     expect(bootstrap).toContain("gh workflow run quality.yml");
-    expect(bootstrap).toContain("cloudflare-current-main-reconcile.yml");
-    expect(bootstrap).toContain("Cloudflare reconcile job success");
-    expect(bootstrap).toContain("Supabase functions job success");
-    expect(bootstrap).toContain("Supabase database job success");
+    expect(bootstrap).toContain("exact-main successful Quality Gate is missing");
+    expect(bootstrap).toContain("github.event_name != 'pull_request'");
+
+    for (const path of [
+      ".github/workflows/cloudflare-current-main-reconcile.yml",
+      ".github/workflows/supabase-functions-auto.yml",
+      ".github/workflows/supabase-database-auto.yml",
+    ]) {
+      const workflow = read(path);
+      expect(workflow).toContain('workflows: ["Quality Gate"]');
+      expect(workflow).toContain("types: [completed]");
+      expect(workflow).toContain("github.event.workflow_run.conclusion == 'success'");
+      expect(workflow).toContain("github.event.workflow_run.head_branch == 'main'");
+    }
   });
 
   it("syncs Supabase functions and migrations only from exact green main", () => {
