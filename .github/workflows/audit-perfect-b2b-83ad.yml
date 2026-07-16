@@ -1,0 +1,74 @@
+name: Audit perfect B2B 83ad
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPECTED_SHA: 83ad6a60004c2082587391216695c179088c9e6f
+      ORIGIN: https://irhaapparels.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for exact production
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 120); do
+            if curl -fsSL --max-time 40 -H 'Cache-Control: no-cache' "$ORIGIN/build.json?a=${EXPECTED_SHA::12}-$i-$RANDOM" -o live-build.json \
+              && jq -e --arg s "$EXPECTED_SHA" '.source_commit==$s and .source_identity_state=="verified"' live-build.json >/dev/null; then exit 0; fi
+            sleep 10
+          done
+          exit 1
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Browser verification
+        shell: bash
+        run: |
+          cat > audit.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          import { writeFile } from 'node:fs/promises';
+          const origin=process.env.ORIGIN, expected=process.env.EXPECTED_SHA;
+          const browser=await chromium.launch({headless:true});
+          const out={expected,mobile:{},desktop:{},routes:{},errors:[]};
+          async function cookie(page,path){const d=page.getByRole('dialog',{name:/optional cookies/i});const v=await d.isVisible().catch(()=>false);let bg=null;if(v){bg=await d.evaluate(e=>getComputedStyle(e).backgroundColor);await page.screenshot({path});await page.getByRole('button',{name:/essential only/i}).click();await page.waitForTimeout(500);}return{visible:v,background:bg};}
+          async function ready(page,alt){return page.locator(`img[alt="${alt}"]`).evaluate(i=>i.complete&&i.naturalWidth>0).catch(()=>false);}
+          async function dims(page){return page.evaluate(()=>({innerWidth,scrollWidth:document.documentElement.scrollWidth,bodyWidth:document.body.scrollWidth}));}
+
+          const mc=await browser.newContext({viewport:{width:390,height:844},locale:'en-GB'});const m=await mc.newPage();m.on('pageerror',e=>out.errors.push(`mobile:${e.message}`));const mr=await m.goto(`${origin}/?m=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:90000});await m.waitForTimeout(3500);const mCookie=await cookie(m,'01-mobile-cookie.png');out.mobile={status:mr?.status(),cookie:mCookie,logo:await m.locator('img[src="/irha-brand-mark.svg"]').first().isVisible().catch(()=>false),quote:await m.getByText('Request quote',{exact:false}).first().isVisible().catch(()=>false),dock:await m.locator('.sticky-mobile-cta').isVisible().catch(()=>false),guideLauncher:await m.getByRole('button',{name:/Open Irha Live Support/i}).isVisible().catch(()=>false),humanLauncher:await m.getByRole('button',{name:/Open live chat with the Irha Apparels team/i}).isVisible().catch(()=>false),sports:await ready(m,'Custom sportswear manufacturing'),leather:await ready(m,'Custom leather apparel manufacturing'),dimensions:await dims(m)};await m.screenshot({path:'02-mobile-home.png'});await m.screenshot({path:'03-mobile-full.png',fullPage:true});await m.getByRole('button',{name:/Open live support with the AI guide or Irha human team/i}).click();await m.waitForTimeout(800);out.mobile.ai=await m.locator('section[data-chat-kind="ai-guide"]').isVisible().catch(()=>false);out.mobile.humanTab=await m.getByRole('button',{name:/Human Team/i}).isVisible().catch(()=>false);await m.screenshot({path:'04-mobile-support.png'});if(out.mobile.humanTab){await m.getByRole('button',{name:/Human Team/i}).click();await m.waitForTimeout(800);}out.mobile.human=await m.locator('section[data-chat-kind="human"]').isVisible().catch(()=>false);await m.screenshot({path:'05-mobile-human.png'});await mc.close();
+
+          const dc=await browser.newContext({viewport:{width:1440,height:900},locale:'en-GB'});const d=await dc.newPage();d.on('pageerror',e=>out.errors.push(`desktop:${e.message}`));const dr=await d.goto(`${origin}/?d=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:90000});await d.waitForTimeout(3500);const dCookie=await cookie(d,'06-desktop-cookie.png');const wa=await d.locator('a[href*="wa.me"],a[href*="api.whatsapp.com"]').evaluateAll(es=>es.filter(e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0}).length).catch(()=>0);out.desktop={status:dr?.status(),cookie:dCookie,logo:await d.locator('img[src="/irha-brand-mark.svg"]').first().isVisible().catch(()=>false),nav:await d.getByRole('navigation').first().isVisible().catch(()=>false),quote:await d.getByText('Request quote',{exact:false}).first().isVisible().catch(()=>false),dock:await d.locator('.sticky-mobile-cta').isVisible().catch(()=>false),guideLauncher:await d.getByRole('button',{name:/Open Irha Live Support/i}).isVisible().catch(()=>false),humanLauncher:await d.getByRole('button',{name:/Open live chat with the Irha Apparels team/i}).isVisible().catch(()=>false),visibleWhatsApp:wa,sports:await ready(d,'Custom sportswear manufacturing'),leather:await ready(d,'Custom leather apparel manufacturing'),dimensions:await dims(d)};await d.screenshot({path:'07-desktop-home.png'});await d.screenshot({path:'08-desktop-full.png',fullPage:true});if(out.desktop.guideLauncher){await d.getByRole('button',{name:/Open Irha Live Support/i}).click();await d.waitForTimeout(800);}out.desktop.ai=await d.locator('section[data-chat-kind="ai-guide"]').isVisible().catch(()=>false);out.desktop.humanTab=await d.getByRole('button',{name:/Human Team/i}).isVisible().catch(()=>false);await d.screenshot({path:'09-desktop-support.png'});for(const p of ['/products','/inquiry','/catalogue']){const r=await d.goto(`${origin}${p}?a=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:90000});await d.waitForTimeout(800);out.routes[p]={status:r?.status(),url:d.url()};}await dc.close();await browser.close();
+          await writeFile('audit.json',JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));
+          const dark=v=>!v||/rgba?\((?:0|9),\s*(?:0|9),\s*(?:0|9)/.test(v);const no=x=>x.scrollWidth<=x.innerWidth+2&&x.bodyWidth<=x.innerWidth+2;const c=[out.mobile.status===200,dark(out.mobile.cookie.background),out.mobile.logo,out.mobile.quote,out.mobile.dock,!out.mobile.guideLauncher,!out.mobile.humanLauncher,out.mobile.sports,out.mobile.leather,no(out.mobile.dimensions),out.mobile.ai,out.mobile.humanTab,out.mobile.human,out.desktop.status===200,dark(out.desktop.cookie.background),out.desktop.logo,out.desktop.nav,out.desktop.quote,!out.desktop.dock,out.desktop.guideLauncher,!out.desktop.humanLauncher,out.desktop.visibleWhatsApp===0,out.desktop.sports,out.desktop.leather,no(out.desktop.dimensions),out.desktop.ai,out.desktop.humanTab,out.errors.length===0,...Object.values(out.routes).map(r=>r.status===200)];if(c.some(x=>!x))process.exitCode=1;
+          EOF
+          node audit.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perfect-b2b-83ad-audit
+          path: |
+            live-build.json
+            audit.json
+            01-mobile-cookie.png
+            02-mobile-home.png
+            03-mobile-full.png
+            04-mobile-support.png
+            05-mobile-human.png
+            06-desktop-cookie.png
+            07-desktop-home.png
+            08-desktop-full.png
+            09-desktop-support.png
+          if-no-files-found: warn
+          retention-days: 2
