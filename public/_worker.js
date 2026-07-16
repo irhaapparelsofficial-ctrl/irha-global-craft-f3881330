@@ -279,6 +279,30 @@ function robotsResponse(request) {
   });
 }
 
+function visitorContextResponse(request) {
+  const cf = request.cf || {};
+  const body = JSON.stringify({
+    countryCode: typeof cf.country === "string" ? cf.country : null,
+    country: null,
+    region: typeof cf.region === "string" ? cf.region : null,
+    city: typeof cf.city === "string" ? cf.city : null,
+    timezone: typeof cf.timezone === "string" ? cf.timezone : null,
+  });
+
+  return new Response(request.method === "HEAD" ? null : body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "CDN-Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+      "X-Robots-Tag": "noindex, nofollow, noarchive",
+      "Cross-Origin-Resource-Policy": "same-origin",
+      "X-Irha-Visitor-Context": "coarse-edge-geo-no-ip",
+    },
+  });
+}
+
 function notFoundResponse(request, pathname) {
   const safePath = pathname.replace(/[&<>"']/g, "");
   const body = request.method === "HEAD" ? null : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page Not Found — Irha Apparels</title></head><body style="margin:0;background:#0a0a0a;color:#f5f1e8;font-family:Arial,sans-serif"><main style="max-width:760px;margin:0 auto;padding:96px 24px"><p style="color:#c9a45c;text-transform:uppercase;letter-spacing:.18em">404 — Page not found</p><h1 style="font-size:48px;line-height:1.05">This page does not exist.</h1><p style="color:#c9c1b5;line-height:1.7">The requested path <code>${safePath}</code> is not a published Irha Apparels page.</p><p><a href="/products" style="color:#e8c477">Browse products</a> · <a href="/markets" style="color:#e8c477">International markets</a> · <a href="/inquiry" style="color:#e8c477">Request a quote</a></p></main></body></html>`;
@@ -358,6 +382,10 @@ export default {
 
     if ((request.method === "GET" || request.method === "HEAD") && pathname === "/robots.txt") {
       return robotsResponse(request);
+    }
+
+    if ((request.method === "GET" || request.method === "HEAD") && pathname === "/api/visitor-context") {
+      return visitorContextResponse(request);
     }
 
     const aliasTarget = legacyAliasTarget(pathname);
