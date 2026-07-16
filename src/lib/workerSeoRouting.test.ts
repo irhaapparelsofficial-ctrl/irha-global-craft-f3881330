@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-// @ts-expect-error Cloudflare Pages worker is intentionally plain JavaScript.
 import worker, {
   isStaticBuyerPath,
   legacyAliasTarget,

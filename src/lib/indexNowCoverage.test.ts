@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { BLOG_SLUGS } from "./blogPostsTrusted";
 import { SEO_BUYER_INTENT_PATHS } from "./buyerIntentSeoPages";
 import { MARKET_PAGES } from "./marketPages";
-// @ts-expect-error The production notification script is intentionally plain ESM JavaScript.
 import {
   BLOG_CHANGED_PATHS,
   BUYER_INTENT_CHANGED_PATHS,

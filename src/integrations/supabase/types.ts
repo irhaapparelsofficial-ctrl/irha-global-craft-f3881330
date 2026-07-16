@@ -1092,6 +1092,245 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json
+        }
+        Relationships: []
+      }
+      instagram_conversations: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          id: string
+          instagram_account_id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          meta_conversation_id: string
+          metadata: Json
+          participant_igsid: string
+          participant_name: string | null
+          participant_username: string | null
+          status: string
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          instagram_account_id: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          meta_conversation_id: string
+          metadata?: Json
+          participant_igsid: string
+          participant_name?: string | null
+          participant_username?: string | null
+          status?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          instagram_account_id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          meta_conversation_id?: string
+          metadata?: Json
+          participant_igsid?: string
+          participant_name?: string | null
+          participant_username?: string | null
+          status?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      instagram_messages: {
+        Row: {
+          attachments: Json
+          body: string | null
+          conversation_id: string
+          created_at: string
+          delivery_status: string
+          direction: string
+          id: string
+          idempotency_key: string | null
+          message_type: string
+          meta_message_id: string | null
+          raw_payload: Json
+          recipient_igsid: string | null
+          sender_igsid: string | null
+          sent_at: string
+        }
+        Insert: {
+          attachments?: Json
+          body?: string | null
+          conversation_id: string
+          created_at?: string
+          delivery_status?: string
+          direction: string
+          id?: string
+          idempotency_key?: string | null
+          message_type?: string
+          meta_message_id?: string | null
+          raw_payload?: Json
+          recipient_igsid?: string | null
+          sender_igsid?: string | null
+          sent_at: string
+        }
+        Update: {
+          attachments?: Json
+          body?: string | null
+          conversation_id?: string
+          created_at?: string
+          delivery_status?: string
+          direction?: string
+          id?: string
+          idempotency_key?: string | null
+          message_type?: string
+          meta_message_id?: string | null
+          raw_payload?: Json
+          recipient_igsid?: string | null
+          sender_igsid?: string | null
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "instagram_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_reply_drafts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          body: string
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          sent_message_id: string | null
+          source: string
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body: string
+          conversation_id: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          sent_message_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          sent_message_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_reply_drafts_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "instagram_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instagram_reply_drafts_sent_message_id_fkey"
+            columns: ["sent_message_id"]
+            isOneToOne: false
+            referencedRelation: "instagram_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_webhook_events: {
+        Row: {
+          dedupe_key: string
+          error_message: string | null
+          id: string
+          object_type: string | null
+          payload: Json
+          processed_at: string | null
+          processing_status: string
+          received_at: string
+          signature_valid: boolean
+        }
+        Insert: {
+          dedupe_key: string
+          error_message?: string | null
+          id?: string
+          object_type?: string | null
+          payload: Json
+          processed_at?: string | null
+          processing_status?: string
+          received_at?: string
+          signature_valid?: boolean
+        }
+        Update: {
+          dedupe_key?: string
+          error_message?: string | null
+          id?: string
+          object_type?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_status?: string
+          received_at?: string
+          signature_valid?: boolean
+        }
+        Relationships: []
+      }
       internal_links: {
         Row: {
           anchor_text: string
@@ -2775,6 +3014,30 @@ export type Database = {
     }
     Functions: {
       automation_today_key: { Args: { _timezone: string }; Returns: string }
+      claim_instagram_reply_draft: {
+        Args: { p_actor_user_id: string; p_draft_id: string }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          body: string
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          sent_message_id: string | null
+          source: string
+          status: string
+          updated_at: string
+          version: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "instagram_reply_drafts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cms_get_admin_document: { Args: { _key: string }; Returns: Json }
       cms_get_published_document: { Args: { _key: string }; Returns: Json }
       cms_publish_document: { Args: { _key: string }; Returns: Json }
