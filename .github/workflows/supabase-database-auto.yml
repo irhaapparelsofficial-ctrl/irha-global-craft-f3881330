@@ -1,0 +1,192 @@
+name: Supabase Database After Quality Gate
+
+run-name: Guarded database sync · ${{ github.event.workflow_run.head_sha }}
+
+on:
+  workflow_run:
+    workflows: ["Quality Gate"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irha-production-mutation
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+
+jobs:
+  preflight:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    outputs:
+      should_sync: ${{ steps.ready.outputs.should_sync }}
+      source_sha: ${{ steps.ready.outputs.source_sha }}
+      secrets_ready: ${{ steps.ready.outputs.secrets_ready }}
+
+    steps:
+      - name: Confirm exact current main and database secret readiness
+        id: ready
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          access_token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          db_password="$(printf '%s' "${SUPABASE_DB_PASSWORD:-}" | tr -d '[:space:]')"
+          secrets_ready=true
+          [ -n "$access_token" ] || secrets_ready=false
+          [ -n "$db_password" ] || secrets_ready=false
+
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "secrets_ready=$secrets_ready" >> "$GITHUB_OUTPUT"
+
+          if [ "$latest_main" != "$SOURCE_SHA" ]; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "Superseded green run skipped safely: $SOURCE_SHA; current main is $latest_main"
+          elif [ "$secrets_ready" != "true" ]; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "Exact current main is green, but database secrets are not ready. Waiting without failure."
+          else
+            echo "should_sync=true" >> "$GITHUB_OUTPUT"
+            echo "Exact current main is green and database secrets are available: $SOURCE_SHA"
+          fi
+
+      - name: Record waiting state without a red failure
+        if: steps.ready.outputs.secrets_ready != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Supabase database waiting state"
+            echo "- Quality Gate: green"
+            echo "- Source: \`${{ steps.ready.outputs.source_sha }}\`"
+            echo "- Status: waiting for \`SUPABASE_ACCESS_TOKEN\` and \`SUPABASE_DB_PASSWORD\`"
+            echo "- Result: no database connection, dry-run, or mutation attempted"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  sync-database:
+    needs: preflight
+    if: needs.preflight.outputs.should_sync == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: production
+    env:
+      SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+    steps:
+      - name: Checkout exact green main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Detect whether repository migrations changed
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed=false
+          if git diff-tree --no-commit-id --name-only -r "$SOURCE_SHA" | grep -q '^supabase/migrations/'; then
+            changed=true
+          fi
+          echo "migrations_changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "Repository migrations changed: $changed"
+
+      - name: Setup Node
+        if: steps.changes.outputs.migrations_changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Supabase CLI
+        if: steps.changes.outputs.migrations_changed == 'true'
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Validate source and link owner database
+        if: steps.changes.outputs.migrations_changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          test -n "$(printf '%s' "${SUPABASE_DB_PASSWORD:-}" | tr -d '[:space:]')"
+          grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
+          bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
+          npm run verify:deployment-source
+          npm run verify:secrets
+          npm run verify:migrations
+          bash scripts/ci/retry.sh 3 5 -- supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Preview pending migrations and capture rollback evidence
+        if: steps.changes.outputs.migrations_changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase migration list --linked | tee /tmp/migrations-before.txt
+          supabase db push --linked --dry-run | tee /tmp/migration-dry-run.txt
+
+      - name: Reconfirm current main immediately before database mutation
+        if: steps.changes.outputs.migrations_changed == 'true'
+        id: freshness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          if [ "$latest_main" = "$SOURCE_SHA" ]; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "Source $SOURCE_SHA was superseded by $latest_main; database mutation skipped without failure"
+          fi
+
+      - name: Apply pending migrations exactly once
+        if: steps.changes.outputs.migrations_changed == 'true' && steps.freshness.outputs.fresh == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase db push --linked
+          supabase migration list --linked | tee /tmp/migrations-after.txt
+
+      - name: Preserve database sync evidence
+        if: steps.changes.outputs.migrations_changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-database-evidence-${{ env.SOURCE_SHA }}
+          path: |
+            /tmp/migrations-before.txt
+            /tmp/migration-dry-run.txt
+            /tmp/migrations-after.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Record control-plane outcome
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Supabase database control plane"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Project: \`$SUPABASE_PROJECT_ID\`"
+            echo "- Migration files changed: \`${{ steps.changes.outputs.migrations_changed || 'not-reached' }}\`"
+            echo "- Shared production lock: \`irha-production-mutation\`"
+            echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-needed' }}\`"
+            echo "- Apply policy: dry-run first, then one exact non-retried apply"
+          } >> "$GITHUB_STEP_SUMMARY"
