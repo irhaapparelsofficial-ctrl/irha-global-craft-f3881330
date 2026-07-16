@@ -16,6 +16,9 @@ describe("Irha CI control plane", () => {
     expect(quality).toContain("Build immutable release");
     expect(quality).toContain("Publish exact main build artifact");
     expect(quality).toContain("production-dist-${{ github.sha }}");
+    expect(quality).toContain("statuses: write");
+    expect(quality).toContain("Publish exact commit Quality Gate status");
+    expect(quality).toContain('context="Irha Quality Gate"');
     expect(quality).not.toContain("Detect full-verification readiness");
     expect(quality).not.toContain("steps.mode.outputs.full_verify");
     expect(quality).not.toContain("CLOUDFLARE_API_TOKEN");
