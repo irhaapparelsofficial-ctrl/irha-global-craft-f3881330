@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-// @ts-expect-error Cloudflare Pages worker is intentionally plain JavaScript.
 import worker, { robotsText } from "../../../public/_worker.js";
 
 const BUYER_PATH = "/de/bekleidungshersteller-deutschland";
