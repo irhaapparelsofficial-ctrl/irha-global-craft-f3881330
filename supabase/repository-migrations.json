@@ -45,6 +45,13 @@
       "path": "supabase/migrations/20260717232000_seed_draft_b2b_seo_foundation.sql",
       "git_blob_sha": "a65e05870dd8aada32537121e9510b3332894413",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260717232100",
+      "name": "align_localized_draft_paths",
+      "path": "supabase/migrations/20260717232100_align_localized_draft_paths.sql",
+      "git_blob_sha": "bd12ca8e06c71558e4f8919007e5067f13bc8dfe",
+      "transactional_dry_run": true
     }
   ]
 }
