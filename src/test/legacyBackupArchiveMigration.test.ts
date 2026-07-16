@@ -15,15 +15,17 @@ describe("legacy backup archive migration", () => {
     expect(sql).toContain("indexes_metadata");
     expect(sql).toContain("row_data");
     expect(sql).toContain("jsonb_array_length(rows_json) <> archived_rows");
+    expect(sql).toContain("archive verification failed");
   });
 
-  it("keeps the archive private and removes only named legacy sources", () => {
+  it("keeps the archive private and removes only verified source tables", () => {
     expect(sql).toContain("revoke all on table private.legacy_schema_archive_20260716 from public, anon, authenticated");
     expect(sql).toContain("grant select, insert, update, delete on table private.legacy_schema_archive_20260716 to service_role");
-    expect(sql).toContain("drop schema if exists legacy_pre_irha cascade");
-    expect(sql).toContain("drop schema if exists migration_backup_20260713 cascade");
-    expect(sql).toContain("drop schema if exists migration_backup_20260714_media cascade");
-    expect(sql).not.toContain("drop schema public");
-    expect(sql).not.toContain("drop schema private");
+    expect(sql).toContain("execute pg_catalog.format('drop table %I.%I'");
+    expect(sql).toContain("legacy_pre_irha");
+    expect(sql).toContain("migration_backup_20260713");
+    expect(sql).toContain("migration_backup_20260714_media");
+    expect(sql).not.toMatch(/drop\s+schema/i);
+    expect(sql).not.toContain("drop table public.");
   });
 });
