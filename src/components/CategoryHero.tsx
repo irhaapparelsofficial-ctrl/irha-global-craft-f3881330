@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { BAVARIAN_MENS_COLLECTIONS } from "@/lib/bavarianMensCollections";
+import { categoryHeroImage, topCategorySlugFromPath } from "@/lib/heroMedia";
 
 export type CategoryHeroSlide = {
   image: string;
@@ -17,25 +18,30 @@ type Props = {
   intervalMs?: number;
 };
 
-/**
- * Auto-playing category banner slideshow.
- * - 4s autoplay, pause on hover/focus
- * - arrow + dot controls
- * - touch swipe on mobile
- * - lazy-loads non-active images, eager loads only the first
- * - smooth fade transition
- */
 export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
   const { pathname } = useLocation();
+  const categorySlug = topCategorySlugFromPath(pathname);
+  const displaySlides = useMemo(() => {
+    if (!categorySlug || slides.length === 0) return slides;
+    const curatedImage = categoryHeroImage(categorySlug, slides[0]?.image);
+    return curatedImage ? [{ ...slides[0], image: curatedImage }] : slides;
+  }, [categorySlug, slides]);
+
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [loaded, setLoaded] = useState<Set<number>>(() => new Set([0]));
   const touchStartX = useRef<number | null>(null);
-  const count = slides.length;
+  const count = displaySlides.length;
   const showBavarianMensNav = pathname === "/products/bavarian-trachten-wear";
+
+  useEffect(() => {
+    setIndex(0);
+    setLoaded(new Set([0]));
+  }, [displaySlides]);
 
   const go = useCallback(
     (next: number) => {
+      if (count < 2) return;
       const n = ((next % count) + count) % count;
       setLoaded((prev) => {
         if (prev.has(n)) return prev;
@@ -70,7 +76,7 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
   return (
     <>
       <section
-        className="relative w-full overflow-hidden bg-card border-b border-border/60 h-[50vh] min-h-[380px] md:h-[70vh] md:min-h-[520px]"
+        className="relative h-[54vh] min-h-[420px] w-full overflow-hidden border-b border-border/60 bg-card md:h-[72vh] md:min-h-[560px]"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocus={() => setPaused(true)}
@@ -86,48 +92,50 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
         }}
         aria-roledescription="carousel"
       >
-        {slides.map((s, i) => {
-          const shouldLoad = loaded.has(i);
+        {displaySlides.map((slide, slideIndex) => {
+          const shouldLoad = loaded.has(slideIndex);
           return (
             <img
-              key={`img-${i}`}
-              src={shouldLoad ? s.image : undefined}
-              alt={s.title}
-              loading={i === 0 ? "eager" : "lazy"}
+              key={`${slide.image}-${slideIndex}`}
+              src={shouldLoad ? slide.image : undefined}
+              alt={slide.title}
+              loading={slideIndex === 0 ? "eager" : "lazy"}
+              fetchPriority={slideIndex === 0 ? "high" : "low"}
               decoding="async"
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1000ms] ease-in-out ${
-                i === index ? "opacity-100" : "opacity-0"
+              className={`absolute inset-0 h-full w-full object-cover object-center transition-[opacity,transform] duration-[1200ms] ease-out ${
+                slideIndex === index ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"
               }`}
-              aria-hidden={i !== index}
+              aria-hidden={slideIndex !== index}
             />
           );
         })}
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/88 via-black/58 to-black/18" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
 
-        {slides.map((s, i) => {
-          const active = i === index;
+        {displaySlides.map((slide, slideIndex) => {
+          const active = slideIndex === index;
           return (
             <div
-              key={`content-${i}`}
+              key={`content-${slide.image}-${slideIndex}`}
               className={`absolute inset-0 z-10 transition-opacity duration-[900ms] ${
-                active ? "opacity-100" : "opacity-0 pointer-events-none"
+                active ? "opacity-100" : "pointer-events-none opacity-0"
               }`}
               aria-hidden={!active}
             >
-              <div className="container-luxe relative h-full flex items-center">
-                <div className="max-w-2xl py-12">
-                  <div className="h-px w-16 bg-gold mb-5" />
-                  {s.eyebrow && <p className="eyebrow mb-4 text-gold">{s.eyebrow}</p>}
-                  <h2 className="font-display text-white text-3xl md:text-5xl lg:text-6xl leading-[1.02]">{s.title}</h2>
-                  {s.subtitle && <p className="mt-5 text-sm md:text-base text-white/80 max-w-xl leading-relaxed">{s.subtitle}</p>}
-                  {s.ctaHref && (
+              <div className="container-luxe relative flex h-full items-center">
+                <div className="max-w-2xl py-12 text-white">
+                  <div className="mb-5 h-px w-16 bg-gold" />
+                  {slide.eyebrow && <p className="eyebrow mb-4 text-gold">{slide.eyebrow}</p>}
+                  <h2 className="font-display text-3xl leading-[1.02] text-white md:text-5xl lg:text-6xl">{slide.title}</h2>
+                  {slide.subtitle && <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/82 md:text-base">{slide.subtitle}</p>}
+                  {slide.ctaHref && (
                     <Link
-                      to={s.ctaHref}
+                      to={slide.ctaHref}
                       tabIndex={active ? 0 : -1}
-                      className="group mt-8 inline-flex items-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-3.5 text-[11px] uppercase tracking-[0.3em] font-medium hover:shadow-gold transition-all"
+                      className="group mt-8 inline-flex items-center gap-3 bg-gradient-gold px-7 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-primary-foreground transition-all hover:shadow-gold"
                     >
-                      {s.ctaLabel ?? "View Collection"}
+                      {slide.ctaLabel ?? "View Collection"}
                       <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
                     </Link>
                   )}
@@ -139,21 +147,21 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
 
         {count > 1 && (
           <>
-            <button type="button" onClick={() => go(index - 1)} aria-label="Previous slide" className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
+            <button type="button" onClick={() => go(index - 1)} aria-label="Previous slide" className="absolute left-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center border border-white/25 bg-black/45 text-white backdrop-blur transition-colors hover:border-gold hover:text-gold md:flex">
               <ChevronLeft size={18} />
             </button>
-            <button type="button" onClick={() => go(index + 1)} aria-label="Next slide" className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 h-11 w-11 items-center justify-center bg-background/70 backdrop-blur border border-border/60 hover:border-gold hover:text-gold transition-colors">
+            <button type="button" onClick={() => go(index + 1)} aria-label="Next slide" className="absolute right-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center border border-white/25 bg-black/45 text-white backdrop-blur transition-colors hover:border-gold hover:text-gold md:flex">
               <ChevronRight size={18} />
             </button>
 
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
-              {slides.map((_, i) => (
+            <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+              {displaySlides.map((_, slideIndex) => (
                 <button
-                  key={i}
+                  key={slideIndex}
                   type="button"
-                  onClick={() => go(i)}
-                  aria-label={`Go to slide ${i + 1}`}
-                  className={`h-1.5 rounded-full transition-all ${i === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"}`}
+                  onClick={() => go(slideIndex)}
+                  aria-label={`Go to slide ${slideIndex + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${slideIndex === index ? "w-10 bg-gold" : "w-5 bg-white/40 hover:bg-white/70"}`}
                 />
               ))}
             </div>
@@ -166,7 +174,7 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
           <div className="container-luxe py-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <p className="eyebrow mb-1">Men's Trachten</p>
+                <p className="eyebrow mb-1">Men&apos;s Trachten</p>
                 <h2 id="mens-trachten-collections-heading" className="font-display text-2xl md:text-3xl">
                   Browse buyer-ready collections
                 </h2>
@@ -175,7 +183,7 @@ export default function CategoryHero({ slides, intervalMs = 4000 }: Props) {
                 to="/products/bavarian-trachten-wear?subcategory=men"
                 className="hidden text-[10px] uppercase tracking-[0.22em] text-primary hover:underline sm:inline-flex"
               >
-                View all men's styles
+                View all men&apos;s styles
               </Link>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
