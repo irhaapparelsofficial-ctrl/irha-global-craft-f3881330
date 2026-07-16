@@ -13,22 +13,32 @@ if (!isToml && !isJsonFamily) {
 
 let source = await readFile(path, "utf8");
 
+function normalizedOutputDirectory(value) {
+  const match = isToml
+    ? /^pages_build_output_dir\s*=\s*["']([^"']+)["']/m.exec(value)
+    : /["']pages_build_output_dir["']\s*:\s*["']([^"']+)["']/.exec(value);
+  if (!match) return "";
+
+  return match[1]
+    .trim()
+    .replaceAll("\\", "/")
+    .replace(/^\.\//, "")
+    .replace(/\/+$/, "");
+}
+
 function assertProjectContract(value) {
   const hasName = isToml
     ? /^name\s*=\s*["'][^"']+["']/m.test(value)
     : /["']name["']\s*:\s*["'][^"']+["']/.test(value);
   if (!hasName) throw new Error("Downloaded Pages configuration is missing the project name.");
 
-  const hasDist = isToml
-    ? /^pages_build_output_dir\s*=\s*["']\.\/?dist["']/m.test(value)
-    : /["']pages_build_output_dir["']\s*:\s*["']\.\/?dist["']/.test(value);
-  if (!hasDist) {
+  if (normalizedOutputDirectory(value) !== "dist") {
     throw new Error("Downloaded Pages configuration does not target the verified dist directory.");
   }
 }
 
 function tomlSection(value, sectionName) {
-  const headerPattern = new RegExp(`^\\[${sectionName.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\]\\s*$`, "m");
+  const headerPattern = new RegExp(`^\\[${sectionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\]\\s*$`, "m");
   const headerMatch = headerPattern.exec(value);
   if (!headerMatch || headerMatch.index < 0) return "";
 
