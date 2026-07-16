@@ -19,16 +19,19 @@ function assertProjectContract(value) {
     : /["']name["']\s*:\s*["'][^"']+["']/.test(value);
   if (!hasName) throw new Error("Downloaded Pages configuration is missing the project name.");
 
+  // Wrangler preserves the Pages project's raw destination_dir. Both "dist" and
+  // "./dist" are equivalent canonical forms and may be emitted by current projects.
+  const distValuePattern = "(?:\\./)?dist/?";
   const hasDist = isToml
-    ? /^pages_build_output_dir\s*=\s*["']\.\/?dist["']/m.test(value)
-    : /["']pages_build_output_dir["']\s*:\s*["']\.\/?dist["']/.test(value);
+    ? new RegExp(`^pages_build_output_dir\\s*=\\s*["']${distValuePattern}["']`, "m").test(value)
+    : new RegExp(`["']pages_build_output_dir["']\\s*:\\s*["']${distValuePattern}["']`).test(value);
   if (!hasDist) {
     throw new Error("Downloaded Pages configuration does not target the verified dist directory.");
   }
 }
 
 function tomlSection(value, sectionName) {
-  const headerPattern = new RegExp(`^\\[${sectionName.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\]\\s*$`, "m");
+  const headerPattern = new RegExp(`^\\[${sectionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\]\\s*$`, "m");
   const headerMatch = headerPattern.exec(value);
   if (!headerMatch || headerMatch.index < 0) return "";
 
