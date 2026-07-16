@@ -25,17 +25,21 @@ jobs:
   preflight:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
     outputs:
       should_deploy: ${{ steps.current.outputs.should_deploy }}
       source_sha: ${{ steps.current.outputs.source_sha }}
       quality_run_id: ${{ steps.current.outputs.quality_run_id }}
+      secrets_ready: ${{ steps.current.outputs.secrets_ready }}
 
     steps:
-      - name: Confirm green run belongs to exact current main
+      - name: Confirm exact current main and secret readiness
         id: current
         env:
           SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -45,15 +49,40 @@ jobs:
         run: |
           set -euo pipefail
           latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+
           echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
           echo "quality_run_id=$QUALITY_RUN_ID" >> "$GITHUB_OUTPUT"
-          if [ "$latest_main" = "$SOURCE_SHA" ]; then
-            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
-            echo "Exact current main is green: $SOURCE_SHA"
-          else
+
+          secrets_ready=true
+          [ -n "$token" ] || secrets_ready=false
+          [ -n "$project_name" ] || secrets_ready=false
+          echo "secrets_ready=$secrets_ready" >> "$GITHUB_OUTPUT"
+
+          if [ "$latest_main" != "$SOURCE_SHA" ]; then
             echo "should_deploy=false" >> "$GITHUB_OUTPUT"
             echo "Superseded green run skipped safely: $SOURCE_SHA; current main is $latest_main"
+          elif [ "$secrets_ready" != "true" ]; then
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Exact current main is green, but Cloudflare secrets are not ready. Waiting without failure."
+          else
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+            echo "Exact current main is green and Cloudflare secrets are available: $SOURCE_SHA"
           fi
+
+      - name: Record waiting state without a red failure
+        if: steps.current.outputs.secrets_ready != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare production waiting state"
+            echo "- Quality Gate: green"
+            echo "- Source: \`${{ steps.current.outputs.source_sha }}\`"
+            echo "- Status: waiting for repository secrets"
+            echo "- Required names: \`CLOUDFLARE_API_TOKEN\`, \`CLOUDFLARE_PROJECT_NAME\`"
+            echo "- Result: no deploy attempted and no failure raised"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     needs: preflight
