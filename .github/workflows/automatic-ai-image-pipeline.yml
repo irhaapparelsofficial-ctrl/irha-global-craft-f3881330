@@ -16,10 +16,22 @@ on:
   schedule:
     - cron: "17,47 * * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Protected Admin Media queue mode
+        required: true
+        default: canary
+        type: choice
+        options:
+          - canary
+          - drain
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
   id-token: write
+  issues: read
 
 concurrency:
   group: automatic-ai-image-pipeline-main
@@ -119,19 +131,96 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  admin-media-queue:
-    name: Process protected Admin Media queue
-    # The protected gateway and its database RPCs are synced only after the
-    # exact-main Quality Gate. Never race that backend dependency on a push.
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+  queue-plan:
+    name: Resolve protected queue execution plan
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.number == 375 &&
+       github.event.comment.user.login == 'irhaapparelsofficial-ctrl' &&
+       (github.event.comment.body == '/run-image-ai-canary' ||
+        github.event.comment.body == '/run-image-ai-drain'))
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    outputs:
+      workers: ${{ steps.plan.outputs.workers }}
+      batch_limit: ${{ steps.plan.outputs.batch_limit }}
+      max_jobs: ${{ steps.plan.outputs.max_jobs }}
+      mode: ${{ steps.plan.outputs.mode }}
     steps:
-      - name: Checkout exact workflow source
+      - name: Build bounded plan
+        id: plan
+        shell: bash
+        env:
+          DISPATCH_MODE: ${{ inputs.mode }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+          mode="scheduled"
+          workers='["1"]'
+          batch_limit=2
+          max_jobs=6
+
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            mode="${DISPATCH_MODE:-canary}"
+          elif [ "$GITHUB_EVENT_NAME" = "issue_comment" ]; then
+            case "${COMMENT_BODY:-}" in
+              /run-image-ai-drain) mode="drain" ;;
+              *) mode="canary" ;;
+            esac
+          fi
+
+          if [ "$mode" = "drain" ]; then
+            workers='["1","2","3","4"]'
+            batch_limit=3
+            max_jobs=6
+          elif [ "$mode" = "canary" ]; then
+            workers='["1"]'
+            batch_limit=2
+            max_jobs=2
+          fi
+
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "workers=$workers" >> "$GITHUB_OUTPUT"
+          echo "batch_limit=$batch_limit" >> "$GITHUB_OUTPUT"
+          echo "max_jobs=$max_jobs" >> "$GITHUB_OUTPUT"
+          {
+            echo "## AI image queue plan"
+            echo "- Mode: \`$mode\`"
+            echo "- Workers: \`$workers\`"
+            echo "- Claim limit: \`$batch_limit\`"
+            echo "- Maximum jobs per worker: \`$max_jobs\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  admin-media-queue:
+    name: Process protected Admin Media queue · worker ${{ matrix.worker }}
+    needs: queue-plan
+    if: needs.queue-plan.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJSON(needs.queue-plan.outputs.workers) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - name: Checkout exact protected main source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: main
           persist-credentials: false
+
+      - name: Confirm exact current main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          checked_out="$(git rev-parse HEAD)"
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$checked_out" = "$latest_main" || {
+            echo "Refusing stale queue worker: checked out $checked_out, current main is $latest_main"
+            exit 1
+          }
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -164,19 +253,23 @@ jobs:
             mv "$IRHA_EDSR_MODEL.tmp" "$IRHA_EDSR_MODEL"
           fi
 
-      - name: Request short-lived GitHub OIDC token
+      - name: Process a bounded failure-isolated production batch
+        env:
+          IRHA_IMAGE_BATCH_LIMIT: ${{ needs.queue-plan.outputs.batch_limit }}
+          IRHA_IMAGE_MAX_JOBS: ${{ needs.queue-plan.outputs.max_jobs }}
+          IRHA_IMAGE_WORKER: ${{ matrix.worker }}
+        run: python scripts/image-ai/run_queue.py
+
+      - name: Record worker outcome
+        if: always()
         shell: bash
         run: |
-          set -euo pipefail
-          response="$(curl --fail --silent --show-error \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=irha-image-pipeline")"
-          token="$(printf '%s' "$response" | python -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
-          test -n "$token"
-          echo "::add-mask::$token"
-          echo "IRHA_GITHUB_OIDC_TOKEN=$token" >> "$GITHUB_ENV"
-
-      - name: Process a failure-isolated production batch
-        env:
-          IRHA_IMAGE_BATCH_LIMIT: "2"
-        run: python scripts/image-ai/run_queue.py
+          {
+            echo "## Protected AI image worker"
+            echo "- Mode: \`${{ needs.queue-plan.outputs.mode }}\`"
+            echo "- Worker: \`${{ matrix.worker }}\`"
+            echo "- Claim limit: \`${{ needs.queue-plan.outputs.batch_limit }}\`"
+            echo "- Maximum jobs: \`${{ needs.queue-plan.outputs.max_jobs }}\`"
+            echo "- Original images: preserved"
+            echo "- Stale lock policy: database-controlled reclaim after 30 minutes"
+          } >> "$GITHUB_STEP_SUMMARY"
