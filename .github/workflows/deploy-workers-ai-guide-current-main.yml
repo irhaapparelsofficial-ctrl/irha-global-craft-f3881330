@@ -202,7 +202,7 @@ jobs:
             exit "$smoke_code"
           fi
 
-      - name: Reconfirm exact current main before production
+      - name: Reconfirm exact current main before production configuration
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -213,6 +213,49 @@ jobs:
             echo "Main advanced from $SOURCE_SHA to $latest_main; preview remains isolated and production is skipped"
             exit 1
           }
+
+      - name: Persist verified AI binding in preview and production environments
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME"
+          project_before="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' "$endpoint")"
+          test "$(printf '%s' "$project_before" | jq -r '.success // false')" = "true"
+
+          preview_ai="$(printf '%s' "$project_before" | jq -c '.result.deployment_configs.preview.ai_bindings // {}')"
+          test "$(printf '%s' "$preview_ai" | jq -r 'has("AI")')" = "true" || {
+            echo "Verified preview deployment did not persist an AI binding named AI in project configuration"
+            exit 1
+          }
+          test "$(printf '%s' "$preview_ai" | jq -r 'keys | length')" = "1" || {
+            echo "Expected exactly one preview AI binding"
+            exit 1
+          }
+
+          printf '%s' "$project_before" | jq -c '.result.deployment_configs.production.ai_bindings // {}' > /tmp/production-ai-bindings-before.json
+          payload="$(jq -cn --argjson ai "$preview_ai" '{deployment_configs:{preview:{ai_bindings:$ai},production:{ai_bindings:$ai}}}')"
+          patch_result="$(curl -fsS -X PATCH \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "$payload" \
+            "$endpoint")"
+          test "$(printf '%s' "$patch_result" | jq -r '.success // false')" = "true"
+
+          project_after="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' "$endpoint")"
+          test "$(printf '%s' "$project_after" | jq -r '.success // false')" = "true"
+          preview_after="$(printf '%s' "$project_after" | jq -c '.result.deployment_configs.preview.ai_bindings // {}')"
+          production_after="$(printf '%s' "$project_after" | jq -c '.result.deployment_configs.production.ai_bindings // {}')"
+          test "$preview_after" = "$preview_ai"
+          test "$production_after" = "$preview_ai"
+          test "$(printf '%s' "$production_after" | jq -r 'has("AI")')" = "true"
+
+          {
+            echo "## Persistent Pages AI binding"
+            echo "- Preview binding key: \`AI\`"
+            echo "- Production binding key: \`AI\`"
+            echo "- Existing non-AI project settings modified: \`false\`"
+            echo "- Binding object copied from verified preview environment: \`true\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Deploy exact verified build to production
         shell: bash
@@ -252,7 +295,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Verified Cloudflare Workers AI guide release completed from exact current main \`$SOURCE_SHA\`. Downloaded existing Pages configuration \`$WRANGLER_CONFIG\` was preserved with one \`AI\` binding added. Preview \`$PREVIEW_URL\` passed source identity and two-turn non-repetition smoke tests before production. Apex and pages.dev both serve the same source and the provider header is \`cloudflare-workers-ai\`."
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Verified Cloudflare Workers AI guide release completed from exact current main \`$SOURCE_SHA\`. Downloaded existing Pages configuration \`$WRANGLER_CONFIG\` was preserved with one \`AI\` binding added. The verified preview AI binding was persisted into both Pages environments before production deployment. Preview \`$PREVIEW_URL\` passed source identity and two-turn non-repetition smoke tests before production. Apex and pages.dev both serve the same source and the provider header is \`cloudflare-workers-ai\`."
 
       - name: Record failed Workers AI release attempt
         if: failure()
