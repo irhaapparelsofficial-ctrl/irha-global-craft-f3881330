@@ -173,7 +173,7 @@ jobs:
         run: |
           set -euo pipefail
           token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
-          account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
           project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
           test -n "$token"
           test -n "$project_name"
@@ -182,16 +182,38 @@ jobs:
           verify_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' https://api.cloudflare.com/client/v4/user/tokens/verify)"
           test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = true
 
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
+          fi
+
+          project_json=''
+          if [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            project_json="$(bash scripts/ci/retry.sh 3 5 -- curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+            if [ "$(printf '%s' "$project_json" | jq -r '.success // false')" != true ]; then
+              account_id=''
+              project_json=''
+            fi
+          fi
+
           if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
             accounts_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
             test "$(printf '%s' "$accounts_json" | jq -r '.success // false')" = true
-            test "$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')" = 1
-            account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+
+            while IFS= read -r candidate; do
+              [[ "$candidate" =~ ^[0-9a-fA-F]{32}$ ]] || continue
+              candidate_json="$(bash scripts/ci/retry.sh 3 5 -- curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$candidate/pages/projects/$project_name")"
+              if [ "$(printf '%s' "$candidate_json" | jq -r '.success // false')" = true ] \
+                && [ "$(printf '%s' "$candidate_json" | jq -r '.result.name // empty')" = "$project_name" ]; then
+                account_id="$candidate"
+                project_json="$candidate_json"
+                break
+              fi
+            done < <(printf '%s' "$accounts_json" | jq -r '.result[]?.id // empty')
           fi
+
           [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
           echo "::add-mask::$account_id"
-
-          project_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
           test "$(printf '%s' "$project_json" | jq -r '.success // false')" = true
           test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
           test "$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')" = "$PAGES_BRANCH"
