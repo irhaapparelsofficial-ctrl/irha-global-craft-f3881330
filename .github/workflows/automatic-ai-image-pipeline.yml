@@ -121,7 +121,9 @@ jobs:
 
   admin-media-queue:
     name: Process protected Admin Media queue
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[image-ai-generated]')
+    # The protected gateway and its database RPCs are synced only after the
+    # exact-main Quality Gate. Never race that backend dependency on a push.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
