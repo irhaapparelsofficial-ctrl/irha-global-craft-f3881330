@@ -1,4 +1,4 @@
-name: Audit perfect B2B 2332
+name: Audit perfect B2B b490
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      EXPECTED_SOURCE_SHA: 2332eceea90b1ac2f1e6e6cc452a7450a283a1ea
+      EXPECTED_SOURCE_SHA: b490221ea635651ad60cc06de9a58abc9842ab10
       LIVE_ORIGIN: https://irhaapparels.com
     steps:
       - uses: actions/checkout@v4
@@ -153,7 +153,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: perfect-b2b-2332-audit
+          name: perfect-b2b-b490-audit
           path: |
             live-build.json
             perfect-b2b-audit.json
