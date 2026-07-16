@@ -22,6 +22,17 @@ type HeroMediaSlideshowProps = {
   showDots?: boolean;
 };
 
+export function selectEditorialHeroSlides(slides: Array<HeroMediaSlide | null | undefined>) {
+  const seen = new Set<string>();
+  const deduped = slides.filter((slide): slide is HeroMediaSlide => {
+    if (!slide?.src || seen.has(slide.src)) return false;
+    seen.add(slide.src);
+    return true;
+  });
+  const coverSlides = deduped.filter((slide) => slide.fit !== "contain");
+  return coverSlides.length > 0 ? coverSlides : deduped;
+}
+
 export default function HeroMediaSlideshow({
   slides,
   intervalMs = 9_000,
@@ -33,14 +44,7 @@ export default function HeroMediaSlideshow({
   showArrows = true,
   showDots = true,
 }: HeroMediaSlideshowProps) {
-  const normalizedSlides = useMemo(() => {
-    const seen = new Set<string>();
-    return slides.filter((slide): slide is HeroMediaSlide => {
-      if (!slide?.src || seen.has(slide.src)) return false;
-      seen.add(slide.src);
-      return true;
-    });
-  }, [slides]);
+  const normalizedSlides = useMemo(() => selectEditorialHeroSlides(slides), [slides]);
 
   const [index, setIndex] = useState(0);
   const [loadedIndexes, setLoadedIndexes] = useState<Set<number>>(() => new Set([0]));
@@ -112,8 +116,8 @@ export default function HeroMediaSlideshow({
         <div
           key={slide.src}
           aria-hidden={slideIndex !== index}
-          className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-            slideIndex === index ? "opacity-100" : "pointer-events-none opacity-0"
+          className={`absolute inset-0 transition-[opacity,transform] duration-1000 ease-out ${
+            slideIndex === index ? "scale-100 opacity-100" : "pointer-events-none scale-[1.02] opacity-0"
           } ${slide.backgroundClassName ?? ""}`}
         >
           {loadedIndexes.has(slideIndex) && (
@@ -121,12 +125,12 @@ export default function HeroMediaSlideshow({
               src={slide.src}
               originalSrc={slide.src}
               alt={slide.alt}
-              width={1280}
+              width={1440}
               height={960}
               loading={priority && slideIndex === 0 ? "eager" : "lazy"}
               fetchPriority={priority && slideIndex === 0 ? "high" : "low"}
               decoding="async"
-              sizes="(max-width: 767px) 92vw, (max-width: 1279px) 48vw, 38vw"
+              sizes="(max-width: 767px) 100vw, (max-width: 1279px) 100vw, 100vw"
               className={`h-full w-full ${slide.fit === "contain" ? "object-contain" : "object-cover"} ${imageClassName}`}
               style={slide.position ? { objectPosition: slide.position } : undefined}
             />
