@@ -214,6 +214,71 @@ jobs:
             exit 1
           }
 
+      - name: Reconcile verified preview AI binding into production
+        shell: bash
+        run: |
+          set -euo pipefail
+          project_url="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME"
+          before_json=/tmp/pages-project-before.json
+          patch_json=/tmp/pages-ai-binding-patch.json
+          patch_response=/tmp/pages-ai-binding-patch-response.json
+          reconcile_log=/tmp/binding-reconcile.log
+
+          prepared=false
+          for attempt in {1..8}; do
+            curl -fsS \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H 'Content-Type: application/json' \
+              "$project_url" > "$before_json"
+            if node scripts/reconcile-cloudflare-pages-ai-binding.mjs prepare "$before_json" "$patch_json" > "$reconcile_log" 2>&1; then
+              prepared=true
+              break
+            fi
+            sleep 3
+          done
+          if [ "$prepared" != "true" ]; then
+            cat "$reconcile_log"
+            exit 1
+          fi
+          cat "$reconcile_log"
+          changed="$(sed -n 's/^changed=//p' "$reconcile_log")"
+          test "$changed" = "true" || test "$changed" = "false"
+
+          if [ "$changed" = "true" ]; then
+            http_status="$(curl -sS \
+              -o "$patch_response" \
+              -w '%{http_code}' \
+              -X PATCH \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data-binary "@$patch_json" \
+              "$project_url")"
+            if [[ ! "$http_status" =~ ^2[0-9][0-9]$ ]]; then
+              echo "Cloudflare Pages production AI binding PATCH failed with HTTP $http_status"
+              jq -c '{success, errors: [.errors[]? | {code, message}]}' "$patch_response" 2>/dev/null || true
+              exit 1
+            fi
+            test "$(jq -r '.success // false' "$patch_response")" = "true"
+          fi
+
+          verified=false
+          for attempt in {1..8}; do
+            curl -fsS \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H 'Content-Type: application/json' \
+              "$project_url" > /tmp/pages-project-after.json
+            if node scripts/reconcile-cloudflare-pages-ai-binding.mjs verify /tmp/pages-project-after.json >> "$reconcile_log" 2>&1; then
+              verified=true
+              break
+            fi
+            sleep 3
+          done
+          if [ "$verified" != "true" ]; then
+            cat "$reconcile_log"
+            exit 1
+          fi
+          echo "Verified deployment_configs.production.ai_bindings.AI matches the preview-proven binding."
+
       - name: Deploy exact verified build to production
         shell: bash
         run: |
@@ -252,7 +317,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Verified Cloudflare Workers AI guide release completed from exact current main \`$SOURCE_SHA\`. Downloaded existing Pages configuration \`$WRANGLER_CONFIG\` was preserved with one \`AI\` binding added. Preview \`$PREVIEW_URL\` passed source identity and two-turn non-repetition smoke tests before production. Apex and pages.dev both serve the same source and the provider header is \`cloudflare-workers-ai\`."
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Verified Cloudflare Workers AI guide release completed from exact current main \`$SOURCE_SHA\`. Downloaded existing Pages configuration \`$WRANGLER_CONFIG\` was preserved, the preview-proven \`AI\` binding was reconciled into production without deleting other production AI bindings, and preview \`$PREVIEW_URL\` passed source identity plus two-turn non-repetition smoke tests before production. Apex and pages.dev both serve the same source and the provider header is \`cloudflare-workers-ai\`."
 
       - name: Record failed Workers AI release attempt
         if: failure()
@@ -277,6 +342,15 @@ jobs:
               echo
               echo '```text'
               sanitize < /tmp/preview-smoke.log | tail -n 80 | head -c 8000
+              echo
+              echo '```'
+            fi
+            if [ -s /tmp/binding-reconcile.log ]; then
+              echo
+              echo "Sanitized production binding reconciliation output:"
+              echo
+              echo '```text'
+              sanitize < /tmp/binding-reconcile.log | tail -n 80 | head -c 8000
               echo
               echo '```'
             fi

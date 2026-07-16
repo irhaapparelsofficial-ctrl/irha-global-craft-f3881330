@@ -22,6 +22,24 @@ function runConfigPreparation(filename: string, source: string) {
   }
 }
 
+function buildProductionBindingPatch(projectResponse: unknown) {
+  const directory = mkdtempSync(join(tmpdir(), "irha-workers-ai-binding-"));
+  const input = join(directory, "project.json");
+  const output = join(directory, "patch.json");
+  writeFileSync(input, JSON.stringify(projectResponse), "utf8");
+  try {
+    execFileSync(process.execPath, [
+      resolve(root, "scripts/reconcile-cloudflare-pages-ai-binding.mjs"),
+      "prepare",
+      input,
+      output,
+    ], { cwd: root, stdio: "pipe" });
+    return JSON.parse(readFileSync(output, "utf8"));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
 describe("Cloudflare Workers AI guide", () => {
   it("uses a secure same-origin AI route with context and repetition guards", () => {
     const handler = read("public/_worker-guide.js");
@@ -130,7 +148,30 @@ describe("Cloudflare Workers AI guide", () => {
     }, null, 2))).toThrow();
   });
 
-  it("requires a root downloaded config, preview identity and two-turn smoke before production", () => {
+  it("copies the verified preview AI binding into production without deleting other bindings", () => {
+    const patch = buildProductionBindingPatch({
+      success: true,
+      result: {
+        deployment_configs: {
+          preview: { ai_bindings: { AI: { project_id: "verified-preview-project" } } },
+          production: { ai_bindings: { OTHER_AI: { project_id: "preserve-me" } } },
+        },
+      },
+    });
+
+    expect(patch).toEqual({
+      deployment_configs: {
+        production: {
+          ai_bindings: {
+            OTHER_AI: { project_id: "preserve-me" },
+            AI: { project_id: "verified-preview-project" },
+          },
+        },
+      },
+    });
+  });
+
+  it("requires a root downloaded config, preview identity, production binding reconciliation and two-turn smoke", () => {
     const workflow = read(".github/workflows/deploy-workers-ai-guide-current-main.yml");
     expect(workflow).toContain("Confirm exact current main source");
     expect(workflow).toContain("pages download config");
@@ -144,6 +185,9 @@ describe("Cloudflare Workers AI guide", () => {
     expect(workflow).toContain("Deploy immutable preview with Workers AI binding");
     expect(workflow).toContain('smoke-cloudflare-ai-guide.mjs "$PREVIEW_URL"');
     expect(workflow).toContain("Reconfirm exact current main before production");
+    expect(workflow).toContain("Reconcile verified preview AI binding into production");
+    expect(workflow).toContain("reconcile-cloudflare-pages-ai-binding.mjs");
+    expect(workflow).toContain("deployment_configs.production.ai_bindings");
     expect(workflow).toContain('smoke-cloudflare-ai-guide.mjs "$CANONICAL_ORIGIN"');
 
     const smoke = read("scripts/smoke-cloudflare-ai-guide.mjs");
