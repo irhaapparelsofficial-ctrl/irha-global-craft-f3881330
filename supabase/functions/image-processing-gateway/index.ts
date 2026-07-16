@@ -12,7 +12,23 @@ const CACHE_SECONDS = "31536000";
 const WIDTHS = [360, 720, 1200, 1600, 2400] as const;
 const JWKS = createRemoteJWKSet(new URL(`${OIDC_ISSUER}/.well-known/jwks`));
 
-type ServiceClient = ReturnType<typeof createClient>;
+type ServiceError = { message: string };
+type ServiceClient = {
+  rpc: (
+    functionName: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: ServiceError | null }>;
+  storage: {
+    from: (bucket: string) => {
+      upload: (
+        path: string,
+        file: File,
+        options?: Record<string, unknown>,
+      ) => Promise<{ error: ServiceError | null }>;
+      getPublicUrl: (path: string) => { data: { publicUrl: string } };
+    };
+  };
+};
 
 type Manifest = {
   status?: "ready" | "review_required";
@@ -37,7 +53,7 @@ Deno.serve(async (req: Request) => {
       requiredEnv("SUPABASE_URL"),
       requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
       { auth: { persistSession: false, autoRefreshToken: false } },
-    );
+    ) as unknown as ServiceClient;
 
     const contentType = req.headers.get("content-type") || "";
     if (contentType.includes("multipart/form-data")) {
@@ -106,7 +122,8 @@ async function claimJobs(body: Record<string, unknown>, service: ServiceClient, 
     _worker: worker,
   });
   if (error) return json({ error: error.message }, 422);
-  return json({ ok: true, jobs: data ?? [], count: data?.length ?? 0 });
+  const jobs = Array.isArray(data) ? data : [];
+  return json({ ok: true, jobs, count: jobs.length });
 }
 
 async function failJob(body: Record<string, unknown>, service: ServiceClient, claims: { actor: string }) {
