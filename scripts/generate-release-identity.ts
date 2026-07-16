@@ -5,6 +5,7 @@ import {
   APPLICATION_FINGERPRINT_SCOPE,
   computeApplicationFingerprint,
 } from "./application-fingerprint";
+import { preferExplicitSourceIdentity } from "./exact-source-identity";
 import {
   computeBuildFingerprint,
   computeRuntimeFingerprint,
@@ -28,7 +29,7 @@ if (!existsSync(publicManifestPath)) {
   throw new Error(`Base release manifest is missing: ${publicManifestPath}`);
 }
 
-const identity = resolveSourceIdentity();
+const identity = resolveSourceIdentity(preferExplicitSourceIdentity());
 const runtimeFingerprint = computeRuntimeFingerprint(distDir);
 const applicationFingerprint = computeApplicationFingerprint(distDir);
 const htmlFiles = listHtmlFiles(distDir);
