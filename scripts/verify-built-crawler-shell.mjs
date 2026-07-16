@@ -33,7 +33,7 @@ assert(
   "Built crawler shell is missing the current homepage H1",
 );
 assert(
-  html.includes('type="application/ld+json"') && html.includes('"@type": "Organization"'),
+  html.includes('type="application/ld+json"') && /["']@type["']\s*:\s*["']Organization["']/.test(html),
   "Built crawler shell is missing static Organization structured data",
 );
 assert(
