@@ -5,20 +5,27 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("Irha CI control plane", () => {
-  it("defers repository verification until all core deployment secrets exist", () => {
+  it("runs required repository verification independently from deployment secrets", () => {
     const quality = read(".github/workflows/quality.yml");
-    expect(quality).toContain("Detect full-verification readiness");
-    expect(quality).toContain("Repository verification is deferred without failure");
-    expect(quality).toContain("steps.mode.outputs.full_verify == 'true'");
+    expect(quality).toContain("Checkout exact event source");
+    expect(quality).toContain("Verify deployment source lock");
+    expect(quality).toContain("Verify secret safety");
+    expect(quality).toContain("Verify migration order");
+    expect(quality).toContain("Typecheck");
+    expect(quality).toContain("Test");
+    expect(quality).toContain("Build immutable release");
     expect(quality).toContain("Publish exact main build artifact");
     expect(quality).toContain("production-dist-${{ github.sha }}");
+    expect(quality).not.toContain("Detect full-verification readiness");
+    expect(quality).not.toContain("steps.mode.outputs.full_verify");
+    expect(quality).not.toContain("CLOUDFLARE_API_TOKEN");
+    expect(quality).not.toContain("SUPABASE_ACCESS_TOKEN");
     expect(quality).not.toContain("issue_comment:");
     expect(quality).not.toContain("wrangler@4 pages deploy");
   });
 
-  it("uses one shared production mutation lock", () => {
+  it("keeps Supabase production mutations single-flight", () => {
     for (const path of [
-      ".github/workflows/cloudflare-pages-auto-production.yml",
       ".github/workflows/supabase-functions-auto.yml",
       ".github/workflows/supabase-database-auto.yml",
       ".github/workflows/supabase-owner-release.yml",
@@ -29,22 +36,24 @@ describe("Irha CI control plane", () => {
     }
   });
 
-  it("deploys the exact immutable Quality Gate artifact", () => {
-    const production = read(".github/workflows/cloudflare-pages-auto-production.yml");
+  it("reconciles Cloudflare independently per exact source SHA", () => {
+    const production = read(".github/workflows/cloudflare-current-main-reconcile.yml");
+    expect(production).toContain("group: cloudflare-reconcile-${{ github.event.workflow_run.head_sha }}");
     expect(production).toContain("actions/download-artifact@v4");
     expect(production).toContain("run-id: ${{ env.QUALITY_RUN_ID }}");
-    expect(production).toContain("Reconfirm current main after acquiring production lock");
-    expect(production).toContain("deploy skipped without failure");
-    expect(production).toContain("waiting for repository secrets");
+    expect(production).toContain("Check whether production already serves the exact release");
+    expect(production).toContain("Reconfirm exact current main before production mutation");
+    expect(production).toContain("idempotent-current-main-reconcile");
     expect(production).not.toContain("npm run build");
   });
 
-  it("automatically activates verification and all core sync jobs after secrets appear", () => {
+  it("automatically activates exact-main verification and core sync jobs after secrets appear", () => {
     const bootstrap = read(".github/workflows/secret-bootstrap-controller.yml");
     expect(bootstrap).toContain('cron: "17 * * * *"');
-    expect(bootstrap).toContain("no repository verification, no workflow dispatch, and no red failure");
+    expect(bootstrap).toContain("Required repository Quality Gate: remains secrets-independent");
     expect(bootstrap).toContain("gh workflow run quality.yml");
-    expect(bootstrap).toContain("Cloudflare deploy job success");
+    expect(bootstrap).toContain("cloudflare-current-main-reconcile.yml");
+    expect(bootstrap).toContain("Cloudflare reconcile job success");
     expect(bootstrap).toContain("Supabase functions job success");
     expect(bootstrap).toContain("Supabase database job success");
   });
@@ -70,15 +79,14 @@ describe("Irha CI control plane", () => {
   });
 
   it("removes obsolete duplicate production deployers", () => {
-    expect(
-      existsSync(resolve(process.cwd(), ".github/workflows/cloudflare-pages-one-time-20260714.yml")),
-    ).toBe(false);
-    expect(
-      existsSync(resolve(process.cwd(), ".github/workflows/cloudflare-pages-staging-once.yml")),
-    ).toBe(false);
-    expect(
-      existsSync(resolve(process.cwd(), ".github/workflows/deploy-robots-worker-fix-20260715.yml")),
-    ).toBe(false);
+    for (const path of [
+      ".github/workflows/cloudflare-pages-auto-production.yml",
+      ".github/workflows/cloudflare-pages-one-time-20260714.yml",
+      ".github/workflows/cloudflare-pages-staging-once.yml",
+      ".github/workflows/deploy-robots-worker-fix-20260715.yml",
+    ]) {
+      expect(existsSync(resolve(process.cwd(), path))).toBe(false);
+    }
   });
 
   it("keeps media repository writes single-flight and stale-safe", () => {
