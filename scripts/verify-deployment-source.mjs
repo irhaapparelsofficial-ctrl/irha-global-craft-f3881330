@@ -109,16 +109,18 @@ async function main() {
     `IRHA_DOMAIN_ALIASES: ${EXPECTED.alias}`,
     `default: ${EXPECTED.release}`,
     `default: ${EXPECTED.releaseText}`,
+    "IRHA_EXPECTED_RELEASE: ${{ inputs.expected_release }}",
+    "IRHA_EXPECTED_RELEASE_TEXT: ${{ inputs.expected_release_text }}",
+    "IRHA_BASE_URL: ${{ inputs.base_url }}",
+    "IRHA_PROPAGATION_MINUTES: ${{ inputs.propagation_minutes }}",
     "Trigger: manual deep audit only",
     "Automatic duplicate live audits: disabled",
-    "node scripts/wait-for-production-release.mjs",
-    "node scripts/verify-production-domains.mjs",
-    "node scripts/production-smoke-v2.mjs",
   ];
   for (const line of requiredWorkflowLines) {
     assert(workflow.includes(line), `production-smoke workflow missing or stale: ${line}`);
   }
-  assert(!workflow.includes("\n  push:"), "production-smoke must not run automatically on every main push");
+  assert(!workflow.includes("\n  push:\n"), "production-smoke must remain manual-only under the CI control plane");
+  assert(!workflow.includes("[production-smoke]"), "legacy commit-message smoke trigger must remain removed");
   assert(
     !workflow.includes(`IRHA_EXPECTED_ORIGIN: ${EXPECTED.alias}`) &&
       !workflow.includes(`IRHA_PRIMARY_URL: ${EXPECTED.alias}`),
