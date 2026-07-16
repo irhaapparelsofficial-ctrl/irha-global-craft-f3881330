@@ -34,7 +34,7 @@ permissions:
   issues: read
 
 concurrency:
-  group: automatic-ai-image-pipeline-main
+  group: automatic-ai-image-pipeline-${{ ((github.event_name == 'issue_comment' && github.event.comment.body == '/run-image-ai-drain') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'drain')) && 'drain' || 'main' }}
   cancel-in-progress: false
 
 env:
