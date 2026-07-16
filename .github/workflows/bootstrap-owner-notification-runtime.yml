@@ -1,0 +1,97 @@
+name: Bootstrap Owner Notification Runtime
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/bootstrap-owner-notification-runtime.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bootstrap-owner-notification-runtime
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_REF: pvzjiozismyxqrzmtfbi
+
+jobs:
+  bootstrap:
+    name: Generate push keys and deploy dispatcher
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout exact main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify Supabase credential readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}" || {
+            echo "SUPABASE_ACCESS_TOKEN is missing"
+            exit 1
+          }
+
+      - name: Generate masked VAPID keypair
+        shell: bash
+        run: |
+          set -euo pipefail
+          keys_file="$(mktemp)"
+          npx --yes web-push@3.6.7 generate-vapid-keys --json > "$keys_file"
+          public_key="$(jq -r '.publicKey // empty' "$keys_file")"
+          private_key="$(jq -r '.privateKey // empty' "$keys_file")"
+          rm -f "$keys_file"
+
+          [[ "$public_key" =~ ^[A-Za-z0-9_-]{80,120}$ ]] || {
+            echo "Generated VAPID public key is invalid"
+            exit 1
+          }
+          [[ "$private_key" =~ ^[A-Za-z0-9_-]{40,80}$ ]] || {
+            echo "Generated VAPID private key is invalid"
+            exit 1
+          }
+
+          echo "::add-mask::$public_key"
+          echo "::add-mask::$private_key"
+          {
+            echo "VAPID_PUBLIC_KEY=$public_key"
+            echo "VAPID_PRIVATE_KEY=$private_key"
+          } >> "$GITHUB_ENV"
+
+      - name: Store push credentials in Supabase runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes supabase@latest secrets set \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            VAPID_PUBLIC_KEY="$VAPID_PUBLIC_KEY" \
+            VAPID_PRIVATE_KEY="$VAPID_PRIVATE_KEY"
+
+      - name: Deploy notification dispatcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes supabase@latest functions deploy notification-dispatcher \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            --no-verify-jwt
+
+      - name: Verify runtime secret names and deployed function
+        shell: bash
+        run: |
+          set -euo pipefail
+          secrets_json="$(npx --yes supabase@latest secrets list --project-ref "$SUPABASE_PROJECT_REF" --output json)"
+          printf '%s' "$secrets_json" | jq -e '[.[].name] | index("VAPID_PUBLIC_KEY") != null and index("VAPID_PRIVATE_KEY") != null' >/dev/null
+          functions_json="$(npx --yes supabase@latest functions list --project-ref "$SUPABASE_PROJECT_REF" --output json)"
+          printf '%s' "$functions_json" | jq -e '.[] | select(.slug == "notification-dispatcher" and .status == "ACTIVE")' >/dev/null
+          echo "Owner notification runtime bootstrap verified without printing secret values."
