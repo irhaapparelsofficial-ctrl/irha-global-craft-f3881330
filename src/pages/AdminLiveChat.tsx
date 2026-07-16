@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, ExternalLink, Loader2, MessageSquare, RefreshCw, RotateCcw, Send, UserRound, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, Loader2, MapPin, MessageSquare, RefreshCw, RotateCcw, Send, UserRound, XCircle } from "lucide-react";
 import SEO from "@/components/SEO";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,17 @@ type ChatSession = {
   visitor_name: string | null;
   visitor_company: string | null;
   visitor_email: string | null;
+  visitor_country_code: string | null;
+  visitor_country: string | null;
+  visitor_region: string | null;
+  visitor_city: string | null;
+  visitor_timezone: string | null;
+  visitor_language: string | null;
+  entry_path: string | null;
+  referrer_host: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
+  presence_alerted_at: string | null;
   assigned_to: string | null;
   human_requested_at: string;
   last_message_at: string;
@@ -43,8 +54,27 @@ function fmt(value: string | null) {
   return new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
+function countryFlag(code: string | null) {
+  if (!code || !/^[A-Z]{2}$/.test(code)) return "";
+  return String.fromCodePoint(...code.split("").map((letter) => 127397 + letter.charCodeAt(0)));
+}
+
+function locationLabel(session: ChatSession) {
+  const place = Array.from(new Set([
+    session.visitor_city,
+    session.visitor_region,
+    session.visitor_country || session.visitor_country_code,
+  ].filter((value): value is string => Boolean(value))));
+  const flag = countryFlag(session.visitor_country_code);
+  if (place.length === 0) return "Location unavailable";
+  return `${flag ? `${flag} ` : ""}${place.join(", ")}`;
+}
+
 export default function AdminLiveChat() {
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const requestedSessionRef = useRef(
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("session"),
+  );
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -61,8 +91,8 @@ export default function AdminLiveChat() {
     try {
       const { data: sessionRows, error: sessionError } = await db
         .from("chat_sessions")
-        .select("session_id,status,visitor_name,visitor_company,visitor_email,assigned_to,human_requested_at,last_message_at,last_user_message_at,last_admin_message_at,closed_at,created_at,updated_at")
-        .order("last_message_at", { ascending: false })
+        .select("session_id,status,visitor_name,visitor_company,visitor_email,visitor_country_code,visitor_country,visitor_region,visitor_city,visitor_timezone,visitor_language,entry_path,referrer_host,first_seen_at,last_seen_at,presence_alerted_at,assigned_to,human_requested_at,last_message_at,last_user_message_at,last_admin_message_at,closed_at,created_at,updated_at")
+        .order("last_seen_at", { ascending: false })
         .limit(150);
       if (sessionError) throw sessionError;
 
@@ -85,6 +115,11 @@ export default function AdminLiveChat() {
       setMessages(messageRows);
       setSelectedId((current) => {
         if (current && normalizedSessions.some((session) => session.session_id === current)) return current;
+        const requested = requestedSessionRef.current;
+        if (requested && normalizedSessions.some((session) => session.session_id === requested)) {
+          requestedSessionRef.current = null;
+          return requested;
+        }
         return normalizedSessions.find((session) => session.status === "waiting")?.session_id ?? normalizedSessions[0]?.session_id ?? null;
       });
       setError(null);
@@ -256,8 +291,9 @@ export default function AdminLiveChat() {
                       </div>
                       <span className={`shrink-0 border px-2 py-1 text-[8px] uppercase tracking-[0.12em] ${statusStyle(session.status)}`}>{session.status}</span>
                     </div>
-                    <p className="mt-2 truncate text-xs text-foreground/65">{last ? `${last.role === "admin" ? "You" : "Visitor"}: ${last.message}` : "No message loaded"}</p>
-                    <p className="mt-1 text-[9px] text-muted-foreground">{fmt(session.last_message_at)}</p>
+                    <p className="mt-2 flex items-center gap-1 truncate text-[10px] text-gold/90"><MapPin size={11} className="shrink-0" /> {locationLabel(session)}</p>
+                    <p className="mt-1 truncate text-xs text-foreground/65">{last ? `${last.role === "admin" ? "You" : "Visitor"}: ${last.message}` : "Visitor opened Live Chat · no message yet"}</p>
+                    <p className="mt-1 text-[9px] text-muted-foreground">Seen {fmt(session.last_seen_at)}</p>
                   </button>
                 );
               })}
@@ -283,6 +319,12 @@ export default function AdminLiveChat() {
                         {selectedSession.visitor_company || "Company not supplied"}
                         {selectedSession.visitor_email ? <> · <a href={`mailto:${selectedSession.visitor_email}`} className="text-gold hover:underline">{selectedSession.visitor_email}</a></> : null}
                       </p>
+                      <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-gold"><MapPin size={13} /> {locationLabel(selectedSession)}</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        First seen {fmt(selectedSession.first_seen_at)}
+                        {selectedSession.visitor_timezone ? ` · ${selectedSession.visitor_timezone}` : ""}
+                        {selectedSession.entry_path ? <> · Page <a href={selectedSession.entry_path} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">{selectedSession.entry_path}</a></> : null}
+                      </p>
                       <p className="mt-1 break-all text-[9px] text-muted-foreground/70">Session {selectedSession.session_id} · requested {fmt(selectedSession.human_requested_at)}</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -297,7 +339,7 @@ export default function AdminLiveChat() {
 
                 <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 space-y-3" role="log" aria-live="polite">
                   {selectedMessages.length === 0 ? (
-                    <p className="py-12 text-center text-sm text-muted-foreground">The visitor connected but no message is available yet.</p>
+                    <p className="py-12 text-center text-sm text-muted-foreground">The visitor opened Live Chat but has not sent a message yet.</p>
                   ) : selectedMessages.map((message) => (
                     <div key={message.id} className={`flex ${message.role === "admin" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[88%] rounded-sm px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${message.role === "admin" ? "bg-primary text-primary-foreground" : "border border-border/60 bg-card text-foreground"}`}>
@@ -320,7 +362,7 @@ export default function AdminLiveChat() {
                       <button type="submit" disabled={sending || !reply.trim()} className="inline-flex min-h-12 min-w-12 items-center justify-center bg-gold text-background disabled:opacity-40" aria-label="Send admin reply">{sending ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}</button>
                     </div>
                   )}
-                  <p className="mt-2 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Auto-refresh every 3 seconds · replies are stored in Supabase · no automatic commercial promises</p>
+                  <p className="mt-2 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Auto-refresh every 3 seconds · replies are stored in Supabase · location is approximate edge context · no raw IP stored</p>
                 </form>
               </>
             )}
