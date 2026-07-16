@@ -126,9 +126,19 @@ function buildPdf(images) {
   return Buffer.concat(chunks);
 }
 
+function preferPageFile(current, candidate, page) {
+  if (!current) return candidate;
+  const canonicalSuffix = `-${page}.jpg`;
+  const currentCanonical = current.filename.toLowerCase().endsWith(canonicalSuffix);
+  const candidateCanonical = candidate.filename.toLowerCase().endsWith(canonicalSuffix);
+  if (candidateCanonical && !currentCanonical) return candidate;
+  if (currentCanonical && !candidateCanonical) return current;
+  return candidate.filename.localeCompare(current.filename) < 0 ? candidate : current;
+}
+
 async function discoverCatalogues() {
   const files = await readdir(THUMB_DIR);
-  const catalogues = new Map();
+  const cataloguePages = new Map();
 
   for (const filename of files) {
     const match = filename.match(/^(.+)-(\d+)\.jpg$/i);
@@ -136,16 +146,23 @@ async function discoverCatalogues() {
     const [, base, pageText] = match;
     const page = Number.parseInt(pageText, 10);
     if (!Number.isSafeInteger(page) || page < 1) continue;
-    const pages = catalogues.get(base) ?? [];
-    pages.push({ filename, page });
-    catalogues.set(base, pages);
+
+    const pagesByNumber = cataloguePages.get(base) ?? new Map();
+    const candidate = { filename, page };
+    pagesByNumber.set(page, preferPageFile(pagesByNumber.get(page), candidate, page));
+    cataloguePages.set(base, pagesByNumber);
   }
 
-  if (!catalogues.has("master-catalogue-2026")) {
+  if (!cataloguePages.has("master-catalogue-2026")) {
     throw new Error("Master catalogue thumbnails are missing");
   }
 
-  return catalogues;
+  return new Map(
+    [...cataloguePages.entries()].map(([base, pagesByNumber]) => [
+      base,
+      [...pagesByNumber.values()].sort((a, b) => a.page - b.page),
+    ]),
+  );
 }
 
 async function generateCatalogues() {
@@ -154,7 +171,6 @@ async function generateCatalogues() {
   const generated = [];
 
   for (const [base, pages] of [...catalogues.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-    pages.sort((a, b) => a.page - b.page);
     pages.forEach((entry, index) => {
       const expected = index + 1;
       if (entry.page !== expected) {
