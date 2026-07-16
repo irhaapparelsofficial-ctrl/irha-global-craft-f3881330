@@ -152,14 +152,14 @@ jobs:
               ;;
           esac
           echo "WRANGLER_CONFIG=$wrangler_config" >> "$GITHUB_ENV"
-          echo "Using downloaded Pages configuration: $wrangler_config"
+          echo "Using downloaded root Pages configuration: $wrangler_config"
 
       - name: Deploy immutable preview with Workers AI binding
         shell: bash
         run: |
           set -uo pipefail
+          # Pages auto-discovers the downloaded root wrangler.* file; --config is unsupported.
           npx --yes wrangler@latest pages deploy dist \
-            --config "$WRANGLER_CONFIG" \
             --project-name "$CLOUDFLARE_PROJECT_NAME" \
             --branch "$PREVIEW_BRANCH" \
             --commit-hash "$SOURCE_SHA" \
@@ -213,8 +213,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Pages auto-discovers the same downloaded root wrangler.* file used by preview.
           npx --yes wrangler@latest pages deploy dist \
-            --config "$WRANGLER_CONFIG" \
             --project-name "$CLOUDFLARE_PROJECT_NAME" \
             --branch "$PAGES_BRANCH" \
             --commit-hash "$SOURCE_SHA" \
