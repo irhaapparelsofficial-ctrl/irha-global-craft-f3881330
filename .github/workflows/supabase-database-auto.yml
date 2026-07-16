@@ -44,10 +44,10 @@ jobs:
           set -euo pipefail
           latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
           access_token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
-          db_password="$(printf '%s' "${SUPABASE_DB_PASSWORD:-}" | tr -d '[:space:]')"
+          database_secret="$(printf '%s' "${SUPABASE_DB_PASSWORD:-}" | tr -d '[:space:]')"
           secrets_ready=true
           [ -n "$access_token" ] || secrets_ready=false
-          [ -n "$db_password" ] || secrets_ready=false
+          [ -n "$database_secret" ] || secrets_ready=false
 
           echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
           echo "secrets_ready=$secrets_ready" >> "$GITHUB_OUTPUT"
