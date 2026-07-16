@@ -47,6 +47,10 @@ describe("Irha CI control plane", () => {
     expect(production).toContain("Check whether production already serves the exact release");
     expect(production).toContain("Reconfirm exact current main before production mutation");
     expect(production).toContain("idempotent-current-main-reconcile");
+    expect(production).toContain("authoritative release parity verified");
+    expect(production).toContain("deployment marker is absent or was replaced by another valid same-source deploy");
+    expect(production).toContain("www canonical GET redirect verified");
+    expect(production).toContain("--max-redirs 0");
     expect(production).not.toContain("npm run build");
   });
 

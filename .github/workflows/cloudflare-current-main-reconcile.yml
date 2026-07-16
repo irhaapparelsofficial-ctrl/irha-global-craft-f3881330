@@ -221,35 +221,73 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           verify_origin() {
             origin="$1"
+            label="$2"
+            build_file="/tmp/${label}-build.json"
+            marker_file="/tmp/${label}-deployment.json"
             ready=false
+            last_status="missing"
+            last_commit="missing"
+            last_fingerprint="missing"
+
             for attempt in $(seq 1 36); do
               cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
-              if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-                   "$origin/build.json?release_check=$cache_bust" -o /tmp/build.json \
-                && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-                   "$origin/cloudflare-deployment.json?release_check=$cache_bust" -o /tmp/deployment.json \
+              last_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+                -H 'Cache-Control: no-cache' \
+                -o "$build_file" -w '%{http_code}' \
+                "$origin/build.json?release_check=$cache_bust" || true)"
+              last_commit="$(jq -r '.source_commit // "missing"' "$build_file" 2>/dev/null || echo missing)"
+              last_fingerprint="$(jq -r '.build_fingerprint // "missing"' "$build_file" 2>/dev/null || echo missing)"
+
+              if [ "$last_status" = "200" ] \
                 && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$RELEASE_FINGERPRINT" \
-                   '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' /tmp/build.json >/dev/null \
-                && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$RELEASE_FINGERPRINT" \
-                   '.source_sha == $sha and .branch == "main" and .build_fingerprint == $fingerprint' /tmp/deployment.json >/dev/null; then
+                  '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
+                  "$build_file" >/dev/null 2>&1; then
                 ready=true
                 break
               fi
               sleep 10
             done
-            test "$ready" = true
+
+            if [ "$ready" != "true" ]; then
+              echo "$label did not serve the exact verified release after 36 attempts"
+              echo "origin=$origin status=$last_status source_commit=$last_commit build_fingerprint=$last_fingerprint"
+              echo "expected_source_commit=$SOURCE_SHA expected_build_fingerprint=$RELEASE_FINGERPRINT"
+              head -c 500 "$build_file" 2>/dev/null || true
+              echo
+              exit 1
+            fi
+
+            echo "$label authoritative release parity verified: source=$SOURCE_SHA fingerprint=$RELEASE_FINGERPRINT"
+
+            marker_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -o "$marker_file" -w '%{http_code}' \
+              "$origin/cloudflare-deployment.json?release_check=${SOURCE_SHA::12}-$RANDOM" || true)"
+            if [ "$marker_status" = "200" ] \
+              && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$RELEASE_FINGERPRINT" \
+                '.source_sha == $sha and .branch == "main" and .build_fingerprint == $fingerprint' \
+                "$marker_file" >/dev/null 2>&1; then
+              echo "$label deployment marker matches the exact release."
+            else
+              echo "::warning::$label deployment marker is absent or was replaced by another valid same-source deploy; authoritative build identity already passed."
+            fi
           }
 
-          verify_origin "$PAGES_URL"
-          verify_origin "$CANONICAL_ORIGIN"
+          verify_origin "$PAGES_URL" pages
+          verify_origin "$CANONICAL_ORIGIN" apex
 
-          headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}")"
-          status="$(printf '%s' "$headers" | awk 'NR==1 {print $2}')"
-          location="$(printf '%s' "$headers" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
-          case "$status" in 301|302|307|308) ;; *) echo "Unexpected www status: $status"; exit 1 ;; esac
-          case "$location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $location"; exit 1 ;; esac
+          www_headers=/tmp/www-headers.txt
+          www_body=/tmp/www-body.txt
+          status="$(curl -sS --connect-timeout 10 --max-time 40 --max-redirs 0 \
+            -D "$www_headers" -o "$www_body" -w '%{http_code}' \
+            "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}" || true)"
+          location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$www_headers")"
+          case "$status" in 301|302|307|308) ;; *) echo "Unexpected www GET status: $status"; cat "$www_headers"; exit 1 ;; esac
+          case "$location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $location"; cat "$www_headers"; exit 1 ;; esac
+          echo "www canonical GET redirect verified: status=$status location=$location"
 
       - name: Record reconciliation result
         shell: bash
