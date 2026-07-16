@@ -22,8 +22,14 @@ export default function CategoryAudienceNavigator({ category, locale = "en", com
   const ui = taxonomyUi(locale);
   const topName = localizedTopName(locale, category.slug, category.name);
   const buyerContent = locale === "en" ? CATEGORY_SEO[category.slug] : undefined;
+  const visibleAudiences = taxonomy.audiences
+    .map((audience) => ({
+      ...audience,
+      collections: audience.collections.filter((collection) => collection.products.length > 0),
+    }))
+    .filter((audience) => audience.productCount > 0 && audience.collections.length > 0);
 
-  if (taxonomy.audiences.length === 0) return null;
+  if (visibleAudiences.length === 0) return null;
 
   return (
     <section className={compact ? "py-8" : "py-16 border-y border-border/60"} aria-labelledby={`audience-nav-${category.slug}`}>
@@ -39,7 +45,7 @@ export default function CategoryAudienceNavigator({ category, locale = "en", com
         </div>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {taxonomy.audiences.map((audience) => {
+          {visibleAudiences.map((audience) => {
             const audienceName = localizedAudienceName(locale, audience.slug, audience.name);
             const visibleCollections = audience.collections.slice(0, compact ? 4 : 6);
             return (
