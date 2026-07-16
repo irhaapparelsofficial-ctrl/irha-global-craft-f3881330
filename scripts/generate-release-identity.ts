@@ -28,7 +28,13 @@ if (!existsSync(publicManifestPath)) {
   throw new Error(`Base release manifest is missing: ${publicManifestPath}`);
 }
 
-const identity = resolveSourceIdentity();
+// SOURCE_SHA is set only after the workflow verifies the checked-out current
+// main commit. Prefer it over GitHub's event SHA so a rerun of an older failed
+// run cannot stamp a freshly checked-out build with stale release identity.
+const identity = resolveSourceIdentity({
+  ...process.env,
+  GITHUB_SHA: process.env.SOURCE_SHA?.trim() || process.env.GITHUB_SHA,
+});
 const runtimeFingerprint = computeRuntimeFingerprint(distDir);
 const applicationFingerprint = computeApplicationFingerprint(distDir);
 const htmlFiles = listHtmlFiles(distDir);
