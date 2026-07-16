@@ -1,6 +1,8 @@
 // Secure public gateway for human website live chat.
 // Public callers authenticate with a random per-session visitor token; only its
 // SHA-256 hash is stored. Admin replies are written directly under admin RLS.
+// Coarse edge location is retained for owner context; raw visitor IP addresses
+// are used only for in-memory rate limiting and are never persisted.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SITE_URL = "https://irhaapparels.com";
@@ -101,6 +103,103 @@ function cleanEmail(value: unknown) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
 }
 
+function cleanCountryCode(value: unknown) {
+  const code = cleanText(value, 8).toUpperCase();
+  return /^[A-Z]{2}$/.test(code) && code !== "XX" ? code : null;
+}
+
+function firstHeader(req: Request, names: string[]) {
+  for (const name of names) {
+    const value = cleanText(req.headers.get(name));
+    if (value) return value;
+  }
+  return "";
+}
+
+function countryName(code: string | null, supplied: unknown) {
+  const suppliedName = cleanText(supplied, 120);
+  if (suppliedName) return suppliedName;
+  if (!code) return null;
+  try {
+    return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code;
+  } catch {
+    return code;
+  }
+}
+
+function cleanPath(value: unknown) {
+  const path = cleanText(value, 500);
+  if (!path || !path.startsWith("/")) return null;
+  return path;
+}
+
+function referrerHost(value: unknown) {
+  const referrer = cleanText(value, 1_000);
+  if (!referrer) return null;
+  try {
+    return new URL(referrer).hostname.slice(0, 255) || null;
+  } catch {
+    return null;
+  }
+}
+
+type GeoContext = {
+  countryCode: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  timezone: string | null;
+  language: string | null;
+  entryPath: string | null;
+  referrerHost: string | null;
+  source: string;
+};
+
+function readGeoContext(req: Request, body: Record<string, unknown>): GeoContext {
+  const headerCountry = firstHeader(req, [
+    "cf-ipcountry",
+    "x-country-code",
+    "x-vercel-ip-country",
+    "cloudfront-viewer-country",
+  ]);
+  const countryCode = cleanCountryCode(headerCountry) || cleanCountryCode(body.visitorCountryCode);
+  const headerRegion = firstHeader(req, ["cf-region", "x-vercel-ip-country-region"]);
+  const headerCity = firstHeader(req, ["cf-ipcity", "x-vercel-ip-city"]);
+  const headerTimezone = firstHeader(req, ["cf-timezone", "x-vercel-ip-timezone"]);
+
+  return {
+    countryCode,
+    country: countryName(countryCode, body.visitorCountry),
+    region: cleanText(headerRegion || body.visitorRegion, 160) || null,
+    city: cleanText(headerCity || body.visitorCity, 160) || null,
+    timezone: cleanText(headerTimezone || body.visitorTimezone, 100) || null,
+    language: cleanText(body.visitorLanguage, 40) || null,
+    entryPath: cleanPath(body.entryPath),
+    referrerHost: referrerHost(body.referrer),
+    source: headerCountry || headerRegion || headerCity ? "supabase-edge" : "cloudflare-page-context",
+  };
+}
+
+function geoUpdates(geo: GeoContext) {
+  const values: Record<string, unknown> = {
+    visitor_country_code: geo.countryCode,
+    visitor_country: geo.country,
+    visitor_region: geo.region,
+    visitor_city: geo.city,
+    visitor_timezone: geo.timezone,
+    visitor_language: geo.language,
+    entry_path: geo.entryPath,
+    referrer_host: geo.referrerHost,
+  };
+  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== null && value !== ""));
+}
+
+function locationLabel(geo: GeoContext) {
+  const parts = [geo.city, geo.region, geo.country || geo.countryCode]
+    .filter((value): value is string => Boolean(value));
+  return Array.from(new Set(parts)).join(", ");
+}
+
 async function sha256(value: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest))
@@ -120,7 +219,7 @@ function constantTimeEqual(left: string, right: string) {
 async function authenticateSession(sessionId: string, visitorToken: string) {
   const { data, error } = await service()
     .from("chat_sessions")
-    .select("session_id, visitor_token_hash, status")
+    .select("session_id, visitor_token_hash, status, presence_alerted_at")
     .eq("session_id", sessionId)
     .maybeSingle();
 
@@ -158,6 +257,45 @@ async function readConversation(sessionId: string) {
   return data ?? [];
 }
 
+async function alertOwnerOfPresence(sessionId: string, geo: GeoContext, now: string) {
+  const location = locationLabel(geo);
+  const route = geo.entryPath ? `Page ${geo.entryPath}` : "Website live chat";
+  const body = location
+    ? `${location} · ${route}`
+    : `Website visitor · ${route}`;
+
+  const { error } = await service().from("crm_notifications").upsert({
+    notification_type: "system",
+    source_type: "system",
+    source_id: null,
+    title: "Visitor opened Live Chat",
+    body,
+    severity: "attention",
+    status: "unread",
+    dedupe_key: `live_chat:${sessionId}`,
+    metadata: {
+      session_id: sessionId,
+      channel: "human_live_chat",
+      event: "presence",
+      presence_event_id: sessionId,
+      country_code: geo.countryCode,
+      country: geo.country,
+      region: geo.region,
+      city: geo.city,
+      timezone: geo.timezone,
+      entry_path: geo.entryPath,
+      referrer_host: geo.referrerHost,
+      geo_source: geo.source,
+      presence_seen_at: now,
+    },
+    read_at: null,
+    archived_at: null,
+    created_at: now,
+    updated_at: now,
+  }, { onConflict: "dedupe_key" });
+  if (error) throw error;
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   const headers = corsHeaders(origin);
@@ -190,6 +328,66 @@ Deno.serve(async (req: Request) => {
       return json({ error: "invalid_session_credentials" }, 400, headers);
     }
 
+    const geo = readGeoContext(req, body);
+
+    if (action === "presence") {
+      const tokenHash = await sha256(visitorToken);
+      let existing = await authenticateSession(sessionId, visitorToken);
+      const now = new Date().toISOString();
+
+      if (!existing.ok && existing.reason === "invalid_token") {
+        return json({ error: "invalid_session_token" }, 403, headers);
+      }
+
+      let shouldAlert = false;
+      let sessionStatus: "waiting" | "active" | "closed" = "waiting";
+
+      if (!existing.ok) {
+        const { error } = await service().from("chat_sessions").insert({
+          session_id: sessionId,
+          visitor_token_hash: tokenHash,
+          status: "waiting",
+          human_requested_at: now,
+          last_message_at: now,
+          first_seen_at: now,
+          last_seen_at: now,
+          updated_at: now,
+          ...geoUpdates(geo),
+        });
+
+        if (error?.code === "23505") {
+          existing = await authenticateSession(sessionId, visitorToken);
+          if (!existing.ok) return json({ error: "invalid_session_token" }, 403, headers);
+        } else if (error) {
+          throw error;
+        } else {
+          shouldAlert = true;
+        }
+      }
+
+      if (existing.ok) {
+        sessionStatus = existing.session.status;
+        shouldAlert = !existing.session.presence_alerted_at;
+        const { error } = await service().from("chat_sessions").update({
+          last_seen_at: now,
+          updated_at: now,
+          ...geoUpdates(geo),
+        }).eq("session_id", sessionId);
+        if (error) throw error;
+      }
+
+      if (shouldAlert) {
+        await alertOwnerOfPresence(sessionId, geo, now);
+        const { error } = await service().from("chat_sessions").update({
+          presence_alerted_at: now,
+          updated_at: now,
+        }).eq("session_id", sessionId);
+        if (error) throw error;
+      }
+
+      return json({ ok: true, status: sessionStatus, presenceRecorded: true }, 200, headers);
+    }
+
     if (action === "connect") {
       const tokenHash = await sha256(visitorToken);
       const existing = await authenticateSession(sessionId, visitorToken);
@@ -214,7 +412,10 @@ Deno.serve(async (req: Request) => {
           visitor_email: visitorEmail,
           human_requested_at: now,
           last_message_at: now,
+          first_seen_at: now,
+          last_seen_at: now,
           updated_at: now,
+          ...geoUpdates(geo),
         });
         if (error) throw error;
       } else {
@@ -222,7 +423,9 @@ Deno.serve(async (req: Request) => {
           visitor_name: visitorName,
           visitor_company: visitorCompany,
           visitor_email: visitorEmail,
+          last_seen_at: now,
           updated_at: now,
+          ...geoUpdates(geo),
         };
         if (existing.session.status === "closed") {
           updates.status = "waiting";
@@ -241,6 +444,7 @@ Deno.serve(async (req: Request) => {
           status: "waiting",
           last_message_at: now,
           last_user_message_at: now,
+          last_seen_at: now,
           updated_at: now,
           closed_at: null,
         }).eq("session_id", sessionId);
@@ -274,6 +478,7 @@ Deno.serve(async (req: Request) => {
         status: "waiting",
         last_message_at: now,
         last_user_message_at: now,
+        last_seen_at: now,
         updated_at: now,
       }).eq("session_id", sessionId);
       if (error) throw error;
