@@ -60,10 +60,10 @@ describe("Cloudflare Workers AI guide", () => {
     expect(client).not.toContain("Authorization: `Bearer ${supabasePublishableKey}`");
   });
 
-  it("adds exactly one AI binding to downloaded TOML and remains idempotent", () => {
+  it("adds exactly one AI binding to downloaded TOML with raw dist and remains idempotent", () => {
     const first = runConfigPreparation("wrangler.toml", [
       'name = "irha-apparels"',
-      'pages_build_output_dir = "./dist"',
+      'pages_build_output_dir = "dist"',
       'compatibility_date = "2026-07-16"',
       "",
     ].join("\n"));
@@ -75,7 +75,7 @@ describe("Cloudflare Workers AI guide", () => {
     expect(second.match(/^binding = "AI"$/gm)).toHaveLength(1);
   });
 
-  it("adds exactly one AI binding to downloaded JSONC and remains idempotent", () => {
+  it("adds exactly one AI binding to downloaded JSONC with ./dist and remains idempotent", () => {
     const first = runConfigPreparation("wrangler.jsonc", [
       "{",
       '  // Downloaded from Cloudflare Pages',
@@ -96,7 +96,7 @@ describe("Cloudflare Workers AI guide", () => {
   it("rejects a conflicting downloaded AI binding instead of overwriting it", () => {
     expect(() => runConfigPreparation("wrangler.json", JSON.stringify({
       name: "irha-apparels",
-      pages_build_output_dir: "./dist",
+      pages_build_output_dir: "dist",
       ai: { binding: "OTHER_AI" },
     }, null, 2))).toThrow();
   });
