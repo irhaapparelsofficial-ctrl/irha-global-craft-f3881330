@@ -116,7 +116,7 @@ describe("Cloudflare Workers AI guide", () => {
     }, null, 2))).toThrow();
   });
 
-  it("requires any supported downloaded config, preview identity and two-turn smoke before production", () => {
+  it("requires a root downloaded config, preview identity and two-turn smoke before production", () => {
     const workflow = read(".github/workflows/deploy-workers-ai-guide-current-main.yml");
     expect(workflow).toContain("Confirm exact current main source");
     expect(workflow).toContain("pages download config");
@@ -125,7 +125,8 @@ describe("Cloudflare Workers AI guide", () => {
     expect(workflow).toContain("wrangler.jsonc");
     expect(workflow).toContain('test "${#config_files[@]}" = "1"');
     expect(workflow).toContain('echo "WRANGLER_CONFIG=$wrangler_config"');
-    expect(workflow).toContain('--config "$WRANGLER_CONFIG"');
+    expect(workflow).toContain("Root Pages configuration will be auto-discovered by Wrangler");
+    expect(workflow).not.toContain('--config "$WRANGLER_CONFIG"');
     expect(workflow).toContain("Deploy immutable preview with Workers AI binding");
     expect(workflow).toContain('smoke-cloudflare-ai-guide.mjs "$PREVIEW_URL"');
     expect(workflow).toContain("Reconfirm exact current main before production");
