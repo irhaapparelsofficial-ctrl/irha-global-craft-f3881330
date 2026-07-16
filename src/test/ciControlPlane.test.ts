@@ -86,6 +86,17 @@ describe("Irha CI control plane", () => {
     expect(database).not.toContain("retry.sh 3 8 -- supabase db push --linked");
   });
 
+  it("preserves Supabase parity evidence and publishes an exact-commit status", () => {
+    const database = read(".github/workflows/supabase-database-auto.yml");
+    expect(database).toContain("Detect database validation scope");
+    expect(database).toContain("validation_required");
+    expect(database).toContain("if: always() && steps.changes.outputs.validation_required == 'true'");
+    expect(database).toContain("supabase-database-evidence-${{ env.SOURCE_SHA }}");
+    expect(database).toContain("Publish exact commit database status");
+    expect(database).toContain('context="Irha Supabase Database Sync"');
+    expect(database).toContain("statuses: write");
+  });
+
   it("keeps retry diagnostics on stderr so captured stdout remains machine-readable", () => {
     const retry = read("scripts/ci/retry.sh");
     expect(retry).toContain('echo "[retry] attempt $attempt/$attempts: $*" >&2');
