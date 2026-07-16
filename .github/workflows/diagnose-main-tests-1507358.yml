@@ -17,20 +17,13 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Install dependencies with bounded retry
-        shell: bash
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            if npm ci; then exit 0; fi
-            if [ "$attempt" = "3" ]; then exit 1; fi
-            sleep $((attempt * 5))
-          done
+      - name: Install dependencies like Quality Gate
+        run: bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
       - name: Capture exact test output
         shell: bash
         run: |
           set +e
-          npm test -- --run > exact-test.log 2>&1
+          npm test -- --passWithNoTests > exact-test.log 2>&1
           code=$?
           printf '%s\n' "$code" > exact-test-exit-code.txt
           tail -n 500 exact-test.log
