@@ -7,27 +7,67 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
 
 ROOT = Path(__file__).resolve().parents[2]
 PROCESSOR = ROOT / "scripts/image-ai/process_image.py"
 GATEWAY_URL = os.environ.get("IMAGE_GATEWAY_URL", "").strip()
-OIDC_TOKEN = os.environ.get("IRHA_GITHUB_OIDC_TOKEN", "").strip()
+FALLBACK_OIDC_TOKEN = os.environ.get("IRHA_GITHUB_OIDC_TOKEN", "").strip()
+OIDC_REQUEST_URL = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL", "").strip()
+OIDC_REQUEST_TOKEN = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "").strip()
+OIDC_AUDIENCE = "irha-image-pipeline"
 RUN_ID = os.environ.get("GITHUB_RUN_ID", "local")
 MODEL = Path(os.environ.get("IRHA_EDSR_MODEL", str(ROOT / "models/EDSR_x2.pb")))
 REMBG_MODEL = os.environ.get("IRHA_REMBG_MODEL", "isnet-general-use")
 LIMIT = max(1, min(3, int(os.environ.get("IRHA_IMAGE_BATCH_LIMIT", "2"))))
 
 
+def oidc_request_url() -> str:
+    if not OIDC_REQUEST_URL:
+        return ""
+    parts = urlsplit(OIDC_REQUEST_URL)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["audience"] = OIDC_AUDIENCE
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def fresh_oidc_token() -> str:
+    """Get a new short-lived token for every protected gateway request.
+
+    Background removal and super-resolution can exceed the lifetime of a token
+    obtained at the beginning of the job. Refreshing here keeps claim, complete,
+    and failure reports independently authenticated without storing a secret.
+    """
+    request_url = oidc_request_url()
+    if request_url and OIDC_REQUEST_TOKEN:
+        response = requests.get(
+            request_url,
+            headers={"authorization": f"bearer {OIDC_REQUEST_TOKEN}"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        token = str(response.json().get("value") or "").strip()
+        if not token:
+            raise RuntimeError("GitHub OIDC endpoint returned an empty token")
+        return token
+    if FALLBACK_OIDC_TOKEN:
+        return FALLBACK_OIDC_TOKEN
+    raise RuntimeError("GitHub OIDC request environment is missing")
+
+
 def headers() -> dict[str, str]:
-    if not OIDC_TOKEN:
-        raise RuntimeError("IRHA_GITHUB_OIDC_TOKEN is missing")
-    return {"authorization": f"Bearer {OIDC_TOKEN}"}
+    return {"authorization": f"Bearer {fresh_oidc_token()}"}
 
 
 def gateway_json(payload: dict) -> dict:
-    response = requests.post(GATEWAY_URL, headers={**headers(), "content-type": "application/json"}, json=payload, timeout=90)
+    response = requests.post(
+        GATEWAY_URL,
+        headers={**headers(), "content-type": "application/json"},
+        json=payload,
+        timeout=90,
+    )
     data = response.json() if response.content else {}
     if not response.ok:
         raise RuntimeError(f"Gateway HTTP {response.status_code}: {data}")
