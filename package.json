@@ -16,9 +16,10 @@
     "verify:migrations": "node scripts/verify-migration-order.mjs",
     "verify:release-identity": "npx tsx scripts/verify-built-release-identity.ts",
     "generate:thumbnails": "node scripts/generate-image-thumbnails.mjs",
+    "generate:catalog-pdfs": "node scripts/generate-catalog-pdfs.mjs",
     "generate:market-sitemap": "npx tsx scripts/merge-market-sitemap.ts",
-    "predev": "npx tsx scripts/generate-sitemap.ts && npx tsx scripts/augment-sitemap-with-buyer-intent.ts && npx tsx scripts/merge-market-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs && npm run generate:thumbnails",
-    "prebuild": "node scripts/verify-deployment-source.mjs && node scripts/verify-secret-safety.mjs && node scripts/verify-migration-order.mjs && npx tsx scripts/generate-sitemap.ts && npx tsx scripts/augment-sitemap-with-buyer-intent.ts && npx tsx scripts/merge-market-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs && npm run generate:thumbnails",
+    "predev": "npx tsx scripts/generate-sitemap.ts && npx tsx scripts/augment-sitemap-with-buyer-intent.ts && npx tsx scripts/merge-market-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs && npm run generate:thumbnails && npm run generate:catalog-pdfs",
+    "prebuild": "node scripts/verify-deployment-source.mjs && node scripts/verify-secret-safety.mjs && node scripts/verify-migration-order.mjs && npx tsx scripts/generate-sitemap.ts && npx tsx scripts/augment-sitemap-with-buyer-intent.ts && npx tsx scripts/merge-market-sitemap.ts && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs && npm run generate:thumbnails && npm run generate:catalog-pdfs",
     "notify:search": "node scripts/ping-search-engines.mjs"
   },
   "dependencies": {
@@ -74,7 +75,7 @@
     "react-router-dom": "^7.18.0",
     "recharts": "^3.9.0",
     "sonner": "^1.7.4",
-    "tailwind-merge": "^2.6.0",
+    "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
