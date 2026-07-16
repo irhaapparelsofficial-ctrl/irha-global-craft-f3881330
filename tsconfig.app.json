@@ -23,6 +23,7 @@
     "noFallthroughCasesInSwitch": false,
 
     "paths": {
+      "@/lib/globalCategoryTaxonomy": ["./src/lib/runtimeCategoryTaxonomy.ts"],
       "@/*": ["./src/*"]
     }
   },
