@@ -1,6 +1,6 @@
 import ProductDetail from "@/pages/ProductDetail";
 import CategoryTaxonomyPage from "@/pages/CategoryTaxonomyPage";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 import { buildCategoryTaxonomy } from "@/lib/globalCategoryTaxonomy";
 
@@ -17,6 +17,9 @@ export default function CategoryOrProductPage() {
 
   if (category) {
     const audience = buildCategoryTaxonomy(category).audiences.find((candidate) => candidate.slug === productSlug);
+    if (audience?.productCount === 0 || (audience && audience.collections.length === 0)) {
+      return <Navigate to={`/products/${categorySlug}`} replace />;
+    }
     if (audience) return <CategoryTaxonomyPage audienceOverride={audience.slug} />;
   }
 
