@@ -19,9 +19,11 @@ OIDC_REQUEST_URL = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL", "").strip()
 OIDC_REQUEST_TOKEN = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "").strip()
 OIDC_AUDIENCE = "irha-image-pipeline"
 RUN_ID = os.environ.get("GITHUB_RUN_ID", "local")
+WORKER = os.environ.get("IRHA_IMAGE_WORKER", "1").strip() or "1"
 MODEL = Path(os.environ.get("IRHA_EDSR_MODEL", str(ROOT / "models/EDSR_x2.pb")))
 REMBG_MODEL = os.environ.get("IRHA_REMBG_MODEL", "isnet-general-use")
 LIMIT = max(1, min(3, int(os.environ.get("IRHA_IMAGE_BATCH_LIMIT", "2"))))
+MAX_JOBS = max(LIMIT, min(12, int(os.environ.get("IRHA_IMAGE_MAX_JOBS", str(LIMIT)))))
 
 
 def oidc_request_url() -> str:
@@ -157,29 +159,51 @@ def main() -> int:
     if not GATEWAY_URL:
         raise RuntimeError("IMAGE_GATEWAY_URL is missing")
 
-    claimed = gateway_json({"action": "claim", "limit": LIMIT, "run_id": RUN_ID})
-    jobs = claimed.get("jobs") or []
-    print(f"Claimed {len(jobs)} image job(s)")
     failed = 0
     review = 0
     ready = 0
+    claimed_total = 0
+    claim_rounds = 0
 
-    for job in jobs:
-        try:
-            result = process_job(job)
-            status = result.get("status")
-            if status == "ready":
-                ready += 1
-            elif status == "review_required":
-                review += 1
-            print(json.dumps({"id": job["id"], "result": result}, separators=(",", ":")))
-        except Exception as error:
-            failed += 1
-            message = str(error)
-            report_failure(job, message)
-            print(json.dumps({"id": job.get("id"), "status": "failed", "error": message}), file=sys.stderr)
+    while claimed_total < MAX_JOBS:
+        remaining = MAX_JOBS - claimed_total
+        claim_limit = min(LIMIT, remaining)
+        claimed = gateway_json({
+            "action": "claim",
+            "limit": claim_limit,
+            "run_id": f"{RUN_ID}:worker-{WORKER}",
+        })
+        jobs = claimed.get("jobs") or []
+        claim_rounds += 1
+        print(f"Worker {WORKER}: claim round {claim_rounds} returned {len(jobs)} image job(s)")
+        if not jobs:
+            break
 
-    summary = {"claimed": len(jobs), "ready": ready, "review_required": review, "failed": failed}
+        claimed_total += len(jobs)
+        for job in jobs:
+            try:
+                result = process_job(job)
+                status = result.get("status")
+                if status == "ready":
+                    ready += 1
+                elif status == "review_required":
+                    review += 1
+                print(json.dumps({"id": job["id"], "result": result}, separators=(",", ":")))
+            except Exception as error:
+                failed += 1
+                message = str(error)
+                report_failure(job, message)
+                print(json.dumps({"id": job.get("id"), "status": "failed", "error": message}), file=sys.stderr)
+
+    summary = {
+        "worker": WORKER,
+        "claim_rounds": claim_rounds,
+        "claimed": claimed_total,
+        "ready": ready,
+        "review_required": review,
+        "failed": failed,
+        "max_jobs": MAX_JOBS,
+    }
     print(json.dumps(summary, separators=(",", ":")))
     return 1 if failed else 0
 
