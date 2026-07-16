@@ -27,17 +27,39 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
     outputs:
       should_sync: ${{ steps.ready.outputs.should_sync }}
       source_sha: ${{ steps.ready.outputs.source_sha }}
       secrets_ready: ${{ steps.ready.outputs.secrets_ready }}
+      functions_changed: ${{ steps.changes.outputs.functions_changed }}
 
     steps:
+      - name: Checkout exact green main source for change detection
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Detect whether Edge Functions changed
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed=false
+          if git diff-tree --root --no-commit-id --name-only -r "$SOURCE_SHA" \
+            | grep -q '^supabase/functions/'; then
+            changed=true
+          fi
+          echo "functions_changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "Repository Edge Functions changed: $changed"
+
       - name: Confirm exact current main and Supabase secret readiness
         id: ready
         env:
-          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
           GH_TOKEN: ${{ github.token }}
+          FUNCTIONS_CHANGED: ${{ steps.changes.outputs.functions_changed }}
         shell: bash
         run: |
           set -euo pipefail
@@ -52,23 +74,27 @@ jobs:
           if [ "$latest_main" != "$SOURCE_SHA" ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
             echo "Superseded green run skipped safely: $SOURCE_SHA; current main is $latest_main"
+          elif [ "$FUNCTIONS_CHANGED" != "true" ]; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "No Edge Function source changed; unrelated commit skipped without failure."
           elif [ "$secrets_ready" != "true" ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "Exact current main is green, but SUPABASE_ACCESS_TOKEN is not ready. Waiting without failure."
+            echo "Exact current main changed Edge Functions, but SUPABASE_ACCESS_TOKEN is not ready. Waiting without failure."
           else
             echo "should_sync=true" >> "$GITHUB_OUTPUT"
-            echo "Exact current main is green and Supabase token is available: $SOURCE_SHA"
+            echo "Exact current main changed Edge Functions and Supabase token is available: $SOURCE_SHA"
           fi
 
-      - name: Record waiting state without a red failure
-        if: steps.ready.outputs.secrets_ready != 'true'
+      - name: Record clean non-sync state
+        if: steps.ready.outputs.should_sync != 'true'
         shell: bash
         run: |
           {
-            echo "## Supabase functions waiting state"
+            echo "## Supabase functions control plane"
             echo "- Quality Gate: green"
             echo "- Source: \`${{ steps.ready.outputs.source_sha }}\`"
-            echo "- Status: waiting for \`SUPABASE_ACCESS_TOKEN\`"
+            echo "- Edge Functions changed: \`${{ steps.changes.outputs.functions_changed }}\`"
+            echo "- Secrets ready: \`${{ steps.ready.outputs.secrets_ready }}\`"
             echo "- Result: no backend mutation attempted and no failure raised"
           } >> "$GITHUB_STEP_SUMMARY"
 
