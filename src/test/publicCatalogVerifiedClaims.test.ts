@@ -72,7 +72,7 @@ describe("public catalogue verified-claims gate", () => {
     expect(migration).toContain("Specifications are confirmed after requirement review");
     expect(migration).not.toContain("MOQ 50");
     expect(migration).not.toContain("45-day");
-    expect(migration).not.toMatch(/OEKO|BSCI|SEDEX|ISO 9001|GOTS|WRAP|REACH/i);
+    expect(migration).not.toMatch(/\b(?:OEKO|BSCI|SEDEX|ISO 9001|GOTS|WRAP|REACH)\b/i);
   });
 
   it("preserves the public read contract without granting write access", () => {
