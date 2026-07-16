@@ -26,7 +26,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -43,7 +43,7 @@ jobs:
             "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state=pending \
             -f context="Irha Cloudflare Recovery" \
-            -f description="Waiting for exact-main verified artifact" \
+            -f description="Waiting for exact-main verified release" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
 
@@ -72,7 +72,7 @@ jobs:
           fi
           echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
 
-      - name: Wait for successful exact-main Quality Gate
+      - name: Wait briefly for successful exact-main Quality Gate
         id: quality
         if: steps.eligibility.outputs.eligible == 'true'
         env:
@@ -82,7 +82,9 @@ jobs:
           set -euo pipefail
           quality_run_id=""
           superseded=false
-          for attempt in $(seq 1 90); do
+          fallback_build=false
+
+          for attempt in $(seq 1 18); do
             latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
             if [ "$latest_main" != "$SOURCE_SHA" ]; then
               superseded=true
@@ -93,25 +95,25 @@ jobs:
             runs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/quality.yml/runs?branch=main&per_page=50")"
             quality_run_id="$(printf '%s' "$runs_json" | jq -r --arg sha "$SOURCE_SHA" '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")][0].id // empty')"
             if [ -n "$quality_run_id" ]; then
+              echo "Using exact-main Quality Gate run: $quality_run_id"
               break
             fi
-            echo "Exact-main Quality Gate not green yet (attempt $attempt/90)."
+
+            echo "Exact-main Quality artifact not available yet (attempt $attempt/18)."
             sleep 10
           done
 
-          echo "superseded=$superseded" >> "$GITHUB_OUTPUT"
-          if [ "$superseded" = "true" ]; then
-            exit 0
+          if [ "$superseded" != "true" ] && [ -z "$quality_run_id" ]; then
+            fallback_build=true
+            echo "No successful exact-main artifact was available; deterministic fallback verification will run."
           fi
-          test -n "$quality_run_id" || {
-            echo "No successful Quality Gate found for $SOURCE_SHA"
-            exit 1
-          }
+
           echo "run_id=$quality_run_id" >> "$GITHUB_OUTPUT"
-          echo "Using exact-main Quality Gate run: $quality_run_id"
+          echo "superseded=$superseded" >> "$GITHUB_OUTPUT"
+          echo "fallback_build=$fallback_build" >> "$GITHUB_OUTPUT"
 
       - name: Download immutable verified release
-        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true'
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.quality.outputs.fallback_build != 'true'
         uses: actions/download-artifact@v4
         with:
           name: production-dist-${{ env.SOURCE_SHA }}
@@ -119,7 +121,38 @@ jobs:
           run-id: ${{ steps.quality.outputs.run_id }}
           github-token: ${{ github.token }}
 
-      - name: Verify immutable artifact and create deployment marker
+      - name: Checkout exact source for fallback verification
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.quality.outputs.fallback_build == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Setup Node for fallback verification
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.quality.outputs.fallback_build == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install fallback dependencies with bounded retry
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.quality.outputs.fallback_build == 'true'
+        run: bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Run deterministic fallback verification and build
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.quality.outputs.fallback_build == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run verify:deployment-source
+          npm run verify:secrets
+          npm run verify:migrations
+          npx tsc --noEmit
+          npm test -- --passWithNoTests
+          npm run build
+          npm run verify:release-identity
+
+      - name: Verify release and create deployment marker
         if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true'
         shell: bash
         run: |
@@ -141,12 +174,17 @@ jobs:
           }
           echo "RELEASE_FINGERPRINT=$fingerprint" >> "$GITHUB_ENV"
 
+          purpose="exact-main-recovery-artifact"
+          if [ "${{ steps.quality.outputs.fallback_build }}" = "true" ]; then
+            purpose="exact-main-recovery-fallback"
+          fi
+
           jq -n \
             --arg source_sha "$SOURCE_SHA" \
             --arg repository "$GITHUB_REPOSITORY" \
             --arg branch "$PAGES_BRANCH" \
             --arg build_fingerprint "$fingerprint" \
-            --arg purpose "exact-main-recovery" \
+            --arg purpose "$purpose" \
             --arg quality_run_id "${{ steps.quality.outputs.run_id }}" \
             --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '{source_sha:$source_sha,repository:$repository,branch:$branch,build_fingerprint:$build_fingerprint,purpose:$purpose,quality_run_id:$quality_run_id,generated_at:$generated_at}' \
@@ -194,7 +232,7 @@ jobs:
           fi
           echo "fresh=$fresh" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy exact verified artifact to Cloudflare Pages
+      - name: Deploy exact verified release to Cloudflare Pages
         if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.freshness.outputs.fresh == 'true'
         shell: bash
         run: |
@@ -206,16 +244,21 @@ jobs:
             --commit-dirty=false
 
       - name: Verify Pages, apex and canonical www behavior
+        id: verify
         if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.freshness.outputs.fresh == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
+          echo "superseded=false" >> "$GITHUB_OUTPUT"
           pages_ready=false
           apex_ready=false
 
           for attempt in $(seq 1 36); do
             latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
             if [ "$latest_main" != "$SOURCE_SHA" ]; then
+              echo "superseded=true" >> "$GITHUB_OUTPUT"
               echo "Verification superseded by newer main: source=$SOURCE_SHA current_main=$latest_main"
               exit 0
             fi
@@ -265,13 +308,14 @@ jobs:
           ELIGIBLE: ${{ steps.eligibility.outputs.eligible }}
           SUPERSEDED_WHILE_WAITING: ${{ steps.quality.outputs.superseded }}
           FRESH_BEFORE_DEPLOY: ${{ steps.freshness.outputs.fresh }}
+          VERIFY_SUPERSEDED: ${{ steps.verify.outputs.superseded }}
         shell: bash
         run: |
           set -euo pipefail
           state=failure
           description="Cloudflare exact-main recovery failed"
 
-          if [ "$ELIGIBLE" = "false" ] || [ "$SUPERSEDED_WHILE_WAITING" = "true" ] || [ "$FRESH_BEFORE_DEPLOY" = "false" ]; then
+          if [ "$ELIGIBLE" = "false" ] || [ "$SUPERSEDED_WHILE_WAITING" = "true" ] || [ "$FRESH_BEFORE_DEPLOY" = "false" ] || [ "$VERIFY_SUPERSEDED" = "true" ]; then
             state=success
             description="Superseded Cloudflare recovery skipped safely"
           elif [ "$RECOVERY_JOB_STATUS" = "success" ]; then
