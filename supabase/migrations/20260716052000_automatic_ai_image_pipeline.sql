@@ -47,21 +47,9 @@ create index if not exists media_assets_ai_review_idx
   on public.media_assets (ai_processing_status, updated_at desc)
   where ai_processing_status in ('review_required', 'failed');
 
-update public.media_assets
-set
-  ai_processing_status = case
-    when mime_type in ('image/jpeg', 'image/png', 'image/webp') and status = 'active' then 'queued'
-    else ai_processing_status
-  end,
-  ai_processing_source = case
-    when mime_type in ('image/jpeg', 'image/png', 'image/webp') and status = 'active' then 'existing_media_backfill'
-    else ai_processing_source
-  end,
-  ai_processing_error = null,
-  ai_review_reason = null
-where mime_type in ('image/jpeg', 'image/png', 'image/webp')
-  and status = 'active'
-  and ai_processed_at is null;
+-- Existing rows inherit the new defaults automatically. Avoid a blanket UPDATE:
+-- media_assets has a service/admin trigger that intentionally rejects direct
+-- migration-session writes. New Admin uploads also inherit queued automatically.
 
 create or replace function public.claim_ai_image_processing_jobs(
   _limit integer default 2,
