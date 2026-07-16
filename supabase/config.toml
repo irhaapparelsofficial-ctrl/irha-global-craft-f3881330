@@ -92,3 +92,8 @@ verify_jwt = false
 
 [functions.whatsapp-admin]
 verify_jwt = true
+
+# GitHub Actions authenticates with a short-lived OIDC token. The function
+# validates issuer, audience, repository, workflow and protected main ref.
+[functions.image-processing-gateway]
+verify_jwt = false

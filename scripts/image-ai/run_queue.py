@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+import requests
+
+ROOT = Path(__file__).resolve().parents[2]
+PROCESSOR = ROOT / "scripts/image-ai/process_image.py"
+GATEWAY_URL = os.environ.get("IMAGE_GATEWAY_URL", "").strip()
+OIDC_TOKEN = os.environ.get("IRHA_GITHUB_OIDC_TOKEN", "").strip()
+RUN_ID = os.environ.get("GITHUB_RUN_ID", "local")
+MODEL = Path(os.environ.get("IRHA_EDSR_MODEL", str(ROOT / "models/EDSR_x2.pb")))
+REMBG_MODEL = os.environ.get("IRHA_REMBG_MODEL", "isnet-general-use")
+LIMIT = max(1, min(3, int(os.environ.get("IRHA_IMAGE_BATCH_LIMIT", "2"))))
+
+
+def headers() -> dict[str, str]:
+    if not OIDC_TOKEN:
+        raise RuntimeError("IRHA_GITHUB_OIDC_TOKEN is missing")
+    return {"authorization": f"Bearer {OIDC_TOKEN}"}
+
+
+def gateway_json(payload: dict) -> dict:
+    response = requests.post(GATEWAY_URL, headers={**headers(), "content-type": "application/json"}, json=payload, timeout=90)
+    data = response.json() if response.content else {}
+    if not response.ok:
+        raise RuntimeError(f"Gateway HTTP {response.status_code}: {data}")
+    return data
+
+
+def report_failure(job: dict, message: str, review_required: bool = False) -> None:
+    try:
+        gateway_json({
+            "action": "fail",
+            "id": job["id"],
+            "lock_token": job["lock_token"],
+            "message": message[:1800],
+            "review_required": review_required,
+        })
+    except Exception as error:
+        print(f"Could not report failure for {job.get('id')}: {error}", file=sys.stderr)
+
+
+def process_job(job: dict) -> dict:
+    with tempfile.TemporaryDirectory(prefix="irha-image-") as temp:
+        temp_dir = Path(temp)
+        source = temp_dir / "source-image"
+        output = temp_dir / "output"
+
+        download = requests.get(job["public_url"], timeout=120)
+        download.raise_for_status()
+        if len(download.content) < 24:
+            raise RuntimeError("Downloaded original is empty")
+        source.write_bytes(download.content)
+
+        command = [
+            sys.executable,
+            str(PROCESSOR),
+            "--input", str(source),
+            "--output-dir", str(output),
+            "--edsr-model", str(MODEL),
+            "--rembg-model", REMBG_MODEL,
+            "--asset-id", str(job["id"]),
+            "--file-name", str(job.get("file_name") or ""),
+        ]
+        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=900)
+        if result.returncode != 0:
+            raise RuntimeError((result.stderr or result.stdout or "Image processor failed")[-1800:])
+
+        manifest_path = output / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        file_handles = []
+        files: dict[str, tuple[str, object, str]] = {}
+        try:
+            for key, filename in {
+                "master": "master.webp",
+                "variant_360": "360.webp",
+                "variant_720": "720.webp",
+                "variant_1200": "1200.webp",
+                "variant_1600": "1600.webp",
+                "variant_2400": "2400.webp",
+            }.items():
+                handle = (output / filename).open("rb")
+                file_handles.append(handle)
+                files[key] = (filename, handle, "image/webp")
+
+            response = requests.post(
+                GATEWAY_URL,
+                headers=headers(),
+                data={
+                    "action": "complete",
+                    "id": job["id"],
+                    "lock_token": job["lock_token"],
+                    "bucket": job.get("bucket") or "site-media",
+                    "object_path": job["object_path"],
+                    "manifest": json.dumps(manifest, separators=(",", ":")),
+                },
+                files=files,
+                timeout=300,
+            )
+            data = response.json() if response.content else {}
+            if not response.ok:
+                raise RuntimeError(f"Completion HTTP {response.status_code}: {data}")
+            return data
+        finally:
+            for handle in file_handles:
+                handle.close()
+
+
+def main() -> int:
+    if not GATEWAY_URL:
+        raise RuntimeError("IMAGE_GATEWAY_URL is missing")
+
+    claimed = gateway_json({"action": "claim", "limit": LIMIT, "run_id": RUN_ID})
+    jobs = claimed.get("jobs") or []
+    print(f"Claimed {len(jobs)} image job(s)")
+    failed = 0
+    review = 0
+    ready = 0
+
+    for job in jobs:
+        try:
+            result = process_job(job)
+            status = result.get("status")
+            if status == "ready":
+                ready += 1
+            elif status == "review_required":
+                review += 1
+            print(json.dumps({"id": job["id"], "result": result}, separators=(",", ":")))
+        except Exception as error:
+            failed += 1
+            message = str(error)
+            report_failure(job, message)
+            print(json.dumps({"id": job.get("id"), "status": "failed", "error": message}), file=sys.stderr)
+
+    summary = {"claimed": len(jobs), "ready": ready, "review_required": review, "failed": failed}
+    print(json.dumps(summary, separators=(",", ":")))
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

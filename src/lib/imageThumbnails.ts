@@ -4,12 +4,13 @@ import {
 } from "@/lib/assetResolver";
 
 const STATIC_ALREADY_THUMBNAIL = /^\/(?:thumbnails|catalogs\/thumbs)\//i;
-const STATIC_ALREADY_RESPONSIVE = /^\/responsive\/(?:360|720|1200)\//i;
+const STATIC_ALREADY_RESPONSIVE = /^\/responsive\/(?:360|720|1200|1600|2400)\//i;
+const RESPONSIVE_PREFIX = /^responsive\/(?:360|720|1200|1600|2400)\/(.+)\.webp$/i;
 const RASTER_EXTENSION = /\.(?:avif|gif|jpe?g|png|webp)(?:$|[?#])/i;
 const SUPABASE_PUBLIC_MARKER = "/storage/v1/object/public/";
 const SITE_HOSTS = new Set(["irhaapparels.com", "www.irhaapparels.com"]);
 
-export const RESPONSIVE_IMAGE_WIDTHS = [360, 720, 1200] as const;
+export const RESPONSIVE_IMAGE_WIDTHS = [360, 720, 1200, 1600, 2400] as const;
 export type ResponsiveImageWidth = typeof RESPONSIVE_IMAGE_WIDTHS[number];
 
 function splitUrlSuffix(value: string) {
@@ -19,7 +20,7 @@ function splitUrlSuffix(value: string) {
 
 function originalObjectPath(objectPath: string): string {
   const clean = objectPath.replace(/^\/+/, "");
-  const responsive = clean.match(/^responsive\/(?:360|720|1200)\/(.+)\.webp$/i);
+  const responsive = clean.match(RESPONSIVE_PREFIX);
   if (responsive) return responsive[1];
   if (clean.startsWith("thumbnails/") && clean.endsWith(".webp")) {
     return clean.slice("thumbnails/".length, -".webp".length);
@@ -81,21 +82,18 @@ export function thumbnailUrl(source?: string | null): string {
   } catch {
     return source;
   }
-
   return source;
 }
 
 export function originalImageUrl(source?: string | null): string {
   if (!source) return "";
-
   if (source.startsWith("/thumbnails/") && source.includes(".webp")) {
     const { pathname, suffix } = splitUrlSuffix(source);
     return `/${pathname.slice("/thumbnails/".length).replace(/\.webp$/, "")}${suffix}`;
   }
-
   if (STATIC_ALREADY_RESPONSIVE.test(source) && source.includes(".webp")) {
     const { pathname, suffix } = splitUrlSuffix(source);
-    return `/${pathname.replace(/^\/responsive\/(?:360|720|1200)\//i, "").replace(/\.webp$/, "")}${suffix}`;
+    return `/${pathname.replace(/^\/responsive\/(?:360|720|1200|1600|2400)\//i, "").replace(/\.webp$/, "")}${suffix}`;
   }
 
   try {
@@ -123,15 +121,14 @@ export function originalImageUrl(source?: string | null): string {
         url.pathname = `/${url.pathname.slice("/thumbnails/".length).replace(/\.webp$/, "")}`;
         return url.toString();
       }
-      if (/^\/responsive\/(?:360|720|1200)\//i.test(url.pathname) && url.pathname.endsWith(".webp")) {
-        url.pathname = `/${url.pathname.replace(/^\/responsive\/(?:360|720|1200)\//i, "").replace(/\.webp$/, "")}`;
+      if (/^\/responsive\/(?:360|720|1200|1600|2400)\//i.test(url.pathname) && url.pathname.endsWith(".webp")) {
+        url.pathname = `/${url.pathname.replace(/^\/responsive\/(?:360|720|1200|1600|2400)\//i, "").replace(/\.webp$/, "")}`;
         return url.toString();
       }
     }
   } catch {
     return source;
   }
-
   return source;
 }
 
@@ -200,7 +197,6 @@ export function responsiveImageAttributes(source?: string | null): ResponsiveIma
   } catch {
     return { src: source };
   }
-
   return { src: source };
 }
 
@@ -234,26 +230,26 @@ async function encodeCanvas(canvas: HTMLCanvasElement, quality: number): Promise
   });
 }
 
+function qualityForBrowserWidth(width: ResponsiveImageWidth, requested: number) {
+  const floor = width >= 2400 ? 0.9 : width >= 1600 ? 0.88 : width >= 1200 ? 0.85 : width >= 720 ? 0.82 : 0.78;
+  return Math.max(floor, requested);
+}
+
 export async function createBrowserImageVariants(
   source: Blob,
   options: { widths?: readonly ResponsiveImageWidth[]; quality?: number } = {},
 ): Promise<BrowserImageVariant[]> {
   if (!source.type.startsWith("image/") || typeof document === "undefined") return [];
-
   const widths = Array.from(new Set(options.widths ?? RESPONSIVE_IMAGE_WIDTHS))
     .filter((width): width is ResponsiveImageWidth => RESPONSIVE_IMAGE_WIDTHS.includes(width as ResponsiveImageWidth))
     .sort((a, b) => a - b);
-  const quality = Math.max(0.45, Math.min(0.9, options.quality ?? 0.68));
+  const requestedQuality = Math.max(0.65, Math.min(0.92, options.quality ?? 0.82));
   let bitmap: ImageBitmap | null = null;
   let image: HTMLImageElement | null = null;
 
   try {
-    if (typeof createImageBitmap === "function") {
-      bitmap = await createImageBitmap(source);
-    } else {
-      image = await loadImageElement(source);
-    }
-
+    if (typeof createImageBitmap === "function") bitmap = await createImageBitmap(source);
+    else image = await loadImageElement(source);
     const sourceWidth = bitmap?.width ?? image?.naturalWidth ?? 0;
     const sourceHeight = bitmap?.height ?? image?.naturalHeight ?? 0;
     if (sourceWidth < 1 || sourceHeight < 1) return [];
@@ -267,11 +263,10 @@ export async function createBrowserImageVariants(
       canvas.height = height;
       const context = canvas.getContext("2d", { alpha: true });
       if (!context) return [];
-
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = "high";
       context.drawImage(bitmap ?? image!, 0, 0, width, height);
-      const blob = await encodeCanvas(canvas, quality);
+      const blob = await encodeCanvas(canvas, qualityForBrowserWidth(targetWidth, requestedQuality));
       if (!blob) return [];
       variants.push({ blob, width, height, mimeType: "image/webp", targetWidth });
     }
@@ -286,23 +281,17 @@ export async function createBrowserThumbnail(
   options: { maxEdge?: number; quality?: number } = {},
 ): Promise<BrowserThumbnail | null> {
   if (!source.type.startsWith("image/") || typeof document === "undefined") return null;
-
-  const maxEdge = Math.max(160, Math.min(1600, options.maxEdge ?? 720));
-  const quality = Math.max(0.45, Math.min(0.92, options.quality ?? 0.68));
+  const maxEdge = Math.max(160, Math.min(2400, options.maxEdge ?? 720));
+  const quality = Math.max(0.65, Math.min(0.92, options.quality ?? 0.82));
   let bitmap: ImageBitmap | null = null;
   let image: HTMLImageElement | null = null;
 
   try {
-    if (typeof createImageBitmap === "function") {
-      bitmap = await createImageBitmap(source);
-    } else {
-      image = await loadImageElement(source);
-    }
-
+    if (typeof createImageBitmap === "function") bitmap = await createImageBitmap(source);
+    else image = await loadImageElement(source);
     const sourceWidth = bitmap?.width ?? image?.naturalWidth ?? 0;
     const sourceHeight = bitmap?.height ?? image?.naturalHeight ?? 0;
     if (sourceWidth < 1 || sourceHeight < 1) return null;
-
     const scale = Math.min(1, maxEdge / Math.max(sourceWidth, sourceHeight));
     const width = Math.max(1, Math.round(sourceWidth * scale));
     const height = Math.max(1, Math.round(sourceHeight * scale));
@@ -311,11 +300,9 @@ export async function createBrowserThumbnail(
     canvas.height = height;
     const context = canvas.getContext("2d", { alpha: true });
     if (!context) return null;
-
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
     context.drawImage(bitmap ?? image!, 0, 0, width, height);
-
     const blob = await encodeCanvas(canvas, quality);
     if (!blob) return null;
     return { blob, width, height, mimeType: "image/webp" };
