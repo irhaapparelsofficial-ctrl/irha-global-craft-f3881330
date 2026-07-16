@@ -196,19 +196,23 @@ jobs:
 
       - name: Reconfirm exact current main before production mutation
         if: steps.live.outputs.exact != 'true'
+        id: freshness
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
-          test "$latest_main" = "$SOURCE_SHA" || {
-            echo "Main advanced from $SOURCE_SHA to $latest_main; refusing stale deploy"
-            exit 1
-          }
+          if [ "$latest_main" = "$SOURCE_SHA" ]; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+            echo "Exact current main reconfirmed before production mutation."
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "Main advanced from $SOURCE_SHA to $latest_main; stale deploy skipped without failure"
+          fi
 
       - name: Deploy exact immutable artifact
-        if: steps.live.outputs.exact != 'true'
+        if: steps.live.outputs.exact != 'true' && steps.freshness.outputs.fresh == 'true'
         shell: bash
         run: |
           bash scripts/ci/retry.sh 3 10 -- npx --yes wrangler@4 pages deploy dist \
@@ -217,10 +221,40 @@ jobs:
             --commit-hash="$SOURCE_SHA" \
             --commit-dirty=false
 
-      - name: Verify pages.dev, apex and www canonical behavior
+      - name: Record superseded release without failure
+        if: steps.live.outputs.exact != 'true' && steps.freshness.outputs.fresh == 'false'
         shell: bash
         run: |
+          {
+            echo "## Cloudflare current-main reconciliation"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Quality Gate run: \`$QUALITY_RUN_ID\`"
+            echo "- Result: superseded release skipped without failure"
+            echo "- Production mutation: \`false\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify pages.dev, apex and www canonical behavior
+        id: verify
+        if: steps.live.outputs.exact == 'true' || steps.freshness.outputs.fresh == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
           set -euo pipefail
+          echo "verified=false" >> "$GITHUB_OUTPUT"
+          echo "superseded=false" >> "$GITHUB_OUTPUT"
+
+          fail_or_skip_if_superseded() {
+            message="$1"
+            latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            if [ "$latest_main" != "$SOURCE_SHA" ]; then
+              echo "superseded=true" >> "$GITHUB_OUTPUT"
+              echo "Superseded release verification skipped without failure: source=$SOURCE_SHA current_main=$latest_main"
+              exit 0
+            fi
+            echo "$message"
+            exit 1
+          }
 
           verify_origin() {
             origin="$1"
@@ -252,12 +286,11 @@ jobs:
             done
 
             if [ "$ready" != "true" ]; then
-              echo "$label did not serve the exact verified release after 36 attempts"
               echo "origin=$origin status=$last_status source_commit=$last_commit build_fingerprint=$last_fingerprint"
               echo "expected_source_commit=$SOURCE_SHA expected_build_fingerprint=$RELEASE_FINGERPRINT"
               head -c 500 "$build_file" 2>/dev/null || true
               echo
-              exit 1
+              fail_or_skip_if_superseded "$label did not serve the exact verified release after 36 attempts"
             fi
 
             echo "$label authoritative release parity verified: source=$SOURCE_SHA fingerprint=$RELEASE_FINGERPRINT"
@@ -285,11 +318,19 @@ jobs:
             -D "$www_headers" -o "$www_body" -w '%{http_code}' \
             "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}" || true)"
           location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$www_headers")"
-          case "$status" in 301|302|307|308) ;; *) echo "Unexpected www GET status: $status"; cat "$www_headers"; exit 1 ;; esac
-          case "$location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $location"; cat "$www_headers"; exit 1 ;; esac
+          case "$status" in
+            301|302|307|308) ;;
+            *) cat "$www_headers"; fail_or_skip_if_superseded "Unexpected www GET status: $status" ;;
+          esac
+          case "$location" in
+            https://irhaapparels.com/*) ;;
+            *) cat "$www_headers"; fail_or_skip_if_superseded "Unexpected www redirect: $location" ;;
+          esac
           echo "www canonical GET redirect verified: status=$status location=$location"
+          echo "verified=true" >> "$GITHUB_OUTPUT"
 
       - name: Record reconciliation result
+        if: steps.verify.outputs.verified == 'true'
         shell: bash
         run: |
           {
