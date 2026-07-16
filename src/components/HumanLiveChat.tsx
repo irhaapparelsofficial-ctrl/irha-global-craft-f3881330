@@ -17,12 +17,23 @@ type ApiResponse = {
   ok?: boolean;
   status?: ConversationStatus;
   messages?: LiveMessage[];
+  presenceRecorded?: boolean;
   error?: string;
+};
+
+type VisitorContext = {
+  visitorCountryCode?: string | null;
+  visitorCountry?: string | null;
+  visitorRegion?: string | null;
+  visitorCity?: string | null;
+  visitorTimezone?: string | null;
+  visitorLanguage?: string | null;
 };
 
 const SESSION_KEY = "irha:human-chat-session";
 const TOKEN_KEY = "irha:human-chat-token";
 const STARTED_KEY = "irha:human-chat-started";
+const PRESENCE_KEY_PREFIX = "irha:human-chat-presence:";
 const OPEN_EVENT = "irha:open-human-chat";
 
 function randomToken() {
@@ -67,6 +78,60 @@ function wasStarted() {
   }
 }
 
+function presenceStorageKey(sessionId: string) {
+  return `${PRESENCE_KEY_PREFIX}${sessionId}`;
+}
+
+function presenceWasReported(sessionId: string) {
+  try {
+    return sessionStorage.getItem(presenceStorageKey(sessionId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markPresenceReported(sessionId: string) {
+  try {
+    sessionStorage.setItem(presenceStorageKey(sessionId), "1");
+  } catch {
+    // Memory-only sessions may report again after reopening; server dedupe prevents spam.
+  }
+}
+
+async function readVisitorContext(): Promise<VisitorContext> {
+  const browserFallback: VisitorContext = {
+    visitorTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+    visitorLanguage: navigator.language || null,
+  };
+
+  try {
+    const response = await fetch("/api/visitor-context", {
+      method: "GET",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return browserFallback;
+    const context = await response.json() as {
+      countryCode?: string | null;
+      country?: string | null;
+      region?: string | null;
+      city?: string | null;
+      timezone?: string | null;
+    };
+    return {
+      visitorCountryCode: context.countryCode || null,
+      visitorCountry: context.country || null,
+      visitorRegion: context.region || null,
+      visitorCity: context.city || null,
+      visitorTimezone: context.timezone || browserFallback.visitorTimezone || null,
+      visitorLanguage: browserFallback.visitorLanguage || null,
+    };
+  } catch {
+    return browserFallback;
+  }
+}
+
 function statusLabel(status: ConversationStatus) {
   if (status === "active") return "Irha team joined";
   if (status === "closed") return "Conversation closed";
@@ -80,6 +145,8 @@ function isMobileInteraction() {
 
 export default function HumanLiveChat() {
   const credentialsRef = useRef(readStoredCredentials());
+  const visitorContextRef = useRef<VisitorContext>({});
+  const presenceInFlightRef = useRef<Promise<void> | null>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -119,6 +186,35 @@ export default function HumanLiveChat() {
     return body;
   }, []);
 
+  const reportPresence = useCallback(async () => {
+    const sessionId = credentialsRef.current.sessionId;
+    if (presenceWasReported(sessionId)) return;
+    if (presenceInFlightRef.current) return presenceInFlightRef.current;
+
+    const operation = (async () => {
+      try {
+        const context = await readVisitorContext();
+        visitorContextRef.current = context;
+        await callApi({
+          action: "presence",
+          ...context,
+          entryPath: `${window.location.pathname}${window.location.search}`.slice(0, 500),
+          referrer: document.referrer,
+        });
+        markPresenceReported(sessionId);
+      } catch {
+        // Chat remains usable. The server also derives edge context on connect.
+      }
+    })();
+
+    presenceInFlightRef.current = operation;
+    try {
+      await operation;
+    } finally {
+      presenceInFlightRef.current = null;
+    }
+  }, [callApi]);
+
   const poll = useCallback(async (showSpinner = false) => {
     if (!started) return;
     if (showSpinner) setPolling(true);
@@ -144,6 +240,11 @@ export default function HumanLiveChat() {
     window.addEventListener(OPEN_EVENT, openHumanChat);
     return () => window.removeEventListener(OPEN_EVENT, openHumanChat);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    void reportPresence();
+  }, [open, reportPresence]);
 
   useEffect(() => {
     if (!started || !open) return;
@@ -222,6 +323,7 @@ export default function HumanLiveChat() {
     setSending(true);
     setError(null);
     try {
+      await reportPresence();
       const body = await callApi({
         action: started ? "send" : "connect",
         message,
@@ -229,6 +331,9 @@ export default function HumanLiveChat() {
         visitorName: visitorName.trim(),
         visitorCompany: visitorCompany.trim(),
         visitorEmail: visitorEmail.trim(),
+        ...visitorContextRef.current,
+        entryPath: `${window.location.pathname}${window.location.search}`.slice(0, 500),
+        referrer: document.referrer,
       });
       setMessages(body.messages ?? []);
       setStatus(body.status ?? "waiting");
@@ -255,6 +360,7 @@ export default function HumanLiveChat() {
   const startNewConversation = () => {
     const created = createCredentials();
     credentialsRef.current = created;
+    visitorContextRef.current = {};
     try {
       sessionStorage.setItem(SESSION_KEY, created.sessionId);
       sessionStorage.setItem(TOKEN_KEY, created.visitorToken);
@@ -267,6 +373,7 @@ export default function HumanLiveChat() {
     setStarted(false);
     setInput("");
     setError(null);
+    void reportPresence();
     window.setTimeout(() => inputRef.current?.focus(), 0);
   };
 
