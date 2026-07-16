@@ -2,6 +2,11 @@
 // Admin-only: validates JWT and `user_roles.role = 'admin'`.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -51,7 +56,7 @@ interface InspectResult {
 }
 
 async function inspect(url: string): Promise<InspectResult> {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const lovableKey = irhaLovableRuntimeKey();
   const gscKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
   if (!lovableKey || !gscKey) return { url, error: "Missing API credentials" };
 

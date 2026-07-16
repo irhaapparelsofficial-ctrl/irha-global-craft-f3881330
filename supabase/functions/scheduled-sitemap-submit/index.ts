@@ -1,5 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const SITE_PROPERTY = "sc-domain:irhaapparels.com";
 const SITEMAP_URL = "https://irhaapparels.com/sitemap.xml";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
@@ -24,7 +29,7 @@ Deno.serve(async (req: Request) => {
   const providedHash = await sha256Hex(token);
   if (!constantTimeEqual(providedHash, SCHEDULER_TOKEN_HASH)) return json({ error: "unauthorized" }, 401);
 
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY") || "";
+  const lovableKey = irhaLovableRuntimeKey() || "";
   const gscKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY") || "";
   if (!lovableKey || !gscKey) return json({ error: "gsc_connection_not_configured" }, 503);
 

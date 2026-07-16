@@ -2,6 +2,11 @@ import { incomplete, isTooSimilar, redact, type PageContext, type Provider, type
 import { catalogueContext } from "./data.ts";
 import { fallbackReply, systemPrompt } from "./prompt.ts";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 function externalMessages(messages: SafeMessage[]) {
   return messages.slice(-12).map((message) => ({ role: message.role, content: redact(message.content) }));
 }
@@ -19,7 +24,7 @@ function geminiText(payload: any) {
 }
 
 async function tryLovable(messages: SafeMessage[], prompt: string) {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = irhaLovableRuntimeKey();
   if (!key) return "";
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",

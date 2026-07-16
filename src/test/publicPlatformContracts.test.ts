@@ -95,6 +95,7 @@ describe("buyer-critical public platform contracts", () => {
     expect(chatFunction).toContain("resolveSessionId(body.sessionId, req)");
     expect(chatFunction).toContain("isAllowedOrigin(origin)");
     expect(chatFunction).toContain("ai.gateway.lovable.dev/v1/chat/completions");
+    expect(chatFunction).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
     expect(chatFunction).toContain('"X-Irha-Conversation-Version": "3"');
     expect(chatFunction).toContain("isTooSimilar");
   });
