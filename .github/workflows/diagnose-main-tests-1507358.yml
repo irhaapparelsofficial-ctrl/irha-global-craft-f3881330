@@ -17,7 +17,15 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - name: Install dependencies with bounded retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npm ci; then exit 0; fi
+            if [ "$attempt" = "3" ]; then exit 1; fi
+            sleep $((attempt * 5))
+          done
       - name: Capture exact test output
         shell: bash
         run: |
