@@ -69,6 +69,12 @@ describe("Irha CI control plane", () => {
     expect(database).not.toContain("retry.sh 3 8 -- supabase db push --linked");
   });
 
+  it("keeps retry diagnostics on stderr so captured stdout remains machine-readable", () => {
+    const retry = read("scripts/ci/retry.sh");
+    expect(retry).toContain('echo "[retry] attempt $attempt/$attempts: $*" >&2');
+    expect(retry).toContain('echo "[retry] transient failure (exit $status); waiting ${sleep_for}s before retry" >&2');
+  });
+
   it("has an automatic one-attempt transient failure guardian", () => {
     const guardian = read(".github/workflows/ci-guardian.yml");
     expect(guardian).toContain("Irha CI Guardian");
