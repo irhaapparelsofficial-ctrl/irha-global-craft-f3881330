@@ -35,8 +35,8 @@ describe("polished B2B homepage", () => {
     expect(hero).toContain("Leatherwear");
     expect(hero).toContain("SPORTS_PRODUCT_IMAGE");
     expect(hero).toContain("LEATHER_PRODUCT_IMAGE");
-    expect(hero.match(/loading=\"eager\"/g)).toHaveLength(1);
-    expect(hero.match(/loading=\"lazy\"/g)).toHaveLength(2);
+    expect(hero.match(/loading="eager"/g)).toHaveLength(1);
+    expect(hero.match(/loading="lazy"/g)).toHaveLength(2);
     expect(hero).not.toContain("sportswearThumb");
     expect(hero).not.toContain("leatherThumb");
   });
@@ -96,13 +96,14 @@ describe("polished B2B homepage", () => {
     expect(finalCta).not.toContain("MessageCircle");
   });
 
-  it("uses a reliable local brand mark in header and footer", () => {
+  it("uses the official owner-supplied local brand mark in header and footer", () => {
     expect(navbar).toContain('src="/irha-brand-mark.svg"');
     expect(footer).toContain('src="/irha-brand-mark.svg"');
     expect(navbar).not.toContain("irha-logo.png.asset.json");
     expect(footer).not.toContain("irha-logo.png.asset.json");
-    expect(brand).toContain("IRHA APPARELS");
-    expect(brand).toContain("MANUFACTURING SPECIALISTS");
+    expect(brand).toContain('<title id="title">Irha Apparels</title>');
+    expect(brand).toContain("Official owner-supplied Irha Apparels Manufacturing Specialists logo");
+    expect(brand).toContain('<image href="data:image/webp;base64,');
   });
 
   it("keeps mobile consent compact, readable and clear of contact actions", () => {
@@ -128,7 +129,7 @@ describe("polished B2B homepage", () => {
   });
 
   it("uses a simple B2B primary navigation", () => {
-    for (const label of ["Products", "Manufacturing", "How it works", "Buyer trust"]) expect(navbar).toContain(`label: \"${label}\"`);
+    for (const label of ["Products", "Manufacturing", "How it works", "Buyer trust"]) expect(navbar).toContain(`label: "${label}"`);
     expect(navbar).toContain("Request quote");
     expect(navbar).not.toContain("MockupRequestButton");
   });
