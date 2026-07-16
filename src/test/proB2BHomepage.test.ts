@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 const hero = read("src/components/HeroCarousel.tsx");
+const heroMedia = read("src/lib/heroMedia.ts");
 const home = read("src/pages/Home.tsx");
 const navbar = read("src/components/layout/Navbar.tsx");
 const layout = read("src/components/layout/Layout.tsx");
@@ -29,16 +30,28 @@ describe("polished B2B homepage", () => {
     expect(hero).toContain("irha:open-human-chat");
   });
 
-  it("presents consistent product-first hero media with one LCP image", () => {
-    expect(hero).toContain("Bavarian &amp; Trachten");
-    expect(hero).toContain("Sportswear");
-    expect(hero).toContain("Leatherwear");
-    expect(hero).toContain("SPORTS_PRODUCT_IMAGE");
-    expect(hero).toContain("LEATHER_PRODUCT_IMAGE");
+  it("presents consistent editorial hero media with one LCP image", () => {
+    for (const label of ["Bavarian &amp; Trachten", "Sportswear", "Leatherwear", "Streetwear", "Leisurewear"]) {
+      expect(hero).toContain(label);
+    }
+    for (const slug of [
+      "bavarian-trachten-wear",
+      "sportswear",
+      "premium-leather-apparel",
+      "streetwear-activewear",
+      "leisure-nightwear",
+    ]) {
+      expect(heroMedia).toContain(`\"${slug}\"`);
+    }
+    expect(hero).toContain("CATEGORY_HERO_MEDIA");
+    expect(hero).toContain("SECONDARY_PROGRAMS.map");
+    expect(hero).toContain("object-cover");
     expect(hero.match(/loading=\"eager\"/g)).toHaveLength(1);
-    expect(hero.match(/loading=\"lazy\"/g)).toHaveLength(2);
-    expect(hero).not.toContain("sportswearThumb");
-    expect(hero).not.toContain("leatherThumb");
+    expect(hero.match(/loading=\"lazy\"/g)).toHaveLength(1);
+    expect(hero).not.toContain("SPORTS_PRODUCT_IMAGE");
+    expect(hero).not.toContain("LEATHER_PRODUCT_IMAGE");
+    expect(hero).not.toContain("BAVARIAN_PRODUCT_IMAGE");
+    expect(hero).not.toContain("object-contain");
   });
 
   it("keeps the homepage short and ordered around buyer tasks", () => {
