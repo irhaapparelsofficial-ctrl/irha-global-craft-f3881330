@@ -103,9 +103,27 @@ jobs:
           print('EDSR x2 inference passed:', output.shape)
           PY
 
-      - name: Type-check the protected Supabase gateway
+      - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
-      - run: deno check supabase/functions/image-processing-gateway/index.ts
+      - name: Type-check protected Supabase gateway
+        id: deno_check
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          deno check supabase/functions/image-processing-gateway/index.ts 2>&1 | tee /tmp/image-gateway-deno-check.log
+
+      - name: Preserve compiler diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-gateway-deno-check-${{ github.run_id }}
+          path: /tmp/image-gateway-deno-check.log
+          retention-days: 7
+
+      - name: Enforce successful gateway type-check
+        if: steps.deno_check.outcome != 'success'
+        run: exit 1
