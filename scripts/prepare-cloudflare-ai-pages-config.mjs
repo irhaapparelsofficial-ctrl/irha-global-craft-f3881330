@@ -52,48 +52,187 @@ function tomlSection(value, sectionName) {
   return value.slice(sectionStart, sectionEnd);
 }
 
-function addTomlBinding(value) {
-  const aiSection = tomlSection(value, "ai");
-  if (aiSection) {
-    if (!/^binding\s*=\s*["']AI["']/m.test(aiSection)) {
-      throw new Error("A conflicting Workers AI binding already exists; refusing to overwrite it.");
+function ensureTomlAiBinding(value, sectionName) {
+  const section = tomlSection(value, sectionName);
+  if (section) {
+    if (!/^binding\s*=\s*["']AI["']/m.test(section)) {
+      throw new Error(`A conflicting Workers AI binding already exists in [${sectionName}]; refusing to overwrite it.`);
     }
     return value;
   }
-  return `${value.trimEnd()}\n\n[ai]\nbinding = "AI"\n`;
+  return `${value.trimEnd()}\n\n[${sectionName}]\nbinding = "AI"\n`;
 }
 
-function addJsonBinding(value) {
-  const aiProperty = value.match(/["']ai["']\s*:\s*\{[\s\S]*?\}/)?.[0] || "";
-  if (aiProperty) {
-    if (!/["']binding["']\s*:\s*["']AI["']/.test(aiProperty)) {
-      throw new Error("A conflicting Workers AI binding already exists; refusing to overwrite it.");
+function addTomlBindings(value) {
+  return ensureTomlAiBinding(ensureTomlAiBinding(value, "ai"), "env.production.ai");
+}
+
+function stripJsonComments(value) {
+  let output = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    const next = value[index + 1];
+
+    if (inString) {
+      output += character;
+      if (escaped) {
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === '"') {
+        inString = false;
+      }
+      continue;
     }
-    return value;
+
+    if (character === '"') {
+      inString = true;
+      output += character;
+      continue;
+    }
+
+    if (character === "/" && next === "/") {
+      output += "  ";
+      index += 1;
+      while (index + 1 < value.length && value[index + 1] !== "\n") {
+        output += " ";
+        index += 1;
+      }
+      continue;
+    }
+
+    if (character === "/" && next === "*") {
+      output += "  ";
+      index += 1;
+      while (index + 1 < value.length) {
+        const current = value[index + 1];
+        const after = value[index + 2];
+        if (current === "*" && after === "/") {
+          output += "  ";
+          index += 2;
+          break;
+        }
+        output += current === "\n" ? "\n" : " ";
+        index += 1;
+      }
+      continue;
+    }
+
+    output += character;
   }
 
-  const lastBrace = value.lastIndexOf("}");
-  if (lastBrace < 0) throw new Error("Downloaded JSON Wrangler configuration is malformed.");
-  const prefix = value.slice(0, lastBrace).trimEnd();
-  const suffix = value.slice(lastBrace);
-  const separator = prefix.endsWith("{") || prefix.endsWith(",") ? "" : ",";
-  return `${prefix}${separator}\n  "ai": {\n    "binding": "AI"\n  }\n${suffix}`;
+  return output;
+}
+
+function stripJsonTrailingCommas(value) {
+  let output = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+
+    if (inString) {
+      output += character;
+      if (escaped) {
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (character === '"') {
+      inString = true;
+      output += character;
+      continue;
+    }
+
+    if (character === ",") {
+      let lookahead = index + 1;
+      while (lookahead < value.length && /\s/.test(value[lookahead])) lookahead += 1;
+      if (value[lookahead] === "}" || value[lookahead] === "]") continue;
+    }
+
+    output += character;
+  }
+
+  return output;
+}
+
+function parseJsonFamily(value) {
+  try {
+    return JSON.parse(stripJsonTrailingCommas(stripJsonComments(value)));
+  } catch (error) {
+    throw new Error(`Downloaded JSON Wrangler configuration is malformed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function ensureObject(parent, key, label) {
+  const current = parent[key];
+  if (current === undefined) {
+    parent[key] = {};
+    return parent[key];
+  }
+  if (!current || typeof current !== "object" || Array.isArray(current)) {
+    throw new Error(`${label} must be an object; refusing to overwrite it.`);
+  }
+  return current;
+}
+
+function ensureJsonAiBinding(container, label) {
+  const current = container.ai;
+  if (current === undefined) {
+    container.ai = { binding: "AI" };
+    return;
+  }
+  if (!current || typeof current !== "object" || Array.isArray(current) || current.binding !== "AI") {
+    throw new Error(`A conflicting Workers AI binding already exists in ${label}; refusing to overwrite it.`);
+  }
+}
+
+function addJsonBindings(value) {
+  const parsed = parseJsonFamily(value);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Downloaded JSON Wrangler configuration must contain an object at the root.");
+  }
+
+  ensureJsonAiBinding(parsed, "the top-level configuration");
+  const environments = ensureObject(parsed, "env", 'the top-level "env" property');
+  const production = ensureObject(environments, "production", 'the "env.production" property');
+  ensureJsonAiBinding(production, 'the "env.production" configuration');
+
+  return `${JSON.stringify(parsed, null, 2)}\n`;
+}
+
+function assertTomlBindings(value) {
+  for (const sectionName of ["ai", "env.production.ai"]) {
+    const section = tomlSection(value, sectionName);
+    if (!section || !/^binding\s*=\s*["']AI["']/m.test(section)) {
+      throw new Error(`Workers AI binding is missing from [${sectionName}].`);
+    }
+  }
+}
+
+function assertJsonBindings(value) {
+  const parsed = parseJsonFamily(value);
+  if (parsed?.ai?.binding !== "AI" || parsed?.env?.production?.ai?.binding !== "AI") {
+    throw new Error("Workers AI bindings are missing from preview or production configuration.");
+  }
 }
 
 assertProjectContract(source);
-source = isToml ? addTomlBinding(source) : addJsonBinding(source);
+source = isToml ? addTomlBindings(source) : addJsonBindings(source);
 await writeFile(path, source, "utf8");
 
 const final = await readFile(path, "utf8");
 assertProjectContract(final);
-const sectionCount = isToml
-  ? (final.match(/^\[ai\]$/gm) || []).length
-  : (final.match(/["']ai["']\s*:/g) || []).length;
-const bindingCount = isToml
-  ? (final.match(/^binding\s*=\s*["']AI["']$/gm) || []).length
-  : (final.match(/["']binding["']\s*:\s*["']AI["']/g) || []).length;
-if (sectionCount !== 1 || bindingCount !== 1) {
-  throw new Error(`Workers AI config is not idempotent: sections=${sectionCount}, bindings=${bindingCount}`);
-}
+if (isToml) assertTomlBindings(final);
+else assertJsonBindings(final);
 
-console.log(`Verified one Workers AI binding named AI in downloaded ${extension.slice(1).toUpperCase()} Pages configuration.`);
+console.log(`Verified Workers AI bindings named AI for preview and production in downloaded ${extension.slice(1).toUpperCase()} Pages configuration.`);
