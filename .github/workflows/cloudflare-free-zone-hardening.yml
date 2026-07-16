@@ -1,0 +1,181 @@
+name: Cloudflare Free Zone Hardening
+
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: cloudflare-free-zone-hardening
+  cancel-in-progress: false
+
+env:
+  RELEASE_AUDIT_ISSUE: "375"
+  ZONE_NAME: irhaapparels.com
+
+jobs:
+  harden:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 375 &&
+       github.event.comment.body == '/harden-cloudflare-free-zone' &&
+       github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Checkout exact current main utilities
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Apply and verify exact free zone settings
+        id: zone
+        shell: bash
+        run: |
+          set +e
+          report=/tmp/cloudflare-free-zone-hardening.md
+          detail=/tmp/cloudflare-free-zone-detail.txt
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          source_sha="$(git rev-parse HEAD 2>/dev/null || printf unknown)"
+          result=failure
+          stage=preflight
+          exit_code=1
+          ssl_before=unknown
+          ssl_after=unknown
+          https_before=unknown
+          https_after=unknown
+          rewrites_before=unknown
+          rewrites_after=unknown
+          dnssec_status=unknown
+
+          [ -n "$token" ] && echo "::add-mask::$token"
+
+          api() {
+            method="$1"
+            endpoint="$2"
+            payload="${3:-}"
+            if [ -n "$payload" ]; then
+              curl -sS --connect-timeout 10 --max-time 40 \
+                -X "$method" \
+                -H "Authorization: Bearer $token" \
+                -H 'Content-Type: application/json' \
+                --data "$payload" \
+                "https://api.cloudflare.com/client/v4$endpoint"
+            else
+              curl -sS --connect-timeout 10 --max-time 40 \
+                -X "$method" \
+                -H "Authorization: Bearer $token" \
+                -H 'Content-Type: application/json' \
+                "https://api.cloudflare.com/client/v4$endpoint"
+            fi
+          }
+
+          setting_value() {
+            api GET "/zones/$zone_id/settings/$1" | jq -r 'if .success == true then .result.value else "__error__" end'
+          }
+
+          set_setting() {
+            setting="$1"
+            desired="$2"
+            response="$(api PATCH "/zones/$zone_id/settings/$setting" "$(jq -nc --arg value "$desired" '{value:$value}')")"
+            if [ "$(printf '%s' "$response" | jq -r '.success // false')" != true ]; then
+              printf 'Cloudflare rejected %s=%s: ' "$setting" "$desired" >> "$detail"
+              printf '%s' "$response" | jq -c '{errors}' >> "$detail"
+              return 1
+            fi
+            return 0
+          }
+
+          : > "$detail"
+          if [ -z "$token" ]; then
+            printf '%s\n' 'CLOUDFLARE_API_TOKEN is missing.' >> "$detail"
+          else
+            stage=token-verification
+            verify="$(api GET /user/tokens/verify)"
+            if [ "$(printf '%s' "$verify" | jq -r '.success // false')" != true ]; then
+              printf '%s\n' 'Cloudflare token verification failed.' >> "$detail"
+            else
+              stage=zone-resolution
+              zones="$(api GET "/zones?name=$ZONE_NAME&status=active&per_page=5")"
+              zone_count="$(printf '%s' "$zones" | jq -r 'if .success == true then (.result | length) else -1 end')"
+              if [ "$zone_count" != 1 ]; then
+                printf 'Expected one active zone for %s; found %s.\n' "$ZONE_NAME" "$zone_count" >> "$detail"
+              else
+                zone_id="$(printf '%s' "$zones" | jq -r '.result[0].id')"
+                echo "::add-mask::$zone_id"
+                stage=settings-audit
+                ssl_before="$(setting_value ssl)"
+                https_before="$(setting_value always_use_https)"
+                rewrites_before="$(setting_value automatic_https_rewrites)"
+
+                if [ "$ssl_before" = __error__ ] || [ "$https_before" = __error__ ] || [ "$rewrites_before" = __error__ ]; then
+                  printf '%s\n' 'Cloudflare zone settings could not be read with the current token.' >> "$detail"
+                else
+                  stage=settings-mutation
+                  mutation_failed=false
+                  [ "$ssl_before" = strict ] || set_setting ssl strict || mutation_failed=true
+                  [ "$https_before" = on ] || set_setting always_use_https on || mutation_failed=true
+                  [ "$rewrites_before" = on ] || set_setting automatic_https_rewrites on || mutation_failed=true
+
+                  stage=settings-verification
+                  ssl_after="$(setting_value ssl)"
+                  https_after="$(setting_value always_use_https)"
+                  rewrites_after="$(setting_value automatic_https_rewrites)"
+                  dnssec="$(api GET "/zones/$zone_id/dnssec")"
+                  dnssec_status="$(printf '%s' "$dnssec" | jq -r 'if .success == true then (.result.status // "unknown") else "unavailable" end')"
+
+                  if [ "$mutation_failed" = false ] &&
+                     [ "$ssl_after" = strict ] &&
+                     [ "$https_after" = on ] &&
+                     [ "$rewrites_after" = on ]; then
+                    result=success
+                    stage=complete
+                    exit_code=0
+                    printf '%s\n' 'Exact free zone settings are active.' >> "$detail"
+                  else
+                    printf '%s\n' 'One or more exact free zone settings were not verified.' >> "$detail"
+                  fi
+                fi
+              fi
+            fi
+          fi
+
+          sanitized="$(sed -E 's/[0-9a-fA-F]{32}/[masked-32hex]/g; s/(Bearer[[:space:]]+)[A-Za-z0-9._~-]+/\1[masked]/g' "$detail" | tail -n 30 | head -c 5000)"
+          {
+            echo '## Cloudflare free zone hardening'
+            echo
+            echo "- Source: \`$source_sha\`"
+            echo "- Result: \`$result\`"
+            echo "- Stage: \`$stage\`"
+            echo "- SSL mode: \`$ssl_before\` → \`$ssl_after\`"
+            echo "- Always Use HTTPS: \`$https_before\` → \`$https_after\`"
+            echo "- Automatic HTTPS Rewrites: \`$rewrites_before\` → \`$rewrites_after\`"
+            echo "- DNSSEC read-only status: \`$dnssec_status\`"
+            echo '- DNS records changed: `false`'
+            echo '- HSTS changed: `false`'
+            echo '- Cache rules changed: `false`'
+            echo
+            echo '```text'
+            printf '%s\n' "$sanitized"
+            echo '```'
+          } > "$report"
+          cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          exit "$exit_code"
+
+      - name: Record sanitized owner evidence
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -s /tmp/cloudflare-free-zone-hardening.md
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file /tmp/cloudflare-free-zone-hardening.md
