@@ -157,13 +157,18 @@ jobs:
       - name: Deploy immutable preview with Workers AI binding
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           npx --yes wrangler@latest pages deploy dist \
             --config "$WRANGLER_CONFIG" \
             --project-name "$CLOUDFLARE_PROJECT_NAME" \
             --branch "$PREVIEW_BRANCH" \
             --commit-hash "$SOURCE_SHA" \
-            --commit-dirty=false | tee /tmp/preview-deploy.log
+            --commit-dirty=false 2>&1 | tee /tmp/preview-deploy.log
+          deploy_code="${PIPESTATUS[0]}"
+          if [ "$deploy_code" -ne 0 ]; then
+            echo "Preview deployment failed with exit code $deploy_code"
+            exit "$deploy_code"
+          fi
 
           preview_url="$(grep -Eo 'https://[a-zA-Z0-9.-]+\.pages\.dev' /tmp/preview-deploy.log | tail -n 1 || true)"
           if [ -z "$preview_url" ]; then
@@ -244,4 +249,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Workers AI guide release failed for source \`${SOURCE_SHA:-unknown}\`. Preview-first safeguards prevented an unverified production claim. Inspect: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          set -euo pipefail
+          report=/tmp/workers-ai-release-failure.md
+          {
+            echo "Workers AI guide release failed for source \`${SOURCE_SHA:-unknown}\`."
+            echo
+            echo "Preview-first safeguards prevented an unverified production claim."
+            echo
+            echo "Inspect: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            if [ -s /tmp/preview-deploy.log ]; then
+              echo
+              echo "Sanitized preview deploy tail:"
+              echo
+              echo '```text'
+              sed -E $'s/\033\[[0-9;]*[mK]//g; s/[0-9a-fA-F]{32}/[masked-32hex]/g; s/(Bearer[[:space:]]+)[A-Za-z0-9._~-]+/\1[masked]/g' /tmp/preview-deploy.log | tail -n 80 | head -c 8000
+              echo
+              echo '```'
+            fi
+          } > "$report"
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file "$report"
