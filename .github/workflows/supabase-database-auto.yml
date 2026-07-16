@@ -1,6 +1,6 @@
 name: Supabase Database After Quality Gate
 
-run-name: Guarded database sync · ${{ github.event.workflow_run.head_sha }}
+run-name: Repository-led database sync · ${{ github.event.workflow_run.head_sha }}
 
 on:
   workflow_run:
@@ -32,10 +32,9 @@ jobs:
       secrets_ready: ${{ steps.ready.outputs.secrets_ready }}
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
     steps:
-      - name: Confirm exact current main and database secret readiness
+      - name: Confirm exact current main and Management API readiness
         id: ready
         env:
           SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -45,10 +44,8 @@ jobs:
           set -euo pipefail
           latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
           access_token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
-          database_secret="$(printf '%s' "${SUPABASE_DB_PASSWORD:-}" | tr -d '[:space:]')"
           secrets_ready=true
           [ -n "$access_token" ] || secrets_ready=false
-          [ -n "$database_secret" ] || secrets_ready=false
 
           echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
           echo "secrets_ready=$secrets_ready" >> "$GITHUB_OUTPUT"
@@ -58,10 +55,10 @@ jobs:
             echo "Superseded green run skipped safely: $SOURCE_SHA; current main is $latest_main"
           elif [ "$secrets_ready" != "true" ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "Exact current main is green, but database secrets are not ready. Waiting without failure."
+            echo "Exact current main is green, but SUPABASE_ACCESS_TOKEN is unavailable. Waiting without failure."
           else
             echo "should_sync=true" >> "$GITHUB_OUTPUT"
-            echo "Exact current main is green and database secrets are available: $SOURCE_SHA"
+            echo "Exact current main and Management API secret readiness verified: $SOURCE_SHA"
           fi
 
       - name: Record waiting state without a red failure
@@ -69,23 +66,25 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## Supabase database waiting state"
+            echo "## Supabase repository migration waiting state"
             echo "- Quality Gate: green"
             echo "- Source: \`${{ steps.ready.outputs.source_sha }}\`"
-            echo "- Status: waiting for \`SUPABASE_ACCESS_TOKEN\` and \`SUPABASE_DB_PASSWORD\`"
-            echo "- Result: no database connection, dry-run, or mutation attempted"
+            echo "- Status: waiting for \`SUPABASE_ACCESS_TOKEN\`"
+            echo "- Result: no database query, dry-run, or mutation attempted"
           } >> "$GITHUB_STEP_SUMMARY"
 
   sync-database:
     needs: preflight
     if: needs.preflight.outputs.should_sync == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     environment: production
     env:
       SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      GH_TOKEN: ${{ github.token }}
+      REPO_MIGRATION_PLAN_PATH: /tmp/repository-migration-plan.json
+      REPO_MIGRATION_EVIDENCE_PATH: /tmp/repository-migration-evidence.json
 
     steps:
       - name: Checkout exact green main source
@@ -95,50 +94,17 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
-      - name: Record repository change context
-        id: changes
-        shell: bash
-        run: |
-          set -euo pipefail
-          changed_files="$(git diff-tree --no-commit-id --name-only -r "$SOURCE_SHA")"
-          migrations_changed=false
-          workflow_changed=false
-
-          if printf '%s\n' "$changed_files" | grep -q '^supabase/migrations/'; then
-            migrations_changed=true
-          fi
-          if printf '%s\n' "$changed_files" | grep -q '^\.github/workflows/supabase-database-auto\.yml$'; then
-            workflow_changed=true
-          fi
-
-          echo "migrations_changed=$migrations_changed" >> "$GITHUB_OUTPUT"
-          echo "workflow_changed=$workflow_changed" >> "$GITHUB_OUTPUT"
-          echo "Head commit contains migration files: $migrations_changed"
-          echo "Head commit changes the database workflow: $workflow_changed"
-          echo "Repository migrations are always reconciled against linked production state."
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          version: latest
+          node-version: 24
 
-      - name: Validate source and link owner database
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
-          test -n "$(printf '%s' "${SUPABASE_DB_PASSWORD:-}" | tr -d '[:space:]')"
-          grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
-          bash scripts/ci/retry.sh 3 5 -- supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
+      - name: Validate manifest and transactionally dry-run pending migrations
+        env:
+          REPO_MIGRATION_MODE: plan
+        run: node scripts/ci/reconcile-repository-migrations.mjs
 
-      - name: Reconcile repository migrations against linked owner database
-        shell: bash
-        run: |
-          set -o pipefail
-          supabase migration list --linked 2>&1 | tee /tmp/migrations-before.txt
-          supabase db push --linked --dry-run 2>&1 | tee /tmp/migration-dry-run.txt
-
-      - name: Reconfirm current main immediately before database mutation
+      - name: Reconfirm exact current main immediately before database mutation
         id: freshness
         env:
           GH_TOKEN: ${{ github.token }}
@@ -148,30 +114,32 @@ jobs:
           latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
           if [ "$latest_main" = "$SOURCE_SHA" ]; then
             echo "fresh=true" >> "$GITHUB_OUTPUT"
+            echo "Exact current main reconfirmed immediately before database mutation."
           else
             echo "fresh=false" >> "$GITHUB_OUTPUT"
             echo "Source $SOURCE_SHA was superseded by $latest_main; database mutation skipped without failure"
           fi
 
-      - name: Apply pending migrations exactly once
+      - name: Apply pending repository migrations exactly once
         if: steps.freshness.outputs.fresh == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          supabase db push --linked
-          supabase migration list --linked | tee /tmp/migrations-after.txt
-          supabase db push --linked --dry-run 2>&1 | tee /tmp/migration-post-apply-dry-run.txt
+        env:
+          REPO_MIGRATION_MODE: apply
+        run: node scripts/ci/reconcile-repository-migrations.mjs
 
-      - name: Preserve database sync evidence
+      - name: Verify private repository migration ledger parity
+        if: steps.freshness.outputs.fresh == 'true'
+        env:
+          REPO_MIGRATION_MODE: verify
+        run: node scripts/ci/reconcile-repository-migrations.mjs
+
+      - name: Preserve repository migration evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: supabase-database-evidence-${{ env.SOURCE_SHA }}
+          name: supabase-repository-migration-evidence-${{ env.SOURCE_SHA }}
           path: |
-            /tmp/migrations-before.txt
-            /tmp/migration-dry-run.txt
-            /tmp/migrations-after.txt
-            /tmp/migration-post-apply-dry-run.txt
+            /tmp/repository-migration-plan.json
+            /tmp/repository-migration-evidence.json
           if-no-files-found: warn
           retention-days: 14
 
@@ -180,15 +148,17 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## Supabase database control plane"
+            echo "## Supabase repository migration control plane"
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Project: \`$SUPABASE_PROJECT_ID\`"
-            echo "- Head commit migration files: \`${{ steps.changes.outputs.migrations_changed || 'not-reached' }}\`"
-            echo "- Head commit workflow change: \`${{ steps.changes.outputs.workflow_changed || 'not-reached' }}\`"
-            echo "- Reconciliation policy: every exact-current-main green release checks repository migrations against linked production"
+            echo "- Ledger: \`private.irha_repository_migration_ledger\`"
+            echo "- API: official Supabase Management API database/query endpoint"
+            echo "- Validation: manifest completeness + Git blob checksum + forbidden side-effect scan"
+            echo "- Dry-run: transactional \`BEGIN ... ROLLBACK\` for every pending migration"
             echo "- Shared production lock: \`irha-production-mutation\`"
             echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
-            echo "- Apply policy: linked dry-run first, then one exact non-retried idempotent apply"
+            echo "- Apply policy: one exact transaction per migration with ledger insert in the same commit"
+            echo "- Legacy drifted \`supabase_migrations\` history: preserved, not deleted or rewritten"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact commit database status
@@ -200,19 +170,19 @@ jobs:
         run: |
           set -euo pipefail
           state=error
-          description="Supabase database sync did not complete"
+          description="Supabase repository migration sync did not complete"
           case "$DATABASE_JOB_STATUS" in
             success)
               state=success
-              description="Supabase database sync passed"
+              description="Supabase repository migration parity verified"
               ;;
             failure)
               state=failure
-              description="Supabase database sync failed"
+              description="Supabase repository migration sync failed"
               ;;
             cancelled)
               state=error
-              description="Supabase database sync cancelled"
+              description="Supabase repository migration sync cancelled"
               ;;
           esac
 
