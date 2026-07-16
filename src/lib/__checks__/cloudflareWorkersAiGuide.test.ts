@@ -60,37 +60,47 @@ describe("Cloudflare Workers AI guide", () => {
     expect(client).not.toContain("Authorization: `Bearer ${supabasePublishableKey}`");
   });
 
-  it("adds exactly one AI binding to downloaded TOML and remains idempotent", () => {
+  it("adds AI to preview and production TOML environments and remains idempotent", () => {
     const first = runConfigPreparation("wrangler.toml", [
       'name = "irha-apparels"',
       'pages_build_output_dir = "dist"',
       'compatibility_date = "2026-07-16"',
       "",
+      "[env.production]",
+      'compatibility_date = "2026-07-16"',
+      "",
     ].join("\n"));
     expect(first.match(/^\[ai\]$/gm)).toHaveLength(1);
-    expect(first.match(/^binding = "AI"$/gm)).toHaveLength(1);
+    expect(first.match(/^\[env\.production\.ai\]$/gm)).toHaveLength(1);
+    expect(first.match(/^binding = "AI"$/gm)).toHaveLength(2);
 
     const second = runConfigPreparation("wrangler.toml", first);
     expect(second.match(/^\[ai\]$/gm)).toHaveLength(1);
-    expect(second.match(/^binding = "AI"$/gm)).toHaveLength(1);
+    expect(second.match(/^\[env\.production\.ai\]$/gm)).toHaveLength(1);
+    expect(second.match(/^binding = "AI"$/gm)).toHaveLength(2);
   });
 
-  it("adds exactly one AI binding to downloaded JSONC and remains idempotent", () => {
+  it("adds AI to preview and production JSONC environments and remains idempotent", () => {
     const first = runConfigPreparation("wrangler.jsonc", [
       "{",
       "  // Downloaded from Cloudflare Pages",
       '  "name": "irha-apparels",',
       '  "pages_build_output_dir": "./dist",',
-      '  "compatibility_date": "2026-07-16"',
+      '  "compatibility_date": "2026-07-16",',
+      '  "env": { "production": { "compatibility_date": "2026-07-16" } },',
       "}",
       "",
     ].join("\n"));
-    expect(first.match(/"ai"\s*:/g)).toHaveLength(1);
-    expect(first.match(/"binding"\s*:\s*"AI"/g)).toHaveLength(1);
+    const firstConfig = JSON.parse(first);
+    expect(firstConfig.ai).toEqual({ binding: "AI" });
+    expect(firstConfig.env.production.ai).toEqual({ binding: "AI" });
+    expect(first.match(/"binding"\s*:\s*"AI"/g)).toHaveLength(2);
 
     const second = runConfigPreparation("wrangler.jsonc", first);
-    expect(second.match(/"ai"\s*:/g)).toHaveLength(1);
-    expect(second.match(/"binding"\s*:\s*"AI"/g)).toHaveLength(1);
+    const secondConfig = JSON.parse(second);
+    expect(secondConfig.ai).toEqual({ binding: "AI" });
+    expect(secondConfig.env.production.ai).toEqual({ binding: "AI" });
+    expect(second.match(/"binding"\s*:\s*"AI"/g)).toHaveLength(2);
   });
 
   it("normalizes harmless dist path variants without accepting another build directory", () => {
@@ -100,6 +110,7 @@ describe("Cloudflare Workers AI guide", () => {
       "",
     ].join("\n"));
     expect(accepted).toContain('[ai]\nbinding = "AI"');
+    expect(accepted).toContain('[env.production.ai]\nbinding = "AI"');
 
     expect(() => runConfigPreparation("wrangler.toml", [
       'name = "irha-apparels"',
@@ -108,15 +119,28 @@ describe("Cloudflare Workers AI guide", () => {
     ].join("\n"))).toThrow();
   });
 
-  it("rejects a conflicting downloaded AI binding instead of overwriting it", () => {
+  it("rejects conflicting preview or production AI bindings instead of overwriting them", () => {
     expect(() => runConfigPreparation("wrangler.json", JSON.stringify({
       name: "irha-apparels",
       pages_build_output_dir: "./dist",
       ai: { binding: "OTHER_AI" },
+      env: { production: {} },
     }, null, 2))).toThrow();
+
+    expect(() => runConfigPreparation("wrangler.toml", [
+      'name = "irha-apparels"',
+      'pages_build_output_dir = "dist"',
+      "",
+      "[ai]",
+      'binding = "AI"',
+      "",
+      "[env.production.ai]",
+      'binding = "OTHER_AI"',
+      "",
+    ].join("\n"))).toThrow();
   });
 
-  it("requires a root downloaded config, preview identity and two-turn smoke before production", () => {
+  it("requires both environment bindings, preview identity and two-turn smoke before production", () => {
     const workflow = read(".github/workflows/deploy-workers-ai-guide-current-main.yml");
     expect(workflow).toContain("Confirm exact current main source");
     expect(workflow).toContain("pages download config");
@@ -131,6 +155,11 @@ describe("Cloudflare Workers AI guide", () => {
     expect(workflow).toContain('smoke-cloudflare-ai-guide.mjs "$PREVIEW_URL"');
     expect(workflow).toContain("Reconfirm exact current main before production");
     expect(workflow).toContain('smoke-cloudflare-ai-guide.mjs "$CANONICAL_ORIGIN"');
+
+    const preparer = read("scripts/prepare-cloudflare-ai-pages-config.mjs");
+    expect(preparer).toContain('ensureTomlBinding(source, "ai")');
+    expect(preparer).toContain('ensureTomlBinding(source, "env.production.ai")');
+    expect(preparer).toContain("config?.env?.production?.ai?.binding");
 
     const smoke = read("scripts/smoke-cloudflare-ai-guide.mjs");
     expect(smoke).toContain("What about sampling for that same jersey?");
