@@ -5,8 +5,6 @@ run-name: Exact-main Cloudflare recovery · ${{ github.sha }}
 on:
   push:
     branches: [main]
-    paths:
-      - ".github/workflows/cloudflare-exact-main-recovery.yml"
   workflow_dispatch:
 
 permissions:
@@ -15,7 +13,7 @@ permissions:
   statuses: write
 
 concurrency:
-  group: cloudflare-exact-main-recovery
+  group: cloudflare-exact-main-recovery-${{ github.sha }}
   cancel-in-progress: false
 
 env:
@@ -49,37 +47,49 @@ jobs:
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
 
-      - name: Verify exact current main and deployment readiness
+      - name: Resolve exact-main eligibility and deployment readiness
+        id: eligibility
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
-          test "$latest_main" = "$SOURCE_SHA" || {
-            echo "Recovery source is stale: source=$SOURCE_SHA current_main=$latest_main"
-            exit 1
-          }
-
-          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
-          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
-          test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
-          test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
-          [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {
-            echo "CLOUDFLARE_PROJECT_NAME is invalid"
-            exit 1
-          }
-          echo "Exact current main and Cloudflare secret readiness verified."
+          eligible=true
+          if [ "$latest_main" != "$SOURCE_SHA" ]; then
+            eligible=false
+            echo "Superseded recovery skipped before validation: source=$SOURCE_SHA current_main=$latest_main"
+          else
+            token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+            project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+            test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
+            test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
+            [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {
+              echo "CLOUDFLARE_PROJECT_NAME is invalid"
+              exit 1
+            }
+            echo "Exact current main and Cloudflare secret readiness verified."
+          fi
+          echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
 
       - name: Wait for successful exact-main Quality Gate
         id: quality
+        if: steps.eligibility.outputs.eligible == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           quality_run_id=""
+          superseded=false
           for attempt in $(seq 1 90); do
+            latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            if [ "$latest_main" != "$SOURCE_SHA" ]; then
+              superseded=true
+              echo "Main advanced while waiting for Quality Gate: source=$SOURCE_SHA current_main=$latest_main"
+              break
+            fi
+
             runs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/quality.yml/runs?branch=main&per_page=50")"
             quality_run_id="$(printf '%s' "$runs_json" | jq -r --arg sha "$SOURCE_SHA" '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")][0].id // empty')"
             if [ -n "$quality_run_id" ]; then
@@ -88,6 +98,11 @@ jobs:
             echo "Exact-main Quality Gate not green yet (attempt $attempt/90)."
             sleep 10
           done
+
+          echo "superseded=$superseded" >> "$GITHUB_OUTPUT"
+          if [ "$superseded" = "true" ]; then
+            exit 0
+          fi
           test -n "$quality_run_id" || {
             echo "No successful Quality Gate found for $SOURCE_SHA"
             exit 1
@@ -96,6 +111,7 @@ jobs:
           echo "Using exact-main Quality Gate run: $quality_run_id"
 
       - name: Download immutable verified release
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true'
         uses: actions/download-artifact@v4
         with:
           name: production-dist-${{ env.SOURCE_SHA }}
@@ -104,6 +120,7 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Verify immutable artifact and create deployment marker
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -136,6 +153,7 @@ jobs:
             > dist/cloudflare-deployment.json
 
       - name: Normalize Cloudflare credentials
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -159,18 +177,25 @@ jobs:
           fi
 
       - name: Reconfirm exact main before production mutation
+        id: freshness
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
-          test "$latest_main" = "$SOURCE_SHA" || {
-            echo "Main advanced before deployment: source=$SOURCE_SHA current_main=$latest_main"
-            exit 1
-          }
+          fresh=false
+          if [ "$latest_main" = "$SOURCE_SHA" ]; then
+            fresh=true
+            echo "Exact current main reconfirmed immediately before deployment."
+          else
+            echo "Superseded recovery skipped before deployment: source=$SOURCE_SHA current_main=$latest_main"
+          fi
+          echo "fresh=$fresh" >> "$GITHUB_OUTPUT"
 
       - name: Deploy exact verified artifact to Cloudflare Pages
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.freshness.outputs.fresh == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -181,6 +206,7 @@ jobs:
             --commit-dirty=false
 
       - name: Verify Pages, apex and canonical www behavior
+        if: steps.eligibility.outputs.eligible == 'true' && steps.quality.outputs.superseded != 'true' && steps.freshness.outputs.fresh == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -188,6 +214,12 @@ jobs:
           apex_ready=false
 
           for attempt in $(seq 1 36); do
+            latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            if [ "$latest_main" != "$SOURCE_SHA" ]; then
+              echo "Verification superseded by newer main: source=$SOURCE_SHA current_main=$latest_main"
+              exit 0
+            fi
+
             for entry in "$PAGES_URL pages" "$CANONICAL_ORIGIN apex"; do
               origin="${entry% *}"
               label="${entry##* }"
@@ -230,18 +262,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RECOVERY_JOB_STATUS: ${{ job.status }}
+          ELIGIBLE: ${{ steps.eligibility.outputs.eligible }}
+          SUPERSEDED_WHILE_WAITING: ${{ steps.quality.outputs.superseded }}
+          FRESH_BEFORE_DEPLOY: ${{ steps.freshness.outputs.fresh }}
         shell: bash
         run: |
           set -euo pipefail
           state=failure
           description="Cloudflare exact-main recovery failed"
-          if [ "$RECOVERY_JOB_STATUS" = "success" ]; then
+
+          if [ "$ELIGIBLE" = "false" ] || [ "$SUPERSEDED_WHILE_WAITING" = "true" ] || [ "$FRESH_BEFORE_DEPLOY" = "false" ]; then
+            state=success
+            description="Superseded Cloudflare recovery skipped safely"
+          elif [ "$RECOVERY_JOB_STATUS" = "success" ]; then
             state=success
             description="Cloudflare exact-main release verified"
           elif [ "$RECOVERY_JOB_STATUS" = "cancelled" ]; then
             state=error
             description="Cloudflare exact-main recovery cancelled"
           fi
+
           gh api --method POST \
             "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state="$state" \
