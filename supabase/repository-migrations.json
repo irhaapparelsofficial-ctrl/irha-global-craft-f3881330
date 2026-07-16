@@ -17,6 +17,13 @@
       "path": "supabase/migrations/20260717124500_live_chat_visitor_presence_geo.sql",
       "git_blob_sha": "a1d4f9447a5d4c59242acf76c9b7ef61a846416c",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260717220000",
+      "name": "catalog_taxonomy_foundation",
+      "path": "supabase/migrations/20260717220000_catalog_taxonomy_foundation.sql",
+      "git_blob_sha": "a05d42e83bdbe8122760296e1f8a3357dc59730d",
+      "transactional_dry_run": true
     }
   ]
 }
