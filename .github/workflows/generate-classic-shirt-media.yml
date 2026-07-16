@@ -41,10 +41,11 @@ jobs:
         run: python -m pip install --disable-pip-version-check --no-cache-dir 'Pillow==11.3.0'
 
       - name: Generate exact-logo masters and web renditions
+        id: generate
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
+          python - <<'PY' 2>&1 | tee classic-shirt-generator.log
           from __future__ import annotations
 
           import hashlib
@@ -92,11 +93,13 @@ jobs:
           }
 
           for view, source_url in sources.items():
+              print(f"Downloading and processing {view}: {source_url}", flush=True)
               source_bytes = download(source_url)
               clean_path = clean_dir / f"classic-bavarian-checkered-shirt-design-01-{view}-clean-2048.png"
               clean_path.write_bytes(source_bytes)
 
               base = Image.open(io.BytesIO(source_bytes)).convert("RGBA")
+              print(f"{view} dimensions: {base.size}; bytes: {len(source_bytes)}", flush=True)
               if base.size != (2048, 2048):
                   raise RuntimeError(f"Unexpected {view} dimensions: {base.size}")
 
@@ -140,6 +143,7 @@ jobs:
           PY
 
       - name: Verify generated media
+        if: steps.generate.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -162,7 +166,19 @@ jobs:
           print('Classic shirt media verification passed.')
           PY
 
+      - name: Upload generator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: classic-shirt-media-${{ github.run_id }}
+          path: |
+            classic-shirt-generator.log
+            public/product-media/classic-bavarian-checkered-shirt
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Commit generated files to branch
+        if: steps.generate.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
