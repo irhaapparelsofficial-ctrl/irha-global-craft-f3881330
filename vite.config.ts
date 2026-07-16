@@ -54,6 +54,10 @@ export default defineConfig(({ mode }) => ({
         find: "@/lib/globalCategoryTaxonomy",
         replacement: path.resolve(__dirname, "./src/lib/runtimeCategoryTaxonomy.ts"),
       },
+      {
+        find: "@/components/admin/CategoriesPanel",
+        replacement: path.resolve(__dirname, "./src/components/admin/CategoriesPanelWithTaxonomy.tsx"),
+      },
       { find: "@", replacement: path.resolve(__dirname, "./src") },
     ],
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
