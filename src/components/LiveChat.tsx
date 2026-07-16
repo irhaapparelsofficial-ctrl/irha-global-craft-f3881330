@@ -30,6 +30,9 @@ const WELCOME_TEXT =
 
 const OPEN_EVENT = "irha:open-irha-guide";
 const OPEN_HUMAN_EVENT = "irha:open-human-chat";
+const CLOUDFLARE_GUIDE_ENDPOINT = "/api/guide";
+const SUPABASE_GUIDE_ENDPOINT = `${supabaseRuntimeUrl}/functions/v1/chat`;
+const FALLBACK_STATUSES = new Set([404, 502, 503]);
 
 function makeId() {
   try {
@@ -76,7 +79,7 @@ function isMobileInteraction() {
 
 function normalizeProvider(value: string | null): GuideProvider {
   if (value === "lovable-ai-gateway") return "lovable-ai-gateway";
-  if (value === "gemini") return "gemini";
+  if (value === "gemini" || value === "cloudflare-workers-ai") return "gemini";
   return "deterministic-backup";
 }
 
@@ -92,6 +95,27 @@ function currentPageContext() {
     path: window.location.pathname.slice(0, 300),
     title: document.title.slice(0, 240),
   };
+}
+
+async function requestGuide(body: string) {
+  const cloudflareResponse = await fetch(CLOUDFLARE_GUIDE_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+  });
+
+  if (cloudflareResponse.ok || !FALLBACK_STATUSES.has(cloudflareResponse.status)) {
+    return cloudflareResponse;
+  }
+
+  return fetch(SUPABASE_GUIDE_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: supabasePublishableKey,
+    },
+    body,
+  });
 }
 
 export default function LiveChat() {
@@ -251,20 +275,13 @@ export default function LiveChat() {
     let resolvedProvider: GuideProvider = "deterministic-backup";
 
     try {
-      const response = await fetch(`${supabaseRuntimeUrl}/functions/v1/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${supabasePublishableKey}`,
-          apikey: supabasePublishableKey,
-        },
-        body: JSON.stringify({
-          sessionId: sessionIdRef.current,
-          messages: requestHistory,
-          pageContext: currentPageContext(),
-          clientVersion: "irha-live-support-v3",
-        }),
+      const body = JSON.stringify({
+        sessionId: sessionIdRef.current,
+        messages: requestHistory,
+        pageContext: currentPageContext(),
+        clientVersion: "irha-live-support-v4",
       });
+      const response = await requestGuide(body);
 
       if (!response.ok || !response.body) throw new Error(`guide-unavailable-${response.status}`);
 
