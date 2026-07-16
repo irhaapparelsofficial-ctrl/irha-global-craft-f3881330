@@ -1,0 +1,286 @@
+name: Supabase Forward Migrations After Quality Gate
+
+run-name: Forward database migrations · ${{ github.event.workflow_run.head_sha }}
+
+on:
+  workflow_run:
+    workflows: ["Quality Gate"]
+    types: [completed]
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: irha-production-mutation
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  FORWARD_MIGRATIONS_DIR: supabase/forward_migrations
+
+jobs:
+  preflight:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    outputs:
+      should_sync: ${{ steps.ready.outputs.should_sync }}
+      source_sha: ${{ steps.ready.outputs.source_sha }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Confirm exact current main and Management API readiness
+        id: ready
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha="${{ github.event.workflow_run.head_sha }}"
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          should_sync=true
+
+          if [ "$latest_main" != "$source_sha" ]; then
+            should_sync=false
+            echo "Superseded forward-migration run skipped: source=$source_sha current_main=$latest_main"
+          elif [ -z "$token" ]; then
+            should_sync=false
+            echo "SUPABASE_ACCESS_TOKEN is unavailable; no database request attempted."
+          fi
+
+          echo "::add-mask::$token"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "should_sync=$should_sync" >> "$GITHUB_OUTPUT"
+
+      - name: Publish pending forward-migration status
+        if: steps.ready.outputs.should_sync == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/${{ steps.ready.outputs.source_sha }}" \
+            -f state=pending \
+            -f context="Irha Supabase Forward Migrations" \
+            -f description="Checking checksum-locked forward migrations" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
+
+  sync:
+    needs: preflight
+    if: needs.preflight.outputs.should_sync == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout exact green main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Validate forward migration filenames and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d "$FORWARD_MIGRATIONS_DIR"
+          mapfile -t files < <(find "$FORWARD_MIGRATIONS_DIR" -maxdepth 1 -type f -name '*.sql' -printf '%f\n' | sort)
+          test "${#files[@]}" -gt 0
+
+          : > /tmp/forward-local-manifest.tsv
+          : > /tmp/forward-versions.txt
+          for filename in "${files[@]}"; do
+            [[ "$filename" =~ ^([0-9]{14})_([a-z0-9_]+)\.sql$ ]] || {
+              echo "Invalid forward migration filename: $filename"
+              exit 1
+            }
+            version="${BASH_REMATCH[1]}"
+            checksum="$(sha256sum "$FORWARD_MIGRATIONS_DIR/$filename" | awk '{print $1}')"
+            printf '%s\n' "$version" >> /tmp/forward-versions.txt
+            printf '%s\t%s\t%s\n' "$version" "$filename" "$checksum" >> /tmp/forward-local-manifest.tsv
+          done
+
+          duplicates="$(sort /tmp/forward-versions.txt | uniq -d)"
+          test -z "$duplicates" || {
+            echo "Duplicate forward migration versions detected:"
+            printf '%s\n' "$duplicates"
+            exit 1
+          }
+
+      - name: Fetch private forward migration registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          echo "::add-mask::$token"
+          test -n "$token"
+
+          jq -n \
+            --arg query "select version, filename, checksum_sha256, source_sha, applied_at from private.irha_forward_migrations order by version" \
+            '{query:$query,parameters:[]}' \
+            > /tmp/forward-registry-request.json
+
+          curl --fail-with-body -sS \
+            --request POST \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/database/query/read-only" \
+            --header "Authorization: Bearer $token" \
+            --header 'Content-Type: application/json' \
+            --data-binary @/tmp/forward-registry-request.json \
+            > /tmp/forward-registry-response.json
+
+          jq -e 'if type == "array" then . elif (.result? | type) == "array" then .result elif (.data? | type) == "array" then .data else error("Unexpected registry response") end' \
+            /tmp/forward-registry-response.json \
+            > /tmp/forward-registry-before.json
+
+      - name: Apply pending forward migrations exactly once
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          echo "::add-mask::$token"
+          : > /tmp/forward-apply.log
+
+          while IFS=$'\t' read -r version filename checksum; do
+            remote_checksum="$(jq -r --arg version "$version" '[.[] | select(.version == $version)][0].checksum_sha256 // empty' /tmp/forward-registry-before.json)"
+            if [ -n "$remote_checksum" ]; then
+              if [ "$remote_checksum" != "$checksum" ]; then
+                echo "Checksum mismatch for already-applied migration $version" | tee -a /tmp/forward-apply.log
+                exit 1
+              fi
+              echo "SKIP $version $filename checksum-matched" | tee -a /tmp/forward-apply.log
+              continue
+            fi
+
+            latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            test "$latest_main" = "$SOURCE_SHA" || {
+              echo "Source superseded before migration $version; no write attempted" | tee -a /tmp/forward-apply.log
+              exit 0
+            }
+
+            migration_path="$FORWARD_MIGRATIONS_DIR/$filename"
+            wrapper="/tmp/forward-${version}.sql"
+            {
+              echo 'begin;'
+              echo "select pg_advisory_xact_lock(hashtextextended('irha-forward-migrations', 0));"
+              cat <<'SQL'
+create schema if not exists private;
+create table if not exists private.irha_forward_migrations (
+  version text primary key,
+  filename text not null unique,
+  checksum_sha256 text not null check (checksum_sha256 ~ '^[0-9a-f]{64}$'),
+  source_sha text not null,
+  applied_at timestamptz not null default now(),
+  applied_by text not null default current_user,
+  metadata jsonb not null default '{}'::jsonb
+);
+revoke all on table private.irha_forward_migrations from public, anon, authenticated;
+grant select, insert, update on table private.irha_forward_migrations to service_role;
+SQL
+              printf "do \\\$guard\\\$ begin if exists (select 1 from private.irha_forward_migrations where version = '%s') then raise exception 'Forward migration version already recorded: %s'; end if; end \\\$guard\\\$;\n" "$version" "$version"
+              cat "$migration_path"
+              printf "\ninsert into private.irha_forward_migrations(version,filename,checksum_sha256,source_sha,applied_by,metadata) values ('%s','%s','%s','%s','github-actions-management-api',jsonb_build_object('workflow_run_id','%s','repository','%s'));\n" \
+                "$version" "$filename" "$checksum" "$SOURCE_SHA" "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY"
+              echo 'commit;'
+            } > "$wrapper"
+
+            jq -n --rawfile query "$wrapper" '{query:$query,parameters:[],read_only:false}' \
+              > /tmp/forward-write-request.json
+
+            curl --fail-with-body -sS \
+              --request POST \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/database/query" \
+              --header "Authorization: Bearer $token" \
+              --header 'Content-Type: application/json' \
+              --data-binary @/tmp/forward-write-request.json \
+              > /tmp/forward-write-response.json
+
+            jq -e '(.error // null) == null' /tmp/forward-write-response.json >/dev/null
+            echo "APPLY $version $filename checksum=$checksum" | tee -a /tmp/forward-apply.log
+
+            jq --arg version "$version" --arg filename "$filename" --arg checksum "$checksum" --arg source "$SOURCE_SHA" \
+              '. + [{version:$version,filename:$filename,checksum_sha256:$checksum,source_sha:$source}]' \
+              /tmp/forward-registry-before.json > /tmp/forward-registry-next.json
+            mv /tmp/forward-registry-next.json /tmp/forward-registry-before.json
+          done < /tmp/forward-local-manifest.tsv
+
+      - name: Verify final registry parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          jq -n \
+            --arg query "select version, filename, checksum_sha256, source_sha, applied_at from private.irha_forward_migrations order by version" \
+            '{query:$query,parameters:[]}' \
+            > /tmp/forward-registry-request.json
+
+          curl --fail-with-body -sS \
+            --request POST \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/database/query/read-only" \
+            --header "Authorization: Bearer $token" \
+            --header 'Content-Type: application/json' \
+            --data-binary @/tmp/forward-registry-request.json \
+            > /tmp/forward-registry-final-response.json
+
+          jq -e 'if type == "array" then . elif (.result? | type) == "array" then .result elif (.data? | type) == "array" then .data else error("Unexpected registry response") end' \
+            /tmp/forward-registry-final-response.json \
+            > /tmp/forward-registry-after.json
+
+          while IFS=$'\t' read -r version filename checksum; do
+            jq -e --arg version "$version" --arg filename "$filename" --arg checksum "$checksum" \
+              'any(.[]; .version == $version and .filename == $filename and .checksum_sha256 == $checksum)' \
+              /tmp/forward-registry-after.json >/dev/null
+          done < /tmp/forward-local-manifest.tsv
+
+      - name: Preserve sanitized forward migration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-forward-migration-evidence-${{ env.SOURCE_SHA }}
+          path: |
+            /tmp/forward-local-manifest.tsv
+            /tmp/forward-registry-before.json
+            /tmp/forward-registry-after.json
+            /tmp/forward-apply.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish exact commit forward-migration status
+        if: always()
+        env:
+          FORWARD_JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          state=error
+          description="Supabase forward migration release did not complete"
+          case "$FORWARD_JOB_STATUS" in
+            success)
+              state=success
+              description="Supabase forward migrations verified"
+              ;;
+            failure)
+              state=failure
+              description="Supabase forward migration release failed"
+              ;;
+            cancelled)
+              state=error
+              description="Supabase forward migration release cancelled"
+              ;;
+          esac
+
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
+            -f state="$state" \
+            -f context="Irha Supabase Forward Migrations" \
+            -f description="$description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
