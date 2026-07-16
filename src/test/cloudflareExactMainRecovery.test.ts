@@ -8,13 +8,25 @@ const workflow = readFileSync(
 );
 
 describe("Cloudflare exact-main recovery", () => {
-  it("deploys only the immutable artifact from a successful exact-main Quality Gate", () => {
-    expect(workflow).toContain("Resolve exact-main eligibility and deployment readiness");
-    expect(workflow).toContain("Wait for successful exact-main Quality Gate");
+  it("prefers the immutable exact-main Quality artifact", () => {
+    expect(workflow).toContain("Wait briefly for successful exact-main Quality Gate");
     expect(workflow).toContain("production-dist-${{ env.SOURCE_SHA }}");
     expect(workflow).toContain("run-id: ${{ steps.quality.outputs.run_id }}");
-    expect(workflow).toContain("Reconfirm exact main before production mutation");
-    expect(workflow).toContain('--commit-hash="$SOURCE_SHA"');
+    expect(workflow).toContain("steps.quality.outputs.fallback_build != 'true'");
+  });
+
+  it("runs the full deterministic release gate when Quality runs are repeatedly cancelled", () => {
+    expect(workflow).toContain("fallback_build");
+    expect(workflow).toContain("Checkout exact source for fallback verification");
+    expect(workflow).toContain("Run deterministic fallback verification and build");
+    expect(workflow).toContain("npm run verify:deployment-source");
+    expect(workflow).toContain("npm run verify:secrets");
+    expect(workflow).toContain("npm run verify:migrations");
+    expect(workflow).toContain("npx tsc --noEmit");
+    expect(workflow).toContain("npm test -- --passWithNoTests");
+    expect(workflow).toContain("npm run build");
+    expect(workflow).toContain("npm run verify:release-identity");
+    expect(workflow).toContain("exact-main-recovery-fallback");
   });
 
   it("follows every main push and safely skips superseded source commits", () => {
@@ -26,9 +38,12 @@ describe("Cloudflare exact-main recovery", () => {
     expect(workflow).toContain("Superseded Cloudflare recovery skipped safely");
   });
 
-  it("verifies both Cloudflare origins and publishes an observable commit status", () => {
+  it("deploys only after exact-main freshness and verifies all public origins", () => {
+    expect(workflow).toContain("Reconfirm exact main before production mutation");
+    expect(workflow).toContain('--commit-hash="$SOURCE_SHA"');
     expect(workflow).toContain("Pages and apex exact-source parity verified");
     expect(workflow).toContain("www canonical redirect verified");
+    expect(workflow).toContain("VERIFY_SUPERSEDED");
     expect(workflow).toContain('context="Irha Cloudflare Recovery"');
     expect(workflow).toContain("statuses: write");
   });
