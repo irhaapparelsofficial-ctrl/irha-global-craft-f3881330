@@ -16,6 +16,10 @@ dist-ssr
 public/thumbnails/
 public/.thumbnail-build-*/
 
+# Generated catalogue PDFs (rebuilt from committed page thumbnails)
+public/catalogs/*.pdf
+public/Irha-Apparels-Catalog-2026.pdf
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
