@@ -3,6 +3,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -179,7 +184,7 @@ async function health(service: DbClient) {
   return json({
     ok: true,
     database_ready: required.every((check) => check.ready),
-    ai_gateway_configured: Boolean(Deno.env.get("LOVABLE_API_KEY")),
+    ai_gateway_configured: Boolean(irhaLovableRuntimeKey()),
     media_library_ready: media.ready,
     render_pipeline_ready: renders.ready && renderItems.ready,
     renderer_provider_configured: Boolean(Deno.env.get("SOCIAL_RENDER_PROVIDER_URL") && Deno.env.get("SOCIAL_RENDER_PROVIDER_KEY") && Deno.env.get("SOCIAL_RENDER_CALLBACK_SECRET")),
@@ -211,7 +216,7 @@ async function saveSettings(service: DbClient, userId: string, body: JsonRecord)
 
 async function prepareWeek(service: DbClient, auth: DbClient, userId: string, body: JsonRecord) {
   const dryRun = body.dry_run === true;
-  if (!Deno.env.get("LOVABLE_API_KEY")) return json({ error: "Lovable AI gateway is not configured" }, 503);
+  if (!irhaLovableRuntimeKey()) return json({ error: "Lovable AI gateway is not configured" }, 503);
 
   const { data: settingsRow, error: settingsError } = await service.from("social_autopilot_settings").select("*").eq("id", "default").maybeSingle();
   if (settingsError) return json({ error: settingsError.message, migration_required: isMissingTable(settingsError) }, isMissingTable(settingsError) ? 503 : 422);
@@ -794,7 +799,7 @@ function fingerprint(settings: Settings) {
 }
 
 async function aiJson(prompt: string): Promise<JsonRecord> {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = irhaLovableRuntimeKey();
   if (!key) throw new Error("LOVABLE_API_KEY missing");
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",

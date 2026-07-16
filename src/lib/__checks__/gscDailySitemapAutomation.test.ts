@@ -27,7 +27,7 @@ describe("daily Google Search Console sitemap automation", () => {
   });
 
   it("checks GSC readiness against the gateway credential actually used by the functions", () => {
-    expect(source).toContain('gsc: Boolean(Deno.env.get("LOVABLE_API_KEY"))');
+    expect(source).toContain('gsc: Boolean(irhaLovableRuntimeKey())');
     expect(source).not.toContain('gsc: Boolean(Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY"))');
   });
 });

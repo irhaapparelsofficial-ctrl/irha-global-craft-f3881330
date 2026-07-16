@@ -1,0 +1,270 @@
+name: Cloudflare Current Main Reconcile
+
+run-name: Cloudflare reconcile · ${{ github.event.workflow_run.head_sha }}
+
+on:
+  workflow_run:
+    workflows: ["Quality Gate"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: cloudflare-reconcile-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+env:
+  PAGES_BRANCH: main
+  PAGES_URL: https://irha-apparels.pages.dev
+  CANONICAL_ORIGIN: https://irhaapparels.com
+  WWW_ORIGIN: https://www.irhaapparels.com
+
+jobs:
+  preflight:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    outputs:
+      source_sha: ${{ steps.resolve.outputs.source_sha }}
+      quality_run_id: ${{ steps.resolve.outputs.quality_run_id }}
+      should_reconcile: ${{ steps.resolve.outputs.should_reconcile }}
+      secrets_ready: ${{ steps.resolve.outputs.secrets_ready }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+    steps:
+      - name: Resolve exact current main and secret readiness
+        id: resolve
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          QUALITY_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "quality_run_id=$QUALITY_RUN_ID" >> "$GITHUB_OUTPUT"
+
+          secrets_ready=true
+          [ -n "$token" ] || secrets_ready=false
+          [ -n "$project_name" ] || secrets_ready=false
+          echo "secrets_ready=$secrets_ready" >> "$GITHUB_OUTPUT"
+
+          if [ "$SOURCE_SHA" != "$latest_main" ]; then
+            echo "should_reconcile=false" >> "$GITHUB_OUTPUT"
+            echo "Superseded source skipped safely: $SOURCE_SHA; current main is $latest_main"
+          elif [ "$secrets_ready" != "true" ]; then
+            echo "should_reconcile=false" >> "$GITHUB_OUTPUT"
+            echo "Exact current main is green, but Cloudflare secrets are unavailable. Waiting without failure."
+          else
+            echo "should_reconcile=true" >> "$GITHUB_OUTPUT"
+            echo "Exact green current main is eligible for Cloudflare reconciliation: $SOURCE_SHA"
+          fi
+
+      - name: Record non-deploy state
+        if: steps.resolve.outputs.should_reconcile != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare reconciliation"
+            echo "- Source: \`${{ steps.resolve.outputs.source_sha }}\`"
+            echo "- Secrets ready: \`${{ steps.resolve.outputs.secrets_ready }}\`"
+            echo "- Deploy attempted: \`false\`"
+            echo "- Result: safely skipped without production mutation"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  reconcile:
+    needs: preflight
+    if: needs.preflight.outputs.should_reconcile == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+      QUALITY_RUN_ID: ${{ needs.preflight.outputs.quality_run_id }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+    steps:
+      - name: Checkout exact green source utilities
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Download immutable Quality Gate artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: production-dist-${{ env.SOURCE_SHA }}
+          path: dist
+          run-id: ${{ env.QUALITY_RUN_ID }}
+          github-token: ${{ github.token }}
+
+      - name: Verify immutable release and prepare deployment evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/build.json
+          test -s dist/release.txt
+          test -s dist/_redirects
+          test -s dist/_headers
+
+          jq -e --arg sha "$SOURCE_SHA" --arg repo "$GITHUB_REPOSITORY" \
+            '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == "pvzjiozismyxqrzmtfbi" and .expected_origin == "https://irhaapparels.com"' \
+            dist/build.json >/dev/null
+
+          if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
+            echo "Retired Lovable Cloud database identity found"
+            exit 1
+          fi
+
+          fingerprint="$(jq -r '.build_fingerprint // empty' dist/build.json)"
+          [[ "$fingerprint" =~ ^[0-9a-f]{64}$ ]]
+          echo "RELEASE_FINGERPRINT=$fingerprint" >> "$GITHUB_ENV"
+
+          jq -n \
+            --arg source_sha "$SOURCE_SHA" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg branch "$PAGES_BRANCH" \
+            --arg build_fingerprint "$fingerprint" \
+            --arg purpose "idempotent-current-main-reconcile" \
+            --arg quality_run_id "$QUALITY_RUN_ID" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{source_sha:$source_sha,repository:$repository,branch:$branch,build_fingerprint:$build_fingerprint,purpose:$purpose,quality_run_id:$quality_run_id,generated_at:$generated_at}' \
+            > dist/cloudflare-deployment.json
+
+      - name: Check whether production already serves the exact release
+        id: live
+        shell: bash
+        run: |
+          set -euo pipefail
+          exact=true
+          for origin in "$PAGES_URL" "$CANONICAL_ORIGIN"; do
+            cache_bust="${SOURCE_SHA::12}-$RANDOM"
+            if ! curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                 "$origin/build.json?release_check=$cache_bust" -o /tmp/build.json \
+              || ! jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$RELEASE_FINGERPRINT" \
+                 '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
+                 /tmp/build.json >/dev/null; then
+              exact=false
+            fi
+          done
+          echo "exact=$exact" >> "$GITHUB_OUTPUT"
+          echo "Production exact-source parity before reconcile: $exact"
+
+      - name: Resolve Cloudflare account and verify project
+        if: steps.live.outputs.exact != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          test -n "$project_name"
+          echo "::add-mask::$token"
+
+          verify_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = true
+
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            accounts_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+            test "$(printf '%s' "$accounts_json" | jq -r '.success // false')" = true
+            test "$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')" = 1
+            account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+          fi
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
+          echo "::add-mask::$account_id"
+
+          project_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = true
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
+          test "$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')" = "$PAGES_BRANCH"
+
+          echo "CLOUDFLARE_API_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "CLOUDFLARE_ACCOUNT_ID=$account_id" >> "$GITHUB_ENV"
+          echo "CLOUDFLARE_PROJECT_NAME=$project_name" >> "$GITHUB_ENV"
+
+      - name: Reconfirm exact current main before production mutation
+        if: steps.live.outputs.exact != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$SOURCE_SHA" || {
+            echo "Main advanced from $SOURCE_SHA to $latest_main; refusing stale deploy"
+            exit 1
+          }
+
+      - name: Deploy exact immutable artifact
+        if: steps.live.outputs.exact != 'true'
+        shell: bash
+        run: |
+          bash scripts/ci/retry.sh 3 10 -- npx --yes wrangler@4 pages deploy dist \
+            --project-name="$CLOUDFLARE_PROJECT_NAME" \
+            --branch="$PAGES_BRANCH" \
+            --commit-hash="$SOURCE_SHA" \
+            --commit-dirty=false
+
+      - name: Verify pages.dev, apex and www canonical behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify_origin() {
+            origin="$1"
+            ready=false
+            for attempt in $(seq 1 36); do
+              cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
+              if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                   "$origin/build.json?release_check=$cache_bust" -o /tmp/build.json \
+                && curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                   "$origin/cloudflare-deployment.json?release_check=$cache_bust" -o /tmp/deployment.json \
+                && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$RELEASE_FINGERPRINT" \
+                   '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' /tmp/build.json >/dev/null \
+                && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$RELEASE_FINGERPRINT" \
+                   '.source_sha == $sha and .branch == "main" and .build_fingerprint == $fingerprint' /tmp/deployment.json >/dev/null; then
+                ready=true
+                break
+              fi
+              sleep 10
+            done
+            test "$ready" = true
+          }
+
+          verify_origin "$PAGES_URL"
+          verify_origin "$CANONICAL_ORIGIN"
+
+          headers="$(curl -sSI --connect-timeout 10 --max-time 40 "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}")"
+          status="$(printf '%s' "$headers" | awk 'NR==1 {print $2}')"
+          location="$(printf '%s' "$headers" | awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}')"
+          case "$status" in 301|302|307|308) ;; *) echo "Unexpected www status: $status"; exit 1 ;; esac
+          case "$location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $location"; exit 1 ;; esac
+
+      - name: Record reconciliation result
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare current-main reconciliation"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Quality Gate run: \`$QUALITY_RUN_ID\`"
+            echo "- Already exact before run: \`${{ steps.live.outputs.exact }}\`"
+            echo "- Apex and Pages source parity: verified"
+            echo "- www canonical redirect: verified"
+          } >> "$GITHUB_STEP_SUMMARY"

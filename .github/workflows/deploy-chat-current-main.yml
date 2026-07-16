@@ -2,48 +2,47 @@ name: Deploy Chat Function Current Main
 
 on:
   workflow_dispatch:
-  issue_comment:
-    types: [created]
+    inputs:
+      confirm:
+        description: Type DEPLOY_CHAT to deploy the chat Edge Function from exact current main
+        required: true
+        default: "NO"
+        type: string
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
-  group: deploy-chat-current-main
+  group: irha-production-mutation
   cancel-in-progress: false
 
 env:
   SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
-  RELEASE_AUDIT_ISSUE: "375"
 
 jobs:
   deploy-chat:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.issue.number == 375 &&
-       github.event.comment.body == '/deploy-chat-current-main' &&
-       github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'DEPLOY_CHAT'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: production
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
     steps:
-      - name: Checkout exact current main
+      - name: Checkout exact dispatch source
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.sha }}
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Confirm exact current main source
+      - name: Confirm exact current main after acquiring production lock
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
           checked_out="$(git rev-parse HEAD)"
           test "$checked_out" = "$latest_main" || {
             echo "Refusing stale chat release: checked out $checked_out, current main $latest_main"
@@ -74,33 +73,40 @@ jobs:
           grep -F '[functions.chat]' supabase/config.toml
           grep -F 'verify_jwt = false' supabase/config.toml
           test -s supabase/functions/chat/index.ts
-          npm install --legacy-peer-deps --no-audit --no-fund
+          bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
           npm run verify:deployment-source
           npm run verify:secrets
           npm run verify:migrations
           npx tsc --noEmit
           npm test -- --passWithNoTests
 
-      - name: Deploy only the chat Edge Function
+      - name: Reconfirm current main immediately before mutation
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$SOURCE_SHA" = "$latest_main" || {
+            echo "Chat source $SOURCE_SHA was superseded by $latest_main"
+            exit 1
+          }
+
+      - name: Deploy only the chat Edge Function with bounded retry
         shell: bash
         run: |
           set -euo pipefail
-          supabase functions deploy chat --project-ref "$SUPABASE_PROJECT_ID"
-          supabase functions list --project-ref "$SUPABASE_PROJECT_ID" | tee /tmp/functions.txt
+          bash scripts/ci/retry.sh 3 8 -- supabase functions deploy chat --project-ref "$SUPABASE_PROJECT_ID"
+          bash scripts/ci/retry.sh 3 5 -- supabase functions list --project-ref "$SUPABASE_PROJECT_ID" | tee /tmp/functions.txt
           grep -E '(^|[[:space:]])chat([[:space:]]|$)' /tmp/functions.txt
 
-      - name: Record verified chat release evidence
+      - name: Record targeted release summary
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Verified targeted chat Edge Function release completed from exact current main \`$SOURCE_SHA\` to Supabase project \`$SUPABASE_PROJECT_ID\`. Only \`chat\` was deployed; no database migrations or other functions were applied."
-
-      - name: Record failed chat release attempt
-        if: failure()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Targeted chat Edge Function release failed for source \`${SOURCE_SHA:-unknown}\`. No success evidence was recorded. Inspect: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          {
+            echo "## Chat Edge Function release"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Project: \`$SUPABASE_PROJECT_ID\`"
+            echo "- Scope: chat only"
+            echo "- Shared production lock: \`irha-production-mutation\`"
+          } >> "$GITHUB_STEP_SUMMARY"

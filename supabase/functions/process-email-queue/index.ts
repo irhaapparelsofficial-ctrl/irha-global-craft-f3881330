@@ -1,3 +1,8 @@
+function irhaLovableRuntimeKey(): string | undefined {
+  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+  return Deno.env.get("LOVABLE_API_KEY") || undefined;
+}
+
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -79,7 +84,7 @@ async function moveToDlq(
 }
 
 Deno.serve(async (req) => {
-  const apiKey = Deno.env.get('LOVABLE_API_KEY')
+  const apiKey = irhaLovableRuntimeKey()
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 

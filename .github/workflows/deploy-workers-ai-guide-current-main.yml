@@ -1,0 +1,220 @@
+name: Deploy Workers AI Guide Current Main
+
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: deploy-workers-ai-guide-current-main
+  cancel-in-progress: false
+
+env:
+  PAGES_BRANCH: main
+  PAGES_URL: https://irha-apparels.pages.dev
+  CANONICAL_ORIGIN: https://irhaapparels.com
+  RELEASE_AUDIT_ISSUE: "375"
+
+jobs:
+  deploy-ai-guide:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 375 &&
+       github.event.comment.body == '/deploy-workers-ai-current-main' &&
+       github.event.comment.user.login == 'irhaapparelsofficial-ctrl')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+    steps:
+      - name: Checkout exact current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Confirm exact current main source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          checked_out="$(git rev-parse HEAD)"
+          test "$checked_out" = "$latest_main" || {
+            echo "Refusing stale AI release: checked out $checked_out, current main $latest_main"
+            exit 1
+          }
+          echo "SOURCE_SHA=$latest_main" >> "$GITHUB_ENV"
+          echo "PREVIEW_BRANCH=workers-ai-${latest_main:0:12}" >> "$GITHUB_ENV"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify source, tests and production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run verify:deployment-source
+          npm run verify:secrets
+          npm run verify:migrations
+          npx tsc --noEmit
+          npm test -- --passWithNoTests
+          npm run build
+          npm run verify:release-identity
+          grep -F 'handleIrhaGuideRequest' dist/_worker.js
+          grep -F 'pathname === "/api/guide"' dist/_worker.js
+          grep -F 'env.AI.run' dist/_worker-guide.js
+          grep -F 'cloudflare-workers-ai' dist/_worker-guide.js
+
+      - name: Resolve Cloudflare account and Pages project
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+
+          test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
+          test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
+          echo "::add-mask::$token"
+
+          verify_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = "true"
+
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
+          fi
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            accounts_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' 'https://api.cloudflare.com/client/v4/accounts?per_page=50')"
+            test "$(printf '%s' "$accounts_json" | jq -r '.success // false')" = "true"
+            test "$(printf '%s' "$accounts_json" | jq -r '(.result // []) | length')" = "1"
+            account_id="$(printf '%s' "$accounts_json" | jq -r '.result[0].id // empty')"
+          fi
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || { echo "Cloudflare account ID could not be resolved"; exit 1; }
+          echo "::add-mask::$account_id"
+
+          project_json="$(curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true"
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
+          test "$(printf '%s' "$project_json" | jq -r '.result.production_branch // empty')" = "$PAGES_BRANCH"
+
+          echo "CLOUDFLARE_API_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "CLOUDFLARE_ACCOUNT_ID=$account_id" >> "$GITHUB_ENV"
+          echo "CLOUDFLARE_PROJECT_NAME=$project_name" >> "$GITHUB_ENV"
+
+      - name: Download existing Pages configuration and add only AI binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f wrangler.toml wrangler.json wrangler.jsonc
+          npx --yes wrangler@latest pages download config "$CLOUDFLARE_PROJECT_NAME"
+          test -s wrangler.toml || {
+            echo "Wrangler did not create the expected downloaded wrangler.toml"
+            exit 1
+          }
+          node scripts/prepare-cloudflare-ai-pages-config.mjs wrangler.toml
+          grep -Fx '[ai]' wrangler.toml
+          grep -Fx 'binding = "AI"' wrangler.toml
+
+      - name: Deploy immutable preview with Workers AI binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@latest pages deploy dist \
+            --project-name "$CLOUDFLARE_PROJECT_NAME" \
+            --branch "$PREVIEW_BRANCH" \
+            --commit-hash "$SOURCE_SHA" \
+            --commit-dirty=false | tee /tmp/preview-deploy.log
+
+          preview_url="$(grep -Eo 'https://[a-zA-Z0-9.-]+\.pages\.dev' /tmp/preview-deploy.log | tail -n 1 || true)"
+          if [ -z "$preview_url" ]; then
+            deployments_json="$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CLOUDFLARE_PROJECT_NAME/deployments?env=preview&per_page=25")"
+            preview_url="$(printf '%s' "$deployments_json" | jq -r --arg branch "$PREVIEW_BRANCH" '[.result[] | select(.deployment_trigger.metadata.branch == $branch)] | sort_by(.created_on) | reverse | .[0].url // empty')"
+          fi
+          [[ "$preview_url" =~ ^https://[a-zA-Z0-9.-]+\.pages\.dev$ ]] || {
+            echo "Could not resolve the preview deployment URL"
+            exit 1
+          }
+          echo "PREVIEW_URL=$preview_url" >> "$GITHUB_ENV"
+
+      - name: Verify preview source and two-turn real AI conversation
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..18}; do
+            preview_sha="$(curl -fsS "$PREVIEW_URL/build.json" | jq -r '.source_commit // empty' 2>/dev/null || true)"
+            [ "$preview_sha" = "$SOURCE_SHA" ] && break
+            sleep 5
+          done
+          test "$preview_sha" = "$SOURCE_SHA" || {
+            echo "Preview source mismatch: expected $SOURCE_SHA, got ${preview_sha:-missing}"
+            exit 1
+          }
+          node scripts/smoke-cloudflare-ai-guide.mjs "$PREVIEW_URL"
+
+      - name: Reconfirm exact current main before production
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$SOURCE_SHA" = "$latest_main" || {
+            echo "Main advanced from $SOURCE_SHA to $latest_main; preview remains isolated and production is skipped"
+            exit 1
+          }
+
+      - name: Deploy exact verified build to production
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@latest pages deploy dist \
+            --project-name "$CLOUDFLARE_PROJECT_NAME" \
+            --branch "$PAGES_BRANCH" \
+            --commit-hash "$SOURCE_SHA" \
+            --commit-dirty=false
+
+      - name: Verify apex, pages.dev and real AI production contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..24}; do
+            apex_sha="$(curl -fsS "$CANONICAL_ORIGIN/build.json" | jq -r '.source_commit // empty' 2>/dev/null || true)"
+            pages_sha="$(curl -fsS "$PAGES_URL/build.json" | jq -r '.source_commit // empty' 2>/dev/null || true)"
+            if [ "$apex_sha" = "$SOURCE_SHA" ] && [ "$pages_sha" = "$SOURCE_SHA" ]; then break; fi
+            sleep 5
+          done
+          test "$apex_sha" = "$SOURCE_SHA"
+          test "$pages_sha" = "$SOURCE_SHA"
+          node scripts/smoke-cloudflare-ai-guide.mjs "$CANONICAL_ORIGIN"
+
+      - name: Record verified Workers AI release evidence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Verified Cloudflare Workers AI guide release completed from exact current main \`$SOURCE_SHA\`. Downloaded existing Pages configuration was preserved with one \`AI\` binding added. Preview \`$PREVIEW_URL\` passed source identity and two-turn non-repetition smoke tests before production. Apex and pages.dev both serve the same source and the provider header is \`cloudflare-workers-ai\`."
+
+      - name: Record failed Workers AI release attempt
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "$RELEASE_AUDIT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "Workers AI guide release failed for source \`${SOURCE_SHA:-unknown}\`. Preview-first safeguards prevented an unverified production claim. Inspect: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
