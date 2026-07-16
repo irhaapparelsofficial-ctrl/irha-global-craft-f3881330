@@ -13,22 +13,34 @@ if (!isToml && !isJsonFamily) {
 
 let source = await readFile(path, "utf8");
 
-function assertProjectContract(value) {
+function assertProjectName(value) {
   const hasName = isToml
     ? /^name\s*=\s*["'][^"']+["']/m.test(value)
     : /["']name["']\s*:\s*["'][^"']+["']/.test(value);
   if (!hasName) throw new Error("Downloaded Pages configuration is missing the project name.");
+}
 
+function normalizeTomlDist(value) {
+  if (/^pages_build_output_dir\s*=/m.test(value)) {
+    return value.replace(/^pages_build_output_dir\s*=.*$/m, 'pages_build_output_dir = "dist"');
+  }
+  return value.replace(/^name\s*=\s*["'][^"']+["'].*$/m, (line) => (
+    `${line}\npages_build_output_dir = "dist"`
+  ));
+}
+
+function assertProjectContract(value) {
+  assertProjectName(value);
   const hasDist = isToml
-    ? /^pages_build_output_dir\s*=\s*["']\.\/?dist["']/m.test(value)
-    : /["']pages_build_output_dir["']\s*:\s*["']\.\/?dist["']/.test(value);
+    ? /^pages_build_output_dir\s*=\s*["']\.?\/?dist["']/m.test(value)
+    : /["']pages_build_output_dir["']\s*:\s*["']\.?\/?dist["']/.test(value);
   if (!hasDist) {
-    throw new Error("Downloaded Pages configuration does not target the verified dist directory.");
+    throw new Error("Prepared Pages configuration does not target the verified dist directory.");
   }
 }
 
 function tomlSection(value, sectionName) {
-  const headerPattern = new RegExp(`^\\[${sectionName.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\]\\s*$`, "m");
+  const headerPattern = new RegExp(`^\\[${sectionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\]\\s*$`, "m");
   const headerMatch = headerPattern.exec(value);
   if (!headerMatch || headerMatch.index < 0) return "";
 
@@ -45,10 +57,10 @@ function tomlSection(value, sectionName) {
 function addTomlBinding(value) {
   const aiSection = tomlSection(value, "ai");
   if (aiSection) {
-    if (!/^binding\s*=\s*["']AI["']/m.test(aiSection)) {
-      throw new Error("A conflicting Workers AI binding already exists; refusing to overwrite it.");
-    }
-    return value;
+    const normalized = /^binding\s*=/m.test(aiSection)
+      ? aiSection.replace(/^binding\s*=.*$/m, 'binding = "AI"')
+      : aiSection.replace(/^\[ai\]\s*$/m, '[ai]\nbinding = "AI"');
+    return value.replace(aiSection, normalized);
   }
   return `${value.trimEnd()}\n\n[ai]\nbinding = "AI"\n`;
 }
@@ -70,7 +82,8 @@ function addJsonBinding(value) {
   return `${prefix}${separator}\n  "ai": {\n    "binding": "AI"\n  }\n${suffix}`;
 }
 
-assertProjectContract(source);
+assertProjectName(source);
+if (isToml) source = normalizeTomlDist(source);
 source = isToml ? addTomlBinding(source) : addJsonBinding(source);
 await writeFile(path, source, "utf8");
 
@@ -86,4 +99,4 @@ if (sectionCount !== 1 || bindingCount !== 1) {
   throw new Error(`Workers AI config is not idempotent: sections=${sectionCount}, bindings=${bindingCount}`);
 }
 
-console.log(`Verified one Workers AI binding named AI in downloaded ${extension.slice(1).toUpperCase()} Pages configuration.`);
+console.log(`Verified dist output and one Workers AI binding named AI in downloaded ${extension.slice(1).toUpperCase()} Pages configuration.`);
