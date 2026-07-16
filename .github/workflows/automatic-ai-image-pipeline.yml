@@ -153,20 +153,22 @@ jobs:
         shell: bash
         env:
           DISPATCH_MODE: ${{ inputs.mode }}
-          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           set -euo pipefail
           mode="scheduled"
           workers='["1"]'
           batch_limit=2
           max_jobs=6
+          comment_body=""
 
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             mode="${DISPATCH_MODE:-canary}"
           elif [ "$GITHUB_EVENT_NAME" = "issue_comment" ]; then
-            case "${COMMENT_BODY:-}" in
+            comment_body="$(jq -r '.comment.body // empty' "$GITHUB_EVENT_PATH")"
+            case "$comment_body" in
               /run-image-ai-drain) mode="drain" ;;
-              *) mode="canary" ;;
+              /run-image-ai-canary) mode="canary" ;;
+              *) echo "Unsupported issue command in event payload: ${comment_body:-missing}"; exit 1 ;;
             esac
           fi
 
@@ -190,6 +192,7 @@ jobs:
             echo "- Workers: \`$workers\`"
             echo "- Claim limit: \`$batch_limit\`"
             echo "- Maximum jobs per worker: \`$max_jobs\`"
+            echo "- Issue command source: \`GITHUB_EVENT_PATH\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   admin-media-queue:
