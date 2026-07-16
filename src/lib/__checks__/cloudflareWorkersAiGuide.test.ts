@@ -130,7 +130,7 @@ describe("Cloudflare Workers AI guide", () => {
     }, null, 2))).toThrow();
   });
 
-  it("requires a root downloaded config, preview identity and two-turn smoke before production", () => {
+  it("requires a root downloaded config, current-main identity and two-turn smoke before production", () => {
     const workflow = read(".github/workflows/deploy-workers-ai-guide-current-main.yml");
     expect(workflow).toContain("Confirm exact current main source");
     expect(workflow).toContain("pages download config");
@@ -145,6 +145,9 @@ describe("Cloudflare Workers AI guide", () => {
     expect(workflow).toContain('smoke-cloudflare-ai-guide.mjs "$PREVIEW_URL"');
     expect(workflow).toContain("Reconfirm exact current main before production");
     expect(workflow).toContain('smoke-cloudflare-ai-guide.mjs "$CANONICAL_ORIGIN"');
+
+    const identityGenerator = read("scripts/generate-release-identity.ts");
+    expect(identityGenerator).toContain("GITHUB_SHA: process.env.SOURCE_SHA?.trim() || process.env.GITHUB_SHA");
 
     const smoke = read("scripts/smoke-cloudflare-ai-guide.mjs");
     expect(smoke).toContain("What about sampling for that same jersey?");
