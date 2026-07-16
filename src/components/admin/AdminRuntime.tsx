@@ -2,6 +2,7 @@ import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLaunc
 import AdminLiveChatLauncher from "@/components/admin/AdminLiveChatLauncher";
 import AdminLiveChatNotification from "@/components/admin/AdminLiveChatNotification";
 import AdminOutreachCommandCenter from "@/components/admin/AdminOutreachCommandCenter";
+import AdminPushNotificationSetup from "@/components/admin/AdminPushNotificationSetup";
 import "@/admin-mobile-focus.css";
 
 /**
@@ -17,6 +18,7 @@ export default function AdminRuntime() {
       <AdminBuyerActionsLauncher />
       <AdminLiveChatLauncher />
       <AdminLiveChatNotification />
+      <AdminPushNotificationSetup />
     </>
   );
 }

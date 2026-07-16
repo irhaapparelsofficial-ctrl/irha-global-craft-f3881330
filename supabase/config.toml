@@ -63,6 +63,11 @@ verify_jwt = true
 [functions.outreach-unsubscribe]
 verify_jwt = false
 
+# Public gateway with two independent authorization paths: authenticated admin
+# JWTs for subscription management and a high-entropy Vault token for cron.
+[functions.notification-dispatcher]
+verify_jwt = false
+
 [functions.process-email-queue]
 verify_jwt = true
 
