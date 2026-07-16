@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "project_id": "pvzjiozismyxqrzmtfbi",
+  "cutover_version": "20260717000000",
+  "ledger_table": "private.irha_repository_migration_ledger",
+  "migrations": [
+    {
+      "version": "20260717002000",
+      "name": "link_classic_bavarian_shirt_four_view_media",
+      "path": "supabase/migrations/20260717002000_link_classic_bavarian_shirt_four_view_media.sql",
+      "git_blob_sha": "7d131e0d0c55e4671aa7445620077f41e458a281",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717124500",
+      "name": "live_chat_visitor_presence_geo",
+      "path": "supabase/migrations/20260717124500_live_chat_visitor_presence_geo.sql",
+      "git_blob_sha": "a1d4f9447a5d4c59242acf76c9b7ef61a846416c",
+      "transactional_dry_run": true
+    }
+  ]
+}
