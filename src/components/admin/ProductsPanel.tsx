@@ -1,13 +1,42 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
-  Plus, Search, Trash2, Edit3, X, ExternalLink, RefreshCw, ImageIcon,
-  Copy, CheckSquare, Square, Download, Star,
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
+  ClipboardCheck,
+  Copy,
+  Edit3,
+  ExternalLink,
+  ImageIcon,
+  Plus,
+  RefreshCw,
+  Search,
+  Star,
+  Trash2,
+  UploadCloud,
+  X,
 } from "lucide-react";
+import {
+  auditProductUrls,
+  nextAvailableProductSlug,
+  productPublicUrl,
+  PRODUCT_MEDIA_ALLOWED_TYPES,
+  PRODUCT_MEDIA_MAX_BYTES,
+  PRODUCT_MEDIA_MAX_FILES,
+  rollbackUploadedProductMedia,
+  slugifyProductName,
+  uploadProductImages,
+  type CategoryRef,
+  type UploadedProductMedia,
+} from "@/lib/productPublishing";
 
-type Category = { id: string; name: string; slug: string; parent_id: string | null; is_published: boolean };
+type Category = CategoryRef & {
+  name: string;
+  is_published: boolean;
+};
 
 type Product = {
   id: string;
@@ -15,40 +44,33 @@ type Product = {
   slug: string;
   name: string;
   description: string | null;
+  short_description: string | null;
+  sku: string | null;
   image_url: string | null;
   gallery: string[];
   specs: string[];
-  details: Array<{ label: string; value: string }>;
   material_specifications: string | null;
   seo_title: string | null;
   seo_description: string | null;
   sort_order: number;
   is_published: boolean;
   is_featured: boolean;
-  sku: string | null;
-  short_description: string | null;
   moq_display: string | null;
-  moq_min: number | null;
-  sample_available: boolean | null;
   sample_timeline: string | null;
   production_timeline: string | null;
-  country_of_origin: string | null;
   primary_material: string | null;
   fabric_composition: string | null;
   gsm: string | null;
-  available_sizes: string[];
-  size_notes: string | null;
-  available_colors: string[];
-  custom_colors: boolean | null;
-  customization: Record<string, boolean>;
-  packaging_standard: string | null;
-  packaging_custom: boolean | null;
-  related_product_ids: string[];
   created_at: string;
   updated_at: string;
 };
 
-type EditorTab = "basics" | "buyer" | "materials" | "customization" | "media" | "seo" | "publish";
+type PendingImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+  state: "pending" | "optimizing" | "uploading" | "saved";
+};
 
 type Draft = {
   id?: string;
@@ -59,47 +81,23 @@ type Draft = {
   short_description: string;
   sku: string;
   image_url: string;
+  galleryText: string;
+  specsText: string;
   material_specifications: string;
   seo_title: string;
   seo_description: string;
   sort_order: number;
-  is_published: boolean;
   is_featured: boolean;
-  galleryText: string;
-  specsText: string;
   moq_display: string;
-  moq_min: string;
-  sample_available: boolean;
   sample_timeline: string;
   production_timeline: string;
-  country_of_origin: string;
   primary_material: string;
   fabric_composition: string;
   gsm: string;
-  sizesText: string;
-  size_notes: string;
-  colorsText: string;
-  custom_colors: boolean;
-  packaging_standard: string;
-  packaging_custom: boolean;
-  customization: Record<string, boolean>;
+  pendingImages: PendingImage[];
 };
 
-const CUSTOMIZATION_KEYS: Array<{ key: string; label: string }> = [
-  { key: "oem", label: "OEM" },
-  { key: "odm", label: "ODM" },
-  { key: "private_label", label: "Private Label" },
-  { key: "embroidery", label: "Embroidery" },
-  { key: "screen_printing", label: "Screen Printing" },
-  { key: "dtf_printing", label: "DTF / Transfer Printing" },
-  { key: "sublimation", label: "Sublimation" },
-  { key: "custom_branding", label: "Custom Branding" },
-  { key: "custom_labels", label: "Custom Labels" },
-  { key: "woven_labels", label: "Woven Labels" },
-  { key: "hang_tags", label: "Hang Tags" },
-  { key: "custom_trims", label: "Custom Trims" },
-  { key: "custom_packaging", label: "Custom Packaging" },
-];
+type SaveMode = "draft" | "publish";
 
 const emptyDraft = (categoryId = ""): Draft => ({
   category_id: categoryId,
@@ -109,430 +107,330 @@ const emptyDraft = (categoryId = ""): Draft => ({
   short_description: "",
   sku: "",
   image_url: "",
+  galleryText: "",
+  specsText: "",
   material_specifications: "",
   seo_title: "",
   seo_description: "",
   sort_order: 0,
-  is_published: false,
   is_featured: false,
-  galleryText: "",
-  specsText: "",
   moq_display: "",
-  moq_min: "",
-  sample_available: false,
   sample_timeline: "",
   production_timeline: "",
-  country_of_origin: "",
   primary_material: "",
   fabric_composition: "",
   gsm: "",
-  sizesText: "",
-  size_notes: "",
-  colorsText: "",
-  custom_colors: false,
-  packaging_standard: "",
-  packaging_custom: false,
-  customization: {},
+  pendingImages: [],
 });
 
-const slugify = (s: string) =>
-  s.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
-
-const toDraft = (p: Product): Draft => ({
-  id: p.id,
-  category_id: p.category_id,
-  slug: p.slug,
-  name: p.name,
-  description: p.description ?? "",
-  short_description: p.short_description ?? "",
-  sku: p.sku ?? "",
-  image_url: p.image_url ?? "",
-  material_specifications: p.material_specifications ?? "",
-  seo_title: p.seo_title ?? "",
-  seo_description: p.seo_description ?? "",
-  sort_order: p.sort_order,
-  is_published: p.is_published,
-  is_featured: p.is_featured,
-  galleryText: (p.gallery ?? []).join("\n"),
-  specsText: (p.specs ?? []).join("\n"),
-  moq_display: p.moq_display ?? "",
-  moq_min: p.moq_min?.toString() ?? "",
-  sample_available: !!p.sample_available,
-  sample_timeline: p.sample_timeline ?? "",
-  production_timeline: p.production_timeline ?? "",
-  country_of_origin: p.country_of_origin ?? "",
-  primary_material: p.primary_material ?? "",
-  fabric_composition: p.fabric_composition ?? "",
-  gsm: p.gsm ?? "",
-  sizesText: (p.available_sizes ?? []).join(", "),
-  size_notes: p.size_notes ?? "",
-  colorsText: (p.available_colors ?? []).join(", "),
-  custom_colors: !!p.custom_colors,
-  packaging_standard: p.packaging_standard ?? "",
-  packaging_custom: !!p.packaging_custom,
-  customization: p.customization ?? {},
+const toDraft = (product: Product): Draft => ({
+  id: product.id,
+  category_id: product.category_id,
+  slug: product.slug,
+  name: product.name,
+  description: product.description ?? "",
+  short_description: product.short_description ?? "",
+  sku: product.sku ?? "",
+  image_url: product.image_url ?? "",
+  galleryText: (product.gallery ?? []).join("\n"),
+  specsText: (product.specs ?? []).join("\n"),
+  material_specifications: product.material_specifications ?? "",
+  seo_title: product.seo_title ?? "",
+  seo_description: product.seo_description ?? "",
+  sort_order: product.sort_order ?? 0,
+  is_featured: product.is_featured,
+  moq_display: product.moq_display ?? "",
+  sample_timeline: product.sample_timeline ?? "",
+  production_timeline: product.production_timeline ?? "",
+  primary_material: product.primary_material ?? "",
+  fabric_composition: product.fabric_composition ?? "",
+  gsm: product.gsm ?? "",
+  pendingImages: [],
 });
 
-const csvEscape = (v: unknown) => {
-  const s = v == null ? "" : String(v);
-  if (/["\n,]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-};
+function lines(value: string) {
+  return value.split("\n").map((item) => item.trim()).filter(Boolean);
+}
+
+function releasePreviews(images: PendingImage[]) {
+  images.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+}
 
 export default function ProductsPanel() {
-  const [cats, setCats] = useState<Category[]>([]);
-  const [rows, setRows] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const [catFilter, setCatFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft" | "featured">("all");
-  const [sort, setSort] = useState<"sort_order" | "name" | "updated_at">("sort_order");
+  const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [editing, setEditing] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const catMap = useMemo(() => new Map(cats.map((c) => [c.id, c])), [cats]);
+  const categoryMap = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
+  const subcategories = useMemo(() => categories.filter((category) => category.parent_id !== null), [categories]);
+  const parentCategories = useMemo(
+    () => categories.filter((category) => category.parent_id === null && category.is_published),
+    [categories],
+  );
 
   const load = async () => {
-    setLoading(true); setError(null);
-    const [cRes, pRes] = await Promise.all([
+    setLoading(true);
+    setError(null);
+    const [categoryResult, productResult] = await Promise.all([
       supabase.from("categories").select("id,name,slug,parent_id,is_published").order("sort_order"),
       supabase.from("products").select("*").order("sort_order", { ascending: true }).limit(500),
     ]);
-    if (cRes.error) setError(cRes.error.message);
-    if (pRes.error) setError(pRes.error.message);
-    setCats((cRes.data as Category[]) ?? []);
-    setRows(((pRes.data as unknown) as Product[]) ?? []);
+    if (categoryResult.error || productResult.error) {
+      setError(categoryResult.error?.message ?? productResult.error?.message ?? "Could not load products");
+    }
+    setCategories((categoryResult.data as Category[]) ?? []);
+    setProducts((productResult.data as unknown as Product[]) ?? []);
     setLoading(false);
   };
+
   useEffect(() => { void load(); }, []);
 
-  const subCats = useMemo(() => cats.filter((c) => c.parent_id !== null), [cats]);
-  const mainCats = useMemo(() => cats.filter((c) => c.parent_id === null && c.is_published), [cats]);
-
   const filtered = useMemo(() => {
-    let list = rows;
-    if (catFilter !== "all") list = list.filter((r) => r.category_id === catFilter);
-    if (statusFilter === "published") list = list.filter((r) => r.is_published);
-    else if (statusFilter === "draft") list = list.filter((r) => !r.is_published);
-    else if (statusFilter === "featured") list = list.filter((r) => r.is_featured);
-    const s = q.trim().toLowerCase();
-    if (s) list = list.filter((r) =>
-      r.name.toLowerCase().includes(s) ||
-      r.slug.toLowerCase().includes(s) ||
-      (r.sku ?? "").toLowerCase().includes(s) ||
-      (r.description ?? "").toLowerCase().includes(s),
-    );
-    list = [...list].sort((a, b) => {
-      if (sort === "name") return a.name.localeCompare(b.name);
-      if (sort === "updated_at") return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-      return a.sort_order - b.sort_order;
+    const needle = query.trim().toLowerCase();
+    return products.filter((product) => {
+      if (categoryFilter !== "all" && product.category_id !== categoryFilter) return false;
+      if (statusFilter === "published" && !product.is_published) return false;
+      if (statusFilter === "draft" && product.is_published) return false;
+      if (!needle) return true;
+      return [product.name, product.slug, product.sku, product.description]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
     });
-    return list;
-  }, [rows, q, catFilter, statusFilter, sort]);
+  }, [products, query, categoryFilter, statusFilter]);
+
+  const closeEditor = () => {
+    if (editing) releasePreviews(editing.pendingImages);
+    setEditing(null);
+  };
 
   const openNew = () => {
-    if (subCats.length === 0) { toast({ title: "Create a subcategory first", variant: "destructive" }); return; }
-    setEditing(emptyDraft(subCats[0].id));
-  };
-  const openEdit = (p: Product) => setEditing(toDraft(p));
-
-  const duplicate = async (p: Product) => {
-    const baseName = `${p.name} (Copy)`;
-    let candidateSlug = `${p.slug}-copy`;
-    let n = 1;
-    while (rows.some((r) => r.slug === candidateSlug)) {
-      n += 1;
-      candidateSlug = `${p.slug}-copy-${n}`;
-    }
-    const { id: _omit, created_at: _c, updated_at: _u, ...rest } = p;
-    void _omit; void _c; void _u;
-    const payload = {
-      ...rest,
-      name: baseName,
-      slug: candidateSlug,
-      sku: null,
-      is_published: false,
-      is_featured: false,
-    };
-    const { data, error: err } = await supabase.from("products").insert(payload).select("*").single();
-    if (err) { toast({ title: "Duplicate failed", description: err.message, variant: "destructive" }); return; }
-    setRows((prev) => [...prev, data as unknown as Product]);
-    toast({ title: "Product duplicated", description: `${baseName} created as draft.` });
-    setEditing(toDraft(data as unknown as Product));
-  };
-
-  const save = async () => {
-    if (!editing) return;
-    const d = editing;
-    if (!d.name.trim() || !d.category_id) {
-      toast({ title: "Name and subcategory are required", variant: "destructive" }); return;
-    }
-    const selectedCat = cats.find((c) => c.id === d.category_id);
-    if (!selectedCat || selectedCat.parent_id === null) {
-      toast({ title: "Pick a subcategory", description: "Products must live under a subcategory (not a main category).", variant: "destructive" });
+    if (subcategories.length === 0) {
+      toast({ title: "Create a subcategory first", variant: "destructive" });
       return;
     }
-    const slug = d.slug.trim() ? slugify(d.slug) : slugify(d.name);
-    const splitList = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
-    const payload = {
-      category_id: d.category_id,
-      slug,
-      name: d.name.trim(),
-      description: d.description || null,
-      short_description: d.short_description || null,
-      sku: d.sku.trim() || null,
-      image_url: d.image_url || null,
-      material_specifications: d.material_specifications || null,
-      seo_title: d.seo_title || null,
-      seo_description: d.seo_description || null,
-      sort_order: Number(d.sort_order) || 0,
-      is_published: !!d.is_published,
-      is_featured: !!d.is_featured,
-      gallery: d.galleryText.split("\n").map((s) => s.trim()).filter(Boolean),
-      specs: d.specsText.split("\n").map((s) => s.trim()).filter(Boolean),
-      moq_display: d.moq_display.trim() || null,
-      moq_min: d.moq_min.trim() ? Number(d.moq_min) : null,
-      sample_available: d.sample_available,
-      sample_timeline: d.sample_timeline.trim() || null,
-      production_timeline: d.production_timeline.trim() || null,
-      country_of_origin: d.country_of_origin.trim() || null,
-      primary_material: d.primary_material.trim() || null,
-      fabric_composition: d.fabric_composition.trim() || null,
-      gsm: d.gsm.trim() || null,
-      available_sizes: splitList(d.sizesText),
-      size_notes: d.size_notes.trim() || null,
-      available_colors: splitList(d.colorsText),
-      custom_colors: d.custom_colors,
-      packaging_standard: d.packaging_standard.trim() || null,
-      packaging_custom: d.packaging_custom,
-      customization: d.customization,
-    };
-    setSaving(true);
-    try {
-      let savedId = d.id;
-      if (d.id) {
-        const { error: err } = await supabase.from("products").update(payload).eq("id", d.id);
-        if (err) throw err;
-      } else {
-        const { data, error: err } = await supabase.from("products").insert(payload).select("id").single();
-        if (err) throw err;
-        savedId = data.id;
-      }
-      const { data: verify, error: vErr } = await supabase.from("products").select("*").eq("id", savedId!).single();
-      if (vErr) throw vErr;
-      setRows((prev) => {
-        const others = prev.filter((r) => r.id !== (verify as Product).id);
-        return [...others, verify as unknown as Product];
-      });
-      toast({ title: d.id ? "Product updated" : "Product created", description: (verify as Product).name });
-      setEditing(null);
-    } catch (e) {
-      toast({ title: "Save failed", description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
-    } finally { setSaving(false); }
+    setEditing(emptyDraft(subcategories[0].id));
   };
 
-  const remove = async (p: Product) => {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
-    const { error: err } = await supabase.from("products").delete().eq("id", p.id);
-    if (err) { toast({ title: "Delete failed", description: err.message, variant: "destructive" }); return; }
-    setRows((prev) => prev.filter((r) => r.id !== p.id));
-    setSelected((prev) => { const n = new Set(prev); n.delete(p.id); return n; });
-    toast({ title: "Product deleted" });
+  const auditUrls = () => {
+    const result = auditProductUrls(products, categories);
+    toast({
+      title: result.complete === result.total ? "All product URLs are complete" : "Product URL audit complete",
+      description: `${result.total} checked · ${result.missingProductUrl} missing product URL · ${result.missingCoverUrl} missing cover · ${result.missingGalleryUrl} missing gallery`,
+      variant: result.complete === result.total ? "default" : "destructive",
+    });
   };
 
-  const toggleSel = (id: string) =>
-    setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const selectAllFiltered = () => setSelected(new Set(filtered.map((r) => r.id)));
-  const clearSel = () => setSelected(new Set());
-
-  const bulkUpdate = async (patch: Partial<Product>, label: string) => {
-    if (selected.size === 0) return;
-    const ids = Array.from(selected);
-    const { error: err } = await supabase.from("products").update(patch).in("id", ids);
-    if (err) { toast({ title: `${label} failed`, description: err.message, variant: "destructive" }); return; }
-    setRows((prev) => prev.map((r) => (selected.has(r.id) ? { ...r, ...patch } : r)));
-    toast({ title: `${label} · ${ids.length} product${ids.length === 1 ? "" : "s"}` });
-  };
-
-  const exportCsv = (scope: "all" | "filtered" | "selected") => {
-    const source =
-      scope === "all" ? rows :
-      scope === "selected" ? rows.filter((r) => selected.has(r.id)) :
-      filtered;
-    if (source.length === 0) { toast({ title: "Nothing to export", variant: "destructive" }); return; }
-    const cols = [
-      "id","sku","name","slug","category_slug","is_published","is_featured",
-      "short_description","description","primary_material","fabric_composition","gsm",
-      "moq_display","moq_min","sample_available","sample_timeline","production_timeline",
-      "country_of_origin","available_sizes","available_colors","custom_colors",
-      "packaging_standard","packaging_custom","image_url","gallery","specs",
-      "seo_title","seo_description","sort_order",
-    ];
-    const lines = [cols.join(",")];
-    for (const p of source) {
-      const cat = catMap.get(p.category_id);
-      lines.push(cols.map((c) => {
-        switch (c) {
-          case "category_slug": return csvEscape(cat?.slug ?? "");
-          case "available_sizes": return csvEscape((p.available_sizes ?? []).join("|"));
-          case "available_colors": return csvEscape((p.available_colors ?? []).join("|"));
-          case "gallery": return csvEscape((p.gallery ?? []).join("|"));
-          case "specs": return csvEscape((p.specs ?? []).join("|"));
-          default: return csvEscape((p as unknown as Record<string, unknown>)[c]);
-        }
-      }).join(","));
+  const save = async (mode: SaveMode) => {
+    if (!editing || saving) return;
+    const draft = editing;
+    const selectedCategory = categoryMap.get(draft.category_id);
+    if (!draft.name.trim() || !selectedCategory || selectedCategory.parent_id === null) {
+      toast({ title: "Name and subcategory are required", variant: "destructive" });
+      return;
     }
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `products-${scope}-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: `Exported ${source.length} product${source.length === 1 ? "" : "s"}` });
+
+    const existingGallery = lines(draft.galleryText);
+    const hasMedia = Boolean(draft.image_url.trim() || existingGallery.length || draft.pendingImages.length);
+    if (mode === "publish" && !hasMedia) {
+      toast({ title: "Add at least one product image before publishing", variant: "destructive" });
+      return;
+    }
+
+    setSaving(true);
+    let uploaded: UploadedProductMedia[] = [];
+    let productWriteCompleted = false;
+    try {
+      const { data: slugRows, error: slugError } = await supabase
+        .from("products")
+        .select("id,category_id,slug")
+        .eq("category_id", draft.category_id);
+      if (slugError) throw slugError;
+
+      const slug = nextAvailableProductSlug(
+        draft.slug,
+        draft.name,
+        draft.category_id,
+        (slugRows ?? []) as { id: string; category_id: string; slug: string }[],
+        draft.id,
+      );
+
+      uploaded = await uploadProductImages(
+        supabase,
+        draft.pendingImages.map((item) => item.file),
+        slug,
+        (index, state) => {
+          setEditing((current) => current ? {
+            ...current,
+            pendingImages: current.pendingImages.map((item, itemIndex) => itemIndex === index ? { ...item, state } : item),
+          } : current);
+        },
+      );
+
+      const uploadedUrls = uploaded.map((item) => item.publicUrl);
+      const gallery = [...existingGallery, ...uploadedUrls];
+      const coverUrl = draft.image_url.trim() || gallery[0] || null;
+      const payload = {
+        category_id: draft.category_id,
+        slug,
+        name: draft.name.trim(),
+        description: draft.description.trim() || null,
+        short_description: draft.short_description.trim() || null,
+        sku: draft.sku.trim() || null,
+        image_url: coverUrl,
+        gallery,
+        specs: lines(draft.specsText),
+        material_specifications: draft.material_specifications.trim() || null,
+        seo_title: draft.seo_title.trim() || null,
+        seo_description: draft.seo_description.trim() || null,
+        sort_order: Number(draft.sort_order) || 0,
+        is_published: mode === "publish",
+        is_featured: draft.is_featured,
+        moq_display: draft.moq_display.trim() || null,
+        sample_timeline: draft.sample_timeline.trim() || null,
+        production_timeline: draft.production_timeline.trim() || null,
+        primary_material: draft.primary_material.trim() || null,
+        fabric_composition: draft.fabric_composition.trim() || null,
+        gsm: draft.gsm.trim() || null,
+      };
+
+      let savedId = draft.id;
+      if (draft.id) {
+        const { error: updateError } = await supabase.from("products").update(payload).eq("id", draft.id);
+        if (updateError) throw updateError;
+      } else {
+        const { data: inserted, error: insertError } = await supabase.from("products").insert(payload).select("id").single();
+        if (insertError) throw insertError;
+        savedId = inserted.id;
+      }
+      productWriteCompleted = true;
+
+      const { data: verified, error: verifyError } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", savedId!)
+        .single();
+      if (verifyError) throw new Error(`Product was written but verification failed: ${verifyError.message}`);
+
+      const savedProduct = verified as unknown as Product;
+      setProducts((current) => [...current.filter((product) => product.id !== savedProduct.id), savedProduct]);
+      const liveUrl = productPublicUrl(categories, savedProduct.category_id, savedProduct.slug);
+      window.dispatchEvent(new CustomEvent("catalog:updated", { detail: { productId: savedProduct.id } }));
+      releasePreviews(draft.pendingImages);
+      setEditing(null);
+      toast({
+        title: mode === "publish" ? "Product is live" : "Draft saved",
+        description: mode === "publish" && liveUrl ? liveUrl : savedProduct.name,
+      });
+    } catch (saveError) {
+      if (!productWriteCompleted && uploaded.length > 0) {
+        await rollbackUploadedProductMedia(supabase, uploaded).catch(() => undefined);
+      }
+      toast({
+        title: productWriteCompleted ? "Saved, but verification needs attention" : "Save failed",
+        description: saveError instanceof Error ? saveError.message : String(saveError),
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (product: Product) => {
+    if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
+    const { error: deleteError } = await supabase.from("products").delete().eq("id", product.id);
+    if (deleteError) {
+      toast({ title: "Delete failed", description: deleteError.message, variant: "destructive" });
+      return;
+    }
+    setProducts((current) => current.filter((item) => item.id !== product.id));
+    toast({ title: "Product deleted" });
   };
 
   return (
     <div className="space-y-6">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name, slug, SKU…"
-            className="w-full pl-9 pr-3 py-2 text-sm bg-card/40 border border-border/60 focus:border-primary outline-none"
-          />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, slug or product code…" className={`${inputClass} pl-9`} />
         </div>
-        <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="text-sm bg-card/40 border border-border/60 px-3 py-2">
+        <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className={inputClass}>
           <option value="all">All categories</option>
-          {mainCats.map((m) => (
-            <optgroup key={m.id} label={m.name}>
-              {subCats.filter((s) => s.parent_id === m.id).map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+          {parentCategories.map((parent) => (
+            <optgroup key={parent.id} label={parent.name}>
+              {subcategories.filter((child) => child.parent_id === parent.id).map((child) => (
+                <option key={child.id} value={child.id}>{child.name}</option>
               ))}
             </optgroup>
           ))}
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} className="text-sm bg-card/40 border border-border/60 px-3 py-2">
+        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} className={inputClass}>
           <option value="all">All statuses</option>
           <option value="published">Published</option>
           <option value="draft">Draft</option>
-          <option value="featured">Featured</option>
         </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="text-sm bg-card/40 border border-border/60 px-3 py-2">
-          <option value="sort_order">Sort: order</option>
-          <option value="name">Sort: name</option>
-          <option value="updated_at">Sort: updated</option>
-        </select>
-        <button onClick={load} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-primary px-3 py-2">
-          <RefreshCw size={12} /> Refresh
-        </button>
-        <div className="ml-auto text-xs text-muted-foreground">
-          {loading ? "Loading…" : `${filtered.length} of ${rows.length}`}
-        </div>
-        <button onClick={openNew} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] bg-gradient-gold text-primary-foreground px-4 py-2 hover:shadow-gold">
-          <Plus size={14} /> New product
-        </button>
+        <button type="button" onClick={() => void load()} className={secondaryButton}><RefreshCw size={13} /> Refresh</button>
+        <button type="button" onClick={auditUrls} className={secondaryButton}><ClipboardCheck size={13} /> Audit URLs</button>
+        <button type="button" onClick={openNew} className={primaryButton}><Plus size={14} /> New product</button>
       </div>
 
-      {/* Bulk bar */}
-      {selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 bg-primary/5 border border-primary/40 px-4 py-3 text-xs">
-          <span className="uppercase tracking-[0.25em] text-primary">{selected.size} selected</span>
-          <button onClick={() => bulkUpdate({ is_published: true }, "Published")} className="px-3 py-1.5 border border-border/60 hover:border-primary">Publish</button>
-          <button onClick={() => bulkUpdate({ is_published: false }, "Unpublished")} className="px-3 py-1.5 border border-border/60 hover:border-primary">Unpublish</button>
-          <button onClick={() => bulkUpdate({ is_featured: true }, "Featured")} className="px-3 py-1.5 border border-border/60 hover:border-primary">Set featured</button>
-          <button onClick={() => bulkUpdate({ is_featured: false }, "Unfeatured")} className="px-3 py-1.5 border border-border/60 hover:border-primary">Remove featured</button>
-          <button onClick={() => exportCsv("selected")} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border/60 hover:border-primary">
-            <Download size={12} /> Export selected
-          </button>
-          <button onClick={clearSel} className="ml-auto text-muted-foreground hover:text-foreground">Clear</button>
-        </div>
-      )}
-
-      {/* Export bar */}
-      <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-        <span>Export CSV:</span>
-        <button onClick={() => exportCsv("all")} className="hover:text-primary">All ({rows.length})</button>
-        <span>·</span>
-        <button onClick={() => exportCsv("filtered")} className="hover:text-primary">Filtered ({filtered.length})</button>
-      </div>
-
+      <div className="text-xs text-muted-foreground">{loading ? "Loading…" : `${filtered.length} of ${products.length} products`}</div>
       {error && <div className="border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
 
-      {loading ? (
-        <div className="text-sm text-muted-foreground py-16 text-center">Loading products…</div>
-      ) : filtered.length === 0 ? (
+      {!loading && filtered.length === 0 ? (
         <div className="border border-border/60 bg-card/30 p-12 text-center">
-          <ImageIcon className="mx-auto mb-3 text-muted-foreground/70" size={28} />
-          <h3 className="font-display text-xl">No products{q || catFilter !== "all" ? " match" : " yet"}</h3>
-          <p className="text-sm text-muted-foreground mt-2">Click <b>New product</b> to create one.</p>
+          <ImageIcon className="mx-auto mb-3 text-muted-foreground" size={28} />
+          <h3 className="font-display text-xl">No products found</h3>
         </div>
       ) : (
         <div className="border border-border/60 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-secondary/40 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <thead className="bg-secondary/40 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               <tr>
-                <th className="w-10 text-center py-3">
-                  <button onClick={selected.size === filtered.length && filtered.length > 0 ? clearSel : selectAllFiltered} aria-label="Select all">
-                    {selected.size === filtered.length && filtered.length > 0 ? <CheckSquare size={14} /> : <Square size={14} />}
-                  </button>
-                </th>
                 <th className="text-left py-3 px-4">Product</th>
                 <th className="text-left py-3 px-4 hidden md:table-cell">Category</th>
-                <th className="text-left py-3 px-4 hidden lg:table-cell">SKU</th>
+                <th className="text-left py-3 px-4 hidden lg:table-cell">Code</th>
+                <th className="text-left py-3 px-4">URL health</th>
                 <th className="text-left py-3 px-4">Status</th>
                 <th className="text-right py-3 px-4">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
-                const cat = catMap.get(p.category_id);
-                const isSel = selected.has(p.id);
+              {filtered.map((product) => {
+                const category = categoryMap.get(product.category_id);
+                const liveUrl = productPublicUrl(categories, product.category_id, product.slug);
+                const mediaReady = Boolean(product.image_url && product.gallery?.length);
                 return (
-                  <tr key={p.id} className={`border-t border-border/40 hover:bg-muted/20 ${isSel ? "bg-primary/5" : ""}`}>
-                    <td className="text-center py-2.5">
-                      <button onClick={() => toggleSel(p.id)} aria-label={`Select ${p.name}`}>
-                        {isSel ? <CheckSquare size={14} className="text-primary" /> : <Square size={14} className="text-muted-foreground" />}
-                      </button>
-                    </td>
-                    <td className="py-2.5 px-4">
+                  <tr key={product.id} className="border-t border-border/40 hover:bg-muted/20">
+                    <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        {p.image_url ? (
-                          <img src={p.image_url} alt="" className="w-10 h-10 object-cover border border-border/40" loading="lazy" />
-                        ) : (
-                          <div className="w-10 h-10 border border-dashed border-border/40 flex items-center justify-center text-muted-foreground/50"><ImageIcon size={14} /></div>
-                        )}
+                        {product.image_url ? <img src={product.image_url} alt="" className="w-11 h-11 object-cover border border-border/40" loading="lazy" /> : <div className="w-11 h-11 border border-dashed border-border/50 flex items-center justify-center"><ImageIcon size={15} /></div>}
                         <div className="min-w-0">
-                          <p className="truncate text-foreground/90 flex items-center gap-1.5">
-                            {p.name}
-                            {p.is_featured && <Star size={11} className="text-gold fill-gold" />}
-                          </p>
-                          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground md:hidden">{cat?.name ?? "—"}</p>
+                          <p className="truncate flex items-center gap-1.5">{product.name}{product.is_featured && <Star size={11} className="text-gold fill-gold" />}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{product.slug}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-2.5 px-4 hidden md:table-cell text-foreground/70">{cat?.name ?? "—"}</td>
-                    <td className="py-2.5 px-4 hidden lg:table-cell text-muted-foreground text-xs">{p.sku ?? "—"}</td>
-                    <td className="py-2.5 px-4">
-                      <span className={`text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 border ${p.is_published ? "border-emerald-500/50 text-emerald-500" : "border-border/60 text-muted-foreground"}`}>
-                        {p.is_published ? "Published" : "Draft"}
+                    <td className="py-3 px-4 hidden md:table-cell text-foreground/70">{category?.name ?? "—"}</td>
+                    <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground">{product.sku ?? "—"}</td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.15em] ${liveUrl && mediaReady ? "text-emerald-500" : "text-amber-500"}`}>
+                        <CheckCircle2 size={12} /> {liveUrl && mediaReady ? `${product.gallery.length} images` : "Check URLs"}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4">
+                    <td className="py-3 px-4"><span className={product.is_published ? publishedBadge : draftBadge}>{product.is_published ? "Published" : "Draft"}</span></td>
+                    <td className="py-3 px-4">
                       <div className="flex items-center justify-end gap-1">
-                        {cat && (
-                          <a href={`/products/${(cats.find((c) => c.id === cat.parent_id)?.slug) ?? cat.slug}/${p.slug}`} target="_blank" rel="noreferrer" title="Preview" className="p-1.5 text-muted-foreground hover:text-primary">
-                            <ExternalLink size={14} />
-                          </a>
-                        )}
-                        <button onClick={() => duplicate(p)} title="Duplicate" className="p-1.5 text-muted-foreground hover:text-primary"><Copy size={14} /></button>
-                        <button onClick={() => openEdit(p)} title="Edit" className="p-1.5 text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
-                        <button onClick={() => remove(p)} title="Delete" className="p-1.5 text-destructive/70 hover:text-destructive"><Trash2 size={14} /></button>
+                        {liveUrl && <a href={liveUrl} target="_blank" rel="noreferrer" title="Open product" className={iconButton}><ExternalLink size={14} /></a>}
+                        <button type="button" onClick={() => setEditing(toDraft(product))} title="Edit" className={iconButton}><Edit3 size={14} /></button>
+                        <button type="button" onClick={() => void remove(product)} title="Delete" className={`${iconButton} text-destructive`}><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -547,10 +445,11 @@ export default function ProductsPanel() {
         <ProductEditor
           draft={editing}
           setDraft={setEditing}
-          cats={cats}
-          onCancel={() => setEditing(null)}
-          onSave={save}
+          categories={categories}
           saving={saving}
+          onCancel={closeEditor}
+          onSaveDraft={() => void save("draft")}
+          onPublish={() => void save("publish")}
         />
       )}
     </div>
@@ -558,245 +457,198 @@ export default function ProductsPanel() {
 }
 
 function ProductEditor({
-  draft, setDraft, cats, onCancel, onSave, saving,
+  draft,
+  setDraft,
+  categories,
+  saving,
+  onCancel,
+  onSaveDraft,
+  onPublish,
 }: {
-  draft: Draft; setDraft: (d: Draft) => void; cats: Category[];
-  onCancel: () => void; onSave: () => void; saving: boolean;
+  draft: Draft;
+  setDraft: (draft: Draft) => void;
+  categories: Category[];
+  saving: boolean;
+  onCancel: () => void;
+  onSaveDraft: () => void;
+  onPublish: () => void;
 }) {
-  const [tab, setTab] = useState<EditorTab>("basics");
-  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft({ ...draft, [k]: v });
-  const setCustom = (k: string, v: boolean) => setDraft({ ...draft, customization: { ...draft.customization, [k]: v } });
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  const selectedCategory = categories.find((category) => category.id === draft.category_id);
+  const parentCategory = selectedCategory ? categories.find((category) => category.id === selectedCategory.parent_id) : null;
+  const previewSlug = slugifyProductName(draft.slug) || slugifyProductName(draft.name) || "product";
+  const liveUrl = productPublicUrl(categories, draft.category_id, previewSlug);
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft({ ...draft, [key]: value });
 
-  const selectedCat = cats.find((c) => c.id === draft.category_id);
-  const parent = selectedCat ? cats.find((c) => c.id === selectedCat.parent_id) : null;
+  useEffect(() => () => releasePreviews(draft.pendingImages), []);
 
-  const tabs: Array<{ id: EditorTab; label: string }> = [
-    { id: "basics", label: "Basics" },
-    { id: "buyer", label: "Buyer Info" },
-    { id: "materials", label: "Materials & Options" },
-    { id: "customization", label: "Customization" },
-    { id: "media", label: "Media" },
-    { id: "seo", label: "SEO" },
-    { id: "publish", label: "Publish" },
-  ];
+  const addFiles = (files: FileList | File[]) => {
+    const incoming = Array.from(files);
+    const availableSlots = PRODUCT_MEDIA_MAX_FILES - draft.pendingImages.length;
+    const accepted: PendingImage[] = [];
+    for (const file of incoming.slice(0, Math.max(0, availableSlots))) {
+      if (!PRODUCT_MEDIA_ALLOWED_TYPES.has(file.type)) {
+        toast({ title: `${file.name}: use JPG, PNG or WebP`, variant: "destructive" });
+        continue;
+      }
+      if (file.size > PRODUCT_MEDIA_MAX_BYTES) {
+        toast({ title: `${file.name}: maximum size is 25 MB`, variant: "destructive" });
+        continue;
+      }
+      accepted.push({ id: crypto.randomUUID(), file, previewUrl: URL.createObjectURL(file), state: "pending" });
+    }
+    if (incoming.length > availableSlots) toast({ title: `Maximum ${PRODUCT_MEDIA_MAX_FILES} new images per save`, variant: "destructive" });
+    set("pendingImages", [...draft.pendingImages, ...accepted]);
+  };
+
+  const moveImage = (index: number, direction: -1 | 1) => {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= draft.pendingImages.length) return;
+    const next = [...draft.pendingImages];
+    [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+    set("pendingImages", next);
+  };
+
+  const removePending = (index: number) => {
+    const target = draft.pendingImages[index];
+    URL.revokeObjectURL(target.previewUrl);
+    set("pendingImages", draft.pendingImages.filter((_, itemIndex) => itemIndex !== index));
+  };
+
+  const copyUrl = async () => {
+    if (!liveUrl) return;
+    await navigator.clipboard.writeText(liveUrl);
+    toast({ title: "Product URL copied" });
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/80 backdrop-blur-sm p-4 md:p-8">
-      <div className="w-full max-w-3xl bg-card border border-border/60 shadow-xl">
-        <div className="sticky top-0 flex items-center justify-between border-b border-border/60 bg-card/95 px-6 py-4 z-10">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-background/85 backdrop-blur-sm p-3 md:p-8">
+      <div className="mx-auto max-w-4xl bg-card border border-border/60 shadow-xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border/60 bg-card/95 px-5 py-4">
           <div>
-            <p className="eyebrow">{draft.id ? "Edit" : "New"} · Product</p>
-            <h2 className="font-display text-xl mt-1">{draft.name || "Untitled product"}</h2>
-            {parent && selectedCat && (
-              <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mt-1">
-                {parent.name} → {selectedCat.name}
-              </p>
-            )}
+            <p className="eyebrow">{draft.id ? "Edit product" : "New product"}</p>
+            <h2 className="font-display text-2xl mt-1">{draft.name || "Untitled product"}</h2>
           </div>
-          <button onClick={onCancel} className="p-2 text-muted-foreground hover:text-foreground"><X size={18} /></button>
+          <button type="button" onClick={onCancel} disabled={saving} className={iconButton}><X size={18} /></button>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-border/60 px-2 overflow-x-auto">
-          <div className="flex gap-1 min-w-max">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`px-4 py-3 text-[11px] uppercase tracking-[0.22em] whitespace-nowrap border-b-2 transition-colors ${
-                  tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="p-6 space-y-5">
-          {tab === "basics" && (
-            <>
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Name *"><input value={draft.name} onChange={(e) => set("name", e.target.value)} className={inputCls} /></Field>
-                <Field label="SKU"><input value={draft.sku} onChange={(e) => set("sku", e.target.value)} placeholder="Optional internal code" className={inputCls} /></Field>
-                <Field label="Subcategory *" hint="Products must live under a subcategory">
-                  <select value={draft.category_id} onChange={(e) => set("category_id", e.target.value)} className={inputCls}>
-                    {cats.filter((c) => c.parent_id === null && c.is_published).map((main) => (
-                      <optgroup key={main.id} label={main.name}>
-                        {cats.filter((s) => s.parent_id === main.id).map((s) => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Slug" hint="Auto-generated from name if empty">
-                  <input value={draft.slug} onChange={(e) => set("slug", e.target.value)} placeholder="auto-generated" className={inputCls} />
-                </Field>
-              </div>
-              <Field label="Short description" hint="1–2 sentences for cards & search">
-                <textarea rows={2} value={draft.short_description} onChange={(e) => set("short_description", e.target.value)} className={inputCls} />
+        <div className="p-5 md:p-7 space-y-8">
+          <Section title="Product details">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Field label="Product name *"><input value={draft.name} onChange={(event) => set("name", event.target.value)} className={inputClass} /></Field>
+              <Field label="Product code / SKU"><input value={draft.sku} onChange={(event) => set("sku", event.target.value)} placeholder="e.g. IA-LH-001" className={inputClass} /></Field>
+              <Field label="Subcategory *">
+                <select value={draft.category_id} onChange={(event) => set("category_id", event.target.value)} className={inputClass}>
+                  {categories.filter((category) => category.parent_id === null && category.is_published).map((parent) => (
+                    <optgroup key={parent.id} label={parent.name}>
+                      {categories.filter((category) => category.parent_id === parent.id).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
               </Field>
-              <Field label="Full description">
-                <textarea rows={4} value={draft.description} onChange={(e) => set("description", e.target.value)} className={inputCls} />
-              </Field>
-              <Field label="Sort order">
-                <input type="number" value={draft.sort_order} onChange={(e) => set("sort_order", Number(e.target.value))} className={inputCls} />
-              </Field>
-              <div className="flex gap-6">
-                <label className="inline-flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={draft.is_featured} onChange={(e) => set("is_featured", e.target.checked)} />
-                  <span>Featured</span>
-                </label>
-              </div>
-            </>
-          )}
-
-          {tab === "buyer" && (
-            <>
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="MOQ display" hint="Public label (e.g. “Flexible per program”)">
-                  <input value={draft.moq_display} onChange={(e) => set("moq_display", e.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Minimum MOQ (number)" hint="Only when genuinely known">
-                  <input type="number" value={draft.moq_min} onChange={(e) => set("moq_min", e.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Sample availability">
-                  <label className="inline-flex items-center gap-2 mt-2 text-sm">
-                    <input type="checkbox" checked={draft.sample_available} onChange={(e) => set("sample_available", e.target.checked)} />
-                    Available on request
-                  </label>
-                </Field>
-                <Field label="Sample timeline"><input value={draft.sample_timeline} onChange={(e) => set("sample_timeline", e.target.value)} placeholder="Confirmed per program" className={inputCls} /></Field>
-                <Field label="Production timeline"><input value={draft.production_timeline} onChange={(e) => set("production_timeline", e.target.value)} placeholder="Confirmed per program" className={inputCls} /></Field>
-                <Field label="Country of origin"><input value={draft.country_of_origin} onChange={(e) => set("country_of_origin", e.target.value)} placeholder="Pakistan (Sialkot)" className={inputCls} /></Field>
-              </div>
-              <p className="text-xs text-muted-foreground">Pricing is quotation-only. There is no public price field.</p>
-            </>
-          )}
-
-          {tab === "materials" && (
-            <>
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Primary material"><input value={draft.primary_material} onChange={(e) => set("primary_material", e.target.value)} className={inputCls} /></Field>
-                <Field label="Weight / GSM"><input value={draft.gsm} onChange={(e) => set("gsm", e.target.value)} className={inputCls} /></Field>
-              </div>
-              <Field label="Fabric composition">
-                <textarea rows={2} value={draft.fabric_composition} onChange={(e) => set("fabric_composition", e.target.value)} className={inputCls} />
-              </Field>
-              <Field label="Material specifications">
-                <textarea rows={2} value={draft.material_specifications} onChange={(e) => set("material_specifications", e.target.value)} className={inputCls} />
-              </Field>
-              <Field label="Available sizes" hint="Comma-separated (e.g. S, M, L, XL)">
-                <input value={draft.sizesText} onChange={(e) => set("sizesText", e.target.value)} className={inputCls} />
-              </Field>
-              <Field label="Size notes"><input value={draft.size_notes} onChange={(e) => set("size_notes", e.target.value)} className={inputCls} /></Field>
-              <Field label="Available colors" hint="Comma-separated">
-                <input value={draft.colorsText} onChange={(e) => set("colorsText", e.target.value)} className={inputCls} />
-              </Field>
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={draft.custom_colors} onChange={(e) => set("custom_colors", e.target.checked)} />
-                <span>Custom colors available on request</span>
-              </label>
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Standard packaging"><input value={draft.packaging_standard} onChange={(e) => set("packaging_standard", e.target.value)} className={inputCls} /></Field>
-                <Field label="Custom packaging">
-                  <label className="inline-flex items-center gap-2 mt-2 text-sm">
-                    <input type="checkbox" checked={draft.packaging_custom} onChange={(e) => set("packaging_custom", e.target.checked)} />
-                    Available on request
-                  </label>
-                </Field>
-              </div>
-            </>
-          )}
-
-          {tab === "customization" && (
-            <div className="grid sm:grid-cols-2 gap-3">
-              {CUSTOMIZATION_KEYS.map(({ key, label }) => (
-                <label key={key} className="inline-flex items-center gap-2 text-sm border border-border/60 px-3 py-2.5 cursor-pointer hover:border-primary">
-                  <input type="checkbox" checked={!!draft.customization[key]} onChange={(e) => setCustom(key, e.target.checked)} />
-                  <span>{label}</span>
-                </label>
-              ))}
+              <Field label="URL slug" hint="Generated from name; duplicates get -2, -3 automatically"><input value={draft.slug} onChange={(event) => set("slug", event.target.value)} placeholder={previewSlug} className={inputClass} /></Field>
             </div>
-          )}
+            <Field label="Short description"><textarea rows={2} value={draft.short_description} onChange={(event) => set("short_description", event.target.value)} className={inputClass} /></Field>
+            <Field label="Full description"><textarea rows={5} value={draft.description} onChange={(event) => set("description", event.target.value)} className={inputClass} /></Field>
+          </Section>
 
-          {tab === "media" && (
-            <>
-              <Field label="Cover image URL">
-                <input value={draft.image_url} onChange={(e) => set("image_url", e.target.value)} placeholder="https://…" className={inputCls} />
-              </Field>
-              {draft.image_url && (
-                <img src={draft.image_url} alt="Cover preview" className="w-32 h-32 object-cover border border-border/60" />
-              )}
-              <Field label="Gallery URLs" hint="One URL per line — first becomes cover if none set">
-                <textarea rows={4} value={draft.galleryText} onChange={(e) => set("galleryText", e.target.value)} className={inputCls} />
-              </Field>
-              <div className="flex flex-wrap gap-2">
-                {draft.galleryText.split("\n").filter((s) => s.trim()).slice(0, 8).map((u, i) => (
-                  <img key={i} src={u.trim()} alt="" className="w-16 h-16 object-cover border border-border/60" />
+          <Section title="Images" description="Select images here. Upload & Publish creates Supabase Storage URLs automatically and makes the product live.">
+            <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
+            <button type="button" onClick={() => fileInput.current?.click()} disabled={saving || draft.pendingImages.length >= PRODUCT_MEDIA_MAX_FILES} className="w-full min-h-28 border border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10 flex flex-col items-center justify-center gap-2 text-sm disabled:opacity-50">
+              <UploadCloud size={24} className="text-primary" />
+              <span>Select JPG, PNG or WebP images</span>
+              <span className="text-xs text-muted-foreground">Up to {PRODUCT_MEDIA_MAX_FILES} new images · 25 MB each</span>
+            </button>
+
+            {draft.pendingImages.length > 0 && (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {draft.pendingImages.map((image, index) => (
+                  <div key={image.id} className="border border-border/60 p-2 bg-background/40">
+                    <img src={image.previewUrl} alt={image.file.name} className="w-full aspect-square object-cover" />
+                    <p className="text-xs truncate mt-2" title={image.file.name}>{index === 0 && !draft.image_url.trim() ? "Cover · " : ""}{image.file.name}</p>
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground mt-1">{image.state}</p>
+                    <div className="flex items-center justify-end gap-1 mt-2">
+                      <button type="button" onClick={() => moveImage(index, -1)} disabled={saving || index === 0} className={iconButton}><ArrowUp size={13} /></button>
+                      <button type="button" onClick={() => moveImage(index, 1)} disabled={saving || index === draft.pendingImages.length - 1} className={iconButton}><ArrowDown size={13} /></button>
+                      <button type="button" onClick={() => removePending(index)} disabled={saving} className={`${iconButton} text-destructive`}><Trash2 size={13} /></button>
+                    </div>
+                  </div>
                 ))}
               </div>
-              <Field label="Specs / bullet highlights" hint="One per line">
-                <textarea rows={3} value={draft.specsText} onChange={(e) => set("specsText", e.target.value)} className={inputCls} />
-              </Field>
-            </>
-          )}
+            )}
 
-          {tab === "seo" && (
-            <>
-              <Field label="SEO title" hint="Under 60 chars">
-                <input value={draft.seo_title} onChange={(e) => set("seo_title", e.target.value)} className={inputCls} />
-              </Field>
-              <Field label="SEO description" hint="Under 160 chars">
-                <textarea rows={2} value={draft.seo_description} onChange={(e) => set("seo_description", e.target.value)} className={inputCls} />
-              </Field>
-              <p className="text-xs text-muted-foreground">Product schema is generated automatically. No price / Offer is emitted (quotation-based).</p>
-            </>
-          )}
+            <Field label="Existing cover image URL" hint="Usually generated automatically"><input value={draft.image_url} onChange={(event) => set("image_url", event.target.value)} placeholder="https://…" className={inputClass} /></Field>
+            {draft.image_url && <img src={draft.image_url} alt="Current cover" className="w-28 h-28 object-cover border border-border/60" />}
+            <Field label="Existing gallery URLs" hint="One URL per line; preserved unless removed"><textarea rows={5} value={draft.galleryText} onChange={(event) => set("galleryText", event.target.value)} className={inputClass} /></Field>
+          </Section>
 
-          {tab === "publish" && (
-            <>
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={draft.is_published} onChange={(e) => set("is_published", e.target.checked)} />
-                <span>Published (visible on public site)</span>
-              </label>
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={draft.is_featured} onChange={(e) => set("is_featured", e.target.checked)} />
-                <span>Featured</span>
-              </label>
-              {draft.id && selectedCat && parent && (
-                <p className="text-xs text-muted-foreground">
-                  Preview: <a href={`/products/${parent.slug}/${draft.slug || slugify(draft.name)}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">/products/{parent.slug}/{draft.slug || slugify(draft.name)}</a>
-                </p>
+          <Section title="Buyer information">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Field label="Primary material"><input value={draft.primary_material} onChange={(event) => set("primary_material", event.target.value)} className={inputClass} /></Field>
+              <Field label="GSM / weight"><input value={draft.gsm} onChange={(event) => set("gsm", event.target.value)} className={inputClass} /></Field>
+              <Field label="MOQ display"><input value={draft.moq_display} onChange={(event) => set("moq_display", event.target.value)} placeholder="Flexible per program" className={inputClass} /></Field>
+              <Field label="Sample timeline"><input value={draft.sample_timeline} onChange={(event) => set("sample_timeline", event.target.value)} className={inputClass} /></Field>
+              <Field label="Production timeline"><input value={draft.production_timeline} onChange={(event) => set("production_timeline", event.target.value)} className={inputClass} /></Field>
+              <Field label="Sort order"><input type="number" value={draft.sort_order} onChange={(event) => set("sort_order", Number(event.target.value))} className={inputClass} /></Field>
+            </div>
+            <Field label="Fabric composition"><textarea rows={2} value={draft.fabric_composition} onChange={(event) => set("fabric_composition", event.target.value)} className={inputClass} /></Field>
+            <Field label="Material specifications"><textarea rows={2} value={draft.material_specifications} onChange={(event) => set("material_specifications", event.target.value)} className={inputClass} /></Field>
+            <Field label="Specs / highlights" hint="One per line"><textarea rows={4} value={draft.specsText} onChange={(event) => set("specsText", event.target.value)} className={inputClass} /></Field>
+            <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.is_featured} onChange={(event) => set("is_featured", event.target.checked)} /> Featured product</label>
+            <p className="text-xs text-muted-foreground">Pricing remains quotation-only; no public price is added.</p>
+          </Section>
+
+          <Section title="SEO and live URL">
+            <Field label="SEO title"><input value={draft.seo_title} onChange={(event) => set("seo_title", event.target.value)} className={inputClass} /></Field>
+            <Field label="SEO description"><textarea rows={2} value={draft.seo_description} onChange={(event) => set("seo_description", event.target.value)} className={inputClass} /></Field>
+            <div className="border border-border/60 bg-background/40 p-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Generated product URL</p>
+              <p className="text-sm break-all mt-2">{liveUrl ?? "Choose a valid subcategory and product name"}</p>
+              {parentCategory && liveUrl && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <button type="button" onClick={() => void copyUrl()} className={secondaryButton}><Copy size={13} /> Copy</button>
+                  <a href={liveUrl} target="_blank" rel="noreferrer" className={secondaryButton}><ExternalLink size={13} /> Open</a>
+                </div>
               )}
-            </>
-          )}
+            </div>
+          </Section>
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border/60 bg-card/95 px-6 py-4">
-          <button onClick={onCancel} className="text-xs uppercase tracking-[0.25em] px-4 py-2 border border-border/60 hover:border-primary">Cancel</button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="text-xs uppercase tracking-[0.25em] bg-gradient-gold text-primary-foreground px-5 py-2 hover:shadow-gold disabled:opacity-60"
-          >
-            {saving ? "Saving…" : draft.id ? "Save changes" : "Create product"}
-          </button>
+        <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t border-border/60 bg-card/95 px-5 py-4">
+          <button type="button" onClick={onCancel} disabled={saving} className={secondaryButton}>Cancel</button>
+          <button type="button" onClick={onSaveDraft} disabled={saving} className={secondaryButton}>{saving ? "Working…" : "Save Draft"}</button>
+          <button type="button" onClick={onPublish} disabled={saving} className={primaryButton}>{saving ? "Uploading & saving…" : draft.id ? "Save & Publish" : "Upload & Publish"}</button>
         </div>
       </div>
     </div>
   );
 }
 
-const inputCls = "w-full bg-background/60 border border-border/60 focus:border-primary outline-none px-3 py-2 text-sm";
+const inputClass = "min-h-10 w-full bg-background/60 border border-border/60 focus:border-primary outline-none px-3 py-2 text-sm";
+const primaryButton = "min-h-10 inline-flex items-center justify-center gap-2 text-xs uppercase tracking-[0.18em] bg-gradient-gold text-primary-foreground px-4 py-2 hover:shadow-gold disabled:opacity-50";
+const secondaryButton = "min-h-10 inline-flex items-center justify-center gap-2 text-xs uppercase tracking-[0.16em] border border-border/60 px-3 py-2 hover:border-primary disabled:opacity-50";
+const iconButton = "min-h-9 min-w-9 inline-flex items-center justify-center text-muted-foreground hover:text-primary disabled:opacity-40";
+const publishedBadge = "text-[10px] uppercase tracking-[0.16em] px-2 py-1 border border-emerald-500/50 text-emerald-500";
+const draftBadge = "text-[10px] uppercase tracking-[0.16em] px-2 py-1 border border-border/60 text-muted-foreground";
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{label}</span>
+      <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</span>
       {hint && <span className="text-[10px] text-muted-foreground/70 ml-2">· {hint}</span>}
       <div className="mt-1.5">{children}</div>
     </label>
+  );
+}
+
+function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+  return (
+    <section className="space-y-4">
+      <div>
+        <h3 className="font-display text-xl">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+      </div>
+      {children}
+    </section>
   );
 }
