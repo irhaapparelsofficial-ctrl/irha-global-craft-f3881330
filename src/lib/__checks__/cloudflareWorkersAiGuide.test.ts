@@ -63,7 +63,7 @@ describe("Cloudflare Workers AI guide", () => {
   it("adds exactly one AI binding to downloaded TOML and remains idempotent", () => {
     const first = runConfigPreparation("wrangler.toml", [
       'name = "irha-apparels"',
-      'pages_build_output_dir = "./dist"',
+      'pages_build_output_dir = "dist"',
       'compatibility_date = "2026-07-16"',
       "",
     ].join("\n"));
@@ -78,7 +78,7 @@ describe("Cloudflare Workers AI guide", () => {
   it("adds exactly one AI binding to downloaded JSONC and remains idempotent", () => {
     const first = runConfigPreparation("wrangler.jsonc", [
       "{",
-      '  // Downloaded from Cloudflare Pages',
+      "  // Downloaded from Cloudflare Pages",
       '  "name": "irha-apparels",',
       '  "pages_build_output_dir": "./dist",',
       '  "compatibility_date": "2026-07-16"',
@@ -91,6 +91,21 @@ describe("Cloudflare Workers AI guide", () => {
     const second = runConfigPreparation("wrangler.jsonc", first);
     expect(second.match(/"ai"\s*:/g)).toHaveLength(1);
     expect(second.match(/"binding"\s*:\s*"AI"/g)).toHaveLength(1);
+  });
+
+  it("normalizes harmless dist path variants without accepting another build directory", () => {
+    const accepted = runConfigPreparation("wrangler.toml", [
+      'name = "irha-apparels"',
+      'pages_build_output_dir = "./dist/"',
+      "",
+    ].join("\n"));
+    expect(accepted).toContain('[ai]\nbinding = "AI"');
+
+    expect(() => runConfigPreparation("wrangler.toml", [
+      'name = "irha-apparels"',
+      'pages_build_output_dir = "build"',
+      "",
+    ].join("\n"))).toThrow();
   });
 
   it("rejects a conflicting downloaded AI binding instead of overwriting it", () => {
