@@ -17,6 +17,23 @@ describe("Cloudflare crawler route asset contract", () => {
     expect(patcher).toContain('const REQUIRED_ROUTE_SHELLS = ["products", "contact", "inquiry"]');
   });
 
+  it("derives dynamic public route validity from the exact generated sitemap", () => {
+    const patcher = read("scripts/patch-cloudflare-route-shell-assets.mjs");
+    expect(patcher).toContain('const SITEMAP_PATH = resolve("dist/sitemap.xml")');
+    expect(patcher).toContain("extractManifestRoutes");
+    expect(patcher).toContain("GENERATED_PUBLIC_ROUTES");
+    expect(patcher).toContain("FUNCTIONAL_HTML_PREFIXES");
+    expect(patcher).toContain("if (GENERATED_PUBLIC_ROUTES.has(normalized)) return true");
+    expect(patcher).toContain('if (worker.includes("return PUBLIC_PREFIXES.some"))');
+    expect(patcher).toContain("Cloudflare worker still blanket-allows dynamic public prefixes");
+  });
+
+  it("returns true 404 when a manifest route shell asset is missing", () => {
+    const patcher = read("scripts/patch-cloudflare-route-shell-assets.mjs");
+    expect(patcher).toContain("if (!explicitResponse.ok) return notFoundResponse(request, pathname)");
+    expect(patcher).not.toContain("if (!explicitResponse.ok) return env.ASSETS.fetch(request)");
+  });
+
   it("fails the build unless core route shells contain conversion and trust content", () => {
     const patcher = read("scripts/patch-cloudflare-route-shell-assets.mjs");
     for (const token of [
