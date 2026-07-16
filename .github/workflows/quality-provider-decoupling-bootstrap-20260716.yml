@@ -1,0 +1,93 @@
+name: Quality provider decoupling bootstrap
+
+on:
+  push:
+    branches: [fix/quality-provider-decoupling-20260716]
+    paths:
+      - ".github/workflows/quality-provider-decoupling-bootstrap-20260716.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/quality-provider-decoupling-20260716
+          fetch-depth: 0
+
+      - name: Decouple repository validation from provider secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('.github/workflows/quality.yml')
+          text = path.read_text()
+
+          text = re.sub(
+              r'\n  CLOUDFLARE_API_TOKEN:.*\n  CLOUDFLARE_PROJECT_NAME:.*\n  SUPABASE_ACCESS_TOKEN:.*\n  SUPABASE_DB_PASSWORD:.*',
+              '',
+              text,
+              count=1,
+          )
+
+          text, removed = re.subn(
+              r'\n      - name: Detect full-verification readiness[\s\S]*?\n      - name: Checkout exact event source',
+              '\n      - name: Checkout exact event source',
+              text,
+              count=1,
+          )
+          if removed != 1:
+              raise SystemExit(f'expected one bootstrap-mode block, got {removed}')
+
+          text = text.replace("        if: steps.mode.outputs.full_verify == 'true'\n", '')
+          text = text.replace(
+              "        if: steps.mode.outputs.full_verify == 'true' && always()\n",
+              "        if: always()\n",
+          )
+          text = text.replace(
+              "        if: >-\n          steps.mode.outputs.full_verify == 'true' &&\n          github.ref == 'refs/heads/main' &&\n          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')",
+              "        if: >-\n          github.ref == 'refs/heads/main' &&\n          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')",
+          )
+
+          if 'steps.mode.outputs.full_verify' in text:
+              raise SystemExit('secret-dependent quality condition remains')
+          if 'SUPABASE_ACCESS_TOKEN' in text or 'CLOUDFLARE_API_TOKEN' in text:
+              raise SystemExit('provider secrets remain in Quality Gate')
+          if 'Record temporary no-verification mode' in text:
+              raise SystemExit('bootstrap skip mode remains')
+
+          path.write_text(text)
+
+          Path('src/lib/__checks__/qualityGateProviderIndependence.test.ts').write_text('''import { readFileSync } from "node:fs";\nimport { describe, expect, it } from "vitest";\n\nconst quality = readFileSync(".github/workflows/quality.yml", "utf8");\nconst cloudflare = readFileSync(".github/workflows/cloudflare-pages-auto-production.yml", "utf8");\n\ndescribe("provider-independent Quality Gate", () => {\n  it("always performs repository validation without deployment credentials", () => {\n    expect(quality).not.toContain("SUPABASE_ACCESS_TOKEN");\n    expect(quality).not.toContain("SUPABASE_DB_PASSWORD");\n    expect(quality).not.toContain("CLOUDFLARE_API_TOKEN");\n    expect(quality).not.toContain("full_verify");\n    expect(quality).not.toContain("verification is deferred");\n    expect(quality).toContain("npx tsc --noEmit");\n    expect(quality).toContain("npm test -- --passWithNoTests");\n    expect(quality).toContain("npm run build");\n    expect(quality).toContain("production-dist-${{ github.sha }}");\n  });\n\n  it("keeps Cloudflare secret readiness in the Cloudflare deployment workflow", () => {\n    expect(cloudflare).toContain("CLOUDFLARE_API_TOKEN");\n    expect(cloudflare).toContain("CLOUDFLARE_PROJECT_NAME");\n    expect(cloudflare).toContain("secrets_ready");\n    expect(cloudflare).toContain("Download immutable Quality Gate artifact");\n  });\n});\n''')
+
+          Path('docs/QUALITY_GATE_PROVIDER_INDEPENDENCE_20260716.md').write_text('''# Quality Gate provider independence — 2026-07-16\n\n- TypeScript, tests, migration order, secret scan, production build and release identity always run.\n- The immutable main build artifact is always produced after successful repository validation.\n- Cloudflare deployment waits only for Cloudflare credentials.\n- Supabase deployment workflows remain independently gated by Supabase credentials.\n- Missing one provider credential cannot silently skip validation for the whole repository.\n''')
+
+          Path('.github/workflows/quality-provider-decoupling-bootstrap-20260716.yml').unlink()
+          PY
+
+      - name: Validate patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e .github/workflows/quality-provider-decoupling-bootstrap-20260716.yml
+          grep -Fq 'npm run build' .github/workflows/quality.yml
+          ! grep -Fq 'full_verify' .github/workflows/quality.yml
+          ! grep -Fq 'SUPABASE_ACCESS_TOKEN' .github/workflows/quality.yml
+          test -f src/lib/__checks__/qualityGateProviderIndependence.test.ts
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "ci: decouple validation from provider credentials"
+          git push origin HEAD:fix/quality-provider-decoupling-20260716
