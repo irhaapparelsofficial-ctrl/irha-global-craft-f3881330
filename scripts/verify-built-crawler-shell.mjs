@@ -33,6 +33,26 @@ assert(
   "Built crawler shell is missing the current homepage H1",
 );
 assert(
+  html.includes('type="application/ld+json"') && html.includes('"@type": "Organization"'),
+  "Built crawler shell is missing static Organization structured data",
+);
+assert(
+  html.includes("info@irhaapparels.com") && html.includes("+92 320 4110066"),
+  "Built crawler shell is missing public sales contact details",
+);
+assert(
+  html.includes('href="/inquiry"') && html.includes('href="/buyer-trust"') && html.includes('href="/manufacturing"'),
+  "Built crawler shell is missing primary conversion and trust links",
+);
+assert(
+  html.includes("Bavarian & Trachten Wear") &&
+    html.includes("Leather Apparel") &&
+    html.includes("Sportswear & Teamwear") &&
+    html.includes("Streetwear & Activewear") &&
+    html.includes("Leisurewear & Nightwear"),
+  "Built crawler shell is missing the public product universe",
+);
+assert(
   html.includes(`<link rel="canonical" href="${canonical}/"`),
   "Built HTML canonical does not use the live apex host",
 );
@@ -58,4 +78,4 @@ assert(sitemap.includes(`<loc>${canonical}/</loc>`), "sitemap is missing the can
 assert(llms.includes(`${canonical}/`), "llms.txt is missing absolute canonical URLs");
 assert(llmsFull.toLowerCase().includes("two production hubs"), "llms-full.txt is missing the current homepage structure");
 
-console.log("PASS built crawler parity shell, canonical URLs, robots, sitemap and llms files");
+console.log("PASS built crawler parity shell, structured data, contact, conversion, canonical URLs, robots, sitemap and llms files");
