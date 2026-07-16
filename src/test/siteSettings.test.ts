@@ -9,6 +9,7 @@ import {
 describe("global site settings", () => {
   it("keeps verified defaults when CMS data is missing", () => {
     expect(normalizeGlobalSiteSettings(null)).toEqual(DEFAULT_GLOBAL_SITE_SETTINGS);
+    expect(DEFAULT_GLOBAL_SITE_SETTINGS.brand.email).toBe("info@irhaapparels.com");
   });
 
   it("rejects unsafe logo and navigation protocols", () => {

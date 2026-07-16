@@ -3,7 +3,7 @@ export const BRAND = {
   tagline: "Global Premium Apparel Manufacturer from Sialkot",
   phone: "+923204110066",
   phoneDisplay: "+92 320 411 0066",
-  email: "irhaapparelsofficial@gmail.com",
+  email: "info@irhaapparels.com",
   address: "Sialkot, Punjab, Pakistan",
 };
 
