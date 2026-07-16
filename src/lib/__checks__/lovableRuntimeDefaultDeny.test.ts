@@ -24,6 +24,11 @@ describe("Lovable runtime is explicit opt-in only", () => {
     }
   });
 
+  it("does not enable the opt-in flag in the committed Supabase configuration", () => {
+    const config = readFileSync("supabase/config.toml", "utf8");
+    expect(config).not.toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
+  });
+
   it("covers the modular public chat provider source", () => {
     const provider = readFileSync("supabase/functions/chat/providers.ts", "utf8");
     expect(provider).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
