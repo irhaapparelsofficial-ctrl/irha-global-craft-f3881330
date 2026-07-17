@@ -28,9 +28,9 @@ describe("public lead gateway", () => {
     mocks.uploadToSignedUrl.mockResolvedValue({ error: null });
   });
 
-  it("submits inquiries through the validated Edge Function with a stable reference", async () => {
+  it("submits inquiries through the validated Edge Function with a stable corporate reference", async () => {
     mocks.invoke.mockResolvedValue({
-      data: { ok: true, reference: "IRQ-TEST-123456" },
+      data: { ok: true, reference: "IRHA-2026-123456" },
       error: null,
     });
 
@@ -41,7 +41,7 @@ describe("public lead gateway", () => {
       country: "Germany",
     });
 
-    expect(result).toEqual({ reference: "IRQ-TEST-123456" });
+    expect(result).toEqual({ reference: "IRHA-2026-123456" });
     expect(mocks.invoke).toHaveBeenCalledWith(
       "public-lead-gateway",
       expect.objectContaining({
@@ -50,7 +50,9 @@ describe("public lead gateway", () => {
           payload: expect.objectContaining({
             name: "Buyer Test",
             email: "buyer@example.com",
-            inquiry_ref: expect.stringMatching(/^IRQ-[A-Z0-9-]{6,70}$/),
+            company: "Buyer Co",
+            country: "Germany",
+            inquiry_ref: expect.stringMatching(/^IRHA-[0-9]{4}-[0-9]{6}$/),
           }),
         }),
       }),
@@ -101,13 +103,14 @@ describe("public lead gateway", () => {
     expect(mocks.directFrom).not.toHaveBeenCalled();
   });
 
-  it("uses a signed private upload ticket and returns only safe file metadata", async () => {
+  it("uses a signed private tech-pack upload ticket and returns only safe file metadata", async () => {
     mocks.invoke.mockResolvedValue({
       data: {
         ok: true,
-        bucket: "inquiry-uploads",
-        path: "requests/inquiry/2026-07/test.pdf",
+        bucket: "tech_packs",
+        path: "requests/tech-pack/2026-07/test.pdf",
         token: "signed-upload-token",
+        content_type: "application/pdf",
       },
       error: null,
     });
@@ -124,22 +127,22 @@ describe("public lead gateway", () => {
             filename: "specification.pdf",
             mime: "application/pdf",
             size: file.size,
-            purpose: "inquiry",
+            purpose: "tech-pack",
             form_started_at: 123456,
             website: "",
           },
         },
       },
     );
-    expect(mocks.storageFrom).toHaveBeenCalledWith("inquiry-uploads");
+    expect(mocks.storageFrom).toHaveBeenCalledWith("tech_packs");
     expect(mocks.uploadToSignedUrl).toHaveBeenCalledWith(
-      "requests/inquiry/2026-07/test.pdf",
+      "requests/tech-pack/2026-07/test.pdf",
       "signed-upload-token",
       file,
       { contentType: "application/pdf", upsert: false },
     );
     expect(result).toEqual({
-      path: "requests/inquiry/2026-07/test.pdf",
+      path: "requests/tech-pack/2026-07/test.pdf",
       name: "specification.pdf",
       size: file.size,
       mime: "application/pdf",
