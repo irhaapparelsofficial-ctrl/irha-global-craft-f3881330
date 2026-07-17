@@ -1,5 +1,5 @@
-# Public B2B website: search and AI retrieval crawlers may access published pages.
-# Private admin/auth routes and retired catalogue files remain blocked.
+# Irha Apparels public B2B website.
+# Published categories, products, markets and German sourcing pages are indexable.
 
 User-agent: Googlebot
 Allow: /
@@ -7,6 +7,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: Bingbot
 Allow: /
@@ -14,6 +16,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: OAI-SearchBot
 Allow: /
@@ -21,6 +25,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: ChatGPT-User
 Allow: /
@@ -28,6 +34,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: GPTBot
 Allow: /
@@ -35,6 +43,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: ClaudeBot
 Allow: /
@@ -42,6 +52,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: PerplexityBot
 Allow: /
@@ -49,6 +61,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: Google-Extended
 Allow: /
@@ -56,6 +70,8 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: Applebot-Extended
 Allow: /
@@ -63,16 +79,20 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 User-agent: Twitterbot
 Allow: /
 Disallow: /admin
 Disallow: /auth
+Disallow: /api/
 
 User-agent: facebookexternalhit
 Allow: /
 Disallow: /admin
 Disallow: /auth
+Disallow: /api/
 
 User-agent: *
 Allow: /
@@ -80,5 +100,7 @@ Disallow: /seo-indexing
 Disallow: /admin
 Disallow: /auth
 Disallow: /catalogs/
+Disallow: /inquiry-review
+Disallow: /api/
 
 Sitemap: https://irhaapparels.com/sitemap.xml

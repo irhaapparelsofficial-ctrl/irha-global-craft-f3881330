@@ -22,6 +22,8 @@ const Markets = lazy(() => import("./pages/Markets"));
 const MarketLandingPage = lazy(() => import("./pages/MarketLandingPage"));
 const Manufacturing = lazy(() => import("./pages/Manufacturing"));
 const Inquiry = lazy(() => import("./pages/Inquiry"));
+const InquiryCart = lazy(() => import("./pages/InquiryCart"));
+const GermanBavarianWear = lazy(() => import("./pages/GermanBavarianWear"));
 const RepeatOrder = lazy(() => import("./pages/RepeatOrder"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -44,7 +46,6 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Catalogue = lazy(() => import("./pages/Catalogue"));
 const CatalogueCategory = lazy(() => import("./pages/CatalogueCategory"));
-const Shortlist = lazy(() => import("./pages/Shortlist"));
 const Compare = lazy(() => import("./pages/Compare"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const BuyerTrust = lazy(() => import("./pages/BuyerTrust"));
@@ -134,8 +135,8 @@ const App = () => (
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Layout><Home /></Layout>} />
-              <Route path="/de" element={<Navigate to="/" replace />} />
-              <Route path="/de/" element={<Navigate to="/" replace />} />
+              <Route path="/de" element={<Navigate to="/de/bavarian-wear" replace />} />
+              <Route path="/de/" element={<Navigate to="/de/bavarian-wear" replace />} />
               <Route path="/legacy-home" element={<Navigate to="/" replace />} />
 
               <Route path="/auth" element={<Auth />} />
@@ -183,6 +184,8 @@ const App = () => (
                       <Route path="/sustainability" element={<Navigate to="/inquiry?intent=rfq" replace />} />
                       <Route path="/shipping-returns" element={<Navigate to="/resources#shipping-questions" replace />} />
                       <Route path="/inquiry" element={<Inquiry />} />
+                      <Route path="/inquiry-cart" element={<InquiryCart />} />
+                      <Route path="/shortlist" element={<Navigate to="/inquiry-cart" replace />} />
                       <Route path="/repeat-order" element={<RepeatOrder />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -190,6 +193,7 @@ const App = () => (
                       <Route path="/connect" element={<Connect />} />
                       <Route path="/catalogue" element={<Catalogue />} />
                       <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
+                      <Route path="/de/bavarian-wear" element={<GermanBavarianWear />} />
                       <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
                       <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
@@ -197,7 +201,6 @@ const App = () => (
                       <Route path="/de/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
                       <Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
                       <Route path="/studio" element={<Studio />} />
-                      <Route path="/shortlist" element={<Shortlist />} />
                       <Route path="/compare" element={<Compare />} />
                       <Route path="/journal" element={<Navigate to="/blog" replace />} />
                       <Route path="/journal/:slug" element={<Navigate to="/blog" replace />} />
