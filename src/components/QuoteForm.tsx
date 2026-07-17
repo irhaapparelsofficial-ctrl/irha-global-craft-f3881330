@@ -1,237 +1,327 @@
-import { useMemo, useRef, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
+import { ArrowRight, CheckCircle2, FileCheck2, MessageCircle, Paperclip, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Check, FileUp, MessageCircle, Send } from "lucide-react";
-import { WHATSAPP_NUMBER, BRAND } from "@/lib/constants";
-import { toast } from "@/hooks/use-toast";
-import { submitPublicInquiry } from "@/lib/publicLeadGateway";
+import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
+import { WHATSAPP_NUMBER } from "@/lib/constants";
+import { submitPublicInquiry, uploadPublicLeadFile } from "@/lib/publicLeadGateway";
 
-type PreferredContact = "email" | "whatsapp" | "either";
+const MAX_FILES = 3;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 
-type QuoteData = {
-  name: string;
-  company: string;
-  country: string;
-  email: string;
-  phone: string;
-  quantity: string;
-  targetDeliveryDate: string;
-  preferredContact: PreferredContact;
-  notes: string;
-  needsCompliance: boolean;
-  website: string;
-};
-
-const EMPTY_QUOTE: QuoteData = {
+const initialData = {
   name: "",
   company: "",
   country: "",
   email: "",
   phone: "",
+  preferredContact: "email",
   quantity: "",
   targetDeliveryDate: "",
-  preferredContact: "email",
   notes: "",
   needsCompliance: false,
   website: "",
 };
 
-export default function QuoteForm({
-  defaultCategory,
-  pageContext,
-}: {
+type QuoteData = typeof initialData;
+
+type QuoteFormProps = {
+  /** Preferred prop for new callers. */
+  category?: string;
+  /** Backward-compatible prop used by current SEO landing pages. */
   defaultCategory?: string;
+  /** Human-readable origin retained in lead context for CRM attribution. */
   pageContext?: string;
-}) {
-  const [data, setData] = useState<QuoteData>(EMPTY_QUOTE);
-  const [sent, setSent] = useState<null | { reference: string }>(null);
+};
+
+export default function QuoteForm({ category, defaultCategory, pageContext }: QuoteFormProps) {
+  const resolvedCategory = category?.trim() || defaultCategory?.trim() || "General";
+  const [data, setData] = useState<QuoteData>(initialData);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const startedAtRef = useRef(Date.now());
+  const [reference, setReference] = useState<string | null>(null);
+  const formStartedAt = useRef(Date.now());
+  const submittingRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { toast } = useToast();
 
-  const update = <K extends keyof QuoteData>(key: K, value: QuoteData[K]) =>
-    setData((current) => ({ ...current, [key]: value }));
+  const update = <K extends keyof QuoteData>(key: K, value: QuoteData[K]) => {
+    setData((previous) => ({ ...previous, [key]: value }));
+  };
 
-  const fullRfqHref = useMemo(() => {
-    const params = new URLSearchParams({ intent: "rfq", utm_source: "inline-quote-upgrade" });
-    if (defaultCategory) params.set("category", defaultCategory);
-    if (pageContext) params.set("utm_content", pageContext);
-    return `/inquiry?${params.toString()}`;
-  }, [defaultCategory, pageContext]);
+  const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    const incoming = Array.from(files);
+    const invalid = incoming.find((file) => !ALLOWED_FILE_TYPES.has(file.type) || file.size < 1 || file.size > MAX_FILE_BYTES);
+    if (invalid) {
+      toast({
+        title: "File not accepted",
+        description: "Use PDF, JPG, PNG or WEBP files up to 10 MB each.",
+        variant: "destructive",
+      });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
-  const whatsappMessage = useMemo(() => {
-    if (!sent) return "";
-    return `Hi ${BRAND.name} — following up on my saved B2B quote request.\n\nReference: ${sent.reference}\nCategory: ${defaultCategory || "General manufacturing inquiry"}\nCompany: ${data.company || "—"}\nCountry: ${data.country}\nQuantity: ${data.quantity || "—"}`;
-  }, [data.company, data.country, data.quantity, defaultCategory, sent]);
+    setSelectedFiles((current) => {
+      const combined = [...current, ...incoming].filter(
+        (file, index, all) => all.findIndex((item) => item.name === file.name && item.size === file.size) === index,
+      );
+      if (combined.length > MAX_FILES) {
+        toast({ title: "Maximum 3 files", description: "Remove a file before adding another.", variant: "destructive" });
+      }
+      return combined.slice(0, MAX_FILES);
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
-  const submit = async (event: React.FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!data.name.trim() || !data.email.trim() || !data.country.trim()) {
-      toast({ title: "Please complete name, country and email", variant: "destructive" });
-      return;
-    }
-    if (data.preferredContact === "whatsapp" && data.phone.trim().length < 6) {
-      toast({ title: "Add a WhatsApp / phone number for WhatsApp follow-up", variant: "destructive" });
+    if (submittingRef.current) return;
+
+    if (!data.name.trim() || !data.company.trim() || !data.country.trim() || !data.email.trim()) {
+      toast({
+        title: "Required information missing",
+        description: "Please add your name, company, destination country and business email.",
+        variant: "destructive",
+      });
       return;
     }
 
-    const complianceNote = data.needsCompliance
-      ? "Buyer requests program-specific material, testing or audit documentation to be reviewed before order confirmation."
-      : "";
-    const deliveryNote = data.targetDeliveryDate
-      ? `Buyer target delivery date: ${data.targetDeliveryDate}. Feasibility must be confirmed after requirement review.`
-      : "";
-    const combinedNotes = [data.notes, deliveryNote, complianceNote].filter(Boolean).join(" — ");
+    if (data.preferredContact !== "email" && !data.phone.trim()) {
+      toast({
+        title: "WhatsApp or phone number required",
+        description: "Add a number or select email as your preferred contact method.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    submittingRef.current = true;
     setLoading(true);
-
     try {
-      const { reference } = await submitPublicInquiry({
+      const uploadedFiles = await Promise.all(
+        selectedFiles.map((file) => uploadPublicLeadFile(file, "inquiry", formStartedAt.current)),
+      );
+
+      const result = await submitPublicInquiry({
         kind: "quote",
         name: data.name,
-        email: data.email,
-        phone: data.phone || null,
         company: data.company,
         country: data.country,
+        email: data.email,
+        phone: data.phone,
+        category: resolvedCategory,
         quantity: data.quantity,
-        category: defaultCategory || null,
-        message: combinedNotes,
-        source: pageContext || "inline-quote-form",
+        message: data.notes,
+        files: uploadedFiles,
+        source: "website-quick-quote",
         intent: "rfq",
+        form_started_at: formStartedAt.current,
         website: data.website,
-        form_started_at: startedAtRef.current,
         lead_context: {
-          conversion_type: "inline-quote",
-          page_context: pageContext || null,
           preferred_contact: data.preferredContact,
           target_delivery_date: data.targetDeliveryDate || null,
-          compliance_review_requested: data.needsCompliance,
+          needs_compliance_documents: data.needsCompliance,
+          quick_quote: true,
+          uploaded_file_count: uploadedFiles.length,
+          page_context: pageContext?.trim() || null,
           source_page: window.location.pathname + window.location.search,
           referrer: document.referrer || null,
         },
       });
 
-      try {
-        (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
-          "event",
-          "conversion",
-          { send_to: "AW-18279003993/K0wJCMiF7sYcENnujYxE" },
-        );
-      } catch {
-        // Analytics failure must never block a saved quote request.
-      }
-
-      setSent({ reference });
-    } catch (error) {
-      toast({
-        title: "Quote request could not be saved",
-        description: error instanceof Error ? error.message : "Please try again or contact us on WhatsApp.",
-        variant: "destructive",
+      setReference(result.reference);
+      trackEvent("quote_submit_success", {
+        category: resolvedCategory,
+        preferred_contact: data.preferredContact,
+        has_phone: Boolean(data.phone.trim()),
+        has_target_date: Boolean(data.targetDeliveryDate),
+        file_count: uploadedFiles.length,
       });
+      toast({
+        title: "Quote request received",
+        description: `Reference ${result.reference}. Our team will review it before contacting you.`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Please retry or use the full inquiry form.";
+      toast({ title: "Submission failed", description: message, variant: "destructive" });
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
 
-  const input =
-    "w-full bg-input border border-border focus:border-primary outline-none px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors";
+  if (reference) {
+    const summary = `Hi Irha Apparels — I submitted quote request ${reference} for ${resolvedCategory}.`;
+    const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(summary)}`;
+    const fullInquiryHref = `/inquiry?intent=rfq&category=${encodeURIComponent(resolvedCategory)}&utm_source=quick-quote-success`;
 
-  if (sent) {
     return (
-      <div className="border border-primary/40 bg-card/60 p-7 md:p-9 text-center">
-        <div className="mx-auto w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center mb-4">
-          <Check className="text-primary" size={22} />
-        </div>
-        <h3 className="font-display text-2xl">Quote request saved</h3>
-        <p className="text-foreground/70 mt-2 text-sm">
-          Reference <span className="font-mono text-foreground">{sent.reference}</span>. Our team will review the product, quantity and destination before confirming price, MOQ and timing.
+      <div className="border border-primary/40 bg-card/70 p-6 sm:p-8 text-center" role="status" aria-live="polite">
+        <CheckCircle2 className="mx-auto text-primary" size={36} aria-hidden="true" />
+        <h3 className="mt-4 font-display text-2xl">Quote request received</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Reference <span className="font-mono text-foreground">{reference}</span>. We will review your requirements and contact you through your preferred channel.
         </p>
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <Link
-            to={fullRfqHref}
-            className="inline-flex items-center justify-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-3 text-[11px] uppercase tracking-[0.2em]"
+            to={fullInquiryHref}
+            className="inline-flex min-h-12 items-center justify-center gap-2 border border-primary/50 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
           >
-            <FileUp size={14} /> Add tech pack / full RFQ
+            <Paperclip size={15} aria-hidden="true" /> Add more project detail
           </Link>
           <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`}
+            href={whatsappHref}
             target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 border border-border hover:border-primary px-6 py-3 text-[11px] uppercase tracking-[0.2em]"
+            rel="noreferrer noopener"
+            className="inline-flex min-h-12 items-center justify-center gap-2 bg-primary px-4 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground hover:opacity-90"
           >
-            <MessageCircle size={14} /> WhatsApp follow-up
+            <MessageCircle size={15} aria-hidden="true" /> Optional WhatsApp follow-up
           </a>
         </div>
-        <p className="mt-4 text-[11px] text-muted-foreground">
-          WhatsApp is optional. Your request is already saved.
-        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setReference(null);
+            setData(initialData);
+            setSelectedFiles([]);
+            formStartedAt.current = Date.now();
+          }}
+          className="mt-5 text-xs uppercase tracking-[0.18em] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Submit another request
+        </button>
       </div>
     );
   }
 
+  const inputClass = "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+  const labelClass = "mb-2 block text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground";
+
   return (
-    <form
-      onSubmit={submit}
-      className="border border-border bg-card/40 p-6 md:p-8 space-y-4"
-      aria-label="Request a quote"
-    >
+    <form onSubmit={submit} className="space-y-4" noValidate aria-label="Request a quote">
       <input
+        name="website"
         tabIndex={-1}
         autoComplete="off"
+        className="hidden"
         aria-hidden="true"
-        className="absolute -left-[10000px] h-px w-px opacity-0"
-        name="website"
         value={data.website}
         onChange={(event) => update("website", event.target.value)}
       />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="quote-name" className={labelClass}>Your name *</label>
+          <input id="quote-name" autoComplete="name" className={inputClass} value={data.name} onChange={(event) => update("name", event.target.value)} required />
+        </div>
+        <div>
+          <label htmlFor="quote-company" className={labelClass}>Company / brand *</label>
+          <input id="quote-company" autoComplete="organization" className={inputClass} value={data.company} onChange={(event) => update("company", event.target.value)} required />
+        </div>
+        <div>
+          <label htmlFor="quote-country" className={labelClass}>Destination country *</label>
+          <input id="quote-country" autoComplete="country-name" className={inputClass} value={data.country} onChange={(event) => update("country", event.target.value)} required />
+        </div>
+        <div>
+          <label htmlFor="quote-email" className={labelClass}>Business email *</label>
+          <input id="quote-email" type="email" autoComplete="email" className={inputClass} value={data.email} onChange={(event) => update("email", event.target.value)} required />
+        </div>
+        <div>
+          <label htmlFor="quote-phone" className={labelClass}>WhatsApp / phone (optional)</label>
+          <input id="quote-phone" type="tel" autoComplete="tel" placeholder="+49 123 456789" className={inputClass} value={data.phone} onChange={(event) => update("phone", event.target.value)} />
+        </div>
+        <div>
+          <label htmlFor="quote-contact" className={labelClass}>Preferred contact</label>
+          <select id="quote-contact" className={inputClass} value={data.preferredContact} onChange={(event) => update("preferredContact", event.target.value)}>
+            <option value="email">Email</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="phone">Phone call</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="quote-quantity" className={labelClass}>Estimated quantity</label>
+          <input id="quote-quantity" placeholder="e.g. 500 pcs / style" className={inputClass} value={data.quantity} onChange={(event) => update("quantity", event.target.value)} />
+        </div>
+        <div>
+          <label htmlFor="quote-date" className={labelClass}>Target delivery date</label>
+          <input id="quote-date" type="date" className={inputClass} value={data.targetDeliveryDate} onChange={(event) => update("targetDeliveryDate", event.target.value)} />
+        </div>
+      </div>
+
       <div>
-        <p className="eyebrow mb-2">Quote Request</p>
-        <h3 className="font-display text-2xl md:text-3xl leading-tight">
-          Request a <span className="text-gold italic">quote</span> for this program
-        </h3>
-        <p className="text-xs text-muted-foreground mt-2">
-          Price, MOQ and timing are confirmed after the exact requirement is reviewed.
-        </p>
-      </div>
-      <div className="grid sm:grid-cols-2 gap-3">
-        <input className={input} placeholder="Full name *" value={data.name} onChange={(event) => update("name", event.target.value)} aria-label="Full name" required maxLength={100} />
-        <input className={input} placeholder="Company / brand" value={data.company} onChange={(event) => update("company", event.target.value)} aria-label="Company" maxLength={160} />
-        <input className={input} placeholder="Country *" value={data.country} onChange={(event) => update("country", event.target.value)} aria-label="Country" required maxLength={80} />
-        <input type="email" className={input} placeholder="Email *" value={data.email} onChange={(event) => update("email", event.target.value)} aria-label="Email" required maxLength={254} />
-        <input className={input} placeholder="WhatsApp / phone (optional)" value={data.phone} onChange={(event) => update("phone", event.target.value)} aria-label="WhatsApp or phone" maxLength={40} />
-        <select className={input} value={data.preferredContact} onChange={(event) => update("preferredContact", event.target.value as PreferredContact)} aria-label="Preferred contact method">
-          <option value="email">Preferred contact: Email</option>
-          <option value="whatsapp">Preferred contact: WhatsApp</option>
-          <option value="either">Preferred contact: Either</option>
-        </select>
-        <input className={input} placeholder="Estimated quantity (e.g. 500 pcs)" value={data.quantity} onChange={(event) => update("quantity", event.target.value)} aria-label="Quantity" maxLength={100} />
-        <input type="date" className={input} value={data.targetDeliveryDate} onChange={(event) => update("targetDeliveryDate", event.target.value)} aria-label="Target delivery date" />
-        <textarea className={`${input} sm:col-span-2`} rows={3} placeholder="Tell us about your project — fabric, deadline, references…" value={data.notes} onChange={(event) => update("notes", event.target.value)} aria-label="Notes" maxLength={6000} />
-      </div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-border bg-input/30 px-4 py-3">
-        <p className="text-xs text-foreground/70">Have a tech pack, artwork or reference images?</p>
-        <Link to={fullRfqHref} className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-gold hover:underline">
-          <FileUp size={14} /> Use full RFQ uploader
-        </Link>
-      </div>
-      <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground/80 border border-border bg-input/40 px-4 py-3 hover:border-gold/50 transition-colors">
-        <input
-          type="checkbox"
-          checked={data.needsCompliance}
-          onChange={(event) => update("needsCompliance", event.target.checked)}
-          className="mt-1 h-4 w-4 accent-[hsl(var(--gold))]"
+        <label htmlFor="quote-notes" className={labelClass}>Product requirements</label>
+        <textarea
+          id="quote-notes"
+          rows={4}
+          placeholder="Product, fabric, GSM, sizes, colours, branding, packaging and destination requirements…"
+          className={inputClass}
+          value={data.notes}
+          onChange={(event) => update("notes", event.target.value)}
         />
-        <span className="leading-snug">
-          I need <span className="text-gold">program-specific material, testing or audit documents</span> reviewed with the order
-        </span>
+      </div>
+
+      <div className="rounded-xl border border-dashed border-primary/35 bg-primary/[0.04] p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground">Tech pack / reference files</p>
+            <p className="mt-1 text-xs text-muted-foreground">Up to 3 PDF, JPG, PNG or WEBP files · 10 MB each.</p>
+          </div>
+          <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 border border-primary/50 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary hover:bg-primary/10">
+            <Paperclip size={14} aria-hidden="true" /> Add files
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => addFiles(event.target.files)}
+              disabled={loading || selectedFiles.length >= MAX_FILES}
+            />
+          </label>
+        </div>
+        {selectedFiles.length > 0 && (
+          <ul className="mt-4 space-y-2" aria-label="Selected files">
+            {selectedFiles.map((file, index) => (
+              <li key={`${file.name}-${file.size}`} className="flex items-center justify-between gap-3 border-t border-white/10 pt-2 text-xs">
+                <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                  <FileCheck2 size={14} className="shrink-0 text-primary" aria-hidden="true" />
+                  <span className="truncate">{file.name}</span>
+                  <span className="shrink-0 text-[10px]">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                </span>
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={`Remove ${file.name}`}
+                  onClick={() => setSelectedFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                  disabled={loading}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-muted-foreground">
+        <input type="checkbox" className="mt-1 accent-primary" checked={data.needsCompliance} onChange={(event) => update("needsCompliance", event.target.checked)} />
+        <span>I need compliance, material or testing documents discussed during quotation.</span>
       </label>
+
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        Submitting this form saves your request and files securely. WhatsApp is optional and will never open automatically.
+      </p>
+
       <button
         type="submit"
         disabled={loading}
-        className="w-full inline-flex items-center justify-center gap-3 bg-gradient-gold text-primary-foreground px-7 py-4 text-xs uppercase tracking-[0.3em] hover:shadow-gold transition-all disabled:opacity-60"
+        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? "Saving…" : <>Save quote request <Send size={14} /></>}
+        {loading ? (selectedFiles.length ? "Uploading & submitting…" : "Submitting…") : "Submit quote request"} <ArrowRight size={15} aria-hidden="true" />
       </button>
-      <p className="text-center text-[11px] text-muted-foreground">
-        Submitting saves the request. It does not automatically open WhatsApp.
-      </p>
     </form>
   );
 }
