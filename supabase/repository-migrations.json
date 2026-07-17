@@ -119,6 +119,14 @@
       "transactional_dry_run": true
     },
     {
+      "version": "20260717162000",
+      "name": "immediate_live_chat_presence_dispatch",
+      "path": "supabase/migrations/20260717162000_immediate_live_chat_presence_dispatch.sql",
+      "git_blob_sha": "5042e41b22a612ab9355495e463de0cf8c4950ed",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
       "version": "20260717222000",
       "name": "media_duplicate_lineage_foundation",
       "path": "supabase/migrations/20260717222000_media_duplicate_lineage_foundation.sql",
