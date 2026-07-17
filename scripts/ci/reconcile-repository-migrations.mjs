@@ -220,14 +220,25 @@ async function plan() {
   const pending = pendingEntries(ledger);
   const dryRuns = [];
   const verifiedExisting = [];
+  const transactionalStack = [];
   for (const entry of pending) {
     if (entryExecutionMode(entry) === "verified_present") {
       verifiedExisting.push(await verifyExistingEntry(entry));
       continue;
     }
     const sql = transactionBody(readFileSync(resolve(root, entry.path), "utf8"), entry);
-    await databaseQuery(`begin;\n${sql}\nrollback;`);
-    dryRuns.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, status: "passed" });
+    transactionalStack.push({ entry, sql });
+  }
+  // Dry-run all pending transactional migrations in ONE BEGIN...ROLLBACK so
+  // later migrations that reference objects created by earlier pending ones
+  // resolve correctly. Apply() still commits each migration in its own
+  // transaction, so per-migration atomicity is preserved at mutation time.
+  if (transactionalStack.length > 0) {
+    const stackedSql = transactionalStack.map((item) => item.sql).join("\n");
+    await databaseQuery(`begin;\n${stackedSql}\nrollback;`);
+    for (const { entry } of transactionalStack) {
+      dryRuns.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, status: "passed" });
+    }
   }
   const output = {
     schema_version: 1,
@@ -243,6 +254,7 @@ async function plan() {
       execution_mode: execution_mode || "transactional",
     })),
     transactional_dry_runs: dryRuns,
+    transactional_dry_run_mode: "stacked_single_transaction",
     verified_existing: verifiedExisting,
     ledger_versions: ledger.map((row) => ({ version: String(row.version), git_blob_sha: row.git_blob_sha, state: row.application_state })),
   };
