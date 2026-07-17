@@ -360,6 +360,125 @@
           "web_sha256": "ba9e5f37eaad82aeca4a70a5fd20bde54cd71a5a9e0257614d61fc1b3738f19a"
         }
       ]
+    },
+    {
+      "slug": "rugby-match-jersey",
+      "product": "Rugby Match Jersey",
+      "design": "01",
+      "views": [
+        {
+          "view": "front",
+          "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:323d6b5f-639c-4f2f-9978-dc39004dcc9e",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/rugby-match-jersey/clean/rugby-match-jersey-design-01-front-clean-2048.png",
+          "branded_path": "public/product-media/rugby-match-jersey/branded/rugby-match-jersey-design-01-front-branded-2048.png",
+          "web_path": "public/product-media/rugby-match-jersey/web/rugby-match-jersey-design-01-front-web-1600.webp",
+          "clean_sha256": "8b56fcd86f11128ea9d73eef56fe3f89e7c4bde51431ab90231d7cb01b92008e",
+          "branded_sha256": "688ab2105b5f1119fe118859d8a6f4acd68140fbda20a541787e0917566b4aeb",
+          "web_sha256": "3370ad9ac54a81c53e9ac94056c9d3199cf5fef42a02e46f273720290b658fd3"
+        },
+        {
+          "view": "three-quarter",
+          "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:b092ad5a-3468-448e-99fa-369face2bb97",
+          "source_dimensions": [
+            1536,
+            1536
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/rugby-match-jersey/clean/rugby-match-jersey-design-01-three-quarter-clean-2048.png",
+          "branded_path": "public/product-media/rugby-match-jersey/branded/rugby-match-jersey-design-01-three-quarter-branded-2048.png",
+          "web_path": "public/product-media/rugby-match-jersey/web/rugby-match-jersey-design-01-three-quarter-web-1600.webp",
+          "clean_sha256": "5d5ac53bcf7b2a53f2a08f7d8ba1868ad1829dab963751c91fb320f5327ed659",
+          "branded_sha256": "2cb825461ebb5fb5a58a2072b1d4f7a3d80972759575cd99950b108fe11369f9",
+          "web_sha256": "e0eb0d0dcae7f895646b7c24613927349e5f0e931a43e844cb63a270857eef93"
+        },
+        {
+          "view": "side",
+          "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:ee715116-c99b-421a-bba0-ffd640d6e767",
+          "source_dimensions": [
+            1536,
+            1536
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/rugby-match-jersey/clean/rugby-match-jersey-design-01-side-clean-2048.png",
+          "branded_path": "public/product-media/rugby-match-jersey/branded/rugby-match-jersey-design-01-side-branded-2048.png",
+          "web_path": "public/product-media/rugby-match-jersey/web/rugby-match-jersey-design-01-side-web-1600.webp",
+          "clean_sha256": "7b1442563b3a602c84aa9f3c0cdef9048c2aefc8abca945e75b89c8445d6b2f0",
+          "branded_sha256": "2fc065d29dd1d1ab16071ab5172f996912ff774ca6a8ce9023f418e617d4992a",
+          "web_sha256": "8c5c090e09714f49400426d7e011fb45189dccdc9bbef29519e8c68847562fbe"
+        },
+        {
+          "view": "back",
+          "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:8b72172c-9ade-4a9e-93a1-d40d099286f2",
+          "source_dimensions": [
+            1536,
+            1536
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/rugby-match-jersey/clean/rugby-match-jersey-design-01-back-clean-2048.png",
+          "branded_path": "public/product-media/rugby-match-jersey/branded/rugby-match-jersey-design-01-back-branded-2048.png",
+          "web_path": "public/product-media/rugby-match-jersey/web/rugby-match-jersey-design-01-back-web-1600.webp",
+          "clean_sha256": "0bd16deec5c8ecb4aab2879bdf020dbdfdb156461d44e0fecc88e1d2270a7816",
+          "branded_sha256": "754f0ac616f6c09f3fb8f63eaab8fe18456cc0a0bc982946a7424f2bfd754166",
+          "web_sha256": "ac1dc6d1ebc398311caad62ce4e1bb84c3a4bce24c21dc91703009b6a66238f4"
+        }
+      ]
     }
   ]
 }
