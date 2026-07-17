@@ -1,0 +1,62 @@
+name: Package P0 Sports Drive Archives
+
+on:
+  push:
+    branches:
+      - catalog-media-p0-sports-2026-07-17
+    paths:
+      - .github/workflows/package-p0-sports-drive.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/package-p0-sports-drive.yml
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        product:
+          - baseball-jersey
+          - basketball-mesh-jersey
+          - cricket-match-jersey
+          - rugby-match-jersey
+        variant:
+          - clean
+          - branded
+          - web
+
+    steps:
+      - name: Checkout media branch
+        uses: actions/checkout@v4
+        with:
+          ref: catalog-media-p0-sports-2026-07-17
+
+      - name: Verify requested product variant
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.variant }}" in
+            clean|branded)
+              test "$(find public/product-media/${{ matrix.product }}/${{ matrix.variant }} -type f -name '*.png' | wc -l)" -eq 4
+              ;;
+            web)
+              test "$(find public/product-media/${{ matrix.product }}/web -type f -name '*.webp' | wc -l)" -eq 4
+              ;;
+          esac
+          test -f "public/product-media/${{ matrix.product }}/media-manifest.json"
+
+      - name: Package Drive-ready archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.product }}-${{ matrix.variant }}
+          path: |
+            public/product-media/${{ matrix.product }}/${{ matrix.variant }}
+            public/product-media/${{ matrix.product }}/media-manifest.json
+          retention-days: 30
