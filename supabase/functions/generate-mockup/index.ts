@@ -432,7 +432,7 @@ type PreviewPayload = {
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   const headers = corsHeaders(origin);
-  const respond = (body: Record<string, unknown>, status = 200) => respond(body, status, headers);
+  const respond = (body: Record<string, unknown>, status = 200) => jsonResponse(body, status, headers);
 
   if (origin && !isAllowedOrigin(origin)) return respond({ error: "origin_not_allowed" }, 403);
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
