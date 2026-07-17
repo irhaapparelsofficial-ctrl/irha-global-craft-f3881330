@@ -12,11 +12,21 @@ export const PRODUCT_MEDIA_MAX_BYTES = 25 * 1024 * 1024;
 export const PRODUCT_MEDIA_MAX_FILES = 10;
 export const PRODUCT_MEDIA_ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const IMMUTABLE_CACHE_SECONDS = "31536000";
+const SITE_URL = "https://irhaapparels.com";
 
 export type CategoryRef = {
   id: string;
   slug: string;
   parent_id: string | null;
+};
+
+export type TaxonomyNodeRef = {
+  id: string;
+  node_type: string;
+  depth: number;
+  slug: string;
+  name?: string;
+  full_slug_path: string;
 };
 
 export type ProductSlugRef = {
@@ -38,6 +48,55 @@ export type ProductUrlAuditRow = {
   category_id: string | null;
 };
 
+const ROOT_REFERENCE_CODES: Record<string, string> = {
+  "bavarian-trachten-wear": "BAV",
+  "sportswear": "SPT",
+  "premium-leather-apparel": "LTH",
+  "streetwear-activewear": "STW",
+  "leisure-nightwear": "LNW",
+};
+
+const PRODUCT_TYPE_REFERENCE_CODES: Record<string, string> = {
+  lederhosen: "LDH",
+  "short-lederhosen": "SLH",
+  bundhosen: "BDH",
+  "knee-length-lederhosen": "KLH",
+  "long-leather-trousers": "LLT",
+  "trachten-shirts": "TSH",
+  "trachten-vests": "TVS",
+  "bavarian-jackets": "BJK",
+  dirndl: "DRD",
+  "dirndl-dresses": "DRD",
+  "dirndl-blouses": "DBL",
+  "dirndl-aprons": "DAP",
+  "football-uniforms": "FBJ",
+  "football-kits": "FBJ",
+  "soccer-uniforms": "FBJ",
+  "basketball-uniforms": "BBJ",
+  "baseball-uniforms": "BSJ",
+  "rugby-kits": "RGJ",
+  "cricket-uniforms": "CKU",
+  "hockey-jerseys": "HKJ",
+  tracksuits: "TRK",
+  "training-wear": "TRN",
+  "biker-jackets": "BJK",
+  "bomber-jackets": "BMJ",
+  "leather-vests": "LVS",
+  "leather-pants": "LPT",
+  hoodies: "HOD",
+  "t-shirts": "TSH",
+  joggers: "JGR",
+  "cargo-pants": "CGP",
+  activewear: "ACT",
+  leggings: "LEG",
+  "sports-bras": "SBR",
+  pajamas: "PJM",
+  "pajama-sets": "PJM",
+  nightwear: "NGT",
+  loungewear: "LNG",
+  robes: "ROB",
+};
+
 export function slugifyProductName(value: string) {
   return value
     .toLowerCase()
@@ -46,6 +105,43 @@ export function slugifyProductName(value: string) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+export function normalizeProductReferenceCode(value: string) {
+  return value
+    .toUpperCase()
+    .trim()
+    .replace(/[^A-Z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48);
+}
+
+function fallbackReferenceSegment(slug: string) {
+  const tokens = slugifyProductName(slug).split("-").filter(Boolean);
+  if (tokens.length >= 2) return tokens.slice(0, 3).map((token) => token[0]).join("").toUpperCase();
+  const token = tokens[0] ?? "PRD";
+  const consonants = token.replace(/[aeiou]/g, "");
+  return (consonants.slice(0, 3) || token.slice(0, 3) || "PRD").padEnd(3, "X").toUpperCase();
+}
+
+export function productReferencePrefix(taxonomyPath: string) {
+  const segments = taxonomyPath.split("/").filter(Boolean);
+  const root = ROOT_REFERENCE_CODES[segments[0]] ?? fallbackReferenceSegment(segments[0] ?? "product");
+  const leafSlug = segments.at(-1) ?? "product";
+  const leaf = PRODUCT_TYPE_REFERENCE_CODES[leafSlug] ?? fallbackReferenceSegment(leafSlug);
+  return `IRHA-${root}-${leaf}`;
+}
+
+export function suggestProductReferenceCode(taxonomyPath: string, existingCodes: Array<string | null | undefined>) {
+  const prefix = productReferencePrefix(taxonomyPath);
+  const pattern = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-(\\d{4})$`);
+  const highest = existingCodes.reduce((max, value) => {
+    const normalized = normalizeProductReferenceCode(value ?? "");
+    const match = normalized.match(pattern);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `${prefix}-${String(highest + 1).padStart(4, "0")}`;
 }
 
 export function nextAvailableProductSlug(
@@ -77,7 +173,21 @@ export function topLevelCategorySlug(categories: CategoryRef[], categoryId: stri
 export function productPublicUrl(categories: CategoryRef[], categoryId: string, productSlug: string) {
   const parentSlug = topLevelCategorySlug(categories, categoryId);
   if (!parentSlug || !productSlug) return null;
-  return `https://irhaapparels.com/products/${parentSlug}/${productSlug}`;
+  return `${SITE_URL}/products/${parentSlug}/${productSlug}`;
+}
+
+export function taxonomyProductPublicUrl(node: TaxonomyNodeRef | null | undefined, productSlug: string) {
+  if (!node || node.depth !== 2 || node.node_type !== "product_type" || !node.full_slug_path || !productSlug) return null;
+  return `${SITE_URL}/products/${node.full_slug_path}/${productSlug}`;
+}
+
+export function taxonomyNodeMatchesCategory(
+  node: TaxonomyNodeRef,
+  categories: CategoryRef[],
+  categoryId: string,
+) {
+  const rootSlug = topLevelCategorySlug(categories, categoryId);
+  return Boolean(rootSlug && node.full_slug_path.startsWith(`${rootSlug}/`));
 }
 
 export function auditProductUrls(rows: ProductUrlAuditRow[], categories: CategoryRef[]) {
