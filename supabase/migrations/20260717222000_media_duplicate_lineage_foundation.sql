@@ -5,6 +5,11 @@
 
 begin;
 
+-- Supabase management API migrations execute as postgres without JWT claims.
+-- Set a transaction-local service role so existing media write guards authorize
+-- this controlled migration without weakening or disabling the trigger.
+select set_config('request.jwt.claim.role', 'service_role', true);
+
 alter table public.media_assets
   add column if not exists duplicate_of uuid references public.media_assets(id) on delete restrict,
   add column if not exists duplicate_kind text,
