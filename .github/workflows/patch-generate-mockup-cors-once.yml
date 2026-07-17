@@ -1,0 +1,57 @@
+name: Patch Generate Mockup CORS Once
+
+on:
+  push:
+    branches:
+      - fix/generate-mockup-cors-20260717
+    paths:
+      - ".github/workflows/patch-generate-mockup-cors-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: patch-generate-mockup-cors-once
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    if: github.actor == 'irhaapparelsofficial-ctrl'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/generate-mockup-cors-20260717
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Apply fail-closed source patch
+        run: node scripts/ci/patch-generate-mockup-cors.mjs
+
+      - name: Verify patch shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          ! grep -Fq '"Access-Control-Allow-Origin": "*"' supabase/functions/generate-mockup/index.ts
+          grep -Fq 'origin_not_allowed' supabase/functions/generate-mockup/index.ts
+          grep -Fq '"Vary": "Origin"' supabase/functions/generate-mockup/index.ts
+
+      - name: Remove one-time patch machinery
+        shell: bash
+        run: |
+          rm scripts/ci/patch-generate-mockup-cors.mjs
+          rm .github/workflows/patch-generate-mockup-cors-once.yml
+
+      - name: Commit patched source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          test -n "$(git status --porcelain)"
+          git commit -m "fix(mockup): restrict renderer CORS origins"
+          git push origin HEAD:fix/generate-mockup-cors-20260717
