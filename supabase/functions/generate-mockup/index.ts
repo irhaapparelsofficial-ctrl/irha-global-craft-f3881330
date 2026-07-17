@@ -360,13 +360,33 @@ const securityHeaders = {
   "Cross-Origin-Resource-Policy": "same-site",
 };
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
-  ...securityHeaders,
-};
+const SITE_URL = "https://irhaapparels.com";
+
+function isAllowedOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (url.protocol !== "https:" && !local) return false;
+    return url.hostname === "irhaapparels.com" ||
+      url.hostname === "www.irhaapparels.com" ||
+      local ||
+      url.hostname.endsWith(".lovable.app");
+  } catch {
+    return false;
+  }
+}
+
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && isAllowedOrigin(origin) ? origin : SITE_URL;
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+    ...securityHeaders,
+  };
+}
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 12;
@@ -383,11 +403,15 @@ function rateLimited(ip: string): boolean {
   return entry.count > RATE_LIMIT_MAX;
 }
 
-function jsonResponse(body: Record<string, unknown>, status = 200): Response {
+function jsonResponse(
+  body: Record<string, unknown>,
+  status: number,
+  headers: Record<string, string>,
+): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...corsHeaders,
+      ...headers,
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Irha-Renderer": "deterministic-png-v1",
@@ -406,20 +430,25 @@ type PreviewPayload = {
 };
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
-  if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
+  const origin = req.headers.get("origin");
+  const headers = corsHeaders(origin);
+  const respond = (body: Record<string, unknown>, status = 200) => respond(body, status, headers);
+
+  if (origin && !isAllowedOrigin(origin)) return respond({ error: "origin_not_allowed" }, 403);
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method !== "POST") return respond({ error: "method_not_allowed" }, 405);
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("cf-connecting-ip") || "unknown";
-  if (rateLimited(ip)) return jsonResponse({ error: "preview_rate_limited" }, 429);
+  if (rateLimited(ip)) return respond({ error: "preview_rate_limited" }, 429);
 
   const declaredLength = Number(req.headers.get("content-length") || 0);
   if (Number.isFinite(declaredLength) && declaredLength > 2_500_000) {
-    return jsonResponse({ error: "request_too_large" }, 413);
+    return respond({ error: "request_too_large" }, 413);
   }
 
   try {
     const raw = await req.text();
-    if (raw.length > 2_500_000) return jsonResponse({ error: "request_too_large" }, 413);
+    if (raw.length > 2_500_000) return respond({ error: "request_too_large" }, 413);
 
     const payload = JSON.parse(raw) as PreviewPayload;
     const productName = typeof payload.productName === "string" ? payload.productName.trim().slice(0, 120) : "";
@@ -429,7 +458,7 @@ Deno.serve(async (req: Request) => {
     const hasLogo = typeof payload.logoBase64 === "string" && payload.logoBase64.startsWith("data:image/") && payload.logoBase64.length <= 2_300_000;
 
     if (!productName || !/^#[0-9a-fA-F]{6}$/.test(colorHex)) {
-      return jsonResponse({ error: "invalid_preview_request" }, 400);
+      return respond({ error: "invalid_preview_request" }, 400);
     }
 
     const [frontPng, backPng] = await Promise.all([
@@ -441,7 +470,7 @@ Deno.serve(async (req: Request) => {
       ? "The uploaded logo is represented by a placement marker; exact artwork is applied after factory review."
       : "Add a logo in the Custom Lab to preview its intended placement.";
 
-    return jsonResponse({
+    return respond({
       frontUrl: `data:image/png;base64,${bytesToBase64(frontPng)}`,
       backUrl: `data:image/png;base64,${bytesToBase64(backPng)}`,
       fallback: false,
@@ -450,6 +479,6 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error) {
     console.error("generate-mockup failed", error);
-    return jsonResponse({ error: "preview_generation_failed" }, 500);
+    return respond({ error: "preview_generation_failed" }, 500);
   }
 });
