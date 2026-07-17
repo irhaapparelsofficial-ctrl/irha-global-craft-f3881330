@@ -15,7 +15,9 @@ describe("owner exact-main dispatch command", () => {
     expect(workflow).toContain("github.event.comment.body == '/deploy-current-main'");
   });
 
-  it("restricts issue-command dispatch to trusted repository relationships", () => {
+  it("authorizes the exact repository owner login and trusted repository relationships", () => {
+    expect(workflow).toContain("github.actor == 'irhaapparelsofficial-ctrl'");
+    expect(workflow).toContain("github.event.comment.user.login == 'irhaapparelsofficial-ctrl'");
     expect(workflow).toContain("github.event.comment.author_association == 'OWNER'");
     expect(workflow).toContain("github.event.comment.author_association == 'MEMBER'");
     expect(workflow).toContain("github.event.comment.author_association == 'COLLABORATOR'");
