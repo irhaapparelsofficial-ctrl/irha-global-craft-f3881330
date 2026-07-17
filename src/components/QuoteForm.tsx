@@ -1,10 +1,14 @@
 import { FormEvent, useRef, useState } from "react";
-import { ArrowRight, CheckCircle2, MessageCircle, Paperclip } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileCheck2, MessageCircle, Paperclip, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
-import { submitPublicInquiry } from "@/lib/publicLeadGateway";
+import { submitPublicInquiry, uploadPublicLeadFile } from "@/lib/publicLeadGateway";
+
+const MAX_FILES = 3;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 
 const initialData = {
   name: "",
@@ -24,13 +28,41 @@ type QuoteData = typeof initialData;
 
 export default function QuoteForm({ category = "General" }: { category?: string }) {
   const [data, setData] = useState<QuoteData>(initialData);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [reference, setReference] = useState<string | null>(null);
   const formStartedAt = useRef(Date.now());
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
 
   const update = <K extends keyof QuoteData>(key: K, value: QuoteData[K]) => {
     setData((previous) => ({ ...previous, [key]: value }));
+  };
+
+  const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    const incoming = Array.from(files);
+    const invalid = incoming.find((file) => !ALLOWED_FILE_TYPES.has(file.type) || file.size < 1 || file.size > MAX_FILE_BYTES);
+    if (invalid) {
+      toast({
+        title: "File not accepted",
+        description: "Use PDF, JPG, PNG or WEBP files up to 10 MB each.",
+        variant: "destructive",
+      });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setSelectedFiles((current) => {
+      const combined = [...current, ...incoming].filter(
+        (file, index, all) => all.findIndex((item) => item.name === file.name && item.size === file.size) === index,
+      );
+      if (combined.length > MAX_FILES) {
+        toast({ title: "Maximum 3 files", description: "Remove a file before adding another.", variant: "destructive" });
+      }
+      return combined.slice(0, MAX_FILES);
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const submit = async (event: FormEvent) => {
@@ -46,6 +78,10 @@ export default function QuoteForm({ category = "General" }: { category?: string 
 
     setLoading(true);
     try {
+      const uploadedFiles = await Promise.all(
+        selectedFiles.map((file) => uploadPublicLeadFile(file, "inquiry", formStartedAt.current)),
+      );
+
       const result = await submitPublicInquiry({
         kind: "quote",
         name: data.name,
@@ -56,6 +92,7 @@ export default function QuoteForm({ category = "General" }: { category?: string 
         category,
         quantity: data.quantity,
         message: data.notes,
+        files: uploadedFiles,
         source: "website-quick-quote",
         intent: "rfq",
         form_started_at: formStartedAt.current,
@@ -65,6 +102,7 @@ export default function QuoteForm({ category = "General" }: { category?: string 
           target_delivery_date: data.targetDeliveryDate || null,
           needs_compliance_documents: data.needsCompliance,
           quick_quote: true,
+          uploaded_file_count: uploadedFiles.length,
         },
       });
 
@@ -74,6 +112,7 @@ export default function QuoteForm({ category = "General" }: { category?: string 
         preferred_contact: data.preferredContact,
         has_phone: Boolean(data.phone.trim()),
         has_target_date: Boolean(data.targetDeliveryDate),
+        file_count: uploadedFiles.length,
       });
       toast({
         title: "Quote request received",
@@ -104,7 +143,7 @@ export default function QuoteForm({ category = "General" }: { category?: string 
             to={fullInquiryHref}
             className="inline-flex min-h-12 items-center justify-center gap-2 border border-primary/50 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
           >
-            <Paperclip size={15} aria-hidden="true" /> Add tech pack or images
+            <Paperclip size={15} aria-hidden="true" /> Add more project detail
           </Link>
           <a
             href={whatsappHref}
@@ -120,6 +159,7 @@ export default function QuoteForm({ category = "General" }: { category?: string 
           onClick={() => {
             setReference(null);
             setData(initialData);
+            setSelectedFiles([]);
             formStartedAt.current = Date.now();
           }}
           className="mt-5 text-xs uppercase tracking-[0.18em] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
@@ -195,13 +235,56 @@ export default function QuoteForm({ category = "General" }: { category?: string 
         />
       </div>
 
+      <div className="rounded-xl border border-dashed border-primary/35 bg-primary/[0.04] p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground">Tech pack / reference files</p>
+            <p className="mt-1 text-xs text-muted-foreground">Up to 3 PDF, JPG, PNG or WEBP files · 10 MB each.</p>
+          </div>
+          <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 border border-primary/50 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary hover:bg-primary/10">
+            <Paperclip size={14} aria-hidden="true" /> Add files
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => addFiles(event.target.files)}
+              disabled={loading || selectedFiles.length >= MAX_FILES}
+            />
+          </label>
+        </div>
+        {selectedFiles.length > 0 && (
+          <ul className="mt-4 space-y-2" aria-label="Selected files">
+            {selectedFiles.map((file, index) => (
+              <li key={`${file.name}-${file.size}`} className="flex items-center justify-between gap-3 border-t border-white/10 pt-2 text-xs">
+                <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                  <FileCheck2 size={14} className="shrink-0 text-primary" aria-hidden="true" />
+                  <span className="truncate">{file.name}</span>
+                  <span className="shrink-0 text-[10px]">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                </span>
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={`Remove ${file.name}`}
+                  onClick={() => setSelectedFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                  disabled={loading}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-muted-foreground">
         <input type="checkbox" className="mt-1 accent-primary" checked={data.needsCompliance} onChange={(event) => update("needsCompliance", event.target.checked)} />
         <span>I need compliance, material or testing documents discussed during quotation.</span>
       </label>
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Submitting this form saves your request securely. WhatsApp is optional and will never open automatically. Tech packs and reference images can be added through the full inquiry workflow.
+        Submitting this form saves your request and files securely. WhatsApp is optional and will never open automatically.
       </p>
 
       <button
@@ -209,7 +292,7 @@ export default function QuoteForm({ category = "General" }: { category?: string 
         disabled={loading}
         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? "Submitting…" : "Submit quote request"} <ArrowRight size={15} aria-hidden="true" />
+        {loading ? (selectedFiles.length ? "Uploading & submitting…" : "Submitting…") : "Submit quote request"} <ArrowRight size={15} aria-hidden="true" />
       </button>
     </form>
   );
