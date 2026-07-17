@@ -50,6 +50,16 @@ describe("media duplicate lineage foundation", () => {
     expect(migration).not.toContain("storage.from(");
   });
 
+  it("uses a narrow transactional bypass for the existing admin-write trigger", () => {
+    const disable = "alter table public.media_assets disable trigger media_assets_before_write_trigger";
+    const enable = "alter table public.media_assets enable trigger media_assets_before_write_trigger";
+    expect(migration).toContain(disable);
+    expect(migration).toContain(enable);
+    expect(migration.indexOf(disable)).toBeLessThan(migration.indexOf(enable));
+    expect(migration).not.toContain("disable trigger all");
+    expect(migration).not.toContain("disable trigger user");
+  });
+
   it("links only the reviewed unreferenced duplicate to the live canonical wallet asset", () => {
     expect(migration).toContain("b4c6f3d0-f50c-45c3-9446-3752e4b4800c");
     expect(migration).toContain("06bd5d3d-d7ec-4d8b-ac71-5d080e9c00ce");
