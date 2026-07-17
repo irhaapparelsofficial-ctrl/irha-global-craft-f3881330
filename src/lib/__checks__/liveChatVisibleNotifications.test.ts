@@ -26,7 +26,19 @@ describe("visible owner notifications", () => {
     expect(component).toContain("setInterval");
     expect(component).toContain('.eq("role", "admin")');
     expect(component).toContain("/admin/live-chat?session=");
-    expect(component).toContain('return "/admin"');
+    expect(component).toContain('OWNER_VIEW_QUERY = "ownerView"');
+    expect(component).toContain('OWNER_VIEW_INQUIRIES = "inquiries"');
+  });
+
+  it("opens inquiry alerts into the owner request workspace on touch and device click", () => {
+    const component = read("src/components/admin/AdminLiveChatNotification.tsx");
+    expect(component).toContain("openInquiryWorkspaceFromCurrentAdminView");
+    expect(component).toContain('findAdminButtonByPrefixes(["review new requests", "new requests"])');
+    expect(component).toContain('findAdminButtonByPrefixes(["inbox"])');
+    expect(component).toContain("event.preventDefault()");
+    expect(component).toContain("window.location.assign(alertHref(latestAlert))");
+    expect(component).toContain("touch-manipulation");
+    expect(component).toContain("clearRequestedOwnerView");
   });
 
   it("offers explicit device permission, visible toast, sound and click-through alerts", () => {
