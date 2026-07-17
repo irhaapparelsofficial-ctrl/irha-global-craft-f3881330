@@ -9,6 +9,57 @@
       "name": "link_classic_bavarian_shirt_four_view_media",
       "path": "supabase/migrations/20260717002000_link_classic_bavarian_shirt_four_view_media.sql",
       "git_blob_sha": "7d131e0d0c55e4671aa7445620077f41e458a281",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717023000",
+      "name": "owner_notification_delivery",
+      "path": "supabase/migrations/20260717023000_owner_notification_delivery.sql",
+      "git_blob_sha": "3d211ad1226ec9bf2159632364c699afa6b570ad",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (\n  to_regclass('public.owner_push_subscriptions') is not null\n  and to_regclass('public.notification_outbox') is not null\n  and to_regclass('public.notification_delivery_attempts') is not null\n  and to_regprocedure('public.notification_get_secret(text)') is not null\n  and to_regprocedure('public.notification_owner_email()') is not null\n  and to_regprocedure('public.notification_enqueue_from_crm()') is not null\n  and to_regprocedure('public.notification_claim_outbox(integer)') is not null\n  and to_regprocedure('public.notification_requeue_blocked(text)') is not null\n  and to_regprocedure('public.notification_delivery_health()') is not null\n  and exists (\n    select 1\n    from pg_trigger\n    where tgname = 'crm_notifications_delivery_outbox'\n      and tgrelid = 'public.crm_notifications'::regclass\n      and not tgisinternal\n  )\n  and (select relrowsecurity from pg_class where oid = 'public.owner_push_subscriptions'::regclass)\n  and (select relrowsecurity from pg_class where oid = 'public.notification_outbox'::regclass)\n  and (select relrowsecurity from pg_class where oid = 'public.notification_delivery_attempts'::regclass)\n) as verified"
+    },
+    {
+      "version": "20260717023100",
+      "name": "notification_health_service_role",
+      "path": "supabase/migrations/20260717023100_notification_health_service_role.sql",
+      "git_blob_sha": "edc0d7fb78c575e05676dea5af7ccff86e73be5b",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717023200",
+      "name": "notification_dispatch_runtime",
+      "path": "supabase/migrations/20260717023200_notification_dispatch_runtime.sql",
+      "git_blob_sha": "1f27cafbc568af25f8f1f28a5287d2a8cca96a9c",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (\n  to_regclass('public.notification_dispatch_runtime') is not null\n  and to_regprocedure('public.notification_begin_dispatch(integer)') is not null\n  and to_regprocedure('public.notification_dispatch_tick()') is not null\n) as verified"
+    },
+    {
+      "version": "20260717023300",
+      "name": "owner_notifications_only",
+      "path": "supabase/migrations/20260717023300_owner_notifications_only.sql",
+      "git_blob_sha": "8f113a8ba1dc237f0901cc00f62fef3e0f934f5b",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717023400",
+      "name": "notification_claim_outbox_qualification",
+      "path": "supabase/migrations/20260717023400_notification_claim_outbox_qualification.sql",
+      "git_blob_sha": "f549f9fa3ada6f5e87fa44acfd44a3f1b0c37ef9",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717023500",
+      "name": "notification_dispatch_lock",
+      "path": "supabase/migrations/20260717023500_notification_dispatch_lock.sql",
+      "git_blob_sha": "cd79084fb32563edf60ad59b6441712c5913625d",
+      "execution_mode": "transactional",
       "transactional_dry_run": true
     },
     {
@@ -16,6 +67,15 @@
       "name": "live_chat_visitor_presence_geo",
       "path": "supabase/migrations/20260717124500_live_chat_visitor_presence_geo.sql",
       "git_blob_sha": "a1d4f9447a5d4c59242acf76c9b7ef61a846416c",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717130000",
+      "name": "notification_security_hardening",
+      "path": "supabase/migrations/20260717130000_notification_security_hardening.sql",
+      "git_blob_sha": "a1f30871813c0c5092ccd603990abe3c525203fb",
+      "execution_mode": "transactional",
       "transactional_dry_run": true
     }
   ]
