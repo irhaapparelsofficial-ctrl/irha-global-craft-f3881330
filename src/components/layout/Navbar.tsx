@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Bookmark, ChevronRight, Home, Menu, X } from "lucide-react";
+import { ChevronRight, ClipboardList, Home, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useShortlist } from "@/lib/shortlist";
+import { useInquiryCart } from "@/lib/inquiryCart";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const CORE_NAV: ReadonlyArray<{ label: string; href: string; anchor?: boolean }> = [
@@ -17,9 +17,9 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-  const shortlist = useShortlist();
+  const inquiryCart = useInquiryCart();
   const { data: settings } = useSiteSettings();
-  const savedCount = shortlist.items.length;
+  const inquiryCount = inquiryCart.count;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 18);
@@ -104,14 +104,15 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-2 lg:flex">
           <Link
-            to="/shortlist"
-            aria-label={`Saved products (${savedCount})`}
+            to="/inquiry-cart"
+            aria-label={`Inquiry cart (${inquiryCount})`}
+            title="Multi-item inquiry cart"
             className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border/70 text-foreground/70 transition-colors hover:border-primary hover:text-primary"
           >
-            <Bookmark size={17} />
-            {savedCount > 0 && (
+            <ClipboardList size={17} />
+            {inquiryCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-                {savedCount}
+                {inquiryCount}
               </span>
             )}
           </Link>
@@ -122,10 +123,10 @@ export default function Navbar() {
             Factory call
           </Link>
           <Link
-            to={settings.ctas.quoteHref || "/inquiry?intent=rfq"}
+            to={inquiryCount > 0 ? "/inquiry-cart" : (settings.ctas.quoteHref || "/inquiry?intent=rfq")}
             className="inline-flex min-h-11 items-center gap-2 rounded-md bg-gradient-gold px-5 text-[10px] font-semibold uppercase tracking-[0.19em] text-primary-foreground transition-all hover:shadow-gold"
           >
-            Request quote <ChevronRight size={14} />
+            {inquiryCount > 0 ? `Review inquiry (${inquiryCount})` : "Request quote"} <ChevronRight size={14} />
           </Link>
         </div>
 
@@ -140,6 +141,18 @@ export default function Navbar() {
               <Home size={20} />
             </Link>
           )}
+          <Link
+            to="/inquiry-cart"
+            aria-label={`Inquiry cart (${inquiryCount})`}
+            className="relative inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-primary/35 bg-black/35 text-primary"
+          >
+            <ClipboardList size={20} />
+            {inquiryCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                {inquiryCount}
+              </span>
+            )}
+          </Link>
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
@@ -191,18 +204,18 @@ export default function Navbar() {
               Factory call
             </Link>
             <Link
-              to="/shortlist"
+              to="/inquiry-cart"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-border/70 px-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/75"
             >
-              <Bookmark size={14} /> Saved {savedCount || ""}
+              <ClipboardList size={14} /> Inquiry {inquiryCount || ""}
             </Link>
           </div>
 
           <Link
-            to={settings.ctas.quoteHref || "/inquiry?intent=rfq"}
+            to={inquiryCount > 0 ? "/inquiry-cart" : (settings.ctas.quoteHref || "/inquiry?intent=rfq")}
             className="mt-3 inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-gradient-gold px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground"
           >
-            Request a quote <ChevronRight size={15} />
+            {inquiryCount > 0 ? `Review inquiry (${inquiryCount})` : "Request a quote"} <ChevronRight size={15} />
           </Link>
           <p className="mt-4 text-center text-xs text-muted-foreground">
             {settings.brand.phoneDisplay || "Sialkot, Pakistan · B2B manufacturing"}
