@@ -234,8 +234,8 @@ async function plan() {
   // resolve correctly. Apply() still commits each migration in its own
   // transaction, so per-migration atomicity is preserved at mutation time.
   if (transactionalStack.length > 0) {
-    const stackedSql = transactionalStack.map((item) => item.sql).join("\n");
-    await databaseQuery(`begin;\n${stackedSql}\nrollback;`);
+    const sql = transactionalStack.map((item) => item.sql).join("\n");
+    await databaseQuery(`begin;\n${sql}\nrollback;`);
     for (const { entry } of transactionalStack) {
       dryRuns.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, status: "passed" });
     }
