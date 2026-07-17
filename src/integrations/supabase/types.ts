@@ -1976,6 +1976,45 @@ export type Database = {
           },
         ]
       }
+      media_placement_events: {
+        Row: {
+          acted_by: string | null
+          action: string
+          created_at: string
+          id: string
+          media_asset_id: string | null
+          page_slug: string | null
+          page_type: Database["public"]["Enums"]["placement_page_type"] | null
+          reason: string | null
+          reference_code: string | null
+          snapshot: Json
+        }
+        Insert: {
+          acted_by?: string | null
+          action: string
+          created_at?: string
+          id?: string
+          media_asset_id?: string | null
+          page_slug?: string | null
+          page_type?: Database["public"]["Enums"]["placement_page_type"] | null
+          reason?: string | null
+          reference_code?: string | null
+          snapshot?: Json
+        }
+        Update: {
+          acted_by?: string | null
+          action?: string
+          created_at?: string
+          id?: string
+          media_asset_id?: string | null
+          page_slug?: string | null
+          page_type?: Database["public"]["Enums"]["placement_page_type"] | null
+          reason?: string | null
+          reference_code?: string | null
+          snapshot?: Json
+        }
+        Relationships: []
+      }
       outreach_campaigns: {
         Row: {
           approved_count: number
@@ -2235,6 +2274,71 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      product_slot_media: {
+        Row: {
+          approved: boolean
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_required: boolean
+          mapping_confidence: string
+          media_asset_id: string
+          provenance_note: string | null
+          reference_code: string
+          rejected_reason: string | null
+          role: Database["public"]["Enums"]["slot_media_role"]
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_required?: boolean
+          mapping_confidence?: string
+          media_asset_id: string
+          provenance_note?: string | null
+          reference_code: string
+          rejected_reason?: string | null
+          role: Database["public"]["Enums"]["slot_media_role"]
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_required?: boolean
+          mapping_confidence?: string
+          media_asset_id?: string
+          provenance_note?: string | null
+          reference_code?: string
+          rejected_reason?: string | null
+          role?: Database["public"]["Enums"]["slot_media_role"]
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_slot_media_media_asset_id_fkey"
+            columns: ["media_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       production_job_events: {
         Row: {
@@ -2795,6 +2899,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      site_media_placements: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          is_lcp: boolean
+          media_asset_id: string
+          notes: string | null
+          page_slug: string
+          page_type: Database["public"]["Enums"]["placement_page_type"]
+          role: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_lcp?: boolean
+          media_asset_id: string
+          notes?: string | null
+          page_slug: string
+          page_type: Database["public"]["Enums"]["placement_page_type"]
+          role: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_lcp?: boolean
+          media_asset_id?: string
+          notes?: string | null
+          page_slug?: string
+          page_type?: Database["public"]["Enums"]["placement_page_type"]
+          role?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_media_placements_media_asset_id_fkey"
+            columns: ["media_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_calendar_items: {
         Row: {
@@ -3392,6 +3552,14 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_media_audit_summary: {
+        Row: {
+          social_approved_count: number | null
+          total: number | null
+          verification_status: string | null
+        }
+        Relationships: []
+      }
       admin_media_brief_queue: {
         Row: {
           aspect_ratio: string | null
@@ -3658,6 +3826,22 @@ export type Database = {
     Enums: {
       app_role: "admin"
       lead_status: "New" | "Pitched" | "Warm" | "Replied" | "Rejected"
+      placement_page_type:
+        | "home"
+        | "main_category"
+        | "audience"
+        | "family"
+        | "product"
+        | "static"
+      slot_media_role:
+        | "hero"
+        | "three_quarter"
+        | "side"
+        | "back"
+        | "macro"
+        | "branding_detail"
+        | "packaging"
+        | "gallery"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3787,6 +3971,24 @@ export const Constants = {
     Enums: {
       app_role: ["admin"],
       lead_status: ["New", "Pitched", "Warm", "Replied", "Rejected"],
+      placement_page_type: [
+        "home",
+        "main_category",
+        "audience",
+        "family",
+        "product",
+        "static",
+      ],
+      slot_media_role: [
+        "hero",
+        "three_quarter",
+        "side",
+        "back",
+        "macro",
+        "branding_detail",
+        "packaging",
+        "gallery",
+      ],
     },
   },
 } as const

@@ -45,6 +45,7 @@ const AdminTaxonomyReview = lazy(() => import("./pages/AdminTaxonomyReview"));
 const AdminCatalogueCompletion = lazy(() => import("./pages/AdminCatalogueCompletion"));
 const AdminSlotEditor = lazy(() => import("./pages/AdminSlotEditor"));
 const AdminMediaBriefQueue = lazy(() => import("./pages/AdminMediaBriefQueue"));
+const AdminMediaApproval = lazy(() => import("./pages/AdminMediaApproval"));
 const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
@@ -161,6 +162,7 @@ const App = () => (
               <Route path="/admin/catalogue-completion" element={<AdminCatalogueCompletion />} />
               <Route path="/admin/catalogue-completion/:referenceCode" element={<AdminSlotEditor />} />
               <Route path="/admin/media-briefs" element={<AdminMediaBriefQueue />} />
+              <Route path="/admin/media-approval" element={<AdminMediaApproval />} />
               <Route path="/seo-indexing" element={<SeoIndexing />} />
 
               <Route
