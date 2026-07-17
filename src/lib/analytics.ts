@@ -63,6 +63,12 @@ export function trackAnalyticsEvent(name: string, parameters: AnalyticsParameter
   }
 }
 
+/**
+ * Concise alias for components that emit a single consent-aware analytics event.
+ * It intentionally delegates to the same guarded implementation above.
+ */
+export const trackEvent = trackAnalyticsEvent;
+
 export function trackAdsConversion(sendTo: string, parameters: AnalyticsParameters = {}): boolean {
   if (!canSend("ads")) return false;
   try {
