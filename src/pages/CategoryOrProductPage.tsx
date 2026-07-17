@@ -1,4 +1,4 @@
-import ProductDetail from "@/pages/ProductDetail";
+import CanonicalProductDetail from "@/pages/CanonicalProductDetail";
 import CategoryTaxonomyPage from "@/pages/CategoryTaxonomyPage";
 import { Navigate, useParams } from "react-router-dom";
 import { useNormalizedCategory } from "@/hooks/usePublicCategoryData";
@@ -23,5 +23,5 @@ export default function CategoryOrProductPage() {
     if (audience) return <CategoryTaxonomyPage audienceOverride={audience.slug} />;
   }
 
-  return <ProductDetail />;
+  return <CanonicalProductDetail />;
 }
