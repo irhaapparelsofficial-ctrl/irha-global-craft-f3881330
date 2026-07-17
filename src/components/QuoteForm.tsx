@@ -26,12 +26,23 @@ const initialData = {
 
 type QuoteData = typeof initialData;
 
-export default function QuoteForm({ category = "General" }: { category?: string }) {
+type QuoteFormProps = {
+  /** Preferred prop for new callers. */
+  category?: string;
+  /** Backward-compatible prop used by current SEO landing pages. */
+  defaultCategory?: string;
+  /** Human-readable origin retained in lead context for CRM attribution. */
+  pageContext?: string;
+};
+
+export default function QuoteForm({ category, defaultCategory, pageContext }: QuoteFormProps) {
+  const resolvedCategory = category?.trim() || defaultCategory?.trim() || "General";
   const [data, setData] = useState<QuoteData>(initialData);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [reference, setReference] = useState<string | null>(null);
   const formStartedAt = useRef(Date.now());
+  const submittingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
 
@@ -67,6 +78,8 @@ export default function QuoteForm({ category = "General" }: { category?: string 
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (submittingRef.current) return;
+
     if (!data.name.trim() || !data.company.trim() || !data.country.trim() || !data.email.trim()) {
       toast({
         title: "Required information missing",
@@ -76,6 +89,16 @@ export default function QuoteForm({ category = "General" }: { category?: string 
       return;
     }
 
+    if (data.preferredContact !== "email" && !data.phone.trim()) {
+      toast({
+        title: "WhatsApp or phone number required",
+        description: "Add a number or select email as your preferred contact method.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    submittingRef.current = true;
     setLoading(true);
     try {
       const uploadedFiles = await Promise.all(
@@ -89,7 +112,7 @@ export default function QuoteForm({ category = "General" }: { category?: string 
         country: data.country,
         email: data.email,
         phone: data.phone,
-        category,
+        category: resolvedCategory,
         quantity: data.quantity,
         message: data.notes,
         files: uploadedFiles,
@@ -103,12 +126,15 @@ export default function QuoteForm({ category = "General" }: { category?: string 
           needs_compliance_documents: data.needsCompliance,
           quick_quote: true,
           uploaded_file_count: uploadedFiles.length,
+          page_context: pageContext?.trim() || null,
+          source_page: window.location.pathname + window.location.search,
+          referrer: document.referrer || null,
         },
       });
 
       setReference(result.reference);
       trackEvent("quote_submit_success", {
-        category,
+        category: resolvedCategory,
         preferred_contact: data.preferredContact,
         has_phone: Boolean(data.phone.trim()),
         has_target_date: Boolean(data.targetDeliveryDate),
@@ -122,14 +148,15 @@ export default function QuoteForm({ category = "General" }: { category?: string 
       const message = error instanceof Error ? error.message : "Please retry or use the full inquiry form.";
       toast({ title: "Submission failed", description: message, variant: "destructive" });
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
 
   if (reference) {
-    const summary = `Hi Irha Apparels — I submitted quote request ${reference} for ${category}.`;
+    const summary = `Hi Irha Apparels — I submitted quote request ${reference} for ${resolvedCategory}.`;
     const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(summary)}`;
-    const fullInquiryHref = `/inquiry?intent=rfq&category=${encodeURIComponent(category)}&utm_source=quick-quote-success`;
+    const fullInquiryHref = `/inquiry?intent=rfq&category=${encodeURIComponent(resolvedCategory)}&utm_source=quick-quote-success`;
 
     return (
       <div className="border border-primary/40 bg-card/70 p-6 sm:p-8 text-center" role="status" aria-live="polite">
@@ -148,7 +175,7 @@ export default function QuoteForm({ category = "General" }: { category?: string 
           <a
             href={whatsappHref}
             target="_blank"
-            rel="noreferrer"
+            rel="noreferrer noopener"
             className="inline-flex min-h-12 items-center justify-center gap-2 bg-primary px-4 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground hover:opacity-90"
           >
             <MessageCircle size={15} aria-hidden="true" /> Optional WhatsApp follow-up
@@ -174,8 +201,9 @@ export default function QuoteForm({ category = "General" }: { category?: string 
   const labelClass = "mb-2 block text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground";
 
   return (
-    <form onSubmit={submit} className="space-y-4" noValidate>
+    <form onSubmit={submit} className="space-y-4" noValidate aria-label="Request a quote">
       <input
+        name="website"
         tabIndex={-1}
         autoComplete="off"
         className="hidden"
