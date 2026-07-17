@@ -6,20 +6,38 @@ import { transactionBody } from "../../scripts/ci/sql-transaction-body.mjs";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("repository migration transaction envelope", () => {
-  it("uses one SQL-aware parser for manifest validation, dry-run and apply", () => {
+  it("uses one SQL-aware parser for manifest validation, cumulative dry-run and apply", () => {
     const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
 
     expect(reconciler).toContain('import { transactionBody } from "./sql-transaction-body.mjs";');
     expect(reconciler).toContain('const sql = transactionBody(buffer.toString("utf8"), entry);');
     expect(reconciler).toContain('const sql = transactionBody(readFileSync(resolve(root, entry.path), "utf8"), entry);');
     expect(reconciler.match(/transactionBody\(readFileSync/g)).toHaveLength(2);
-    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
+    expect(reconciler).toContain("const transactionalPending = [];");
+    expect(reconciler).toContain('const cumulativeSql = transactionalPending');
+    expect(reconciler).toContain('await databaseQuery(`begin;\\n${cumulativeSql}\\nrollback;`);');
+    expect(reconciler).not.toContain('await databaseQuery(`begin;\\n${sql}\\nrollback;`);');
     expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
+  });
+
+  it("preserves manifest order while validating dependent pending migrations in one rollback", () => {
+    const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
+
+    expect(reconciler).toContain('transactionalPending.push({ entry, sql });');
+    expect(reconciler).toContain('.map(({ entry, sql }) => `-- repository migration ${entry.version}: ${entry.path}\\n${sql}`)');
+    expect(reconciler).toContain('.join("\\n\\n")');
+    expect(reconciler.indexOf("const cumulativeSql = transactionalPending"))
+      .toBeLessThan(reconciler.indexOf('await databaseQuery(`begin;\\n${cumulativeSql}\\nrollback;`);'));
   });
 
   it("accepts leading and trailing SQL comments around one outer transaction", () => {
     const body = transactionBody(
-      `-- migration purpose\n/* reviewed wrapper */\nBEGIN;\nselect 1;\nCOMMIT;\n-- end evidence`,
+      `-- migration purpose
+/* reviewed wrapper */
+BEGIN;
+select 1;
+COMMIT;
+-- end evidence`,
       { version: "test-commented-wrapper" },
     );
 
@@ -28,7 +46,15 @@ describe("repository migration transaction envelope", () => {
 
   it("ignores transaction words inside comments, strings and dollar-quoted functions", () => {
     const body = transactionBody(
-      `begin;\n-- begin; commit; rollback;\nselect 'commit;' as note;\ncreate function pg_temp.wrapper_probe() returns void language plpgsql as $$\nbegin\n  perform 1;\nend;\n$$;\ncommit;`,
+      `begin;
+-- begin; commit; rollback;
+select 'commit;' as note;
+create function pg_temp.wrapper_probe() returns void language plpgsql as $$
+begin
+  perform 1;
+end;
+$$;
+commit;`,
       { version: "test-sql-lexing" },
     );
 
