@@ -2,6 +2,9 @@ import { Link } from "react-router-dom";
 import { ArrowRight, FileText, Headphones, Video } from "lucide-react";
 import ResilientImage from "@/components/ResilientImage";
 import { CATEGORY_HERO_MEDIA } from "@/lib/heroMedia";
+import heroDesktop from "@/assets/hero-b2b-manufacturer-desktop.jpg";
+import heroMobile from "@/assets/hero-b2b-manufacturer-mobile.jpg";
+
 
 const SECONDARY_PROGRAMS = [
   {
