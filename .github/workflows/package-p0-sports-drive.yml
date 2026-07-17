@@ -1,0 +1,65 @@
+name: Package P0 Sports Drive Archives
+
+on:
+  push:
+    branches:
+      - catalog-media-p0-sports-2026-07-17
+    paths:
+      - .github/workflows/package-p0-sports-drive.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/package-p0-sports-drive.yml
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout media branch
+        uses: actions/checkout@v4
+        with:
+          ref: catalog-media-p0-sports-2026-07-17
+
+      - name: Verify product packs exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          for slug in baseball-jersey basketball-mesh-jersey cricket-match-jersey rugby-match-jersey; do
+            test "$(find public/product-media/$slug/clean -type f -name '*.png' | wc -l)" -eq 4
+            test "$(find public/product-media/$slug/branded -type f -name '*.png' | wc -l)" -eq 4
+            test "$(find public/product-media/$slug/web -type f -name '*.webp' | wc -l)" -eq 4
+            test -f "public/product-media/$slug/media-manifest.json"
+          done
+
+      - name: Package Baseball Jersey
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseball-jersey-complete-media-pack
+          path: public/product-media/baseball-jersey
+          retention-days: 30
+
+      - name: Package Basketball Mesh Jersey
+        uses: actions/upload-artifact@v4
+        with:
+          name: basketball-mesh-jersey-complete-media-pack
+          path: public/product-media/basketball-mesh-jersey
+          retention-days: 30
+
+      - name: Package Cricket Match Jersey
+        uses: actions/upload-artifact@v4
+        with:
+          name: cricket-match-jersey-complete-media-pack
+          path: public/product-media/cricket-match-jersey
+          retention-days: 30
+
+      - name: Package Rugby Match Jersey
+        uses: actions/upload-artifact@v4
+        with:
+          name: rugby-match-jersey-complete-media-pack
+          path: public/product-media/rugby-match-jersey
+          retention-days: 30
