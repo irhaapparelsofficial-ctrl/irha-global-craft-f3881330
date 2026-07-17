@@ -13,6 +13,7 @@ type VisitorContext = {
 const SESSION_KEY = "irha:site-visitor-session";
 const ARRIVAL_KEY_PREFIX = "irha:site-visitor-arrived:";
 const CHAT_OPEN_EVENT = "irha:human-chat-opened";
+const PROGRAMMATIC_CHAT_OPEN_EVENT = "irha:open-human-chat";
 const HEARTBEAT_INTERVAL_MS = 45_000;
 
 function readSessionId() {
@@ -94,6 +95,14 @@ function shouldTrack(pathname: string) {
     !pathname.startsWith("/seo-indexing");
 }
 
+function isLiveChatLauncher(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+  const control = target.closest<HTMLElement>("button,a");
+  if (!control) return false;
+  const label = `${control.getAttribute("aria-label") || ""} ${control.textContent || ""}`.toLowerCase();
+  return label.includes("live chat") && (label.includes("open") || label.includes("chat with"));
+}
+
 export default function SiteVisitorTracker() {
   const { pathname, search } = useLocation();
   const sessionIdRef = useRef(readSessionId());
@@ -166,16 +175,23 @@ export default function SiteVisitorTracker() {
       if (document.visibilityState === "visible") void report("heartbeat");
     };
     const onChatOpen = () => void report("chat_open", true);
+    const onDocumentClick = (event: MouseEvent) => {
+      if (isLiveChatLauncher(event.target)) void report("chat_open", true);
+    };
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void report("heartbeat");
     }, HEARTBEAT_INTERVAL_MS);
 
     document.addEventListener("visibilitychange", onVisibility);
+    document.addEventListener("click", onDocumentClick, true);
     window.addEventListener(CHAT_OPEN_EVENT, onChatOpen);
+    window.addEventListener(PROGRAMMATIC_CHAT_OPEN_EVENT, onChatOpen);
     return () => {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
+      document.removeEventListener("click", onDocumentClick, true);
       window.removeEventListener(CHAT_OPEN_EVENT, onChatOpen);
+      window.removeEventListener(PROGRAMMATIC_CHAT_OPEN_EVENT, onChatOpen);
     };
   }, [report]);
 
