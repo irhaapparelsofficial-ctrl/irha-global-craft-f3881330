@@ -5,11 +5,12 @@ import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicProduct } from "@/hooks/usePublicCatalog";
 import { resolveGallery } from "@/lib/assetResolver";
 import {
-  Bookmark,
-  BookmarkCheck,
+  Check,
   ChevronRight,
+  ClipboardList,
   GitCompareArrows,
   MessageCircle,
+  PackagePlus,
   Printer,
   Upload,
 } from "lucide-react";
@@ -62,6 +63,7 @@ export default function ProductDetail() {
     categoryName: category.name,
     addedAt: Date.now(),
   };
+  const inInquiry = shortlist.has(product.slug);
   const inCompare = compare.has(product.slug);
   const compareFull = !inCompare && compare.items.length >= 4;
 
@@ -109,6 +111,7 @@ export default function ProductDetail() {
   const fallbackDescription = `${product.name} custom B2B manufacturing by Irha Apparels in Sialkot. OEM, ODM and private-label requirements are reviewed before quotation and production commitments.`;
   const metaDescription = product.seo_description ?? product.description?.slice(0, 158) ?? fallbackDescription;
   const serviceId = `${url}#service`;
+  const productImageAlt = `Custom ${product.primary_material ? `${product.primary_material} ` : ""}${product.name} wholesale manufacturer in Sialkot Pakistan`;
 
   const jsonLd = [
     {
@@ -147,7 +150,7 @@ export default function ProductDetail() {
   return (
     <>
       <SEO
-        title={product.seo_title ?? `${product.name} | ${category.name} Manufacturer | Irha Apparels`}
+        title={product.seo_title ?? `${product.name} Wholesale Manufacturer | Sialkot Garment Factory`}
         description={metaDescription}
         path={`/products/${category.slug}/${product.slug}`}
         image={gallery[0]}
@@ -170,13 +173,20 @@ export default function ProductDetail() {
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-16">
             <div className="lg:col-span-7">
               <div className="relative aspect-[4/5] overflow-hidden bg-card mb-4">
-                <img src={gallery[activeImg] ?? gallery[0]} alt={`${product.name} wholesale manufacturing style`} className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src={gallery[activeImg] ?? gallery[0]}
+                  alt={productImageAlt}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                />
               </div>
               {gallery.length > 1 && (
                 <div className="grid grid-cols-4 gap-3">
                   {gallery.map((image, index) => (
                     <button key={image} onClick={() => setActiveImg(index)} aria-label={`View ${product.name} image ${index + 1}`} className={`aspect-square overflow-hidden border ${index === activeImg ? "border-primary" : "border-border/60"}`}>
-                      <ThumbnailImage src={image} alt="" className="w-full h-full object-cover" />
+                      <ThumbnailImage src={image} alt={`${productImageAlt}, view ${index + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -202,22 +212,24 @@ export default function ProductDetail() {
               )}
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link to={`/inquiry?intent=rfq&product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}`} className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
-                  Request a Quote
-                </Link>
-                <a href={whatsappLink(whatsappMsg)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
-                  <MessageCircle size={16} /> WhatsApp
-                </a>
                 <button
                   type="button"
                   onClick={() => shortlist.toggle(savedProduct)}
-                  aria-pressed={shortlist.has(product.slug)}
-                  aria-label={shortlist.has(product.slug) ? "Remove from shortlist" : "Save to shortlist"}
-                  className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
+                  aria-pressed={inInquiry}
+                  aria-label={inInquiry ? "Remove product from inquiry cart" : "Add product to inquiry cart"}
+                  className={`inline-flex items-center gap-3 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors ${inInquiry ? "border border-primary text-primary" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
                 >
-                  {shortlist.has(product.slug) ? <BookmarkCheck size={16} className="text-primary" /> : <Bookmark size={16} />}
-                  {shortlist.has(product.slug) ? "Saved" : "Save"}
+                  {inInquiry ? <Check size={16} /> : <PackagePlus size={16} />}
+                  {inInquiry ? "Added to Inquiry" : "Add to Inquiry"}
                 </button>
+                {inInquiry && (
+                  <Link to="/inquiry-cart" className="inline-flex items-center gap-3 bg-gradient-gold px-7 py-4 text-xs uppercase tracking-[0.3em] text-primary-foreground">
+                    <ClipboardList size={16} /> Review Inquiry
+                  </Link>
+                )}
+                <a href={whatsappLink(whatsappMsg)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
+                  <MessageCircle size={16} /> WhatsApp
+                </a>
                 <button
                   type="button"
                   onClick={() => compare.toggle(savedProduct)}
@@ -237,7 +249,7 @@ export default function ProductDetail() {
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.25em]">
-                <Link to={`/inquiry?product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}&intent=reference`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Upload size={12} /> Upload reference design</Link>
+                <Link to="/inquiry-cart" className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Upload size={12} /> Upload tech pack in inquiry cart</Link>
                 <span className="text-foreground/25">·</span>
                 <Link to={`/products/${category.slug}/${product.slug}/spec-sheet`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Printer size={12} /> Print spec sheet</Link>
                 {inCompare && (
@@ -303,7 +315,7 @@ export default function ProductDetail() {
                 {relatedProducts.map((relatedProduct) => (
                   <Link key={relatedProduct.id} to={`/products/${category.slug}/${relatedProduct.slug}`} className="group flex flex-col text-left">
                     <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
-                      <ThumbnailImage src={relatedProduct.image_url ?? relatedProduct.gallery?.[0] ?? ""} alt={`${relatedProduct.name} wholesale manufacturing style`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+                      <ThumbnailImage src={relatedProduct.image_url ?? relatedProduct.gallery?.[0] ?? ""} alt={`Custom ${relatedProduct.name} wholesale manufacturer product style`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
                     </div>
                     <h3 className="font-display text-base leading-tight group-hover:text-primary transition-colors">{relatedProduct.name}</h3>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">MOQ confirmed after review</p>
