@@ -62,10 +62,11 @@ export default function AdminMediaApproval() {
     [placements],
   );
 
-  async function act(id: string, patch: Partial<SlotMediaRow> & { rejected_reason?: string }) {
+  async function act(id: string, patch: Record<string, unknown>) {
     setBusy(id);
     setErr(null);
-    const { error } = await supabase.from("product_slot_media").update(patch).eq("id", id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from("product_slot_media") as any).update(patch).eq("id", id);
     if (error) setErr(error.message);
     setBusy(null);
     await reload();
@@ -146,7 +147,7 @@ export default function AdminMediaApproval() {
                   <button
                     type="button"
                     disabled={busy === r.id}
-                    onClick={() => act(r.id, { approved: true, approved_at: new Date().toISOString() as never })}
+                    onClick={() => act(r.id, { approved: true, approved_at: new Date().toISOString() })}
                     className="border border-border/60 px-3 py-1 text-[10px] uppercase tracking-[0.2em] hover:border-gold"
                   >Approve</button>
                   <button
