@@ -33,10 +33,11 @@ describe("taxonomy collection conversion journey", () => {
     expect(source).toContain("to={structuredQuoteLink}");
   });
 
-  it("keeps product detail routes and the existing taxonomy hierarchy intact", () => {
+  it("keeps product detail routes and the explicit taxonomy hierarchy intact", () => {
     expect(source).toContain("taxonomyAudiencePath");
     expect(source).toContain("taxonomyCollectionPath");
     expect(source).toContain("const productPath = `/products/${category.slug}/${product.slug}`");
-    expect(source).toContain("<CategoryAudienceNavigator category={category} locale={locale} />");
+    expect(source).toContain("<CategoryAudienceNavigator category={category} locale={locale} taxonomy={taxonomy} />");
+    expect(source).toContain("publishedTaxonomy.taxonomy ?? buildCategoryTaxonomy(category)");
   });
 });

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, Database, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, Database, RefreshCw, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CatalogPriorityAuditPanel from "@/components/admin/CatalogPriorityAuditPanel";
 import ProductQualityCenter from "@/components/admin/ProductQualityCenter";
+import CatalogTaxonomyReviewPanel from "@/components/admin/CatalogTaxonomyReviewPanel";
 
 type Health = {
   categoryCount: number;
@@ -94,6 +95,28 @@ export default function CatalogReleaseStatus() {
         </summary>
         <div className="border-t border-border/60 p-3 sm:p-4">
           <ProductQualityCenter />
+        </div>
+      </details>
+
+      <details className="group mb-4 border border-gold/45 bg-card/25" open>
+        <summary className="list-none cursor-pointer px-4 py-4 sm:px-5 [&::-webkit-details-marker]:hidden">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <ShieldCheck size={18} className="mt-0.5 shrink-0 text-gold" />
+              <div className="min-w-0">
+                <p className="text-[9px] uppercase tracking-[0.18em] text-gold">Owner approval required</p>
+                <h2 className="mt-1 font-display text-lg sm:text-xl">Catalogue hierarchy review</h2>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Review all Main Category → Buyer Group → Product Type mappings before the new public hierarchy is released.
+                </p>
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full border border-gold/45 px-3 py-2 text-[9px] uppercase tracking-[0.16em] text-gold group-open:hidden">Review</span>
+            <span className="hidden shrink-0 rounded-full border border-border/60 px-3 py-2 text-[9px] uppercase tracking-[0.16em] text-muted-foreground group-open:inline-flex">Close</span>
+          </div>
+        </summary>
+        <div className="border-t border-border/60 p-3 sm:p-4">
+          <CatalogTaxonomyReviewPanel />
         </div>
       </details>
 
