@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -56,6 +57,19 @@ describe("production public indexing policy", () => {
     });
 
     expect(response.headers.get("X-Robots-Tag")).toBe("noindex,follow");
+  });
+
+  it("locks localized draft noindex into the deployed Cloudflare worker patch", () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "scripts/patch-cloudflare-route-shell-assets.mjs"),
+      "utf8",
+    );
+
+    expect(source).toContain('const FUNCTIONAL_NOINDEX_PREFIXES = ["/intl/"]');
+    expect(source).toContain(
+      'FUNCTIONAL_NOINDEX_PREFIXES.some((prefix) => pathname.startsWith(prefix))',
+    );
+    expect(source).toContain('withNoIndexHeaders(assetResponse, "localized-draft")');
   });
 
   it("sanitizes the runtime sitemap to canonical indexable URLs only", async () => {
