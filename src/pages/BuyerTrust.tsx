@@ -125,7 +125,7 @@ export default function BuyerTrust() {
               Verify the supplier <span className="text-gold italic">before the order.</span>
             </h1>
             <p className="mt-7 max-w-3xl text-base md:text-lg text-white/80 leading-relaxed">
-              Irha Apparels is an experienced manufacturer in Sialkot. The website is newly built, so we do not expect buyers to rely on a website alone. Use live discussion, relevant evidence, clear specifications and documented approvals to evaluate the program.
+              Irha Apparels is an established apparel manufacturer in Sialkot with a newly launched digital buyer platform. Evaluate the exact program through live discussion, relevant factory evidence, clear specifications, samples and documented approvals instead of relying on website claims alone.
             </p>
           </div>
           <div className="lg:col-span-4 border border-white/20 bg-black/45 backdrop-blur-md p-6">
