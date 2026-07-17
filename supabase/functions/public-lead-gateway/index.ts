@@ -1,14 +1,41 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const SITE_URL = "https://irhaapparels.com";
-const PRIVATE_UPLOAD_BUCKET = "inquiry-uploads";
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-const ALLOWED_UPLOADS: Record<string, string[]> = {
-  pdf: ["application/pdf"],
-  jpg: ["image/jpeg"],
-  jpeg: ["image/jpeg"],
-  png: ["image/png"],
-  webp: ["image/webp"],
+const TECH_PACK_BUCKET = "tech_packs";
+const MOCKUP_BUCKET = "mockup-uploads";
+const MAX_TECH_PACK_BYTES = 25 * 1024 * 1024;
+const MAX_MOCKUP_BYTES = 10 * 1024 * 1024;
+
+type UploadRule = {
+  contentType: string;
+  aliases: string[];
+};
+
+const TECH_PACK_UPLOADS: Record<string, UploadRule> = {
+  pdf: { contentType: "application/pdf", aliases: ["application/pdf"] },
+  ai: {
+    contentType: "application/vnd.adobe.illustrator",
+    aliases: ["", "application/octet-stream", "application/pdf", "application/postscript", "application/illustrator", "application/vnd.adobe.illustrator"],
+  },
+  eps: {
+    contentType: "application/postscript",
+    aliases: ["", "application/octet-stream", "application/postscript", "application/eps", "application/x-eps"],
+  },
+  zip: {
+    contentType: "application/zip",
+    aliases: ["", "application/octet-stream", "application/zip", "application/x-zip-compressed", "multipart/x-zip"],
+  },
+  png: { contentType: "image/png", aliases: ["image/png"] },
+  jpg: { contentType: "image/jpeg", aliases: ["image/jpeg"] },
+  jpeg: { contentType: "image/jpeg", aliases: ["image/jpeg"] },
+};
+
+const MOCKUP_UPLOADS: Record<string, UploadRule> = {
+  pdf: { contentType: "application/pdf", aliases: ["application/pdf"] },
+  jpg: { contentType: "image/jpeg", aliases: ["image/jpeg"] },
+  jpeg: { contentType: "image/jpeg", aliases: ["image/jpeg"] },
+  png: { contentType: "image/png", aliases: ["image/png"] },
+  webp: { contentType: "image/webp", aliases: ["image/webp"] },
 };
 
 type JsonRecord = Record<string, unknown>;
@@ -30,8 +57,7 @@ Deno.serve(async (req) => {
     if (!isGatewayAction(action)) return json({ error: "Unsupported action" }, 400, headers);
 
     const payload = isRecord(body.payload) ? body.payload : body;
-    const honeypot = text(payload.website, 300);
-    if (honeypot) return json({ ok: true, reference: "received" }, 200, headers);
+    if (text(payload.website, 300)) return json({ ok: true, reference: "received" }, 200, headers);
 
     const service = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -96,11 +122,11 @@ async function submitInquiry(
   }
 
   const requestedRef = text(payload.inquiry_ref, 80);
-  const inquiryRef = /^IRQ-[A-Z0-9-]{6,70}$/.test(requestedRef)
+  const inquiryRef = /^IRHA-[0-9]{4}-[0-9]{6}$/.test(requestedRef)
     ? requestedRef
-    : `IRQ-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
-
+    : createInquiryReference();
   const files = normalizeFiles(payload.files);
+  const items = normalizeItems(payload.items);
   const incomingContext = safeObject(payload.lead_context, 50_000);
   const leadContext = {
     ...incomingContext,
@@ -110,22 +136,54 @@ async function submitInquiry(
       server_validated: true,
     },
     uploaded_files: files,
+    inquiry_items: items,
   };
 
-  const { error } = await service.from("inquiries").insert({
+  if (items.length > 0) {
+    const { data, error } = await service.rpc("submit_b2b_inquiry", {
+      _payload: {
+        ...payload,
+        name,
+        email,
+        phone,
+        company,
+        country,
+        category,
+        message,
+        source,
+        inquiry_ref: inquiryRef,
+        files,
+        items,
+        lead_context: leadContext,
+      },
+    }).single();
+
+    if (!error) {
+      const reference = isRecord(data) ? text(data.inquiry_ref, 80) : "";
+      return json({ ok: true, reference: reference || inquiryRef }, 200, headers);
+    }
+
+    const missingRpc = error.code === "PGRST202" || error.message.toLowerCase().includes("submit_b2b_inquiry");
+    if (!missingRpc) {
+      if (error.code === "23505") return json({ ok: true, reference: inquiryRef, duplicate: true }, 200, headers);
+      throw new Error(`Relational inquiry insert failed: ${error.message}`);
+    }
+  }
+
+  const { data, error } = await service.from("inquiries").insert({
     name,
     email,
     company: company || null,
     country: country || null,
     phone: phone || null,
     category: category || null,
-    quantity: quantity || null,
+    quantity: items.length > 0 ? `${items.length} styles` : quantity || null,
     message: message || null,
     source,
     intent,
     lead_context: leadContext,
     inquiry_ref: inquiryRef,
-  });
+  }).select("inquiry_ref").single();
 
   if (error) {
     if (error.code === "23505" && error.message.toLowerCase().includes("inquiry_ref")) {
@@ -134,7 +192,7 @@ async function submitInquiry(
     throw new Error(`Inquiry insert failed: ${error.message}`);
   }
 
-  return json({ ok: true, reference: inquiryRef }, 200, headers);
+  return json({ ok: true, reference: text(data?.inquiry_ref, 80) || inquiryRef }, 200, headers);
 }
 
 async function submitCatalogue(
@@ -174,46 +232,61 @@ async function createUpload(
   payload: JsonRecord,
   headers: Record<string, string>,
 ) {
-  const purpose = oneOf(text(payload.purpose, 30), ["inquiry", "mockup"]) ?? "inquiry";
+  const requestedPurpose = text(payload.purpose, 30);
+  const isMockup = requestedPurpose === "mockup";
+  const purpose = isMockup ? "mockup" : "tech-pack";
   const filename = text(payload.filename, 240);
   const mime = text(payload.mime, 100).toLowerCase();
   const size = Number(payload.size);
   const extension = fileExtension(filename);
-  const allowedMimes = ALLOWED_UPLOADS[extension];
+  const rules = isMockup ? MOCKUP_UPLOADS : TECH_PACK_UPLOADS;
+  const rule = rules[extension];
+  const maxBytes = isMockup ? MAX_MOCKUP_BYTES : MAX_TECH_PACK_BYTES;
+  const bucket = isMockup ? MOCKUP_BUCKET : TECH_PACK_BUCKET;
 
-  if (!filename || !allowedMimes || !allowedMimes.includes(mime)) {
-    return json({ error: "Only PDF, JPG, PNG and WEBP files are allowed" }, 400, headers);
+  if (!filename || !rule || !rule.aliases.includes(mime)) {
+    const allowed = isMockup ? "PDF, JPG, PNG and WEBP" : "PDF, AI, EPS, ZIP, PNG and JPG";
+    return json({ error: `Only ${allowed} files are allowed` }, 400, headers);
   }
-  if (!Number.isFinite(size) || size < 1 || size > MAX_UPLOAD_BYTES) {
-    return json({ error: "File must be between 1 byte and 10 MB" }, 400, headers);
+  if (!Number.isFinite(size) || size < 1 || size > maxBytes) {
+    return json({ error: `File must be between 1 byte and ${Math.round(maxBytes / 1024 / 1024)} MB` }, 400, headers);
   }
 
   const month = new Date().toISOString().slice(0, 7);
   const path = `requests/${purpose}/${month}/${crypto.randomUUID()}.${extension}`;
-  const { data, error } = await service.storage.from(PRIVATE_UPLOAD_BUCKET).createSignedUploadUrl(path);
+  const { data, error } = await service.storage.from(bucket).createSignedUploadUrl(path);
   if (error || !data?.token) throw new Error(`Signed upload could not be created: ${error?.message ?? "missing token"}`);
 
   return json({
     ok: true,
-    bucket: PRIVATE_UPLOAD_BUCKET,
+    bucket,
     path,
     token: data.token,
-    max_size: MAX_UPLOAD_BYTES,
+    content_type: rule.contentType,
+    max_size: maxBytes,
   }, 200, headers);
 }
 
-async function requestFingerprint(req: Request) {
-  const ip = (
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-real-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0] ||
-    "unknown"
-  ).trim();
-  const userAgent = (req.headers.get("user-agent") || "unknown").slice(0, 300);
-  const pepper = Deno.env.get("PUBLIC_SUBMISSION_PEPPER") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.slice(0, 48) || "irha";
-  const bytes = new TextEncoder().encode(`${pepper}|${ip}|${userAgent}`);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+function normalizeItems(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 50).flatMap((item) => {
+    if (!isRecord(item)) return [];
+    const productId = text(item.product_id ?? item.productId, 80);
+    const slug = text(item.slug, 180);
+    const name = text(item.name, 240);
+    const categorySlug = text(item.category_slug ?? item.categorySlug, 180);
+    const quantity = Number(item.target_quantity ?? item.targetQuantity);
+    if (!slug || !name || !Number.isInteger(quantity) || quantity < 1 || quantity > 10_000_000) return [];
+    return [{
+      product_id: /^[0-9a-f-]{36}$/i.test(productId) ? productId : null,
+      slug,
+      name,
+      category_slug: categorySlug || null,
+      target_quantity: quantity,
+      size_breakdown: multiline(item.size_breakdown ?? item.sizeBreakdown, 1000) || null,
+      notes: multiline(item.notes, 2000) || null,
+    }];
+  });
 }
 
 function normalizeFiles(value: unknown) {
@@ -224,9 +297,33 @@ function normalizeFiles(value: unknown) {
     const name = text(item.name, 240);
     const mime = text(item.mime, 100);
     const size = Number(item.size);
-    if (!path.startsWith("requests/") || !name || !Number.isFinite(size) || size < 1 || size > MAX_UPLOAD_BYTES) return [];
+    const validPath = path.startsWith("requests/tech-pack/") ||
+      path.startsWith("requests/mockup/") ||
+      path.startsWith("requests/inquiry/");
+    if (!validPath || !name || !Number.isFinite(size) || size < 1 || size > MAX_TECH_PACK_BYTES) return [];
     return [{ path, name, mime, size }];
   });
+}
+
+function createInquiryReference() {
+  const digits = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
+  return `IRHA-${new Date().getUTCFullYear()}-${digits.toString().padStart(6, "0")}`;
+}
+
+async function requestFingerprint(req: Request) {
+  const ip = (
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0] ||
+    "unknown"
+  ).trim();
+  const userAgent = (req.headers.get("user-agent") || "unknown").slice(0, 300);
+  const pepper = Deno.env.get("PUBLIC_SUBMISSION_PEPPER") ||
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.slice(0, 48) ||
+    "irha";
+  const bytes = new TextEncoder().encode(`${pepper}|${ip}|${userAgent}`);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function safeObject(value: unknown, maxBytes: number): JsonRecord {
@@ -248,9 +345,7 @@ function safePublicUrl(value: unknown): string | null {
   try {
     const url = new URL(raw, SITE_URL);
     if (url.protocol !== "https:") return null;
-    const allowedHost = url.hostname === "irhaapparels.com" ||
-      url.hostname === "www.irhaapparels.com" ||
-      url.hostname.endsWith(".lovable.app");
+    const allowedHost = url.hostname === "irhaapparels.com" || url.hostname === "www.irhaapparels.com";
     return allowedHost ? url.toString().slice(0, 1000) : null;
   } catch {
     return null;
@@ -310,15 +405,13 @@ function corsHeaders(origin: string | null) {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Max-Age": "86400",
-    "Vary": "Origin",
+    "Content-Type": "application/json",
     "Cache-Control": "no-store",
+    "Vary": "Origin",
     "X-Content-Type-Options": "nosniff",
   };
 }
 
-function json(payload: unknown, status: number, headers: Record<string, string>) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { ...headers, "Content-Type": "application/json; charset=utf-8" },
-  });
+function json(body: unknown, status: number, headers: Record<string, string>) {
+  return new Response(JSON.stringify(body), { status, headers });
 }
