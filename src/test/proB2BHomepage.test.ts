@@ -21,7 +21,7 @@ const sticky = read("src/components/sections/StickyMobileCTA.tsx");
 const styles = read("src/index.css");
 const brand = read("public/irha-brand-mark.svg");
 
- describe("polished B2B homepage", () => {
+describe("polished B2B homepage", () => {
   it("identifies the business, buyers and next actions immediately", () => {
     expect(hero).toContain("B2B Apparel Manufacturer for Brands &amp; Wholesalers");
     expect(hero).toContain("Sialkot · Made to order · B2B buyers");
@@ -143,8 +143,12 @@ const brand = read("public/irha-brand-mark.svg");
     expect(sticky).not.toContain("border-gold/35");
   });
 
-  it("uses a simple B2B primary navigation", () => {
-    for (const label of ["Products", "Manufacturing", "How it works", "Buyer trust"]) expect(navbar).toContain(`label: \"${label}\"`);
+  it("provides direct home access on desktop and mobile", () => {
+    for (const label of ["Home", "Products", "Manufacturing", "How it works", "Buyer trust"]) {
+      expect(navbar).toContain(`label: \"${label}\"`);
+    }
+    expect(navbar).toContain('aria-label="Go to homepage"');
+    expect(navbar).toContain('pathname !== "/"');
     expect(navbar).toContain("Request quote");
     expect(navbar).not.toContain("MockupRequestButton");
   });
