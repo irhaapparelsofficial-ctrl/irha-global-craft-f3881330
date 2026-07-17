@@ -1,11 +1,11 @@
 import {
   ArrowRight,
-  Bookmark,
-  BookmarkCheck,
+  CheckCircle2,
   ChevronRight,
   GitCompareArrows,
   Globe2,
   MessageCircle,
+  PackagePlus,
 } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import SEO from "@/components/SEO";
@@ -28,7 +28,8 @@ import {
   type TaxonomyLocale,
 } from "@/lib/taxonomyI18n";
 import { whatsappLink } from "@/lib/constants";
-import { useCompare, useShortlist } from "@/lib/shortlist";
+import { useInquiryCart } from "@/lib/inquiryCart";
+import { useCompare } from "@/lib/shortlist";
 
 const SITE = "https://irhaapparels.com";
 
@@ -53,7 +54,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   const locale: TaxonomyLocale = params.locale && isTaxonomyLocale(params.locale) ? params.locale : "en";
   const invalidLocale = Boolean(params.locale && !isTaxonomyLocale(params.locale));
   const { category, isLoading } = useNormalizedCategory(categorySlug);
-  const shortlist = useShortlist();
+  const inquiryCart = useInquiryCart();
   const compare = useCompare();
 
   if (invalidLocale) return <Navigate to={`/products/${categorySlug}`} replace />;
@@ -110,7 +111,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
     ?? category.image;
   const heroLabel = collectionName ?? audienceName ?? topName;
   const quoteContext = collectionName ?? audienceName ?? topName;
-  const structuredQuoteLink = `/inquiry?intent=rfq&category=${encodeURIComponent(category.slug)}&categoryName=${encodeURIComponent(quoteContext)}${collection ? `&collection=${encodeURIComponent(collection.slug)}&collectionName=${encodeURIComponent(collectionName ?? collection.name)}` : ""}`;
+  const customReviewLink = `/inquiry?intent=rfq&category=${encodeURIComponent(category.slug)}&categoryName=${encodeURIComponent(quoteContext)}${collection ? `&collection=${encodeURIComponent(collection.slug)}&collectionName=${encodeURIComponent(collectionName ?? collection.name)}` : ""}`;
   const quoteWhatsappMessage = `Hello Irha Apparels — I need help reviewing a B2B requirement for ${collection?.name ?? audience?.name ?? category.name}.`;
   const heroProducts = collection
     ? products
@@ -127,8 +128,8 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
     .map((src, index) => ({
       src,
       alt: index === 0
-        ? `${heroLabel} custom manufacturing collection`
-        : `${heroLabel} product view ${index + 1}`,
+        ? `${heroLabel} custom wholesale manufacturing collection`
+        : `${heroLabel} B2B product view ${index + 1}`,
       fit: "contain" as const,
       backgroundClassName: "bg-[#f4f0e7]",
     }));
@@ -194,9 +195,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
       />
 
       <section className="relative pt-32 pb-14 md:pt-40 md:pb-20 border-b border-border/60 overflow-hidden">
-        {heroImage && (
-          <img src={heroImage} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-[0.08] blur-sm scale-105" />
-        )}
+        {heroImage && <img src={heroImage} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-[0.08] blur-sm scale-105" />}
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/75" />
         <div className="container-luxe relative grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-7">
@@ -204,11 +203,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
               {breadcrumbItems.map((item, index) => (
                 <span key={`${item.path}-${index}`} className="inline-flex items-center gap-2">
                   {index > 0 && <ChevronRight size={11} aria-hidden="true" />}
-                  {index === breadcrumbItems.length - 1 ? (
-                    <span className="text-foreground/85">{item.name}</span>
-                  ) : (
-                    <Link to={item.path} className="hover:text-primary">{item.name}</Link>
-                  )}
+                  {index === breadcrumbItems.length - 1 ? <span className="text-foreground/85">{item.name}</span> : <Link to={item.path} className="hover:text-primary">{item.name}</Link>}
                 </span>
               ))}
             </nav>
@@ -220,18 +215,13 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to={structuredQuoteLink}
+                to="/inquiry-cart"
                 data-track="taxonomy-structured-rfq"
                 className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
               >
                 {ui.requestQuote} <ArrowRight size={15} aria-hidden="true" />
               </Link>
-              <a
-                href={whatsappLink(quoteWhatsappMessage)}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-3 border border-gold/70 px-7 py-4 text-xs uppercase tracking-[0.25em] text-gold hover:bg-gold hover:text-background"
-              >
+              <a href={whatsappLink(quoteWhatsappMessage)} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-3 border border-gold/70 px-7 py-4 text-xs uppercase tracking-[0.25em] text-gold hover:bg-gold hover:text-background">
                 <MessageCircle size={15} aria-hidden="true" /> WhatsApp
               </a>
               <div className="inline-flex items-center gap-2 border border-border/60 px-4 py-2 bg-background/70 backdrop-blur-sm">
@@ -244,13 +234,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                       ? taxonomyAudiencePath(category.slug, audience.slug, candidate.code)
                       : topPath(category.slug, candidate.code);
                   return (
-                    <Link
-                      key={candidate.code}
-                      to={href}
-                      lang={candidate.htmlLang}
-                      hrefLang={candidate.hreflang}
-                      className={`min-w-9 min-h-9 inline-flex items-center justify-center text-[10px] uppercase tracking-[0.15em] ${candidate.code === locale ? "text-primary" : "text-foreground/55 hover:text-primary"}`}
-                    >
+                    <Link key={candidate.code} to={href} lang={candidate.htmlLang} hrefLang={candidate.hreflang} className={`min-w-9 min-h-9 inline-flex items-center justify-center text-[10px] uppercase tracking-[0.15em] ${candidate.code === locale ? "text-primary" : "text-foreground/55 hover:text-primary"}`}>
                       {candidate.code}
                     </Link>
                   );
@@ -261,12 +245,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
 
           {heroSlides.length > 0 && (
             <div className="lg:col-span-5 relative aspect-[4/5] max-h-[640px] overflow-hidden border border-border/60 bg-card shadow-2xl">
-              <HeroMediaSlideshow
-                slides={heroSlides}
-                label={`${heroLabel} product slideshow`}
-                imageClassName="p-3 md:p-5"
-                controlsClassName="bottom-4 right-4"
-              />
+              <HeroMediaSlideshow slides={heroSlides} label={`${heroLabel} product slideshow`} imageClassName="p-3 md:p-5" controlsClassName="bottom-4 right-4" />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
               <div className="pointer-events-none absolute left-5 right-5 bottom-5 border border-white/20 bg-black/45 backdrop-blur-sm p-4">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-gold">Featured program</p>
@@ -283,10 +262,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
         <section className="py-16">
           <div className="container-luxe">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-              <div>
-                <p className="eyebrow mb-3">{ui.productCategories}</p>
-                <h2 className="font-display text-3xl md:text-5xl">{audienceName}</h2>
-              </div>
+              <div><p className="eyebrow mb-3">{ui.productCategories}</p><h2 className="font-display text-3xl md:text-5xl">{audienceName}</h2></div>
               <p className="text-xs uppercase tracking-[0.22em] text-foreground/45">{audience.productCount} {ui.styles}</p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -294,23 +270,14 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                 const name = localizedCollectionName(locale, item.slug, item.name);
                 const image = item.products[0]?.image ?? category.image;
                 return (
-                  <Link
-                    key={item.slug}
-                    to={taxonomyCollectionPath(category.slug, audience.slug, item.slug, locale)}
-                    className="group border border-border/60 hover:border-primary transition-colors bg-card/20"
-                  >
+                  <Link key={item.slug} to={taxonomyCollectionPath(category.slug, audience.slug, item.slug, locale)} className="group border border-border/60 hover:border-primary transition-colors bg-card/20">
                     <div className="aspect-[16/10] overflow-hidden bg-card">
-                      {image && <img src={image} alt={name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />}
+                      {image && <img src={image} alt={`${name} wholesale manufacturing collection`} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />}
                     </div>
                     <div className="p-5">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-display text-xl group-hover:text-primary">{name}</h3>
-                        <span className="text-[10px] uppercase tracking-[0.18em] text-foreground/40">{item.products.length}</span>
-                      </div>
+                      <div className="flex items-start justify-between gap-4"><h3 className="font-display text-xl group-hover:text-primary">{name}</h3><span className="text-[10px] uppercase tracking-[0.18em] text-foreground/40">{item.products.length}</span></div>
                       <p className="mt-3 text-sm text-foreground/60 leading-relaxed">{item.description}</p>
-                      <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-primary">
-                        {ui.viewCollection} <ArrowRight size={13} aria-hidden="true" />
-                      </span>
+                      <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-primary">{ui.viewCollection} <ArrowRight size={13} aria-hidden="true" /></span>
                     </div>
                   </Link>
                 );
@@ -324,44 +291,28 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
         <section className="py-16">
           <div className="container-luxe">
             <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
-              <div>
-                <p className="eyebrow mb-3">{ui.products}</p>
-                <h2 className="font-display text-3xl md:text-5xl">{collectionName}</h2>
-              </div>
+              <div><p className="eyebrow mb-3">{ui.products}</p><h2 className="font-display text-3xl md:text-5xl">{collectionName}</h2></div>
               <p className="text-xs uppercase tracking-[0.22em] text-foreground/45">{products.length} {ui.styles}</p>
             </div>
 
             {products.length === 0 ? (
               <div className="border border-dashed border-border/60 p-10 text-center text-foreground/65">
                 <p>{ui.empty}</p>
-                <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-foreground/55">
-                  Share a reference or requirement and our team can review a custom manufacturing route for this collection.
-                </p>
+                <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-foreground/55">Share a reference or requirement and our team can review a custom manufacturing route for this collection.</p>
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
-                  <Link
-                    to={structuredQuoteLink}
-                    className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-[10px] uppercase tracking-[0.2em] text-primary-foreground hover:bg-primary/90"
-                  >
-                    Request custom review <ArrowRight size={13} aria-hidden="true" />
-                  </Link>
-                  <a
-                    href={whatsappLink(quoteWhatsappMessage)}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="inline-flex min-h-11 items-center gap-2 border border-gold/70 px-5 text-[10px] uppercase tracking-[0.2em] text-gold hover:bg-gold hover:text-background"
-                  >
-                    <MessageCircle size={13} aria-hidden="true" /> WhatsApp
-                  </a>
+                  <Link to={customReviewLink} className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 text-[10px] uppercase tracking-[0.2em] text-primary-foreground hover:bg-primary/90">Request custom review <ArrowRight size={13} aria-hidden="true" /></Link>
+                  <a href={whatsappLink(quoteWhatsappMessage)} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center gap-2 border border-gold/70 px-5 text-[10px] uppercase tracking-[0.2em] text-gold hover:bg-gold hover:text-background"><MessageCircle size={13} aria-hidden="true" /> WhatsApp</a>
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
                 {products.map((product) => {
-                  const saved = shortlist.has(product.slug);
+                  const inInquiry = inquiryCart.has(product.slug);
                   const inCompare = compare.has(product.slug);
                   const compareFull = !inCompare && compare.items.length >= 4;
                   const productPath = `/products/${category.slug}/${product.slug}`;
                   const storedProduct = {
+                    productId: product.id,
                     slug: product.slug,
                     name: product.name,
                     image: product.image,
@@ -374,16 +325,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                     <article key={product.slug} className="group flex min-w-0 flex-col">
                       <Link to={productPath} className="block">
                         <div className="aspect-square overflow-hidden bg-card mb-3">
-                          {product.image && (
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              loading="lazy"
-                              width={720}
-                              height={720}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            />
-                          )}
+                          {product.image && <img src={product.image} alt={`Custom ${product.name} wholesale manufacturer in Sialkot`} loading="lazy" width={720} height={720} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />}
                         </div>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/45">{audienceName}</p>
                         <h3 className="font-display text-base md:text-lg mt-1 group-hover:text-primary">{product.name}</h3>
@@ -391,15 +333,13 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => shortlist.toggle(storedProduct)}
-                          aria-pressed={saved}
-                          aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
-                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
-                            saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
-                          }`}
+                          onClick={() => inquiryCart.toggle(storedProduct)}
+                          aria-pressed={inInquiry}
+                          aria-label={inInquiry ? `Remove ${product.name} from inquiry cart` : `Add ${product.name} to inquiry cart`}
+                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${inInquiry ? "border-primary text-primary" : "border-border/60 hover:border-primary"}`}
                         >
-                          {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-                          {saved ? "Saved" : "Save"}
+                          {inInquiry ? <CheckCircle2 size={12} /> : <PackagePlus size={12} />}
+                          {inInquiry ? "Added" : "Inquiry"}
                         </button>
                         <button
                           type="button"
@@ -407,22 +347,11 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                           disabled={compareFull}
                           aria-pressed={inCompare}
                           title={compareFull ? "Comparison is limited to four products" : undefined}
-                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
-                            inCompare
-                              ? "border-primary text-primary"
-                              : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"
-                          }`}
+                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${inCompare ? "border-primary text-primary" : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"}`}
                         >
-                          <GitCompareArrows size={12} />
-                          {inCompare ? "Added" : compareFull ? "Full" : "Compare"}
+                          <GitCompareArrows size={12} />{inCompare ? "Added" : compareFull ? "Full" : "Compare"}
                         </button>
-                        <Link
-                          to={productPath}
-                          aria-label={`Open ${product.name}`}
-                          className="ml-auto inline-flex min-h-10 min-w-10 items-center justify-center text-primary hover:text-primary/70"
-                        >
-                          <ArrowRight size={14} aria-hidden="true" />
-                        </Link>
+                        <Link to={productPath} aria-label={`Open ${product.name}`} className="ml-auto inline-flex min-h-10 min-w-10 items-center justify-center text-primary hover:text-primary/70"><ArrowRight size={14} aria-hidden="true" /></Link>
                       </div>
                     </article>
                   );
