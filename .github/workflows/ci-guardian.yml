@@ -6,7 +6,8 @@ on:
   workflow_run:
     workflows:
       - Quality Gate
-      - Cloudflare Production After Quality Gate
+      - Workers AI Guide Gate
+      - Cloudflare Current Main Reconcile
       - Supabase Functions After Quality Gate
       - Supabase Database After Quality Gate
       - Secret Bootstrap Controller
@@ -80,7 +81,7 @@ jobs:
           allowed=false
 
           case "$WORKFLOW_NAME" in
-            "Quality Gate"|"Cloudflare Production After Quality Gate"|"Supabase Functions After Quality Gate"|"Secret Bootstrap Controller"|"Production Smoke"|"Live crawler parity"|"Deploy Chat Function Current Main"|"Sync Product Media"|"Agent Readiness Live")
+            "Quality Gate"|"Workers AI Guide Gate"|"Cloudflare Current Main Reconcile"|"Supabase Functions After Quality Gate"|"Secret Bootstrap Controller"|"Production Smoke"|"Live crawler parity"|"Deploy Chat Function Current Main"|"Sync Product Media"|"Agent Readiness Live")
               allowed=true
               ;;
           esac
@@ -97,6 +98,7 @@ jobs:
             echo "- Source: \`${HEAD_BRANCH:-unknown}\` / \`${HEAD_SHA:-unknown}\`"
             echo "- Classification: \`$classification\`"
             echo "- Reason: $reason"
+            echo "- PR deterministic repair: delegated to \`Irha PR Auto Fixer\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Re-run one transient failure
@@ -109,12 +111,13 @@ jobs:
             "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/rerun-failed-jobs"
           echo "- Recovery: one automatic failed-job rerun requested" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Suppress stale or non-retryable duplicate noise
+      - name: Preserve deterministic and database safety boundaries
         if: steps.decision.outputs.retryable != 'true' || steps.decision.outputs.allowed != 'true'
         shell: bash
         run: |
           {
             echo "- Recovery: no blind rerun performed"
-            echo "- Notification policy: stale/superseded failures are treated as resolved noise; capacity and deterministic failures remain available for exact inspection"
-            echo "- Database migration workflow is never blindly rerun because an interrupted apply requires ledger inspection first"
+            echo "- Stale/superseded runs: ignored as resolved noise"
+            echo "- Deterministic PR failures: safe mechanical repair is attempted by Irha PR Auto Fixer"
+            echo "- Database migration workflow is never blindly rerun because an interrupted apply requires ledger inspection"
           } >> "$GITHUB_STEP_SUMMARY"

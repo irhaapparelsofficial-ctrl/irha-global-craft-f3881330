@@ -1,0 +1,203 @@
+name: Irha PR Auto Fixer
+
+run-name: PR auto-fix · ${{ github.event.workflow_run.name }} · ${{ github.event.workflow_run.id }}
+
+on:
+  workflow_run:
+    workflows:
+      - Quality Gate
+      - Workers AI Guide Gate
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: pr-auto-fix-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  repair:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+      WORKFLOW_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Resolve current PR head and reject stale evidence
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr_number="$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH")"
+          eligible=false
+          head_ref=""
+          head_sha=""
+
+          if [ -n "$pr_number" ]; then
+            pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr_number")"
+            head_ref="$(printf '%s' "$pr_json" | jq -r '.head.ref')"
+            head_sha="$(printf '%s' "$pr_json" | jq -r '.head.sha')"
+            head_repo="$(printf '%s' "$pr_json" | jq -r '.head.repo.full_name')"
+            state="$(printf '%s' "$pr_json" | jq -r '.state')"
+            draft="$(printf '%s' "$pr_json" | jq -r '.draft')"
+
+            if [ "$head_repo" = "$GITHUB_REPOSITORY" ] \
+              && [ "$state" = "open" ] \
+              && [ "$draft" = "false" ] \
+              && [ "$head_sha" = "$WORKFLOW_HEAD_SHA" ]; then
+              eligible=true
+            fi
+          fi
+
+          echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+
+          if [ "$eligible" != "true" ]; then
+            echo "Stale, closed, draft, forked or superseded PR run; no write attempted."
+          fi
+
+      - name: Checkout exact current PR branch
+        if: steps.resolve.outputs.eligible == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve.outputs.head_ref }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Collect failed logs and changed files
+        if: steps.resolve.outputs.eligible == 'true'
+        shell: bash
+        env:
+          PR_NUMBER: ${{ steps.resolve.outputs.pr_number }}
+        run: |
+          set -euo pipefail
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/failed.log 2>&1 || true
+          gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" \
+            --jq '.[].filename' > /tmp/changed-files.txt
+          test -s /tmp/failed.log || echo "Failed log was unavailable; no unsafe inference will be made." > /tmp/failed.log
+
+      - name: Setup Node
+        if: steps.resolve.outputs.eligible == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies for repair validation
+        if: steps.resolve.outputs.eligible == 'true'
+        continue-on-error: true
+        run: bash scripts/ci/retry.sh 2 5 -- npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Apply bounded mechanical fixes
+        id: fix
+        if: steps.resolve.outputs.eligible == 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci/apply-safe-auto-fixes.mjs /tmp/failed.log /tmp/changed-files.txt /tmp/auto-fix-result.json
+          changed="$(jq -r '.changed' /tmp/auto-fix-result.json)"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Validate repaired branch completely
+        id: validate
+        if: steps.fix.outputs.changed == 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npm test -- --passWithNoTests
+          npm run build
+
+      - name: Commit and push validated mechanical repair
+        id: push
+        if: steps.fix.outputs.changed == 'true' && steps.validate.outcome == 'success'
+        shell: bash
+        env:
+          HEAD_REF: ${{ steps.resolve.outputs.head_ref }}
+        run: |
+          set -euo pipefail
+          git config user.name "irha-ci-auto-fixer[bot]"
+          git config user.email "irha-ci-auto-fixer[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(ci): apply validated mechanical auto-remediation"
+          git push origin "HEAD:$HEAD_REF"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publish one durable PR repair report
+        if: always() && steps.resolve.outputs.pr_number != ''
+        shell: bash
+        env:
+          PR_NUMBER: ${{ steps.resolve.outputs.pr_number }}
+          ELIGIBLE: ${{ steps.resolve.outputs.eligible }}
+          FIX_CHANGED: ${{ steps.fix.outputs.changed }}
+          VALIDATION_OUTCOME: ${{ steps.validate.outcome }}
+          PUSHED: ${{ steps.push.outputs.pushed }}
+        run: |
+          set -euo pipefail
+          marker='<!-- irha-pr-auto-fixer -->'
+          result_json='{"changed":false,"actions":[],"policy":"No result generated."}'
+          if [ -s /tmp/auto-fix-result.json ]; then
+            result_json="$(cat /tmp/auto-fix-result.json)"
+          fi
+          log_tail="$(tail -n 60 /tmp/failed.log 2>/dev/null | sed 's/`/\`/g' || true)"
+
+          cat > /tmp/comment.md <<EOF
+          $marker
+          ## Irha PR Auto Fixer
+
+          - Workflow: \`$WORKFLOW_NAME\`
+          - Failed run: \`$RUN_ID\`
+          - Evidence current and writable: \`${ELIGIBLE:-false}\`
+          - Mechanical change found: \`${FIX_CHANGED:-false}\`
+          - Full validation: \`${VALIDATION_OUTCOME:-not-run}\`
+          - Fix pushed to the same PR branch: \`${PUSHED:-false}\`
+
+          The fixer is deliberately bounded. It may repair dependency-lock drift and autofixable lint errors only. It will not rewrite SQL migrations, deployment identity, secrets, business logic, buyer communication or production data.
+
+          <details><summary>Auto-fix decision</summary>
+
+          \`\`\`json
+          $result_json
+          \`\`\`
+          </details>
+
+          <details><summary>Latest failed-log tail</summary>
+
+          \`\`\`text
+          $log_tail
+          \`\`\`
+          </details>
+          EOF
+
+          existing_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments?per_page=100" \
+            --jq '[.[] | select(.body | contains("<!-- irha-pr-auto-fixer -->"))][-1].id // empty')"
+          if [ -n "$existing_id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing_id" \
+              -f body="$(cat /tmp/comment.md)" >/dev/null
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
+              -f body="$(cat /tmp/comment.md)" >/dev/null
+          fi
+
+          {
+            echo "## Irha PR Auto Fixer"
+            echo "- PR: #$PR_NUMBER"
+            echo "- Current evidence: ${ELIGIBLE:-false}"
+            echo "- Mechanical change: ${FIX_CHANGED:-false}"
+            echo "- Validation: ${VALIDATION_OUTCOME:-not-run}"
+            echo "- Pushed: ${PUSHED:-false}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -5,16 +5,14 @@ on:
     branches: [main]
     paths:
       - "public/_worker-guide.js"
+      - "public/_worker.js"
       - "scripts/install-cloudflare-ai-guide.mjs"
       - "scripts/prepare-cloudflare-ai-pages-config.mjs"
       - "scripts/smoke-cloudflare-ai-guide.mjs"
       - "src/components/LiveChat.tsx"
       - "src/lib/__checks__/cloudflareWorkersAiGuide.test.ts"
-      - "package.json"
-      - "package-lock.json"
       - ".github/workflows/workers-ai-guide-gate.yml"
       - ".github/workflows/deploy-workers-ai-guide-current-main.yml"
-      - ".github/workflows/supabase-database-auto.yml"
   workflow_dispatch:
 
 permissions:
@@ -25,9 +23,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  full-verification:
+  targeted-verification:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 15
     steps:
       - name: Checkout exact event source
         uses: actions/checkout@v4
@@ -41,35 +39,32 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Install dependencies with bounded retry
+        run: bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
 
-      - name: Verify deployment source lock
-        run: npm run verify:deployment-source
+      - name: Run targeted Workers AI contract test
+        run: npx vitest run src/lib/__checks__/cloudflareWorkersAiGuide.test.ts --reporter=verbose
 
-      - name: Verify secret safety
-        run: npm run verify:secrets
-
-      - name: Verify migration order
-        run: npm run verify:migrations
-
-      - name: Typecheck
-        run: npx tsc --noEmit
-
-      - name: Test
-        run: npm test -- --passWithNoTests
-
-      - name: Build immutable release
-        run: npm run build
-
-      - name: Verify release and Workers AI route
+      - name: Build and verify only the Workers AI surface
         shell: bash
         run: |
           set -euo pipefail
-          npm run verify:release-identity
+          npx vite build
+          node scripts/install-cloudflare-ai-guide.mjs
           grep -F 'import { handleIrhaGuideRequest } from "./_worker-guide.js";' dist/_worker.js
           grep -F 'pathname === "/api/guide"' dist/_worker.js
           grep -F 'env.AI.run' dist/_worker-guide.js
           grep -F 'cloudflare-workers-ai' dist/_worker-guide.js
           test "$(grep -Fc 'pathname === "/api/guide"' dist/_worker.js)" = "1"
           test "$(grep -Fc 'handleIrhaGuideRequest' dist/_worker.js)" = "2"
+
+      - name: Record specialized-gate contract
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Workers AI Guide Gate"
+            echo "- Scope: targeted contract test and worker-route build only"
+            echo "- Full typecheck, full test suite and immutable release build: owned by Quality Gate"
+            echo "- Duplicate full-build notification risk: removed"
+          } >> "$GITHUB_STEP_SUMMARY"
