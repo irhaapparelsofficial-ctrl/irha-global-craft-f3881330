@@ -21,8 +21,7 @@
 /products/activewear /products/streetwear-activewear 301
 /products/streetwear/oversized-hoodie /products/streetwear-activewear/oversized-streetwear-hoodie 301
 
-# Retire stale indexed Studio and unsupported legacy editorial pages.
-/studio /inquiry 301
+# Retire unsupported legacy editorial pages while preserving the buyer-safe Custom Lab.
 /blog/dirndl-manufacturer-moq-50 /products/bavarian-trachten-wear/women/dirndl-dresses 301
 /blog/streetwear-oem-pakistan /products/streetwear-activewear 301
 /blog/leather-grades-explained /products/premium-leather-apparel 301
