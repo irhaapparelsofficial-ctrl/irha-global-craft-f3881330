@@ -1,7 +1,7 @@
 // Planned-catalog routing gate — PR #3.
 //
-// The taxonomy manifest (src/lib/catalogTaxonomyManifest.ts) is the single
-// source of truth for what is / isn't allowed to render publicly.
+// The taxonomy routing manifest is the single source of truth for what is /
+// isn't allowed to render publicly.
 //
 // Rules enforced here (per project business controls):
 //   - Draft, in-review, or unapproved slots return `not-found` publicly.
@@ -22,7 +22,7 @@ import {
   type ProductSlot,
   type ProductTypeNode,
   isSlotPublishable,
-} from "./catalogTaxonomyManifest";
+} from "./catalogTaxonomyRoutingManifest";
 
 export type ManifestResolution =
   | { status: "not-in-manifest"; segments: string[] }
