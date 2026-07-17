@@ -106,7 +106,7 @@ export default function AdminPushNotificationSetup() {
       setDismissed(true);
       toast({
         title: "Owner push alerts enabled",
-        description: "Quote requests and human live-chat messages can now alert this device in the background.",
+        description: "New website visitors, quote requests and human live-chat messages can now alert this device in the background.",
       });
     } catch (error) {
       toast({
@@ -145,6 +145,7 @@ export default function AdminPushNotificationSetup() {
         <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
           <CheckCircle2 size={16} /> Background owner alerts active
         </div>
+        <p className="mt-1 max-w-xs text-[10px] leading-relaxed text-white/45">This device is subscribed for new visitors, buyer requests and live-chat alerts.</p>
         <button type="button" onClick={test} disabled={busy} className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-gold disabled:opacity-50">
           {busy ? "Sending…" : "Send test alert"}
         </button>
@@ -162,13 +163,16 @@ export default function AdminPushNotificationSetup() {
           <p className="text-sm font-semibold">Enable real owner alerts</p>
           <p className="mt-1 text-xs leading-relaxed text-white/65">
             {isIos() && !isStandalone()
-              ? "Install Irha Admin from Safari to receive quote and live-chat alerts when the browser is closed."
-              : "Receive quote and human live-chat notifications even when the admin tab is not open."}
+              ? "Install Irha Admin from Safari to receive new-visitor, quote and live-chat alerts when the browser is closed."
+              : "Receive new website visitor, quote and human live-chat notifications even when the admin tab is not open."}
           </p>
+          {config.active_subscriptions > 0 && (
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300">{config.active_subscriptions} owner device{config.active_subscriptions === 1 ? "" : "s"} already connected</p>
+          )}
         </div>
       </div>
       <button type="button" onClick={enable} disabled={busy || !supported || !config.push_supported} className="mt-3 min-h-11 w-full rounded-lg bg-gold px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-background disabled:opacity-50">
-        {busy ? <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Connecting</span> : isIos() && !isStandalone() ? "Show iPhone install steps" : "Enable background alerts"}
+        {busy ? <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Connecting</span> : isIos() && !isStandalone() ? "Show iPhone install steps" : "Enable alerts on this device"}
       </button>
       <button type="button" onClick={() => setDismissed(true)} className="mt-2 w-full text-[10px] text-white/45">Not now</button>
     </aside>

@@ -8,6 +8,7 @@ import Layout from "@/components/layout/Layout";
 import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
 import GlobalInteractionTracker from "@/components/GlobalInteractionTracker";
+import SiteVisitorTracker from "@/components/SiteVisitorTracker";
 
 const Home = lazy(() => import("./pages/Home"));
 const About = lazy(() => import("./pages/About"));
@@ -33,6 +34,7 @@ const BuyerIntentLandingPage = lazy(() => import("./pages/BuyerIntentLandingPage
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminLiveChat = lazy(() => import("./pages/AdminLiveChat"));
+const AdminVisitors = lazy(() => import("./pages/AdminVisitors"));
 const AdminOutreachQuick = lazy(() => import("./pages/AdminOutreachQuick"));
 const AdminWhatsAppQuick = lazy(() => import("./pages/AdminWhatsAppQuick"));
 const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"));
@@ -132,6 +134,7 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <PageViewTracker />
+          <SiteVisitorTracker />
           <GlobalInteractionTracker />
           <Suspense fallback={<PageFallback />}>
             <Routes>
@@ -143,6 +146,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/live-chat" element={<AdminLiveChat />} />
+              <Route path="/admin/visitors" element={<AdminVisitors />} />
               <Route path="/admin/outreach-quick" element={<AdminOutreachQuick />} />
               <Route path="/admin/whatsapp-quick" element={<AdminWhatsAppQuick />} />
               <Route path="/admin/lead-intake" element={<AdminLeadIntake />} />

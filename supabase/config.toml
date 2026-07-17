@@ -8,6 +8,11 @@ verify_jwt = false
 [functions.live-chat]
 verify_jwt = false
 
+# Public browser presence gateway. It validates canonical origins and a
+# session-scoped UUID, rate-limits requests, suppresses bots and stores no IP.
+[functions.site-visitor]
+verify_jwt = false
+
 [functions.public-lead-gateway]
 verify_jwt = false
 
