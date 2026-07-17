@@ -214,6 +214,14 @@
       "git_blob_sha": "c5fd888d49afd4895187fa44a79dfa27a8328106",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260718103000",
+      "name": "live_chat_typing_intelligence",
+      "path": "supabase/migrations/20260718103000_live_chat_typing_intelligence.sql",
+      "git_blob_sha": "a8c232256844e36be6ffe6e0c5ad7814981264c9",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
