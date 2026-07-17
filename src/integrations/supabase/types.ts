@@ -626,6 +626,111 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_publication_events: {
+        Row: {
+          acted_by: string | null
+          created_at: string
+          event: string
+          gate_snapshot: Json
+          id: string
+          reason: string | null
+          reference_code: string
+        }
+        Insert: {
+          acted_by?: string | null
+          created_at?: string
+          event: string
+          gate_snapshot: Json
+          id?: string
+          reason?: string | null
+          reference_code: string
+        }
+        Update: {
+          acted_by?: string | null
+          created_at?: string
+          event?: string
+          gate_snapshot?: Json
+          id?: string
+          reason?: string | null
+          reference_code?: string
+        }
+        Relationships: []
+      }
+      catalog_slot_completion: {
+        Row: {
+          approved_media_count: number
+          audience_slug: string
+          created_at: string
+          factual_description: string | null
+          family_slug: string
+          id: string
+          main_slug: string
+          owner_approved_title: string | null
+          owner_signed_off: boolean
+          publish_state: string
+          publishable: boolean | null
+          published_at: string | null
+          published_by: string | null
+          reference_code: string
+          slot_slug: string
+          spec_sheet_ready: boolean
+          taxonomy_assigned: boolean
+          unpublished_at: string | null
+          unpublished_reason: string | null
+          updated_at: string
+          updated_by: string | null
+          working_title: string
+        }
+        Insert: {
+          approved_media_count?: number
+          audience_slug: string
+          created_at?: string
+          factual_description?: string | null
+          family_slug: string
+          id?: string
+          main_slug: string
+          owner_approved_title?: string | null
+          owner_signed_off?: boolean
+          publish_state?: string
+          publishable?: boolean | null
+          published_at?: string | null
+          published_by?: string | null
+          reference_code: string
+          slot_slug: string
+          spec_sheet_ready?: boolean
+          taxonomy_assigned?: boolean
+          unpublished_at?: string | null
+          unpublished_reason?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          working_title: string
+        }
+        Update: {
+          approved_media_count?: number
+          audience_slug?: string
+          created_at?: string
+          factual_description?: string | null
+          family_slug?: string
+          id?: string
+          main_slug?: string
+          owner_approved_title?: string | null
+          owner_signed_off?: boolean
+          publish_state?: string
+          publishable?: boolean | null
+          published_at?: string | null
+          published_by?: string | null
+          reference_code?: string
+          slot_slug?: string
+          spec_sheet_ready?: boolean
+          taxonomy_assigned?: boolean
+          unpublished_at?: string | null
+          unpublished_reason?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          working_title?: string
+        }
+        Relationships: []
+      }
       catalogue_leads: {
         Row: {
           admin_notes: string | null
@@ -1811,6 +1916,65 @@ export type Database = {
           width_px?: number | null
         }
         Relationships: []
+      }
+      media_generation_briefs: {
+        Row: {
+          aspect_ratio: string | null
+          created_at: string
+          created_by: string | null
+          generated_asset_id: string | null
+          id: string
+          notes: string | null
+          owner_approved_at: string | null
+          owner_approved_by: string | null
+          reference_code: string
+          status: string
+          style: string | null
+          subject: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          created_at?: string
+          created_by?: string | null
+          generated_asset_id?: string | null
+          id?: string
+          notes?: string | null
+          owner_approved_at?: string | null
+          owner_approved_by?: string | null
+          reference_code: string
+          status?: string
+          style?: string | null
+          subject: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          aspect_ratio?: string | null
+          created_at?: string
+          created_by?: string | null
+          generated_asset_id?: string | null
+          id?: string
+          notes?: string | null
+          owner_approved_at?: string | null
+          owner_approved_by?: string | null
+          reference_code?: string
+          status?: string
+          style?: string | null
+          subject?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_generation_briefs_generated_asset_id_fkey"
+            columns: ["generated_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       outreach_campaigns: {
         Row: {
@@ -3228,6 +3392,113 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_media_brief_queue: {
+        Row: {
+          aspect_ratio: string | null
+          created_at: string | null
+          generated_asset_id: string | null
+          id: string | null
+          notes: string | null
+          owner_approved_at: string | null
+          reference_code: string | null
+          status: string | null
+          style: string | null
+          subject: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          created_at?: string | null
+          generated_asset_id?: string | null
+          id?: string | null
+          notes?: string | null
+          owner_approved_at?: string | null
+          reference_code?: string | null
+          status?: string | null
+          style?: string | null
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aspect_ratio?: string | null
+          created_at?: string | null
+          generated_asset_id?: string | null
+          id?: string | null
+          notes?: string | null
+          owner_approved_at?: string | null
+          reference_code?: string | null
+          status?: string | null
+          style?: string | null
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_generation_briefs_generated_asset_id_fkey"
+            columns: ["generated_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_slot_completion_dashboard: {
+        Row: {
+          approved_media_count: number | null
+          audience_slug: string | null
+          blocking_gate: string | null
+          family_slug: string | null
+          main_slug: string | null
+          owner_approved_title: string | null
+          owner_signed_off: boolean | null
+          publish_state: string | null
+          publishable: boolean | null
+          published_at: string | null
+          reference_code: string | null
+          slot_slug: string | null
+          spec_sheet_ready: boolean | null
+          taxonomy_assigned: boolean | null
+          updated_at: string | null
+          working_title: string | null
+        }
+        Insert: {
+          approved_media_count?: number | null
+          audience_slug?: string | null
+          blocking_gate?: never
+          family_slug?: string | null
+          main_slug?: string | null
+          owner_approved_title?: string | null
+          owner_signed_off?: boolean | null
+          publish_state?: string | null
+          publishable?: boolean | null
+          published_at?: string | null
+          reference_code?: string | null
+          slot_slug?: string | null
+          spec_sheet_ready?: boolean | null
+          taxonomy_assigned?: boolean | null
+          updated_at?: string | null
+          working_title?: string | null
+        }
+        Update: {
+          approved_media_count?: number | null
+          audience_slug?: string | null
+          blocking_gate?: never
+          family_slug?: string | null
+          main_slug?: string | null
+          owner_approved_title?: string | null
+          owner_signed_off?: boolean | null
+          publish_state?: string | null
+          publishable?: boolean | null
+          published_at?: string | null
+          reference_code?: string | null
+          slot_slug?: string | null
+          spec_sheet_ready?: boolean | null
+          taxonomy_assigned?: boolean | null
+          updated_at?: string | null
+          working_title?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       automation_today_key: { Args: { _timezone: string }; Returns: string }
@@ -3309,6 +3580,39 @@ export type Database = {
         }
         Returns: number
       }
+      publish_slot_ref: {
+        Args: { _reference_code: string }
+        Returns: {
+          approved_media_count: number
+          audience_slug: string
+          created_at: string
+          factual_description: string | null
+          family_slug: string
+          id: string
+          main_slug: string
+          owner_approved_title: string | null
+          owner_signed_off: boolean
+          publish_state: string
+          publishable: boolean | null
+          published_at: string | null
+          published_by: string | null
+          reference_code: string
+          slot_slug: string
+          spec_sheet_ready: boolean
+          taxonomy_assigned: boolean
+          unpublished_at: string | null
+          unpublished_reason: string | null
+          updated_at: string
+          updated_by: string | null
+          working_title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "catalog_slot_completion"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -3316,6 +3620,39 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      unpublish_slot_ref: {
+        Args: { _reason: string; _reference_code: string }
+        Returns: {
+          approved_media_count: number
+          audience_slug: string
+          created_at: string
+          factual_description: string | null
+          family_slug: string
+          id: string
+          main_slug: string
+          owner_approved_title: string | null
+          owner_signed_off: boolean
+          publish_state: string
+          publishable: boolean | null
+          published_at: string | null
+          published_by: string | null
+          reference_code: string
+          slot_slug: string
+          spec_sheet_ready: boolean
+          taxonomy_assigned: boolean
+          unpublished_at: string | null
+          unpublished_reason: string | null
+          updated_at: string
+          updated_by: string | null
+          working_title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "catalog_slot_completion"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {

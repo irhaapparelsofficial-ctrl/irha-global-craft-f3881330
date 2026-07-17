@@ -1,78 +1,60 @@
-# PR #2 — Catalog Taxonomy Manifest + 206 Planned Slots
+# PR #2 — Catalog Taxonomy Manifest Progress
 
-**Scope:** Main Category → Audience Group → Product Type (Family) → Product Slot.
-**Ships:** manifest source-of-truth, deterministic seed migration, admin missing-media queue view, automated tests. Non-public planning records only.
+Scope: Main Category → Audience Group → Product Type → Product.
 
-## Locked capacity (all verified by tests)
+Target capacity (locked in `src/lib/catalogTaxonomyManifest.ts`):
 
-| Metric | Value |
-|---|---|
-| Main categories | **5** |
-| Product families | **103** |
-| Planned product slots | **206** (2 per family: Design 01 / Design 02) |
-| Slots ready for publication | **0** (correct — all draft/unpublished/missing media) |
+- 5 main categories
+- 103 product families (Product Type nodes)
+- 206 planned product records / slots
 
-## Family count by main category
+## Foundation status
 
-| Main category | Families | Slots |
-|---|---:|---:|
-| Bavarian & Trachten Wear | 22 | 44 |
-| Premium Leather Apparel | 20 | 40 |
-| Sportswear | 22 | 44 |
-| Streetwear & Activewear | 20 | 40 |
-| Leisure & Nightwear | 19 | 38 |
-| **Total** | **103** | **206** |
+| Item | State | Evidence |
+|---|---|---|
+| `public.catalog_taxonomy_nodes` table | Migration committed | `supabase/migrations/20260717230000_explicit_catalog_taxonomy_foundation.sql` |
+| `public.product_taxonomy_assignments` | Migration committed | same file |
+| Leaf-guard, RLS optimization, owner release, review/approval, verified publication | Committed | `supabase/migrations/2026071723{0500,4000,5000,5100,5200}_*.sql` |
+| 5 main categories | Verified against `public.categories` (parent_id IS NULL) | Slugs: `bavarian-trachten-wear`, `premium-leather-apparel`, `sportswear`, `streetwear-activewear`, `leisure-nightwear` |
+| Manifest contract | Committed | `src/lib/catalogTaxonomyManifest.ts` |
+| Draft / review / publish states | Enforced in manifest types + `catalog_taxonomy_nodes.publish_state` CHECK | — |
+| Reference code format | `IRHA-<MAIN>-<AUDIENCE>-<TYPE>-<NNN>` (regex enforced) | manifest |
+| Canonical URL builder | Apex-only, no www | manifest |
+| Breadcrumbs builder | Derived from `fullSlugPath` | manifest |
+| Missing-media queue | Computable from `mediaStatus` per slot | manifest |
+| No fake public content | Slots default to `draft` + `unpublished` + `missing` | manifest |
+| Auto-publish blocked on incomplete slots | `isSlotPublishable()` requires all four green | manifest |
 
-## Files changed
+## Owner-input required (non-fabricated)
 
-| Path | Purpose |
-|---|---|
-| `src/lib/catalogTaxonomyManifest.ts` | Manifest source of truth: 5 mains, 103 families, 206 typed slots, canonical/breadcrumb/reference-code helpers, `isSlotPublishable` gate. |
-| `src/lib/catalogTaxonomyManifest.test.ts` | 10 vitest assertions: counts, uniqueness, ref-code pattern, no publishable slots, parent-child integrity, apex-only canonical URLs. |
-| `scripts/emit-taxonomy-seed.ts` | Deterministic manifest → SQL emitter. Idempotent re-run supported. |
-| `supabase/migrations/20260718000000_seed_planned_taxonomy_206_slots.sql` | 5 main-category nodes (idempotent w/ foundation) + 22 audience nodes + 103 product-type nodes + 206 product slots + 206 proposed taxonomy assignments + `admin_missing_media_queue` view. All `ON CONFLICT DO NOTHING`. |
-| `docs/PR2_TAXONOMY_MANIFEST_PROGRESS.md` | This tracker. |
+To respect the "never invent" rule, the following data does not exist in
+the repository and must be supplied by the owner in reviewed batches.
+Each batch lands as a SQL seed migration through
+`supabase-owner-release.yml`, never as a chat-side fabrication.
 
-## Reference-code scheme
+Per main category, the owner supplies:
 
-`IRHA-<MAIN>-<AUD>-F<NN>-<NNN>` (regex enforced).
+1. The audience groups actually offered under that main.
+2. The product-type (family) slugs and display names for that audience —
+   summing to 103 families across all mains.
+3. The individual product slot list — summing to 206 slots — with the
+   working title, slug, and IRHA reference code per slot.
+4. Any legacy URLs that must 301 to the new canonical path.
 
-- MAIN: `BAV`, `LEA`, `SPT`, `STR`, `LEI`
-- AUD: `MEN`, `WMN`, `KDS`, `UNI`, `TEA`, `FAM`, `ACC`
-- F<NN>: 1-based family position within its main (F01–F22)
-- NNN: design index 001 / 002
+## Deferred verification checkpoints (from R2 runbook)
 
-Example: `IRHA-BAV-MEN-F01-001` → Men's Short Lederhosen — Design 01 (Planned).
+These do not block PR #2. See
+`docs/BACKEND_CUTOVER_2026_07_17_R2.md` §3 for the owner-side list.
 
-## Non-fabrication guarantees
+## PR #2 acceptance checklist
 
-- Every slot ships `is_published=false`, `gallery='{}'`, `image_url=NULL`, `specs='{}'`, `details='{}'`. No invented material composition, MOQ, lead time, pricing, certification, buyer proof, capacity or stock status.
-- Working titles use the pattern `"<Family Name> — Design NN (Planned)"` — explicitly marked as planning records.
-- `product_taxonomy_assignments.review_state = 'proposed'` on every row; publication requires owner approval workflow already committed in migrations `20260717235100`–`20260717235200`.
-
-## Admin missing-media queue
-
-`public.admin_missing_media_queue` — read-only view. On seed apply, all 206 slots appear with `media_status='missing'`. As media is attached and reviewed, rows transition to `pending_review` → `approved` and drop off the queue.
-
-## Test / build results
-
-```
-$ bunx vitest run src/lib/catalogTaxonomyManifest
-Test Files  1 passed (1)
-     Tests  10 passed (10)
-```
-
-## Deployment
-
-The migration file is committed but NOT applied by this PR. Application on the owner project `pvzjiozismyxqrzmtfbi` is gated on `supabase-owner-release.yml` with the manual `APPLY_SUPABASE_RELEASE` input, per project rules.
-
-## PR #3 — next foundation phase
-
-Not started. Planned scope:
-
-1. Public routing: React Router routes for `/main/audience/product-type` (family landing) and `/main/audience/product-type/slot` (slot detail). Family pages render when parent nodes are approved; slot pages remain 404 until `isSlotPublishable`.
-2. Admin taxonomy assignment UI wired to `product_taxonomy_assignments` (approve / re-assign / reject).
-3. Redirect table for legacy URLs — awaits owner list.
-4. Canonical + hreflang + JSON-LD emission per family/slot.
-
-Media generation (official crest, branded tags, cards, banners, woven labels) is explicitly deferred to a dedicated media PR after PR #3.
+- [x] Manifest contract + types committed
+- [x] 5 main categories verified against DB
+- [x] Draft / review / publish states enforced end-to-end
+- [x] Reference code format enforced
+- [x] Canonical URL + breadcrumb helpers
+- [x] Missing-media queue derivable per slot
+- [ ] 103 family rows seeded (awaits owner batches)
+- [ ] 206 product slot rows seeded (awaits owner batches)
+- [ ] Admin taxonomy-assignment UI wired to `product_taxonomy_assignments`
+- [ ] Redirect table entries for legacy URLs (awaits owner list)
