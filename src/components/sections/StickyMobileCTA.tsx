@@ -8,21 +8,28 @@ function categoryFromPath(pathname: string): string | null {
   return slug && slug !== "all" ? slug : null;
 }
 
+function isProductDetailPath(pathname: string): boolean {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments[0] !== "products" || segments[1] === "all") return false;
+  return segments.length >= 5 || (segments.length === 3 && segments[2] !== "all-products");
+}
+
 export default function StickyMobileCTA() {
   const { pathname } = useLocation();
   const categorySlug = categoryFromPath(pathname);
+  const productDetail = isProductDetailPath(pathname);
   const quoteHref = categorySlug
     ? `/inquiry?intent=rfq&category=${encodeURIComponent(categorySlug)}&utm_source=mobile-dock&utm_content=${encodeURIComponent(pathname)}`
     : "/inquiry?intent=rfq";
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(productDetail);
   const [supportOpened, setSupportOpened] = useState(false);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
-    setCollapsed(false);
+    setCollapsed(productDetail);
     setSupportOpened(false);
     lastScrollY.current = window.scrollY;
-  }, [pathname]);
+  }, [pathname, productDetail]);
 
   useEffect(() => {
     let frame = 0;
@@ -31,7 +38,8 @@ export default function StickyMobileCTA() {
       frame = window.requestAnimationFrame(() => {
         const current = window.scrollY;
         const delta = current - lastScrollY.current;
-        if (current < 120) setCollapsed(false);
+        if (productDetail) setCollapsed(true);
+        else if (current < 120) setCollapsed(false);
         else if (delta > 10) setCollapsed(true);
         else if (delta < -10) setCollapsed(false);
         lastScrollY.current = current;
@@ -44,7 +52,7 @@ export default function StickyMobileCTA() {
       window.removeEventListener("scroll", onScroll);
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [productDetail]);
 
   const openLiveSupport = () => {
     setSupportOpened(true);
@@ -60,6 +68,7 @@ export default function StickyMobileCTA() {
       }`}
       aria-label="Primary contact actions"
       data-collapsed={collapsed ? "true" : "false"}
+      data-product-detail={productDetail ? "true" : "false"}
     >
       <button
         type="button"

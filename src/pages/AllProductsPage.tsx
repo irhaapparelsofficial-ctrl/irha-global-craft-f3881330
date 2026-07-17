@@ -111,7 +111,7 @@ export default function AllProductsPage() {
         }}
       />
 
-      <section className="border-b border-border/60 pt-32 pb-12 md:pt-40 md:pb-16">
+      <section className="border-b border-border/60 pb-10 pt-36 md:pb-16 md:pt-40">
         <div className="container-luxe">
           <p className="eyebrow mb-4">Complete Product Finder</p>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -123,14 +123,14 @@ export default function AllProductsPage() {
                 Search product names, SKUs, categories and construction descriptions. Add suitable styles to one inquiry cart, define quantities and size breakdowns, then submit one structured RFQ.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
-              <span className="border border-border/60 px-4 py-2.5 text-foreground/60">
+            <div className="flex flex-wrap items-center gap-2 text-[9px] uppercase tracking-[0.16em] sm:gap-3 sm:text-[10px] sm:tracking-[0.2em]">
+              <span className="rounded-md border border-border/60 px-3 py-2.5 text-foreground/60 sm:px-4">
                 {totalProducts} published products
               </span>
-              <Link to="/inquiry-cart" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
+              <Link to="/inquiry-cart" className="rounded-md border border-border/60 px-3 py-2.5 hover:border-primary hover:text-primary sm:px-4">
                 Inquiry cart {shortlist.items.length > 0 ? `(${shortlist.items.length})` : ""}
               </Link>
-              <Link to="/compare" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
+              <Link to="/compare" className="rounded-md border border-border/60 px-3 py-2.5 hover:border-primary hover:text-primary sm:px-4">
                 Compare {compare.items.length > 0 ? `(${compare.items.length}/4)` : ""}
               </Link>
             </div>
@@ -138,10 +138,10 @@ export default function AllProductsPage() {
         </div>
       </section>
 
-      <section className="sticky top-16 z-30 border-b border-border/60 bg-background/95 py-5 backdrop-blur-xl">
+      <section className="border-b border-border/60 bg-background/96 py-3 backdrop-blur-xl md:sticky md:top-20 md:z-30 md:py-4">
         <div className="container-luxe">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px_190px_auto]">
-            <label className="relative block">
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-[minmax(0,1fr)_240px_190px_auto] lg:gap-3">
+            <label className="relative col-span-2 block lg:col-span-1">
               <span className="sr-only">Search all products</span>
               <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/45" />
               <input
@@ -151,7 +151,7 @@ export default function AllProductsPage() {
                 placeholder="Search product, category or SKU…"
                 autoComplete="off"
                 enterKeyHint="search"
-                className="min-h-12 w-full border border-border/60 bg-card/35 pl-11 pr-11 text-sm outline-none transition-colors focus:border-primary"
+                className="min-h-12 w-full rounded-md border border-border/60 bg-card/35 pl-11 pr-11 text-sm outline-none transition-colors focus:border-primary"
               />
               {query && (
                 <button
@@ -165,13 +165,13 @@ export default function AllProductsPage() {
               )}
             </label>
 
-            <label className="relative">
+            <label className="relative col-span-2 sm:col-span-1 lg:col-span-1">
               <span className="sr-only">Filter by category</span>
               <SlidersHorizontal size={15} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-foreground/45" />
               <select
                 value={categorySlug}
                 onChange={(event) => updateParam("category", event.target.value)}
-                className="min-h-12 w-full appearance-none border border-border/60 bg-card/35 pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary"
+                className="min-h-12 w-full appearance-none rounded-md border border-border/60 bg-card/35 pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary"
               >
                 <option value="all">All categories ({totalProducts})</option>
                 {categories.map((category) => (
@@ -182,12 +182,12 @@ export default function AllProductsPage() {
               </select>
             </label>
 
-            <label>
+            <label className="col-span-1">
               <span className="sr-only">Sort products</span>
               <select
                 value={sort}
                 onChange={(event) => updateParam("sort", event.target.value)}
-                className="min-h-12 w-full border border-border/60 bg-card/35 px-4 text-sm outline-none transition-colors focus:border-primary"
+                className="min-h-12 w-full rounded-md border border-border/60 bg-card/35 px-3 text-sm outline-none transition-colors focus:border-primary sm:px-4"
               >
                 <option value="relevance">Best match</option>
                 <option value="name-asc">Name A–Z</option>
@@ -199,7 +199,7 @@ export default function AllProductsPage() {
               type="button"
               onClick={clearFilters}
               disabled={!hasFilters}
-              className="min-h-12 border border-border/60 px-5 text-[10px] uppercase tracking-[0.2em] text-foreground/65 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-35"
+              className="col-span-1 min-h-12 rounded-md border border-border/60 px-3 text-[9px] uppercase tracking-[0.16em] text-foreground/65 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-[10px] sm:tracking-[0.2em]"
             >
               Clear filters
             </button>
@@ -207,21 +207,21 @@ export default function AllProductsPage() {
         </div>
       </section>
 
-      <section className="py-12 md:py-16">
+      <section className="pb-32 pt-8 md:pb-16 md:pt-12">
         <div className="container-luxe">
           {isLoading ? (
-            <div className="border border-dashed border-border/60 p-12 text-center text-sm text-foreground/60" role="status" aria-live="polite">
+            <div className="rounded-xl border border-dashed border-border/60 p-12 text-center text-sm text-foreground/60" role="status" aria-live="polite">
               Loading published catalogue…
             </div>
           ) : (
             <>
               {isError && (
-                <div className="mb-8 border border-amber-500/35 bg-amber-500/5 p-4 text-xs text-foreground/70" role="status">
+                <div className="mb-8 rounded-xl border border-amber-500/35 bg-amber-500/5 p-4 text-xs text-foreground/70" role="status">
                   Live catalogue data could not be refreshed. Available fallback products are shown; confirm the current style before quotation.
                 </div>
               )}
 
-              <div className="mb-8 flex flex-wrap items-end justify-between gap-3 border-b border-border/60 pb-5">
+              <div className="mb-7 flex flex-wrap items-end justify-between gap-3 border-b border-border/60 pb-5">
                 <div>
                   <p className="eyebrow mb-2">Search Results</p>
                   <h2 className="font-display text-2xl md:text-3xl">
@@ -234,7 +234,7 @@ export default function AllProductsPage() {
               </div>
 
               {results.length === 0 ? (
-                <div className="border border-dashed border-border/60 px-6 py-14 text-center">
+                <div className="rounded-2xl border border-dashed border-border/60 px-6 py-14 text-center">
                   <Search size={28} className="mx-auto mb-4 text-foreground/35" />
                   <h3 className="font-display text-2xl">No matching published product</h3>
                   <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-foreground/60">
@@ -244,7 +244,7 @@ export default function AllProductsPage() {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="min-h-11 border border-border/60 px-5 text-[10px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary"
+                      className="min-h-11 rounded-md border border-border/60 px-5 text-[10px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary"
                     >
                       Reset search
                     </button>
@@ -252,7 +252,7 @@ export default function AllProductsPage() {
                       href={whatsappLink(assistanceMessage)}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="inline-flex min-h-11 items-center gap-2 border border-gold/70 px-5 text-[10px] uppercase tracking-[0.2em] text-gold hover:bg-gold hover:text-background"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-md border border-gold/70 px-5 text-[10px] uppercase tracking-[0.2em] text-gold hover:bg-gold hover:text-background"
                     >
                       <MessageCircle size={14} /> Ask on WhatsApp
                     </a>
@@ -260,7 +260,7 @@ export default function AllProductsPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-7">
+                  <div className="grid grid-cols-1 gap-6 min-[520px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xl:gap-7">
                     {visibleResults.map((item) => {
                       const { product } = item;
                       const saved = shortlist.has(product.slug);
@@ -277,32 +277,35 @@ export default function AllProductsPage() {
                       const productPath = `/products/${item.categorySlug}/${product.slug}`;
 
                       return (
-                        <article key={`${item.categorySlug}:${product.slug}`} className="group flex min-w-0 flex-col">
-                          <Link to={productPath} className="relative mb-3 block aspect-[3/4] overflow-hidden bg-card">
+                        <article key={`${item.categorySlug}:${product.slug}`} className="group flex min-w-0 flex-col rounded-2xl border border-border/60 bg-card/20 p-3 transition-colors hover:border-primary/50 sm:p-4">
+                          <Link to={productPath} className="relative mb-4 block aspect-[4/5] overflow-hidden rounded-xl bg-[#0d0d0d]">
                             <ThumbnailImage
                               src={product.image}
                               alt={`Custom ${product.name} wholesale manufacturer product style`}
-                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1000ms] group-hover:scale-105"
+                              className="absolute inset-0 h-full w-full object-contain p-2 transition-transform duration-[700ms] group-hover:scale-[1.03]"
                             />
+                            <span className="absolute left-2.5 top-2.5 rounded-full border border-primary/40 bg-black/75 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.16em] text-primary backdrop-blur">
+                              B2B program
+                            </span>
                           </Link>
-                          <p className="truncate text-[9px] uppercase tracking-[0.16em] text-foreground/45">
+                          <p className="truncate text-[8px] uppercase tracking-[0.15em] text-foreground/42">
                             {product.sku ? `${product.sku} · ` : ""}{item.categoryName} · {item.subName}
                           </p>
-                          <Link to={productPath} className="mt-1 font-display text-sm leading-tight transition-colors hover:text-primary md:text-base">
+                          <Link to={productPath} className="mt-1.5 min-h-[2.7rem] font-display text-xl leading-[1.08] transition-colors hover:text-primary">
                             {product.name}
                           </Link>
-                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <div className="mt-4 grid grid-cols-2 gap-2">
                             <button
                               type="button"
                               onClick={() => shortlist.toggle(storedProduct)}
                               aria-pressed={saved}
                               aria-label={saved ? `Remove ${product.name} from inquiry cart` : `Add ${product.name} to inquiry cart`}
-                              className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
+                              className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[8px] font-semibold uppercase tracking-[0.12em] ${
                                 saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
                               }`}
                             >
                               {saved ? <Check size={12} /> : <PackagePlus size={12} />}
-                              {saved ? "Added" : "Add to Inquiry"}
+                              {saved ? "Added" : "Add to inquiry"}
                             </button>
                             <button
                               type="button"
@@ -310,7 +313,7 @@ export default function AllProductsPage() {
                               disabled={compareFull}
                               aria-pressed={inCompare}
                               title={compareFull ? "Comparison is limited to four products" : undefined}
-                              className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
+                              className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[8px] font-semibold uppercase tracking-[0.12em] ${
                                 inCompare
                                   ? "border-primary text-primary"
                                   : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"
@@ -319,8 +322,12 @@ export default function AllProductsPage() {
                               <GitCompareArrows size={12} />
                               {inCompare ? "Added" : "Compare"}
                             </button>
-                            <Link to={productPath} aria-label={`Open ${product.name}`} className="ml-auto inline-flex min-h-10 min-w-10 items-center justify-center text-primary hover:text-primary/70">
-                              <ArrowUpRight size={14} />
+                            <Link
+                              to={productPath}
+                              aria-label={`Open ${product.name}`}
+                              className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-gradient-gold text-[8px] font-semibold uppercase tracking-[0.14em] text-primary-foreground"
+                            >
+                              View product <ArrowUpRight size={13} />
                             </Link>
                           </div>
                         </article>
@@ -333,7 +340,7 @@ export default function AllProductsPage() {
                       <button
                         type="button"
                         onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
-                        className="min-h-12 border border-border/60 px-7 text-[10px] uppercase tracking-[0.22em] hover:border-primary hover:text-primary"
+                        className="min-h-12 rounded-md border border-border/60 px-7 text-[10px] uppercase tracking-[0.22em] hover:border-primary hover:text-primary"
                       >
                         Show more ({results.length - visibleCount} remaining)
                       </button>

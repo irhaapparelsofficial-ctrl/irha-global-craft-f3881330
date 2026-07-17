@@ -32,7 +32,7 @@ env:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
 
     steps:
       - name: Check out exact source branch
@@ -50,8 +50,17 @@ jobs:
       - name: Install image dependency with bounded retry
         run: bash scripts/ci/retry.sh 3 5 -- python -m pip install --disable-pip-version-check --no-cache-dir Pillow==11.3.0
 
-      - name: Fetch and optimize product media
+      - name: Fetch, optimize and verify every manifest image
         run: python scripts/sync_product_media.py
+
+      - name: Reject unresolved manifest media
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d public/product-media
+          count="$(find public/product-media -type f -name '*.webp' | wc -l | tr -d ' ')"
+          test "$count" -gt 0
+          echo "Verified repository product-media outputs: $count files"
 
       - name: Upload validation artifact
         if: github.event_name == 'pull_request'
@@ -104,4 +113,5 @@ jobs:
             echo "- Source SHA: \`$SOURCE_SHA\`"
             echo "- Fresh before push: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
             echo "- Repository mutation lock: \`irha-repository-mutation\`"
+            echo "- Completeness rule: every registered manifest image must exist and validate"
           } >> "$GITHUB_STEP_SUMMARY"
