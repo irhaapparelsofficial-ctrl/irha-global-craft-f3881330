@@ -19,7 +19,9 @@ const manifest = JSON.parse(
     name: string;
     path: string;
     git_blob_sha: string;
+    execution_mode?: string;
     transactional_dry_run: boolean;
+    verification_query?: string;
   }>;
 };
 
@@ -37,13 +39,15 @@ function extract(pattern: RegExp, label: string) {
 describe("draft B2B SEO foundation", () => {
   it("registers the exact migration blob after the taxonomy foundation", () => {
     const entry = manifest.migrations.find((item) => item.version === "20260717232000");
-    expect(entry).toEqual({
+    expect(entry).toMatchObject({
       version: "20260717232000",
       name: "seed_draft_b2b_seo_foundation",
       path: migrationPath,
       git_blob_sha: gitBlobSha(migrationBuffer),
-      transactional_dry_run: true,
+      execution_mode: "verified_present",
+      transactional_dry_run: false,
     });
+    expect(entry?.verification_query).toMatch(/^select\b/i);
     const versions = manifest.migrations.map((item) => item.version);
     expect(versions.indexOf("20260717232000")).toBeGreaterThan(versions.indexOf("20260717230500"));
   });
