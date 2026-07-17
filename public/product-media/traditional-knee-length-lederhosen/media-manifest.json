@@ -1,0 +1,127 @@
+{
+  "product": "Traditional Knee-Length Lederhosen",
+  "slug": "traditional-knee-length-lederhosen",
+  "design": "01",
+  "category": "Bavarian & Trachten Wear / Men / Lederhosen",
+  "logo_source": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/brand/irha-apparels-official-locked-logo-256.png",
+  "logo_sha256": "8d958b6aec7a589afc3644a99b97faaa318d909ef94b79dd38e3bd8f47ca58e1",
+  "logo_rule": "Exact official raster overlay only; no generative redraw",
+  "views": [
+    {
+      "view": "front",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:623b2ad2-fb93-4c34-a821-d859b48f3173",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "clean_path": "public/product-media/traditional-knee-length-lederhosen/clean/traditional-knee-length-lederhosen-design-01-front-clean-2048.png",
+      "branded_path": "public/product-media/traditional-knee-length-lederhosen/branded/traditional-knee-length-lederhosen-design-01-front-branded-2048.png",
+      "web_path": "public/product-media/traditional-knee-length-lederhosen/web/traditional-knee-length-lederhosen-design-01-front-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "9c27cf30776af30e316f3fff637803ecc77452a8b81524ed00d87d22e62781cd",
+      "clean_sha256": "653b5f1d8b16318583f7ecdb2339fc528281d165f494765cc8366a2215e00e5a",
+      "branded_sha256": "e4bfd485c6d030a119efd6dd9350a1ed3f650ee21bbd6174c65b7a42eb1cb6b7",
+      "web_sha256": "dc6e95b15efb3772452ebf279d177dc09772311880906f25b96022ab2ee29a25"
+    },
+    {
+      "view": "three-quarter",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a66cd8c9-1c2a-4f42-b337-84fd15b8acc8",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "clean_path": "public/product-media/traditional-knee-length-lederhosen/clean/traditional-knee-length-lederhosen-design-01-three-quarter-clean-2048.png",
+      "branded_path": "public/product-media/traditional-knee-length-lederhosen/branded/traditional-knee-length-lederhosen-design-01-three-quarter-branded-2048.png",
+      "web_path": "public/product-media/traditional-knee-length-lederhosen/web/traditional-knee-length-lederhosen-design-01-three-quarter-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "bed14a59caa9525e056b66b5152c1cd5a9d359d6682142af834f0a44be047862",
+      "clean_sha256": "2ad4c78026e9aac489fd36bb0aa9208314428920c84afcfbcf29c6aa35e36a1f",
+      "branded_sha256": "09ccbb771e292a3802bd37a2851e3bd7378f8f0982d22ca246cb3e426ee86a60",
+      "web_sha256": "8ba4f72ad411387384ebbba2480565ecc3ea804d7b398c6b242399cb12f6a9c0"
+    },
+    {
+      "view": "side",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a200e974-a94e-4768-b371-cfb824293901",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "clean_path": "public/product-media/traditional-knee-length-lederhosen/clean/traditional-knee-length-lederhosen-design-01-side-clean-2048.png",
+      "branded_path": "public/product-media/traditional-knee-length-lederhosen/branded/traditional-knee-length-lederhosen-design-01-side-branded-2048.png",
+      "web_path": "public/product-media/traditional-knee-length-lederhosen/web/traditional-knee-length-lederhosen-design-01-side-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "f43372ad5be71da3141d5ba4d40256e64462992822d22758c1de4932df40f059",
+      "clean_sha256": "c68aa71eab54e7f96060283c5c4efadc2bb3999386495a9eb874210b77b58b35",
+      "branded_sha256": "44d6b139517f5befebc2223478b68ed6dc273db1b7cdefd7a09004a8e533a973",
+      "web_sha256": "afe6a8566502b6d17d21252e93cb6fdf689d6d0b8e4d2508c78472bf43d8217e"
+    },
+    {
+      "view": "back",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:80922447-35bc-4b0f-a953-bb490caaa44e",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "clean_path": "public/product-media/traditional-knee-length-lederhosen/clean/traditional-knee-length-lederhosen-design-01-back-clean-2048.png",
+      "branded_path": "public/product-media/traditional-knee-length-lederhosen/branded/traditional-knee-length-lederhosen-design-01-back-branded-2048.png",
+      "web_path": "public/product-media/traditional-knee-length-lederhosen/web/traditional-knee-length-lederhosen-design-01-back-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "269539ecc06ba0b0e0649fcf989d0a7eb0595efdce8b9090f37b927c67692eb3",
+      "clean_sha256": "068cccabffad1d8361a319b53150daa95f4eb970735f4aa0629fdb395f4f400c",
+      "branded_sha256": "9bc717d38d2427497e3bcf12a978b5b0a25166f9217d8b560d67e6d8715ded77",
+      "web_sha256": "1fd3633b24996fdcdd99d7521e3633a247025b5f001a5a0c1796f390e6dbdabb"
+    }
+  ]
+}
