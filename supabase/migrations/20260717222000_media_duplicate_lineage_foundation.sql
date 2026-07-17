@@ -145,8 +145,8 @@ begin
      or duplicate_row.checksum_sha256 <> expected_checksum then
     raise exception 'reviewed media duplicate checksum changed; manual re-review is required';
   end if;
-  if canonical_row.object_path <> 'migrated-lovable/32/32be4604-a427-4149-85c4-3ca8de69bb42.png'
-     or duplicate_row.object_path <> 'migrated-lovable/56/56451814-1b32-4612-b763-70a9d2022178.png' then
+  if canonical_row.object_path <> 'migrated-lovable/32/329b168f762b26aac6a426809fef57987aa58eedab66972437d809dd4dc1940b.png'
+     or duplicate_row.object_path <> 'catalog-migrated/06bd5d3d-d7ec-4d8b-ac71-5d080e9c00ce/329b168f762b26aac6a4.png' then
     raise exception 'reviewed media duplicate storage identity changed; manual re-review is required';
   end if;
 
