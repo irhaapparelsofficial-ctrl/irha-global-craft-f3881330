@@ -5,6 +5,10 @@
 
 begin;
 
+-- The Management API executes migrations without a user JWT. Keep the existing
+-- media write guard active, but authorize this one transaction as service_role.
+set local request.jwt.claim.role = 'service_role';
+
 alter table public.media_assets
   add column if not exists duplicate_of uuid references public.media_assets(id) on delete restrict,
   add column if not exists duplicate_kind text,
