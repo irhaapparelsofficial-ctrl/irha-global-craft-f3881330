@@ -11,6 +11,11 @@ verify_jwt = false
 [functions.public-lead-gateway]
 verify_jwt = false
 
+# Meta cannot provide a Supabase JWT. This receiver verifies the platform's
+# challenge token and HMAC signature before persisting a webhook event.
+[functions.meta-webhook]
+verify_jwt = false
+
 [functions.generate-mockup]
 verify_jwt = false
 
