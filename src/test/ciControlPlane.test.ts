@@ -113,7 +113,7 @@ describe("Irha CI control plane", () => {
     expect(reconciler).not.toContain("migration repair");
     expect(manifest.project_id).toBe("pvzjiozismyxqrzmtfbi");
     expect(manifest.cutover_version).toBe("20260717000000");
-    expect(manifest.migrations).toHaveLength(9);
+    expect(manifest.migrations).toHaveLength(10);
 
     const verifiedPresent = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
@@ -130,6 +130,15 @@ describe("Irha CI control plane", () => {
         expect(migration.transactional_dry_run).toBe(true);
         expect(migration.verification_query).toBeUndefined();
       }
+    }
+
+    for (const migration of manifest.migrations.filter(
+      (entry: { version: string; execution_mode?: string }) =>
+        entry.version >= "20260717133000" && entry.execution_mode === "transactional",
+    )) {
+      const sql = read(migration.path);
+      expect(sql).not.toMatch(/^\s*(?:--[^\n]*\n\s*)*(?:begin|start\s+transaction)\s*;/i);
+      expect(sql).not.toMatch(/\b(?:commit|rollback)\s*;\s*$/i);
     }
   });
 
