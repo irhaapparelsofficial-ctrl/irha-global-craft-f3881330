@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, Clock3, Database, RefreshCw } from "lucide
 import { supabase } from "@/integrations/supabase/client";
 import CatalogPriorityAuditPanel from "@/components/admin/CatalogPriorityAuditPanel";
 import ProductQualityCenter from "@/components/admin/ProductQualityCenter";
+import TaxonomyOwnerReviewPanel from "@/components/admin/TaxonomyOwnerReviewPanel";
 
 type Health = {
   categoryCount: number;
@@ -94,6 +95,25 @@ export default function CatalogReleaseStatus() {
         </summary>
         <div className="border-t border-border/60 p-3 sm:p-4">
           <ProductQualityCenter />
+        </div>
+      </details>
+
+      <details className="group mb-4 border border-emerald-500/30 bg-card/25" open>
+        <summary className="list-none cursor-pointer px-4 py-4 sm:px-5 [&::-webkit-details-marker]:hidden">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-300">Owner approval workspace</p>
+              <h2 className="mt-1 font-display text-lg sm:text-xl">Explicit catalogue hierarchy review</h2>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Review Main Category → Audience or Buyer Group → Product Type and every product mapping before any separate public cutover.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-emerald-500/45 px-3 py-2 text-[9px] uppercase tracking-[0.16em] text-emerald-200 group-open:hidden">Open</span>
+            <span className="hidden shrink-0 rounded-full border border-border/60 px-3 py-2 text-[9px] uppercase tracking-[0.16em] text-muted-foreground group-open:inline-flex">Close</span>
+          </div>
+        </summary>
+        <div className="border-t border-border/60 p-3 sm:p-4">
+          <TaxonomyOwnerReviewPanel />
         </div>
       </details>
 
