@@ -77,6 +77,14 @@
       "git_blob_sha": "a1f30871813c0c5092ccd603990abe3c525203fb",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260717133000",
+      "name": "notification_delivery_attempts_notification_fk_index",
+      "path": "supabase/migrations/20260717133000_notification_delivery_attempts_notification_fk_index.sql",
+      "git_blob_sha": "3547bc7635dcaed33951a59851dc0804949b2f94",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
