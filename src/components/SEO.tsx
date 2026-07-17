@@ -48,6 +48,10 @@ function safeJson(value: object) {
   return JSON.stringify(value).replace(/</g, "\u003c");
 }
 
+function taxonomyTranslationsReleased() {
+  return import.meta.env.VITE_TAXONOMY_TRANSLATIONS_RELEASED === "true";
+}
+
 export default function SEO({
   title,
   description,
@@ -75,13 +79,17 @@ export default function SEO({
   const ogImage = assetUrl(override?.og_image_url || image || defaultSocialImage);
   const effectiveJsonLd = override?.json_ld || jsonLd;
   const isCategoryRoute = /^\/products\/[^/]+(?:\/all-products)?\/?$/.test(location.pathname);
-  const functionalCategoryVariant =
-    isCategoryRoute && shouldNoIndexCategorySearchParams(location.search);
-  const robots = noindex || override?.noindex || functionalCategoryVariant
+  const functionalCategoryVariant = isCategoryRoute && shouldNoIndexCategorySearchParams(location.search);
+  const isUnreviewedLocalizedTaxonomy = /^\/intl\/(de|fr|es)\/products\//.test(location.pathname)
+    && !taxonomyTranslationsReleased();
+  const robots = noindex || override?.noindex || functionalCategoryVariant || isUnreviewedLocalizedTaxonomy
     ? "noindex,follow,max-image-preview:large"
     : "index,follow,max-image-preview:large";
-  const normalizedAlternates = alternates.length > 0
+  const allowedAlternates = taxonomyTranslationsReleased()
     ? alternates
+    : alternates.filter((alternate) => !/^\/intl\/(de|fr|es)\/products\//.test(alternate.href));
+  const normalizedAlternates = allowedAlternates.length > 0
+    ? allowedAlternates
     : [{ locale: "en", href: url }];
   const xDefault = canonicalUrl(xDefaultPath || effectivePath);
 
