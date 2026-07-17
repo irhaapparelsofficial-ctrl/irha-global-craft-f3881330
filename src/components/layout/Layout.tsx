@@ -115,7 +115,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <main
         id="main-content"
         tabIndex={-1}
-        className="flex-1 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-0 outline-none"
+        className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0 outline-none"
       >
         {children}
       </main>
