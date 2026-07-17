@@ -1,0 +1,127 @@
+{
+  "product": "Short Lederhosen",
+  "slug": "short-lederhosen",
+  "design": "01",
+  "category": "Bavarian & Trachten Wear / Men / Lederhosen",
+  "logo_source": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/brand/irha-apparels-official-locked-logo-256.png",
+  "logo_sha256": "8d958b6aec7a589afc3644a99b97faaa318d909ef94b79dd38e3bd8f47ca58e1",
+  "logo_rule": "Exact official raster overlay only; no generative redraw",
+  "views": [
+    {
+      "view": "front",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:ae4da0c9-613e-47fc-813c-cc1e541ae38b",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "clean_path": "public/product-media/short-lederhosen/clean/short-lederhosen-design-01-front-clean-2048.png",
+      "branded_path": "public/product-media/short-lederhosen/branded/short-lederhosen-design-01-front-branded-2048.png",
+      "web_path": "public/product-media/short-lederhosen/web/short-lederhosen-design-01-front-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "2acd724bd37de3c8755a46af52601e9eb14041de1faaceb897069f1e39250dcb",
+      "clean_sha256": "7663a8dca20bba722cef45a73b3e1b155f25a735f6a0e19d06df50c06e849b37",
+      "branded_sha256": "24d644b638d18ba628707891c0a85f02390db459d81a63f27e776755c3030797",
+      "web_sha256": "ea2c5979aaefc567bfe7ffc16bd78c6dee780c9be9906991260098643bc9dba9"
+    },
+    {
+      "view": "three-quarter",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:df740457-f009-46db-9cf8-a9aeda9588c4",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "clean_path": "public/product-media/short-lederhosen/clean/short-lederhosen-design-01-three-quarter-clean-2048.png",
+      "branded_path": "public/product-media/short-lederhosen/branded/short-lederhosen-design-01-three-quarter-branded-2048.png",
+      "web_path": "public/product-media/short-lederhosen/web/short-lederhosen-design-01-three-quarter-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "df3e6312eef51ea1e363daa963893b57d516bd97234d87da36cbde417bc4b445",
+      "clean_sha256": "d9e880eaa1df8a95fe86414300b1be52be98f0369674056db8dfc6ec60d8e23c",
+      "branded_sha256": "78d64fe43dee53281cc92a02cb1bf84d88d3d58aedbb6f9e8eeb1eaea84e7377",
+      "web_sha256": "7da3a4621f9e32ea90df4d046bcfd49b274425595faf89584408ce069990c894"
+    },
+    {
+      "view": "side",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:4e23f9f5-7728-412f-91b9-ab5d1c6bcadf",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "clean_path": "public/product-media/short-lederhosen/clean/short-lederhosen-design-01-side-clean-2048.png",
+      "branded_path": "public/product-media/short-lederhosen/branded/short-lederhosen-design-01-side-branded-2048.png",
+      "web_path": "public/product-media/short-lederhosen/web/short-lederhosen-design-01-side-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "99fddca3b3dc17ea7fbe8e2013f84cf4cdfe5f30882fdde31705a57bfaf5c189",
+      "clean_sha256": "e7859413066c618fe93c7829133f4408a79a8bf8e3e34c08baf477d231454870",
+      "branded_sha256": "bc8e53503a18d8b46089689303f3b7f52fb708fda4817b8e4cd39288c3f2d4b7",
+      "web_sha256": "66c49edeac5f88062e34e9db023196ea9768b6c07848f4f329d4dbcd1e65d480"
+    },
+    {
+      "view": "back",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:af06d256-8cc2-4a17-8dab-0fe24c67eea7",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "clean_path": "public/product-media/short-lederhosen/clean/short-lederhosen-design-01-back-clean-2048.png",
+      "branded_path": "public/product-media/short-lederhosen/branded/short-lederhosen-design-01-back-branded-2048.png",
+      "web_path": "public/product-media/short-lederhosen/web/short-lederhosen-design-01-back-web-1600.webp",
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "477375e84656410a063e1fd63eb4202a5c1da883400570d245104d4c458e57a9",
+      "clean_sha256": "0d8055e6c759e50842fdd96425ca52cf272fc72684d1aeb31353b0392e23ef41",
+      "branded_sha256": "a81995d7dd399dad86548f73fea31880823515f0b376088b8d91ec290b15cdf9",
+      "web_sha256": "99a96b3ce2dde6b71d2362bc4b92a50b8a3602e0f5e938962768880de9c3f7fc"
+    }
+  ]
+}
