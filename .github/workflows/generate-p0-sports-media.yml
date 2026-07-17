@@ -6,12 +6,19 @@ on:
       - catalog-media-p0-sports-2026-07-17
     paths:
       - .github/workflows/generate-p0-sports-media.yml
+      - scripts/generate_p0_sports_media.py
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/generate-p0-sports-media.yml
+      - scripts/generate_p0_sports_media.py
 
 permissions:
   contents: write
 
 concurrency:
-  group: generate-p0-sports-media
+  group: generate-p0-sports-media-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
@@ -19,7 +26,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - name: Checkout exact branch
+      - name: Checkout exact media branch
         uses: actions/checkout@v4
         with:
           ref: catalog-media-p0-sports-2026-07-17
@@ -34,158 +41,13 @@ jobs:
       - name: Install locked image dependency
         run: python -m pip install --disable-pip-version-check --no-cache-dir 'Pillow==11.3.0'
 
-      - name: Build verified clean, branded and web assets
+      - name: Generate clean, branded and web assets
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY' 2>&1 | tee p0-sports-generator.log
-          from __future__ import annotations
+          python scripts/generate_p0_sports_media.py 2>&1 | tee p0-sports-generator.log
 
-          import hashlib
-          import io
-          import json
-          import urllib.request
-          from pathlib import Path
-
-          from PIL import Image
-
-          SUPABASE = "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media"
-          LOGO_URL = f"{SUPABASE}/brand/irha-apparels-official-locked-logo-256.png"
-
-          products = {
-              "baseball-jersey": {
-                  "name": "Baseball Jersey",
-                  "sources": {
-                      "front": f"{SUPABASE}/catalog-remediation/baseball-jersey/baseball-jersey-design-01-front-clean-2048.png",
-                      "three-quarter": f"{SUPABASE}/catalog-remediation/baseball-jersey/baseball-jersey-design-01-three-quarter-clean-2048.png",
-                      "side": f"{SUPABASE}/catalog-remediation/baseball-jersey/baseball-jersey-design-01-side-clean-2048.png",
-                      "back": f"{SUPABASE}/catalog-remediation/baseball-jersey/baseball-jersey-design-01-back-clean-2048.png",
-                  },
-              },
-              "basketball-mesh-jersey": {
-                  "name": "Basketball Mesh Jersey",
-                  "sources": {
-                      "front": f"{SUPABASE}/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-front-clean-2048.png",
-                      "three-quarter": f"{SUPABASE}/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-three-quarter-clean-2048.png",
-                      "side": f"{SUPABASE}/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-side-clean-2048.png",
-                      "back": f"{SUPABASE}/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-back-clean-2048.png",
-                  },
-              },
-              "cricket-match-jersey": {
-                  "name": "Cricket Match Jersey",
-                  "sources": {
-                      "front": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:2c26ff02-f18a-4c34-acd3-5fa25e5b1f93",
-                      "three-quarter": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:3437d9e8-f474-4e3e-826c-0552fbd68c14",
-                      "side": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:90afcd70-b15e-4fa8-89ba-64563821d437",
-                      "back": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:ad60a55d-f3d8-45e5-a0fd-2fe5b0c18f14",
-                  },
-              },
-          }
-
-          def download(url: str) -> bytes:
-              request = urllib.request.Request(url, headers={"User-Agent": "Irha-Apparels-Media-Pipeline/2.0"})
-              with urllib.request.urlopen(request, timeout=120) as response:
-                  if response.status != 200:
-                      raise RuntimeError(f"Download failed: {response.status} {url}")
-                  content_type = response.headers.get("content-type", "")
-                  if not content_type.startswith("image/"):
-                      raise RuntimeError(f"Non-image response: {content_type} {url}")
-                  data = response.read()
-                  if len(data) > 20_000_000:
-                      raise RuntimeError(f"Image exceeds 20 MB: {url}")
-                  return data
-
-          logo_bytes = download(LOGO_URL)
-          logo_master = Image.open(io.BytesIO(logo_bytes)).convert("RGBA")
-          if min(logo_master.size) < 200:
-              raise RuntimeError(f"Official logo unexpectedly small: {logo_master.size}")
-          logo_sha = hashlib.sha256(logo_bytes).hexdigest()
-
-          project_manifest = {
-              "batch": "P0 Sports Media",
-              "logo_source": LOGO_URL,
-              "logo_sha256": logo_sha,
-              "logo_rule": "Exact official raster overlay only; no generative redraw",
-              "products": [],
-          }
-
-          for slug, product in products.items():
-              base_dir = Path("public/product-media") / slug
-              clean_dir = base_dir / "clean"
-              branded_dir = base_dir / "branded"
-              web_dir = base_dir / "web"
-              for directory in (clean_dir, branded_dir, web_dir):
-                  directory.mkdir(parents=True, exist_ok=True)
-
-              product_manifest = {
-                  "slug": slug,
-                  "product": product["name"],
-                  "design": "01",
-                  "views": [],
-              }
-
-              for view, source_url in product["sources"].items():
-                  print(f"Processing {slug}/{view}", flush=True)
-                  source_bytes = download(source_url)
-                  source_image = Image.open(io.BytesIO(source_bytes)).convert("RGBA")
-                  original_size = source_image.size
-                  if source_image.width != source_image.height or min(source_image.size) < 1200:
-                      raise RuntimeError(f"Unusable dimensions for {slug}/{view}: {source_image.size}")
-
-                  if source_image.size == (2048, 2048):
-                      clean = source_image
-                  else:
-                      clean = source_image.resize((2048, 2048), Image.Resampling.LANCZOS)
-
-                  clean_path = clean_dir / f"{slug}-design-01-{view}-clean-2048.png"
-                  clean.save(clean_path, format="PNG", compress_level=6)
-
-                  logo = logo_master.copy()
-                  logo_width = 220
-                  logo_height = round(logo.height * logo_width / logo.width)
-                  logo = logo.resize((logo_width, logo_height), Image.Resampling.LANCZOS)
-                  alpha = logo.getchannel("A").point(lambda value: round(value * 0.72))
-                  logo.putalpha(alpha)
-                  x = clean.width - logo.width - 72
-                  y = 72
-
-                  branded = clean.copy()
-                  branded.alpha_composite(logo, (x, y))
-                  branded_path = branded_dir / f"{slug}-design-01-{view}-branded-2048.png"
-                  branded.save(branded_path, format="PNG", compress_level=6)
-
-                  web = branded.convert("RGB")
-                  web.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
-                  web_path = web_dir / f"{slug}-design-01-{view}-web-1600.webp"
-                  web.save(web_path, format="WEBP", quality=86, method=6)
-
-                  product_manifest["views"].append({
-                      "view": view,
-                      "source_url": source_url,
-                      "source_dimensions": list(original_size),
-                      "master_dimensions": list(branded.size),
-                      "web_dimensions": list(web.size),
-                      "logo_box": [x, y, logo.width, logo.height],
-                      "clean_path": str(clean_path),
-                      "branded_path": str(branded_path),
-                      "web_path": str(web_path),
-                      "clean_sha256": hashlib.sha256(clean_path.read_bytes()).hexdigest(),
-                      "branded_sha256": hashlib.sha256(branded_path.read_bytes()).hexdigest(),
-                      "web_sha256": hashlib.sha256(web_path.read_bytes()).hexdigest(),
-                  })
-
-              (base_dir / "media-manifest.json").write_text(
-                  json.dumps(product_manifest, indent=2) + "\n",
-                  encoding="utf-8",
-              )
-              project_manifest["products"].append(product_manifest)
-
-          manifest_path = Path("public/product-media/p0-sports-media-manifest.json")
-          manifest_path.write_text(json.dumps(project_manifest, indent=2) + "\n", encoding="utf-8")
-          print(json.dumps(project_manifest, indent=2))
-          PY
-
-      - name: Verify every output
+      - name: Verify generated media
         shell: bash
         run: |
           set -euo pipefail
@@ -194,7 +56,12 @@ jobs:
           from pathlib import Path
           from PIL import Image
 
-          slugs = ["baseball-jersey", "basketball-mesh-jersey", "cricket-match-jersey"]
+          slugs = [
+              "baseball-jersey",
+              "basketball-mesh-jersey",
+              "cricket-match-jersey",
+              "rugby-match-jersey",
+          ]
           for slug in slugs:
               base = Path("public/product-media") / slug
               manifest = json.loads((base / "media-manifest.json").read_text())
@@ -209,7 +76,7 @@ jobs:
                       assert image.size == (2048, 2048)
                   with Image.open(row["web_path"]) as image:
                       assert image.size == (1600, 1600)
-          print("All P0 sports media outputs verified.")
+          print("All four P0 sports image packs passed verification.")
           PY
 
       - name: Upload evidence artifact
@@ -222,17 +89,20 @@ jobs:
             public/product-media/baseball-jersey
             public/product-media/basketball-mesh-jersey
             public/product-media/cricket-match-jersey
+            public/product-media/rugby-match-jersey
             public/product-media/p0-sports-media-manifest.json
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Commit generated assets
+      - name: Commit generated assets to media branch
+        if: github.event_name == 'push'
         shell: bash
         run: |
           set -euo pipefail
           git add public/product-media/baseball-jersey \
                   public/product-media/basketball-mesh-jersey \
                   public/product-media/cricket-match-jersey \
+                  public/product-media/rugby-match-jersey \
                   public/product-media/p0-sports-media-manifest.json
           if git diff --cached --quiet; then
             echo "Media already matches committed outputs."
@@ -240,5 +110,5 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "feat(media): add P0 sports product image packs [generated]"
+          git commit -m "feat(media): add four P0 sports image packs [generated]"
           git push origin HEAD:catalog-media-p0-sports-2026-07-17
