@@ -1,0 +1,8 @@
+Asset: IA-HERO-HOME-DESKTOP-001
+Target: 2400x1350 (landscape)
+
+--- POSITIVE PROMPT ---
+Premium European B2B apparel-manufacturer editorial hero photograph. Cohesive curated arrangement of five distinct manufacturing categories on subtle matte-black plinths in a dark charcoal studio: (1) embroidered Bavarian Lederhosen shorts in rich brown leather with green trim and detailed embroidery, (2) a premium black leather biker jacket with matte hardware, (3) a custom football/soccer jersey in navy and gold with sublimated panels, (4) a heavyweight oversized charcoal streetwear hoodie folded next to matching joggers, (5) a premium navy satin robe / nightwear set. Products only, no humans, no mannequins, no invisible-body forms. Controlled directional gold-rim lighting, realistic fabric grain and leather texture, crisp seams and stitching, cinematic depth. Wide 16:9 composition with pronounced negative space on the LEFT half for future website copy — subjects grouped on the right two-thirds. No text, no labels, no logos, no brand names, no captions, no price tags, no watermarks, no flags, no gibberish writing, no duplicate products, no floating hardware, no props clutter.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions

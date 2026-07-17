@@ -1,0 +1,8 @@
+Asset: IA-HERO-SPORTS-MOBILE-001
+Target: 1080x1350 (portrait)
+
+--- POSITIVE PROMPT ---
+Vertical portrait editorial for premium B2B custom-teamwear manufacturer. Centered composition on matte-black plinths in dark charcoal studio: original non-branded navy-and-gold sublimated football jersey, red-and-black basketball mesh jersey, white-and-navy rugby jersey, cream-and-navy cricket shirt, charcoal tracksuit jacket. Technical fabrics, visible sublimation, flatlock seams. Gold-rim lighting, top/bottom safe zones. No humans, no mannequins, no invisible body forms, no real logos, no brand names, no numbers, no text, no flags, no watermarks.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions
