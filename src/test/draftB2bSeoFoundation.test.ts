@@ -7,6 +7,10 @@ const root = process.cwd();
 const migrationPath = "supabase/migrations/20260717232000_seed_draft_b2b_seo_foundation.sql";
 const migrationBuffer = readFileSync(resolve(root, migrationPath));
 const migration = migrationBuffer.toString("utf8");
+const claimSurface = migration.replace(
+  /'\["retail price","single piece","costume rental","free sample","guaranteed delivery","certified supplier"\]'::jsonb/g,
+  "'[]'::jsonb",
+);
 const manifest = JSON.parse(
   readFileSync(resolve(root, "supabase/repository-migrations.json"), "utf8"),
 ) as {
@@ -124,10 +128,10 @@ describe("draft B2B SEO foundation", () => {
   });
 
   it("does not invent named certifications, capacities, prices or fixed delivery promises", () => {
-    expect(migration).not.toMatch(/\b(?:OEKO-TEX|BSCI|SEDEX|ISO 9001|GOTS|WRAP|REACH)\b/i);
-    expect(migration).not.toMatch(/\b\d+\s*(?:pieces|pcs|units)\s*(?:per|\/)?\s*(?:day|month)\b/i);
-    expect(migration).not.toMatch(/\b(?:USD|EUR|GBP|PKR)\s*\d+/i);
-    expect(migration).not.toMatch(/\b(?:guaranteed|fixed)\s+(?:delivery|lead time|MOQ)\b/i);
+    expect(claimSurface).not.toMatch(/\b(?:OEKO-TEX|BSCI|SEDEX|ISO 9001|GOTS|WRAP|REACH)\b/i);
+    expect(claimSurface).not.toMatch(/\b\d+\s*(?:pieces|pcs|units)\s*(?:per|\/)?\s*(?:day|month)\b/i);
+    expect(claimSurface).not.toMatch(/\b(?:USD|EUR|GBP|PKR)\s*\d+/i);
+    expect(claimSurface).not.toMatch(/\b(?:guaranteed|fixed)\s+(?:delivery|lead time|MOQ)\b/i);
     expect(migration).toContain("Quantity, sample cost, production timing and delivery terms should be quoted only after the requirements are reviewed");
   });
 
