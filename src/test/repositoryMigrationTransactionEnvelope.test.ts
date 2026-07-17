@@ -16,7 +16,7 @@ describe("repository migration transaction envelope", () => {
     expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
   });
 
-  it("keeps repository migration files compatible with the single outer transaction", () => {
+  it("allows one optional outer wrapper but rejects nested transaction control", () => {
     const manifest = JSON.parse(read("supabase/repository-migrations.json"));
     const transactional = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "transactional",
@@ -25,8 +25,10 @@ describe("repository migration transaction envelope", () => {
     expect(transactional.length).toBeGreaterThan(0);
     for (const migration of transactional) {
       const sql = read(migration.path).trim();
-      expect(sql).toMatch(/^begin\s*;/i);
-      expect(sql).toMatch(/commit\s*;?$/i);
+      const wrapped = sql.match(/^begin\s*;\s*([\s\S]*?)\s*commit\s*;?$/i);
+      const body = (wrapped ? wrapped[1] : sql).trim();
+      expect(body.length).toBeGreaterThan(0);
+      expect(body).not.toMatch(/\b(begin|commit|rollback)\s*;/i);
     }
   });
 });
