@@ -216,6 +216,14 @@
       "transactional_dry_run": true
     },
     {
+      "version": "20260718000000",
+      "name": "seed_planned_taxonomy_206_slots",
+      "path": "supabase/migrations/20260718000000_seed_planned_taxonomy_206_slots.sql",
+      "git_blob_sha": "7a1c9f0d7d4ed4fe240fd61690e65be396539a81",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
       "version": "20260718103000",
       "name": "live_chat_typing_intelligence",
       "path": "supabase/migrations/20260718103000_live_chat_typing_intelligence.sql",
