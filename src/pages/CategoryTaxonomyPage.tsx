@@ -12,6 +12,7 @@ import SEO from "@/components/SEO";
 import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
 import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import { useNormalizedCategory } from "@/hooks/usePublicCategoryData";
+import { usePublishedCategoryTaxonomy } from "@/hooks/usePublishedCatalogTaxonomy";
 import {
   buildCategoryTaxonomy,
   taxonomyAudiencePath,
@@ -53,16 +54,17 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   const locale: TaxonomyLocale = params.locale && isTaxonomyLocale(params.locale) ? params.locale : "en";
   const invalidLocale = Boolean(params.locale && !isTaxonomyLocale(params.locale));
   const { category, isLoading } = useNormalizedCategory(categorySlug);
+  const publishedTaxonomy = usePublishedCategoryTaxonomy(category);
   const shortlist = useShortlist();
   const compare = useCompare();
 
   if (invalidLocale) return <Navigate to={`/products/${categorySlug}`} replace />;
-  if (isLoading && !category) {
+  if ((isLoading && !category) || (category && publishedTaxonomy.isLoading && !publishedTaxonomy.data)) {
     return <div className="pt-40 pb-24 container-luxe text-sm text-foreground/60">Loading collection…</div>;
   }
   if (!category) return <Navigate to="/products" replace />;
 
-  const taxonomy = buildCategoryTaxonomy(category);
+  const taxonomy = publishedTaxonomy.taxonomy ?? buildCategoryTaxonomy(category);
   const audience = audienceSlug
     ? taxonomy.audiences.find((candidate) => candidate.slug === audienceSlug) ?? null
     : null;
@@ -116,7 +118,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
     ? products
     : audience
       ? audience.collections.flatMap((item) => item.products)
-      : category.subs.flatMap((item) => item.products);
+      : taxonomy.audiences.flatMap((item) => item.collections.flatMap((child) => child.products));
   const heroSlides = [
     heroImage,
     ...heroProducts.map((product) => product.originalImage ?? product.gallery?.[0] ?? product.image),
@@ -277,7 +279,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
         </div>
       </section>
 
-      {!audience && <CategoryAudienceNavigator category={category} locale={locale} />}
+      {!audience && <CategoryAudienceNavigator category={category} locale={locale} taxonomy={taxonomy} />}
 
       {audience && !collection && (
         <section className="py-16">
