@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -46,5 +46,14 @@ describe("Product-page media resilience and mobile presentation", () => {
     expect(workflow).toContain("timeout-minutes: 45");
     expect(workflow).toContain("Fetch, optimize and verify every manifest image");
     expect(workflow).toContain("Reject unresolved manifest media");
+  });
+
+  it("ships the formerly broken black-gold long Lederhosen hero as a real optimized file", () => {
+    const heroPath = resolve(
+      process.cwd(),
+      "public/product-media/black-gold-embroidered-long-lederhosen/01-multi-angle-hero.webp",
+    );
+
+    expect(statSync(heroPath).size).toBeGreaterThan(8_000);
   });
 });
