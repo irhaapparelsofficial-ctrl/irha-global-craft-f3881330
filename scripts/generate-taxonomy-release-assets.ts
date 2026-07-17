@@ -150,6 +150,12 @@ function productTitle(route: ExplicitProductRoute) {
   return `${route.productName} Wholesale Manufacturer | Irha Apparels`;
 }
 
+function writeProductShell(outputRoot: string, routePath: string, html: string) {
+  const target = resolve(outputRoot, routePath.replace(/^\//, ""), "index.html");
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, html, "utf8");
+}
+
 export function generateTaxonomyProductShells(root = process.cwd(), outputDir = "dist") {
   const { products } = readExplicitTaxonomyRoutes(root);
   const outputRoot = resolve(root, outputDir);
@@ -159,15 +165,18 @@ export function generateTaxonomyProductShells(root = process.cwd(), outputDir = 
     const title = productTitle(route);
     const description = `${route.productName} custom manufacturing for wholesale, OEM, ODM and private-label buyers. Specifications are confirmed after buyer and factory review.`;
     const canonical = `${SITE}${route.canonicalPath}`;
-    let html = template
+    const html = template
       .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
       .replace(/<meta data-irha-fallback-seo="true" name="description" content="[^"]*"\s*\/?>/i, `<meta data-irha-fallback-seo="true" name="description" content="${escapeHtml(description)}" />`)
       .replace(/\s*<link rel="canonical"[^>]*>/gi, "")
       .replace("</head>", `  <link rel="canonical" href="${canonical}" />\n</head>`);
 
-    const target = resolve(outputRoot, route.canonicalPath.replace(/^\//, ""), "index.html");
-    mkdirSync(dirname(target), { recursive: true });
-    writeFileSync(target, html, "utf8");
+    writeProductShell(outputRoot, route.canonicalPath, html);
+    // Existing build verification and bookmarked buyer links still require the
+    // legacy shell. Cloudflare's generated 301 wins at the edge, while this
+    // compatibility file keeps local/static verification deterministic and
+    // points crawlers to the new four-level canonical if served directly.
+    writeProductShell(outputRoot, route.legacyPath, html);
   }
 }
 
