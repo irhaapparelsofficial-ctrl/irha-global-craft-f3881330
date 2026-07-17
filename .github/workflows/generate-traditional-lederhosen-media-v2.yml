@@ -1,0 +1,62 @@
+name: Generate Traditional Lederhosen Media V2
+on:
+  push:
+    branches: [catalog-media-traditional-lederhosen-v2-2026-07-17]
+    paths:
+      - scripts/generate_traditional_lederhosen_media.py
+      - .github/workflows/generate-traditional-lederhosen-media-v2.yml
+permissions:
+  contents: write
+concurrency:
+  group: traditional-lederhosen-v2
+  cancel-in-progress: false
+jobs:
+  generate:
+    if: ${{ !contains(github.event.head_commit.message || '', '[lederhosen-v2-generated]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: catalog-media-traditional-lederhosen-v2-2026-07-17
+          fetch-depth: 2
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check --no-cache-dir 'Pillow==11.3.0'
+      - id: generate
+        run: python scripts/generate_traditional_lederhosen_media.py 2>&1 | tee generator.log
+      - name: Verify
+        if: steps.generate.outcome == 'success'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from PIL import Image
+          b=Path('public/product-media/traditional-knee-length-lederhosen')
+          m=json.loads((b/'media-manifest.json').read_text())
+          assert [r['view'] for r in m['views']]==['front','three-quarter','side','back']
+          for r in m['views']:
+            with Image.open(r['clean_path']) as i: assert i.size==(2048,2048)
+            with Image.open(r['branded_path']) as i: assert i.size==(2048,2048)
+            with Image.open(r['web_path']) as i: assert i.size==(1600,1600)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: traditional-lederhosen-v2-${{ github.run_id }}
+          path: |
+            generator.log
+            public/product-media/traditional-knee-length-lederhosen
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Commit generated assets
+        if: steps.generate.outcome == 'success'
+        run: |
+          git add public/product-media/traditional-knee-length-lederhosen
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(media): regenerate Traditional Lederhosen [lederhosen-v2-generated]'
+          git push origin HEAD:catalog-media-traditional-lederhosen-v2-2026-07-17
