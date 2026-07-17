@@ -1594,6 +1594,45 @@ export type Database = {
           },
         ]
       }
+      legacy_route_redirects: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          confidence: string
+          created_at: string
+          created_by: string | null
+          from_path: string
+          id: string
+          reason: string | null
+          to_path: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          from_path: string
+          id?: string
+          reason?: string | null
+          to_path: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          from_path?: string
+          id?: string
+          reason?: string | null
+          to_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       master_cartons: {
         Row: {
           carton_number: string | null
@@ -3162,7 +3201,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_legacy_redirect_queue: {
+        Row: {
+          created_at: string | null
+          from_path: string | null
+          id: string | null
+          reason: string | null
+          to_path: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_path?: string | null
+          id?: string | null
+          reason?: string | null
+          to_path?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_path?: string | null
+          id?: string | null
+          reason?: string | null
+          to_path?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       automation_today_key: { Args: { _timezone: string }; Returns: string }
