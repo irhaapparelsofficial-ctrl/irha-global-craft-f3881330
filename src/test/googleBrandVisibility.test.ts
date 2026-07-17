@@ -18,7 +18,7 @@ describe("Google brand visibility controls", () => {
     expect(patch).toContain("/products/streetwear-activewear");
   });
 
-  it("consolidates stale indexed URLs into relevant canonical pages", () => {
+  it("consolidates stale category and unsupported editorial URLs into relevant canonical pages", () => {
     const redirects = read("public/_redirects");
 
     for (const redirect of [
@@ -26,17 +26,20 @@ describe("Google brand visibility controls", () => {
       "/products/leather-garments /products/premium-leather-apparel 301",
       "/products/streetwear /products/streetwear-activewear 301",
       "/products/streetwear/oversized-hoodie /products/streetwear-activewear/oversized-streetwear-hoodie 301",
-      "/studio /inquiry 301",
       "/blog/dirndl-manufacturer-moq-50 /products/bavarian-trachten-wear/women/dirndl-dresses 301",
     ]) {
       expect(redirects).toContain(redirect);
     }
   });
 
-  it("keeps unsupported legacy editorial shells out of the sitemap and build", () => {
+  it("keeps the buyer-safe Custom Lab available while retiring unsupported legacy editorial shells", () => {
+    const redirects = read("public/_redirects");
     const policy = read("scripts/enforce-public-index-policy.mjs");
+
+    expect(redirects).not.toContain("/studio /inquiry");
+    expect(policy).toContain("const NON_INDEXABLE_PATHS = new Set();");
+    expect(policy).not.toContain('"studio/index.html"');
     expect(policy).toContain('"/blog/dirndl-manufacturer-moq-50"');
     expect(policy).toContain('"blog/dirndl-manufacturer-moq-50/index.html"');
-    expect(policy).toContain('const NON_INDEXABLE_PATHS = new Set(["/studio"])');
   });
 });
