@@ -114,7 +114,10 @@ describe("Irha CI control plane", () => {
     expect(database).toContain("preserved, not deleted or rewritten");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
-    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
+    expect(reconciler).toContain("unwrapOuterTransaction");
+    expect(reconciler).toContain("must contain exactly one non-empty outer BEGIN/COMMIT transaction");
+    expect(reconciler).toContain("begin;\\n${body}\\nrollback;");
+    expect(reconciler).toContain("begin;\\n${body}\\n${ledgerInsertSql(entry)}\\ncommit;");
     expect(reconciler).toContain("github_management_api_transaction");
     expect(reconciler).toContain("Current main advanced before database mutation");
     expect(reconciler).not.toContain("migration repair");
