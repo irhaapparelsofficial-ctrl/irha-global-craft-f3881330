@@ -1,9 +1,11 @@
 /**
  * Guest shortlist + recently-viewed + compare utilities.
- * All local-storage backed, no login. Feeds buyer RFQ context.
+ * Legacy shortlist actions are mirrored into the global inquiry cart so older
+ * product cards remain compatible while the public UI migrates to RFQ wording.
  */
 import { useEffect, useState, useCallback } from "react";
 import { thumbnailUrl } from "@/lib/imageThumbnails";
+import { addInquiryItem, clearInquiryCart, removeInquiryItem } from "@/lib/inquiryCart";
 
 const SHORTLIST_KEY = "irha_shortlist_v1";
 const RECENT_KEY = "irha_recent_v1";
@@ -36,9 +38,7 @@ function hasStoredSlug<T extends { slug: string }>(value: unknown): value is T {
 
 export function sanitizeStoredList<T extends { slug: string }>(value: unknown): T[] {
   if (!Array.isArray(value)) return [];
-  return value
-    .filter((item): item is T => hasStoredSlug<T>(item))
-    .map(normalizeStoredImage);
+  return value.filter((item): item is T => hasStoredSlug<T>(item)).map(normalizeStoredImage);
 }
 
 export function addUniqueStoredItem<T extends { slug: string }>(currentValue: unknown, item: T, max: number): T[] {
@@ -52,9 +52,7 @@ export function toggleStoredItem<T extends { slug: string }>(currentValue: unkno
   if (!hasStoredSlug<T>(item)) return sanitizeStoredList<T>(currentValue).slice(0, Math.max(0, max));
   const normalized = normalizeStoredImage(item);
   const current = sanitizeStoredList<T>(currentValue);
-  if (current.some((stored) => stored.slug === normalized.slug)) {
-    return current.filter((stored) => stored.slug !== normalized.slug);
-  }
+  if (current.some((stored) => stored.slug === normalized.slug)) return current.filter((stored) => stored.slug !== normalized.slug);
   return [normalized, ...current].slice(0, Math.max(0, max));
 }
 
@@ -76,6 +74,23 @@ const write = (key: string, value: unknown) => {
     /* Storage can be unavailable or full; the public page must remain usable. */
   }
 };
+
+function mirrorShortlistAdd<T extends { slug: string }>(key: string, item: T) {
+  if (key !== SHORTLIST_KEY) return;
+  const product = item as T & Partial<ShortlistItem>;
+  addInquiryItem({
+    slug: product.slug,
+    name: product.name || product.slug,
+    image: product.image,
+    categorySlug: product.categorySlug,
+    categoryName: product.categoryName,
+    addedAt: product.addedAt || Date.now(),
+  });
+}
+
+function mirrorShortlistRemove(key: string, slug: string) {
+  if (key === SHORTLIST_KEY) removeInquiryItem(slug);
+}
 
 export function shortlistProductPath(item: Pick<ShortlistItem, "slug" | "categorySlug">) {
   const slug = item.slug.trim();
@@ -101,26 +116,30 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
     };
   }, [key]);
 
-  const add = useCallback(
-    (item: T) => write(key, addUniqueStoredItem<T>(read<T>(key), item, max)),
-    [key, max],
-  );
+  const add = useCallback((item: T) => {
+    write(key, addUniqueStoredItem<T>(read<T>(key), item, max));
+    mirrorShortlistAdd(key, item);
+  }, [key, max]);
 
-  const remove = useCallback(
-    (slug: string) => {
-      const normalizedSlug = slug.trim();
-      if (!normalizedSlug) return;
-      write(key, read<T>(key).filter((item) => item.slug !== normalizedSlug));
-    },
-    [key],
-  );
+  const remove = useCallback((slug: string) => {
+    const normalizedSlug = slug.trim();
+    if (!normalizedSlug) return;
+    write(key, read<T>(key).filter((item) => item.slug !== normalizedSlug));
+    mirrorShortlistRemove(key, normalizedSlug);
+  }, [key]);
 
-  const clear = useCallback(() => write(key, []), [key]);
+  const clear = useCallback(() => {
+    write(key, []);
+    if (key === SHORTLIST_KEY) clearInquiryCart();
+  }, [key]);
   const has = useCallback((slug: string) => items.some((item) => item.slug === slug), [items]);
-  const toggle = useCallback(
-    (item: T) => write(key, toggleStoredItem<T>(read<T>(key), item, max)),
-    [key, max],
-  );
+  const toggle = useCallback((item: T) => {
+    const current = read<T>(key);
+    const wasStored = current.some((stored) => stored.slug === item.slug);
+    write(key, toggleStoredItem<T>(current, item, max));
+    if (wasStored) mirrorShortlistRemove(key, item.slug);
+    else mirrorShortlistAdd(key, item);
+  }, [key, max]);
 
   return { items, add, remove, clear, has, toggle };
 }
@@ -129,7 +148,6 @@ export const useShortlist = () => useLocalList<ShortlistItem>(SHORTLIST_KEY, MAX
 export const useRecentlyViewed = () => useLocalList<ShortlistItem>(RECENT_KEY, MAX_RECENT);
 export const useCompare = () => useLocalList<ShortlistItem>(COMPARE_KEY, MAX_COMPARE);
 
-/** Add to recently viewed without a hook — safe to call from any effect. */
 export function pushRecentlyViewed(item: Omit<ShortlistItem, "addedAt">) {
   if (!hasStoredSlug<ShortlistItem>(item)) return;
   const next = addUniqueStoredItem<ShortlistItem>(
