@@ -138,7 +138,7 @@
       "version": "20260717212407",
       "name": "admin_legacy_redirect_queue_security_invoker",
       "path": "supabase/migrations/20260717212407_ec76cc82-081d-407d-b253-bd56d67eeef2.sql",
-      "git_blob_sha": "f1abb39124d0eea262902590d64b7949a5f2b715",
+      "git_blob_sha": "ba7527e9b7be021da20666b031759e8e70a0af6c",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     },
