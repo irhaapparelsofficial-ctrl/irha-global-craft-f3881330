@@ -30,7 +30,7 @@ describe("polished B2B homepage", () => {
     expect(hero).toContain("irha:open-human-chat");
   });
 
-  it("presents consistent editorial hero media with one LCP image", () => {
+  it("presents clean product-first studio hero media with one LCP image", () => {
     for (const label of ["Bavarian &amp; Trachten", "Sportswear", "Leatherwear", "Streetwear", "Leisurewear"]) {
       expect(hero).toContain(label);
     }
@@ -45,13 +45,16 @@ describe("polished B2B homepage", () => {
     }
     expect(hero).toContain("CATEGORY_HERO_MEDIA");
     expect(hero).toContain("SECONDARY_PROGRAMS.map");
-    expect(hero).toContain("object-cover");
+    expect(hero).toContain("object-contain");
+    expect(hero).toContain("bg-[#101722]");
     expect(hero.match(/loading=\"eager\"/g)).toHaveLength(1);
     expect(hero.match(/loading=\"lazy\"/g)).toHaveLength(1);
+    expect(heroMedia).toContain("SITE_MEDIA_ROOT");
+    expect(heroMedia).toContain("site-media");
+    expect(heroMedia).not.toContain("@/assets/og/");
     expect(hero).not.toContain("SPORTS_PRODUCT_IMAGE");
     expect(hero).not.toContain("LEATHER_PRODUCT_IMAGE");
     expect(hero).not.toContain("BAVARIAN_PRODUCT_IMAGE");
-    expect(hero).not.toContain("object-contain");
   });
 
   it("keeps the homepage short and ordered around buyer tasks", () => {
@@ -73,10 +76,13 @@ describe("polished B2B homepage", () => {
     expect(processSource).toContain("Swipe through the order process");
   });
 
-  it("uses buyer language, stable category images and evidence-led proof", () => {
+  it("uses buyer language, clean stable category images and evidence-led proof", () => {
     expect(capabilities).toContain("OEM, ODM & Private Label");
     expect(capabilities).toContain("Sample Before Bulk");
     expect(categories).toContain("Choose the product line your business needs");
+    expect(categories).toContain("CATEGORY_HERO_MEDIA");
+    expect(categories).toContain("object-contain");
+    expect(categories).not.toContain("@/assets/og/");
     expect(categories).not.toContain("usePublicCatalogTree");
     expect(categories).not.toContain("resolveAsset");
     expect(categories).not.toContain("featuredProductRank");
