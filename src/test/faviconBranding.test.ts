@@ -9,6 +9,7 @@ describe("Irha favicon branding", () => {
     const index = read("index.html");
     const favicon = read("public/favicon.svg");
     const redirects = read("public/_redirects");
+    const workerPatch = read("scripts/patch-cloudflare-route-shell-assets.mjs");
     const manifest = JSON.parse(read("public/manifest.webmanifest")) as {
       icons: Array<{ src: string; sizes: string; type: string; purpose?: string }>;
     };
@@ -28,6 +29,13 @@ describe("Irha favicon branding", () => {
 
     expect(redirects).toContain("/favicon.ico /favicon.svg 200");
     expect(redirects).not.toContain("/favicon.ico /favicon.svg 301");
+    expect(workerPatch).toContain("officialFaviconResponse");
+    expect(workerPatch).toContain('pathname === "/favicon.ico"');
+    expect(workerPatch).toContain('assetUrl.pathname = "/favicon.svg"');
+    expect(workerPatch).toContain('X-Irha-Favicon-Source\", \"official-owner-crest');
+    expect(workerPatch).toContain('headers.delete("Location")');
+    expect(workerPatch).toContain("status: 200");
+
     expect(manifest.icons[0]).toEqual({
       src: "/favicon.svg",
       sizes: "any",

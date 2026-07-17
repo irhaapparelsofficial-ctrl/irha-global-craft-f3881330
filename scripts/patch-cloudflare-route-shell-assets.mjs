@@ -42,6 +42,43 @@ const helperBlock = `const FUNCTIONAL_SPA_PATHS = new Set([
 const FUNCTIONAL_SPA_PREFIXES = ["/admin/", "/auth/", "/journal/"];
 const FUNCTIONAL_NOINDEX_PATHS = new Set(["/studio", "/shortlist", "/compare"]);
 
+async function officialFaviconResponse(request, env) {
+  const assetUrl = new URL(request.url);
+  assetUrl.pathname = "/favicon.svg";
+  assetUrl.search = "";
+  assetUrl.hash = "";
+
+  const assetResponse = await env.ASSETS.fetch(
+    new Request(assetUrl.toString(), {
+      method: "GET",
+      headers: { Accept: "image/svg+xml" },
+    }),
+  );
+
+  if (!assetResponse.ok) {
+    return new Response("Official favicon unavailable", {
+      status: 503,
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Irha-Favicon-Asset-Status": String(assetResponse.status),
+      },
+    });
+  }
+
+  const headers = new Headers(assetResponse.headers);
+  headers.delete("Location");
+  headers.set("Content-Type", "image/svg+xml; charset=utf-8");
+  headers.set("Content-Location", APEX_ORIGIN + "/favicon.svg");
+  headers.set("Cache-Control", "public, max-age=86400, must-revalidate");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-Irha-Favicon-Source", "official-owner-crest");
+
+  return new Response(request.method === "HEAD" ? null : assetResponse.body, {
+    status: 200,
+    headers,
+  });
+}
+
 function explicitRouteAssetPath(pathname) {
   const normalized = normalizePath(pathname);
   if (normalized === "/" || looksLikeFile(normalized) || isStaticBuyerPath(normalized)) return null;
@@ -90,7 +127,14 @@ const assetBefore = `    const assetResponse = await env.ASSETS.fetch(request);
     }
     return assetResponse;`;
 
-const assetAfter = `    const explicitAssetPath = explicitRouteAssetPath(pathname);
+const assetAfter = `    if (
+      (request.method === "GET" || request.method === "HEAD") &&
+      pathname === "/favicon.ico"
+    ) {
+      return officialFaviconResponse(request, env);
+    }
+
+    const explicitAssetPath = explicitRouteAssetPath(pathname);
     const assetResponse = explicitAssetPath
       ? await routeShellAssetResponse(request, env, pathname, explicitAssetPath)
       : await env.ASSETS.fetch(request);
@@ -141,6 +185,10 @@ async function main() {
   worker = worker.replace(assetBefore, assetAfter);
 
   const requiredWorkerTokens = [
+    "officialFaviconResponse",
+    'pathname === "/favicon.ico"',
+    'assetUrl.pathname = "/favicon.svg"',
+    'X-Irha-Favicon-Source", "official-owner-crest',
     "explicitRouteAssetPath",
     "routeShellAssetResponse",
     "X-Irha-Route-Shell-Asset",
@@ -157,7 +205,7 @@ async function main() {
 
   await verifyRichRouteShells();
   await writeFile(WORKER_PATH, worker, "utf8");
-  console.log("Patched Cloudflare worker with explicit rich route assets, missing-route 404s and functional noindex handling");
+  console.log("Patched Cloudflare worker with the official favicon route, explicit rich route assets, missing-route 404s and functional noindex handling");
 }
 
 main().catch((error) => {
