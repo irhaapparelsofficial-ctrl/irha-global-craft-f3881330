@@ -31,8 +31,10 @@ export type PlacementSpec = {
 
 
 const HOMEPAGE: PlacementSpec[] = [
-  { pageType: "home", pageSlug: "/", role: "hero_desktop", isLcpEligible: true, description: "Above-the-fold desktop hero" },
-  { pageType: "home", pageSlug: "/", role: "hero_mobile", isLcpEligible: true, description: "Above-the-fold mobile hero" },
+const HOMEPAGE: PlacementSpec[] = [
+  { pageType: "home", pageSlug: "/", role: "hero_desktop", isLcpEligible: true, description: "Above-the-fold desktop hero", localAssetPath: "src/assets/hero-b2b-manufacturer-desktop.jpg", localAssetStatus: "pending_qa" },
+  { pageType: "home", pageSlug: "/", role: "hero_mobile", isLcpEligible: true, description: "Above-the-fold mobile hero", localAssetPath: "src/assets/hero-b2b-manufacturer-mobile.jpg", localAssetStatus: "pending_qa" },
+
   { pageType: "home", pageSlug: "/", role: "private_label_visual", description: "Woven labels + hang tags + packaging" },
   { pageType: "home", pageSlug: "/", role: "sampling_qc_visual", description: "Sampling / QC / customization" },
   { pageType: "home", pageSlug: "/", role: "factory_call_cta", description: "Factory live-video-call CTA visual" },
