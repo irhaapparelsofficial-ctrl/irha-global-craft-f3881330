@@ -71,11 +71,6 @@ const STATIC_META: Record<string, { title: string; heading: string; description:
     heading: "B2B Apparel Manufacturing Insights",
     description: "Practical apparel sourcing, customization, sampling and manufacturing guidance for international buyers.",
   },
-  "/studio": {
-    title: "Custom Apparel Mockup Studio | Irha Apparels",
-    heading: "Custom Apparel Mockup Studio",
-    description: "Prepare a visual product direction before submitting your private-label manufacturing inquiry.",
-  },
   "/privacy-policy": {
     title: "Privacy Policy | Irha Apparels",
     heading: "Privacy Policy",
