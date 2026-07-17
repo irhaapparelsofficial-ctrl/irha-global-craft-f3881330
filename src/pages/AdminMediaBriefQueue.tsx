@@ -102,8 +102,10 @@ export default function AdminMediaBriefQueue() {
 
   const setStatus = async (id: string, status: "approved" | "rejected") => {
     setBusy(true);
-    const patch: Record<string, unknown> = { status };
-    if (status === "approved") patch.owner_approved_at = new Date().toISOString();
+    const patch =
+      status === "approved"
+        ? { status, owner_approved_at: new Date().toISOString() }
+        : { status };
     const { error } = await supabase
       .from("media_generation_briefs")
       .update(patch)

@@ -42,6 +42,9 @@ const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"));
 const AdminLeadReview = lazy(() => import("./pages/AdminLeadReview"));
 const AdminOutreachApproval = lazy(() => import("./pages/AdminOutreachApproval"));
 const AdminTaxonomyReview = lazy(() => import("./pages/AdminTaxonomyReview"));
+const AdminCatalogueCompletion = lazy(() => import("./pages/AdminCatalogueCompletion"));
+const AdminSlotEditor = lazy(() => import("./pages/AdminSlotEditor"));
+const AdminMediaBriefQueue = lazy(() => import("./pages/AdminMediaBriefQueue"));
 const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
@@ -155,6 +158,9 @@ const App = () => (
               <Route path="/admin/lead-review" element={<AdminLeadReview />} />
               <Route path="/admin/outreach-approval" element={<AdminOutreachApproval />} />
               <Route path="/admin/taxonomy-review" element={<AdminTaxonomyReview />} />
+              <Route path="/admin/catalogue-completion" element={<AdminCatalogueCompletion />} />
+              <Route path="/admin/catalogue-completion/:referenceCode" element={<AdminSlotEditor />} />
+              <Route path="/admin/media-briefs" element={<AdminMediaBriefQueue />} />
               <Route path="/seo-indexing" element={<SeoIndexing />} />
 
               <Route
