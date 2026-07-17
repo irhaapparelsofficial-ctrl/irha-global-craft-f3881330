@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, MapPin, MessageCircle } from "lucide-react";
+import { Mail, MapPin, MessageCircle, ShieldCheck, Ship } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { settingsWhatsappLink } from "@/lib/siteSettings";
 import { SEO_BUYER_INTENT_FOOTER_LINKS } from "@/lib/buyerIntentSeoPages";
@@ -16,10 +16,11 @@ function TikTokIcon({ size = 18 }: { size?: number }) {
 
 const DIRECT_LINKS = [
   { label: "Products", href: "/products" },
+  { label: "Build Multi-Item RFQ", href: "/inquiry-cart" },
   { label: "Manufacturing", href: "/manufacturing" },
   { label: "Buyer Trust", href: "/buyer-trust" },
   { label: "Factory Video Call", href: "/factory-video-call" },
-  { label: "Request Catalogue", href: "/inquiry?intent=catalogue" },
+  { label: "Deutsch · Trachten", href: "/de/bavarian-wear" },
 ];
 
 export default function Footer() {
@@ -38,42 +39,28 @@ export default function Footer() {
       <div className="container-luxe grid gap-9 sm:grid-cols-2 lg:grid-cols-[1.35fr_.8fr_.8fr_1fr] lg:gap-10">
         <div className="sm:col-span-2 lg:col-span-1">
           <Link to="/" className="inline-flex items-center gap-3" aria-label={`${settings.brand.name} home`}>
-            <img
-              src="/favicon.svg"
-              alt="Official Irha Apparels Manufacturing Specialists crest"
-              className="h-20 w-20 shrink-0 object-contain"
-            />
+            <img src="/favicon.svg" alt="Official Irha Apparels Manufacturing Specialists crest" className="h-20 w-20 shrink-0 object-contain" />
             <span className="leading-none">
               <span className="block font-display text-2xl font-semibold text-foreground">Irha Apparels</span>
               <span className="mt-1.5 block text-[8px] font-bold uppercase tracking-[0.22em] text-primary">Manufacturing Specialists</span>
             </span>
           </Link>
-          <p className="mt-4 max-w-md text-sm font-medium leading-6 text-foreground/85">
-            Custom apparel manufacturing for brands, wholesalers and importers.
-          </p>
-          <p className="mt-2 max-w-md text-xs leading-5 text-foreground/52">
-            Made-to-order Bavarian wear, sportswear, leatherwear, streetwear and leisure apparel from Sialkot, Pakistan.
-          </p>
-          <p className="mt-4 flex max-w-md items-start gap-2 text-xs leading-5 text-foreground/50">
-            <MapPin size={14} className="mt-0.5 shrink-0 text-primary" /> {settings.brand.address || settings.brand.location}
-          </p>
+          <p className="mt-4 max-w-md text-sm font-medium leading-6 text-foreground/85">Custom apparel manufacturing for brands, wholesalers and importers.</p>
+          <p className="mt-2 max-w-md text-xs leading-5 text-foreground/52">Made-to-order Bavarian wear, sportswear, leatherwear, streetwear and leisure apparel from Sialkot, Pakistan.</p>
+          <p className="mt-4 flex max-w-md items-start gap-2 text-xs leading-5 text-foreground/50"><MapPin size={14} className="mt-0.5 shrink-0 text-primary" /> {settings.brand.address || settings.brand.location}</p>
         </div>
 
         <div>
           <p className="mb-4 text-[9px] font-semibold uppercase tracking-[0.22em] text-primary">Product programs</p>
           <ul className="space-y-2.5 text-sm">
-            {collections.map((item) => (
-              <li key={item.href}><Link to={item.href} className="text-foreground/62 transition-colors hover:text-primary">{item.label}</Link></li>
-            ))}
+            {collections.map((item) => <li key={item.href}><Link to={item.href} className="text-foreground/62 transition-colors hover:text-primary">{item.label}</Link></li>)}
           </ul>
         </div>
 
         <div>
           <p className="mb-4 text-[9px] font-semibold uppercase tracking-[0.22em] text-primary">For buyers</p>
           <ul className="space-y-2.5 text-sm">
-            {DIRECT_LINKS.map((item) => (
-              <li key={item.href}><Link to={item.href} className="text-foreground/62 transition-colors hover:text-primary">{item.label}</Link></li>
-            ))}
+            {DIRECT_LINKS.map((item) => <li key={item.href}><Link to={item.href} className="text-foreground/62 transition-colors hover:text-primary">{item.label}</Link></li>)}
           </ul>
         </div>
 
@@ -95,7 +82,24 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="container-luxe mt-10 border-t border-foreground/10 pt-6">
+      <div className="container-luxe mt-10 grid gap-4 border-t border-foreground/10 pt-6 md:grid-cols-2">
+        <div className="flex items-start gap-3 border border-foreground/10 bg-white/[0.02] p-4">
+          <Ship size={17} className="mt-0.5 shrink-0 text-primary" />
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/55">International trade terms</p>
+            <p className="mt-2 text-xs leading-5 text-foreground/48">FOB Sialkot, CIF, EXW and DDP can be quoted subject to destination, product, order value, carrier availability and written order review.</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 border border-foreground/10 bg-white/[0.02] p-4">
+          <ShieldCheck size={17} className="mt-0.5 shrink-0 text-primary" />
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/55">Buyer data & GDPR</p>
+            <p className="mt-2 text-xs leading-5 text-foreground/48">Inquiry data is used to review and respond to sourcing requests. Access, correction and deletion rights are described in the <Link to="/privacy-policy" className="text-primary hover:underline">privacy policy</Link>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="container-luxe mt-7 border-t border-foreground/10 pt-6">
         <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/38">Priority sourcing markets</p>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px]">
           {marketLinks.map((item) => <Link key={item.href} to={item.href} className="text-foreground/48 hover:text-primary">{item.label}</Link>)}
