@@ -37,8 +37,16 @@ export default function Footer() {
     <footer className="relative border-t border-border/60 bg-[#080808] pb-24 pt-12 text-foreground/80 md:pb-8 md:pt-16">
       <div className="container-luxe grid gap-9 sm:grid-cols-2 lg:grid-cols-[1.35fr_.8fr_.8fr_1fr] lg:gap-10">
         <div className="sm:col-span-2 lg:col-span-1">
-          <Link to="/" className="inline-flex items-center" aria-label={`${settings.brand.name} home`}>
-            <img src="/irha-brand-mark.svg" alt="Irha Apparels — B2B custom manufacturing" className="h-16 w-auto max-w-full" />
+          <Link to="/" className="inline-flex items-center gap-3" aria-label={`${settings.brand.name} home`}>
+            <img
+              src="/favicon.svg"
+              alt="Official Irha Apparels Manufacturing Specialists crest"
+              className="h-20 w-20 shrink-0 object-contain"
+            />
+            <span className="leading-none">
+              <span className="block font-display text-2xl font-semibold text-foreground">Irha Apparels</span>
+              <span className="mt-1.5 block text-[8px] font-bold uppercase tracking-[0.22em] text-primary">Manufacturing Specialists</span>
+            </span>
           </Link>
           <p className="mt-4 max-w-md text-sm font-medium leading-6 text-foreground/85">
             Custom apparel manufacturing for brands, wholesalers and importers.

@@ -50,23 +50,31 @@ export default function Navbar() {
       className={cn(
         "fixed inset-x-0 top-0 z-50 border-b transition-all duration-300",
         headerSolid
-          ? "border-border/70 bg-background/96 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,.22)] backdrop-blur-xl"
-          : "border-transparent bg-gradient-to-b from-black/75 to-transparent py-3.5",
+          ? "border-border/70 bg-background/96 py-2 shadow-[0_12px_35px_rgba(0,0,0,.22)] backdrop-blur-xl"
+          : "border-transparent bg-gradient-to-b from-black/75 to-transparent py-2.5",
       )}
     >
-      <div className="container-luxe flex min-h-14 items-center justify-between gap-5">
+      <div className="container-luxe flex min-h-16 items-center justify-between gap-4">
         <Link
           to="/"
-          className="group flex min-w-0 shrink-0 items-center"
+          className="group flex min-w-0 shrink-0 items-center gap-2.5"
           aria-label={`${settings.brand.name} — home`}
         >
           <img
-            src="/irha-brand-mark.svg"
-            alt="Irha Apparels — B2B custom manufacturing"
-            className="h-12 w-auto max-w-[232px] object-contain transition-transform group-hover:scale-[1.015] sm:h-14 sm:max-w-[290px]"
+            src="/favicon.svg"
+            alt="Official Irha Apparels Manufacturing Specialists crest"
+            className="h-14 w-14 shrink-0 object-contain transition-transform group-hover:scale-[1.02] sm:h-16 sm:w-16"
             loading="eager"
             decoding="async"
           />
+          <span className="min-w-0 leading-none">
+            <span className="block whitespace-nowrap font-display text-[1.18rem] font-semibold tracking-[0.01em] text-foreground sm:text-[1.45rem]">
+              Irha Apparels
+            </span>
+            <span className="mt-1 block whitespace-nowrap text-[6.5px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[8px] sm:tracking-[0.22em]">
+              Manufacturing Specialists
+            </span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary navigation">
