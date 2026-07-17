@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Bookmark, ChevronRight, Home, Menu, X } from "lucide-react";
+import { Bookmark, ChevronRight, Home, Menu, ShoppingBasket, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useInquiryCart } from "@/lib/inquiryCart";
 import { useShortlist } from "@/lib/shortlist";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const cart = useInquiryCart();
   const shortlist = useShortlist();
   const { data: settings } = useSiteSettings();
   const savedCount = shortlist.items.length;
@@ -110,8 +112,20 @@ export default function Navbar() {
           >
             <Bookmark size={17} />
             {savedCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-card px-1 text-[9px] font-bold text-primary ring-1 ring-primary/50">
                 {savedCount}
+              </span>
+            )}
+          </Link>
+          <Link
+            to="/inquiry-cart"
+            aria-label={`Inquiry cart (${cart.count})`}
+            className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-primary/45 text-primary transition-colors hover:bg-primary/10"
+          >
+            <ShoppingBasket size={18} />
+            {cart.count > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                {cart.count}
               </span>
             )}
           </Link>
@@ -122,14 +136,26 @@ export default function Navbar() {
             Factory call
           </Link>
           <Link
-            to={settings.ctas.quoteHref || "/inquiry?intent=rfq"}
+            to="/inquiry-cart"
             className="inline-flex min-h-11 items-center gap-2 rounded-md bg-gradient-gold px-5 text-[10px] font-semibold uppercase tracking-[0.19em] text-primary-foreground transition-all hover:shadow-gold"
           >
-            Request quote <ChevronRight size={14} />
+            Build RFQ {cart.count > 0 ? `(${cart.count})` : ""} <ChevronRight size={14} />
           </Link>
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
+          <Link
+            to="/inquiry-cart"
+            aria-label={`Inquiry cart (${cart.count})`}
+            className="relative inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-primary/35 bg-black/35 text-primary"
+          >
+            <ShoppingBasket size={19} />
+            {cart.count > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                {cart.count}
+              </span>
+            )}
+          </Link>
           {pathname !== "/" && (
             <Link
               to="/"
@@ -183,26 +209,32 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-3 gap-2">
             <Link
               to="/factory-video-call"
-              className="inline-flex min-h-12 items-center justify-center rounded-md border border-border/70 px-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/75"
+              className="inline-flex min-h-12 items-center justify-center rounded-md border border-border/70 px-2 text-center text-[8px] font-semibold uppercase tracking-[0.12em] text-foreground/75"
             >
               Factory call
             </Link>
             <Link
               to="/shortlist"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-border/70 px-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/75"
+              className="inline-flex min-h-12 items-center justify-center gap-1 rounded-md border border-border/70 px-2 text-[8px] font-semibold uppercase tracking-[0.12em] text-foreground/75"
             >
-              <Bookmark size={14} /> Saved {savedCount || ""}
+              <Bookmark size={13} /> Saved {savedCount || ""}
+            </Link>
+            <Link
+              to="/inquiry-cart"
+              className="inline-flex min-h-12 items-center justify-center gap-1 rounded-md border border-primary/50 px-2 text-[8px] font-semibold uppercase tracking-[0.12em] text-primary"
+            >
+              <ShoppingBasket size={13} /> RFQ {cart.count || ""}
             </Link>
           </div>
 
           <Link
-            to={settings.ctas.quoteHref || "/inquiry?intent=rfq"}
+            to="/inquiry-cart"
             className="mt-3 inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-gradient-gold px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground"
           >
-            Request a quote <ChevronRight size={15} />
+            Build multi-item RFQ <ChevronRight size={15} />
           </Link>
           <p className="mt-4 text-center text-xs text-muted-foreground">
             {settings.brand.phoneDisplay || "Sialkot, Pakistan · B2B manufacturing"}
