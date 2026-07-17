@@ -6,6 +6,17 @@ const ROOT = process.cwd();
 const SOURCE_ROOTS = ["src", "scripts"];
 const TEXT_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".json"]);
 const MEDIA_REFERENCE = /["'`]\/(product-media|images|assets|category-media|catalog-media)\/[^"'`?\s]+\.(?:avif|webp|png|jpe?g|svg)(?:\?[^"'`\s]*)?["'`]/gi;
+const TEST_DIRECTORY_NAMES = new Set(["test", "tests", "__tests__", "__checks__", "fixtures"]);
+
+function isProductionSourceFile(path: string): boolean {
+  const normalized = path.replace(/\\/g, "/");
+  return !/(^|\/)[^/]+\.(?:test|spec)\.[cm]?[jt]sx?$/.test(normalized)
+    && !normalized.includes("/test/")
+    && !normalized.includes("/tests/")
+    && !normalized.includes("/__tests__/")
+    && !normalized.includes("/__checks__/")
+    && !normalized.includes("/fixtures/");
+}
 
 function walk(directory: string): string[] {
   const absolute = resolve(ROOT, directory);
@@ -14,10 +25,11 @@ function walk(directory: string): string[] {
   return readdirSync(absolute, { withFileTypes: true }).flatMap((entry) => {
     const child = resolve(absolute, entry.name);
     if (entry.isDirectory()) {
-      if (["node_modules", "dist", ".git"].includes(entry.name)) return [];
+      if (["node_modules", "dist", ".git"].includes(entry.name) || TEST_DIRECTORY_NAMES.has(entry.name)) return [];
       return walk(relative(ROOT, child));
     }
-    return TEXT_EXTENSIONS.has(extname(entry.name).toLowerCase()) ? [child] : [];
+    if (!TEXT_EXTENSIONS.has(extname(entry.name).toLowerCase())) return [];
+    return isProductionSourceFile(child) ? [child] : [];
   });
 }
 
@@ -43,7 +55,7 @@ function literalMediaReferences(): Array<{ source: string; publicPath: string }>
 }
 
 describe("Catalogue media completeness", () => {
-  it("ships every literal catalogue media reference as a non-empty public file", () => {
+  it("ships every production catalogue media reference as a non-empty public file", () => {
     const references = literalMediaReferences();
     const missing: string[] = [];
     const empty: string[] = [];
@@ -64,14 +76,16 @@ describe("Catalogue media completeness", () => {
     expect(empty, `Empty or invalid catalogue media:\n${empty.join("\n")}`).toEqual([]);
   });
 
-  it("keeps the published product surfaces on semantic image fallbacks", () => {
+  it("keeps the published product surfaces on semantic multi-source image fallbacks", () => {
     const detail = readFileSync(resolve(ROOT, "src/pages/CanonicalProductDetail.tsx"), "utf8");
     const finder = readFileSync(resolve(ROOT, "src/pages/AllProductsPage.tsx"), "utf8");
     const thumbnail = readFileSync(resolve(ROOT, "src/components/ThumbnailImage.tsx"), "utf8");
 
     expect(detail).toContain("fallbackSrc={fallbackImage}");
     expect(finder).toContain("<ThumbnailImage");
-    expect(thumbnail).toContain("setFailed(true)");
-    expect(thumbnail).toContain("fallbackSrc");
+    expect(thumbnail).toContain("semanticFallback");
+    expect(thumbnail).toContain("setSourceIndex");
+    expect(thumbnail).toContain("setResponsiveFailed(true)");
+    expect(thumbnail).toContain("sources.length - 1");
   });
 });
