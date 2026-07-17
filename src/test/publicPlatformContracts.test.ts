@@ -17,6 +17,7 @@ describe("buyer-critical public platform contracts", () => {
       "/resources",
       "/faq",
       "/inquiry",
+      "/inquiry-cart",
       "/repeat-order",
       "/contact",
       "/catalogue",
@@ -52,6 +53,7 @@ describe("buyer-critical public platform contracts", () => {
     expect(config).toMatch(/\[functions\.chat\]\s+verify_jwt = false/);
     expect(config).toMatch(/\[functions\.public-lead-gateway\]\s+verify_jwt = false/);
     expect(config).toMatch(/\[functions\.generate-mockup\]\s+verify_jwt = false/);
+    expect(config).toMatch(/\[functions\.meta-webhook\]\s+verify_jwt = false/);
     expect(config).toMatch(/\[functions\.admin-agent\]\s+verify_jwt = true/);
     expect(config).toMatch(/\[functions\.process-email-queue\]\s+verify_jwt = true/);
   });
@@ -60,7 +62,9 @@ describe("buyer-critical public platform contracts", () => {
     const gateway = source("supabase/functions/public-lead-gateway/index.ts");
     const client = source("src/lib/publicLeadGateway.ts");
 
-    expect(gateway).toContain('const PRIVATE_UPLOAD_BUCKET = "inquiry-uploads"');
+    expect(gateway).toContain('const TECH_PACK_BUCKET = "tech_packs"');
+    expect(gateway).toContain('const MOCKUP_BUCKET = "mockup-uploads"');
+    expect(gateway).toContain("MAX_TECH_PACK_BYTES = 25 * 1024 * 1024");
     expect(gateway).toContain('service.rpc("consume_public_submission_limit"');
     expect(gateway).toContain("isAllowedOrigin(origin)");
     expect(gateway).toContain("createSignedUploadUrl(path)");

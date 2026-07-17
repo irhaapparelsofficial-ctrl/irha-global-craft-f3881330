@@ -30,7 +30,7 @@ describe("polished B2B homepage", () => {
     expect(hero).toContain("irha:open-human-chat");
   });
 
-  it("presents consistent editorial hero media with one LCP image", () => {
+  it("presents clean product-first studio hero media with one LCP image", () => {
     for (const label of ["Bavarian &amp; Trachten", "Sportswear", "Leatherwear", "Streetwear", "Leisurewear"]) {
       expect(hero).toContain(label);
     }
@@ -45,13 +45,16 @@ describe("polished B2B homepage", () => {
     }
     expect(hero).toContain("CATEGORY_HERO_MEDIA");
     expect(hero).toContain("SECONDARY_PROGRAMS.map");
-    expect(hero).toContain("object-cover");
+    expect(hero).toContain("object-contain");
+    expect(hero).toContain("bg-[#101722]");
     expect(hero.match(/loading=\"eager\"/g)).toHaveLength(1);
     expect(hero.match(/loading=\"lazy\"/g)).toHaveLength(1);
+    expect(heroMedia).toContain("SITE_MEDIA_ROOT");
+    expect(heroMedia).toContain("site-media");
+    expect(heroMedia).not.toContain("@/assets/og/");
     expect(hero).not.toContain("SPORTS_PRODUCT_IMAGE");
     expect(hero).not.toContain("LEATHER_PRODUCT_IMAGE");
     expect(hero).not.toContain("BAVARIAN_PRODUCT_IMAGE");
-    expect(hero).not.toContain("object-contain");
   });
 
   it("keeps the homepage short and ordered around buyer tasks", () => {
@@ -73,10 +76,13 @@ describe("polished B2B homepage", () => {
     expect(processSource).toContain("Swipe through the order process");
   });
 
-  it("uses buyer language, stable category images and evidence-led proof", () => {
+  it("uses buyer language, clean stable category images and evidence-led proof", () => {
     expect(capabilities).toContain("OEM, ODM & Private Label");
     expect(capabilities).toContain("Sample Before Bulk");
     expect(categories).toContain("Choose the product line your business needs");
+    expect(categories).toContain("CATEGORY_HERO_MEDIA");
+    expect(categories).toContain("object-contain");
+    expect(categories).not.toContain("@/assets/og/");
     expect(categories).not.toContain("usePublicCatalogTree");
     expect(categories).not.toContain("resolveAsset");
     expect(categories).not.toContain("featuredProductRank");
@@ -109,9 +115,11 @@ describe("polished B2B homepage", () => {
     expect(finalCta).not.toContain("MessageCircle");
   });
 
-  it("uses a reliable local brand mark in header and footer", () => {
-    expect(navbar).toContain('src="/irha-brand-mark.svg"');
-    expect(footer).toContain('src="/irha-brand-mark.svg"');
+  it("uses the official crest and owner wording in header and footer", () => {
+    expect(navbar).toContain('src="/favicon.svg"');
+    expect(footer).toContain('src="/favicon.svg"');
+    expect(navbar).toContain("Manufacturing Specialists");
+    expect(footer).toContain("Manufacturing Specialists");
     expect(navbar).not.toContain("irha-logo.png.asset.json");
     expect(footer).not.toContain("irha-logo.png.asset.json");
     const normalizedBrand = brand.toUpperCase();
@@ -141,8 +149,12 @@ describe("polished B2B homepage", () => {
     expect(sticky).not.toContain("border-gold/35");
   });
 
-  it("uses a simple B2B primary navigation", () => {
-    for (const label of ["Products", "Manufacturing", "How it works", "Buyer trust"]) expect(navbar).toContain(`label: \"${label}\"`);
+  it("provides direct home access on desktop and mobile", () => {
+    for (const label of ["Home", "Products", "Manufacturing", "How it works", "Buyer trust"]) {
+      expect(navbar).toContain(`label: \"${label}\"`);
+    }
+    expect(navbar).toContain('aria-label="Go to homepage"');
+    expect(navbar).toContain('pathname !== "/"');
     expect(navbar).toContain("Request quote");
     expect(navbar).not.toContain("MockupRequestButton");
   });

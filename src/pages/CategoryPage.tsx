@@ -9,7 +9,7 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import CatalogFlipbook from "@/components/CatalogFlipbook";
 import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CategoryHero, { type CategoryHeroSlide } from "@/components/CategoryHero";
-import { ChevronRight, Download, Eye, MessageCircle, Search, SlidersHorizontal, X } from "lucide-react";
+import { ChevronRight, Eye, MessageCircle, Search, SlidersHorizontal, X } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
 import { usePublicCategories, useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
@@ -191,6 +191,8 @@ export default function CategoryPage() {
     exportMarkets: ["USA", "UK", "Germany", "Australia", "Canada", "UAE"],
     ogImage: category.image,
     faqs: [],
+    sections: [],
+    buyerGuides: [],
   };
 
   const totalProducts = allProducts.length;
@@ -292,13 +294,6 @@ export default function CategoryPage() {
             >
               <Eye size={14} /> Preview Catalogue
             </button>
-            <a
-              href={`/catalogs/${category.slug}-catalog.pdf`}
-              download
-              className="inline-flex items-center gap-3 border border-border/60 hover:border-primary hover:text-primary px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
-            >
-              <Download size={14} /> Download PDF
-            </a>
             <span className="text-xs uppercase tracking-[0.3em] text-foreground/55 ml-2">
               {totalProducts} styles · Flexible MOQ · Exports {seo.exportMarkets.slice(0, 3).join(", ")}
             </span>

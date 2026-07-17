@@ -9,28 +9,28 @@ const SECONDARY_PROGRAMS = [
     title: "Sportswear",
     eyebrow: "Teamwear",
     image: CATEGORY_HERO_MEDIA.sportswear,
-    alt: "Custom sportswear and teamwear manufacturing program",
+    alt: "Custom performance tracksuit for sportswear and teamwear manufacturing",
   },
   {
     slug: "premium-leather-apparel",
     title: "Leatherwear",
     eyebrow: "Jackets & vests",
     image: CATEGORY_HERO_MEDIA["premium-leather-apparel"],
-    alt: "Custom premium leather apparel manufacturing program",
+    alt: "Custom classic biker jacket for premium leather apparel manufacturing",
   },
   {
     slug: "streetwear-activewear",
     title: "Streetwear",
     eyebrow: "Private label",
     image: CATEGORY_HERO_MEDIA["streetwear-activewear"],
-    alt: "Custom streetwear and activewear manufacturing program",
+    alt: "Custom oversized hoodie for streetwear and activewear manufacturing",
   },
   {
     slug: "leisure-nightwear",
     title: "Leisurewear",
     eyebrow: "Nightwear & lounge",
     image: CATEGORY_HERO_MEDIA["leisure-nightwear"],
-    alt: "Custom leisurewear and nightwear manufacturing program",
+    alt: "Custom plush robe for leisurewear and nightwear manufacturing",
   },
 ] as const;
 
@@ -87,20 +87,21 @@ export default function HeroCarousel() {
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:grid-rows-2 sm:gap-3">
             <Link
               to="/products/bavarian-trachten-wear"
-              className="group relative col-span-2 min-h-[260px] overflow-hidden rounded-xl border border-primary/30 bg-black shadow-elegant sm:row-span-2 sm:min-h-[500px] sm:rounded-none"
+              className="group relative col-span-2 min-h-[430px] overflow-hidden rounded-xl border border-primary/35 bg-[#101722] shadow-elegant sm:row-span-2 sm:min-h-[520px] sm:rounded-none"
             >
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(213,173,77,.18),transparent_52%)]" />
               <ResilientImage
                 sources={[CATEGORY_HERO_MEDIA["bavarian-trachten-wear"]]}
-                alt="Custom Bavarian and Trachten apparel manufacturing"
+                alt="Premium embroidered Lederhosen shown upright for Bavarian and Trachten manufacturing"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
                 sizes="(max-width: 639px) 92vw, (max-width: 1023px) 56vw, 34vw"
-                width={1200}
-                height={1500}
-                className="h-full w-full object-cover object-center transition-transform duration-1000 group-hover:scale-[1.035]"
+                width={1600}
+                height={1600}
+                className="absolute inset-0 h-full w-full object-contain object-center px-3 pb-24 pt-3 transition-transform duration-1000 group-hover:scale-[1.025] sm:px-6 sm:pb-28 sm:pt-6"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/5 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-6">
                 <p className="text-[7px] font-semibold uppercase tracking-[0.14em] text-primary sm:text-[8px]">Flagship manufacturing program</p>
                 <p className="mt-1 font-display text-2xl leading-tight sm:text-3xl">Bavarian &amp; Trachten</p>
@@ -112,8 +113,9 @@ export default function HeroCarousel() {
               <Link
                 key={program.slug}
                 to={`/products/${program.slug}`}
-                className="group relative min-h-[145px] overflow-hidden rounded-xl border border-border/70 bg-black sm:min-h-0 sm:rounded-none"
+                className="group relative min-h-[160px] overflow-hidden rounded-xl border border-border/70 bg-[#101722] sm:min-h-0 sm:rounded-none"
               >
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(213,173,77,.12),transparent_58%)]" />
                 <ResilientImage
                   sources={[program.image]}
                   alt={program.alt}
@@ -121,11 +123,11 @@ export default function HeroCarousel() {
                   fetchPriority="low"
                   decoding="async"
                   sizes="(max-width: 639px) 46vw, (max-width: 1023px) 24vw, 13vw"
-                  width={720}
-                  height={720}
-                  className="h-full w-full object-cover object-center transition-transform duration-1000 group-hover:scale-[1.055]"
+                  width={912}
+                  height={1600}
+                  className="relative h-full w-full object-contain p-2.5 transition-transform duration-1000 group-hover:scale-[1.035] sm:p-4"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/94 via-black/15 to-black/5" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/96 via-black/5 to-transparent" />
                 <div className="absolute inset-x-3 bottom-3 text-white">
                   <p className="text-[7px] uppercase tracking-[0.14em] text-primary">{program.eyebrow}</p>
                   <p className="mt-1 font-display text-base sm:text-lg">{program.title}</p>

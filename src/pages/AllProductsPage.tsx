@@ -1,9 +1,9 @@
 import {
   ArrowUpRight,
-  Bookmark,
-  BookmarkCheck,
+  Check,
   GitCompareArrows,
   MessageCircle,
+  PackagePlus,
   Search,
   SlidersHorizontal,
   X,
@@ -120,15 +120,15 @@ export default function AllProductsPage() {
                 Find the right <span className="text-gold italic">manufacturing style</span>.
               </h1>
               <p className="mt-5 max-w-2xl text-sm leading-relaxed text-foreground/65 md:text-base">
-                Search product names, SKUs, categories and construction descriptions. Save or compare suitable styles before sending one structured RFQ.
+                Search product names, SKUs, categories and construction descriptions. Add suitable styles to one inquiry cart, define quantities and size breakdowns, then submit one structured RFQ.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
               <span className="border border-border/60 px-4 py-2.5 text-foreground/60">
                 {totalProducts} published products
               </span>
-              <Link to="/shortlist" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
-                Shortlist {shortlist.items.length > 0 ? `(${shortlist.items.length})` : ""}
+              <Link to="/inquiry-cart" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
+                Inquiry cart {shortlist.items.length > 0 ? `(${shortlist.items.length})` : ""}
               </Link>
               <Link to="/compare" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
                 Compare {compare.items.length > 0 ? `(${compare.items.length}/4)` : ""}
@@ -281,7 +281,7 @@ export default function AllProductsPage() {
                           <Link to={productPath} className="relative mb-3 block aspect-[3/4] overflow-hidden bg-card">
                             <ThumbnailImage
                               src={product.image}
-                              alt={product.name}
+                              alt={`Custom ${product.name} wholesale manufacturer product style`}
                               className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1000ms] group-hover:scale-105"
                             />
                           </Link>
@@ -296,13 +296,13 @@ export default function AllProductsPage() {
                               type="button"
                               onClick={() => shortlist.toggle(storedProduct)}
                               aria-pressed={saved}
-                              aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
+                              aria-label={saved ? `Remove ${product.name} from inquiry cart` : `Add ${product.name} to inquiry cart`}
                               className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
                                 saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
                               }`}
                             >
-                              {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-                              {saved ? "Saved" : "Save"}
+                              {saved ? <Check size={12} /> : <PackagePlus size={12} />}
+                              {saved ? "Added" : "Add to Inquiry"}
                             </button>
                             <button
                               type="button"

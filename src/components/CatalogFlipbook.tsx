@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CATALOG_PAGES, catalogPdf, catalogThumb } from "@/lib/catalogPages";
+import { CATALOG_PAGES, catalogThumb } from "@/lib/catalogPages";
 
 
 
@@ -96,15 +96,6 @@ export default function CatalogFlipbook({ slug, title, open, onClose, startPage,
           <h2 className="font-display text-base sm:text-lg md:text-2xl leading-tight tracking-tight line-clamp-2 break-words">{title}</h2>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href={catalogPdf(slug)}
-            target="_blank"
-            rel="noreferrer"
-            className="hidden md:inline-flex items-center gap-2 border border-border/60 hover:border-primary px-4 py-2.5 text-[10px] uppercase tracking-[0.3em] transition-colors"
-            aria-label="Open PDF in new tab"
-          >
-            <Maximize2 size={13} /> Open PDF
-          </a>
           <button
             type="button"
             onClick={onClose}

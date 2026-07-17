@@ -45,6 +45,9 @@ verify_jwt = true
 [functions.admin-agent-health]
 verify_jwt = true
 
+[functions.release-health]
+verify_jwt = true
+
 [functions.lead-research]
 verify_jwt = true
 
@@ -61,6 +64,11 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.outreach-unsubscribe]
+verify_jwt = false
+
+# Public gateway with two independent authorization paths: authenticated admin
+# JWTs for subscription management and a high-entropy Vault token for cron.
+[functions.notification-dispatcher]
 verify_jwt = false
 
 [functions.process-email-queue]
@@ -93,7 +101,7 @@ verify_jwt = false
 [functions.whatsapp-admin]
 verify_jwt = true
 
-# GitHub Actions authenticates with a short-lived OIDC token. The function
-# validates issuer, audience, repository, workflow and protected main ref.
-[functions.image-processing-gateway]
+# GET verification uses META_WEBHOOK_VERIFY_TOKEN. POST requests require the
+# Meta x-hub-signature-256 HMAC before any payload is persisted.
+[functions.meta-webhook]
 verify_jwt = false

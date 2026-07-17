@@ -1,0 +1,119 @@
+{
+  "slug": "basketball-mesh-jersey",
+  "product": "Basketball Mesh Jersey",
+  "design": "01",
+  "views": [
+    {
+      "view": "front",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-front-clean-2048.png",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/basketball-mesh-jersey/clean/basketball-mesh-jersey-design-01-front-clean-2048.png",
+      "branded_path": "public/product-media/basketball-mesh-jersey/branded/basketball-mesh-jersey-design-01-front-branded-2048.png",
+      "web_path": "public/product-media/basketball-mesh-jersey/web/basketball-mesh-jersey-design-01-front-web-1600.webp",
+      "clean_sha256": "3a8d9da137c928b3f345ef9e8337d710307f072a8634fe77e0078a457f8ec4ee",
+      "branded_sha256": "913e1426816e9745a2b9d96aa4b8fc81697c4e0503c1ac2fa7c81aa667a50ab4",
+      "web_sha256": "5b322c687168714a22cc10cb4733e4e4cefc81be51a9861fe7da55b698eb045a"
+    },
+    {
+      "view": "three-quarter",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-three-quarter-clean-2048.png",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/basketball-mesh-jersey/clean/basketball-mesh-jersey-design-01-three-quarter-clean-2048.png",
+      "branded_path": "public/product-media/basketball-mesh-jersey/branded/basketball-mesh-jersey-design-01-three-quarter-branded-2048.png",
+      "web_path": "public/product-media/basketball-mesh-jersey/web/basketball-mesh-jersey-design-01-three-quarter-web-1600.webp",
+      "clean_sha256": "e47b38b1b9b6fd5391c25833bfaa53c6fe4411d75addc62a4a80916a965d5cfa",
+      "branded_sha256": "b5d03d568717e694aa4ef107aeacb5724b2c84be06b020865549f851c8bc1171",
+      "web_sha256": "78da8037cfb155655ab9c0a93a101a88115cf282594c0b0d687fce2eba55cedb"
+    },
+    {
+      "view": "side",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-side-clean-2048.png",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/basketball-mesh-jersey/clean/basketball-mesh-jersey-design-01-side-clean-2048.png",
+      "branded_path": "public/product-media/basketball-mesh-jersey/branded/basketball-mesh-jersey-design-01-side-branded-2048.png",
+      "web_path": "public/product-media/basketball-mesh-jersey/web/basketball-mesh-jersey-design-01-side-web-1600.webp",
+      "clean_sha256": "3e5ef56889914a98bb717d9309a1e68de1ecd19fe9003e54c948270c0bebcf74",
+      "branded_sha256": "818b6c078001996f99db5bac873c2eb9785e747992f80536c1992967b043c27c",
+      "web_sha256": "a5e6488533723880275b090aa791bebaec0ea96bcda97ed149e56f8fd7e88e85"
+    },
+    {
+      "view": "back",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-back-clean-2048.png",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/basketball-mesh-jersey/clean/basketball-mesh-jersey-design-01-back-clean-2048.png",
+      "branded_path": "public/product-media/basketball-mesh-jersey/branded/basketball-mesh-jersey-design-01-back-branded-2048.png",
+      "web_path": "public/product-media/basketball-mesh-jersey/web/basketball-mesh-jersey-design-01-back-web-1600.webp",
+      "clean_sha256": "f15cc774ed9ac563b5a1ceaebe83b7abeec5140bcaa50445e2603272ac2c821b",
+      "branded_sha256": "8aaaff92d150b01787bfdca26c84cc6365cc8fad3c397f73894a82e9bbbabfa7",
+      "web_sha256": "0a5aecef2a5815d921180db8c270e7e9876f77b184ea79197626550cc1d7e605"
+    }
+  ]
+}

@@ -19,9 +19,34 @@ const canonicalAfter = `    if (
     }`;
 
 const helperMarker = "export default {";
-const helperBlock = `function explicitRouteAssetPath(pathname) {
+const helperBlock = `const FUNCTIONAL_SPA_PATHS = new Set([
+  "/studio",
+  "/shortlist",
+  "/compare",
+  "/auth",
+  "/admin",
+  "/login",
+  "/signin",
+  "/sign-in",
+  "/log-in",
+  "/dashboard",
+  "/de",
+  "/de/katalog",
+  "/legacy-home",
+  "/seo-indexing",
+  "/sustainability",
+  "/catalog",
+  "/journal",
+]);
+
+const FUNCTIONAL_SPA_PREFIXES = ["/admin/", "/auth/", "/journal/"];
+const FUNCTIONAL_NOINDEX_PATHS = new Set(["/studio", "/shortlist", "/compare"]);
+
+function explicitRouteAssetPath(pathname) {
   const normalized = normalizePath(pathname);
   if (normalized === "/" || looksLikeFile(normalized) || isStaticBuyerPath(normalized)) return null;
+  if (FUNCTIONAL_SPA_PATHS.has(normalized)) return null;
+  if (FUNCTIONAL_SPA_PREFIXES.some((prefix) => normalized.startsWith(prefix))) return null;
   if (!isKnownHtmlRoute(normalized)) return null;
   return \`${"${normalized}"}/index.html\`;
 }
@@ -39,7 +64,7 @@ async function routeShellAssetResponse(request, env, pathname, assetPath) {
     }),
   );
 
-  if (!explicitResponse.ok) return env.ASSETS.fetch(request);
+  if (!explicitResponse.ok) return notFoundResponse(request, pathname);
 
   const headers = new Headers(explicitResponse.headers);
   headers.delete("Location");
@@ -69,6 +94,9 @@ const assetAfter = `    const explicitAssetPath = explicitRouteAssetPath(pathnam
     const assetResponse = explicitAssetPath
       ? await routeShellAssetResponse(request, env, pathname, explicitAssetPath)
       : await env.ASSETS.fetch(request);
+    if (FUNCTIONAL_NOINDEX_PATHS.has(pathname)) {
+      return withNoIndexHeaders(assetResponse, "functional-public-tool");
+    }
     if (shouldNoIndex(pathname)) {
       return withNoIndexHeaders(assetResponse, "private-route");
     }
@@ -118,6 +146,10 @@ async function main() {
     "X-Irha-Route-Shell-Asset",
     'return `${normalized}/index.html`',
     "canonicalPathRedirect(request, url, pathname)",
+    "FUNCTIONAL_SPA_PATHS",
+    "FUNCTIONAL_NOINDEX_PATHS",
+    "return notFoundResponse(request, pathname)",
+    'withNoIndexHeaders(assetResponse, "functional-public-tool")',
   ];
   for (const token of requiredWorkerTokens) {
     if (!worker.includes(token)) throw new Error(`Patched Cloudflare worker is missing: ${token}`);
@@ -125,7 +157,7 @@ async function main() {
 
   await verifyRichRouteShells();
   await writeFile(WORKER_PATH, worker, "utf8");
-  console.log("Patched Cloudflare worker to serve explicit rich route index assets with canonical path handling");
+  console.log("Patched Cloudflare worker with explicit rich route assets, missing-route 404s and functional noindex handling");
 }
 
 main().catch((error) => {

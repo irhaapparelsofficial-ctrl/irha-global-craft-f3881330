@@ -95,9 +95,10 @@ describe("Irha CI control plane", () => {
     expect(database).not.toContain("supabase migration repair");
   });
 
-  it("uses a private manifest and exact Git blob checksums instead of rewriting legacy history", () => {
+  it("uses one merged private manifest with exact Git blob checksums", () => {
     const database = read(".github/workflows/supabase-database-auto.yml");
     const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
+    const transactionParser = read("scripts/ci/sql-transaction-body.mjs");
     const manifest = JSON.parse(read("supabase/repository-migrations.json"));
     expect(database).toContain("private.irha_repository_migration_ledger");
     expect(database).toContain("Legacy drifted");
@@ -105,16 +106,38 @@ describe("Irha CI control plane", () => {
     expect(database).toContain("preserved, not deleted or rewritten");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
+    expect(reconciler).toContain('import { transactionBody } from "./sql-transaction-body.mjs";');
+    expect(transactionParser).toContain("contains nested transaction control");
+    expect(transactionParser).toContain("trimSqlEdgeTrivia");
+    expect(transactionParser).toContain("sqlCodeOnly");
     expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
+    expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
     expect(reconciler).toContain("github_management_api_transaction");
+    expect(reconciler).toContain("github_management_api_verified_existing");
+    expect(reconciler).toContain("verified_present");
     expect(reconciler).toContain("Current main advanced before database mutation");
     expect(reconciler).not.toContain("migration repair");
     expect(manifest.project_id).toBe("pvzjiozismyxqrzmtfbi");
     expect(manifest.cutover_version).toBe("20260717000000");
-    expect(manifest.migrations).toHaveLength(2);
+    expect(manifest.migrations.length).toBeGreaterThanOrEqual(18);
+    expect(new Set(manifest.migrations.map((migration: { version: string }) => migration.version)).size).toBe(manifest.migrations.length);
+    expect(new Set(manifest.migrations.map((migration: { path: string }) => migration.path)).size).toBe(manifest.migrations.length);
+
+    const verifiedPresent = manifest.migrations.filter(
+      (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
+    );
+    expect(verifiedPresent).toHaveLength(2);
+
     for (const migration of manifest.migrations) {
       expect(migration.git_blob_sha).toMatch(/^[0-9a-f]{40}$/);
-      expect(migration.transactional_dry_run).toBe(true);
+      if (migration.execution_mode === "verified_present") {
+        expect(migration.transactional_dry_run).toBe(false);
+        expect(migration.verification_query).toMatch(/^select\b/i);
+      } else {
+        expect(migration.execution_mode ?? "transactional").toBe("transactional");
+        expect(migration.transactional_dry_run).toBe(true);
+        expect(migration.verification_query).toBeUndefined();
+      }
     }
   });
 

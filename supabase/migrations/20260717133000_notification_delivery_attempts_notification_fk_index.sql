@@ -1,0 +1,2 @@
+create index if not exists notification_delivery_attempts_notification_id_idx
+  on public.notification_delivery_attempts(notification_id);

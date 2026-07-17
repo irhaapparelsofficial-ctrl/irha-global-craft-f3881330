@@ -17,7 +17,8 @@ describe("homepage navigation and B2B conversion journey", () => {
     expect(navbar).toContain('aria-label="Primary navigation"');
     expect(navbar).toContain('aria-label="Mobile navigation"');
     expect(navbar).toContain("Request quote");
-    expect(navbar).toContain('to="/shortlist"');
+    expect(navbar).toContain('to="/inquiry-cart"');
+    expect(navbar).toContain("Review inquiry");
     expect(navbar).not.toContain("usePublicCatalogTree");
     expect(navbar).not.toContain("desktop-collections-menu");
   });
