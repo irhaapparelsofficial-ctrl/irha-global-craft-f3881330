@@ -1,26 +1,25 @@
 const SITE_ORIGIN = "https://irhaapparels.com";
 const DEFAULT_SUPABASE_URL = "https://pvzjiozismyxqrzmtfbi.supabase.co";
+const NON_INDEXABLE_PATHS = new Set(["/studio"]);
+const NON_INDEXABLE_PREFIXES = ["/intl/"];
+const REMOVED_BLOG_PATHS = new Set([
+  "/blog/dirndl-manufacturer-moq-50",
+  "/blog/streetwear-oem-pakistan",
+  "/blog/leather-grades-explained",
+  "/blog/fob-sialkot-vs-cif-pricing-explained",
+]);
 const FALLBACK_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${SITE_ORIGIN}/</loc></url>
   <url><loc>${SITE_ORIGIN}/products</loc></url>
-  <url><loc>${SITE_ORIGIN}/de/bavarian-wear</loc></url>
 </urlset>`;
 
 export async function onRequestGet(context) {
-  const staticXml = await readStaticSitemap(context);
+  const staticXml = sanitizeSitemap(await readStaticSitemap(context));
 
   try {
     const liveEntries = await fetchPublishedCatalogue(context.env);
-    const merged = mergeEntries(staticXml, [
-      {
-        loc: `${SITE_ORIGIN}/de/bavarian-wear`,
-        lastmod: new Date().toISOString().slice(0, 10),
-        changefreq: "weekly",
-        priority: "0.88",
-      },
-      ...liveEntries,
-    ]);
+    const merged = mergeEntries(staticXml, liveEntries);
     return xmlResponse(merged, "public, max-age=900, s-maxage=1800, stale-while-revalidate=86400");
   } catch (error) {
     console.error("dynamic sitemap fallback", error instanceof Error ? error.message : error);
@@ -97,19 +96,60 @@ async function fetchPublishedCatalogue(env) {
   return entries;
 }
 
+function canonicalPath(pathname) {
+  return pathname === "/" ? "/" : pathname.replace(/\/+$/, "") || "/";
+}
+
+function isNonIndexablePath(pathname) {
+  return NON_INDEXABLE_PATHS.has(pathname)
+    || REMOVED_BLOG_PATHS.has(pathname)
+    || NON_INDEXABLE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+function canonicalIndexableUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.origin !== SITE_ORIGIN || url.search || url.hash) return null;
+    const pathname = canonicalPath(url.pathname);
+    if (isNonIndexablePath(pathname)) return null;
+    return `${SITE_ORIGIN}${pathname}`;
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeSitemap(xml) {
+  const source = xml.includes("<urlset") ? xml : FALLBACK_XML;
+  const blocks = source.match(/\s*<url>[\s\S]*?<\/url>/gi) ?? [];
+  const retained = [];
+  const seen = new Set();
+
+  for (const block of blocks) {
+    const rawLoc = block.match(/<loc>([^<]+)<\/loc>/i)?.[1];
+    const loc = canonicalIndexableUrl(decodeXml(rawLoc || ""));
+    if (!loc || seen.has(loc)) continue;
+    seen.add(loc);
+    retained.push(block.trim().replace(/<loc>[^<]+<\/loc>/i, `<loc>${escapeXml(loc)}</loc>`));
+  }
+
+  if (retained.length === 0 && source !== FALLBACK_XML) return sanitizeSitemap(FALLBACK_XML);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${retained.map((block) => `  ${block.replace(/\n/g, "\n  ")}`).join("\n")}\n</urlset>`;
+}
+
 function mergeEntries(xml, entries) {
-  const normalized = xml.includes("<urlset") ? xml : FALLBACK_XML;
+  const normalized = sanitizeSitemap(xml);
   const existing = new Set(
     Array.from(normalized.matchAll(/<loc>([^<]+)<\/loc>/g), (match) => decodeXml(match[1])),
   );
   const additions = [];
 
   for (const entry of entries) {
-    if (!entry?.loc || existing.has(entry.loc)) continue;
-    existing.add(entry.loc);
+    const loc = canonicalIndexableUrl(entry?.loc);
+    if (!loc || existing.has(loc)) continue;
+    existing.add(loc);
     additions.push([
       "  <url>",
-      `    <loc>${escapeXml(entry.loc)}</loc>`,
+      `    <loc>${escapeXml(loc)}</loc>`,
       entry.lastmod ? `    <lastmod>${escapeXml(entry.lastmod)}</lastmod>` : "",
       entry.changefreq ? `    <changefreq>${escapeXml(entry.changefreq)}</changefreq>` : "",
       entry.priority ? `    <priority>${escapeXml(entry.priority)}</priority>` : "",
