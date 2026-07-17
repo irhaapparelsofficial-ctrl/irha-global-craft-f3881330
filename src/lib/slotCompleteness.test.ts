@@ -6,7 +6,7 @@ import {
 } from "./slotCompleteness";
 
 const GREEN: SlotCompletionInput = {
-  referenceCode: "IRHA-BAV-M-LHS-001",
+  referenceCode: "IRHA-BAV-MN-LHS-001",
   ownerApprovedTitle: "Herren Lederhose Kurz — Antique Brown",
   factualDescription:
     "Full-grain suede lederhose, hand-embroidered yoke, brass hardware, made to order per confirmed program specification.",
