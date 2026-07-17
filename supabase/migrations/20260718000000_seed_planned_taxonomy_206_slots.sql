@@ -557,4 +557,48 @@ insert into public.product_taxonomy_assignments (product_id, taxonomy_node_id, a
 insert into public.product_taxonomy_assignments (product_id, taxonomy_node_id, assignment_source, review_state) values ('c387a8d2-42b6-a1d6-e0b6-514754f5e80c', '82907e43-2a46-fabd-d108-0a1069edd720', 'migration', 'proposed') on conflict (product_id) do nothing;
 insert into public.product_taxonomy_assignments (product_id, taxonomy_node_id, assignment_source, review_state) values ('d98ce4e5-1149-5ef1-cde0-93cce4bf4800', '82907e43-2a46-fabd-d108-0a1069edd720', 'migration', 'proposed') on conflict (product_id) do nothing;
 
+
+-- ---------------------------------------------------------------------------
+-- Admin media queue: every planned/unpublished product without approved media
+-- surfaces here so the admin can attach official Irha Apparels branded media
+-- before promotion. Read-only view; access gated by owner/admin RLS on
+-- underlying tables.
+create or replace view public.admin_missing_media_queue as
+select
+  p.id                                    as product_id,
+  p.sku                                   as reference_code,
+  p.slug                                  as slug,
+  p.name                                  as working_title,
+  p.category_id                           as category_id,
+  c.slug                                  as main_category_slug,
+  c.name                                  as main_category_name,
+  a.taxonomy_node_id                      as taxonomy_node_id,
+  n.full_slug_path                        as canonical_slug_path,
+  n.name                                  as product_type_name,
+  case
+    when p.image_url is null and coalesce(array_length(p.gallery, 1), 0) = 0
+      then 'missing'
+    when coalesce(array_length(p.gallery, 1), 0) > 0 and not p.is_published
+      then 'pending_review'
+    else 'approved'
+  end                                     as media_status,
+  a.review_state                          as taxonomy_review_state,
+  p.is_published                          as is_published,
+  p.created_at                            as created_at
+from public.products p
+join public.categories c on c.id = p.category_id
+left join public.product_taxonomy_assignments a on a.product_id = p.id
+left join public.catalog_taxonomy_nodes n on n.id = a.taxonomy_node_id
+where p.is_published = false
+  and (
+    p.image_url is null
+    or coalesce(array_length(p.gallery, 1), 0) = 0
+  );
+
+grant select on public.admin_missing_media_queue to authenticated;
+grant select on public.admin_missing_media_queue to service_role;
+
+comment on view public.admin_missing_media_queue is
+  'Planned or unpublished products awaiting official Irha Apparels branded media. PR #2 seeds 206 rows here until owner-approved images are attached.';
+
 commit;
