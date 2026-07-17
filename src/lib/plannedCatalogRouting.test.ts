@@ -12,7 +12,7 @@ import {
   MAIN_CATEGORIES,
   type ProductTypeNode,
   type ProductSlot,
-} from "./catalogTaxonomyManifest";
+} from "./catalogTaxonomyRoutingManifest";
 
 describe("plannedCatalogRouting", () => {
   it("returns null segments for out-of-catalog paths", () => {
@@ -60,6 +60,14 @@ describe("plannedCatalogRouting", () => {
       referenceCode: "IRHA-SPT-MEN-SHR-001",
       workingTitle: "Draft Men's Shorts",
       slug: "mens-shorts-design-01",
+      fullSlugPath: "sportswear/men/mens-shorts/mens-shorts-design-01",
+      canonicalUrl: "https://irhaapparels.com/products/sportswear/men/mens-shorts/mens-shorts-design-01",
+      breadcrumbs: [],
+      main: "sportswear",
+      audience: "men",
+      familySlug: "mens-shorts",
+      familyName: "Men's Shorts",
+      designIndex: 1,
       draftStatus: "in_review",
       publicationStatus: "unpublished",
       mediaStatus: "missing",
@@ -71,7 +79,6 @@ describe("plannedCatalogRouting", () => {
       draftStatus: "in_review",
       productSlots: [draftSlot],
     };
-    // Attach for the duration of this test only.
     const sportswear = CATALOG_TAXONOMY_MANIFEST.find(
       (m) => m.slug === "sportswear",
     )!;
@@ -101,7 +108,6 @@ describe("plannedCatalogRouting", () => {
 
   it("enumerateApprovedRoutes only emits fully-approved paths", () => {
     const routes = enumerateApprovedRoutes();
-    // Spine-only manifest → exactly one entry per main category.
     expect(routes).toEqual(
       MAIN_CATEGORIES.map((m) => `/products/${m.slug}`),
     );
@@ -127,9 +133,17 @@ describe("plannedCatalogRouting", () => {
               referenceCode: "IRHA-SPT-MEN-SHR-001",
               workingTitle: "Draft",
               slug: "d-01",
+              fullSlugPath: "sportswear/men/mens-shorts/d-01",
+              canonicalUrl: "https://irhaapparels.com/products/sportswear/men/mens-shorts/d-01",
+              breadcrumbs: [],
+              main: "sportswear",
+              audience: "men",
+              familySlug: "mens-shorts",
+              familyName: "Men's Shorts",
+              designIndex: 1,
               draftStatus: "approved",
               publicationStatus: "published",
-              mediaStatus: "missing", // media missing → NOT publishable
+              mediaStatus: "missing",
             },
           ],
         },
@@ -138,9 +152,7 @@ describe("plannedCatalogRouting", () => {
     try {
       const routes = enumerateApprovedRoutes();
       expect(
-        routes.some((r) =>
-          r.endsWith("/mens-shorts/d-01"),
-        ),
+        routes.some((r) => r.endsWith("/mens-shorts/d-01")),
       ).toBe(false);
       expect(routes).toContain("/products/sportswear/men/mens-shorts");
     } finally {
