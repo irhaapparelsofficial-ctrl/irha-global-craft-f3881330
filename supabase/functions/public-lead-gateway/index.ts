@@ -15,15 +15,15 @@ const TECH_PACK_UPLOADS: Record<string, UploadRule> = {
   pdf: { contentType: "application/pdf", aliases: ["application/pdf"] },
   ai: {
     contentType: "application/vnd.adobe.illustrator",
-    aliases: ["", "application/pdf", "application/postscript", "application/illustrator", "application/vnd.adobe.illustrator"],
+    aliases: ["", "application/octet-stream", "application/pdf", "application/postscript", "application/illustrator", "application/vnd.adobe.illustrator"],
   },
   eps: {
     contentType: "application/postscript",
-    aliases: ["", "application/postscript", "application/eps", "application/x-eps"],
+    aliases: ["", "application/octet-stream", "application/postscript", "application/eps", "application/x-eps"],
   },
   zip: {
     contentType: "application/zip",
-    aliases: ["", "application/zip", "application/x-zip-compressed", "multipart/x-zip"],
+    aliases: ["", "application/octet-stream", "application/zip", "application/x-zip-compressed", "multipart/x-zip"],
   },
   png: { contentType: "image/png", aliases: ["image/png"] },
   jpg: { contentType: "image/jpeg", aliases: ["image/jpeg"] },
@@ -141,29 +141,27 @@ async function submitInquiry(
   };
 
   if (items.length > 0) {
+    const relationalPayload: JsonRecord = {
+      ...payload,
+      name,
+      email,
+      phone,
+      company,
+      country,
+      category,
+      message,
+      source,
+      files,
+      items,
+      lead_context: leadContext,
+    };
+    delete relationalPayload.inquiry_ref;
+
     const { data, error } = await service.rpc("submit_b2b_inquiry", {
-      _payload: {
-        ...payload,
-        name,
-        email,
-        phone,
-        company,
-        country,
-        category,
-        message,
-        source,
-        inquiry_ref: inquiryRef,
-        files,
-        items,
-        lead_context: leadContext,
-      },
+      _payload: relationalPayload,
     }).single();
 
-    if (error) {
-      if (error.code === "23505") return json({ ok: true, reference: inquiryRef, duplicate: true }, 200, headers);
-      throw new Error(`Relational inquiry insert failed: ${error.message}`);
-    }
-
+    if (error) throw new Error(`Relational inquiry insert failed: ${error.message}`);
     const reference = isRecord(data) ? text(data.inquiry_ref, 80) : "";
     return json({ ok: true, reference: reference || inquiryRef }, 200, headers);
   }
