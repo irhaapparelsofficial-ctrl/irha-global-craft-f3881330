@@ -191,6 +191,8 @@ export default function CategoryPage() {
     exportMarkets: ["USA", "UK", "Germany", "Australia", "Canada", "UAE"],
     ogImage: category.image,
     faqs: [],
+    sections: [],
+    buyerGuides: [],
   };
 
   const totalProducts = allProducts.length;
