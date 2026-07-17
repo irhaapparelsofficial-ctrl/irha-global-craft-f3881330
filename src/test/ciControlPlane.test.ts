@@ -116,9 +116,9 @@ describe("Irha CI control plane", () => {
     expect(reconciler).not.toContain("migration repair");
     expect(manifest.project_id).toBe("pvzjiozismyxqrzmtfbi");
     expect(manifest.cutover_version).toBe("20260717000000");
-    expect(manifest.migrations).toHaveLength(15);
-    expect(new Set(manifest.migrations.map((migration: { version: string }) => migration.version)).size).toBe(15);
-    expect(new Set(manifest.migrations.map((migration: { path: string }) => migration.path)).size).toBe(15);
+    expect(manifest.migrations).toHaveLength(16);
+    expect(new Set(manifest.migrations.map((migration: { version: string }) => migration.version)).size).toBe(16);
+    expect(new Set(manifest.migrations.map((migration: { path: string }) => migration.path)).size).toBe(16);
 
     const verifiedPresent = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
