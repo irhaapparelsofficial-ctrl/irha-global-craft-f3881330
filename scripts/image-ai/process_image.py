@@ -2,9 +2,10 @@
 """Guarded product-image enhancement for Irha Apparels.
 
 The original is never modified. The processor removes the source background,
-optionally applies EDSR x2 super-resolution, composites the product onto the
-approved charcoal B2B studio, and writes a high-resolution master plus
-responsive WebP derivatives. Unsafe masks are marked for manual review.
+optionally applies one bounded EDSR x2 super-resolution pass, composites the
+product onto the approved charcoal B2B studio, and writes a high-resolution
+master plus responsive WebP derivatives. Unsafe masks are marked for manual
+review.
 """
 
 from __future__ import annotations
@@ -21,11 +22,14 @@ from typing import Iterable
 
 import cv2
 import numpy as np
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 from rembg import new_session, remove
 
 MASTER_WIDTH = 2400
 MASTER_HEIGHT = 3000
+SOURCE_MAX_EDGE = 2400
+SEGMENT_MAX_EDGE = 1600
+EDSR_MAX_EDGE = 700
 RESPONSIVE_WIDTHS = (360, 720, 1200, 1600, 2400)
 BACKGROUND_STYLE = "charcoal_studio_v1"
 BACKGROUND_HEX = "#101722"
@@ -65,41 +69,43 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def resize_to_max_edge(image: Image.Image, maximum: int) -> Image.Image:
+    max_edge = max(image.size)
+    if max_edge <= maximum:
+        return image
+    scale = maximum / max_edge
+    return image.resize(
+        (max(1, round(image.width * scale)), max(1, round(image.height * scale))),
+        Image.Resampling.LANCZOS,
+    )
+
+
 def load_rgb(path: Path) -> Image.Image:
     with Image.open(path) as source:
         source.load()
         image = source.convert("RGBA")
-    max_edge = max(image.size)
-    if max_edge > 5000:
-        scale = 5000 / max_edge
-        image = image.resize(
-            (max(1, round(image.width * scale)), max(1, round(image.height * scale))),
-            Image.Resampling.LANCZOS,
-        )
-    return image
+    return resize_to_max_edge(image, SOURCE_MAX_EDGE)
 
 
 def sharpness_score(image: Image.Image) -> float:
-    rgb = np.asarray(image.convert("RGB"))
+    preview = resize_to_max_edge(image.convert("RGB"), 1200)
+    rgb = np.asarray(preview)
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     return float(cv2.Laplacian(gray, cv2.CV_64F).var())
 
 
-def upscale_edsr(image: Image.Image, model_path: Path, steps: int) -> Image.Image:
-    if steps <= 0:
-        return image
+def upscale_edsr(image: Image.Image, model_path: Path) -> Image.Image:
     if not model_path.is_file():
         raise FileNotFoundError(f"EDSR model is missing: {model_path}")
+    if max(image.size) > EDSR_MAX_EDGE:
+        raise ValueError(f"EDSR input exceeds bounded edge of {EDSR_MAX_EDGE}px")
 
     sr = cv2.dnn_superres.DnnSuperResImpl_create()
     sr.readModel(str(model_path))
     sr.setModel("edsr", 2)
-    result = image.convert("RGB")
-    for _ in range(steps):
-        bgr = cv2.cvtColor(np.asarray(result), cv2.COLOR_RGB2BGR)
-        enlarged = sr.upsample(bgr)
-        result = Image.fromarray(cv2.cvtColor(enlarged, cv2.COLOR_BGR2RGB))
-    return result.convert("RGBA")
+    bgr = cv2.cvtColor(np.asarray(image.convert("RGB")), cv2.COLOR_RGB2BGR)
+    enlarged = sr.upsample(bgr)
+    return Image.fromarray(cv2.cvtColor(enlarged, cv2.COLOR_BGR2RGB)).convert("RGBA")
 
 
 def remove_background(image: Image.Image, model_name: str) -> Image.Image:
@@ -176,19 +182,37 @@ def crop_subject(subject: Image.Image, bbox: tuple[int, int, int, int]) -> Image
 
 
 def studio_background(width: int, height: int) -> Image.Image:
-    y = np.linspace(0.0, 1.0, height, dtype=np.float32)[:, None, None]
-    top = np.array(TOP_RGB, dtype=np.float32)[None, None, :]
-    bottom = np.array(BOTTOM_RGB, dtype=np.float32)[None, None, :]
-    gradient = top * (1.0 - y) + bottom * y
-    gradient = np.repeat(gradient, width, axis=1)
+    # Build a one-pixel-wide vertical gradient, then expand it. This avoids the
+    # several hundred megabytes allocated by full-size NumPy mesh grids.
+    strip = Image.new("RGB", (1, height))
+    strip.putdata([
+        tuple(round(TOP_RGB[channel] + (BOTTOM_RGB[channel] - TOP_RGB[channel]) * (y / max(1, height - 1))) for channel in range(3))
+        for y in range(height)
+    ])
+    background = strip.resize((width, height), Image.Resampling.NEAREST).convert("RGBA")
+    strip.close()
 
-    yy, xx = np.mgrid[0:height, 0:width]
-    center_x = width * 0.5
-    center_y = height * 0.38
-    distance = ((xx - center_x) / (width * 0.62)) ** 2 + ((yy - center_y) / (height * 0.58)) ** 2
-    spotlight = np.clip(1.0 - distance, 0.0, 1.0)[..., None] * 13.0
-    gradient = np.clip(gradient + spotlight, 0, 255).astype(np.uint8)
-    return Image.fromarray(gradient, mode="RGB").convert("RGBA")
+    # Render the soft spotlight at quarter resolution and upscale it. The visual
+    # result is smooth after blur while peak memory remains bounded.
+    preview_width = max(1, width // 4)
+    preview_height = max(1, height // 4)
+    spotlight = Image.new("RGBA", (preview_width, preview_height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(spotlight, "RGBA")
+    draw.ellipse(
+        (
+            round(preview_width * 0.13),
+            round(preview_height * 0.04),
+            round(preview_width * 0.87),
+            round(preview_height * 0.72),
+        ),
+        fill=(255, 255, 255, 24),
+    )
+    spotlight = spotlight.filter(ImageFilter.GaussianBlur(radius=max(8, preview_width // 10)))
+    expanded = spotlight.resize((width, height), Image.Resampling.BILINEAR)
+    background.alpha_composite(expanded)
+    spotlight.close()
+    expanded.close()
+    return background
 
 
 def composite_subject(subject: Image.Image) -> Image.Image:
@@ -216,7 +240,13 @@ def composite_subject(subject: Image.Image) -> Image.Image:
     draw = ImageDraw.Draw(background, "RGBA")
     floor_y = round(MASTER_HEIGHT * 0.925)
     draw.line((round(MASTER_WIDTH * 0.08), floor_y, round(MASTER_WIDTH * 0.92), floor_y), fill=(255, 255, 255, 18), width=2)
-    return background.convert("RGB")
+    output = background.convert("RGB")
+    alpha.close()
+    shadow_mask.close()
+    shadow.close()
+    subject.close()
+    background.close()
+    return output
 
 
 def quality_score(
@@ -240,7 +270,7 @@ def quality_score(
 
 def write_webp(image: Image.Image, path: Path, quality: int) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
-    image.save(path, format="WEBP", quality=quality, method=6, exact=True)
+    image.save(path, format="WEBP", quality=quality, method=4, exact=True)
     return path.stat().st_size
 
 
@@ -248,27 +278,34 @@ def process(args: argparse.Namespace) -> ProcessManifest:
     source = load_rgb(args.input)
     source_width, source_height = source.size
     sharpness = sharpness_score(source)
-    max_edge = max(source.size)
-    upscale_steps = 2 if max_edge < 900 else 1 if max_edge < 1800 or sharpness < 70 else 0
     upscaled = False
     reasons: list[str] = []
 
-    working = source
-    if upscale_steps:
+    working = resize_to_max_edge(source, SEGMENT_MAX_EDGE)
+    if max(working.size) <= EDSR_MAX_EDGE:
         try:
-            working = upscale_edsr(source, args.edsr_model, upscale_steps)
+            enhanced = upscale_edsr(working, args.edsr_model)
+            if enhanced is not working:
+                working.close()
+            working = enhanced
             upscaled = True
         except Exception as error:  # the original remains available and review blocks publication
-            reasons.append(f"AI super-resolution was required but unavailable: {error}")
+            reasons.append(f"AI super-resolution was requested but unavailable: {error}")
 
     subject = remove_background(working, args.rembg_model)
+    if working is not source:
+        working.close()
     foreground_ratio, translucent_ratio, major_components, bbox, mask_reasons = mask_metrics(subject)
     reasons.extend(mask_reasons)
     if bbox is None:
+        subject.close()
+        source.close()
         raise RuntimeError("No product foreground was detected")
 
     cropped = crop_subject(subject, bbox)
+    subject.close()
     master = composite_subject(cropped)
+    cropped.close()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     output_bytes: dict[str, int] = {}
@@ -277,6 +314,9 @@ def process(args: argparse.Namespace) -> ProcessManifest:
         height = max(1, round(MASTER_HEIGHT * (width / MASTER_WIDTH)))
         variant = master.resize((width, height), Image.Resampling.LANCZOS)
         output_bytes[str(width)] = write_webp(variant, args.output_dir / f"{width}.webp", WEBP_QUALITY[width])
+        variant.close()
+    master.close()
+    source.close()
 
     score = quality_score(
         source_width,

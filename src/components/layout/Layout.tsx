@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import OccasionBanner from "@/components/OccasionBanner";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
 import ViewportDeferred from "@/components/performance/ViewportDeferred";
+import TaxonomyIndexingGuard from "@/components/TaxonomyIndexingGuard";
 
 const loadGuide = () => import("@/components/LiveChat");
 const loadHumanLiveChat = () => import("@/components/HumanLiveChat");
@@ -118,6 +119,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
+      <TaxonomyIndexingGuard />
       <DeferredFooterChrome />
       <StickyMobileCTA />
       <DeferredSupportRuntime />
