@@ -8,7 +8,16 @@ const title = "Trachten & Lederhosen Hersteller für Großhandel | Irha Apparels
 const description = "B2B Hersteller für Lederhosen, Dirndl und Trachtenbekleidung in Sialkot. OEM, Private Label, Musterentwicklung und Export für Deutschland, Österreich und die Schweiz.";
 const heading = "Trachtenfertigung für Marken und Großhändler";
 
-let html = await readFile(outputPath, "utf8");
+let html;
+try {
+  html = await readFile(outputPath, "utf8");
+} catch (error) {
+  if (error && error.code === "ENOENT") {
+    console.log("Skipped: /de/bavarian-wear shell not present in sitemap");
+    process.exit(0);
+  }
+  throw error;
+}
 html = html
   .replace(/<html lang="[^"]*"/i, '<html lang="de-DE"')
   .replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`)
