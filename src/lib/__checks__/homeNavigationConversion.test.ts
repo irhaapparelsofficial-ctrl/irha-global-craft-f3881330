@@ -6,7 +6,7 @@ const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("homepage navigation and B2B conversion journey", () => {
-  it("uses a focused desktop and mobile buyer navigation with products as the catalogue entry", () => {
+  it("uses a focused desktop and mobile buyer navigation with products and the inquiry cart", () => {
     const navbar = read("src/components/layout/Navbar.tsx");
     for (const item of [
       '{ label: "Products", href: "/products" }',
@@ -17,7 +17,8 @@ describe("homepage navigation and B2B conversion journey", () => {
     expect(navbar).toContain('aria-label="Primary navigation"');
     expect(navbar).toContain('aria-label="Mobile navigation"');
     expect(navbar).toContain("Request quote");
-    expect(navbar).toContain('to="/shortlist"');
+    expect(navbar).toContain('to="/inquiry-cart"');
+    expect(navbar).toContain("useInquiryCart");
     expect(navbar).not.toContain("usePublicCatalogTree");
     expect(navbar).not.toContain("desktop-collections-menu");
   });
