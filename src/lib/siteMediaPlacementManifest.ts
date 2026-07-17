@@ -22,7 +22,13 @@ export type PlacementSpec = {
   role: string;
   isLcpEligible?: boolean;
   description: string;
+  /** Static asset path when the placement is wired via bundled asset,
+   *  independent of `site_media_placements` DB row. Kept in review state
+   *  until owner QA marks the placement verified. */
+  localAssetPath?: string;
+  localAssetStatus?: "pending_qa" | "approved" | "rejected";
 };
+
 
 const HOMEPAGE: PlacementSpec[] = [
   { pageType: "home", pageSlug: "/", role: "hero_desktop", isLcpEligible: true, description: "Above-the-fold desktop hero" },
