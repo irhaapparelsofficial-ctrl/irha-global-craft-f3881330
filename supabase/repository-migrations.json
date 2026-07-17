@@ -17,6 +17,48 @@
       "path": "supabase/migrations/20260717124500_live_chat_visitor_presence_geo.sql",
       "git_blob_sha": "a1d4f9447a5d4c59242acf76c9b7ef61a846416c",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260717222000",
+      "name": "media_duplicate_lineage_foundation",
+      "path": "supabase/migrations/20260717222000_media_duplicate_lineage_foundation.sql",
+      "git_blob_sha": "70780acdc1a772a8d7083544e3ff1da92ac47c75",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717223000",
+      "name": "gate_public_product_claims_by_quality_review",
+      "path": "supabase/migrations/20260717223000_gate_public_product_claims_by_quality_review.sql",
+      "git_blob_sha": "7ffe5e7a494b66c8cd66383ed15d2fd52539d7d7",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717230000",
+      "name": "explicit_catalog_taxonomy_foundation",
+      "path": "supabase/migrations/20260717230000_explicit_catalog_taxonomy_foundation.sql",
+      "git_blob_sha": "4ffd8acb69cb5569d5d6666099d61c9496c8a574",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717230500",
+      "name": "harden_taxonomy_assignment_leaf_guard",
+      "path": "supabase/migrations/20260717230500_harden_taxonomy_assignment_leaf_guard.sql",
+      "git_blob_sha": "4ea55a0483a73a6c7a3c72a7bf9cfc49c5ec3af1",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717232000",
+      "name": "seed_draft_b2b_seo_foundation",
+      "path": "supabase/migrations/20260717232000_seed_draft_b2b_seo_foundation.sql",
+      "git_blob_sha": "a65e05870dd8aada32537121e9510b3332894413",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717232100",
+      "name": "align_localized_draft_paths",
+      "path": "supabase/migrations/20260717232100_align_localized_draft_paths.sql",
+      "git_blob_sha": "bd12ca8e06c71558e4f8919007e5067f13bc8dfe",
+      "transactional_dry_run": true
     }
   ]
 }

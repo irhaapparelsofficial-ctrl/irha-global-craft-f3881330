@@ -42,6 +42,15 @@ function extractRows(payload) {
   return [];
 }
 
+function unwrapOuterTransaction(sql, label) {
+  const trimmed = String(sql || "").trim();
+  const match = trimmed.match(/^begin\s*;\s*([\s\S]*?)\s*commit\s*;\s*$/i);
+  if (!match?.[1]?.trim()) {
+    throw new Error(`Migration ${label} must contain exactly one non-empty outer BEGIN/COMMIT transaction`);
+  }
+  return match[1].trim();
+}
+
 async function databaseQuery(query, { readOnly = false } = {}) {
   const response = await fetch(`${managementApi}/v1/projects/${projectId}/database/query`, {
     method: "POST",
@@ -124,6 +133,7 @@ function validateManifest() {
     const sql = buffer.toString("utf8");
     const forbidden = /\b(create\s+index\s+concurrently|reindex\s+concurrently|vacuum|cluster\s+|net\.http_|http_post\s*\(|cron\.schedule\s*\()/i;
     if (forbidden.test(sql)) throw new Error(`Migration ${entry.version} contains non-transactional or external side-effect SQL`);
+    unwrapOuterTransaction(sql, entry.version);
   }
 }
 
@@ -160,7 +170,8 @@ async function plan() {
   const dryRuns = [];
   for (const entry of pending) {
     const sql = readFileSync(resolve(root, entry.path), "utf8");
-    await databaseQuery(`begin;\n${sql}\nrollback;`);
+    const body = unwrapOuterTransaction(sql, entry.version);
+    await databaseQuery(`begin;\n${body}\nrollback;`);
     dryRuns.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, status: "passed" });
   }
   const output = {
@@ -217,7 +228,8 @@ async function apply() {
     const latestMain = await currentMainSha();
     if (latestMain !== sourceSha) throw new Error(`Current main advanced before database mutation: ${latestMain}`);
     const sql = readFileSync(resolve(root, entry.path), "utf8");
-    await databaseQuery(`begin;\n${sql}\n${ledgerInsertSql(entry)}\ncommit;`);
+    const body = unwrapOuterTransaction(sql, entry.version);
+    await databaseQuery(`begin;\n${body}\n${ledgerInsertSql(entry)}\ncommit;`);
     applied.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha });
   }
 

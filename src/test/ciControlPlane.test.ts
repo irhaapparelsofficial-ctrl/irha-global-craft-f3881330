@@ -98,21 +98,37 @@ describe("Irha CI control plane", () => {
   it("uses a private manifest and exact Git blob checksums instead of rewriting legacy history", () => {
     const database = read(".github/workflows/supabase-database-auto.yml");
     const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
-    const manifest = JSON.parse(read("supabase/repository-migrations.json"));
+    const manifest = JSON.parse(read("supabase/repository-migrations.json")) as {
+      project_id: string;
+      cutover_version: string;
+      migrations: Array<{
+        version: string;
+        path: string;
+        git_blob_sha: string;
+        transactional_dry_run: boolean;
+      }>;
+    };
     expect(database).toContain("private.irha_repository_migration_ledger");
     expect(database).toContain("Legacy drifted");
     expect(database).toContain("supabase_migrations");
     expect(database).toContain("preserved, not deleted or rewritten");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
-    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
+    expect(reconciler).toContain("unwrapOuterTransaction");
+    expect(reconciler).toContain("must contain exactly one non-empty outer BEGIN/COMMIT transaction");
+    expect(reconciler).toContain("begin;\\n${body}\\nrollback;");
+    expect(reconciler).toContain("begin;\\n${body}\\n${ledgerInsertSql(entry)}\\ncommit;");
     expect(reconciler).toContain("github_management_api_transaction");
     expect(reconciler).toContain("Current main advanced before database mutation");
     expect(reconciler).not.toContain("migration repair");
     expect(manifest.project_id).toBe("pvzjiozismyxqrzmtfbi");
     expect(manifest.cutover_version).toBe("20260717000000");
-    expect(manifest.migrations).toHaveLength(2);
+    expect(manifest.migrations.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(manifest.migrations.map((migration) => migration.version)).size).toBe(manifest.migrations.length);
+    expect(new Set(manifest.migrations.map((migration) => migration.path)).size).toBe(manifest.migrations.length);
     for (const migration of manifest.migrations) {
+      expect(migration.version).toMatch(/^\d{14}$/);
+      expect(migration.path).toContain(`supabase/migrations/${migration.version}_`);
       expect(migration.git_blob_sha).toMatch(/^[0-9a-f]{40}$/);
       expect(migration.transactional_dry_run).toBe(true);
     }
