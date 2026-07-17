@@ -29,6 +29,10 @@ function gitBlobSha(buffer) {
   return createHash("sha1").update(prefix).update(buffer).digest("hex");
 }
 
+function sha256(value) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
 function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
@@ -40,6 +44,27 @@ function extractRows(payload) {
   if (Array.isArray(payload?.rows)) return payload.rows;
   if (Array.isArray(payload?.result?.rows)) return payload.result.rows;
   return [];
+}
+
+function entryExecutionMode(entry) {
+  return entry.execution_mode || "transactional";
+}
+
+function validateVerificationQuery(entry) {
+  const query = String(entry.verification_query || "").trim();
+  if (!query) throw new Error(`Migration ${entry.version} requires a verification_query`);
+  if (!/^select\b/i.test(query)) {
+    throw new Error(`Migration ${entry.version} verification_query must begin with SELECT`);
+  }
+  const withoutTrailingSemicolon = query.replace(/;\s*$/, "");
+  if (withoutTrailingSemicolon.includes(";")) {
+    throw new Error(`Migration ${entry.version} verification_query must contain one read-only statement`);
+  }
+  const forbidden = /\b(insert|update|delete|merge|create|alter|drop|truncate|grant|revoke|comment|call|do|copy|vacuum|cluster|reindex|refresh|execute|perform)\b/i;
+  if (forbidden.test(withoutTrailingSemicolon)) {
+    throw new Error(`Migration ${entry.version} verification_query contains a mutation keyword`);
+  }
+  return query;
 }
 
 async function databaseQuery(query, { readOnly = false } = {}) {
@@ -111,7 +136,6 @@ function validateManifest() {
       throw new Error(`Invalid migration path: ${entry.path}`);
     }
     if (!/^[0-9a-f]{40}$/.test(entry.git_blob_sha)) throw new Error(`Invalid Git blob SHA for ${entry.version}`);
-    if (entry.transactional_dry_run !== true) throw new Error(`Migration ${entry.version} must opt into transactional dry-run`);
     if (versions.has(entry.version) || paths.has(entry.path)) throw new Error(`Duplicate migration manifest entry: ${entry.version}`);
     versions.add(entry.version);
     paths.add(entry.path);
@@ -120,6 +144,26 @@ function validateManifest() {
     const actualBlobSha = gitBlobSha(buffer);
     if (actualBlobSha !== entry.git_blob_sha) {
       throw new Error(`Migration checksum mismatch for ${entry.path}: expected ${entry.git_blob_sha}, got ${actualBlobSha}`);
+    }
+
+    const executionMode = entryExecutionMode(entry);
+    if (!["transactional", "verified_present"].includes(executionMode)) {
+      throw new Error(`Unsupported execution_mode for ${entry.version}: ${executionMode}`);
+    }
+
+    if (executionMode === "verified_present") {
+      if (entry.transactional_dry_run !== false) {
+        throw new Error(`Verified-present migration ${entry.version} must set transactional_dry_run to false`);
+      }
+      validateVerificationQuery(entry);
+      continue;
+    }
+
+    if (entry.transactional_dry_run !== true) {
+      throw new Error(`Migration ${entry.version} must opt into transactional dry-run`);
+    }
+    if (entry.verification_query !== undefined) {
+      throw new Error(`Transactional migration ${entry.version} must not define verification_query`);
     }
     const sql = buffer.toString("utf8");
     const forbidden = /\b(create\s+index\s+concurrently|reindex\s+concurrently|vacuum|cluster\s+|net\.http_|http_post\s*\(|cron\.schedule\s*\()/i;
@@ -154,11 +198,32 @@ function pendingEntries(ledgerRows) {
   return pending;
 }
 
+async function verifyExistingEntry(entry) {
+  const query = validateVerificationQuery(entry);
+  const payload = await databaseQuery(query, { readOnly: true });
+  const rows = extractRows(payload);
+  if (rows.length !== 1 || rows[0]?.verified !== true) {
+    throw new Error(`Existing migration verification failed for ${entry.version}`);
+  }
+  return {
+    version: entry.version,
+    path: entry.path,
+    git_blob_sha: entry.git_blob_sha,
+    verification_query_sha256: sha256(query),
+    status: "verified_present",
+  };
+}
+
 async function plan() {
   const ledger = await readLedger();
   const pending = pendingEntries(ledger);
   const dryRuns = [];
+  const verifiedExisting = [];
   for (const entry of pending) {
+    if (entryExecutionMode(entry) === "verified_present") {
+      verifiedExisting.push(await verifyExistingEntry(entry));
+      continue;
+    }
     const sql = readFileSync(resolve(root, entry.path), "utf8");
     await databaseQuery(`begin;\n${sql}\nrollback;`);
     dryRuns.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, status: "passed" });
@@ -169,8 +234,15 @@ async function plan() {
     repository,
     source_sha: sourceSha,
     generated_at: new Date().toISOString(),
-    pending: pending.map(({ version, name, path, git_blob_sha }) => ({ version, name, path, git_blob_sha })),
+    pending: pending.map(({ version, name, path, git_blob_sha, execution_mode }) => ({
+      version,
+      name,
+      path,
+      git_blob_sha,
+      execution_mode: execution_mode || "transactional",
+    })),
     transactional_dry_runs: dryRuns,
+    verified_existing: verifiedExisting,
     ledger_versions: ledger.map((row) => ({ version: String(row.version), git_blob_sha: row.git_blob_sha, state: row.application_state })),
   };
   writeJson(planPath, output);
@@ -178,19 +250,25 @@ async function plan() {
   console.log(`Repository migration plan complete: ${pending.length} pending migration(s)`);
 }
 
-function ledgerInsertSql(entry) {
+function ledgerInsertSql(entry, {
+  applicationState = "applied",
+  executionMode = "github_management_api_transaction",
+  verificationExtra = {},
+} = {}) {
   const verification = JSON.stringify({
     source_sha: sourceSha,
     manifest_schema_version: manifest.schema_version,
-    transactional_dry_run: true,
+    execution_mode: entryExecutionMode(entry),
+    transactional_dry_run: entry.transactional_dry_run,
+    ...verificationExtra,
   });
   return `insert into private.irha_repository_migration_ledger (
     version, name, repository_path, git_blob_sha, source_commit,
     application_state, execution_mode, verification, applied_at, recorded_at
   ) values (
     ${sqlLiteral(entry.version)}, ${sqlLiteral(entry.name)}, ${sqlLiteral(entry.path)},
-    ${sqlLiteral(entry.git_blob_sha)}, ${sqlLiteral(sourceSha)}, 'applied',
-    'github_management_api_transaction', ${sqlLiteral(verification)}::jsonb, now(), now()
+    ${sqlLiteral(entry.git_blob_sha)}, ${sqlLiteral(sourceSha)}, ${sqlLiteral(applicationState)},
+    ${sqlLiteral(executionMode)}, ${sqlLiteral(verification)}::jsonb, now(), now()
   )
   on conflict (version) do update
   set name = excluded.name,
@@ -216,9 +294,24 @@ async function apply() {
   for (const entry of pending) {
     const latestMain = await currentMainSha();
     if (latestMain !== sourceSha) throw new Error(`Current main advanced before database mutation: ${latestMain}`);
+
+    if (entryExecutionMode(entry) === "verified_present") {
+      const verification = await verifyExistingEntry(entry);
+      await databaseQuery(`begin;\n${ledgerInsertSql(entry, {
+        applicationState: "verified_present",
+        executionMode: "github_management_api_verified_existing",
+        verificationExtra: {
+          verification_query_sha256: verification.verification_query_sha256,
+          existing_objects_verified: true,
+        },
+      })}\ncommit;`);
+      applied.push({ ...verification, ledger_state: "verified_present" });
+      continue;
+    }
+
     const sql = readFileSync(resolve(root, entry.path), "utf8");
     await databaseQuery(`begin;\n${sql}\n${ledgerInsertSql(entry)}\ncommit;`);
-    applied.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha });
+    applied.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, ledger_state: "applied" });
   }
 
   const ledgerAfter = await readLedger();
@@ -238,13 +331,21 @@ async function apply() {
     parity: "verified",
   };
   writeJson(evidencePath, output);
-  console.log(`Repository migration apply complete: ${applied.length} applied; parity verified`);
+  console.log(`Repository migration apply complete: ${applied.length} applied or verified; parity verified`);
 }
 
 async function verify() {
   const ledger = await readLedger();
   const remaining = pendingEntries(ledger);
   if (remaining.length > 0) throw new Error(`Pending repository migrations: ${remaining.map((entry) => entry.version).join(", ")}`);
+
+  const verifiedExisting = [];
+  for (const entry of manifest.migrations) {
+    if (entryExecutionMode(entry) === "verified_present") {
+      verifiedExisting.push(await verifyExistingEntry(entry));
+    }
+  }
+
   const output = {
     phase: "verify",
     schema_version: 1,
@@ -253,6 +354,7 @@ async function verify() {
     source_sha: sourceSha,
     verified_at: new Date().toISOString(),
     parity: "verified",
+    verified_existing: verifiedExisting,
     ledger_versions: ledger.map((row) => ({ version: String(row.version), git_blob_sha: row.git_blob_sha, state: row.application_state })),
   };
   writeJson(evidencePath, output);
