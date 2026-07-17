@@ -1,8 +1,8 @@
 import {
   ArrowRight,
-  Bookmark,
-  BookmarkCheck,
+  Check,
   ChevronRight,
+  ClipboardList,
   GitCompareArrows,
   Globe2,
   MessageCircle,
@@ -28,13 +28,12 @@ import {
   type TaxonomyLocale,
 } from "@/lib/taxonomyI18n";
 import { whatsappLink } from "@/lib/constants";
-import { useCompare, useShortlist } from "@/lib/shortlist";
+import { useInquiryCart } from "@/lib/inquiryCart";
+import { useCompare } from "@/lib/shortlist";
 
 const SITE = "https://irhaapparels.com";
 
-type Props = {
-  audienceOverride?: string;
-};
+type Props = { audienceOverride?: string };
 
 function topPath(categorySlug: string, locale: TaxonomyLocale) {
   return locale === "en" ? `/products/${categorySlug}` : `/intl/${locale}/products/${categorySlug}`;
@@ -53,7 +52,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   const locale: TaxonomyLocale = params.locale && isTaxonomyLocale(params.locale) ? params.locale : "en";
   const invalidLocale = Boolean(params.locale && !isTaxonomyLocale(params.locale));
   const { category, isLoading } = useNormalizedCategory(categorySlug);
-  const shortlist = useShortlist();
+  const inquiryCart = useInquiryCart();
   const compare = useCompare();
 
   if (invalidLocale) return <Navigate to={`/products/${categorySlug}`} replace />;
@@ -127,8 +126,8 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
     .map((src, index) => ({
       src,
       alt: index === 0
-        ? `${heroLabel} custom manufacturing collection`
-        : `${heroLabel} product view ${index + 1}`,
+        ? `${heroLabel} custom wholesale manufacturing collection`
+        : `${heroLabel} wholesale manufacturing product view ${index + 1}`,
       fit: "contain" as const,
       backgroundClassName: "bg-[#f4f0e7]",
     }));
@@ -220,11 +219,11 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to={structuredQuoteLink}
+                to={inquiryCart.count > 0 ? "/inquiry-cart" : structuredQuoteLink}
                 data-track="taxonomy-structured-rfq"
                 className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
               >
-                {ui.requestQuote} <ArrowRight size={15} aria-hidden="true" />
+                {inquiryCart.count > 0 ? `Review inquiry (${inquiryCart.count})` : ui.requestQuote} <ArrowRight size={15} aria-hidden="true" />
               </Link>
               <a
                 href={whatsappLink(quoteWhatsappMessage)}
@@ -300,7 +299,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                     className="group border border-border/60 hover:border-primary transition-colors bg-card/20"
                   >
                     <div className="aspect-[16/10] overflow-hidden bg-card">
-                      {image && <img src={image} alt={name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />}
+                      {image && <img src={image} alt={`${name} wholesale manufacturing collection`} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />}
                     </div>
                     <div className="p-5">
                       <div className="flex items-start justify-between gap-4">
@@ -357,11 +356,11 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
                 {products.map((product) => {
-                  const saved = shortlist.has(product.slug);
+                  const inInquiry = inquiryCart.has(product.slug);
                   const inCompare = compare.has(product.slug);
                   const compareFull = !inCompare && compare.items.length >= 4;
                   const productPath = `/products/${category.slug}/${product.slug}`;
-                  const storedProduct = {
+                  const inquiryProduct = {
                     slug: product.slug,
                     name: product.name,
                     image: product.image,
@@ -377,7 +376,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                           {product.image && (
                             <img
                               src={product.image}
-                              alt={product.name}
+                              alt={`${product.name} wholesale manufacturer product style`}
                               loading="lazy"
                               width={720}
                               height={720}
@@ -391,19 +390,19 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => shortlist.toggle(storedProduct)}
-                          aria-pressed={saved}
-                          aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
+                          onClick={() => inquiryCart.toggle(inquiryProduct)}
+                          aria-pressed={inInquiry}
+                          aria-label={inInquiry ? `Remove ${product.name} from inquiry` : `Add ${product.name} to inquiry`}
                           className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
-                            saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
+                            inInquiry ? "border-primary text-primary" : "border-border/60 hover:border-primary"
                           }`}
                         >
-                          {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-                          {saved ? "Saved" : "Save"}
+                          {inInquiry ? <Check size={12} /> : <ClipboardList size={12} />}
+                          {inInquiry ? "In Inquiry" : "Add to Inquiry"}
                         </button>
                         <button
                           type="button"
-                          onClick={() => compare.toggle(storedProduct)}
+                          onClick={() => compare.toggle(inquiryProduct)}
                           disabled={compareFull}
                           aria-pressed={inCompare}
                           title={compareFull ? "Comparison is limited to four products" : undefined}
