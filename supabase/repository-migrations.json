@@ -93,6 +93,14 @@
       "git_blob_sha": "36598df739cf18d91294455a692300a6c935d40b",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260717141000",
+      "name": "b2b_notification_details",
+      "path": "supabase/migrations/20260717141000_b2b_notification_details.sql",
+      "git_blob_sha": "3e3479ba84fb62cd723ba3d69447d9b00733eab1",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
