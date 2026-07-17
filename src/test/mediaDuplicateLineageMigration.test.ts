@@ -25,8 +25,15 @@ describe("reviewed media duplicate lineage migration", () => {
     expect(migration).not.toContain("migrated-lovable/56/56451814-1b32-4612-b763-70a9d2022178.png");
   });
 
+  it("scopes the JWT-free migration write while preserving audit and lineage guards", () => {
+    expect(migration).toContain("alter table public.media_assets disable trigger media_assets_before_write_trigger;");
+    expect(migration).toContain("alter table public.media_assets enable trigger media_assets_before_write_trigger;");
+    expect(migration).toContain("The audit and");
+    expect(migration).not.toContain("disable trigger all");
+  });
+
   it("registers the exact modified migration blob", () => {
     const entry = manifest.migrations.find((item) => item.version === "20260717222000");
-    expect(entry?.git_blob_sha).toBe("ae306d5ba80923739a25e17e56e591c4aa907d3a");
+    expect(entry?.git_blob_sha).toBe("47f9275c76d7b8f12dd6ec9e06f62f0d160bae50");
   });
 });
