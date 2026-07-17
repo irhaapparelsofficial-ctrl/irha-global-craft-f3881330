@@ -14,6 +14,19 @@
 /products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe /products/leisure-nightwear/plush-bathrobe-sleep-robe 301
 /products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe/ /products/leisure-nightwear/plush-bathrobe-sleep-robe 301
 
+# Consolidate legacy category and product URLs into the current public taxonomy.
+/products/bavarian-garments /products/bavarian-trachten-wear 301
+/products/leather-garments /products/premium-leather-apparel 301
+/products/streetwear /products/streetwear-activewear 301
+/products/activewear /products/streetwear-activewear 301
+/products/streetwear/oversized-hoodie /products/streetwear-activewear/oversized-streetwear-hoodie 301
+
+# Retire unsupported legacy editorial pages while preserving the buyer-safe Custom Lab.
+/blog/dirndl-manufacturer-moq-50 /products/bavarian-trachten-wear/women/dirndl-dresses 301
+/blog/streetwear-oem-pakistan /products/streetwear-activewear 301
+/blog/leather-grades-explained /products/premium-leather-apparel 301
+/blog/fob-sialkot-vs-cif-pricing-explained /resources 301
+
 # Do not add "/route/ -> /route" redirects for generated route shells.
 # The build writes those pages as dist/<route>/index.html and Cloudflare Pages
 # may canonicalize /route to /route/. A reverse redirect creates an infinite
