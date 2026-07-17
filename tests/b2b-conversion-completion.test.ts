@@ -16,6 +16,15 @@ describe("B2B conversion completion", () => {
     expect(form).not.toContain("window.open(");
   });
 
+  it("preserves existing SEO and journal form callers", () => {
+    const form = read("src/components/QuoteForm.tsx");
+    expect(form).toContain("defaultCategory?: string");
+    expect(form).toContain("pageContext?: string");
+    expect(form).toContain("resolvedCategory");
+    expect(form).toContain('name="website"');
+    expect(form).toContain("submittingRef.current");
+  });
+
   it("keeps the mobile conversion dock out of inquiry and admin workflows", () => {
     const dock = read("src/components/sections/StickyMobileCTA.tsx");
     expect(dock).toContain('pathname.startsWith("/admin")');
