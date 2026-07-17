@@ -8,9 +8,10 @@ export default function AdminLiveChatLauncher() {
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
-      const isAdminPath = window.location.pathname.startsWith("/admin");
-      const isConsole = window.location.pathname.startsWith("/admin/live-chat");
-      if (!isAdminPath || isConsole) {
+      const path = window.location.pathname;
+      const isAdminPath = path.startsWith("/admin");
+      const isDedicatedConsole = path.startsWith("/admin/live-chat") || path.startsWith("/admin/visitors");
+      if (!isAdminPath || isDedicatedConsole) {
         if (!cancelled) setVisible(false);
         return;
       }
@@ -44,7 +45,7 @@ export default function AdminLiveChatLauncher() {
   return (
     <a
       href="/admin/live-chat"
-      className="fixed z-[66] left-3 sm:left-5 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 min-h-12 inline-flex items-center gap-2 rounded-full border border-emerald-500/50 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-emerald-300 shadow-2xl backdrop-blur hover:bg-emerald-500 hover:text-background"
+      className="fixed bottom-5 left-5 z-[66] hidden min-h-12 items-center gap-2 rounded-full border border-emerald-500/45 bg-card/95 px-4 py-3 text-[10px] uppercase tracking-[0.14em] text-emerald-300 shadow-2xl backdrop-blur hover:bg-emerald-500 hover:text-background md:inline-flex"
       aria-label="Open human live chat console"
       title="Open human live chat console"
     >

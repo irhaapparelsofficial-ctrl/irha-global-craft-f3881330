@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BellRing, CheckCircle2, Loader2, Smartphone } from "lucide-react";
+import { BellRing, Loader2, Smartphone, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,6 +15,8 @@ type NavigatorWithStandalone = Navigator & {
   standalone?: boolean;
   userAgentData?: { platform?: string };
 };
+
+const DISMISSED_KEY = "irha:push-setup-dismissed";
 
 function base64UrlToUint8Array(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
@@ -38,17 +40,34 @@ function platformLabel() {
   return browserNavigator.userAgentData?.platform || browserNavigator.platform || "web";
 }
 
+function wasDismissed() {
+  try {
+    return window.sessionStorage.getItem(DISMISSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export default function AdminPushNotificationSetup() {
   const [config, setConfig] = useState<NotificationConfig | null>(null);
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [busy, setBusy] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(wasDismissed);
   const supported = useMemo(() =>
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
     "PushManager" in window &&
     "Notification" in window,
   []);
+
+  const dismiss = useCallback(() => {
+    setDismissed(true);
+    try {
+      window.sessionStorage.setItem(DISMISSED_KEY, "1");
+    } catch {
+      // Session-only preference is optional.
+    }
+  }, []);
 
   const load = useCallback(async () => {
     if (!window.location.pathname.startsWith("/admin")) return;
@@ -103,10 +122,10 @@ export default function AdminPushNotificationSetup() {
       });
       if (error || !data?.ok) throw new Error(data?.error || error?.message || "Subscription failed");
       setSubscription(next);
-      setDismissed(true);
+      dismiss();
       toast({
-        title: "Owner push alerts enabled",
-        description: "New website visitors, quote requests and human live-chat messages can now alert this device in the background.",
+        title: "Owner alerts are active",
+        description: "Visitor, inquiry and live-chat alerts will reach this device in the background.",
       });
     } catch (error) {
       toast({
@@ -117,64 +136,38 @@ export default function AdminPushNotificationSetup() {
     } finally {
       setBusy(false);
     }
-  }, [config, supported]);
-
-  const test = useCallback(async () => {
-    setBusy(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("notification-dispatcher", {
-        body: { action: "test_push" },
-      });
-      if (error || !data?.ok) throw new Error(data?.error || error?.message || "Test failed");
-      toast({ title: "Test alert sent", description: "A system notification should appear on this device." });
-    } catch (error) {
-      toast({
-        title: "Test alert failed",
-        description: error instanceof Error ? error.message : "Open notification settings and try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+  }, [config, dismiss, supported]);
 
   if (!config || dismissed) return null;
-  if (subscription && Notification.permission === "granted") {
-    return (
-      <aside className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-[68] rounded-xl border border-emerald-400/35 bg-black/95 p-3 shadow-2xl md:bottom-5 md:right-5">
-        <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
-          <CheckCircle2 size={16} /> Background owner alerts active
-        </div>
-        <p className="mt-1 max-w-xs text-[10px] leading-relaxed text-white/45">This device is subscribed for new visitors, buyer requests and live-chat alerts.</p>
-        <button type="button" onClick={test} disabled={busy} className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-gold disabled:opacity-50">
-          {busy ? "Sending…" : "Send test alert"}
-        </button>
-      </aside>
-    );
-  }
+
+  // Once the device is connected, do not keep a floating success card over the
+  // owner workspace. The browser/OS notification permission is the durable state.
+  if (subscription && Notification.permission === "granted") return null;
 
   return (
-    <aside className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-[68] w-[min(23rem,calc(100vw-1.5rem))] rounded-xl border border-gold/45 bg-black/95 p-4 text-white shadow-2xl md:bottom-5 md:right-5">
-      <div className="flex items-start gap-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold">
+    <aside className="fixed inset-x-3 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-[68] mx-auto w-auto max-w-sm rounded-2xl border border-gold/35 bg-[#0a0d12]/97 p-4 text-white shadow-2xl backdrop-blur-xl md:inset-x-auto md:bottom-5 md:right-5 md:w-[23rem]">
+      <button type="button" onClick={dismiss} className="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full text-white/45 hover:bg-white/10 hover:text-white" aria-label="Dismiss notification setup">
+        <X size={16} />
+      </button>
+      <div className="flex items-start gap-3 pr-8">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/12 text-gold">
           {isIos() && !isStandalone() ? <Smartphone size={19} /> : <BellRing size={19} />}
         </span>
         <div>
-          <p className="text-sm font-semibold">Enable real owner alerts</p>
-          <p className="mt-1 text-xs leading-relaxed text-white/65">
+          <p className="text-sm font-semibold">Enable owner alerts on this device</p>
+          <p className="mt-1 text-xs leading-relaxed text-white/60">
             {isIos() && !isStandalone()
-              ? "Install Irha Admin from Safari to receive new-visitor, quote and live-chat alerts when the browser is closed."
-              : "Receive new website visitor, quote and human live-chat notifications even when the admin tab is not open."}
+              ? "Install Irha Admin from Safari to receive alerts when the browser is closed."
+              : "Receive new visitor, inquiry and live-chat alerts even when this screen is not open."}
           </p>
           {config.active_subscriptions > 0 && (
-            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300">{config.active_subscriptions} owner device{config.active_subscriptions === 1 ? "" : "s"} already connected</p>
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300">{config.active_subscriptions} other owner device{config.active_subscriptions === 1 ? "" : "s"} connected</p>
           )}
         </div>
       </div>
-      <button type="button" onClick={enable} disabled={busy || !supported || !config.push_supported} className="mt-3 min-h-11 w-full rounded-lg bg-gold px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-background disabled:opacity-50">
-        {busy ? <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Connecting</span> : isIos() && !isStandalone() ? "Show iPhone install steps" : "Enable alerts on this device"}
+      <button type="button" onClick={enable} disabled={busy || !supported || !config.push_supported} className="mt-3 min-h-11 w-full rounded-xl bg-gold px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#07111f] disabled:opacity-50">
+        {busy ? <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Connecting</span> : isIos() && !isStandalone() ? "Show iPhone install steps" : "Enable alerts"}
       </button>
-      <button type="button" onClick={() => setDismissed(true)} className="mt-2 w-full text-[10px] text-white/45">Not now</button>
     </aside>
   );
 }

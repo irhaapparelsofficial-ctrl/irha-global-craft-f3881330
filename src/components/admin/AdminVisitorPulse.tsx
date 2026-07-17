@@ -26,25 +26,26 @@ function countryFlag(code: string | null) {
 
 function visitorLabel(visitor: VisitorRow) {
   const location = [visitor.city, visitor.region, visitor.country || visitor.country_code].filter(Boolean).join(", ");
-  return `${countryFlag(visitor.country_code)} ${location || "Country unavailable"} · ${visitor.device_type} · ${visitor.entry_path}`;
+  return `${countryFlag(visitor.country_code)} ${location || "Country unavailable"} · ${visitor.device_type}`;
 }
 
 export default function AdminVisitorPulse() {
-  const [visible, setVisible] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   const [liveVisitors, setLiveVisitors] = useState<VisitorRow[]>([]);
   const initialized = useRef(false);
   const seenSessions = useRef(new Set<string>());
 
   const load = useCallback(async (announce = false) => {
-    if (!window.location.pathname.startsWith("/admin") || window.location.pathname.startsWith("/admin/visitors")) {
-      setVisible(false);
+    const path = window.location.pathname;
+    if (!path.startsWith("/admin") || path.startsWith("/admin/visitors") || path.startsWith("/admin/live-chat")) {
+      setAuthorized(false);
       return;
     }
 
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData.session?.user.id;
     if (!userId) {
-      setVisible(false);
+      setAuthorized(false);
       return;
     }
 
@@ -55,11 +56,11 @@ export default function AdminVisitorPulse() {
       .eq("role", "admin")
       .maybeSingle();
     if (role?.role !== "admin") {
-      setVisible(false);
+      setAuthorized(false);
       return;
     }
 
-    setVisible(true);
+    setAuthorized(true);
     const cutoff = new Date(Date.now() - LIVE_WINDOW_MS).toISOString();
     const { data, error } = await db
       .from("site_visitors")
@@ -76,20 +77,7 @@ export default function AdminVisitorPulse() {
         .filter((visitor) => !seenSessions.current.has(visitor.visitor_session_id))
         .sort((a, b) => new Date(a.first_seen_at).getTime() - new Date(b.first_seen_at).getTime())
         .forEach((visitor) => {
-          const body = visitorLabel(visitor);
-          toast({ title: "New website visitor", description: body });
-          if ("Notification" in window && Notification.permission === "granted") {
-            const notification = new Notification("New Irha website visitor", {
-              body,
-              icon: "/icon-512x512.png",
-              tag: `site-visitor:${visitor.visitor_session_id}`,
-            });
-            notification.onclick = () => {
-              window.focus();
-              window.location.assign(`/admin/visitors?visitor=${encodeURIComponent(visitor.visitor_session_id)}`);
-              notification.close();
-            };
-          }
+          toast({ title: "New website visitor", description: `${visitorLabel(visitor)} · ${visitor.entry_path}` });
         });
     }
 
@@ -100,7 +88,7 @@ export default function AdminVisitorPulse() {
 
   useEffect(() => {
     void load(false);
-    const interval = window.setInterval(() => void load(true), 15_000);
+    const interval = window.setInterval(() => void load(true), 20_000);
     const realtime = supabase
       .channel("admin-visitor-pulse")
       .on("postgres_changes", { event: "*", schema: "public", table: "site_visitors" }, () => void load(true))
@@ -113,26 +101,23 @@ export default function AdminVisitorPulse() {
     };
   }, [load]);
 
-  if (!visible) return null;
-  const latest = liveVisitors[0] ?? null;
+  if (!authorized || liveVisitors.length === 0) return null;
+  const latest = liveVisitors[0];
 
   return (
     <a
-      href={latest ? `/admin/visitors?visitor=${encodeURIComponent(latest.visitor_session_id)}` : "/admin/visitors"}
-      className="fixed z-[67] left-3 bottom-[calc(8.75rem+env(safe-area-inset-bottom))] w-[min(21rem,calc(100vw-1.5rem))] rounded-2xl border border-sky-400/30 bg-[#07111f]/95 p-3 text-white shadow-2xl shadow-black/30 backdrop-blur-xl transition hover:border-gold/60 sm:left-5 md:bottom-[5rem]"
+      href={`/admin/visitors?visitor=${encodeURIComponent(latest.visitor_session_id)}`}
+      className="fixed bottom-[calc(5.35rem+env(safe-area-inset-bottom))] left-3 z-[64] inline-flex min-h-11 max-w-[calc(100vw-6rem)] items-center gap-2 rounded-full border border-sky-400/35 bg-[#07111f]/96 px-3 py-2 text-white shadow-xl backdrop-blur-xl transition hover:border-gold/60 md:bottom-5 md:left-5"
       aria-label={`Open live visitors dashboard — ${liveVisitors.length} online`}
     >
-      <div className="flex items-center gap-3">
-        <span className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-sky-400/25 bg-sky-400/10 text-sky-300">
-          <Globe2 size={20} />
-          {liveVisitors.length > 0 && <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-emerald-400 px-1 text-[9px] font-bold text-[#07111f]">{liveVisitors.length > 99 ? "99+" : liveVisitors.length}</span>}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-300"><Radio size={11} className={liveVisitors.length > 0 ? "animate-pulse" : ""} /> Live visitor intelligence</span>
-          <span className="mt-1 block truncate text-sm font-semibold">{latest ? visitorLabel(latest) : "No active visitors right now"}</span>
-          <span className="mt-1 block text-[10px] text-white/45">Tap for country, source, page and device details</span>
-        </span>
-      </div>
+      <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-400/12 text-sky-300">
+        <Globe2 size={16} />
+        <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-emerald-400 px-1 text-[8px] font-bold text-[#07111f]">{liveVisitors.length > 99 ? "99+" : liveVisitors.length}</span>
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-emerald-300"><Radio size={9} className="animate-pulse" /> Live now</span>
+        <span className="block truncate text-xs font-medium">{visitorLabel(latest)}</span>
+      </span>
     </a>
   );
 }
