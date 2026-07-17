@@ -85,12 +85,15 @@ export async function uploadPublicLeadFile(
   formStartedAt: number,
 ): Promise<UploadedFileRef> {
   let ticket: GatewayResponse;
+  const gatewayPurpose = purpose === "inquiry"
+    ? (file.type === "image/webp" ? "mockup" : "tech-pack")
+    : purpose;
   try {
     ticket = await invokeGateway("create_upload", {
       filename: file.name,
       mime: file.type,
       size: file.size,
-      purpose: purpose === "inquiry" ? "tech-pack" : purpose,
+      purpose: gatewayPurpose,
       form_started_at: formStartedAt,
       website: "",
     });
