@@ -1,0 +1,139 @@
+name: IndexNow After Verified Production
+
+run-name: IndexNow discovery · ${{ github.event.workflow_run.display_title }}
+
+on:
+  workflow_run:
+    workflows: ["Cloudflare Current Main Reconcile"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  statuses: write
+
+concurrency:
+  group: indexnow-production-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+env:
+  CANONICAL_ORIGIN: https://irhaapparels.com
+
+jobs:
+  notify:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Resolve exact current-main production source
+        id: resolve
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          display_title="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID" --jq '.display_title // ""')"
+          source_sha="$(printf '%s' "$display_title" | grep -Eo '[0-9a-f]{40}' | tail -n 1 || true)"
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+
+          relevant=false
+          if [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]] && [ "$source_sha" = "$latest_main" ]; then
+            relevant=true
+          fi
+
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "latest_main=$latest_main" >> "$GITHUB_OUTPUT"
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+
+          if [ "$relevant" = "true" ]; then
+            echo "Exact current-main production source resolved: $source_sha"
+          else
+            echo "IndexNow notification skipped safely: source=$source_sha current_main=$latest_main"
+          fi
+
+      - name: Mark search discovery pending
+        if: steps.resolve.outputs.relevant == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
+            -f state=pending \
+            -f context="Irha Search Discovery" \
+            -f description="Submitting verified canonical sitemap to IndexNow" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
+
+      - name: Checkout exact verified source
+        if: steps.resolve.outputs.relevant == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve.outputs.source_sha }}
+          persist-credentials: false
+
+      - name: Fetch and verify exact live canonical sitemap
+        if: steps.resolve.outputs.relevant == 'true'
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          cache_bust="${SOURCE_SHA::12}-$RANDOM"
+          curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+            "$CANONICAL_ORIGIN/build.json?search_discovery=$cache_bust" -o /tmp/live-build.json
+          jq -e --arg sha "$SOURCE_SHA" \
+            '.source_commit == $sha and .source_identity_state == "verified" and .expected_origin == "https://irhaapparels.com"' \
+            /tmp/live-build.json >/dev/null
+
+          curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+            "$CANONICAL_ORIGIN/sitemap.xml?search_discovery=$cache_bust" -o public/sitemap.xml
+          url_count="$(grep -c '<loc>' public/sitemap.xml)"
+          test "$url_count" -gt 0
+          test "$url_count" -le 10000
+          grep -F '<loc>https://irhaapparels.com/' public/sitemap.xml >/dev/null
+          ! grep -F '<loc>https://www.irhaapparels.com/' public/sitemap.xml
+          ! grep -F '<loc>https://irhaapparels.com/intl/' public/sitemap.xml
+          ! grep -F '<loc>https://irhaapparels.com/studio' public/sitemap.xml
+
+          curl -fsSL --connect-timeout 10 --max-time 40 \
+            "$CANONICAL_ORIGIN/19d2833c43fe6e05e2a4416f65a53cdc.txt?search_discovery=$cache_bust" \
+            -o /tmp/indexnow-key.txt
+          grep -Fx '19d2833c43fe6e05e2a4416f65a53cdc' /tmp/indexnow-key.txt
+          echo "Verified live canonical sitemap for IndexNow: urls=$url_count source=$SOURCE_SHA"
+
+      - name: Submit verified sitemap URLs to IndexNow
+        if: steps.resolve.outputs.relevant == 'true'
+        shell: bash
+        env:
+          INDEXNOW_STRICT: "1"
+        run: |
+          set -euo pipefail
+          bash scripts/ci/retry.sh 3 10 -- node scripts/ping-search-engines.mjs
+
+      - name: Publish search discovery status
+        if: always() && steps.resolve.outputs.relevant == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          state=failure
+          description="IndexNow canonical sitemap submission failed"
+          if [ "$JOB_STATUS" = "success" ]; then
+            state=success
+            description="Verified canonical sitemap accepted by IndexNow"
+          fi
+
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
+            -f state="$state" \
+            -f context="Irha Search Discovery" \
+            -f description="$description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
