@@ -119,5 +119,5 @@ jobs:
             echo "- Recovery: no blind rerun performed"
             echo "- Stale/superseded runs: ignored as resolved noise"
             echo "- Deterministic PR failures: safe mechanical repair is attempted by Irha PR Auto Fixer"
-            echo "- Database migration failures: never blindly rerun because an interrupted apply requires ledger inspection"
+            echo "- Database migration workflow is never blindly rerun because an interrupted apply requires ledger inspection"
           } >> "$GITHUB_STEP_SUMMARY"
