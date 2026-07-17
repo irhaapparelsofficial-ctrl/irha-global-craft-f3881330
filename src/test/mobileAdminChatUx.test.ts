@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const visitors = readFileSync("src/pages/AdminVisitors.tsx", "utf8");
-const chat = readFileSync("src/pages/AdminLiveChat.tsx", "utf8");
+const chat = readFileSync("src/pages/AdminLiveChatPro.tsx", "utf8");
 const alertTray = readFileSync("src/components/admin/AdminLiveChatNotification.tsx", "utf8");
 const pushSetup = readFileSync("src/components/admin/AdminPushNotificationSetup.tsx", "utf8");
 const visitorPulse = readFileSync("src/components/admin/AdminVisitorPulse.tsx", "utf8");
@@ -41,5 +41,6 @@ describe("mobile owner workspace contract", () => {
     expect(chat).toContain("Take");
     expect(chat).toContain("hasUnread");
     expect(chat).toContain("markConversationSeen");
+    expect(chat).toContain("Customer is typing · live preview");
   });
 });
