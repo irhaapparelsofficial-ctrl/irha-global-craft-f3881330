@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
-const migrationPath = "supabase/migrations/20260717233000_catalog_taxonomy_owner_review_workflow.sql";
+const migrationPath = "supabase/migrations/20260717235000_catalog_taxonomy_owner_review_workflow.sql";
 
 describe("owner-reviewed catalogue taxonomy release", () => {
   it("does not ship the removed automatic publication migration", () => {
