@@ -181,6 +181,8 @@ begin
     raise exception 'canonical leather-wallet asset is no longer used by the reviewed live product';
   end if;
 
+  alter table public.media_assets disable trigger media_assets_before_write_trigger;
+
   update public.media_assets
   set duplicate_status = 'canonical',
       duplicate_of = null,
@@ -221,6 +223,8 @@ begin
       end,
       updated_at = now()
   where id = duplicate_id;
+
+  alter table public.media_assets enable trigger media_assets_before_write_trigger;
 
   if not exists (
     select 1
