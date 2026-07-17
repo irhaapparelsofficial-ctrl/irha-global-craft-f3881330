@@ -14,9 +14,9 @@ describe("mobile public layout", () => {
     expect(categories).toContain("line-clamp-2");
   });
 
-  it("reserves mobile content space for the professional support dock", () => {
+  it("reserves only compact mobile safe space for the professional support dock", () => {
     const layout = read("src/components/layout/Layout.tsx");
-    expect(layout).toContain("pb-[calc(6.5rem+env(safe-area-inset-bottom))]");
+    expect(layout).toContain("pb-[calc(5rem+env(safe-area-inset-bottom))]");
   });
 
   it("shows one clear live-support entry with AI and human handoff", () => {
