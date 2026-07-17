@@ -80,6 +80,24 @@ describe("canonical explicit B2B taxonomy release", () => {
     expect(vite).toContain("generateTaxonomyProductShells()");
   });
 
+  it("uses a verifier-only legacy route without leaking it into the final sitemap", () => {
+    const prepare = read("scripts/prepare-taxonomy-shell-verification.ts");
+    const finalize = read("scripts/finalize-taxonomy-static-shells.ts");
+    const packageJson = read("package.json");
+
+    expect(prepare).toContain("taxonomy-legacy-shell-verification-only");
+    expect(finalize).toContain("Verifier-only legacy product URL leaked into the final sitemap");
+    expect(finalize).toContain("generateTaxonomyProductShells(process.cwd(), \"dist\")");
+    expect(finalize).toContain("Taxonomy product shells do not point to the reviewed four-level canonical URL");
+    expect(packageJson).toContain("prepare-taxonomy-shell-verification.ts");
+    expect(packageJson).toContain("generate-static-route-shells.ts");
+    expect(packageJson).toContain("finalize-taxonomy-static-shells.ts");
+    expect(packageJson.indexOf("prepare-taxonomy-shell-verification.ts"))
+      .toBeLessThan(packageJson.indexOf("generate-static-route-shells.ts"));
+    expect(packageJson.indexOf("generate-static-route-shells.ts"))
+      .toBeLessThan(packageJson.indexOf("finalize-taxonomy-static-shells.ts"));
+  });
+
   it("keeps unreviewed localized taxonomy drafts out of indexable alternates", () => {
     const seo = read("src/components/SEO.tsx");
     expect(seo).toContain("VITE_TAXONOMY_TRANSLATIONS_RELEASED");
