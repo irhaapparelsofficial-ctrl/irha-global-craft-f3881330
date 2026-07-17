@@ -137,9 +137,10 @@ export default function Navbar() {
           </Link>
           <Link
             to="/inquiry-cart"
+            aria-label="Request quote"
             className="inline-flex min-h-11 items-center gap-2 rounded-md bg-gradient-gold px-5 text-[10px] font-semibold uppercase tracking-[0.19em] text-primary-foreground transition-all hover:shadow-gold"
           >
-            Build RFQ {cart.count > 0 ? `(${cart.count})` : ""} <ChevronRight size={14} />
+            Request quote {cart.count > 0 ? `(${cart.count})` : ""} <ChevronRight size={14} />
           </Link>
         </div>
 
@@ -232,9 +233,10 @@ export default function Navbar() {
 
           <Link
             to="/inquiry-cart"
+            aria-label="Request quote"
             className="mt-3 inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-gradient-gold px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground"
           >
-            Build multi-item RFQ <ChevronRight size={15} />
+            Request quote for selected styles <ChevronRight size={15} />
           </Link>
           <p className="mt-4 text-center text-xs text-muted-foreground">
             {settings.brand.phoneDisplay || "Sialkot, Pakistan · B2B manufacturing"}
