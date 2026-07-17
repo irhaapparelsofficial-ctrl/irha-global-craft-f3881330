@@ -1,35 +1,47 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const workflow = readFileSync(
-  resolve(process.cwd(), ".github/workflows/cloudflare-exact-main-recovery.yml"),
-  "utf8",
+const canonicalWorkflowPath = resolve(
+  process.cwd(),
+  ".github/workflows/cloudflare-current-main-reconcile.yml",
 );
+const directWorkflowPath = resolve(
+  process.cwd(),
+  ".github/workflows/cloudflare-direct-production.yml",
+);
+const legacyRecoveryPath = resolve(
+  process.cwd(),
+  ".github/workflows/cloudflare-exact-main-recovery.yml",
+);
+const workflow = readFileSync(canonicalWorkflowPath, "utf8");
 
-describe("Cloudflare exact-main recovery", () => {
-  it("deploys only the immutable artifact from a successful exact-main Quality Gate", () => {
-    expect(workflow).toContain("Resolve exact-main eligibility and deployment readiness");
-    expect(workflow).toContain("Wait for successful exact-main Quality Gate");
+describe("Cloudflare exact-current-main release reconciliation", () => {
+  it("deploys only the immutable artifact from a successful current-main Quality Gate", () => {
+    expect(workflow).toContain('workflows: ["Quality Gate"]');
+    expect(workflow).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(workflow).toContain("github.event.workflow_run.head_branch == 'main'");
     expect(workflow).toContain("production-dist-${{ env.SOURCE_SHA }}");
-    expect(workflow).toContain("run-id: ${{ steps.quality.outputs.run_id }}");
-    expect(workflow).toContain("Reconfirm exact main before production mutation");
+    expect(workflow).toContain("run-id: ${{ env.QUALITY_RUN_ID }}");
+    expect(workflow).toContain("Reconfirm exact current main before production mutation");
     expect(workflow).toContain('--commit-hash="$SOURCE_SHA"');
   });
 
-  it("follows every main push and safely skips superseded source commits", () => {
-    expect(workflow).toContain("branches: [main]");
-    expect(workflow).not.toContain('paths:\n      - ".github/workflows/cloudflare-exact-main-recovery.yml"');
-    expect(workflow).toContain("group: cloudflare-exact-main-recovery-${{ github.sha }}");
-    expect(workflow).toContain("Main advanced while waiting for Quality Gate");
-    expect(workflow).toContain("Superseded recovery skipped before deployment");
-    expect(workflow).toContain("Superseded Cloudflare recovery skipped safely");
+  it("keeps one automatic Cloudflare deployment authority and safely skips superseded commits", () => {
+    expect(existsSync(directWorkflowPath)).toBe(false);
+    expect(existsSync(legacyRecoveryPath)).toBe(false);
+    expect(workflow).toContain("group: cloudflare-reconcile-${{ github.event.workflow_run.head_sha }}");
+    expect(workflow).toContain("Superseded source skipped safely");
+    expect(workflow).toContain("stale deploy skipped without failure");
+    expect(workflow).toContain("Superseded release verification skipped without failure");
   });
 
-  it("verifies both Cloudflare origins and publishes an observable commit status", () => {
-    expect(workflow).toContain("Pages and apex exact-source parity verified");
-    expect(workflow).toContain("www canonical redirect verified");
-    expect(workflow).toContain('context="Irha Cloudflare Recovery"');
-    expect(workflow).toContain("statuses: write");
+  it("verifies pages.dev, apex, release identity and canonical www behavior", () => {
+    expect(workflow).toContain("Verify pages.dev, apex and www canonical behavior");
+    expect(workflow).toContain("verify_origin \"$PAGES_URL\" pages");
+    expect(workflow).toContain("verify_origin \"$CANONICAL_ORIGIN\" apex");
+    expect(workflow).toContain(".source_commit == $sha");
+    expect(workflow).toContain("www canonical GET redirect verified");
+    expect(workflow).toContain("Apex and Pages source parity: verified");
   });
 });
