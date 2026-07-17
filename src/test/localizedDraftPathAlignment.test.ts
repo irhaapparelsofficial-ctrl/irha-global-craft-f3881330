@@ -8,7 +8,17 @@ const buffer = readFileSync(resolve(process.cwd(), migrationPath));
 const migration = buffer.toString("utf8");
 const manifest = JSON.parse(
   readFileSync(resolve(process.cwd(), "supabase/repository-migrations.json"), "utf8"),
-) as { migrations: Array<{ version: string; name: string; path: string; git_blob_sha: string; transactional_dry_run: boolean }> };
+) as {
+  migrations: Array<{
+    version: string;
+    name: string;
+    path: string;
+    git_blob_sha: string;
+    execution_mode?: string;
+    transactional_dry_run: boolean;
+    verification_query?: string;
+  }>;
+};
 
 function gitBlobSha(value: Buffer) {
   return createHash("sha1")
@@ -19,13 +29,16 @@ function gitBlobSha(value: Buffer) {
 
 describe("localized draft path alignment", () => {
   it("registers the exact ordered migration blob", () => {
-    expect(manifest.migrations.find((entry) => entry.version === "20260717232100")).toEqual({
+    const entry = manifest.migrations.find((item) => item.version === "20260717232100");
+    expect(entry).toMatchObject({
       version: "20260717232100",
       name: "align_localized_draft_paths",
       path: migrationPath,
       git_blob_sha: gitBlobSha(buffer),
-      transactional_dry_run: true,
+      execution_mode: "verified_present",
+      transactional_dry_run: false,
     });
+    expect(entry?.verification_query).toMatch(/^select\b/i);
   });
 
   it("uses the required localized hierarchical route and apex canonical URL", () => {
