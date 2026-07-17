@@ -16,10 +16,12 @@ describe("bulk lead intake safety", () => {
 
   it("registers the private route before the public wildcard layout", () => {
     const route = '<Route path="/admin/lead-intake" element={<AdminLeadIntake />} />';
+    const wildcard = app.indexOf('<Route path="*"');
     expect(app).toContain('const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"))');
     expect(app).toContain(route);
     expect(app.indexOf(route)).toBeGreaterThan(-1);
-    expect(app.indexOf(route)).toBeLessThan(app.indexOf('<Route\n                path="*"'));
+    expect(wildcard).toBeGreaterThan(-1);
+    expect(app.indexOf(route)).toBeLessThan(wildcard);
   });
 
   it("uses restartable small chunks and never sends outreach", () => {
