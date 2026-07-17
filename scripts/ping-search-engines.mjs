@@ -20,8 +20,9 @@ export const NON_INDEXABLE_PATHS = new Set([
   "/blog/fob-sialkot-vs-cif-pricing-explained",
 ]);
 
-// Conservative fallback used only when callers explicitly bypass sitemap discovery.
-export const DEFAULT_CHANGED_PATHS = [
+// These groups remain exported as the audited fallback contract and for
+// regression coverage. Normal production notification reads the built sitemap.
+export const CORE_CHANGED_PATHS = [
   "/",
   "/products",
   "/products/bavarian-trachten-wear",
@@ -33,6 +34,9 @@ export const DEFAULT_CHANGED_PATHS = [
   "/buyer-trust",
   "/factory-video-call",
   "/inquiry",
+];
+
+export const BUYER_INTENT_CHANGED_PATHS = [
   "/germany-apparel-manufacturer",
   "/de/bekleidungshersteller-deutschland",
   "/custom-sportswear-manufacturer-germany",
@@ -55,6 +59,9 @@ export const DEFAULT_CHANGED_PATHS = [
   "/de/lederhosen-hersteller",
   "/de/dirndl-grosshandel",
   "/de/trachten-private-label",
+];
+
+export const MARKET_GUIDE_CHANGED_PATHS = [
   "/markets",
   "/markets/germany",
   "/markets/austria",
@@ -65,18 +72,35 @@ export const DEFAULT_CHANGED_PATHS = [
   "/markets/canada",
   "/markets/australia",
   "/markets/new-zealand",
+];
+
+export const BLOG_CHANGED_PATHS = [
   "/blog",
   "/blog/why-source-sportswear-from-pakistan",
   "/blog/lederhosen-manufacturing-guide",
   "/blog/private-label-streetwear-manufacturing",
   "/blog/why-sialkot-is-global-apparel-hub",
   "/blog/oem-vs-odm-clothing-manufacturing",
+  "/blog/custom-hoodies-manufacturer-pakistan-moq-50",
   "/blog/lederhosen-wholesale-germany-oktoberfest-supplier",
   "/blog/private-label-sportswear-fob-sialkot",
   "/blog/small-batch-clothing-manufacturer-pakistan",
+  "/blog/streetwear-oem-pakistan",
+  "/blog/dirndl-manufacturer-moq-50",
   "/blog/sublimated-jerseys-wholesale-pakistan",
   "/blog/leather-jacket-manufacturer-small-order",
+  "/blog/apparel-manufacturer-for-startups-moq-50",
+  "/blog/fob-sialkot-vs-cif-pricing-explained",
 ];
+
+// Conservative fallback used only when callers explicitly bypass sitemap discovery.
+// Retain complete audited groups above, but never notify known non-indexable routes.
+export const DEFAULT_CHANGED_PATHS = [
+  ...CORE_CHANGED_PATHS,
+  ...BUYER_INTENT_CHANGED_PATHS,
+  ...MARKET_GUIDE_CHANGED_PATHS,
+  ...BLOG_CHANGED_PATHS,
+].filter((path) => !NON_INDEXABLE_PATHS.has(path));
 
 function canonicalPathname(url) {
   return url.pathname === "/" ? "/" : url.pathname.replace(/\/+$/, "");
