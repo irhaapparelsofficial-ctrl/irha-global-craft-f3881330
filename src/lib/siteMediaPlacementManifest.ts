@@ -31,7 +31,6 @@ export type PlacementSpec = {
 
 
 const HOMEPAGE: PlacementSpec[] = [
-const HOMEPAGE: PlacementSpec[] = [
   { pageType: "home", pageSlug: "/", role: "hero_desktop", isLcpEligible: true, description: "Above-the-fold desktop hero", localAssetPath: "src/assets/hero-b2b-manufacturer-desktop.jpg", localAssetStatus: "pending_qa" },
   { pageType: "home", pageSlug: "/", role: "hero_mobile", isLcpEligible: true, description: "Above-the-fold mobile hero", localAssetPath: "src/assets/hero-b2b-manufacturer-mobile.jpg", localAssetStatus: "pending_qa" },
 
