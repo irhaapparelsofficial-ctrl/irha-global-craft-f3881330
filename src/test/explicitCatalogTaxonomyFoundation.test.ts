@@ -18,7 +18,9 @@ const manifest = JSON.parse(
     name: string;
     path: string;
     git_blob_sha: string;
+    execution_mode?: string;
     transactional_dry_run: boolean;
+    verification_query?: string;
   }>;
 };
 
@@ -39,20 +41,27 @@ function extract(source: string, pattern: RegExp, label: string) {
 
 describe("explicit catalogue taxonomy foundation", () => {
   it("registers exact ordered migration blobs", () => {
-    expect(manifest.migrations.find((entry) => entry.version === "20260717230000")).toEqual({
+    const foundationEntry = manifest.migrations.find((entry) => entry.version === "20260717230000");
+    expect(foundationEntry).toMatchObject({
       version: "20260717230000",
       name: "explicit_catalog_taxonomy_foundation",
       path: foundationPath,
       git_blob_sha: gitBlobSha(foundationBuffer),
-      transactional_dry_run: true,
+      execution_mode: "verified_present",
+      transactional_dry_run: false,
     });
-    expect(manifest.migrations.find((entry) => entry.version === "20260717230500")).toEqual({
+    expect(foundationEntry?.verification_query).toMatch(/^select\b/i);
+
+    const guardEntry = manifest.migrations.find((entry) => entry.version === "20260717230500");
+    expect(guardEntry).toMatchObject({
       version: "20260717230500",
       name: "harden_taxonomy_assignment_leaf_guard",
       path: guardPath,
       git_blob_sha: gitBlobSha(guardBuffer),
-      transactional_dry_run: true,
+      execution_mode: "verified_present",
+      transactional_dry_run: false,
     });
+    expect(guardEntry?.verification_query).toMatch(/^select\b/i);
   });
 
   it("creates the required explicit hierarchy, assignment and migration-map tables", () => {
