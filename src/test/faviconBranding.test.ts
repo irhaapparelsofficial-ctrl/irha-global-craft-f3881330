@@ -10,6 +10,7 @@ describe("Irha favicon branding", () => {
     const favicon = read("public/favicon.svg");
     const redirects = read("public/_redirects");
     const workerPatch = read("scripts/patch-cloudflare-route-shell-assets.mjs");
+    const liveVerification = read(".github/workflows/verify-official-brand-live.yml");
     const manifest = JSON.parse(read("public/manifest.webmanifest")) as {
       icons: Array<{ src: string; sizes: string; type: string; purpose?: string }>;
     };
@@ -35,6 +36,13 @@ describe("Irha favicon branding", () => {
     expect(workerPatch).toContain('X-Irha-Favicon-Source\", \"official-owner-crest');
     expect(workerPatch).toContain('headers.delete("Location")');
     expect(workerPatch).toContain("status: 200");
+
+    expect(liveVerification).toContain('workflows: ["Cloudflare Production Status"]');
+    expect(liveVerification).not.toContain("push:\n");
+    expect(liveVerification).toContain("Resolve exact deployed production SHA");
+    expect(liveVerification).toContain("source_identity_state");
+    expect(liveVerification).toContain("Official Irha Apparels Manufacturing Specialists crest supplied by the owner");
+    expect(liveVerification).toContain('context="Irha Brand Live"');
 
     expect(manifest.icons[0]).toEqual({
       src: "/favicon.svg",
