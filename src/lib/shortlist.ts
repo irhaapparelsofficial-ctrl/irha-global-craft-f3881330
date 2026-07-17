@@ -1,9 +1,11 @@
 /**
  * Guest shortlist + recently-viewed + compare utilities.
- * All local-storage backed, no login. Feeds buyer RFQ context.
+ * Legacy shortlist actions are mirrored into the global inquiry cart so older
+ * product cards remain compatible while the public UI migrates to RFQ wording.
  */
 import { useEffect, useState, useCallback } from "react";
 import { thumbnailUrl } from "@/lib/imageThumbnails";
+import { addInquiryItem, clearInquiryCart, removeInquiryItem } from "@/lib/inquiryCart";
 
 const SHORTLIST_KEY = "irha_shortlist_v1";
 const RECENT_KEY = "irha_recent_v1";
@@ -77,6 +79,23 @@ const write = (key: string, value: unknown) => {
   }
 };
 
+function mirrorShortlistAdd<T extends { slug: string }>(key: string, item: T) {
+  if (key !== SHORTLIST_KEY) return;
+  const product = item as T & Partial<ShortlistItem>;
+  addInquiryItem({
+    slug: product.slug,
+    name: product.name || product.slug,
+    image: product.image,
+    categorySlug: product.categorySlug,
+    categoryName: product.categoryName,
+    addedAt: product.addedAt || Date.now(),
+  });
+}
+
+function mirrorShortlistRemove(key: string, slug: string) {
+  if (key === SHORTLIST_KEY) removeInquiryItem(slug);
+}
+
 export function shortlistProductPath(item: Pick<ShortlistItem, "slug" | "categorySlug">) {
   const slug = item.slug.trim();
   const categorySlug = item.categorySlug?.trim();
@@ -102,7 +121,10 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
   }, [key]);
 
   const add = useCallback(
-    (item: T) => write(key, addUniqueStoredItem<T>(read<T>(key), item, max)),
+    (item: T) => {
+      write(key, addUniqueStoredItem<T>(read<T>(key), item, max));
+      mirrorShortlistAdd(key, item);
+    },
     [key, max],
   );
 
@@ -111,14 +133,24 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
       const normalizedSlug = slug.trim();
       if (!normalizedSlug) return;
       write(key, read<T>(key).filter((item) => item.slug !== normalizedSlug));
+      mirrorShortlistRemove(key, normalizedSlug);
     },
     [key],
   );
 
-  const clear = useCallback(() => write(key, []), [key]);
+  const clear = useCallback(() => {
+    write(key, []);
+    if (key === SHORTLIST_KEY) clearInquiryCart();
+  }, [key]);
   const has = useCallback((slug: string) => items.some((item) => item.slug === slug), [items]);
   const toggle = useCallback(
-    (item: T) => write(key, toggleStoredItem<T>(read<T>(key), item, max)),
+    (item: T) => {
+      const current = read<T>(key);
+      const wasStored = current.some((stored) => stored.slug === item.slug);
+      write(key, toggleStoredItem<T>(current, item, max));
+      if (wasStored) mirrorShortlistRemove(key, item.slug);
+      else mirrorShortlistAdd(key, item);
+    },
     [key, max],
   );
 
