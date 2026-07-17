@@ -5,16 +5,17 @@ import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicProduct } from "@/hooks/usePublicCatalog";
 import { resolveGallery } from "@/lib/assetResolver";
 import {
-  Bookmark,
-  BookmarkCheck,
+  Check,
   ChevronRight,
+  ClipboardList,
   GitCompareArrows,
   MessageCircle,
   Printer,
   Upload,
 } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
-import { pushRecentlyViewed, useCompare, useShortlist } from "@/lib/shortlist";
+import { useInquiryCart } from "@/lib/inquiryCart";
+import { pushRecentlyViewed, useCompare } from "@/lib/shortlist";
 import {
   ORGANIZATION_ID,
   SITE_URL,
@@ -26,7 +27,7 @@ export default function ProductDetail() {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
   const { data, isLoading, isFetching, error } = usePublicProduct(categorySlug, productSlug);
   const [activeImg, setActiveImg] = useState(0);
-  const shortlist = useShortlist();
+  const inquiryCart = useInquiryCart();
   const compare = useCompare();
 
   useEffect(() => setActiveImg(0), [productSlug]);
@@ -54,7 +55,8 @@ export default function ProductDetail() {
   const product = data.product;
   const gallery = resolveGallery(product.gallery.length ? product.gallery : [product.image_url ?? ""]);
   const url = `${SITE_URL}/products/${category.slug}/${product.slug}`;
-  const savedProduct = {
+  const inquiryProduct = {
+    productId: product.id,
     slug: product.slug,
     name: product.name,
     image: product.image_url ?? gallery[0],
@@ -62,6 +64,7 @@ export default function ProductDetail() {
     categoryName: category.name,
     addedAt: Date.now(),
   };
+  const inInquiry = inquiryCart.has(product.slug);
   const inCompare = compare.has(product.slug);
   const compareFull = !inCompare && compare.items.length >= 4;
 
@@ -99,14 +102,13 @@ export default function ProductDetail() {
   pushIf("Packaging", product.packaging_standard);
 
   const legacyDetails = (product.details ?? []).filter((detail) => !/(moq|lead time)/i.test(detail.label));
-
   const custom = product.customization ?? {};
   const customEnabled = Object.entries(custom)
     .filter(([, value]) => value === true)
     .map(([key]) => key.replace(/_/g, " "));
 
   const whatsappMsg = `Hello Irha Apparels — I'm interested in ${product.name} (${subCat.name}, ${category.name}). Product page: ${url}`;
-  const fallbackDescription = `${product.name} custom B2B manufacturing by Irha Apparels in Sialkot. OEM, ODM and private-label requirements are reviewed before quotation and production commitments.`;
+  const fallbackDescription = `${product.name} wholesale and private-label manufacturing by Irha Apparels in Sialkot. OEM and ODM requirements are reviewed before quotation, sampling and production commitments.`;
   const metaDescription = product.seo_description ?? product.description?.slice(0, 158) ?? fallbackDescription;
   const serviceId = `${url}#service`;
 
@@ -147,7 +149,7 @@ export default function ProductDetail() {
   return (
     <>
       <SEO
-        title={product.seo_title ?? `${product.name} | ${category.name} Manufacturer | Irha Apparels`}
+        title={product.seo_title ?? `${product.name} Wholesale Manufacturer | Sialkot Garment Factory`}
         description={metaDescription}
         path={`/products/${category.slug}/${product.slug}`}
         image={gallery[0]}
@@ -170,12 +172,20 @@ export default function ProductDetail() {
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-16">
             <div className="lg:col-span-7">
               <div className="relative aspect-[4/5] overflow-hidden bg-card mb-4">
-                <img src={gallery[activeImg] ?? gallery[0]} alt={`${product.name} wholesale manufacturing style`} className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src={gallery[activeImg] ?? gallery[0]}
+                  alt={`${product.name} custom wholesale manufacturer in Sialkot`}
+                  width={1200}
+                  height={1500}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               {gallery.length > 1 && (
                 <div className="grid grid-cols-4 gap-3">
                   {gallery.map((image, index) => (
-                    <button key={image} onClick={() => setActiveImg(index)} aria-label={`View ${product.name} image ${index + 1}`} className={`aspect-square overflow-hidden border ${index === activeImg ? "border-primary" : "border-border/60"}`}>
+                    <button key={image} onClick={() => setActiveImg(index)} aria-label={`View ${product.name} manufacturing image ${index + 1}`} className={`aspect-square overflow-hidden border ${index === activeImg ? "border-primary" : "border-border/60"}`}>
                       <ThumbnailImage src={image} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
@@ -202,25 +212,26 @@ export default function ProductDetail() {
               )}
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link to={`/inquiry?intent=rfq&product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}`} className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
-                  Request a Quote
-                </Link>
+                <button
+                  type="button"
+                  onClick={() => inquiryCart.toggle(inquiryProduct)}
+                  aria-pressed={inInquiry}
+                  className={`inline-flex items-center gap-3 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors ${inInquiry ? "border border-primary text-primary" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+                >
+                  {inInquiry ? <Check size={16} /> : <ClipboardList size={16} />}
+                  {inInquiry ? "In Inquiry" : "Add to Inquiry"}
+                </button>
+                {inInquiry && (
+                  <Link to="/inquiry-cart" className="inline-flex items-center gap-3 bg-gradient-gold px-7 py-4 text-xs uppercase tracking-[0.3em] text-primary-foreground transition-opacity hover:opacity-90">
+                    Review RFQ ({inquiryCart.count})
+                  </Link>
+                )}
                 <a href={whatsappLink(whatsappMsg)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
                   <MessageCircle size={16} /> WhatsApp
                 </a>
                 <button
                   type="button"
-                  onClick={() => shortlist.toggle(savedProduct)}
-                  aria-pressed={shortlist.has(product.slug)}
-                  aria-label={shortlist.has(product.slug) ? "Remove from shortlist" : "Save to shortlist"}
-                  className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
-                >
-                  {shortlist.has(product.slug) ? <BookmarkCheck size={16} className="text-primary" /> : <Bookmark size={16} />}
-                  {shortlist.has(product.slug) ? "Saved" : "Save"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => compare.toggle(savedProduct)}
+                  onClick={() => compare.toggle(inquiryProduct)}
                   disabled={compareFull}
                   aria-pressed={inCompare}
                   aria-label={inCompare ? "Remove from product comparison" : "Add to product comparison"}
@@ -237,7 +248,7 @@ export default function ProductDetail() {
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.25em]">
-                <Link to={`/inquiry?product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}&intent=reference`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Upload size={12} /> Upload reference design</Link>
+                <Link to="/inquiry-cart" onClick={() => inquiryCart.add(inquiryProduct)} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Upload size={12} /> Add product & upload tech pack</Link>
                 <span className="text-foreground/25">·</span>
                 <Link to={`/products/${category.slug}/${product.slug}/spec-sheet`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Printer size={12} /> Print spec sheet</Link>
                 {inCompare && (
@@ -303,7 +314,7 @@ export default function ProductDetail() {
                 {relatedProducts.map((relatedProduct) => (
                   <Link key={relatedProduct.id} to={`/products/${category.slug}/${relatedProduct.slug}`} className="group flex flex-col text-left">
                     <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
-                      <ThumbnailImage src={relatedProduct.image_url ?? relatedProduct.gallery?.[0] ?? ""} alt={`${relatedProduct.name} wholesale manufacturing style`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+                      <ThumbnailImage src={relatedProduct.image_url ?? relatedProduct.gallery?.[0] ?? ""} alt={`${relatedProduct.name} wholesale manufacturer product style`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
                     </div>
                     <h3 className="font-display text-base leading-tight group-hover:text-primary transition-colors">{relatedProduct.name}</h3>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">MOQ confirmed after review</p>
