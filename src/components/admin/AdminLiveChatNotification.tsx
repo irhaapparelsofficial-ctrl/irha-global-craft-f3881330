@@ -21,6 +21,8 @@ type AlertKind = "live_chat" | "inquiry";
 const db = supabase as any;
 const POLL_INTERVAL_MS = 15_000;
 const SOUND_PREFERENCE_KEY = "irha-owner-alert-sound";
+const OWNER_VIEW_QUERY = "ownerView";
+const OWNER_VIEW_INQUIRIES = "inquiries";
 
 function alertKind(alert: OwnerAlert): AlertKind | null {
   if (alert.metadata?.channel === "human_live_chat") return "live_chat";
@@ -53,7 +55,37 @@ function alertHref(alert: OwnerAlert | null) {
     const sessionId = typeof alert.metadata?.session_id === "string" ? alert.metadata.session_id.trim() : "";
     return sessionId ? `/admin/live-chat?session=${encodeURIComponent(sessionId)}` : "/admin/live-chat";
   }
-  return "/admin";
+  return `/admin?${OWNER_VIEW_QUERY}=${OWNER_VIEW_INQUIRIES}`;
+}
+
+function normalizedButtonText(button: HTMLButtonElement) {
+  return (button.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function findAdminButtonByPrefixes(prefixes: string[]) {
+  const normalizedPrefixes = prefixes.map((prefix) => prefix.toLowerCase());
+  return Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find((button) => {
+    const text = normalizedButtonText(button);
+    return normalizedPrefixes.some((prefix) => text.startsWith(prefix));
+  }) ?? null;
+}
+
+function openInquiryWorkspaceFromCurrentAdminView() {
+  const requestButton = findAdminButtonByPrefixes(["review new requests", "new requests"]);
+  if (!requestButton) return false;
+  requestButton.click();
+  return true;
+}
+
+function requestedOwnerView() {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get(OWNER_VIEW_QUERY);
+}
+
+function clearRequestedOwnerView() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete(OWNER_VIEW_QUERY);
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 function supportsDeviceAlerts() {
@@ -258,6 +290,45 @@ export default function AdminLiveChatNotification() {
     };
   }, [load, soundEnabled]);
 
+  useEffect(() => {
+    if (!isAdmin || requestedOwnerView() !== OWNER_VIEW_INQUIRIES) return;
+
+    let attempts = 0;
+    let inboxActivated = false;
+    const tryOpen = () => {
+      attempts += 1;
+      if (openInquiryWorkspaceFromCurrentAdminView()) {
+        clearRequestedOwnerView();
+        return true;
+      }
+
+      if (!inboxActivated) {
+        const inboxButton = findAdminButtonByPrefixes(["inbox"]);
+        if (inboxButton) {
+          inboxButton.click();
+          inboxActivated = true;
+        }
+      }
+
+      if (attempts >= 40) {
+        clearRequestedOwnerView();
+        toast({
+          title: "Open Buyer Inbox",
+          description: "The inquiry alert loaded, but the request workspace was not ready. Tap Inbox, then New Requests.",
+          variant: "destructive",
+        });
+        return true;
+      }
+      return false;
+    };
+
+    if (tryOpen()) return;
+    const timer = window.setInterval(() => {
+      if (tryOpen()) window.clearInterval(timer);
+    }, 125);
+    return () => window.clearInterval(timer);
+  }, [isAdmin]);
+
   const counts = useMemo(() => ({
     liveChat: alerts.filter((alert) => alertKind(alert) === "live_chat").length,
     inquiries: alerts.filter((alert) => alertKind(alert) === "inquiry").length,
@@ -272,7 +343,16 @@ export default function AdminLiveChatNotification() {
   return (
     <aside className="fixed z-[69] right-3 top-[calc(4.25rem+env(safe-area-inset-top))] w-[min(23rem,calc(100vw-1.5rem))] rounded-xl border border-gold/45 bg-card/95 p-3 shadow-2xl backdrop-blur md:right-5 md:top-20" aria-live="polite">
       {latestAlert ? (
-        <a href={alertHref(latestAlert)} className="block" aria-label={`Open owner notifications — ${total} unread`}>
+        <a
+          href={alertHref(latestAlert)}
+          className="block touch-manipulation"
+          aria-label={`Open owner notifications — ${total} unread`}
+          onClick={(event) => {
+            if (latestKind !== "inquiry") return;
+            event.preventDefault();
+            if (!openInquiryWorkspaceFromCurrentAdminView()) window.location.assign(alertHref(latestAlert));
+          }}
+        >
           <div className="flex items-start gap-3">
             <span className={`relative mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${latestKind === "live_chat" ? "bg-emerald-500/15 text-emerald-300" : "bg-gold/15 text-gold"}`}>
               {latestKind === "live_chat" ? <MessageSquareText size={19} /> : <Inbox size={19} />}
