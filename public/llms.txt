@@ -6,7 +6,9 @@ Irha Apparels provides OEM, ODM and made-to-requirement apparel programs. The pu
 
 The website is for business inquiries rather than consumer retail. Fixed product prices and a universal MOQ are not published. Product feasibility, materials, construction, sampling, quantity, branding, packaging, production timing, shipping and documentation are confirmed after the buyer's requirements are reviewed.
 
-Qualified buyers may request a live factory view by video call. Irha Apparels manufactures in Sialkot, Pakistan and does not claim factories or offices in target export markets.
+Buyers can collect products from multiple categories into one quotation request, specify target quantity and size breakdown per style, and privately upload PDF, Adobe Illustrator, EPS, ZIP, PNG or JPG tech-pack files. Uploaded files are not public catalogue assets.
+
+Qualified buyers may request a live factory view by video call. Irha Apparels manufactures in Sialkot, Pakistan and does not claim factories or offices in target export markets. Equipment scope and production capacity are confirmed against the actual order rather than presented as an unsupported blanket figure.
 
 ## Primary public pages
 
@@ -42,6 +44,7 @@ Qualified buyers may request a live factory view by video call. Irha Apparels ma
 
 ## German pages
 
+- [Trachten und Lederhosen Hersteller für Großhandel](https://irhaapparels.com/de/bavarian-wear)
 - [Lederhosen Hersteller](https://irhaapparels.com/de/lederhosen-hersteller)
 - [Dirndl Großhandel](https://irhaapparels.com/de/dirndl-grosshandel)
 - [Trachten Private Label](https://irhaapparels.com/de/trachten-private-label)
