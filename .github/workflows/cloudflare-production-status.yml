@@ -1,6 +1,6 @@
 name: Cloudflare Production Status
 
-run-name: Live release proof · ${{ github.event.workflow_run.head_sha }}
+run-name: Live release proof · reconcile-${{ github.event.workflow_run.id }}
 
 on:
   workflow_run:
@@ -8,15 +8,15 @@ on:
     types: [completed]
 
 permissions:
+  actions: read
   contents: read
   statuses: write
 
 concurrency:
-  group: cloudflare-production-status-${{ github.event.workflow_run.head_sha }}
+  group: cloudflare-production-status-${{ github.event.workflow_run.id }}
   cancel-in-progress: false
 
 env:
-  SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
   UPSTREAM_RUN_ID: ${{ github.event.workflow_run.id }}
   UPSTREAM_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
   PAGES_URL: https://irha-apparels.pages.dev
@@ -25,35 +25,66 @@ env:
 
 jobs:
   prove-live-release:
-    if: >-
-      github.event.workflow_run.head_branch == 'main' &&
-      github.event.workflow_run.head_repository.full_name == github.repository
+    if: github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - name: Resolve exact current-main relevance
+      - name: Resolve original release SHA and upstream relevance
         id: relevance
         shell: bash
         run: |
           set -euo pipefail
+          upstream_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID")"
+          display_title="$(printf '%s' "$upstream_json" | jq -r '.display_title // ""')"
+          source_sha="$(printf '%s' "$display_title" | grep -Eo '[0-9a-f]{40}' | tail -n 1 || true)"
           latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
-          current=false
-          if [ "$latest_main" = "$SOURCE_SHA" ]; then
-            current=true
-          fi
-          echo "current=$current" >> "$GITHUB_OUTPUT"
-          echo "latest_main=$latest_main" >> "$GITHUB_OUTPUT"
-          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          jobs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID/jobs?filter=latest&per_page=100")"
+          executed_jobs="$(printf '%s' "$jobs_json" | jq '[.jobs[] | select(.conclusion != "skipped")] | length')"
 
-          if [ "$current" != "true" ]; then
-            echo "Superseded Cloudflare proof skipped safely: source=$SOURCE_SHA current_main=$latest_main"
+          relevant=false
+          current=false
+          if [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]] && [ "$executed_jobs" -gt 0 ]; then
+            relevant=true
+            if [ "$source_sha" = "$latest_main" ]; then
+              current=true
+            fi
           fi
+
+          echo "SOURCE_SHA=$source_sha" >> "$GITHUB_ENV"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "latest_main=$latest_main" >> "$GITHUB_OUTPUT"
+          echo "executed_jobs=$executed_jobs" >> "$GITHUB_OUTPUT"
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+          if [ "$relevant" != "true" ]; then
+            echo "Non-release Cloudflare reconcile ignored: title=$display_title executed_jobs=$executed_jobs"
+          elif [ "$current" != "true" ]; then
+            echo "Superseded Cloudflare proof skipped safely: source=$source_sha current_main=$latest_main"
+          else
+            echo "Exact current-main Cloudflare reconcile identified: source=$source_sha run=$UPSTREAM_RUN_ID"
+          fi
+
+      - name: Record ignored non-release run
+        if: steps.relevance.outputs.relevant != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare Production Status"
+            echo "- Reconcile run: \`$UPSTREAM_RUN_ID\`"
+            echo "- Executed upstream jobs: \`${{ steps.relevance.outputs.executed_jobs }}\`"
+            echo "- Result: ignored because every upstream job was skipped or no original release SHA was present"
+            echo "- Commit status mutation: \`false\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish upstream reconciliation failure without duplicate failure email
-        if: steps.relevance.outputs.current == 'true' && env.UPSTREAM_CONCLUSION != 'success'
+        if: >-
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION != 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -67,7 +98,10 @@ jobs:
           echo "Upstream Cloudflare failure was recorded on the exact commit; this observer exits cleanly to avoid a duplicate failure email."
 
       - name: Publish exact-live verification pending
-        if: steps.relevance.outputs.current == 'true' && env.UPSTREAM_CONCLUSION == 'success'
+        if: >-
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION == 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -81,7 +115,10 @@ jobs:
 
       - name: Verify pages.dev, apex and www against exact merged SHA
         id: live
-        if: steps.relevance.outputs.current == 'true' && env.UPSTREAM_CONCLUSION == 'success'
+        if: >-
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION == 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -152,7 +189,11 @@ jobs:
           echo "Exact production SHA and canonical www redirect verified."
 
       - name: Publish exact live production status
-        if: always() && steps.relevance.outputs.current == 'true' && env.UPSTREAM_CONCLUSION == 'success'
+        if: >-
+          always() &&
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION == 'success'
         shell: bash
         env:
           VERIFIED: ${{ steps.live.outputs.verified }}
