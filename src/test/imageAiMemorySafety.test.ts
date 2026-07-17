@@ -29,9 +29,12 @@ describe("AI image processing resource safety", () => {
     expect(processor).toContain("source.close()");
   });
 
-  it("retains per-job failure reporting and a hard processor timeout", () => {
+  it("retains per-job failure reporting and bounded processor timeouts", () => {
     expect(queue).toContain("report_failure(job, message)");
-    expect(queue).toContain("timeout=900");
+    expect(queue).toContain('IRHA_IMAGE_PRIMARY_TIMEOUT", "900"');
+    expect(queue).toContain('IRHA_IMAGE_FALLBACK_TIMEOUT", "480"');
+    expect(queue).toContain("run_processor(primary_command, PRIMARY_TIMEOUT)");
+    expect(queue).toContain("run_processor(fallback_command, FALLBACK_TIMEOUT)");
     expect(queue).toContain("return 1 if failed else 0");
   });
 });
