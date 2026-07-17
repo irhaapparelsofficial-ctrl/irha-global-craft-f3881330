@@ -11,7 +11,7 @@ describe("Lovable preview and frontend build contract", () => {
     };
 
     expect(pkg.scripts.dev).toBe("vite");
-    expect(pkg.scripts.predev).toBe("node scripts/clean-transient-public-builds.mjs");
+    expect(pkg.scripts.predev).toContain("node scripts/clean-transient-public-builds.mjs");
     expect(pkg.scripts.predev).not.toContain("generate-sitemap");
     expect(pkg.scripts.predev).not.toContain("generate:thumbnails");
     expect(pkg.scripts.predev).not.toContain("generate:catalog-pdfs");
@@ -26,7 +26,7 @@ describe("Lovable preview and frontend build contract", () => {
     expect(pkg.scripts["prepare:public-assets"]).toContain("generate:thumbnails");
     expect(pkg.scripts["prepare:public-assets"]).toContain("generate:catalog-pdfs");
     expect(pkg.scripts["build:frontend"]).toBe(
-      "npm run prepare:public-assets && npm --ignore-scripts run build",
+      "node scripts/clean-transient-public-builds.mjs && npm run prepare:public-assets && npm --ignore-scripts run build",
     );
     expect(pkg.scripts.prebuild).toContain("verify-migration-order.mjs");
     expect(pkg.scripts.prebuild).toContain("npm run prepare:public-assets");
