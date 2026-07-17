@@ -26,13 +26,40 @@ export type PlacementSpec = {
    *  independent of `site_media_placements` DB row. Kept in review state
    *  until owner QA marks the placement verified. */
   localAssetPath?: string;
-  localAssetStatus?: "pending_qa" | "approved" | "rejected";
+  localAssetStatus?: "pending_qa" | "approved" | "rejected" | "unassigned";
+  /** Owner/admin note explaining why an asset was rejected or is pending. */
+  reviewNote?: string;
 };
 
 
 const HOMEPAGE: PlacementSpec[] = [
-  { pageType: "home", pageSlug: "/", role: "hero_desktop", isLcpEligible: true, description: "Above-the-fold desktop hero", localAssetPath: "src/assets/hero-b2b-manufacturer-desktop.jpg", localAssetStatus: "pending_qa" },
-  { pageType: "home", pageSlug: "/", role: "hero_mobile", isLcpEligible: true, description: "Above-the-fold mobile hero", localAssetPath: "src/assets/hero-b2b-manufacturer-mobile.jpg", localAssetStatus: "pending_qa" },
+  // Homepage hero (desktop + mobile) — currently UNASSIGNED. The previous
+  // generated candidates were rejected by the owner as generic suit-only
+  // tailoring imagery that does not represent Irha Apparels' multi-category
+  // B2B range (Bavarian/Trachten, sportswear, leatherwear, streetwear/
+  // activewear, nightwear/private-label). See
+  // docs/PR5A_HOMEPAGE_HERO_BRIEF_V2.md for the corrected brief. Do NOT
+  // wire a public hero image until the admin approves the new candidate.
+  {
+    pageType: "home",
+    pageSlug: "/",
+    role: "hero_desktop",
+    isLcpEligible: true,
+    description: "Above-the-fold desktop hero (21:9)",
+    localAssetStatus: "unassigned",
+    reviewNote:
+      "Rejected 20260717: 'hero-b2b-manufacturer-desktop.jpg' — generic suit-only concept; does not represent multi-category B2B manufacturing. Awaiting corrected candidate per PR5A_HOMEPAGE_HERO_BRIEF_V2.md.",
+  },
+  {
+    pageType: "home",
+    pageSlug: "/",
+    role: "hero_mobile",
+    isLcpEligible: true,
+    description: "Above-the-fold mobile hero (4:5)",
+    localAssetStatus: "unassigned",
+    reviewNote:
+      "Rejected 20260717: 'hero-b2b-manufacturer-mobile.jpg' — generic suit-only concept; does not represent multi-category B2B manufacturing. Awaiting corrected candidate per PR5A_HOMEPAGE_HERO_BRIEF_V2.md.",
+  },
 
   { pageType: "home", pageSlug: "/", role: "private_label_visual", description: "Woven labels + hang tags + packaging" },
   { pageType: "home", pageSlug: "/", role: "sampling_qc_visual", description: "Sampling / QC / customization" },
