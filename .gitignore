@@ -12,9 +12,10 @@ dist
 dist-ssr
 *.local
 
-# Generated website image thumbnails
+# Generated website image thumbnails and transient image workspaces
 public/thumbnails/
 public/.thumbnail-build-*/
+public/.image-build-*/
 
 # Generated catalogue PDFs (rebuilt from committed page thumbnails)
 public/catalogs/*.pdf

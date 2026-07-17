@@ -75,7 +75,6 @@ export default function Studio() {
     [hubProducts, activeCat],
   );
 
-  // Reset downstream when hub changes
   useEffect(() => {
     setActiveCat("all");
     setProduct(null);
@@ -137,28 +136,26 @@ export default function Studio() {
   const stepDone = {
     product: !!product,
     color: !!color,
-    logo: true, // optional
+    logo: true,
     preset: !!preset,
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-20">
-
       <Helmet>
-        <title>B2B Custom Lab — Design Your Apparel | IRHA Apparels</title>
+        <title>B2B Custom Lab — Visual Requirement Builder | Irha Apparels</title>
         <meta
           name="description"
-          content="Design custom Bavarian, leather, sportswear & streetwear in 4 clicks. Upload your logo, pick a color, get a realistic front + back mockup. Flexible MOQ. FOB Sialkot."
+          content="Build a non-binding visual direction for custom Bavarian, leather, sportswear and streetwear programs. Upload a logo and select preferred colors, placement and decoration before submitting a B2B requirement review."
         />
         <link rel="canonical" href="https://irhaapparels.com/studio" />
       </Helmet>
 
-      {/* Header + hub toggle (sticky) */}
       <div className="sticky top-20 z-30 border-b border-border/60 bg-background/95 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-primary">B2B Custom Lab · Sialkot Factory Direct</p>
-            <h1 className="font-serif text-xl md:text-2xl leading-tight">Design Your Production Run</h1>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-primary">B2B Custom Lab · Sialkot Manufacturing Review</p>
+            <h1 className="font-serif text-xl md:text-2xl leading-tight">Build a Visual Requirement Direction</h1>
           </div>
           <div className="inline-flex border border-border rounded-full p-1 bg-card/40 self-start md:self-auto">
             {(Object.keys(HUBS) as HubId[]).map((h) => (
@@ -177,12 +174,10 @@ export default function Studio() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-6 md:py-10">
-        {/* MOQ badge */}
         <div className="inline-flex items-center gap-2 border border-primary/40 bg-primary/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-primary mb-6">
-          <Sparkles className="h-3 w-3" /> Flexible MOQ — Request FOB Quote
+          <Sparkles className="h-3 w-3" /> Requirements Reviewed Before Quotation
         </div>
 
-        {/* Step rail */}
         <ol className="flex flex-wrap gap-2 mb-8 text-[10px] uppercase tracking-[0.2em]">
           {[
             { k: "product", n: 1, label: "Product" },
@@ -204,7 +199,6 @@ export default function Studio() {
           ))}
         </ol>
 
-        {/* STEP 1 — Product */}
         <section className="mb-10">
           <h2 className="font-serif text-lg md:text-xl mb-3">1. Choose your product</h2>
           {categories.length > 0 && (
@@ -266,9 +260,8 @@ export default function Studio() {
           )}
         </section>
 
-        {/* STEP 2 — Color */}
         <section className={`mb-10 ${!product ? "opacity-40 pointer-events-none" : ""}`}>
-          <h2 className="font-serif text-lg md:text-xl mb-3">2. Pick a factory-approved base color</h2>
+          <h2 className="font-serif text-lg md:text-xl mb-3">2. Select a preferred base color</h2>
           <div className="flex flex-wrap gap-3">
             {swatches.map((s) => (
               <button
@@ -285,7 +278,6 @@ export default function Studio() {
           </div>
         </section>
 
-        {/* STEP 3 — Logo + Placement */}
         <section className={`mb-10 ${!color ? "opacity-40 pointer-events-none" : ""}`}>
           <h2 className="font-serif text-lg md:text-xl mb-3">3. Upload logo & choose placement <span className="text-xs text-muted-foreground">(optional)</span></h2>
           <div className="grid md:grid-cols-2 gap-4">
@@ -331,9 +323,8 @@ export default function Studio() {
           </div>
         </section>
 
-        {/* STEP 4 — Preset */}
         <section className={`mb-10 ${!color ? "opacity-40 pointer-events-none" : ""}`}>
-          <h2 className="font-serif text-lg md:text-xl mb-3">4. Choose an embroidery / print pattern</h2>
+          <h2 className="font-serif text-lg md:text-xl mb-3">4. Choose a decoration direction</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {presets.map((p) => (
               <button
@@ -350,10 +341,9 @@ export default function Studio() {
           </div>
         </section>
 
-        {/* Generate */}
         <div className="border-t border-border/60 pt-6 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
           <div className="text-xs text-muted-foreground">
-            Concept preview only — non-binding. Final specs, MOQ and pricing are confirmed after our team reviews your requirements.
+            Concept preview only — non-binding. Materials, specifications, quantity, pricing, production timing and delivery are confirmed only after requirement review and written quotation.
           </div>
           <div className="flex gap-2">
             {(product || result) && (
@@ -381,13 +371,12 @@ export default function Studio() {
           </div>
         )}
 
-        {/* Result */}
         {(generating || result) && (
           <section className="mt-10">
-            <h2 className="font-serif text-lg md:text-xl mb-4">Your Mockup</h2>
+            <h2 className="font-serif text-lg md:text-xl mb-4">Your Concept Preview</h2>
             {result?.fallback && (
               <div className="mb-4 border border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs p-3">
-                ⚠️ AI preview is regenerating in the background — the image below is the original product while the customized mockup finishes rendering. Click <b>Generate</b> again in ~30s to fetch the finished mockup.
+                The customized preview was not available. The original product image is shown for reference. Retry generation or send the selected requirements to our team for manual review.
               </div>
             )}
             <div className="grid md:grid-cols-2 gap-6">
@@ -428,10 +417,10 @@ export default function Studio() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-[#25D366] text-white px-6 py-3 text-[11px] uppercase tracking-[0.3em] font-bold hover:opacity-90"
                 >
-                  <MessageCircle className="h-4 w-4" /> Send to WhatsApp
+                  <MessageCircle className="h-4 w-4" /> Send Requirements to WhatsApp
                 </a>
                 <span className="inline-flex items-center gap-2 border border-primary/40 bg-primary/10 px-3 py-3 text-[10px] uppercase tracking-[0.25em] text-primary">
-                  <Sparkles className="h-3 w-3" /> Flexible MOQ — Request FOB Quote
+                  <Sparkles className="h-3 w-3" /> Requirements Reviewed Before Quote
                 </span>
               </div>
             )}
