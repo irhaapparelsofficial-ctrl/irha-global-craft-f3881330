@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CATALOG_PAGES, catalogPdf, catalogThumb } from "@/lib/catalogPages";
+import { CATALOG_PAGES, catalogThumb } from "@/lib/catalogPages";
 
 
 
