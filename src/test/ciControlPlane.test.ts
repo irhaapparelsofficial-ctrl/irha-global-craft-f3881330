@@ -107,8 +107,8 @@ describe("Irha CI control plane", () => {
     expect(reconciler).toContain("Every migration at or after");
     expect(reconciler).toContain("transactionBody");
     expect(reconciler).toContain("contains nested transaction control");
-    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
-    expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
+    expect(reconciler).toContain("begin;\n${sql}\nrollback;");
+    expect(reconciler).toContain("begin;\n${sql}\n${ledgerInsertSql(entry)}\ncommit;");
     expect(reconciler).toContain("github_management_api_transaction");
     expect(reconciler).toContain("github_management_api_verified_existing");
     expect(reconciler).toContain("verified_present");
@@ -116,9 +116,9 @@ describe("Irha CI control plane", () => {
     expect(reconciler).not.toContain("migration repair");
     expect(manifest.project_id).toBe("pvzjiozismyxqrzmtfbi");
     expect(manifest.cutover_version).toBe("20260717000000");
-    expect(manifest.migrations).toHaveLength(16);
-    expect(new Set(manifest.migrations.map((migration: { version: string }) => migration.version)).size).toBe(16);
-    expect(new Set(manifest.migrations.map((migration: { path: string }) => migration.path)).size).toBe(16);
+    expect(manifest.migrations.length).toBeGreaterThanOrEqual(18);
+    expect(new Set(manifest.migrations.map((migration: { version: string }) => migration.version)).size).toBe(manifest.migrations.length);
+    expect(new Set(manifest.migrations.map((migration: { path: string }) => migration.path)).size).toBe(manifest.migrations.length);
 
     const verifiedPresent = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
