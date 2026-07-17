@@ -25,6 +25,7 @@ import CatalogReleaseStatus from "@/components/admin/CatalogReleaseStatus";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import SeoReleaseReadiness from "@/components/admin/SeoReleaseReadiness";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
+import ReleaseHealthPanel from "@/components/admin/ReleaseHealthPanel";
 import GoogleSearchCenter from "@/components/admin/GoogleSearchCenter";
 import AIOperationsPlaybook from "@/components/admin/AIOperationsPlaybook";
 import AIRulesEnforcementStatus from "@/components/admin/AIRulesEnforcementStatus";
@@ -232,7 +233,7 @@ export function AdminShell({ view, setView, userEmail, children }: {
                                         : view === "gsc"
                                           ? <GoogleSearchCenter />
                                           : view === "system"
-                                            ? <ProductionHealthPanel />
+                                            ? <><ReleaseHealthPanel /><ProductionHealthPanel /></>
                                             : view === "rules"
                                               ? <BusinessRulesPanel />
                                               : view === "ai"

@@ -1,0 +1,119 @@
+{
+  "slug": "baseball-jersey",
+  "product": "Baseball Jersey",
+  "design": "01",
+  "views": [
+    {
+      "view": "front",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/baseball-jersey/baseball-jersey-design-01-front-clean-2048.png",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/baseball-jersey/clean/baseball-jersey-design-01-front-clean-2048.png",
+      "branded_path": "public/product-media/baseball-jersey/branded/baseball-jersey-design-01-front-branded-2048.png",
+      "web_path": "public/product-media/baseball-jersey/web/baseball-jersey-design-01-front-web-1600.webp",
+      "clean_sha256": "8b88241475287e78408f837de2a64ee102b77748cd3979cc96cc6023a1be8500",
+      "branded_sha256": "97d14a3a824d5d33d9d9be9615c70b7fc3917d3d15031bf17e646bc082173ecd",
+      "web_sha256": "eef38af0c90515d8b2cc4d5c1c8554e033675b3961de583052ec28039335582a"
+    },
+    {
+      "view": "three-quarter",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/baseball-jersey/baseball-jersey-design-01-three-quarter-clean-2048.png",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/baseball-jersey/clean/baseball-jersey-design-01-three-quarter-clean-2048.png",
+      "branded_path": "public/product-media/baseball-jersey/branded/baseball-jersey-design-01-three-quarter-branded-2048.png",
+      "web_path": "public/product-media/baseball-jersey/web/baseball-jersey-design-01-three-quarter-web-1600.webp",
+      "clean_sha256": "cba83d2ba820b5d2dbe90283c9ab0e0295424815593db50e214c693cd6c132ca",
+      "branded_sha256": "09e29e9dbe0e0c7d70baea80280f0d1dd8c2e939707e93d9913f25ce5a52d259",
+      "web_sha256": "e6ca02a836277d8a01e744cf922c91328ffb75b854503462a53a9ef196723498"
+    },
+    {
+      "view": "side",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/baseball-jersey/baseball-jersey-design-01-side-clean-2048.png",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/baseball-jersey/clean/baseball-jersey-design-01-side-clean-2048.png",
+      "branded_path": "public/product-media/baseball-jersey/branded/baseball-jersey-design-01-side-branded-2048.png",
+      "web_path": "public/product-media/baseball-jersey/web/baseball-jersey-design-01-side-web-1600.webp",
+      "clean_sha256": "6f8edf7039513d0e5d63a32dbb127fc4a460da3d6e8c800b20d7d0216e14998e",
+      "branded_sha256": "676f20c34dbd1bc8fdf05f0495be97a1c2982eae53ce97e19e26c511fc38fa1b",
+      "web_sha256": "26eb8ac998f3b2eb1f462ccfe849f703743ce2ad44e8a65af4f6515cc873ab15"
+    },
+    {
+      "view": "back",
+      "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/baseball-jersey/baseball-jersey-design-01-back-clean-2048.png",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/baseball-jersey/clean/baseball-jersey-design-01-back-clean-2048.png",
+      "branded_path": "public/product-media/baseball-jersey/branded/baseball-jersey-design-01-back-branded-2048.png",
+      "web_path": "public/product-media/baseball-jersey/web/baseball-jersey-design-01-back-web-1600.webp",
+      "clean_sha256": "83202e8a12a99a7432bbb4836409ec7efd4ff7022abfc869260e9046244c4043",
+      "branded_sha256": "1ccfdf649be31906a37b52b37ca61488092a396e7cde101946a717dbd3591e2d",
+      "web_sha256": "17bb9b5cf4017c89b094905fdeeba891956363ae24cf73ce3c1f3f80d6c46a7f"
+    }
+  ]
+}

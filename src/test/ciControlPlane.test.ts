@@ -95,7 +95,7 @@ describe("Irha CI control plane", () => {
     expect(database).not.toContain("supabase migration repair");
   });
 
-  it("uses a private manifest and exact Git blob checksums instead of rewriting legacy history", () => {
+  it("uses one merged private manifest with exact Git blob checksums", () => {
     const database = read(".github/workflows/supabase-database-auto.yml");
     const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
     const manifest = JSON.parse(read("supabase/repository-migrations.json"));
@@ -105,7 +105,10 @@ describe("Irha CI control plane", () => {
     expect(database).toContain("preserved, not deleted or rewritten");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
+    expect(reconciler).toContain("transactionBody");
+    expect(reconciler).toContain("contains nested transaction control");
     expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
+    expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
     expect(reconciler).toContain("github_management_api_transaction");
     expect(reconciler).toContain("github_management_api_verified_existing");
     expect(reconciler).toContain("verified_present");
@@ -113,7 +116,9 @@ describe("Irha CI control plane", () => {
     expect(reconciler).not.toContain("migration repair");
     expect(manifest.project_id).toBe("pvzjiozismyxqrzmtfbi");
     expect(manifest.cutover_version).toBe("20260717000000");
-    expect(manifest.migrations).toHaveLength(10);
+    expect(manifest.migrations).toHaveLength(16);
+    expect(new Set(manifest.migrations.map((migration: { version: string }) => migration.version)).size).toBe(16);
+    expect(new Set(manifest.migrations.map((migration: { path: string }) => migration.path)).size).toBe(16);
 
     const verifiedPresent = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
@@ -126,7 +131,7 @@ describe("Irha CI control plane", () => {
         expect(migration.transactional_dry_run).toBe(false);
         expect(migration.verification_query).toMatch(/^select\b/i);
       } else {
-        expect(migration.execution_mode).toBe("transactional");
+        expect(migration.execution_mode ?? "transactional").toBe("transactional");
         expect(migration.transactional_dry_run).toBe(true);
         expect(migration.verification_query).toBeUndefined();
       }
