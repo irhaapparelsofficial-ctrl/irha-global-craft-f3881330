@@ -23,9 +23,12 @@ describe("procurement-grade RFQ experience", () => {
     expect(quickQuote).toContain("WhatsApp / phone (optional)");
   });
 
-  it("routes buyers with files into the secure full RFQ", () => {
-    expect(quickQuote).toContain("Use full RFQ uploader");
-    expect(quickQuote).toContain("Add tech pack / full RFQ");
+  it("uploads buyer files securely and retains the full RFQ fallback", () => {
+    expect(quickQuote).toContain("uploadPublicLeadFile");
+    expect(quickQuote).toContain("Tech pack / reference files");
+    expect(quickQuote).toContain("files: uploadedFiles");
+    expect(quickQuote).toContain("Use the full RFQ uploader");
+    expect(quickQuote).toContain("Add more project detail");
     expect(fullInquiry).toContain("SecureFileUpload");
     expect(fullInquiry).toContain("Attach a tech pack, logo, brief or reference photo if useful.");
   });
