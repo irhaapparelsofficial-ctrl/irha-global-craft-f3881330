@@ -87,19 +87,19 @@ export default function HeroCarousel() {
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:grid-rows-2 sm:gap-3">
             <Link
               to="/products/bavarian-trachten-wear"
-              className="group relative col-span-2 min-h-[280px] overflow-hidden rounded-xl border border-primary/35 bg-[#101722] shadow-elegant sm:row-span-2 sm:min-h-[500px] sm:rounded-none"
+              className="group relative col-span-2 min-h-[430px] overflow-hidden rounded-xl border border-primary/35 bg-[#101722] shadow-elegant sm:row-span-2 sm:min-h-[520px] sm:rounded-none"
             >
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(213,173,77,.18),transparent_52%)]" />
               <ResilientImage
                 sources={[CATEGORY_HERO_MEDIA["bavarian-trachten-wear"]]}
-                alt="Traditional embroidered Lederhosen for Bavarian and Trachten manufacturing"
+                alt="Premium embroidered Lederhosen shown upright for Bavarian and Trachten manufacturing"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
                 sizes="(max-width: 639px) 92vw, (max-width: 1023px) 56vw, 34vw"
                 width={1600}
-                height={1200}
-                className="relative h-full w-full object-contain p-4 transition-transform duration-1000 group-hover:scale-[1.025] sm:p-8"
+                height={1600}
+                className="absolute inset-0 h-full w-full object-contain object-center px-3 pb-24 pt-3 transition-transform duration-1000 group-hover:scale-[1.025] sm:px-6 sm:pb-28 sm:pt-6"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/5 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-6">
