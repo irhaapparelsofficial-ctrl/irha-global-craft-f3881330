@@ -21,7 +21,7 @@ const sticky = read("src/components/sections/StickyMobileCTA.tsx");
 const styles = read("src/index.css");
 const brand = read("public/irha-brand-mark.svg");
 
-describe("polished B2B homepage", () => {
+ describe("polished B2B homepage", () => {
   it("identifies the business, buyers and next actions immediately", () => {
     expect(hero).toContain("B2B Apparel Manufacturer for Brands &amp; Wholesalers");
     expect(hero).toContain("Sialkot · Made to order · B2B buyers");
@@ -109,9 +109,11 @@ describe("polished B2B homepage", () => {
     expect(finalCta).not.toContain("MessageCircle");
   });
 
-  it("uses a reliable local brand mark in header and footer", () => {
-    expect(navbar).toContain('src="/irha-brand-mark.svg"');
-    expect(footer).toContain('src="/irha-brand-mark.svg"');
+  it("uses the official crest and owner wording in header and footer", () => {
+    expect(navbar).toContain('src="/favicon.svg"');
+    expect(footer).toContain('src="/favicon.svg"');
+    expect(navbar).toContain("Manufacturing Specialists");
+    expect(footer).toContain("Manufacturing Specialists");
     expect(navbar).not.toContain("irha-logo.png.asset.json");
     expect(footer).not.toContain("irha-logo.png.asset.json");
     const normalizedBrand = brand.toUpperCase();
