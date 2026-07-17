@@ -7,13 +7,17 @@ import { resolveGallery } from "@/lib/assetResolver";
 import {
   Bookmark,
   BookmarkCheck,
+  CheckCircle2,
   ChevronRight,
   GitCompareArrows,
   MessageCircle,
+  PackagePlus,
   Printer,
+  ShoppingBasket,
   Upload,
 } from "lucide-react";
 import { whatsappLink } from "@/lib/constants";
+import { useInquiryCart } from "@/lib/inquiryCart";
 import { pushRecentlyViewed, useCompare, useShortlist } from "@/lib/shortlist";
 import {
   ORGANIZATION_ID,
@@ -26,6 +30,7 @@ export default function ProductDetail() {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
   const { data, isLoading, isFetching, error } = usePublicProduct(categorySlug, productSlug);
   const [activeImg, setActiveImg] = useState(0);
+  const inquiryCart = useInquiryCart();
   const shortlist = useShortlist();
   const compare = useCompare();
 
@@ -54,7 +59,8 @@ export default function ProductDetail() {
   const product = data.product;
   const gallery = resolveGallery(product.gallery.length ? product.gallery : [product.image_url ?? ""]);
   const url = `${SITE_URL}/products/${category.slug}/${product.slug}`;
-  const savedProduct = {
+  const storedProduct = {
+    productId: product.id,
     slug: product.slug,
     name: product.name,
     image: product.image_url ?? gallery[0],
@@ -62,6 +68,7 @@ export default function ProductDetail() {
     categoryName: category.name,
     addedAt: Date.now(),
   };
+  const inInquiry = inquiryCart.has(product.slug);
   const inCompare = compare.has(product.slug);
   const compareFull = !inCompare && compare.items.length >= 4;
 
@@ -99,7 +106,6 @@ export default function ProductDetail() {
   pushIf("Packaging", product.packaging_standard);
 
   const legacyDetails = (product.details ?? []).filter((detail) => !/(moq|lead time)/i.test(detail.label));
-
   const custom = product.customization ?? {};
   const customEnabled = Object.entries(custom)
     .filter(([, value]) => value === true)
@@ -109,6 +115,7 @@ export default function ProductDetail() {
   const fallbackDescription = `${product.name} custom B2B manufacturing by Irha Apparels in Sialkot. OEM, ODM and private-label requirements are reviewed before quotation and production commitments.`;
   const metaDescription = product.seo_description ?? product.description?.slice(0, 158) ?? fallbackDescription;
   const serviceId = `${url}#service`;
+  const imageAlt = `Custom ${product.name} wholesale manufacturer in Sialkot, Pakistan`;
 
   const jsonLd = [
     {
@@ -147,7 +154,7 @@ export default function ProductDetail() {
   return (
     <>
       <SEO
-        title={product.seo_title ?? `${product.name} | ${category.name} Manufacturer | Irha Apparels`}
+        title={product.seo_title ?? `${product.name} Wholesale Manufacturer | Sialkot Garment Factory`}
         description={metaDescription}
         path={`/products/${category.slug}/${product.slug}`}
         image={gallery[0]}
@@ -170,7 +177,15 @@ export default function ProductDetail() {
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-16">
             <div className="lg:col-span-7">
               <div className="relative aspect-[4/5] overflow-hidden bg-card mb-4">
-                <img src={gallery[activeImg] ?? gallery[0]} alt={`${product.name} wholesale manufacturing style`} className="absolute inset-0 w-full h-full object-cover" />
+                <ThumbnailImage
+                  src={gallery[activeImg] ?? gallery[0]}
+                  originalSrc={gallery[activeImg] ?? gallery[0]}
+                  alt={imageAlt}
+                  loading="eager"
+                  fetchPriority="high"
+                  sizes="(max-width: 1024px) 100vw, 58vw"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               {gallery.length > 1 && (
                 <div className="grid grid-cols-4 gap-3">
@@ -202,15 +217,25 @@ export default function ProductDetail() {
               )}
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link to={`/inquiry?intent=rfq&product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}`} className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
-                  Request a Quote
-                </Link>
+                <button
+                  type="button"
+                  onClick={() => inquiryCart.toggle(storedProduct)}
+                  aria-pressed={inInquiry}
+                  className={`inline-flex items-center gap-3 px-7 py-4 text-xs uppercase tracking-[0.25em] transition-colors ${
+                    inInquiry
+                      ? "border border-primary bg-primary/10 text-primary"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90"
+                  }`}
+                >
+                  {inInquiry ? <CheckCircle2 size={16} /> : <PackagePlus size={16} />}
+                  {inInquiry ? "Added to Inquiry" : "Add to Inquiry"}
+                </button>
                 <a href={whatsappLink(whatsappMsg)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 border border-gold/70 text-gold hover:bg-gold hover:text-background px-7 py-4 text-xs uppercase tracking-[0.3em] transition-colors">
                   <MessageCircle size={16} /> WhatsApp
                 </a>
                 <button
                   type="button"
-                  onClick={() => shortlist.toggle(savedProduct)}
+                  onClick={() => shortlist.toggle(storedProduct)}
                   aria-pressed={shortlist.has(product.slug)}
                   aria-label={shortlist.has(product.slug) ? "Remove from shortlist" : "Save to shortlist"}
                   className="inline-flex items-center gap-2 border border-border/60 hover:border-primary px-5 py-4 text-xs uppercase tracking-[0.3em] transition-colors"
@@ -220,7 +245,7 @@ export default function ProductDetail() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => compare.toggle(savedProduct)}
+                  onClick={() => compare.toggle(storedProduct)}
                   disabled={compareFull}
                   aria-pressed={inCompare}
                   aria-label={inCompare ? "Remove from product comparison" : "Add to product comparison"}
@@ -236,8 +261,21 @@ export default function ProductDetail() {
                   {inCompare ? "In Compare" : compareFull ? "Compare Full" : "Compare"}
                 </button>
               </div>
+
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.25em]">
-                <Link to={`/inquiry?product=${encodeURIComponent(product.slug)}&name=${encodeURIComponent(product.name)}&category=${encodeURIComponent(category.slug)}&intent=reference`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Upload size={12} /> Upload reference design</Link>
+                {inquiryCart.count > 0 && (
+                  <>
+                    <Link to="/inquiry-cart" className="text-primary hover:text-primary/75 inline-flex items-center gap-2"><ShoppingBasket size={12} /> Open inquiry cart ({inquiryCart.count})</Link>
+                    <span className="text-foreground/25">·</span>
+                  </>
+                )}
+                <Link
+                  to="/inquiry-cart"
+                  onClick={() => inquiryCart.add(storedProduct)}
+                  className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"
+                >
+                  <Upload size={12} /> Add tech pack
+                </Link>
                 <span className="text-foreground/25">·</span>
                 <Link to={`/products/${category.slug}/${product.slug}/spec-sheet`} className="text-foreground/60 hover:text-primary inline-flex items-center gap-2"><Printer size={12} /> Print spec sheet</Link>
                 {inCompare && (
@@ -303,7 +341,7 @@ export default function ProductDetail() {
                 {relatedProducts.map((relatedProduct) => (
                   <Link key={relatedProduct.id} to={`/products/${category.slug}/${relatedProduct.slug}`} className="group flex flex-col text-left">
                     <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
-                      <ThumbnailImage src={relatedProduct.image_url ?? relatedProduct.gallery?.[0] ?? ""} alt={`${relatedProduct.name} wholesale manufacturing style`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+                      <ThumbnailImage src={relatedProduct.image_url ?? relatedProduct.gallery?.[0] ?? ""} alt={`Custom ${relatedProduct.name} wholesale manufacturing style`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
                     </div>
                     <h3 className="font-display text-base leading-tight group-hover:text-primary transition-colors">{relatedProduct.name}</h3>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/45 mt-2">MOQ confirmed after review</p>
