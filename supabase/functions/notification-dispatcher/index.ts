@@ -9,6 +9,7 @@ const MAX_BATCH = 50;
 const MAX_ATTEMPTS = 5;
 
 type Json = Record<string, unknown>;
+type BuyerItem = { name: string; quantity: string; sizes: string; notes: string };
 type OutboxRow = {
   id: string;
   notification_id: string | null;
@@ -93,17 +94,59 @@ function escapeHtml(value: unknown) {
     .replaceAll("'", "&#039;");
 }
 
+function buyerItems(value: unknown): BuyerItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 50).flatMap((item) => {
+    if (!isRecord(item)) return [];
+    const name = text(item.name, 240);
+    const quantity = text(item.target_quantity ?? item.quantity, 40);
+    if (!name) return [];
+    return [{
+      name,
+      quantity,
+      sizes: text(item.size_breakdown ?? item.sizes, 1000),
+      notes: text(item.notes, 1000),
+    }];
+  });
+}
+
+function itemSummary(items: BuyerItem[]) {
+  if (items.length === 0) return { text: "", html: "" };
+  const textRows = items.map((item, index) => {
+    const details = [item.quantity ? `${item.quantity} pcs` : "quantity pending", item.sizes ? `sizes: ${item.sizes}` : ""].filter(Boolean).join(" · ");
+    return `${index + 1}. ${item.name} — ${details}${item.notes ? `\n   Notes: ${item.notes}` : ""}`;
+  }).join("\n");
+  const htmlRows = items.map((item, index) => `
+    <tr>
+      <td style="padding:12px 10px;border-top:1px solid #e5e7eb;color:#6b7280;vertical-align:top">${index + 1}</td>
+      <td style="padding:12px 10px;border-top:1px solid #e5e7eb;vertical-align:top"><strong>${escapeHtml(item.name)}</strong>${item.notes ? `<div style="margin-top:5px;color:#6b7280;font-size:12px">${escapeHtml(item.notes)}</div>` : ""}</td>
+      <td style="padding:12px 10px;border-top:1px solid #e5e7eb;vertical-align:top;white-space:nowrap">${escapeHtml(item.quantity || "Pending")}</td>
+      <td style="padding:12px 10px;border-top:1px solid #e5e7eb;vertical-align:top">${escapeHtml(item.sizes || "To be confirmed")}</td>
+    </tr>`).join("");
+  return {
+    text: `\n\nRFQ summary (${items.length} style${items.length === 1 ? "" : "s"}):\n${textRows}`,
+    html: `<div style="margin:24px 0"><h2 style="font-size:18px;margin:0 0 12px">RFQ summary</h2><div style="overflow-x:auto"><table role="presentation" style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8fafc"><th style="padding:10px;text-align:left">#</th><th style="padding:10px;text-align:left">Style</th><th style="padding:10px;text-align:left">Qty</th><th style="padding:10px;text-align:left">Size breakdown</th></tr></thead><tbody>${htmlRows}</tbody></table></div></div>`,
+  };
+}
+
 function renderEmail(payload: Json) {
   const template = text(payload.template, 80);
   const subject = text(payload.subject, 300) || "Irha Apparels notification";
   if (template === "buyer_confirmation") {
-    const name = escapeHtml(payload.name) || "Buyer";
-    const reference = escapeHtml(payload.reference);
-    const requestType = escapeHtml(payload.request_type) || "manufacturing request";
+    const rawName = text(payload.name, 100) || "Buyer";
+    const name = escapeHtml(rawName);
+    const company = escapeHtml(payload.company);
+    const rawReference = text(payload.reference, 160);
+    const reference = escapeHtml(rawReference);
+    const rawRequestType = text(payload.request_type, 160) || "manufacturing request";
+    const requestType = escapeHtml(rawRequestType);
+    const summary = itemSummary(buyerItems(payload.items));
+    const rawMessage = text(payload.message, 4000);
+    const message = escapeHtml(rawMessage);
     return {
       subject,
-      text: `Hello ${text(payload.name, 100) || "Buyer"},\n\nWe received your ${text(payload.request_type, 160) || "manufacturing request"}. Reference: ${text(payload.reference, 160)}\n\nIrha Apparels\nSialkot, Pakistan`,
-      html: `<!doctype html><html><body style="margin:0;background:#f4f1ea;font-family:Arial,sans-serif;color:#111827"><div style="max-width:640px;margin:0 auto;padding:28px 16px"><div style="background:#0b2747;color:#fff;padding:22px 26px;border-radius:14px 14px 0 0"><strong style="font-size:22px">Irha Apparels</strong><div style="color:#d5ad4d;font-size:12px;text-transform:uppercase">Manufacturing Specialists</div></div><div style="background:#fff;padding:28px 26px;border-radius:0 0 14px 14px"><h1>Request received</h1><p>Hello ${name}, we received your ${requestType}. Our team will review the requirements before responding.</p>${reference ? `<p><strong>Reference:</strong> ${reference}</p>` : ""}<p style="color:#4b5563">Experienced manufacturer. Newly built website. A live factory-view video call can be arranged.</p><a href="${SITE_URL}" style="display:inline-block;background:#d5ad4d;color:#0b2747;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:8px">Visit Irha Apparels</a></div></div></body></html>`,
+      text: `Hello ${rawName},\n\nWe received your ${rawRequestType}.${company ? ` Company: ${text(payload.company, 160)}.` : ""} Reference: ${rawReference}.${summary.text}${rawMessage ? `\n\nAdditional notes:\n${rawMessage}` : ""}\n\nOur team will review product feasibility, quantities, sizes, branding, sampling, trade terms and delivery requirements before sending a written quotation.\n\nIrha Apparels\nSialkot, Pakistan\nhttps://irhaapparels.com`,
+      html: `<!doctype html><html><body style="margin:0;background:#f4f1ea;font-family:Arial,sans-serif;color:#111827"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#0b2747;color:#fff;padding:22px 26px;border-radius:14px 14px 0 0"><strong style="font-size:22px">Irha Apparels</strong><div style="color:#d5ad4d;font-size:12px;text-transform:uppercase">Manufacturing Specialists</div></div><div style="background:#fff;padding:28px 26px;border-radius:0 0 14px 14px"><h1 style="margin-top:0">Request received</h1><p>Hello ${name}, we received your ${requestType}. Our sourcing team will review the requirements before responding.</p>${company ? `<p><strong>Company:</strong> ${company}</p>` : ""}${reference ? `<p><strong>Inquiry ID:</strong> <span style="font-family:monospace;color:#0b2747">${reference}</span></p>` : ""}${summary.html}${message ? `<div style="margin:20px 0;padding:16px;background:#f8fafc;border-left:3px solid #d5ad4d"><strong>Additional notes</strong><div style="margin-top:8px;white-space:pre-wrap;color:#4b5563">${message}</div></div>` : ""}<p style="color:#4b5563;line-height:1.65">We will confirm feasibility, material and construction details, quantities, size breakdowns, branding, sampling, Incoterm and delivery requirements in writing.</p><p style="color:#4b5563;line-height:1.65">Irha Apparels is an experienced manufacturer and the website is newly built. A live factory-view video call can be arranged for qualified buyers.</p><a href="${SITE_URL}/inquiry-cart" style="display:inline-block;background:#d5ad4d;color:#0b2747;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:8px">Open Irha Apparels</a></div></div></body></html>`,
     };
   }
   const title = escapeHtml(payload.title) || "Owner alert";
