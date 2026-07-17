@@ -17,6 +17,7 @@ describe("buyer-critical public platform contracts", () => {
       "/resources",
       "/faq",
       "/inquiry",
+      "/inquiry-cart",
       "/repeat-order",
       "/contact",
       "/catalogue",
@@ -60,13 +61,17 @@ describe("buyer-critical public platform contracts", () => {
     const gateway = source("supabase/functions/public-lead-gateway/index.ts");
     const client = source("src/lib/publicLeadGateway.ts");
 
-    expect(gateway).toContain('const PRIVATE_UPLOAD_BUCKET = "inquiry-uploads"');
+    expect(gateway).toContain('const TECH_PACK_BUCKET = "tech_packs"');
+    expect(gateway).toContain('const MOCKUP_BUCKET = "mockup-uploads"');
+    expect(gateway).toContain("MAX_TECH_PACK_BYTES = 25 * 1024 * 1024");
     expect(gateway).toContain('service.rpc("consume_public_submission_limit"');
+    expect(gateway).toContain('service.rpc("submit_b2b_inquiry"');
     expect(gateway).toContain("isAllowedOrigin(origin)");
     expect(gateway).toContain("createSignedUploadUrl(path)");
     expect(gateway).toContain("server_validated: true");
 
     expect(client).toContain('supabase.functions.invoke<GatewayResponse>("public-lead-gateway"');
+    expect(client).toContain("uploadToSignedUrl");
     expect(client).not.toContain('.from("inquiries")');
     expect(client).not.toContain('.from("catalogue_leads")');
   });
