@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 import { useShortlist } from "@/lib/shortlist";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
-const CORE_NAV = [
+const CORE_NAV: ReadonlyArray<{ label: string; href: string; anchor?: boolean }> = [
   { label: "Products", href: "/products" },
   { label: "Manufacturing", href: "/manufacturing" },
   { label: "How it works", href: "/#process", anchor: true },
   { label: "Buyer trust", href: "/buyer-trust" },
-] as const;
+];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
