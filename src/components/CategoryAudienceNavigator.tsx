@@ -1,7 +1,12 @@
 import { ArrowRight, BookOpen, CheckCircle2, Layers3, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { NormalizedCategory } from "@/hooks/usePublicCategoryData";
-import { buildCategoryTaxonomy, taxonomyAudiencePath, taxonomyCollectionPath } from "@/lib/globalCategoryTaxonomy";
+import {
+  buildCategoryTaxonomy,
+  taxonomyAudiencePath,
+  taxonomyCollectionPath,
+  type CategoryTaxonomy,
+} from "@/lib/globalCategoryTaxonomy";
 import { CATEGORY_SEO } from "@/lib/categorySeo";
 import {
   localizedAudienceName,
@@ -15,10 +20,16 @@ type Props = {
   category: NormalizedCategory;
   locale?: TaxonomyLocale;
   compact?: boolean;
+  taxonomy?: CategoryTaxonomy;
 };
 
-export default function CategoryAudienceNavigator({ category, locale = "en", compact = false }: Props) {
-  const taxonomy = buildCategoryTaxonomy(category);
+export default function CategoryAudienceNavigator({
+  category,
+  locale = "en",
+  compact = false,
+  taxonomy: suppliedTaxonomy,
+}: Props) {
+  const taxonomy = suppliedTaxonomy ?? buildCategoryTaxonomy(category);
   const ui = taxonomyUi(locale);
   const topName = localizedTopName(locale, category.slug, category.name);
   const buyerContent = locale === "en" ? CATEGORY_SEO[category.slug] : undefined;
