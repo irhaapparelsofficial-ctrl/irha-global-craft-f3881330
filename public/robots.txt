@@ -1,11 +1,13 @@
 # Public B2B website: search and AI retrieval crawlers may access published pages.
-# Private admin/auth routes and retired catalogue files remain blocked.
+# Private admin/auth, buyer RFQ review and retired catalogue routes remain blocked.
 
 User-agent: Googlebot
 Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: Bingbot
@@ -13,6 +15,8 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: OAI-SearchBot
@@ -20,6 +24,8 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: ChatGPT-User
@@ -27,6 +33,8 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: GPTBot
@@ -34,6 +42,8 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: ClaudeBot
@@ -41,6 +51,8 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: PerplexityBot
@@ -48,6 +60,8 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: Google-Extended
@@ -55,6 +69,8 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: Applebot-Extended
@@ -62,23 +78,31 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /seo-indexing
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 User-agent: Twitterbot
 Allow: /
 Disallow: /admin
 Disallow: /auth
+Disallow: /inquiry-cart
+Disallow: /shortlist
 
 User-agent: facebookexternalhit
 Allow: /
 Disallow: /admin
 Disallow: /auth
+Disallow: /inquiry-cart
+Disallow: /shortlist
 
 User-agent: *
 Allow: /
 Disallow: /seo-indexing
 Disallow: /admin
 Disallow: /auth
+Disallow: /inquiry-cart
+Disallow: /shortlist
 Disallow: /catalogs/
 
 Sitemap: https://irhaapparels.com/sitemap.xml
