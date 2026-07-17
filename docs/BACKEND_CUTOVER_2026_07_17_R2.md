@@ -69,18 +69,38 @@ Any mismatch is triaged before step 3.
 
 ## 3. Data + storage sync (only if owner shows gaps)
 
-If owner is missing data present on archive, use the already-generated
-export bucket rather than a live cross-project copy:
+If owner shows data or storage gaps versus archive, do NOT run a live
+cross-project copy. The originally referenced helper
+`scripts/mirror-archive-buckets.mjs` does NOT exist in the repository
+(claim retracted 2026-07-17 during PR #2 pre-audit). A mirror path, if
+needed, must be added as an explicit PR with owner review before use.
 
-1. Download the `database_export_12_07_26` bucket object (present on archive)
-   and restore only the mismatched tables into owner via
-   `supabase db push --file <targeted-sql>` on a fresh migration in a PR.
-2. For `mockup-cache` (142 objects) and `social-uploads` (1 object), run the
-   included `scripts/mirror-archive-buckets.mjs` (owner writes, archive reads
-   with a short-lived service key stored only in the Actions run, never in the
-   repo). Objects are private; hashes are compared before overwrite.
+Interim procedure:
+
+1. Use the on-archive `database_export_12_07_26` bucket (present on archive
+   only) as a cold reference. Restore any missing rows into owner as a
+   targeted, reviewed SQL migration through `supabase-owner-release.yml`.
+2. For any object-storage gaps (`mockup-cache`, `social-uploads`, etc.),
+   surface the diff as a manual checkpoint. No automated mirror script is
+   shipped; do not synthesize one without an approved PR.
 
 Skip this section entirely if owner counts already match or exceed archive.
+
+### Deferred verification checkpoints (non-blocking, owner-side)
+
+The following require credentialed access to `pvzjiozismyxqrzmtfbi` that is
+not reachable from the Lovable Cloud tooling channel. Record results
+manually; PR #2 proceeds without them:
+
+- exact owner-side table count and per-table row counts
+- exact owner-side storage bucket + object counts
+- exact owner-side auth user count and enabled providers
+- exact owner-side cron.job list and pg_trigger inventory
+- exact owner-side RLS policy count and webhook registrations
+- live confirmation that production inquiries and Admin dashboard
+  read/write `pvzjiozismyxqrzmtfbi` (frontend code path is proven; a
+  real submission + owner-side row read is the outstanding evidence)
+
 
 ## 4. Secrets parity (owner-side)
 
