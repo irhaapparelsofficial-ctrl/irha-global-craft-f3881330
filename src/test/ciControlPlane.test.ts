@@ -107,8 +107,8 @@ describe("Irha CI control plane", () => {
     expect(reconciler).toContain("Every migration at or after");
     expect(reconciler).toContain("transactionBody");
     expect(reconciler).toContain("contains nested transaction control");
-    expect(reconciler).toContain("begin;\n${sql}\nrollback;");
-    expect(reconciler).toContain("begin;\n${sql}\n${ledgerInsertSql(entry)}\ncommit;");
+    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
+    expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
     expect(reconciler).toContain("github_management_api_transaction");
     expect(reconciler).toContain("github_management_api_verified_existing");
     expect(reconciler).toContain("verified_present");
