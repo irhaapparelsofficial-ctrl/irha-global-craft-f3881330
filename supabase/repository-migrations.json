@@ -85,6 +85,14 @@
       "git_blob_sha": "3547bc7635dcaed33951a59851dc0804949b2f94",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260717140000",
+      "name": "b2b_inquiry_cart_relational",
+      "path": "supabase/migrations/20260717140000_b2b_inquiry_cart_relational.sql",
+      "git_blob_sha": "36598df739cf18d91294455a692300a6c935d40b",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
