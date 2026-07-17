@@ -112,7 +112,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm --ignore-scripts run build
+          npx vite build
+          npx tsx scripts/generate-release-identity.ts
           npm run verify:release-identity
           test -s dist/index.html
           test -s dist/build.json
