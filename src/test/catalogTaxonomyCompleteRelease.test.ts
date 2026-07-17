@@ -76,7 +76,7 @@ describe("complete explicit B2B catalogue taxonomy release", () => {
     expect(generator).toContain("location.startsWith(`${SITE}/intl/`)");
   });
 
-  it("generates real Cloudflare redirects, sitemap canonicals and static product shells on every build", () => {
+  it("generates real Cloudflare redirects, sitemap canonicals and compatibility shells on every build", () => {
     const generator = read("scripts/generate-taxonomy-release-assets.ts");
     const vite = read("vite.config.ts");
 
@@ -85,6 +85,8 @@ describe("complete explicit B2B catalogue taxonomy release", () => {
     expect(generator).toContain("location.startsWith(`${SITE}/intl/`)");
     expect(generator).toContain("generateTaxonomyProductShells");
     expect(generator).toContain("Expected 86 explicit product routes");
+    expect(generator).toContain("writeProductShell(outputRoot, route.canonicalPath, html)");
+    expect(generator).toContain("writeProductShell(outputRoot, route.legacyPath, html)");
     expect(vite).toContain("taxonomyReleaseAssets()");
     expect(vite).toContain("generateTaxonomyReleaseAssets()");
     expect(vite).toContain("generateTaxonomyProductShells()");
