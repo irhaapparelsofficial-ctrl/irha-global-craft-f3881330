@@ -15,8 +15,8 @@ permissions:
   statuses: write
 
 concurrency:
-  group: quality-${{ github.event.pull_request.number || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: quality-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }}
+  cancel-in-progress: true
 
 env:
   CI: "true"
