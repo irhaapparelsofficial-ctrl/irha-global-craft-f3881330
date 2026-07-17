@@ -20,6 +20,7 @@
     {"version":"20260717230500","name":"harden_taxonomy_assignment_leaf_guard","path":"supabase/migrations/20260717230500_harden_taxonomy_assignment_leaf_guard.sql","git_blob_sha":"4ea55a0483a73a6c7a3c72a7bf9cfc49c5ec3af1","transactional_dry_run":true},
     {"version":"20260717232000","name":"seed_draft_b2b_seo_foundation","path":"supabase/migrations/20260717232000_seed_draft_b2b_seo_foundation.sql","git_blob_sha":"a65e05870dd8aada32537121e9510b3332894413","transactional_dry_run":true},
     {"version":"20260717232100","name":"align_localized_draft_paths","path":"supabase/migrations/20260717232100_align_localized_draft_paths.sql","git_blob_sha":"bd12ca8e06c71558e4f8919007e5067f13bc8dfe","transactional_dry_run":true},
-    {"version":"20260717234000","name":"b2b_inquiry_cart_relational","path":"supabase/migrations/20260717234000_b2b_inquiry_cart_relational.sql","git_blob_sha":"da81fe8ab5ebdc3a74d23dda04fd556bd3ef89e6","execution_mode":"transactional","transactional_dry_run":true}
+    {"version":"20260717234000","name":"b2b_inquiry_cart_relational","path":"supabase/migrations/20260717234000_b2b_inquiry_cart_relational.sql","git_blob_sha":"da81fe8ab5ebdc3a74d23dda04fd556bd3ef89e6","execution_mode":"transactional","transactional_dry_run":true},
+    {"version":"20260717234100","name":"buyer_confirmation_quantity_normalization","path":"supabase/migrations/20260717234100_buyer_confirmation_quantity_normalization.sql","git_blob_sha":"7866289ba1c3950da906111898f4f827a821005f","execution_mode":"transactional","transactional_dry_run":true}
   ]
 }
