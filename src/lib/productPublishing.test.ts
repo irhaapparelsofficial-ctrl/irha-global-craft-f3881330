@@ -2,9 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import {
   auditProductUrls,
   nextAvailableProductSlug,
+  normalizeProductReferenceCode,
   productPublicUrl,
+  productReferencePrefix,
   rollbackUploadedProductMedia,
   slugifyProductName,
+  suggestProductReferenceCode,
+  taxonomyNodeMatchesCategory,
+  taxonomyProductPublicUrl,
 } from "./productPublishing";
 
 describe("product publishing helpers", () => {
@@ -24,11 +29,36 @@ describe("product publishing helpers", () => {
     expect(nextAvailableProductSlug("premium-lederhosen", "Ignored", "child", existing, "1")).toBe("premium-lederhosen");
   });
 
-  it("generates the canonical public product URL from the top-level category", () => {
+  it("generates the legacy-compatible product URL from the top-level category", () => {
     expect(productPublicUrl(categories, "child", "premium-lederhosen")).toBe(
       "https://irhaapparels.com/products/bavarian-trachten-wear/premium-lederhosen",
     );
     expect(productPublicUrl(categories, "missing", "premium-lederhosen")).toBeNull();
+  });
+
+  it("generates canonical four-level URLs only from valid product-type leaves", () => {
+    const leaf = {
+      id: "leaf",
+      node_type: "product_type",
+      depth: 2,
+      slug: "lederhosen",
+      full_slug_path: "bavarian-trachten-wear/men/lederhosen",
+    };
+    expect(taxonomyProductPublicUrl(leaf, "premium-lederhosen")).toBe(
+      "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/premium-lederhosen",
+    );
+    expect(taxonomyProductPublicUrl({ ...leaf, depth: 1 }, "premium-lederhosen")).toBeNull();
+    expect(taxonomyNodeMatchesCategory(leaf, categories, "child")).toBe(true);
+    expect(taxonomyNodeMatchesCategory({ ...leaf, full_slug_path: "sportswear/team-club/football-uniforms" }, categories, "child")).toBe(false);
+  });
+
+  it("creates stable category-aware reference codes without changing existing codes", () => {
+    expect(productReferencePrefix("bavarian-trachten-wear/men/lederhosen")).toBe("IRHA-BAV-LDH");
+    expect(suggestProductReferenceCode(
+      "bavarian-trachten-wear/men/lederhosen",
+      ["IRHA-BAV-LDH-0001", "IRHA-BAV-LDH-0007", "IRHA-SPT-FBJ-0009"],
+    )).toBe("IRHA-BAV-LDH-0008");
+    expect(normalizeProductReferenceCode(" irha bav ldh 0042 ")).toBe("IRHA-BAV-LDH-0042");
   });
 
   it("audits missing product and image URLs without external requests", () => {
