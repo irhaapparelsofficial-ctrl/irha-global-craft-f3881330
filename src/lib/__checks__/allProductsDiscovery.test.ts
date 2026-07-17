@@ -101,15 +101,17 @@ describe("all-products catalogue discovery", () => {
     ]);
   });
 
-  it("ships a dedicated URL-synced finder instead of reusing the long collections page", () => {
+  it("ships a dedicated URL-synced finder with global inquiry and compare actions", () => {
     const page = read("src/pages/AllProductsPage.tsx");
     expect(page).not.toContain('import Products from "./Products"');
     expect(page).toContain("useSearchParams");
     expect(page).toContain('updateParam("category"');
     expect(page).toContain('updateParam("sort"');
     expect(page).toContain("PAGE_SIZE = 24");
-    expect(page).toContain("shortlist.toggle(storedProduct)");
-    expect(page).toContain("compare.toggle(storedProduct)");
+    expect(page).toContain("useInquiryCart");
+    expect(page).toContain("inquiryCart.toggle(inquiryProduct)");
+    expect(page).toContain("compare.toggle(inquiryProduct)");
+    expect(page).toContain("Add to Inquiry");
     expect(page).toContain("Show more");
   });
 });
