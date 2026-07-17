@@ -1,14 +1,27 @@
-// Notify IndexNow after a verified production deployment.
+// Notify IndexNow only after a verified production deployment.
 // Google discovers the canonical sitemap through robots.txt and Search Console;
 // its retired unauthenticated sitemap ping endpoint is intentionally not called.
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const ORIGIN = "https://irhaapparels.com";
 export const HOST = "irhaapparels.com";
 export const INDEXNOW_KEY = "19d2833c43fe6e05e2a4416f65a53cdc";
 export const INDEXNOW_ENDPOINT = "https://api.indexnow.org/IndexNow";
+export const DEFAULT_SITEMAP_PATH = resolve("public/sitemap.xml");
 
+export const NON_INDEXABLE_PATHS = new Set([
+  "/studio",
+  "/blog/dirndl-manufacturer-moq-50",
+  "/blog/streetwear-oem-pakistan",
+  "/blog/leather-grades-explained",
+  "/blog/fob-sialkot-vs-cif-pricing-explained",
+]);
+
+// These groups remain exported as the audited fallback contract and for
+// regression coverage. Normal production notification reads the built sitemap.
 export const CORE_CHANGED_PATHS = [
   "/",
   "/products",
@@ -80,12 +93,18 @@ export const BLOG_CHANGED_PATHS = [
   "/blog/fob-sialkot-vs-cif-pricing-explained",
 ];
 
+// Conservative fallback used only when callers explicitly bypass sitemap discovery.
+// Retain complete audited groups above, but never notify known non-indexable routes.
 export const DEFAULT_CHANGED_PATHS = [
   ...CORE_CHANGED_PATHS,
   ...BUYER_INTENT_CHANGED_PATHS,
   ...MARKET_GUIDE_CHANGED_PATHS,
   ...BLOG_CHANGED_PATHS,
-];
+].filter((path) => !NON_INDEXABLE_PATHS.has(path));
+
+function canonicalPathname(url) {
+  return url.pathname === "/" ? "/" : url.pathname.replace(/\/+$/, "");
+}
 
 function normalizeUrl(value) {
   const trimmed = String(value ?? "").trim();
@@ -99,17 +118,48 @@ function normalizeUrl(value) {
     throw new Error(`IndexNow URL must use canonical origin ${ORIGIN}: ${url.href}`);
   }
 
+  url.pathname = canonicalPathname(url);
+  url.search = "";
   url.hash = "";
   return url.href;
 }
 
-export function resolveChangedUrls({ args = process.argv.slice(2), env = process.env } = {}) {
+function isIndexableCanonicalUrl(value) {
+  const url = new URL(value);
+  const pathname = canonicalPathname(url);
+  return !NON_INDEXABLE_PATHS.has(pathname) && !pathname.startsWith("/intl/");
+}
+
+export function readCanonicalSitemapUrls(sitemapPath = DEFAULT_SITEMAP_PATH) {
+  const xml = readFileSync(sitemapPath, "utf8");
+  const locations = [...xml.matchAll(/<loc>([^<]+)<\/loc>/gi)].map((match) => match[1].trim());
+  if (locations.length === 0) throw new Error(`Sitemap has no URL entries: ${sitemapPath}`);
+
+  const urls = locations
+    .map(normalizeUrl)
+    .filter(Boolean)
+    .filter(isIndexableCanonicalUrl);
+  const unique = [...new Set(urls)];
+  if (unique.length === 0) throw new Error(`Sitemap has no indexable canonical URLs: ${sitemapPath}`);
+  return unique;
+}
+
+export function resolveChangedUrls({
+  args = process.argv.slice(2),
+  env = process.env,
+  sitemapPath = DEFAULT_SITEMAP_PATH,
+} = {}) {
   const envValues = String(env.INDEXNOW_URLS ?? "")
     .split(/[\n,]/)
     .map((value) => value.trim())
     .filter(Boolean);
-  const candidates = args.length > 0 ? args : envValues.length > 0 ? envValues : DEFAULT_CHANGED_PATHS;
-  const urls = candidates.map(normalizeUrl).filter(Boolean);
+
+  let candidates;
+  if (args.length > 0) candidates = args;
+  else if (envValues.length > 0) candidates = envValues;
+  else candidates = readCanonicalSitemapUrls(sitemapPath);
+
+  const urls = candidates.map(normalizeUrl).filter(Boolean).filter(isIndexableCanonicalUrl);
   return [...new Set(urls)];
 }
 
