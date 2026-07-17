@@ -22,6 +22,7 @@
     {"version":"20260717230000","name":"explicit_catalog_taxonomy_foundation","path":"supabase/migrations/20260717230000_explicit_catalog_taxonomy_foundation.sql","git_blob_sha":"4ffd8acb69cb5569d5d6666099d61c9496c8a574","transactional_dry_run":true},
     {"version":"20260717230500","name":"harden_taxonomy_assignment_leaf_guard","path":"supabase/migrations/20260717230500_harden_taxonomy_assignment_leaf_guard.sql","git_blob_sha":"4ea55a0483a73a6c7a3c72a7bf9cfc49c5ec3af1","transactional_dry_run":true},
     {"version":"20260717232000","name":"seed_draft_b2b_seo_foundation","path":"supabase/migrations/20260717232000_seed_draft_b2b_seo_foundation.sql","git_blob_sha":"a65e05870dd8aada32537121e9510b3332894413","transactional_dry_run":true},
-    {"version":"20260717232100","name":"align_localized_draft_paths","path":"supabase/migrations/20260717232100_align_localized_draft_paths.sql","git_blob_sha":"bd12ca8e06c71558e4f8919007e5067f13bc8dfe","transactional_dry_run":true}
+    {"version":"20260717232100","name":"align_localized_draft_paths","path":"supabase/migrations/20260717232100_align_localized_draft_paths.sql","git_blob_sha":"bd12ca8e06c71558e4f8919007e5067f13bc8dfe","transactional_dry_run":true},
+    {"version":"20260717233000","name":"optimize_taxonomy_rls_and_inquiry_index","path":"supabase/migrations/20260717233000_optimize_taxonomy_rls_and_inquiry_index.sql","git_blob_sha":"f8ee7c5df45023c44f32024854d81f5b83871acf","execution_mode":"transactional","transactional_dry_run":true}
   ]
 }
