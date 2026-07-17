@@ -1,7 +1,7 @@
 import {
   ArrowUpRight,
-  Bookmark,
-  BookmarkCheck,
+  Check,
+  ClipboardList,
   GitCompareArrows,
   MessageCircle,
   Search,
@@ -19,7 +19,8 @@ import {
   flattenProductCatalog,
   type ProductFinderSort,
 } from "@/lib/productFinder";
-import { useCompare, useShortlist } from "@/lib/shortlist";
+import { useInquiryCart } from "@/lib/inquiryCart";
+import { useCompare } from "@/lib/shortlist";
 
 const SITE = "https://irhaapparels.com";
 const PAGE_SIZE = 24;
@@ -33,7 +34,7 @@ export default function AllProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const shortlist = useShortlist();
+  const inquiryCart = useInquiryCart();
   const compare = useCompare();
 
   const deferredQuery = useDeferredValue(query.trim());
@@ -120,15 +121,15 @@ export default function AllProductsPage() {
                 Find the right <span className="text-gold italic">manufacturing style</span>.
               </h1>
               <p className="mt-5 max-w-2xl text-sm leading-relaxed text-foreground/65 md:text-base">
-                Search product names, SKUs, categories and construction descriptions. Save or compare suitable styles before sending one structured RFQ.
+                Search product names, SKUs, categories and construction descriptions. Add suitable styles to one multi-item RFQ or compare them first.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
               <span className="border border-border/60 px-4 py-2.5 text-foreground/60">
                 {totalProducts} published products
               </span>
-              <Link to="/shortlist" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
-                Shortlist {shortlist.items.length > 0 ? `(${shortlist.items.length})` : ""}
+              <Link to="/inquiry-cart" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
+                Inquiry {inquiryCart.count > 0 ? `(${inquiryCart.count})` : ""}
               </Link>
               <Link to="/compare" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
                 Compare {compare.items.length > 0 ? `(${compare.items.length}/4)` : ""}
@@ -263,10 +264,10 @@ export default function AllProductsPage() {
                   <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-7">
                     {visibleResults.map((item) => {
                       const { product } = item;
-                      const saved = shortlist.has(product.slug);
+                      const inInquiry = inquiryCart.has(product.slug);
                       const inCompare = compare.has(product.slug);
                       const compareFull = !inCompare && compare.items.length >= 4;
-                      const storedProduct = {
+                      const inquiryProduct = {
                         slug: product.slug,
                         name: product.name,
                         image: product.image,
@@ -281,7 +282,7 @@ export default function AllProductsPage() {
                           <Link to={productPath} className="relative mb-3 block aspect-[3/4] overflow-hidden bg-card">
                             <ThumbnailImage
                               src={product.image}
-                              alt={product.name}
+                              alt={`${product.name} wholesale manufacturer product style`}
                               className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1000ms] group-hover:scale-105"
                             />
                           </Link>
@@ -294,19 +295,19 @@ export default function AllProductsPage() {
                           <div className="mt-3 flex flex-wrap items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => shortlist.toggle(storedProduct)}
-                              aria-pressed={saved}
-                              aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
+                              onClick={() => inquiryCart.toggle(inquiryProduct)}
+                              aria-pressed={inInquiry}
+                              aria-label={inInquiry ? `Remove ${product.name} from inquiry` : `Add ${product.name} to inquiry`}
                               className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
-                                saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
+                                inInquiry ? "border-primary text-primary" : "border-border/60 hover:border-primary"
                               }`}
                             >
-                              {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-                              {saved ? "Saved" : "Save"}
+                              {inInquiry ? <Check size={12} /> : <ClipboardList size={12} />}
+                              {inInquiry ? "In Inquiry" : "Add to Inquiry"}
                             </button>
                             <button
                               type="button"
-                              onClick={() => compare.toggle(storedProduct)}
+                              onClick={() => compare.toggle(inquiryProduct)}
                               disabled={compareFull}
                               aria-pressed={inCompare}
                               title={compareFull ? "Comparison is limited to four products" : undefined}
