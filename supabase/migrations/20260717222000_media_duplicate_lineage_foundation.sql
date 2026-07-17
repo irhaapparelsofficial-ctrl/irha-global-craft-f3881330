@@ -145,9 +145,16 @@ begin
      or duplicate_row.checksum_sha256 <> expected_checksum then
     raise exception 'reviewed media duplicate checksum changed; manual re-review is required';
   end if;
-  if canonical_row.object_path <> 'migrated-lovable/32/32be4604-a427-4149-85c4-3ca8de69bb42.png'
-     or duplicate_row.object_path <> 'migrated-lovable/56/56451814-1b32-4612-b763-70a9d2022178.png' then
-    raise exception 'reviewed media duplicate storage identity changed; manual re-review is required';
+  if canonical_row.bucket <> 'site-media'
+     or duplicate_row.bucket <> 'site-media'
+     or canonical_row.status <> 'active'
+     or duplicate_row.status <> 'active'
+     or canonical_row.verification_status <> 'verified'
+     or duplicate_row.verification_status <> 'verified'
+     or nullif(btrim(canonical_row.object_path), '') is null
+     or nullif(btrim(duplicate_row.object_path), '') is null
+     or canonical_row.object_path = duplicate_row.object_path then
+    raise exception 'reviewed media duplicate storage evidence changed; manual re-review is required';
   end if;
 
   if exists (
