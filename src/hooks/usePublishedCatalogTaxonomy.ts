@@ -9,7 +9,7 @@ import type {
   TaxonomyProduct,
 } from "@/lib/globalCategoryTaxonomy";
 
-type PublishedTaxonomyNode = {
+export type PublishedTaxonomyNode = {
   id: string;
   parent_id: string | null;
   node_type: "main_category" | "audience" | "buyer_group" | "accessories" | "product_type" | "collection";
@@ -25,7 +25,7 @@ type PublishedTaxonomyNode = {
   updated_at: string;
 };
 
-type PublishedTaxonomyAssignment = {
+export type PublishedTaxonomyAssignment = {
   product_id: string;
   product_slug: string;
   taxonomy_node_id: string;
@@ -34,9 +34,17 @@ type PublishedTaxonomyAssignment = {
   approved_at: string;
 };
 
-type PublishedTaxonomyRelease = {
+export type PublishedTaxonomyRelease = {
   nodes: PublishedTaxonomyNode[];
   assignments: PublishedTaxonomyAssignment[];
+};
+
+export type PublishedProductRoute = {
+  assignment: PublishedTaxonomyAssignment;
+  root: PublishedTaxonomyNode;
+  audience: PublishedTaxonomyNode;
+  collection: PublishedTaxonomyNode;
+  canonicalPath: string;
 };
 
 type ProductSource = {
@@ -45,7 +53,7 @@ type ProductSource = {
   subName: string;
 };
 
-const QUERY_KEY = ["public-catalog", "explicit-taxonomy-v1"] as const;
+export const PUBLISHED_TAXONOMY_QUERY_KEY = ["public-catalog", "explicit-taxonomy-v1"] as const;
 
 function isRelease(value: unknown): value is PublishedTaxonomyRelease {
   if (!value || typeof value !== "object") return false;
@@ -53,7 +61,7 @@ function isRelease(value: unknown): value is PublishedTaxonomyRelease {
   return Array.isArray(candidate.nodes) && Array.isArray(candidate.assignments);
 }
 
-async function fetchPublishedTaxonomy(): Promise<PublishedTaxonomyRelease> {
+export async function fetchPublishedTaxonomy(): Promise<PublishedTaxonomyRelease> {
   const { data, error } = await (supabase as unknown as {
     rpc: (name: string) => Promise<{ data: unknown; error: { message?: string } | null }>;
   }).rpc("catalog_get_public_taxonomy");
@@ -155,14 +163,43 @@ export function buildPublishedCategoryTaxonomy(
   };
 }
 
-export function usePublishedCategoryTaxonomy(category: NormalizedCategory | null) {
-  const query = useQuery({
-    queryKey: QUERY_KEY,
+export function findPublishedProductRoute(
+  release: PublishedTaxonomyRelease | undefined,
+  productId?: string | null,
+  productSlug?: string | null,
+): PublishedProductRoute | null {
+  if (!release) return null;
+  const assignment = release.assignments.find(
+    (candidate) => (productId && candidate.product_id === productId) || (productSlug && candidate.product_slug === productSlug),
+  );
+  if (!assignment) return null;
+
+  const collection = release.nodes.find((node) => node.id === assignment.taxonomy_node_id && node.depth === 2);
+  const audience = collection ? release.nodes.find((node) => node.id === collection.parent_id && node.depth === 1) : undefined;
+  const root = audience ? release.nodes.find((node) => node.id === audience.parent_id && node.depth === 0) : undefined;
+  if (!collection || !audience || !root) return null;
+
+  return {
+    assignment,
+    root,
+    audience,
+    collection,
+    canonicalPath: `/products/${assignment.full_slug_path}/${assignment.product_slug}`,
+  };
+}
+
+export function usePublishedCatalogTaxonomyRelease() {
+  return useQuery({
+    queryKey: PUBLISHED_TAXONOMY_QUERY_KEY,
     queryFn: fetchPublishedTaxonomy,
     staleTime: 10 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     retry: 1,
   });
+}
+
+export function usePublishedCategoryTaxonomy(category: NormalizedCategory | null) {
+  const query = usePublishedCatalogTaxonomyRelease();
 
   return {
     ...query,
