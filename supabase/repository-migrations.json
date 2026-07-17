@@ -127,6 +127,22 @@
       "transactional_dry_run": true
     },
     {
+      "version": "20260717212335",
+      "name": "legacy_route_redirect_registry",
+      "path": "supabase/migrations/20260717212335_0e3504ac-aa0b-42f6-8eaf-ade8acb5c30e.sql",
+      "git_blob_sha": "a2912e20c2ac17f63931d16a973fc41290a5aae9",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717212407",
+      "name": "admin_legacy_redirect_queue_security_invoker",
+      "path": "supabase/migrations/20260717212407_ec76cc82-081d-407d-b253-bd56d67eeef2.sql",
+      "git_blob_sha": "ca901d0959e5baca21f147d6287c4b5a3d8d3380",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
       "version": "20260717222000",
       "name": "media_duplicate_lineage_foundation",
       "path": "supabase/migrations/20260717222000_media_duplicate_lineage_foundation.sql",
