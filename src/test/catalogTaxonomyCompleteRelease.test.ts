@@ -65,6 +65,17 @@ describe("complete explicit B2B catalogue taxonomy release", () => {
     expect(app).toContain('/products/:categorySlug/:audienceSlug/:collectionSlug/:productSlug');
   });
 
+  it("keeps unreviewed localized taxonomy drafts out of indexable alternates", () => {
+    const seo = read("src/components/SEO.tsx");
+    const generator = read("scripts/generate-taxonomy-release-assets.ts");
+
+    expect(seo).toContain("VITE_TAXONOMY_TRANSLATIONS_RELEASED");
+    expect(seo).toContain("isUnreviewedLocalizedTaxonomy");
+    expect(seo).toContain("noindex,follow,max-image-preview:large");
+    expect(seo).toContain("alternates.filter");
+    expect(generator).toContain("location.startsWith(`${SITE}/intl/`)");
+  });
+
   it("generates real Cloudflare redirects, sitemap canonicals and static product shells on every build", () => {
     const generator = read("scripts/generate-taxonomy-release-assets.ts");
     const vite = read("vite.config.ts");
