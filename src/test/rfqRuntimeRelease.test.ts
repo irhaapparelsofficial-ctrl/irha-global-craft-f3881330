@@ -11,7 +11,7 @@ const dispatcher = read("supabase/functions/notification-dispatcher/index.ts");
 const metaWebhook = read("supabase/functions/meta-webhook/index.ts");
 const ownerOnly = read("supabase/migrations/20260717142000_enforce_owner_only_rfq_notifications.sql");
 
- describe("RFQ runtime release", () => {
+describe("RFQ runtime release", () => {
   it("marks every backend component required by the multi-item inquiry flow", () => {
     expect(release).toContain('RFQ_RUNTIME_RELEASE = "2026-07-17-rfq-v1"');
     for (const component of ["public-lead-gateway", "notification-dispatcher", "meta-webhook"]) {
@@ -27,8 +27,8 @@ const ownerOnly = read("supabase/migrations/20260717142000_enforce_owner_only_rf
     expect(gateway).toContain('const TECH_PACK_BUCKET = "tech_packs"');
     expect(gateway).toContain("MAX_TECH_PACK_BYTES = 25 * 1024 * 1024");
     expect(gateway).toContain('service.rpc("submit_b2b_inquiry"');
-    expect(metaWebhook).toContain('req.headers.get("x-hub-signature-256")');
-    expect(metaWebhook).toContain("constantTimeEqual");
+    expect(metaWebhook).toContain('request.headers.get("x-hub-signature-256")');
+    expect(metaWebhook).toContain("constantTimeText");
   });
 
   it("deploys the detailed owner alert runtime without automatic buyer email", () => {
