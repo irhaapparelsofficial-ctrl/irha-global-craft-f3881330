@@ -32,13 +32,13 @@ describe("Google brand visibility controls", () => {
     }
   });
 
-  it("keeps the buyer-safe Custom Lab available while retiring unsupported legacy editorial shells", () => {
+  it("keeps the buyer-safe Custom Lab accessible but temporarily outside the public search index", () => {
     const redirects = read("public/_redirects");
     const policy = read("scripts/enforce-public-index-policy.mjs");
 
     expect(redirects).not.toContain("/studio /inquiry");
-    expect(policy).toContain("const NON_INDEXABLE_PATHS = new Set();");
-    expect(policy).not.toContain('"studio/index.html"');
+    expect(policy).toContain('const NON_INDEXABLE_PATHS = new Set(["/studio"])');
+    expect(policy).toContain('"studio/index.html"');
     expect(policy).toContain('"/blog/dirndl-manufacturer-moq-50"');
     expect(policy).toContain('"blog/dirndl-manufacturer-moq-50/index.html"');
   });
