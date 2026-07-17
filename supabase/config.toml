@@ -100,3 +100,8 @@ verify_jwt = false
 
 [functions.whatsapp-admin]
 verify_jwt = true
+
+# GET verification uses META_WEBHOOK_VERIFY_TOKEN. POST requests require the
+# Meta x-hub-signature-256 HMAC before any payload is persisted.
+[functions.meta-webhook]
+verify_jwt = false
