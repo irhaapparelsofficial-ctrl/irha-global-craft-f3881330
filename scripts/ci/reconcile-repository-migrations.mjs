@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { transactionBody } from "./sql-transaction-body.mjs";
 
 const root = process.cwd();
 const manifestPath = resolve(root, "supabase/repository-migrations.json");
@@ -48,17 +49,6 @@ function extractRows(payload) {
 
 function entryExecutionMode(entry) {
   return entry.execution_mode || "transactional";
-}
-
-function transactionBody(sql, entry) {
-  const trimmed = String(sql).trim();
-  const wrapped = trimmed.match(/^begin\s*;\s*([\s\S]*?)\s*commit\s*;?$/i);
-  const body = (wrapped ? wrapped[1] : trimmed).trim();
-  if (!body) throw new Error(`Migration ${entry.version} has no transactional SQL body`);
-  if (/\b(begin|commit|rollback)\s*;/i.test(body)) {
-    throw new Error(`Migration ${entry.version} contains nested transaction control`);
-  }
-  return body;
 }
 
 function validateVerificationQuery(entry) {
