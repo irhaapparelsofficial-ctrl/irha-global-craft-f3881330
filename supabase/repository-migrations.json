@@ -127,6 +127,38 @@
       "transactional_dry_run": true
     },
     {
+      "version": "20260717212335",
+      "name": "legacy_route_redirects_registry",
+      "path": "supabase/migrations/20260717212335_0e3504ac-aa0b-42f6-8eaf-ade8acb5c30e.sql",
+      "git_blob_sha": "a2912e20c2ac17f63931d16a973fc41290a5aae9",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717212407",
+      "name": "admin_legacy_redirect_queue_security_invoker",
+      "path": "supabase/migrations/20260717212407_ec76cc82-081d-407d-b253-bd56d67eeef2.sql",
+      "git_blob_sha": "ca901d0959e5baca21f147d6287c4b5a3d8d3380",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717212829",
+      "name": "pr4_catalogue_completion_workflow",
+      "path": "supabase/migrations/20260717212829_05890176-6378-4d4b-8f42-8fe50f2813c4.sql",
+      "git_blob_sha": "c98805c02b305f8742b8b73d90d590d00a60baa5",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717214344",
+      "name": "pr5_media_placement_backbone",
+      "path": "supabase/migrations/20260717214344_1618bc25-ea6d-4f8c-a581-3c6fa3f25357.sql",
+      "git_blob_sha": "a6846620c06f200756dc670c29f340ec581e3987",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
       "version": "20260717222000",
       "name": "media_duplicate_lineage_foundation",
       "path": "supabase/migrations/20260717222000_media_duplicate_lineage_foundation.sql",
