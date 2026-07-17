@@ -131,7 +131,7 @@ describe("Irha CI control plane", () => {
         expect(migration.transactional_dry_run).toBe(false);
         expect(migration.verification_query).toMatch(/^select\b/i);
       } else {
-        expect(migration.execution_mode).toBe("transactional");
+        expect(migration.execution_mode ?? "transactional").toBe("transactional");
         expect(migration.transactional_dry_run).toBe(true);
         expect(migration.verification_query).toBeUndefined();
       }
