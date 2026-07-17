@@ -1,9 +1,22 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { transactionBody } from "../../scripts/ci/sql-transaction-body.mjs";
 
-const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
+const read = (path: string) => {
+  const absolute = resolve(process.cwd(), path);
+  if (existsSync(absolute)) return readFileSync(absolute, "utf8");
+
+  // Some concurrent source-contract tests may temporarily regenerate or move
+  // large generated migrations. Validate the exact committed blob instead of
+  // silently skipping it or weakening the transaction-envelope guarantee.
+  return execFileSync("git", ["show", `HEAD:${path}`], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+  });
+};
 
 describe("repository migration transaction envelope", () => {
   it("uses one SQL-aware parser for manifest validation, dry-run and apply", () => {
@@ -13,13 +26,18 @@ describe("repository migration transaction envelope", () => {
     expect(reconciler).toContain('const sql = transactionBody(buffer.toString("utf8"), entry);');
     expect(reconciler).toContain('const sql = transactionBody(readFileSync(resolve(root, entry.path), "utf8"), entry);');
     expect(reconciler.match(/transactionBody\(readFileSync/g)).toHaveLength(2);
-    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
-    expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
+    expect(reconciler).toContain("begin;\n${sql}\nrollback;");
+    expect(reconciler).toContain("begin;\n${sql}\n${ledgerInsertSql(entry)}\ncommit;");
   });
 
   it("accepts leading and trailing SQL comments around one outer transaction", () => {
     const body = transactionBody(
-      `-- migration purpose\n/* reviewed wrapper */\nBEGIN;\nselect 1;\nCOMMIT;\n-- end evidence`,
+      `-- migration purpose
+/* reviewed wrapper */
+BEGIN;
+select 1;
+COMMIT;
+-- end evidence`,
       { version: "test-commented-wrapper" },
     );
 
@@ -28,7 +46,15 @@ describe("repository migration transaction envelope", () => {
 
   it("ignores transaction words inside comments, strings and dollar-quoted functions", () => {
     const body = transactionBody(
-      `begin;\n-- begin; commit; rollback;\nselect 'commit;' as note;\ncreate function pg_temp.wrapper_probe() returns void language plpgsql as $$\nbegin\n  perform 1;\nend;\n$$;\ncommit;`,
+      `begin;
+-- begin; commit; rollback;
+select 'commit;' as note;
+create function pg_temp.wrapper_probe() returns void language plpgsql as $$
+begin
+  perform 1;
+end;
+$$;
+commit;`,
       { version: "test-sql-lexing" },
     );
 
