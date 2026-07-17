@@ -50,6 +50,19 @@ function entryExecutionMode(entry) {
   return entry.execution_mode || "transactional";
 }
 
+function transactionalBody(sql, label) {
+  const trimmed = String(sql || "").trim();
+  if (!trimmed) throw new Error(`Migration ${label} is empty`);
+
+  const wrapped = trimmed.match(/^begin\s*;\s*([\s\S]*?)\s*commit\s*;\s*$/i);
+  if (wrapped?.[1]?.trim()) return wrapped[1].trim();
+
+  if (/\b(?:begin|commit|rollback)\s*;/i.test(trimmed)) {
+    throw new Error(`Migration ${label} contains unsupported nested transaction control`);
+  }
+  return trimmed;
+}
+
 function validateVerificationQuery(entry) {
   const query = String(entry.verification_query || "").trim();
   if (!query) throw new Error(`Migration ${entry.version} requires a verification_query`);
@@ -168,6 +181,7 @@ function validateManifest() {
     const sql = buffer.toString("utf8");
     const forbidden = /\b(create\s+index\s+concurrently|reindex\s+concurrently|vacuum|cluster\s+|net\.http_|http_post\s*\(|cron\.schedule\s*\()/i;
     if (forbidden.test(sql)) throw new Error(`Migration ${entry.version} contains non-transactional or external side-effect SQL`);
+    transactionalBody(sql, entry.version);
   }
 }
 
@@ -225,7 +239,8 @@ async function plan() {
       continue;
     }
     const sql = readFileSync(resolve(root, entry.path), "utf8");
-    await databaseQuery(`begin;\n${sql}\nrollback;`);
+    const body = transactionalBody(sql, entry.version);
+    await databaseQuery(`begin;\n${body}\nrollback;`);
     dryRuns.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, status: "passed" });
   }
   const output = {
@@ -310,7 +325,8 @@ async function apply() {
     }
 
     const sql = readFileSync(resolve(root, entry.path), "utf8");
-    await databaseQuery(`begin;\n${sql}\n${ledgerInsertSql(entry)}\ncommit;`);
+    const body = transactionalBody(sql, entry.version);
+    await databaseQuery(`begin;\n${body}\n${ledgerInsertSql(entry)}\ncommit;`);
     applied.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, ledger_state: "applied" });
   }
 
