@@ -23,7 +23,18 @@ type Props = {
   xDefaultPath?: string;
 };
 
-function absoluteUrl(value: string): string {
+function canonicalUrl(value: string): string {
+  try {
+    const parsed = new URL(value, SITE_URL);
+    const pathname = parsed.pathname.startsWith("/") ? parsed.pathname : `/${parsed.pathname}`;
+    return `${SITE_URL}${pathname}${parsed.search}`;
+  } catch {
+    const pathname = value.startsWith("/") ? value : `/${value}`;
+    return `${SITE_URL}${pathname}`;
+  }
+}
+
+function assetUrl(value: string): string {
   return value.startsWith("http")
     ? value
     : `${SITE_URL}${value.startsWith("/") ? value : `/${value}`}`;
@@ -34,7 +45,7 @@ function ogLocale(locale: string) {
 }
 
 function safeJson(value: object) {
-  return JSON.stringify(value).replace(/</g, "\\u003c");
+  return JSON.stringify(value).replace(/</g, "\u003c");
 }
 
 export default function SEO({
@@ -60,8 +71,8 @@ export default function SEO({
   const effectiveTitle = override?.seo_title || title;
   const effectiveDescription = override?.seo_description || description;
   const canonicalValue = override?.canonical_url || canonical || effectivePath;
-  const url = absoluteUrl(canonicalValue);
-  const ogImage = absoluteUrl(override?.og_image_url || image || defaultSocialImage);
+  const url = canonicalUrl(canonicalValue);
+  const ogImage = assetUrl(override?.og_image_url || image || defaultSocialImage);
   const effectiveJsonLd = override?.json_ld || jsonLd;
   const isCategoryRoute = /^\/products\/[^/]+(?:\/all-products)?\/?$/.test(location.pathname);
   const functionalCategoryVariant =
@@ -72,7 +83,7 @@ export default function SEO({
   const normalizedAlternates = alternates.length > 0
     ? alternates
     : [{ locale: "en", href: url }];
-  const xDefault = absoluteUrl(xDefaultPath || effectivePath);
+  const xDefault = canonicalUrl(xDefaultPath || effectivePath);
 
   useEffect(() => {
     document
@@ -87,7 +98,7 @@ export default function SEO({
       <meta name="robots" content={robots} />
       <link rel="canonical" href={url} />
       {normalizedAlternates.map((alternate) => (
-        <link key={`${alternate.locale}-${alternate.href}`} rel="alternate" hrefLang={alternate.locale} href={absoluteUrl(alternate.href)} />
+        <link key={`${alternate.locale}-${alternate.href}`} rel="alternate" hrefLang={alternate.locale} href={canonicalUrl(alternate.href)} />
       ))}
       <link rel="alternate" hrefLang="x-default" href={xDefault} />
 
