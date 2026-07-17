@@ -107,14 +107,29 @@ describe("Irha CI control plane", () => {
     expect(reconciler).toContain("Every migration at or after");
     expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
     expect(reconciler).toContain("github_management_api_transaction");
+    expect(reconciler).toContain("github_management_api_verified_existing");
+    expect(reconciler).toContain("verified_present");
     expect(reconciler).toContain("Current main advanced before database mutation");
     expect(reconciler).not.toContain("migration repair");
     expect(manifest.project_id).toBe("pvzjiozismyxqrzmtfbi");
     expect(manifest.cutover_version).toBe("20260717000000");
-    expect(manifest.migrations).toHaveLength(2);
+    expect(manifest.migrations).toHaveLength(9);
+
+    const verifiedPresent = manifest.migrations.filter(
+      (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
+    );
+    expect(verifiedPresent).toHaveLength(2);
+
     for (const migration of manifest.migrations) {
       expect(migration.git_blob_sha).toMatch(/^[0-9a-f]{40}$/);
-      expect(migration.transactional_dry_run).toBe(true);
+      if (migration.execution_mode === "verified_present") {
+        expect(migration.transactional_dry_run).toBe(false);
+        expect(migration.verification_query).toMatch(/^select\b/i);
+      } else {
+        expect(migration.execution_mode).toBe("transactional");
+        expect(migration.transactional_dry_run).toBe(true);
+        expect(migration.verification_query).toBeUndefined();
+      }
     }
   });
 
