@@ -125,6 +125,13 @@ comment on column public.media_assets.duplicate_status is
 comment on column public.media_assets.replacement_history is
   'Append-only evidence for duplicate linkage, safe replacement and any future owner-approved cleanup.';
 
+-- Management API migrations do not carry an auth JWT, while this existing trigger
+-- correctly requires admin/service identity for normal application writes. Disable
+-- only that auth-bound trigger for the two reviewed lineage updates. The audit and
+-- new lineage-validation triggers remain active. Any failure rolls this trigger
+-- state back with the transaction, and success explicitly restores it below.
+alter table public.media_assets disable trigger media_assets_before_write_trigger;
+
 -- Reviewed 2026-07-17 exact duplicate group.
 do $$
 declare
@@ -240,5 +247,7 @@ begin
   end if;
 end
 $$;
+
+alter table public.media_assets enable trigger media_assets_before_write_trigger;
 
 commit;
