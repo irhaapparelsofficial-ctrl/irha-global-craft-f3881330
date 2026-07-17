@@ -16,6 +16,7 @@ const GlobalCollectionsPage = lazy(() => import("./pages/GlobalCollectionsPage")
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const CategoryTaxonomyPage = lazy(() => import("./pages/CategoryTaxonomyPage"));
 const CategoryOrProductPage = lazy(() => import("./pages/CategoryOrProductPage"));
+const CanonicalProductDetail = lazy(() => import("./pages/CanonicalProductDetail"));
 const BavarianMensCollection = lazy(() => import("./pages/BavarianMensCollection"));
 const BavarianWomensCollection = lazy(() => import("./pages/BavarianWomensCollection"));
 const Markets = lazy(() => import("./pages/Markets"));
@@ -163,6 +164,7 @@ const App = () => (
                       <Route path="/products/bavarian-trachten-wear/mens-trachten/:collectionSlug" element={<BavarianMensCollection />} />
                       <Route path="/products/bavarian-trachten-wear/womens-trachten" element={<Navigate to="/products/bavarian-trachten-wear/women" replace />} />
                       <Route path="/products/bavarian-trachten-wear/womens-trachten/:collectionSlug" element={<BavarianWomensCollection />} />
+                      <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug/:productSlug" element={<CanonicalProductDetail />} />
                       <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
                       <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
                       <Route path="/products/:categorySlug/:productSlug" element={<CategoryOrProductPage />} />
