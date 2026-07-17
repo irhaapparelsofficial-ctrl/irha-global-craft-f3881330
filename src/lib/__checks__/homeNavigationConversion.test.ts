@@ -41,10 +41,11 @@ describe("homepage navigation and B2B conversion journey", () => {
     const guide = read("src/components/LiveChat.tsx");
     const humanChat = read("src/components/HumanLiveChat.tsx");
 
-    for (const source of [desktop, mobile]) {
-      expect(source).toContain("/inquiry?intent=rfq&category=");
-      expect(source).toContain("categoryFromPath");
-    }
+    expect(desktop).toContain("/inquiry?intent=rfq&category=");
+    expect(desktop).toContain("categoryFromPath");
+    expect(mobile).toContain('const DEFAULT_QUOTE_HREF = "/inquiry?intent=rfq"');
+    expect(mobile).toContain("&category=${encodeURIComponent(categorySlug)}");
+    expect(mobile).toContain("categoryFromPath");
     expect(desktop).toContain("settingsWhatsappLink(settings)");
     expect(desktop).toContain('data-track="category-quote-floating"');
     expect(mobile).toContain("utm_source=mobile-dock");
