@@ -3,18 +3,21 @@ import { AlertTriangle, Check, Loader2, RotateCw, Upload, X, File as FileIcon } 
 import type { UploadedFileRef } from "@/lib/inquiryDraft";
 import { uploadPublicLeadFile } from "@/lib/publicLeadGateway";
 
-const ALLOWED_MIME = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
-const ALLOWED_EXT = new Set(["pdf", "jpg", "jpeg", "png", "webp"]);
+const ALLOWED_EXT = new Set(["pdf", "ai", "eps", "zip", "png", "jpg", "jpeg"]);
+const ALLOWED_MIME_BY_EXT: Record<string, Set<string>> = {
+  pdf: new Set(["", "application/pdf"]),
+  ai: new Set(["", "application/octet-stream", "application/pdf", "application/postscript", "application/illustrator", "application/vnd.adobe.illustrator"]),
+  eps: new Set(["", "application/octet-stream", "application/postscript", "application/eps", "application/x-eps"]),
+  zip: new Set(["", "application/octet-stream", "application/zip", "application/x-zip-compressed", "multipart/x-zip"]),
+  png: new Set(["", "image/png"]),
+  jpg: new Set(["", "image/jpeg"]),
+  jpeg: new Set(["", "image/jpeg"]),
+};
 const BLOCKED_EXT = new Set([
   "exe", "bat", "cmd", "com", "msi", "sh", "ps1", "js", "jsx", "ts", "tsx", "py", "rb", "php", "html", "svg", "dmg", "apk", "jar",
 ]);
 
-const MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_SIZE_BYTES = 25 * 1024 * 1024;
 const MAX_FILES = 5;
 
 type UploadRow = {
@@ -36,11 +39,14 @@ function extOf(name: string) {
 }
 
 function validate(file: File): string | null {
-  if (file.size > MAX_SIZE_BYTES) return `"${file.name}" is over 10 MB.`;
+  if (file.size > MAX_SIZE_BYTES) return `"${file.name}" is over 25 MB.`;
+  if (file.size < 1) return `"${file.name}" is empty.`;
   const ext = extOf(file.name);
   if (BLOCKED_EXT.has(ext)) return `"${file.name}" file type is not allowed.`;
-  if (!ALLOWED_EXT.has(ext)) return `"${file.name}" must be PDF, JPG, PNG or WEBP.`;
-  if (file.type && !ALLOWED_MIME.has(file.type)) return `"${file.name}" has an unsupported format.`;
+  if (!ALLOWED_EXT.has(ext)) return `"${file.name}" must be PDF, AI, EPS, ZIP, PNG or JPG.`;
+  if (file.type && !ALLOWED_MIME_BY_EXT[ext]?.has(file.type.toLowerCase())) {
+    return `"${file.name}" has an unsupported format.`;
+  }
   return null;
 }
 
@@ -49,9 +55,16 @@ export type SecureFileUploadProps = {
   onChange: (files: UploadedFileRef[]) => void;
   sessionId: string;
   disabled?: boolean;
+  purpose?: "tech-pack" | "mockup";
 };
 
-export default function SecureFileUpload({ value, onChange, sessionId, disabled }: SecureFileUploadProps) {
+export default function SecureFileUpload({
+  value,
+  onChange,
+  sessionId,
+  disabled,
+  purpose = "tech-pack",
+}: SecureFileUploadProps) {
   const [rows, setRows] = useState<UploadRow[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -74,7 +87,7 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
     )));
 
     try {
-      const ref = await uploadPublicLeadFile(row.file, "inquiry", startedAtRef.current);
+      const ref = await uploadPublicLeadFile(row.file, purpose, startedAtRef.current);
       setRows((current) => current.map((item) => (
         item.id === row.id ? { ...item, status: "done", progress: 100, path: ref.path } : item
       )));
@@ -85,7 +98,7 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
         item.id === row.id ? { ...item, status: "error", progress: 0, error: message } : item
       )));
     }
-  }, [publishValue]);
+  }, [publishValue, purpose]);
 
   const acceptFiles = useCallback((incoming: FileList | File[]) => {
     setGlobalError(null);
@@ -141,7 +154,7 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
       >
         <Upload className="mx-auto mb-3 text-foreground/60" size={22} />
         <p className="text-sm text-foreground/80">
-          Drag & drop or{" "}
+          Drag & drop your tech pack or{" "}
           <button
             type="button"
             disabled={disabled}
@@ -152,13 +165,13 @@ export default function SecureFileUpload({ value, onChange, sessionId, disabled 
           </button>
         </p>
         <p className="text-[11px] text-foreground/50 mt-2">
-          PDF, JPG, PNG, WEBP · max 10 MB each · up to {MAX_FILES} files
+          PDF, AI, EPS, ZIP, PNG, JPG · max 25 MB each · up to {MAX_FILES} files
         </p>
         <input
           ref={inputRef}
           type="file"
           multiple
-          accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+          accept=".pdf,.ai,.eps,.zip,.png,.jpg,.jpeg,application/pdf,application/postscript,application/zip,image/png,image/jpeg"
           className="hidden"
           onChange={(event) => {
             if (event.target.files) acceptFiles(event.target.files);
