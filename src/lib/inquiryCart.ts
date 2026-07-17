@@ -21,6 +21,7 @@ export type InquiryCartItem = {
 type IncomingCartItem = Pick<InquiryCartItem, "slug" | "name"> &
   Partial<Omit<InquiryCartItem, "slug" | "name">>;
 
+const EMPTY_SERVER_SNAPSHOT: InquiryCartItem[] = [];
 let snapshot: InquiryCartItem[] = [];
 let hydrated = false;
 const listeners = new Set<() => void>();
@@ -139,7 +140,7 @@ function getSnapshot() {
 }
 
 function getServerSnapshot() {
-  return [] as InquiryCartItem[];
+  return EMPTY_SERVER_SNAPSHOT;
 }
 
 function normalizeIncoming(item: IncomingCartItem): InquiryCartItem | null {
