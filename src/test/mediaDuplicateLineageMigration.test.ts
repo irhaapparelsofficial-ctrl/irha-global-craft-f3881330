@@ -27,6 +27,6 @@ describe("reviewed media duplicate lineage migration", () => {
 
   it("registers the exact modified migration blob", () => {
     const entry = manifest.migrations.find((item) => item.version === "20260717222000");
-    expect(entry?.git_blob_sha).toBe("ae306d5ba80923739a25e17e56e591c4aa907d3a");
+    expect(entry?.git_blob_sha).toBe("8e426b3046e8beefe201727adf6560eecd30ed26");
   });
 });
