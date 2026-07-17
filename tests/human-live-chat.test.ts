@@ -28,7 +28,7 @@ describe("secure website live support", () => {
   });
 
   it("makes human support unmistakable and keeps visitor entry simple", () => {
-    const widget = read("src/components/HumanLiveChat.tsx");
+    const widget = read("src/components/HumanLiveChatPro.tsx");
     expect(widget).toContain("Live Chat — Irha Team");
     expect(widget).toContain("Real human support");
     expect(widget).toContain("Your message goes directly to the admin dashboard");
@@ -43,7 +43,7 @@ describe("secure website live support", () => {
     const app = read("src/App.tsx");
     const main = read("src/main.tsx");
     const adminRuntime = read("src/components/admin/AdminRuntime.tsx");
-    const admin = read("src/pages/AdminLiveChat.tsx");
+    const admin = read("src/pages/AdminLiveChatPro.tsx");
     const launcher = read("src/components/admin/AdminLiveChatLauncher.tsx");
     expect(app).toContain('const AdminLiveChat = lazy(() => import("./pages/AdminLiveChat"))');
     expect(app).toContain('path="/admin/live-chat"');
@@ -74,8 +74,10 @@ describe("secure website live support", () => {
 
   it("uses custom visitor-token authentication, hashing and origin controls", () => {
     const edge = read("supabase/functions/live-chat/index.ts");
+    const typingEdge = read("supabase/functions/live-chat-typing/index.ts");
     const config = read("supabase/config.toml");
     expect(config).toContain("[functions.live-chat]");
+    expect(config).toContain("[functions.live-chat-typing]");
     expect(config).toContain("verify_jwt = false");
     expect(edge).toContain("async function sha256");
     expect(edge).toContain("constantTimeEqual");
@@ -83,10 +85,12 @@ describe("secure website live support", () => {
     expect(edge).toContain("origin_not_allowed");
     expect(edge).toContain('channel: "human"');
     expect(edge).toContain("client_message_id: clientMessageId");
+    expect(typingEdge).toContain("authenticateSession");
+    expect(typingEdge).toContain("MAX_DRAFT_CHARS = 1_000");
   });
 
   it("polls safely and never auto-generates commercial promises", () => {
-    const widget = read("src/components/HumanLiveChat.tsx");
+    const widget = read("src/components/HumanLiveChatPro.tsx");
     expect(widget).toContain('action: "poll"');
     expect(widget).toContain("2_500");
     expect(widget).toContain("Pricing remains subject to formal requirement review");

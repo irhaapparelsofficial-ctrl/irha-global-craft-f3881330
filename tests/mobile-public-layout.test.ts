@@ -23,7 +23,7 @@ describe("mobile public layout", () => {
     const layout = read("src/components/layout/Layout.tsx");
     const dock = read("src/components/sections/StickyMobileCTA.tsx");
     const guide = read("src/components/LiveChat.tsx");
-    const human = read("src/components/HumanLiveChat.tsx");
+    const human = read("src/components/HumanLiveChatPro.tsx");
 
     expect(layout).toContain("<LiveChat />");
     expect(layout).toContain("<HumanLiveChat />");
@@ -35,7 +35,7 @@ describe("mobile public layout", () => {
     expect(dock).toContain("supportOpened");
     expect(guide).toContain("Irha Live Support");
     expect(guide).toContain("Human Team");
-    expect(guide).toContain('new CustomEvent(OPEN_HUMAN_EVENT)');
+    expect(guide).toContain("new CustomEvent(OPEN_HUMAN_EVENT)");
     expect(human).toContain("hidden min-h-12");
     expect(human).toContain("md:inline-flex");
   });

@@ -19,7 +19,7 @@ describe("live-chat visitor presence and coarse location", () => {
   });
 
   it("creates one presence alert when the public chat is opened", () => {
-    const publicChat = read("src/components/HumanLiveChat.tsx");
+    const publicChat = read("src/components/HumanLiveChatPro.tsx");
     const gateway = read("supabase/functions/live-chat/index.ts");
 
     expect(publicChat).toContain('action: "presence"');
@@ -31,7 +31,7 @@ describe("live-chat visitor presence and coarse location", () => {
   });
 
   it("shows visitor location in the admin console and announces arrival distinctly", () => {
-    const adminChat = read("src/pages/AdminLiveChat.tsx");
+    const adminChat = read("src/pages/AdminLiveChatPro.tsx");
     const ownerAlerts = read("src/components/admin/AdminLiveChatNotification.tsx");
 
     expect(adminChat).toContain("visitor_country_code");

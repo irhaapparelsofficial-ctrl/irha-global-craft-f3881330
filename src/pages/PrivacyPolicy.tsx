@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
     <main className="mx-auto max-w-3xl px-4 py-24 md:py-32">
       <SEO
         title="Privacy Policy — Irha Apparels"
-        description="How Irha Apparels handles website analytics, visitor presence, inquiry details, uploaded files and local draft data."
+        description="How Irha Apparels handles website analytics, visitor presence, inquiry details, live-chat typing previews, uploaded files and local draft data."
         path="/privacy-policy"
       />
 
@@ -34,6 +34,16 @@ export default function PrivacyPolicy() {
           </p>
           <p className="mt-3">
             Approximate location is derived from the internet connection at the hosting or application edge. VPN, proxy, corporate gateway or mobile-network routing can change the reported country or city. Visitor-presence records are automatically eligible for deletion after 90 days.
+          </p>
+        </section>
+
+        <section className="border-t border-border/60 pt-7">
+          <h2 className="font-display text-2xl text-foreground">Live chat and typing preview</h2>
+          <p className="mt-3">
+            When you open the human Live Chat, the text currently being typed inside that chat message box may be shared temporarily with the authenticated Irha Apparels support team before you press Send. This helps the team prepare a faster and more relevant response. The chat interface clearly displays this notice.
+          </p>
+          <p className="mt-3">
+            The typing preview is limited to the Live Chat message composer. It does not read other forms, password fields, browser activity or text entered elsewhere on the website. The preview is cleared when you pause, leave the message box, send the message, close the chat or end the conversation.
           </p>
         </section>
 

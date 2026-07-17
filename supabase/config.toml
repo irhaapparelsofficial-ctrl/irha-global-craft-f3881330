@@ -8,6 +8,11 @@ verify_jwt = false
 [functions.live-chat]
 verify_jwt = false
 
+# Ephemeral live-chat typing gateway. It uses the same session token as
+# live-chat and accepts only the message composer preview, never other inputs.
+[functions.live-chat-typing]
+verify_jwt = false
+
 # Public browser presence gateway. It validates canonical origins and a
 # session-scoped UUID, rate-limits requests, suppresses bots and stores no IP.
 [functions.site-visitor]
