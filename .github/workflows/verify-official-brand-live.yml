@@ -8,6 +8,7 @@ on:
       - "public/favicon.svg"
       - "public/_redirects"
       - "public/manifest.webmanifest"
+      - "scripts/patch-cloudflare-route-shell-assets.mjs"
       - ".github/workflows/verify-official-brand-live.yml"
   workflow_dispatch:
 
@@ -22,7 +23,7 @@ concurrency:
 jobs:
   verify-brand:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Publish pending live-brand status
@@ -47,7 +48,7 @@ jobs:
           origin="https://irhaapparels.com"
           ready=false
 
-          for attempt in $(seq 1 36); do
+          for attempt in $(seq 1 90); do
             cache_bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
             brand_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
               -H 'Cache-Control: no-cache' \
@@ -59,6 +60,7 @@ jobs:
               "$origin/favicon.svg?brand_check=$cache_bust" || true)"
             legacy_status="$(curl -sS --connect-timeout 10 --max-time 40 \
               -H 'Cache-Control: no-cache' \
+              -D /tmp/favicon-headers.txt \
               -o /tmp/favicon.ico -w '%{http_code}' \
               "$origin/favicon.ico?brand_check=$cache_bust" || true)"
             home_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
@@ -77,13 +79,14 @@ jobs:
               && grep -Fq 'data:image/webp;base64,' /tmp/favicon.svg \
               && ! grep -Fiq 'lovable' /tmp/favicon.svg \
               && cmp -s /tmp/favicon.svg /tmp/favicon.ico \
+              && grep -Fiq 'x-irha-favicon-source: official-owner-crest' /tmp/favicon-headers.txt \
               && grep -Fq 'href="/favicon.svg"' /tmp/home.html; then
               ready=true
               echo "Official Irha header logo and direct favicon.ico verified live on attempt $attempt."
               break
             fi
 
-            echo "Brand assets not converged yet: brand=$brand_status favicon=$favicon_status legacy=$legacy_status home=$home_status attempt=$attempt/36"
+            echo "Brand assets not converged yet: brand=$brand_status favicon=$favicon_status legacy=$legacy_status home=$home_status attempt=$attempt/90"
             sleep 10
           done
 
@@ -94,6 +97,9 @@ jobs:
             echo
             echo "--- favicon head ---"
             head -c 400 /tmp/favicon.svg 2>/dev/null || true
+            echo
+            echo "--- legacy favicon headers ---"
+            head -c 800 /tmp/favicon-headers.txt 2>/dev/null || true
             echo
             echo "--- legacy favicon head ---"
             head -c 400 /tmp/favicon.ico 2>/dev/null || true
