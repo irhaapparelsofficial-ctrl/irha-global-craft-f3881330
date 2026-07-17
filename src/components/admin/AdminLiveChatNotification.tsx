@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bell, BellRing, Inbox, MessageSquareText, Volume2 } from "lucide-react";
+import { BellRing, Inbox, MessageSquareText, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -19,8 +20,7 @@ type OwnerAlert = {
 type AlertKind = "live_chat" | "inquiry";
 
 const db = supabase as any;
-const POLL_INTERVAL_MS = 15_000;
-const SOUND_PREFERENCE_KEY = "irha-owner-alert-sound";
+const POLL_INTERVAL_MS = 20_000;
 const OWNER_VIEW_QUERY = "ownerView";
 const OWNER_VIEW_INQUIRIES = "inquiries";
 
@@ -88,46 +88,14 @@ function clearRequestedOwnerView() {
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function supportsDeviceAlerts() {
-  return typeof window !== "undefined" && "Notification" in window;
-}
-
 export default function AdminLiveChatNotification() {
+  const { pathname } = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [alerts, setAlerts] = useState<OwnerAlert[]>([]);
-  const [permission, setPermission] = useState<NotificationPermission>(() =>
-    supportsDeviceAlerts() ? Notification.permission : "denied",
-  );
-  const [soundEnabled, setSoundEnabled] = useState(() =>
-    typeof window !== "undefined" && window.localStorage.getItem(SOUND_PREFERENCE_KEY) === "on",
-  );
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const initialized = useRef(false);
   const seenEventKeys = useRef(new Set<string>());
-  const audioContext = useRef<AudioContext | null>(null);
-
-  const playChime = useCallback(() => {
-    if (!soundEnabled) return;
-    try {
-      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const context = audioContext.current ?? new AudioContextClass();
-      audioContext.current = context;
-      void context.resume();
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, context.currentTime);
-      gain.gain.setValueAtTime(0.0001, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.32);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start();
-      oscillator.stop(context.currentTime + 0.34);
-    } catch {
-      // Visible and browser alerts remain active when sound is unavailable.
-    }
-  }, [soundEnabled]);
+  const collapseTimer = useRef<number | null>(null);
 
   const announce = useCallback((alert: OwnerAlert) => {
     const kind = alertKind(alert);
@@ -135,7 +103,7 @@ export default function AdminLiveChatNotification() {
     const title = presence
       ? "Live Chat visitor arrived"
       : kind === "live_chat"
-        ? "New website live-chat message"
+        ? "New live-chat message"
         : "New buyer inquiry";
     const description = alert.body || (presence
       ? "A website visitor opened Live Chat."
@@ -144,21 +112,11 @@ export default function AdminLiveChatNotification() {
         : "A new inquiry is waiting in Buyer Inbox.");
 
     toast({ title, description });
-    playChime();
-
-    if (supportsDeviceAlerts() && Notification.permission === "granted") {
-      const notification = new Notification(title, {
-        body: description,
-        icon: "/favicon.ico",
-        tag: alertEventKey(alert),
-      });
-      notification.onclick = () => {
-        window.focus();
-        window.location.assign(alertHref(alert));
-        notification.close();
-      };
-    }
-  }, [playChime]);
+    const key = alertEventKey(alert);
+    setExpandedKey(key);
+    if (collapseTimer.current) window.clearTimeout(collapseTimer.current);
+    collapseTimer.current = window.setTimeout(() => setExpandedKey(null), 8_000);
+  }, []);
 
   const load = useCallback(async (shouldAnnounce: boolean) => {
     if (!window.location.pathname.startsWith("/admin")) {
@@ -213,82 +171,32 @@ export default function AdminLiveChatNotification() {
     setAlerts(relevant);
   }, [announce]);
 
-  const enableDeviceAlerts = useCallback(async () => {
-    if (!supportsDeviceAlerts()) {
-      toast({
-        title: "Device alerts are not supported here",
-        description: "Realtime alerts will still appear inside the admin dashboard.",
-      });
-      return;
-    }
-
-    const nextPermission = await Notification.requestPermission();
-    setPermission(nextPermission);
-    if (nextPermission !== "granted") {
-      toast({
-        title: "Device alerts were not enabled",
-        description: "Allow notifications in browser settings, then try again.",
-      });
-      return;
-    }
-
-    window.localStorage.setItem(SOUND_PREFERENCE_KEY, "on");
-    setSoundEnabled(true);
-    new Notification("Irha owner alerts enabled", {
-      body: "New inquiries, visitor arrivals and live-chat messages will alert this device while the admin session is active.",
-      icon: "/favicon.ico",
-      tag: "irha-owner-alerts-enabled",
-    });
-    toast({
-      title: "Owner alerts enabled",
-      description: "Inquiry and live-chat visitor alerts are active on this device.",
-    });
-  }, []);
-
   useEffect(() => {
     void load(false);
-
     const interval = window.setInterval(() => void load(true), POLL_INTERVAL_MS);
     const onFocus = () => void load(true);
     const onVisibility = () => {
       if (document.visibilityState === "visible") void load(true);
     };
-    const unlockAudio = () => {
-      if (!soundEnabled) return;
-      try {
-        const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-        if (!AudioContextClass) return;
-        audioContext.current = audioContext.current ?? new AudioContextClass();
-        void audioContext.current.resume();
-      } catch {
-        // Optional enhancement only.
-      }
-    };
 
     window.addEventListener("focus", onFocus);
-    window.addEventListener("pointerdown", unlockAudio, { once: true });
     document.addEventListener("visibilitychange", onVisibility);
 
     const realtime = supabase
       .channel("admin-owner-notifications")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "crm_notifications" },
-        () => void load(true),
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "crm_notifications" }, () => void load(true))
       .subscribe();
-
     const { data: authListener } = supabase.auth.onAuthStateChange(() => void load(false));
 
     return () => {
       window.clearInterval(interval);
+      if (collapseTimer.current) window.clearTimeout(collapseTimer.current);
       window.removeEventListener("focus", onFocus);
-      window.removeEventListener("pointerdown", unlockAudio);
       document.removeEventListener("visibilitychange", onVisibility);
       authListener.subscription.unsubscribe();
       void supabase.removeChannel(realtime);
     };
-  }, [load, soundEnabled]);
+  }, [load]);
 
   useEffect(() => {
     if (!isAdmin || requestedOwnerView() !== OWNER_VIEW_INQUIRIES) return;
@@ -301,7 +209,6 @@ export default function AdminLiveChatNotification() {
         clearRequestedOwnerView();
         return true;
       }
-
       if (!inboxActivated) {
         const inboxButton = findAdminButtonByPrefixes(["inbox"]);
         if (inboxButton) {
@@ -309,12 +216,11 @@ export default function AdminLiveChatNotification() {
           inboxActivated = true;
         }
       }
-
       if (attempts >= 40) {
         clearRequestedOwnerView();
         toast({
           title: "Open Buyer Inbox",
-          description: "The inquiry alert loaded, but the request workspace was not ready. Tap Inbox, then New Requests.",
+          description: "Tap Inbox, then New Requests to review this inquiry.",
           variant: "destructive",
         });
         return true;
@@ -335,64 +241,57 @@ export default function AdminLiveChatNotification() {
   }), [alerts]);
   const latestAlert = alerts[0] ?? null;
   const latestKind = latestAlert ? alertKind(latestAlert) : null;
+  const latestKey = latestAlert ? alertEventKey(latestAlert) : null;
   const total = alerts.length;
+  const expanded = Boolean(latestAlert && latestKey && expandedKey === latestKey);
+  const dedicatedWorkspace = pathname.startsWith("/admin/live-chat") || pathname.startsWith("/admin/visitors");
 
-  if (!isAdmin) return null;
-  if (total < 1 && (permission === "granted" || !supportsDeviceAlerts())) return null;
+  if (!isAdmin || total < 1 || dedicatedWorkspace) return null;
+
+  const openLatest = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (latestKind !== "inquiry") return;
+    event.preventDefault();
+    if (!openInquiryWorkspaceFromCurrentAdminView()) window.location.assign(alertHref(latestAlert));
+  };
+
+  if (!expanded) {
+    return (
+      <a
+        href={alertHref(latestAlert)}
+        onClick={openLatest}
+        className="fixed right-3 top-[calc(4.75rem+env(safe-area-inset-top))] z-[65] inline-flex min-h-11 items-center gap-2 rounded-full border border-gold/35 bg-[#0b0d11]/96 px-3 py-2 text-white shadow-xl backdrop-blur-xl md:right-5 md:top-20"
+        aria-label={`Open owner alerts — ${total} unread`}
+      >
+        <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-gold/12 text-gold">
+          <BellRing size={16} />
+          <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold text-white">{total > 99 ? "99+" : total}</span>
+        </span>
+        <span className="hidden text-[10px] font-semibold uppercase tracking-[0.12em] text-white/70 sm:inline">Owner inbox</span>
+      </a>
+    );
+  }
 
   return (
-    <aside className="fixed z-[69] right-3 top-[calc(4.25rem+env(safe-area-inset-top))] w-[min(23rem,calc(100vw-1.5rem))] rounded-xl border border-gold/45 bg-card/95 p-3 shadow-2xl backdrop-blur md:right-5 md:top-20" aria-live="polite">
-      {latestAlert ? (
-        <a
-          href={alertHref(latestAlert)}
-          className="block touch-manipulation"
-          aria-label={`Open owner notifications — ${total} unread`}
-          onClick={(event) => {
-            if (latestKind !== "inquiry") return;
-            event.preventDefault();
-            if (!openInquiryWorkspaceFromCurrentAdminView()) window.location.assign(alertHref(latestAlert));
-          }}
-        >
-          <div className="flex items-start gap-3">
-            <span className={`relative mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${latestKind === "live_chat" ? "bg-emerald-500/15 text-emerald-300" : "bg-gold/15 text-gold"}`}>
-              {latestKind === "live_chat" ? <MessageSquareText size={19} /> : <Inbox size={19} />}
-              <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                {total > 99 ? "99+" : total}
-              </span>
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-gold">
-                <BellRing size={13} className="animate-pulse" /> Owner attention required
-              </span>
-              <span className="mt-1 block truncate text-sm font-medium">{latestAlert.title}</span>
-              <span className="mt-1 block line-clamp-2 text-xs leading-relaxed text-foreground/65">{latestAlert.body}</span>
-              <span className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]">
-                {counts.liveChat > 0 && <span className="text-emerald-300">Live chat {counts.liveChat}</span>}
-                {counts.inquiries > 0 && <span className="text-gold">Inquiries {counts.inquiries}</span>}
-                <span className="text-foreground/55">Tap to open</span>
-              </span>
-            </span>
-          </div>
-        </a>
-      ) : (
-        <div className="flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold"><Bell size={18} /></span>
-          <div>
-            <p className="text-sm font-medium">Enable owner notifications</p>
-            <p className="mt-1 text-xs leading-relaxed text-foreground/60">Get inquiry, visitor-arrival and live-chat alerts on this device while your admin session is active.</p>
-          </div>
-        </div>
-      )}
-
-      {permission !== "granted" && supportsDeviceAlerts() && (
-        <button
-          type="button"
-          onClick={enableDeviceAlerts}
-          className="mt-3 min-h-11 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gold/50 bg-gold/10 px-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-gold hover:bg-gold hover:text-background"
-        >
-          <Volume2 size={15} /> Enable device alerts
-        </button>
-      )}
+    <aside className="fixed inset-x-3 top-[calc(4.75rem+env(safe-area-inset-top))] z-[65] mx-auto max-w-md rounded-2xl border border-gold/35 bg-[#0b0d11]/97 p-3 text-white shadow-2xl backdrop-blur-xl md:inset-x-auto md:right-5 md:top-20 md:w-[25rem]" aria-live="polite">
+      <button type="button" onClick={() => setExpandedKey(null)} className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full text-white/40 hover:bg-white/10 hover:text-white" aria-label="Collapse owner alert">
+        <X size={15} />
+      </button>
+      <a href={alertHref(latestAlert)} onClick={openLatest} className="flex items-start gap-3 pr-8">
+        <span className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${latestKind === "live_chat" ? "bg-emerald-500/12 text-emerald-300" : "bg-gold/12 text-gold"}`}>
+          {latestKind === "live_chat" ? <MessageSquareText size={18} /> : <Inbox size={18} />}
+          <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{total > 99 ? "99+" : total}</span>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[9px] font-semibold uppercase tracking-[0.15em] text-gold">New owner alert</span>
+          <span className="mt-1 block truncate text-sm font-semibold">{latestAlert?.title}</span>
+          <span className="mt-1 block line-clamp-2 text-xs leading-relaxed text-white/55">{latestAlert?.body}</span>
+          <span className="mt-2 flex gap-3 text-[9px] font-semibold uppercase tracking-[0.11em]">
+            {counts.liveChat > 0 && <span className="text-emerald-300">Chats {counts.liveChat}</span>}
+            {counts.inquiries > 0 && <span className="text-gold">Inquiries {counts.inquiries}</span>}
+            <span className="text-white/40">Open</span>
+          </span>
+        </span>
+      </a>
     </aside>
   );
 }
