@@ -2,6 +2,9 @@ import { Link } from "react-router-dom";
 import { ArrowRight, FileText, Headphones, Video } from "lucide-react";
 import ResilientImage from "@/components/ResilientImage";
 import { CATEGORY_HERO_MEDIA } from "@/lib/heroMedia";
+import heroDesktop from "@/assets/hero-b2b-manufacturer-desktop.jpg";
+import heroMobile from "@/assets/hero-b2b-manufacturer-mobile.jpg";
+
 
 const SECONDARY_PROGRAMS = [
   {
@@ -39,8 +42,22 @@ export default function HeroCarousel() {
 
   return (
     <section className="relative overflow-hidden border-b border-border/60 bg-background text-foreground">
+      <picture aria-hidden="true" className="pointer-events-none absolute inset-0 -z-0 select-none">
+        <source media="(max-width: 767px)" srcSet={heroMobile} />
+        <img
+          src={heroDesktop}
+          alt=""
+          width={1920}
+          height={1088}
+          decoding="async"
+          fetchPriority="low"
+          className="h-full w-full object-cover opacity-[0.14] mix-blend-screen"
+        />
+      </picture>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_90%_8%,hsl(var(--primary)/0.14),transparent_27%)]" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.025] [background-image:linear-gradient(rgba(255,255,255,.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.35)_1px,transparent_1px)] [background-size:72px_72px]" />
+
 
       <div className="container-luxe relative pb-10 pt-20 sm:pb-14 sm:pt-28 lg:pb-16 lg:pt-32">
         <p className="inline-flex rounded-full border border-border/70 bg-card/60 px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:py-2 sm:text-[9px]">
