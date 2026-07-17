@@ -127,6 +127,22 @@
       "transactional_dry_run": true
     },
     {
+      "version": "20260717212335",
+      "name": "legacy_route_redirect_registry",
+      "path": "supabase/migrations/20260717212335_0e3504ac-aa0b-42f6-8eaf-ade8acb5c30e.sql",
+      "git_blob_sha": "a2912e20c2ac17f63931d16a973fc41290a5aae9",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717212407",
+      "name": "admin_legacy_redirect_queue_security_invoker",
+      "path": "supabase/migrations/20260717212407_ec76cc82-081d-407d-b253-bd56d67eeef2.sql",
+      "git_blob_sha": "f1abb39124d0eea262902590d64b7949a5f2b715",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
       "version": "20260717222000",
       "name": "media_duplicate_lineage_foundation",
       "path": "supabase/migrations/20260717222000_media_duplicate_lineage_foundation.sql",
@@ -212,6 +228,14 @@
       "name": "catalog_taxonomy_verified_publication",
       "path": "supabase/migrations/20260717235200_catalog_taxonomy_verified_publication.sql",
       "git_blob_sha": "c5fd888d49afd4895187fa44a79dfa27a8328106",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260718000000",
+      "name": "seed_planned_taxonomy_206_slots",
+      "path": "supabase/migrations/20260718000000_seed_planned_taxonomy_206_slots.sql",
+      "git_blob_sha": "7a1c9f0d7d4ed4fe240fd61690e65be396539a81",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     },
