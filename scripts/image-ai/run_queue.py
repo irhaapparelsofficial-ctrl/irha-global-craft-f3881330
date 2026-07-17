@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -10,6 +11,7 @@ from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
+from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
 PROCESSOR = ROOT / "scripts/image-ai/process_image.py"
@@ -22,8 +24,12 @@ RUN_ID = os.environ.get("GITHUB_RUN_ID", "local")
 WORKER = os.environ.get("IRHA_IMAGE_WORKER", "1").strip() or "1"
 MODEL = Path(os.environ.get("IRHA_EDSR_MODEL", str(ROOT / "models/EDSR_x2.pb")))
 REMBG_MODEL = os.environ.get("IRHA_REMBG_MODEL", "isnet-general-use")
+FALLBACK_REMBG_MODEL = os.environ.get("IRHA_IMAGE_FALLBACK_REMBG_MODEL", "u2netp").strip() or "u2netp"
 LIMIT = max(1, min(3, int(os.environ.get("IRHA_IMAGE_BATCH_LIMIT", "2"))))
 MAX_JOBS = max(LIMIT, min(12, int(os.environ.get("IRHA_IMAGE_MAX_JOBS", str(LIMIT)))))
+PRIMARY_TIMEOUT = max(120, min(1200, int(os.environ.get("IRHA_IMAGE_PRIMARY_TIMEOUT", "900"))))
+FALLBACK_TIMEOUT = max(120, min(900, int(os.environ.get("IRHA_IMAGE_FALLBACK_TIMEOUT", "480"))))
+FALLBACK_MAX_EDGE = max(640, min(1200, int(os.environ.get("IRHA_IMAGE_FALLBACK_MAX_EDGE", "960"))))
 
 
 def oidc_request_url() -> str:
@@ -89,10 +95,55 @@ def report_failure(job: dict, message: str, review_required: bool = False) -> No
         print(f"Could not report failure for {job.get('id')}: {error}", file=sys.stderr)
 
 
+def processor_command(source: Path, output: Path, rembg_model: str) -> list[str]:
+    return [
+        sys.executable,
+        str(PROCESSOR),
+        "--input", str(source),
+        "--output-dir", str(output),
+        "--edsr-model", str(MODEL),
+        "--rembg-model", rembg_model,
+    ]
+
+
+def prepare_fast_source(source: Path, target: Path) -> None:
+    """Create a bounded temporary retry source without modifying the original."""
+    with Image.open(source) as opened:
+        image = ImageOps.exif_transpose(opened)
+        image.load()
+        has_alpha = image.mode in {"RGBA", "LA"} or "transparency" in image.info
+        converted = image.convert("RGBA" if has_alpha else "RGB")
+
+    max_edge = max(converted.size)
+    if max_edge > FALLBACK_MAX_EDGE:
+        scale = FALLBACK_MAX_EDGE / max_edge
+        resized = converted.resize(
+            (max(1, round(converted.width * scale)), max(1, round(converted.height * scale))),
+            Image.Resampling.LANCZOS,
+        )
+        converted.close()
+        converted = resized
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    converted.save(target, format="PNG", optimize=True)
+    converted.close()
+
+
+def run_processor(command: list[str], timeout_seconds: int) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=timeout_seconds,
+    )
+
+
 def process_job(job: dict) -> dict:
     with tempfile.TemporaryDirectory(prefix="irha-image-") as temp:
         temp_dir = Path(temp)
         source = temp_dir / "source-image"
+        fast_source = temp_dir / "source-fast.png"
         output = temp_dir / "output"
 
         download = requests.get(job["public_url"], timeout=120)
@@ -101,22 +152,58 @@ def process_job(job: dict) -> dict:
             raise RuntimeError("Downloaded original is empty")
         source.write_bytes(download.content)
 
-        command = [
-            sys.executable,
-            str(PROCESSOR),
-            "--input", str(source),
-            "--output-dir", str(output),
-            "--edsr-model", str(MODEL),
-            "--rembg-model", REMBG_MODEL,
+        fallback_used = False
+        primary_command = processor_command(source, output, REMBG_MODEL) + [
             "--asset-id", str(job["id"]),
             "--file-name", str(job.get("file_name") or ""),
         ]
-        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=900)
+
+        try:
+            result = run_processor(primary_command, PRIMARY_TIMEOUT)
+        except subprocess.TimeoutExpired as primary_error:
+            fallback_used = True
+            print(
+                json.dumps({
+                    "id": job.get("id"),
+                    "status": "primary_timeout",
+                    "timeout_seconds": PRIMARY_TIMEOUT,
+                    "fallback_max_edge": FALLBACK_MAX_EDGE,
+                    "fallback_model": FALLBACK_REMBG_MODEL,
+                }, separators=(",", ":")),
+                file=sys.stderr,
+            )
+            shutil.rmtree(output, ignore_errors=True)
+            prepare_fast_source(source, fast_source)
+            fallback_command = processor_command(fast_source, output, FALLBACK_REMBG_MODEL) + [
+                "--asset-id", str(job["id"]),
+                "--file-name", str(job.get("file_name") or ""),
+            ]
+            try:
+                result = run_processor(fallback_command, FALLBACK_TIMEOUT)
+            except subprocess.TimeoutExpired as fallback_error:
+                raise RuntimeError(
+                    f"Primary processor timed out after {PRIMARY_TIMEOUT}s and bounded fallback timed out after {FALLBACK_TIMEOUT}s"
+                ) from fallback_error
+            if result.returncode != 0:
+                detail = (result.stderr or result.stdout or "Image processor fallback failed")[-1800:]
+                raise RuntimeError(f"Primary processor timed out; bounded fallback failed: {detail}") from primary_error
+
         if result.returncode != 0:
             raise RuntimeError((result.stderr or result.stdout or "Image processor failed")[-1800:])
 
         manifest_path = output / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if fallback_used:
+            existing_reason = str(manifest.get("reviewReason") or "").strip()
+            fallback_reason = (
+                f"Bounded {FALLBACK_MAX_EDGE}px fast fallback used after primary processor exceeded {PRIMARY_TIMEOUT}s"
+            )
+            manifest["status"] = "review_required"
+            manifest["reviewReason"] = "; ".join(
+                reason for reason in (existing_reason, fallback_reason) if reason
+            )
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
         file_handles = []
         files: dict[str, tuple[str, object, str]] = {}
         try:
