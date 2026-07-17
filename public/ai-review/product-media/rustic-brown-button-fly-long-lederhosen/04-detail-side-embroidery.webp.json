@@ -1,0 +1,26 @@
+{
+  "source": "/product-media/rustic-brown-button-fly-long-lederhosen/04-detail-side-embroidery.webp",
+  "status": "review_required",
+  "backgroundStyle": "charcoal_studio_v1",
+  "backgroundHex": "#101722",
+  "enhanced": true,
+  "upscaled": false,
+  "qualityScore": 57.23,
+  "reviewReason": "Detected product occupies less than 2.5% of the source",
+  "sourceWidth": 800,
+  "sourceHeight": 800,
+  "masterWidth": 2400,
+  "masterHeight": 3000,
+  "sourceSharpness": 292.31,
+  "foregroundRatio": 0.00015,
+  "translucentRatio": 0.0,
+  "majorComponents": 0,
+  "outputBytes": {
+    "master": 33114,
+    "360": 1344,
+    "720": 3908,
+    "1200": 8802,
+    "1600": 14148,
+    "2400": 31374
+  }
+}
