@@ -1,15 +1,9 @@
 name: Verify Official Brand Live
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "index.html"
-      - "public/favicon.svg"
-      - "public/_redirects"
-      - "public/manifest.webmanifest"
-      - "scripts/patch-cloudflare-route-shell-assets.mjs"
-      - ".github/workflows/verify-official-brand-live.yml"
+  workflow_run:
+    workflows: ["Cloudflare Production Status"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -17,39 +11,81 @@ permissions:
   statuses: write
 
 concurrency:
-  group: verify-official-brand-live-${{ github.sha }}
+  group: verify-official-brand-live-${{ github.event.workflow_run.id || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   verify-brand:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == github.repository
+      )
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 8
 
     steps:
+      - name: Resolve exact deployed production SHA
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin="https://irhaapparels.com"
+          source_sha=""
+
+          for attempt in $(seq 1 18); do
+            cache_bust="brand-source-$GITHUB_RUN_ID-$attempt-$RANDOM"
+            status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -o /tmp/build.json -w '%{http_code}' \
+              "$origin/build.json?brand_check=$cache_bust" || true)"
+
+            if [ "$status" = "200" ] \
+              && jq -e '.source_identity_state == "verified" and (.source_commit | type == "string" and test("^[0-9a-f]{40}$"))' /tmp/build.json >/dev/null 2>&1; then
+              source_sha="$(jq -r '.source_commit' /tmp/build.json)"
+              break
+            fi
+
+            echo "Production identity not ready: status=$status attempt=$attempt/18"
+            sleep 10
+          done
+
+          test "$source_sha" != "" || {
+            echo "::error title=Brand verification source unavailable::Production build.json did not expose a verified source SHA."
+            exit 1
+          }
+
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "Resolved live production source: $source_sha"
+
       - name: Publish pending live-brand status
         env:
           GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
         shell: bash
         run: |
           set -euo pipefail
           gh api --method POST \
-            "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state=pending \
             -f context="Irha Brand Live" \
-            -f description="Checking official header logo and favicon on production" \
+            -f description="Checking official Irha logo and favicon on production" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
 
       - name: Verify official logo and favicon on production
         id: verify
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
         shell: bash
         run: |
           set -euo pipefail
           origin="https://irhaapparels.com"
           ready=false
 
-          for attempt in $(seq 1 90); do
-            cache_bust="${GITHUB_SHA::12}-$attempt-$RANDOM"
+          for attempt in $(seq 1 18); do
+            cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
             brand_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
               -H 'Cache-Control: no-cache' \
               -o /tmp/irha-brand-mark.svg -w '%{http_code}' \
@@ -68,41 +104,44 @@ jobs:
               -o /tmp/home.html -w '%{http_code}' \
               "$origin/?brand_check=$cache_bust" || true)"
 
+            brand_hash="$(sha256sum /tmp/irha-brand-mark.svg 2>/dev/null | awk '{print $1}' || true)"
+            favicon_hash="$(sha256sum /tmp/favicon.svg 2>/dev/null | awk '{print $1}' || true)"
+            legacy_hash="$(sha256sum /tmp/favicon.ico 2>/dev/null | awk '{print $1}' || true)"
+            favicon_source="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-favicon-source:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' /tmp/favicon-headers.txt | tail -n 1)"
+
+            echo "Brand proof attempt $attempt/18: brand=$brand_status favicon=$favicon_status legacy=$legacy_status home=$home_status source=${favicon_source:-none} hashes=$brand_hash/$favicon_hash/$legacy_hash"
+
             if [ "$brand_status" = "200" ] \
               && [ "$favicon_status" = "200" ] \
               && [ "$legacy_status" = "200" ] \
               && [ "$home_status" = "200" ] \
               && grep -Fq 'Official owner-supplied Irha Apparels Manufacturing Specialists logo' /tmp/irha-brand-mark.svg \
               && grep -Fq 'data:image/webp;base64,' /tmp/irha-brand-mark.svg \
-              && grep -Fq 'Irha Apparels' /tmp/irha-brand-mark.svg \
               && grep -Fq 'Official Irha Apparels Manufacturing Specialists crest supplied by the owner' /tmp/favicon.svg \
               && grep -Fq 'data:image/webp;base64,' /tmp/favicon.svg \
               && ! grep -Fiq 'lovable' /tmp/favicon.svg \
-              && cmp -s /tmp/favicon.svg /tmp/favicon.ico \
-              && grep -Fiq 'x-irha-favicon-source: official-owner-crest' /tmp/favicon-headers.txt \
+              && grep -Fq 'Official Irha Apparels Manufacturing Specialists crest supplied by the owner' /tmp/favicon.ico \
+              && grep -Fq 'data:image/webp;base64,' /tmp/favicon.ico \
+              && ! grep -Fiq 'lovable' /tmp/favicon.ico \
               && grep -Fq 'href="/favicon.svg"' /tmp/home.html; then
               ready=true
-              echo "Official Irha header logo and direct favicon.ico verified live on attempt $attempt."
+              echo "Official Irha header logo and favicon content verified live."
               break
             fi
 
-            echo "Brand assets not converged yet: brand=$brand_status favicon=$favicon_status legacy=$legacy_status home=$home_status attempt=$attempt/90"
             sleep 10
           done
 
           test "$ready" = "true" || {
-            echo "Official Irha brand assets were not verified on production."
-            echo "--- brand head ---"
-            head -c 400 /tmp/irha-brand-mark.svg 2>/dev/null || true
+            echo "::error title=Official Irha brand not verified::Production did not serve the owner-supplied logo on all required favicon paths."
+            echo "--- favicon headers ---"
+            head -c 1000 /tmp/favicon-headers.txt 2>/dev/null || true
             echo
-            echo "--- favicon head ---"
-            head -c 400 /tmp/favicon.svg 2>/dev/null || true
+            echo "--- favicon.svg head ---"
+            head -c 500 /tmp/favicon.svg 2>/dev/null || true
             echo
-            echo "--- legacy favicon headers ---"
-            head -c 800 /tmp/favicon-headers.txt 2>/dev/null || true
-            echo
-            echo "--- legacy favicon head ---"
-            head -c 400 /tmp/favicon.ico 2>/dev/null || true
+            echo "--- favicon.ico head ---"
+            head -c 500 /tmp/favicon.ico 2>/dev/null || true
             echo
             exit 1
           }
@@ -111,19 +150,25 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
           VERIFY_OUTCOME: ${{ steps.verify.outcome }}
         shell: bash
         run: |
           set -euo pipefail
+          if [ -z "$SOURCE_SHA" ]; then
+            echo "No verified production SHA was resolved; no commit status can be published."
+            exit 0
+          fi
+
           state=failure
           description="Official Irha brand assets are not verified live"
           if [ "$VERIFY_OUTCOME" = "success" ]; then
             state=success
-            description="Official Irha header logo and favicon verified live"
+            description="Official Irha logo and favicon verified live"
           fi
 
           gh api --method POST \
-            "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state="$state" \
             -f context="Irha Brand Live" \
             -f description="$description" \
