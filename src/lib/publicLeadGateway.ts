@@ -11,6 +11,7 @@ type GatewayResponse = {
   bucket?: string;
   path?: string;
   token?: string;
+  content_type?: string;
 };
 
 type FunctionErrorLike = {
@@ -48,11 +49,11 @@ async function invokeGateway(action: GatewayAction, payload: JsonRecord) {
 
 function inquiryReference(payload: JsonRecord) {
   const provided = text(payload.inquiry_ref, 80).toUpperCase();
-  if (/^IRQ-[A-Z0-9-]{6,70}$/.test(provided)) return provided;
-  const random = typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID().slice(0, 6).toUpperCase()
-    : Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `IRQ-${Date.now().toString(36).toUpperCase()}-${random}`;
+  if (/^IRHA-[0-9]{4}-[0-9]{6}$/.test(provided)) return provided;
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  const digits = (values[0] % 1_000_000).toString().padStart(6, "0");
+  return `IRHA-${new Date().getUTCFullYear()}-${digits}`;
 }
 
 function gatewayUnavailable(surface: "inquiry" | "catalogue" | "upload") {
@@ -89,7 +90,7 @@ export async function submitPublicCatalogueLead(payload: JsonRecord) {
 
 export async function uploadPublicLeadFile(
   file: File,
-  purpose: "inquiry" | "mockup",
+  purpose: "inquiry" | "tech-pack" | "mockup",
   formStartedAt: number,
 ): Promise<UploadedFileRef> {
   let ticket: GatewayResponse;
@@ -98,7 +99,7 @@ export async function uploadPublicLeadFile(
       filename: file.name,
       mime: file.type,
       size: file.size,
-      purpose,
+      purpose: purpose === "inquiry" ? "tech-pack" : purpose,
       form_started_at: formStartedAt,
       website: "",
     });
@@ -108,11 +109,12 @@ export async function uploadPublicLeadFile(
   }
 
   if (!ticket.bucket || !ticket.path || !ticket.token) throw new Error("Upload ticket was incomplete");
+  const contentType = ticket.content_type || file.type || "application/octet-stream";
 
   const { error } = await supabase.storage
     .from(ticket.bucket)
     .uploadToSignedUrl(ticket.path, ticket.token, file, {
-      contentType: file.type,
+      contentType,
       upsert: false,
     });
   if (error) throw new Error(error.message || "Upload failed");
@@ -121,6 +123,6 @@ export async function uploadPublicLeadFile(
     path: ticket.path,
     name: file.name,
     size: file.size,
-    mime: file.type,
+    mime: contentType,
   };
 }
