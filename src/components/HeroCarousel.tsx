@@ -2,8 +2,13 @@ import { Link } from "react-router-dom";
 import { ArrowRight, FileText, Headphones, Video } from "lucide-react";
 import ResilientImage from "@/components/ResilientImage";
 import { CATEGORY_HERO_MEDIA } from "@/lib/heroMedia";
-import heroDesktop from "@/assets/hero-b2b-manufacturer-desktop.jpg";
-import heroMobile from "@/assets/hero-b2b-manufacturer-mobile.jpg";
+
+// Homepage hero backdrop is intentionally NOT wired. Previous generated
+// candidates (hero-b2b-manufacturer-desktop.jpg / .mobile.jpg) were rejected
+// by the owner as generic suit-only tailoring imagery that misrepresents
+// Irha's multi-category B2B range. Corrected brief lives at
+// docs/PR5A_HOMEPAGE_HERO_BRIEF_V2.md. Do not add a public hero image
+// here until an admin-approved replacement is available.
 
 
 const SECONDARY_PROGRAMS = [
