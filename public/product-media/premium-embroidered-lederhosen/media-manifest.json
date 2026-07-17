@@ -1,43 +1,22 @@
 {
-  "slug": "premium-embroidered-lederhosen",
   "product": "Premium Embroidered Lederhosen",
+  "slug": "premium-embroidered-lederhosen",
   "design": "01",
+  "category": "Bavarian & Trachten Wear / Men / Lederhosen",
+  "logo_source": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/brand/irha-apparels-official-locked-logo-256.png",
+  "logo_sha256": "8d958b6aec7a589afc3644a99b97faaa318d909ef94b79dd38e3bd8f47ca58e1",
+  "logo_rule": "Exact official raster overlay only; no generative redraw",
   "views": [
     {
       "view": "front",
-      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:25897a22-4b8f-4629-aa0c-ad3d6b917445",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:2e86fefb-f09c-408a-b188-db9a4693fd9d",
       "source_dimensions": [
-        2048,
-        2048
-      ],
-      "master_dimensions": [
-        2048,
-        2048
-      ],
-      "web_dimensions": [
-        1600,
-        1600
-      ],
-      "logo_box": [
-        1756,
-        72,
-        220,
-        231
+        1536,
+        1536
       ],
       "clean_path": "public/product-media/premium-embroidered-lederhosen/clean/premium-embroidered-lederhosen-design-01-front-clean-2048.png",
       "branded_path": "public/product-media/premium-embroidered-lederhosen/branded/premium-embroidered-lederhosen-design-01-front-branded-2048.png",
       "web_path": "public/product-media/premium-embroidered-lederhosen/web/premium-embroidered-lederhosen-design-01-front-web-1600.webp",
-      "clean_sha256": "4ed8d9088e0c3b065e80b4cdab7fa4de5f0a1d85a680d863b3ee0e57b42aff6f",
-      "branded_sha256": "d372a1ef33f10c7531af54adc846d33d2a8d20cf3ac3c14d3f35d322debb4ec8",
-      "web_sha256": "22eb5a8edd5aad3b55609d00e2e947848f9e50a5b189a47b41190888d8610df0"
-    },
-    {
-      "view": "three-quarter",
-      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:4f50611d-1f10-4578-afa6-6ac68e39e49b",
-      "source_dimensions": [
-        2048,
-        2048
-      ],
       "master_dimensions": [
         2048,
         2048
@@ -51,21 +30,22 @@
         72,
         220,
         231
+      ],
+      "source_sha256": "acfeb882833bbcc8668b779fb26869a5023868af00ad8e45a5ec85179c9d144e",
+      "clean_sha256": "e7d48856fcdce8d7271add23c62bbcf0fd2f923fe6e9d83d12eafae11c1835bf",
+      "branded_sha256": "66dc588bce568d766792ca937b15bc656aaa72686f8ff3d7f5804a34cf78441e",
+      "web_sha256": "90659cbcea87841bfbd24106175fbbcbf1470d0f6bdcffb5d355ec9b2a4872af"
+    },
+    {
+      "view": "three-quarter",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:3affbcca-6b3e-434a-ba8e-d39286f23be1",
+      "source_dimensions": [
+        1536,
+        1536
       ],
       "clean_path": "public/product-media/premium-embroidered-lederhosen/clean/premium-embroidered-lederhosen-design-01-three-quarter-clean-2048.png",
       "branded_path": "public/product-media/premium-embroidered-lederhosen/branded/premium-embroidered-lederhosen-design-01-three-quarter-branded-2048.png",
       "web_path": "public/product-media/premium-embroidered-lederhosen/web/premium-embroidered-lederhosen-design-01-three-quarter-web-1600.webp",
-      "clean_sha256": "472c57a1ce289d14ab0cc951ededc6bf59d31389164e0926ce75dd7d1d04b9cc",
-      "branded_sha256": "30c6c243af2700ebf936b08a0912480ded3d6c9fdfa0c30e7b2740ca53aa6d5d",
-      "web_sha256": "bb65f3aab696b624806082755e54dfbd7ca2f8b3a0ca779a32aaa5f03d40a51b"
-    },
-    {
-      "view": "side",
-      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a32141b7-9bf5-43d2-98ed-71bd297ee86b",
-      "source_dimensions": [
-        2048,
-        2048
-      ],
       "master_dimensions": [
         2048,
         2048
@@ -79,21 +59,22 @@
         72,
         220,
         231
+      ],
+      "source_sha256": "25a7e49109bc30f12301138eb8452a5db3414968048f8212c5a6ff7f5bf75cd5",
+      "clean_sha256": "77176c3d852b9f5cc0b72c4e2d0064271f2d068658e521850c4c3f2166bef9eb",
+      "branded_sha256": "25e1840c1a841749634539e6b47af6ae8e2d0fc453143dbe929310affaafb83f",
+      "web_sha256": "ccb8a4ebd03f0e95fb5af5279248eb90522ec85c95136a94a4f19d531abb58a1"
+    },
+    {
+      "view": "side",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:bfa6c83f-9987-40c5-9bd9-df795d76ce4f",
+      "source_dimensions": [
+        1536,
+        1536
       ],
       "clean_path": "public/product-media/premium-embroidered-lederhosen/clean/premium-embroidered-lederhosen-design-01-side-clean-2048.png",
       "branded_path": "public/product-media/premium-embroidered-lederhosen/branded/premium-embroidered-lederhosen-design-01-side-branded-2048.png",
       "web_path": "public/product-media/premium-embroidered-lederhosen/web/premium-embroidered-lederhosen-design-01-side-web-1600.webp",
-      "clean_sha256": "2d9c2b0d913bba330b04461ac5a1afa7d3ade70c2e975f80ce7f1366e3d0917a",
-      "branded_sha256": "3bec1b6d164b4eb37b151ef1fec11c503099294f8e39960be351d55819d17318",
-      "web_sha256": "e2ff65e34f147f5d4e2255594548c7081ed39eb0f9a9a54ed65cc343521034c2"
-    },
-    {
-      "view": "back",
-      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:22adbb10-6d7f-46c6-acc8-f5a1c4659db1",
-      "source_dimensions": [
-        2048,
-        2048
-      ],
       "master_dimensions": [
         2048,
         2048
@@ -108,12 +89,39 @@
         220,
         231
       ],
+      "source_sha256": "413b7ed1021d922a3205d13a26d9b4f3f7c56bc61cf82b7296e7d7b9601a8d9c",
+      "clean_sha256": "cefe18a0250c92921973fdcc5ecc98b0f3e98c64a71be8c437b9cc79edc573fe",
+      "branded_sha256": "2da374818b094b2cd11348af569a5ddbe30be7ee9e38d31dfd8d4e51f4d1d95d",
+      "web_sha256": "4deff10f1783a8414788a5d625164bc09f847bdb2e268dfeb57ea02adb4b1bc5"
+    },
+    {
+      "view": "back",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a0e1bd6c-7640-4d0d-a5ed-8329903b34e5",
+      "source_dimensions": [
+        1536,
+        1536
+      ],
       "clean_path": "public/product-media/premium-embroidered-lederhosen/clean/premium-embroidered-lederhosen-design-01-back-clean-2048.png",
       "branded_path": "public/product-media/premium-embroidered-lederhosen/branded/premium-embroidered-lederhosen-design-01-back-branded-2048.png",
       "web_path": "public/product-media/premium-embroidered-lederhosen/web/premium-embroidered-lederhosen-design-01-back-web-1600.webp",
-      "clean_sha256": "4a14cd24e7e62809c2608943c1ee5d28b7a3efa4ce5954b1332b73156ed1e1fe",
-      "branded_sha256": "4cd66481fc09ce2b732e4338d7acaf9fc6db0d0ccf10e518752208118f90326f",
-      "web_sha256": "eb0a836da9eb3583c4497ee89d9739254161ea00f2d1476221cc29916cc7105f"
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "source_sha256": "2ff8ea56d74e399431fda8609b9d57dc2d6035d4a38799c7a72d8cd1cf170a79",
+      "clean_sha256": "1c7a5dc46049159471ba6541e8ab6ba725ecd8706ab1fe8c602813cfc9d8a3a8",
+      "branded_sha256": "fb73da0477ce3d1a1cd77ebc2cef5134adc3b80494401962b2af3af3256d78b6",
+      "web_sha256": "d78ce4abfbe2a5811e96499b7d37ae22445bfc3e9dfa4ca3ff9b485982f47366"
     }
   ]
 }
