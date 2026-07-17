@@ -8,6 +8,7 @@ const OWNER_EMAIL = "irhaapparelsofficial@gmail.com";
 const DOMAIN_EMAIL = "info@irhaapparels.com";
 const NON_INDEXABLE_PATHS = new Set(["/studio"]);
 const REMOVED_BLOG_PATHS = new Set([
+  "/blog/dirndl-manufacturer-moq-50",
   "/blog/streetwear-oem-pakistan",
   "/blog/leather-grades-explained",
   "/blog/fob-sialkot-vs-cif-pricing-explained",
@@ -98,6 +99,7 @@ async function enforceBuildPolicy() {
 
   const forbiddenFiles = [
     "studio/index.html",
+    "blog/dirndl-manufacturer-moq-50/index.html",
     "blog/streetwear-oem-pakistan/index.html",
     "blog/leather-grades-explained/index.html",
     "blog/fob-sialkot-vs-cif-pricing-explained/index.html",

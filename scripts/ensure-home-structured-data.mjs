@@ -15,9 +15,10 @@ if (!structuredScriptPattern.test(html)) {
         "@type": "Organization",
         "@id": "https://irhaapparels.com/#organization",
         name: "Irha Apparels",
+        alternateName: "Irha Apparels Sialkot",
         url: "https://irhaapparels.com/",
         logo: "https://irhaapparels.com/icon-512x512.png",
-        description: "B2B custom apparel manufacturer in Sialkot, Pakistan providing OEM, ODM and private-label manufacturing programs.",
+        description: "Irha Apparels is a B2B custom apparel manufacturer in Sialkot, Pakistan providing OEM, ODM and private-label manufacturing programs.",
         email: "info@irhaapparels.com",
         telephone: "+92 320 4110066",
         address: {
@@ -46,8 +47,8 @@ if (!structuredScriptPattern.test(html)) {
         "@type": "WebPage",
         "@id": "https://irhaapparels.com/#webpage",
         url: "https://irhaapparels.com/",
-        name: "Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers",
-        description: "OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan for brands, wholesalers and importers worldwide.",
+        name: "Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan",
+        description: "Irha Apparels manufactures custom apparel and private-label programs in Sialkot, Pakistan for brands, wholesalers and importers worldwide.",
         isPartOf: { "@id": "https://irhaapparels.com/#website" },
         about: { "@id": "https://irhaapparels.com/#organization" },
         inLanguage: "en",
@@ -66,4 +67,5 @@ if (!organizationPattern.test(final) || !/type=["']application\/ld\+json["']/i.t
   throw new Error("Built homepage Organization structured data is missing after injection.");
 }
 
-console.log("PASS ensured one crawler-visible Organization/WebSite graph in built homepage");
+await import("./strengthen-brand-search-signals.mjs");
+console.log("PASS ensured crawler-visible Organization/WebSite graph and exact Irha Apparels brand signals");
