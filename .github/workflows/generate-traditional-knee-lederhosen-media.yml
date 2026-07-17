@@ -1,0 +1,92 @@
+name: Generate Traditional Knee-Length Lederhosen Media
+
+on:
+  push:
+    branches:
+      - catalog-media-traditional-knee-lederhosen-20260717-1027
+    paths:
+      - .github/workflows/generate-traditional-knee-lederhosen-media.yml
+      - scripts/generate_traditional_knee_lederhosen_media.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-traditional-knee-lederhosen-media
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact media branch
+        uses: actions/checkout@v4
+        with:
+          ref: catalog-media-traditional-knee-lederhosen-20260717-1027
+          fetch-depth: 2
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install locked image dependency
+        run: python -m pip install --disable-pip-version-check --no-cache-dir 'Pillow==11.3.0'
+
+      - name: Generate clean, branded and web assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/generate_traditional_knee_lederhosen_media.py 2>&1 | tee traditional-knee-lederhosen-generator.log
+
+      - name: Verify generated media
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from PIL import Image
+
+          base = Path('public/product-media/traditional-knee-length-lederhosen')
+          manifest = json.loads((base / 'media-manifest.json').read_text())
+          assert len(manifest['views']) == 4
+          assert len(list((base / 'clean').glob('*.png'))) == 4
+          assert len(list((base / 'branded').glob('*.png'))) == 4
+          assert len(list((base / 'web').glob('*.webp'))) == 4
+          for row in manifest['views']:
+              with Image.open(row['clean_path']) as image:
+                  assert image.size == (2048, 2048)
+              with Image.open(row['branded_path']) as image:
+                  assert image.size == (2048, 2048)
+              with Image.open(row['web_path']) as image:
+                  assert image.size == (1600, 1600)
+          print('Traditional knee-length lederhosen media verified.')
+          PY
+
+      - name: Upload evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traditional-knee-lederhosen-media-${{ github.run_id }}
+          path: |
+            traditional-knee-lederhosen-generator.log
+            public/product-media/traditional-knee-length-lederhosen
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Commit generated assets to media branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add public/product-media/traditional-knee-length-lederhosen
+          if git diff --cached --quiet; then
+            echo 'Generated media already matches committed outputs.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(media): add traditional knee-length lederhosen pack [generated]'
+          git push origin HEAD:catalog-media-traditional-knee-lederhosen-20260717-1027
