@@ -4,6 +4,9 @@ import { SEO_BUYER_INTENT_LANDING_PAGES } from "../src/lib/buyerIntentSeoPages";
 
 const SITE_URL = "https://irhaapparels.com";
 const SITEMAP_PATH = resolve("public/sitemap.xml");
+const EXTRA_PUBLIC_PAGES = [
+  { path: "/de/bavarian-wear", priority: "0.88" },
+] as const;
 
 function xmlEscape(value: string) {
   return value
@@ -24,16 +27,26 @@ function main() {
   const existing = new Set(
     [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1].replace(/&amp;/g, "&")),
   );
+  const pages = [
+    ...SEO_BUYER_INTENT_LANDING_PAGES.map((page) => ({
+      path: page.path,
+      priority: page.path.startsWith("/de/") ? "0.82" : "0.86",
+    })),
+    ...EXTRA_PUBLIC_PAGES,
+  ];
 
-  const additions = SEO_BUYER_INTENT_LANDING_PAGES
-    .filter((page) => !existing.has(`${SITE_URL}${page.path}`))
+  const additions = pages
+    .filter((page, index, all) => (
+      all.findIndex((candidate) => candidate.path === page.path) === index
+      && !existing.has(`${SITE_URL}${page.path}`)
+    ))
     .map((page) =>
       [
         "  <url>",
         `    <loc>${xmlEscape(`${SITE_URL}${page.path}`)}</loc>`,
         `    <lastmod>${today}</lastmod>`,
         "    <changefreq>monthly</changefreq>",
-        `    <priority>${page.path.startsWith("/de/") ? "0.82" : "0.86"}</priority>`,
+        `    <priority>${page.priority}</priority>`,
         "  </url>",
       ].join("\n"),
     );
