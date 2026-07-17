@@ -19,6 +19,13 @@
       "transactional_dry_run": true
     },
     {
+      "version": "20260717222000",
+      "name": "media_duplicate_lineage_foundation",
+      "path": "supabase/migrations/20260717222000_media_duplicate_lineage_foundation.sql",
+      "git_blob_sha": "70780acdc1a772a8d7083544e3ff1da92ac47c75",
+      "transactional_dry_run": true
+    },
+    {
       "version": "20260717223000",
       "name": "gate_public_product_claims_by_quality_review",
       "path": "supabase/migrations/20260717223000_gate_public_product_claims_by_quality_review.sql",
