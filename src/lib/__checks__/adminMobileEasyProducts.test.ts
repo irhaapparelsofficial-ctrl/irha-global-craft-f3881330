@@ -23,15 +23,17 @@ describe("mobile admin easy products mode", () => {
     expect(css).toContain("display: none !important");
   });
 
-  it("surfaces the priority queue while keeping detailed catalog checks collapsible", () => {
+  it("surfaces priority, quality and owner taxonomy review while keeping detailed checks collapsible", () => {
     const source = read("src/components/admin/CatalogReleaseStatus.tsx");
 
-    expect(source.match(/<details/g)?.length).toBe(3);
+    expect(source.match(/<details/g)?.length).toBe(4);
     expect(source).toContain("Active remediation queue");
     expect(source).toContain("Product information check");
+    expect(source).toContain("Owner approval required");
     expect(source).toContain("Advanced catalog check");
     expect(source).toContain("<CatalogPriorityAuditPanel />");
     expect(source).toContain("<ProductQualityCenter />");
+    expect(source).toContain("<CatalogTaxonomyReviewPanel />");
     expect(source).toContain('className="group mb-4 border border-red-500/30 bg-card/25" open');
   });
 });
