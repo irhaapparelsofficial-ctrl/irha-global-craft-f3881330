@@ -123,7 +123,15 @@ describe("Irha CI control plane", () => {
     const verifiedPresent = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
     );
-    expect(verifiedPresent).toHaveLength(2);
+    expect(verifiedPresent).toHaveLength(6);
+    expect(verifiedPresent.map((migration: { version: string }) => migration.version)).toEqual([
+      "20260717023000",
+      "20260717023200",
+      "20260717230000",
+      "20260717230500",
+      "20260717232000",
+      "20260717232100",
+    ]);
 
     for (const migration of manifest.migrations) {
       expect(migration.git_blob_sha).toMatch(/^[0-9a-f]{40}$/);
