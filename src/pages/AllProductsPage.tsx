@@ -1,9 +1,9 @@
 import {
   ArrowUpRight,
-  Bookmark,
-  BookmarkCheck,
+  CheckCircle2,
   GitCompareArrows,
   MessageCircle,
+  PackagePlus,
   Search,
   SlidersHorizontal,
   X,
@@ -14,12 +14,13 @@ import SEO from "@/components/SEO";
 import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicCategories } from "@/hooks/usePublicCategoryData";
 import { whatsappLink } from "@/lib/constants";
+import { useInquiryCart } from "@/lib/inquiryCart";
 import {
   filterProductFinder,
   flattenProductCatalog,
   type ProductFinderSort,
 } from "@/lib/productFinder";
-import { useCompare, useShortlist } from "@/lib/shortlist";
+import { useCompare } from "@/lib/shortlist";
 
 const SITE = "https://irhaapparels.com";
 const PAGE_SIZE = 24;
@@ -33,7 +34,7 @@ export default function AllProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const shortlist = useShortlist();
+  const inquiryCart = useInquiryCart();
   const compare = useCompare();
 
   const deferredQuery = useDeferredValue(query.trim());
@@ -101,13 +102,8 @@ export default function AllProductsPage() {
           "@type": "CollectionPage",
           name: "Search All Irha Apparels Products",
           url: `${SITE}/products/all`,
-          description:
-            "Utility catalogue search covering custom apparel manufacturing categories available from Irha Apparels.",
-          isPartOf: {
-            "@type": "WebSite",
-            name: "Irha Apparels",
-            url: `${SITE}/`,
-          },
+          description: "Utility catalogue search covering custom apparel manufacturing categories available from Irha Apparels.",
+          isPartOf: { "@type": "WebSite", name: "Irha Apparels", url: `${SITE}/` },
         }}
       />
 
@@ -120,15 +116,13 @@ export default function AllProductsPage() {
                 Find the right <span className="text-gold italic">manufacturing style</span>.
               </h1>
               <p className="mt-5 max-w-2xl text-sm leading-relaxed text-foreground/65 md:text-base">
-                Search product names, SKUs, categories and construction descriptions. Save or compare suitable styles before sending one structured RFQ.
+                Search product names, SKUs, categories and construction descriptions. Add suitable styles to one structured multi-item RFQ.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
-              <span className="border border-border/60 px-4 py-2.5 text-foreground/60">
-                {totalProducts} published products
-              </span>
-              <Link to="/shortlist" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
-                Shortlist {shortlist.items.length > 0 ? `(${shortlist.items.length})` : ""}
+              <span className="border border-border/60 px-4 py-2.5 text-foreground/60">{totalProducts} published products</span>
+              <Link to="/inquiry-cart" className="border border-primary/50 px-4 py-2.5 text-primary hover:bg-primary/10">
+                Inquiry cart {inquiryCart.count > 0 ? `(${inquiryCart.count})` : ""}
               </Link>
               <Link to="/compare" className="border border-border/60 px-4 py-2.5 hover:border-primary hover:text-primary">
                 Compare {compare.items.length > 0 ? `(${compare.items.length}/4)` : ""}
@@ -154,12 +148,7 @@ export default function AllProductsPage() {
                 className="min-h-12 w-full border border-border/60 bg-card/35 pl-11 pr-11 text-sm outline-none transition-colors focus:border-primary"
               />
               {query && (
-                <button
-                  type="button"
-                  onClick={() => updateQuery("")}
-                  aria-label="Clear product search"
-                  className="absolute right-3 top-1/2 inline-flex min-h-9 min-w-9 -translate-y-1/2 items-center justify-center text-foreground/45 hover:text-primary"
-                >
+                <button type="button" onClick={() => updateQuery("")} aria-label="Clear product search" className="absolute right-3 top-1/2 inline-flex min-h-9 min-w-9 -translate-y-1/2 items-center justify-center text-foreground/45 hover:text-primary">
                   <X size={15} />
                 </button>
               )}
@@ -168,39 +157,22 @@ export default function AllProductsPage() {
             <label className="relative">
               <span className="sr-only">Filter by category</span>
               <SlidersHorizontal size={15} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-foreground/45" />
-              <select
-                value={categorySlug}
-                onChange={(event) => updateParam("category", event.target.value)}
-                className="min-h-12 w-full appearance-none border border-border/60 bg-card/35 pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary"
-              >
+              <select value={categorySlug} onChange={(event) => updateParam("category", event.target.value)} className="min-h-12 w-full appearance-none border border-border/60 bg-card/35 pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary">
                 <option value="all">All categories ({totalProducts})</option>
-                {categories.map((category) => (
-                  <option key={category.slug} value={category.slug}>
-                    {category.name} ({category.productCount})
-                  </option>
-                ))}
+                {categories.map((category) => <option key={category.slug} value={category.slug}>{category.name} ({category.productCount})</option>)}
               </select>
             </label>
 
             <label>
               <span className="sr-only">Sort products</span>
-              <select
-                value={sort}
-                onChange={(event) => updateParam("sort", event.target.value)}
-                className="min-h-12 w-full border border-border/60 bg-card/35 px-4 text-sm outline-none transition-colors focus:border-primary"
-              >
+              <select value={sort} onChange={(event) => updateParam("sort", event.target.value)} className="min-h-12 w-full border border-border/60 bg-card/35 px-4 text-sm outline-none transition-colors focus:border-primary">
                 <option value="relevance">Best match</option>
                 <option value="name-asc">Name A–Z</option>
                 <option value="newest">Newest added</option>
               </select>
             </label>
 
-            <button
-              type="button"
-              onClick={clearFilters}
-              disabled={!hasFilters}
-              className="min-h-12 border border-border/60 px-5 text-[10px] uppercase tracking-[0.2em] text-foreground/65 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-35"
-            >
+            <button type="button" onClick={clearFilters} disabled={!hasFilters} className="min-h-12 border border-border/60 px-5 text-[10px] uppercase tracking-[0.2em] text-foreground/65 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-35">
               Clear filters
             </button>
           </div>
@@ -210,9 +182,7 @@ export default function AllProductsPage() {
       <section className="py-12 md:py-16">
         <div className="container-luxe">
           {isLoading ? (
-            <div className="border border-dashed border-border/60 p-12 text-center text-sm text-foreground/60" role="status" aria-live="polite">
-              Loading published catalogue…
-            </div>
+            <div className="border border-dashed border-border/60 p-12 text-center text-sm text-foreground/60" role="status" aria-live="polite">Loading published catalogue…</div>
           ) : (
             <>
               {isError && (
@@ -222,40 +192,18 @@ export default function AllProductsPage() {
               )}
 
               <div className="mb-8 flex flex-wrap items-end justify-between gap-3 border-b border-border/60 pb-5">
-                <div>
-                  <p className="eyebrow mb-2">Search Results</p>
-                  <h2 className="font-display text-2xl md:text-3xl">
-                    {results.length} product{results.length === 1 ? "" : "s"}
-                  </h2>
-                </div>
-                <p className="text-xs text-foreground/50" aria-live="polite">
-                  {deferredQuery ? `Matching “${deferredQuery}” · ` : ""}{selectedCategoryName}
-                </p>
+                <div><p className="eyebrow mb-2">Search Results</p><h2 className="font-display text-2xl md:text-3xl">{results.length} product{results.length === 1 ? "" : "s"}</h2></div>
+                <p className="text-xs text-foreground/50" aria-live="polite">{deferredQuery ? `Matching “${deferredQuery}” · ` : ""}{selectedCategoryName}</p>
               </div>
 
               {results.length === 0 ? (
                 <div className="border border-dashed border-border/60 px-6 py-14 text-center">
                   <Search size={28} className="mx-auto mb-4 text-foreground/35" />
                   <h3 className="font-display text-2xl">No matching published product</h3>
-                  <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-foreground/60">
-                    Try a broader product name, remove the category filter, or share your reference with our team for a custom manufacturing review.
-                  </p>
+                  <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-foreground/60">Try a broader product name, remove the category filter, or share your reference with our team for a custom manufacturing review.</p>
                   <div className="mt-6 flex flex-wrap justify-center gap-3">
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="min-h-11 border border-border/60 px-5 text-[10px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary"
-                    >
-                      Reset search
-                    </button>
-                    <a
-                      href={whatsappLink(assistanceMessage)}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="inline-flex min-h-11 items-center gap-2 border border-gold/70 px-5 text-[10px] uppercase tracking-[0.2em] text-gold hover:bg-gold hover:text-background"
-                    >
-                      <MessageCircle size={14} /> Ask on WhatsApp
-                    </a>
+                    <button type="button" onClick={clearFilters} className="min-h-11 border border-border/60 px-5 text-[10px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary">Reset search</button>
+                    <a href={whatsappLink(assistanceMessage)} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center gap-2 border border-gold/70 px-5 text-[10px] uppercase tracking-[0.2em] text-gold hover:bg-gold hover:text-background"><MessageCircle size={14} /> Ask on WhatsApp</a>
                   </div>
                 </div>
               ) : (
@@ -263,10 +211,11 @@ export default function AllProductsPage() {
                   <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-7">
                     {visibleResults.map((item) => {
                       const { product } = item;
-                      const saved = shortlist.has(product.slug);
+                      const inInquiry = inquiryCart.has(product.slug);
                       const inCompare = compare.has(product.slug);
                       const compareFull = !inCompare && compare.items.length >= 4;
                       const storedProduct = {
+                        productId: product.id,
                         slug: product.slug,
                         name: product.name,
                         image: product.image,
@@ -281,28 +230,22 @@ export default function AllProductsPage() {
                           <Link to={productPath} className="relative mb-3 block aspect-[3/4] overflow-hidden bg-card">
                             <ThumbnailImage
                               src={product.image}
-                              alt={product.name}
+                              alt={`Custom ${product.name} wholesale manufacturer in Sialkot`}
                               className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1000ms] group-hover:scale-105"
                             />
                           </Link>
-                          <p className="truncate text-[9px] uppercase tracking-[0.16em] text-foreground/45">
-                            {product.sku ? `${product.sku} · ` : ""}{item.categoryName} · {item.subName}
-                          </p>
-                          <Link to={productPath} className="mt-1 font-display text-sm leading-tight transition-colors hover:text-primary md:text-base">
-                            {product.name}
-                          </Link>
+                          <p className="truncate text-[9px] uppercase tracking-[0.16em] text-foreground/45">{product.sku ? `${product.sku} · ` : ""}{item.categoryName} · {item.subName}</p>
+                          <Link to={productPath} className="mt-1 font-display text-sm leading-tight transition-colors hover:text-primary md:text-base">{product.name}</Link>
                           <div className="mt-3 flex flex-wrap items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => shortlist.toggle(storedProduct)}
-                              aria-pressed={saved}
-                              aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
-                              className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
-                                saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
-                              }`}
+                              onClick={() => inquiryCart.toggle(storedProduct)}
+                              aria-pressed={inInquiry}
+                              aria-label={inInquiry ? `Remove ${product.name} from inquiry cart` : `Add ${product.name} to inquiry cart`}
+                              className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${inInquiry ? "border-primary text-primary" : "border-border/60 hover:border-primary"}`}
                             >
-                              {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-                              {saved ? "Saved" : "Save"}
+                              {inInquiry ? <CheckCircle2 size={12} /> : <PackagePlus size={12} />}
+                              {inInquiry ? "Added" : "Inquiry"}
                             </button>
                             <button
                               type="button"
@@ -310,18 +253,11 @@ export default function AllProductsPage() {
                               disabled={compareFull}
                               aria-pressed={inCompare}
                               title={compareFull ? "Comparison is limited to four products" : undefined}
-                              className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${
-                                inCompare
-                                  ? "border-primary text-primary"
-                                  : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"
-                              }`}
+                              className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${inCompare ? "border-primary text-primary" : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"}`}
                             >
-                              <GitCompareArrows size={12} />
-                              {inCompare ? "Added" : "Compare"}
+                              <GitCompareArrows size={12} />{inCompare ? "Added" : "Compare"}
                             </button>
-                            <Link to={productPath} aria-label={`Open ${product.name}`} className="ml-auto inline-flex min-h-10 min-w-10 items-center justify-center text-primary hover:text-primary/70">
-                              <ArrowUpRight size={14} />
-                            </Link>
+                            <Link to={productPath} aria-label={`Open ${product.name}`} className="ml-auto inline-flex min-h-10 min-w-10 items-center justify-center text-primary hover:text-primary/70"><ArrowUpRight size={14} /></Link>
                           </div>
                         </article>
                       );
@@ -330,11 +266,7 @@ export default function AllProductsPage() {
 
                   {visibleCount < results.length && (
                     <div className="mt-12 flex justify-center">
-                      <button
-                        type="button"
-                        onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
-                        className="min-h-12 border border-border/60 px-7 text-[10px] uppercase tracking-[0.22em] hover:border-primary hover:text-primary"
-                      >
+                      <button type="button" onClick={() => setVisibleCount((current) => current + PAGE_SIZE)} className="min-h-12 border border-border/60 px-7 text-[10px] uppercase tracking-[0.22em] hover:border-primary hover:text-primary">
                         Show more ({results.length - visibleCount} remaining)
                       </button>
                     </div>
