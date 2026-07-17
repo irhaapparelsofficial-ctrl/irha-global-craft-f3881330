@@ -1621,6 +1621,158 @@ export type Database = {
         }
         Relationships: []
       }
+      media_asset_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_record: Json | null
+          before_record: Json | null
+          created_at: string
+          id: number
+          media_asset_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_record?: Json | null
+          before_record?: Json | null
+          created_at?: string
+          id?: number
+          media_asset_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_record?: Json | null
+          before_record?: Json | null
+          created_at?: string
+          id?: number
+          media_asset_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_asset_events_media_asset_id_fkey"
+            columns: ["media_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_assets: {
+        Row: {
+          alt_text: string | null
+          bucket: string
+          checksum_sha256: string | null
+          created_at: string
+          created_by: string | null
+          duration_ms: number | null
+          file_name: string
+          height_px: number | null
+          id: string
+          mime_type: string
+          object_path: string
+          public_url: string
+          responsive_format: string | null
+          responsive_generated_at: string | null
+          responsive_total_size_bytes: number | null
+          responsive_widths: number[] | null
+          size_bytes: number
+          social_approved: boolean
+          social_approved_at: string | null
+          social_approved_by: string | null
+          status: string
+          tags: string[]
+          thumbnail_bucket: string | null
+          thumbnail_generated_at: string | null
+          thumbnail_height_px: number | null
+          thumbnail_object_path: string | null
+          thumbnail_size_bytes: number | null
+          thumbnail_url: string | null
+          thumbnail_width_px: number | null
+          title: string | null
+          updated_at: string
+          updated_by: string | null
+          usage_notes: string | null
+          verification_status: string
+          width_px: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          bucket?: string
+          checksum_sha256?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_ms?: number | null
+          file_name: string
+          height_px?: number | null
+          id?: string
+          mime_type: string
+          object_path: string
+          public_url: string
+          responsive_format?: string | null
+          responsive_generated_at?: string | null
+          responsive_total_size_bytes?: number | null
+          responsive_widths?: number[] | null
+          size_bytes: number
+          social_approved?: boolean
+          social_approved_at?: string | null
+          social_approved_by?: string | null
+          status?: string
+          tags?: string[]
+          thumbnail_bucket?: string | null
+          thumbnail_generated_at?: string | null
+          thumbnail_height_px?: number | null
+          thumbnail_object_path?: string | null
+          thumbnail_size_bytes?: number | null
+          thumbnail_url?: string | null
+          thumbnail_width_px?: number | null
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          usage_notes?: string | null
+          verification_status?: string
+          width_px?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          bucket?: string
+          checksum_sha256?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_ms?: number | null
+          file_name?: string
+          height_px?: number | null
+          id?: string
+          mime_type?: string
+          object_path?: string
+          public_url?: string
+          responsive_format?: string | null
+          responsive_generated_at?: string | null
+          responsive_total_size_bytes?: number | null
+          responsive_widths?: number[] | null
+          size_bytes?: number
+          social_approved?: boolean
+          social_approved_at?: string | null
+          social_approved_by?: string | null
+          status?: string
+          tags?: string[]
+          thumbnail_bucket?: string | null
+          thumbnail_generated_at?: string | null
+          thumbnail_height_px?: number | null
+          thumbnail_object_path?: string | null
+          thumbnail_size_bytes?: number | null
+          thumbnail_url?: string | null
+          thumbnail_width_px?: number | null
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          usage_notes?: string | null
+          verification_status?: string
+          width_px?: number | null
+        }
+        Relationships: []
+      }
       outreach_campaigns: {
         Row: {
           approved_count: number
