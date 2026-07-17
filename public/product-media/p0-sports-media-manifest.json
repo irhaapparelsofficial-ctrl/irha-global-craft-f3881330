@@ -1,0 +1,365 @@
+{
+  "batch": "P0 Sports Media",
+  "logo_source": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/brand/irha-apparels-official-locked-logo-256.png",
+  "logo_sha256": "8d958b6aec7a589afc3644a99b97faaa318d909ef94b79dd38e3bd8f47ca58e1",
+  "logo_rule": "Exact official raster overlay only; no generative redraw",
+  "products": [
+    {
+      "slug": "baseball-jersey",
+      "product": "Baseball Jersey",
+      "design": "01",
+      "views": [
+        {
+          "view": "front",
+          "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/baseball-jersey/baseball-jersey-design-01-front-clean-2048.png",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/baseball-jersey/clean/baseball-jersey-design-01-front-clean-2048.png",
+          "branded_path": "public/product-media/baseball-jersey/branded/baseball-jersey-design-01-front-branded-2048.png",
+          "web_path": "public/product-media/baseball-jersey/web/baseball-jersey-design-01-front-web-1600.webp",
+          "clean_sha256": "8b88241475287e78408f837de2a64ee102b77748cd3979cc96cc6023a1be8500",
+          "branded_sha256": "97d14a3a824d5d33d9d9be9615c70b7fc3917d3d15031bf17e646bc082173ecd",
+          "web_sha256": "eef38af0c90515d8b2cc4d5c1c8554e033675b3961de583052ec28039335582a"
+        },
+        {
+          "view": "three-quarter",
+          "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/baseball-jersey/baseball-jersey-design-01-three-quarter-clean-2048.png",
+          "source_dimensions": [
+            1536,
+            1536
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/baseball-jersey/clean/baseball-jersey-design-01-three-quarter-clean-2048.png",
+          "branded_path": "public/product-media/baseball-jersey/branded/baseball-jersey-design-01-three-quarter-branded-2048.png",
+          "web_path": "public/product-media/baseball-jersey/web/baseball-jersey-design-01-three-quarter-web-1600.webp",
+          "clean_sha256": "cba83d2ba820b5d2dbe90283c9ab0e0295424815593db50e214c693cd6c132ca",
+          "branded_sha256": "09e29e9dbe0e0c7d70baea80280f0d1dd8c2e939707e93d9913f25ce5a52d259",
+          "web_sha256": "e6ca02a836277d8a01e744cf922c91328ffb75b854503462a53a9ef196723498"
+        },
+        {
+          "view": "side",
+          "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/baseball-jersey/baseball-jersey-design-01-side-clean-2048.png",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/baseball-jersey/clean/baseball-jersey-design-01-side-clean-2048.png",
+          "branded_path": "public/product-media/baseball-jersey/branded/baseball-jersey-design-01-side-branded-2048.png",
+          "web_path": "public/product-media/baseball-jersey/web/baseball-jersey-design-01-side-web-1600.webp",
+          "clean_sha256": "6f8edf7039513d0e5d63a32dbb127fc4a460da3d6e8c800b20d7d0216e14998e",
+          "branded_sha256": "676f20c34dbd1bc8fdf05f0495be97a1c2982eae53ce97e19e26c511fc38fa1b",
+          "web_sha256": "26eb8ac998f3b2eb1f462ccfe849f703743ce2ad44e8a65af4f6515cc873ab15"
+        },
+        {
+          "view": "back",
+          "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/baseball-jersey/baseball-jersey-design-01-back-clean-2048.png",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/baseball-jersey/clean/baseball-jersey-design-01-back-clean-2048.png",
+          "branded_path": "public/product-media/baseball-jersey/branded/baseball-jersey-design-01-back-branded-2048.png",
+          "web_path": "public/product-media/baseball-jersey/web/baseball-jersey-design-01-back-web-1600.webp",
+          "clean_sha256": "83202e8a12a99a7432bbb4836409ec7efd4ff7022abfc869260e9046244c4043",
+          "branded_sha256": "1ccfdf649be31906a37b52b37ca61488092a396e7cde101946a717dbd3591e2d",
+          "web_sha256": "17bb9b5cf4017c89b094905fdeeba891956363ae24cf73ce3c1f3f80d6c46a7f"
+        }
+      ]
+    },
+    {
+      "slug": "basketball-mesh-jersey",
+      "product": "Basketball Mesh Jersey",
+      "design": "01",
+      "views": [
+        {
+          "view": "front",
+          "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-front-clean-2048.png",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/basketball-mesh-jersey/clean/basketball-mesh-jersey-design-01-front-clean-2048.png",
+          "branded_path": "public/product-media/basketball-mesh-jersey/branded/basketball-mesh-jersey-design-01-front-branded-2048.png",
+          "web_path": "public/product-media/basketball-mesh-jersey/web/basketball-mesh-jersey-design-01-front-web-1600.webp",
+          "clean_sha256": "3a8d9da137c928b3f345ef9e8337d710307f072a8634fe77e0078a457f8ec4ee",
+          "branded_sha256": "913e1426816e9745a2b9d96aa4b8fc81697c4e0503c1ac2fa7c81aa667a50ab4",
+          "web_sha256": "5b322c687168714a22cc10cb4733e4e4cefc81be51a9861fe7da55b698eb045a"
+        },
+        {
+          "view": "three-quarter",
+          "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-three-quarter-clean-2048.png",
+          "source_dimensions": [
+            1536,
+            1536
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/basketball-mesh-jersey/clean/basketball-mesh-jersey-design-01-three-quarter-clean-2048.png",
+          "branded_path": "public/product-media/basketball-mesh-jersey/branded/basketball-mesh-jersey-design-01-three-quarter-branded-2048.png",
+          "web_path": "public/product-media/basketball-mesh-jersey/web/basketball-mesh-jersey-design-01-three-quarter-web-1600.webp",
+          "clean_sha256": "e47b38b1b9b6fd5391c25833bfaa53c6fe4411d75addc62a4a80916a965d5cfa",
+          "branded_sha256": "b5d03d568717e694aa4ef107aeacb5724b2c84be06b020865549f851c8bc1171",
+          "web_sha256": "78da8037cfb155655ab9c0a93a101a88115cf282594c0b0d687fce2eba55cedb"
+        },
+        {
+          "view": "side",
+          "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-side-clean-2048.png",
+          "source_dimensions": [
+            1536,
+            1536
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/basketball-mesh-jersey/clean/basketball-mesh-jersey-design-01-side-clean-2048.png",
+          "branded_path": "public/product-media/basketball-mesh-jersey/branded/basketball-mesh-jersey-design-01-side-branded-2048.png",
+          "web_path": "public/product-media/basketball-mesh-jersey/web/basketball-mesh-jersey-design-01-side-web-1600.webp",
+          "clean_sha256": "3e5ef56889914a98bb717d9309a1e68de1ecd19fe9003e54c948270c0bebcf74",
+          "branded_sha256": "818b6c078001996f99db5bac873c2eb9785e747992f80536c1992967b043c27c",
+          "web_sha256": "a5e6488533723880275b090aa791bebaec0ea96bcda97ed149e56f8fd7e88e85"
+        },
+        {
+          "view": "back",
+          "source_url": "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-remediation/basketball-mesh-jersey/basketball-mesh-jersey-design-01-back-clean-2048.png",
+          "source_dimensions": [
+            1536,
+            1536
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/basketball-mesh-jersey/clean/basketball-mesh-jersey-design-01-back-clean-2048.png",
+          "branded_path": "public/product-media/basketball-mesh-jersey/branded/basketball-mesh-jersey-design-01-back-branded-2048.png",
+          "web_path": "public/product-media/basketball-mesh-jersey/web/basketball-mesh-jersey-design-01-back-web-1600.webp",
+          "clean_sha256": "f15cc774ed9ac563b5a1ceaebe83b7abeec5140bcaa50445e2603272ac2c821b",
+          "branded_sha256": "8aaaff92d150b01787bfdca26c84cc6365cc8fad3c397f73894a82e9bbbabfa7",
+          "web_sha256": "0a5aecef2a5815d921180db8c270e7e9876f77b184ea79197626550cc1d7e605"
+        }
+      ]
+    },
+    {
+      "slug": "cricket-match-jersey",
+      "product": "Cricket Match Jersey",
+      "design": "01",
+      "views": [
+        {
+          "view": "front",
+          "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:2c26ff02-f18a-4c34-acd3-5fa25e5b1f93",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/cricket-match-jersey/clean/cricket-match-jersey-design-01-front-clean-2048.png",
+          "branded_path": "public/product-media/cricket-match-jersey/branded/cricket-match-jersey-design-01-front-branded-2048.png",
+          "web_path": "public/product-media/cricket-match-jersey/web/cricket-match-jersey-design-01-front-web-1600.webp",
+          "clean_sha256": "bf99c98604e58d4ae39728a384c1de8efa7a9d9aa5ee4b16917a16240d8c98b7",
+          "branded_sha256": "57f8eb7cae07c567b532b8ac7f13c037e5347e3c56d404fb3dc802d71905cc9b",
+          "web_sha256": "ede4e9b57031a2e55ea13f73b3277688e5677bca78898aa5f6ab79bcb017cad8"
+        },
+        {
+          "view": "three-quarter",
+          "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:3437d9e8-f474-4e3e-826c-0552fbd68c14",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/cricket-match-jersey/clean/cricket-match-jersey-design-01-three-quarter-clean-2048.png",
+          "branded_path": "public/product-media/cricket-match-jersey/branded/cricket-match-jersey-design-01-three-quarter-branded-2048.png",
+          "web_path": "public/product-media/cricket-match-jersey/web/cricket-match-jersey-design-01-three-quarter-web-1600.webp",
+          "clean_sha256": "5a1120259a2e6ab00a1a935ae2f48a8d379e9a6fafa30a59e5e7e0246730b890",
+          "branded_sha256": "155ba28449f1011e7b791415c4e7d05cde4c2b639a8898b7eee329f4a9711a81",
+          "web_sha256": "80a78aab00d3699686cfac148d6550ec31efa219329ee26ba13f2abd60c5ac4b"
+        },
+        {
+          "view": "side",
+          "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:90afcd70-b15e-4fa8-89ba-64563821d437",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/cricket-match-jersey/clean/cricket-match-jersey-design-01-side-clean-2048.png",
+          "branded_path": "public/product-media/cricket-match-jersey/branded/cricket-match-jersey-design-01-side-branded-2048.png",
+          "web_path": "public/product-media/cricket-match-jersey/web/cricket-match-jersey-design-01-side-web-1600.webp",
+          "clean_sha256": "6aeec3dc23361d8bad73ac16d9a16ec8934037ca4ff6ed71e6794f352e1e7a69",
+          "branded_sha256": "5c9260cf886e51dda1ef0bb1ec088c788d00341ccb47c75901005c12b9798190",
+          "web_sha256": "c99c7b4b38377758e2ff2d8b9dbf7b84a9017c0f41750b12467be87eb3163270"
+        },
+        {
+          "view": "back",
+          "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:ad60a55d-f3d8-45e5-a0fd-2fe5b0c18f14",
+          "source_dimensions": [
+            2048,
+            2048
+          ],
+          "master_dimensions": [
+            2048,
+            2048
+          ],
+          "web_dimensions": [
+            1600,
+            1600
+          ],
+          "logo_box": [
+            1756,
+            72,
+            220,
+            231
+          ],
+          "clean_path": "public/product-media/cricket-match-jersey/clean/cricket-match-jersey-design-01-back-clean-2048.png",
+          "branded_path": "public/product-media/cricket-match-jersey/branded/cricket-match-jersey-design-01-back-branded-2048.png",
+          "web_path": "public/product-media/cricket-match-jersey/web/cricket-match-jersey-design-01-back-web-1600.webp",
+          "clean_sha256": "639326c244aedf3e49b1bf18ffc09563ad561548dbc60afab65567903841e3eb",
+          "branded_sha256": "841ad3243fbe51a37b20995dedc3c9e6d95d74ba9720f5a8887a26d5988e4244",
+          "web_sha256": "ba9e5f37eaad82aeca4a70a5fd20bde54cd71a5a9e0257614d61fc1b3738f19a"
+        }
+      ]
+    }
+  ]
+}

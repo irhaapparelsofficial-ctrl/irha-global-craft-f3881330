@@ -1,0 +1,119 @@
+{
+  "slug": "cricket-match-jersey",
+  "product": "Cricket Match Jersey",
+  "design": "01",
+  "views": [
+    {
+      "view": "front",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:2c26ff02-f18a-4c34-acd3-5fa25e5b1f93",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/cricket-match-jersey/clean/cricket-match-jersey-design-01-front-clean-2048.png",
+      "branded_path": "public/product-media/cricket-match-jersey/branded/cricket-match-jersey-design-01-front-branded-2048.png",
+      "web_path": "public/product-media/cricket-match-jersey/web/cricket-match-jersey-design-01-front-web-1600.webp",
+      "clean_sha256": "bf99c98604e58d4ae39728a384c1de8efa7a9d9aa5ee4b16917a16240d8c98b7",
+      "branded_sha256": "57f8eb7cae07c567b532b8ac7f13c037e5347e3c56d404fb3dc802d71905cc9b",
+      "web_sha256": "ede4e9b57031a2e55ea13f73b3277688e5677bca78898aa5f6ab79bcb017cad8"
+    },
+    {
+      "view": "three-quarter",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:3437d9e8-f474-4e3e-826c-0552fbd68c14",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/cricket-match-jersey/clean/cricket-match-jersey-design-01-three-quarter-clean-2048.png",
+      "branded_path": "public/product-media/cricket-match-jersey/branded/cricket-match-jersey-design-01-three-quarter-branded-2048.png",
+      "web_path": "public/product-media/cricket-match-jersey/web/cricket-match-jersey-design-01-three-quarter-web-1600.webp",
+      "clean_sha256": "5a1120259a2e6ab00a1a935ae2f48a8d379e9a6fafa30a59e5e7e0246730b890",
+      "branded_sha256": "155ba28449f1011e7b791415c4e7d05cde4c2b639a8898b7eee329f4a9711a81",
+      "web_sha256": "80a78aab00d3699686cfac148d6550ec31efa219329ee26ba13f2abd60c5ac4b"
+    },
+    {
+      "view": "side",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:90afcd70-b15e-4fa8-89ba-64563821d437",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/cricket-match-jersey/clean/cricket-match-jersey-design-01-side-clean-2048.png",
+      "branded_path": "public/product-media/cricket-match-jersey/branded/cricket-match-jersey-design-01-side-branded-2048.png",
+      "web_path": "public/product-media/cricket-match-jersey/web/cricket-match-jersey-design-01-side-web-1600.webp",
+      "clean_sha256": "6aeec3dc23361d8bad73ac16d9a16ec8934037ca4ff6ed71e6794f352e1e7a69",
+      "branded_sha256": "5c9260cf886e51dda1ef0bb1ec088c788d00341ccb47c75901005c12b9798190",
+      "web_sha256": "c99c7b4b38377758e2ff2d8b9dbf7b84a9017c0f41750b12467be87eb3163270"
+    },
+    {
+      "view": "back",
+      "source_url": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:ad60a55d-f3d8-45e5-a0fd-2fe5b0c18f14",
+      "source_dimensions": [
+        2048,
+        2048
+      ],
+      "master_dimensions": [
+        2048,
+        2048
+      ],
+      "web_dimensions": [
+        1600,
+        1600
+      ],
+      "logo_box": [
+        1756,
+        72,
+        220,
+        231
+      ],
+      "clean_path": "public/product-media/cricket-match-jersey/clean/cricket-match-jersey-design-01-back-clean-2048.png",
+      "branded_path": "public/product-media/cricket-match-jersey/branded/cricket-match-jersey-design-01-back-branded-2048.png",
+      "web_path": "public/product-media/cricket-match-jersey/web/cricket-match-jersey-design-01-back-web-1600.webp",
+      "clean_sha256": "639326c244aedf3e49b1bf18ffc09563ad561548dbc60afab65567903841e3eb",
+      "branded_sha256": "841ad3243fbe51a37b20995dedc3c9e6d95d74ba9720f5a8887a26d5988e4244",
+      "web_sha256": "ba9e5f37eaad82aeca4a70a5fd20bde54cd71a5a9e0257614d61fc1b3738f19a"
+    }
+  ]
+}
