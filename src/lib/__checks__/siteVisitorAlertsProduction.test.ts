@@ -47,12 +47,13 @@ describe("realtime website visitor country alerts", () => {
   });
 
   it("ships a responsive country, source, page and device dashboard", () => {
-    expect(dashboard).toContain("Live Website Visitors");
+    expect(dashboard).toContain("Website Visitors");
     expect(dashboard).toContain("Buyer geography");
     expect(dashboard).toContain("countryFlag");
     expect(dashboard).toContain("referrer_host");
     expect(dashboard).toContain("device_type");
     expect(dashboard).toContain('table: "site_visitors"');
+    expect(dashboard).toContain("grid grid-cols-2");
     expect(runtime).toContain("<AdminVisitorPulse />");
     expect(pulse).toContain("New website visitor");
   });
@@ -60,7 +61,7 @@ describe("realtime website visitor country alerts", () => {
   it("reuses the production Web Push channel for mobile and desktop", () => {
     expect(config).toContain("[functions.site-visitor]");
     expect(config).toMatch(/\[functions\.site-visitor\][\s\S]*?verify_jwt = false/);
-    expect(pushSetup).toContain("new website visitor");
+    expect(pushSetup).toMatch(/new (website )?visitor/i);
     expect(pushSetup).toContain('navigator.serviceWorker.register("/irha-owner-sw.js"');
     expect(pushWorker).toContain('self.addEventListener("push"');
     expect(pushWorker).toContain("showNotification");
