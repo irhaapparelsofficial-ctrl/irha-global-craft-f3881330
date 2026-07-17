@@ -22,6 +22,8 @@ const Markets = lazy(() => import("./pages/Markets"));
 const MarketLandingPage = lazy(() => import("./pages/MarketLandingPage"));
 const Manufacturing = lazy(() => import("./pages/Manufacturing"));
 const Inquiry = lazy(() => import("./pages/Inquiry"));
+const InquiryCart = lazy(() => import("./pages/InquiryCart"));
+const GermanBavarianWear = lazy(() => import("./pages/GermanBavarianWear"));
 const RepeatOrder = lazy(() => import("./pages/RepeatOrder"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -44,7 +46,6 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Catalogue = lazy(() => import("./pages/Catalogue"));
 const CatalogueCategory = lazy(() => import("./pages/CatalogueCategory"));
-const Shortlist = lazy(() => import("./pages/Shortlist"));
 const Compare = lazy(() => import("./pages/Compare"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const BuyerTrust = lazy(() => import("./pages/BuyerTrust"));
@@ -108,11 +109,7 @@ function ScrollToTop() {
 function AdminRuntimeGate() {
   const { pathname } = useLocation();
   if (!pathname.startsWith("/admin")) return null;
-  return (
-    <Suspense fallback={null}>
-      <AdminRuntime />
-    </Suspense>
-  );
+  return <Suspense fallback={null}><AdminRuntime /></Suspense>;
 }
 
 const PageFallback = () => (
@@ -134,8 +131,8 @@ const App = () => (
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Layout><Home /></Layout>} />
-              <Route path="/de" element={<Navigate to="/" replace />} />
-              <Route path="/de/" element={<Navigate to="/" replace />} />
+              <Route path="/de" element={<Navigate to="/de/bavarian-wear" replace />} />
+              <Route path="/de/" element={<Navigate to="/de/bavarian-wear" replace />} />
               <Route path="/legacy-home" element={<Navigate to="/" replace />} />
 
               <Route path="/auth" element={<Auth />} />
@@ -148,73 +145,70 @@ const App = () => (
               <Route path="/admin/outreach-approval" element={<AdminOutreachApproval />} />
               <Route path="/seo-indexing" element={<SeoIndexing />} />
 
-              <Route
-                path="*"
-                element={
-                  <Layout>
-                    <Routes>
-                      <Route path="/about" element={<About />} />
-                      <Route path="/products" element={<GlobalCollectionsPage />} />
-                      <Route path="/products/all" element={<AllProductsPage />} />
-                      <Route path="/products/:categorySlug/all-products" element={<CategoryPage />} />
-                      <Route path="/products/:categorySlug" element={<CategoryTaxonomyPage />} />
-                      <Route path="/products/bavarian-trachten-wear/mens-trachten" element={<Navigate to="/products/bavarian-trachten-wear/men" replace />} />
-                      <Route path="/products/bavarian-trachten-wear/mens-trachten/:collectionSlug" element={<BavarianMensCollection />} />
-                      <Route path="/products/bavarian-trachten-wear/womens-trachten" element={<Navigate to="/products/bavarian-trachten-wear/women" replace />} />
-                      <Route path="/products/bavarian-trachten-wear/womens-trachten/:collectionSlug" element={<BavarianWomensCollection />} />
-                      <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
-                      <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
-                      <Route path="/products/:categorySlug/:productSlug" element={<CategoryOrProductPage />} />
+              <Route path="*" element={
+                <Layout>
+                  <Routes>
+                    <Route path="/about" element={<About />} />
+                    <Route path="/products" element={<GlobalCollectionsPage />} />
+                    <Route path="/products/all" element={<AllProductsPage />} />
+                    <Route path="/products/:categorySlug/all-products" element={<CategoryPage />} />
+                    <Route path="/products/:categorySlug" element={<CategoryTaxonomyPage />} />
+                    <Route path="/products/bavarian-trachten-wear/mens-trachten" element={<Navigate to="/products/bavarian-trachten-wear/men" replace />} />
+                    <Route path="/products/bavarian-trachten-wear/mens-trachten/:collectionSlug" element={<BavarianMensCollection />} />
+                    <Route path="/products/bavarian-trachten-wear/womens-trachten" element={<Navigate to="/products/bavarian-trachten-wear/women" replace />} />
+                    <Route path="/products/bavarian-trachten-wear/womens-trachten/:collectionSlug" element={<BavarianWomensCollection />} />
+                    <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
+                    <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
+                    <Route path="/products/:categorySlug/:productSlug" element={<CategoryOrProductPage />} />
 
-                      <Route path="/intl/:locale/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
-                      <Route path="/intl/:locale/products/:categorySlug/:audienceSlug" element={<CategoryTaxonomyPage />} />
-                      <Route path="/intl/:locale/products/:categorySlug" element={<CategoryTaxonomyPage />} />
+                    <Route path="/intl/:locale/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
+                    <Route path="/intl/:locale/products/:categorySlug/:audienceSlug" element={<CategoryTaxonomyPage />} />
+                    <Route path="/intl/:locale/products/:categorySlug" element={<CategoryTaxonomyPage />} />
 
-                      <Route path="/markets" element={<Markets />} />
-                      <Route path="/markets/:countrySlug" element={<MarketLandingPage />} />
-                      <Route path="/manufacturing" element={<Manufacturing />} />
-                      <Route path="/compliance" element={<Compliance />} />
-                      <Route path="/buyer-trust" element={<BuyerTrust />} />
-                      <Route path="/factory-video-call" element={<FactoryVideoCall />} />
-                      <Route path="/resources" element={<BuyerResources />} />
-                      <Route path="/faq" element={<FAQ />} />
-                      <Route path="/blog" element={<Blog />} />
-                      <Route path="/blog/:slug" element={<BlogPost />} />
-                      <Route path="/sustainability" element={<Navigate to="/inquiry?intent=rfq" replace />} />
-                      <Route path="/shipping-returns" element={<Navigate to="/resources#shipping-questions" replace />} />
-                      <Route path="/inquiry" element={<Inquiry />} />
-                      <Route path="/repeat-order" element={<RepeatOrder />} />
-                      <Route path="/contact" element={<Contact />} />
-                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                      <Route path="/terms-of-service" element={<TermsOfService />} />
-                      <Route path="/connect" element={<Connect />} />
-                      <Route path="/catalogue" element={<Catalogue />} />
-                      <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
-                      <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
-                      <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
-                      <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
-                      <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
-                      <Route path="/de/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
-                      <Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
-                      <Route path="/studio" element={<Studio />} />
-                      <Route path="/shortlist" element={<Shortlist />} />
-                      <Route path="/compare" element={<Compare />} />
-                      <Route path="/journal" element={<Navigate to="/blog" replace />} />
-                      <Route path="/journal/:slug" element={<Navigate to="/blog" replace />} />
-                      {LEGACY_REDIRECTS.map(([from, to]) => (
-                        <Route key={from} path={from} element={<Navigate to={to} replace />} />
-                      ))}
-                      <Route path="/login" element={<Navigate to="/auth" replace />} />
-                      <Route path="/signin" element={<Navigate to="/auth" replace />} />
-                      <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
-                      <Route path="/log-in" element={<Navigate to="/auth" replace />} />
-                      <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
-                      <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Layout>
-                }
-              />
+                    <Route path="/markets" element={<Markets />} />
+                    <Route path="/markets/:countrySlug" element={<MarketLandingPage />} />
+                    <Route path="/manufacturing" element={<Manufacturing />} />
+                    <Route path="/compliance" element={<Compliance />} />
+                    <Route path="/buyer-trust" element={<BuyerTrust />} />
+                    <Route path="/factory-video-call" element={<FactoryVideoCall />} />
+                    <Route path="/resources" element={<BuyerResources />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
+                    <Route path="/sustainability" element={<Navigate to="/inquiry?intent=rfq" replace />} />
+                    <Route path="/shipping-returns" element={<Navigate to="/resources#shipping-questions" replace />} />
+                    <Route path="/inquiry" element={<Inquiry />} />
+                    <Route path="/inquiry-cart" element={<InquiryCart />} />
+                    <Route path="/shortlist" element={<Navigate to="/inquiry-cart" replace />} />
+                    <Route path="/repeat-order" element={<RepeatOrder />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
+                    <Route path="/connect" element={<Connect />} />
+                    <Route path="/catalogue" element={<Catalogue />} />
+                    <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
+                    <Route path="/de/bavarian-wear" element={<GermanBavarianWear />} />
+                    <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
+                    <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
+                    <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
+                    <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
+                    <Route path="/de/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
+                    <Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
+                    <Route path="/studio" element={<Studio />} />
+                    <Route path="/compare" element={<Compare />} />
+                    <Route path="/journal" element={<Navigate to="/blog" replace />} />
+                    <Route path="/journal/:slug" element={<Navigate to="/blog" replace />} />
+                    {LEGACY_REDIRECTS.map(([from, to]) => <Route key={from} path={from} element={<Navigate to={to} replace />} />)}
+                    <Route path="/login" element={<Navigate to="/auth" replace />} />
+                    <Route path="/signin" element={<Navigate to="/auth" replace />} />
+                    <Route path="/sign-in" element={<Navigate to="/auth" replace />} />
+                    <Route path="/log-in" element={<Navigate to="/auth" replace />} />
+                    <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                    <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              } />
             </Routes>
           </Suspense>
           <AdminRuntimeGate />
