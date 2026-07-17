@@ -218,17 +218,33 @@ async function verifyExistingEntry(entry) {
 async function plan() {
   const ledger = await readLedger();
   const pending = pendingEntries(ledger);
-  const dryRuns = [];
+  const transactionalPending = [];
   const verifiedExisting = [];
+
   for (const entry of pending) {
     if (entryExecutionMode(entry) === "verified_present") {
       verifiedExisting.push(await verifyExistingEntry(entry));
       continue;
     }
+
     const sql = transactionBody(readFileSync(resolve(root, entry.path), "utf8"), entry);
-    await databaseQuery(`begin;\n${sql}\nrollback;`);
-    dryRuns.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, status: "passed" });
+    transactionalPending.push({ entry, sql });
   }
+
+  if (transactionalPending.length > 0) {
+    const cumulativeSql = transactionalPending
+      .map(({ entry, sql }) => `-- repository migration ${entry.version}: ${entry.path}\n${sql}`)
+      .join("\n\n");
+    await databaseQuery(`begin;\n${cumulativeSql}\nrollback;`);
+  }
+
+  const dryRuns = transactionalPending.map(({ entry }) => ({
+    version: entry.version,
+    path: entry.path,
+    git_blob_sha: entry.git_blob_sha,
+    status: "passed",
+  }));
+
   const output = {
     schema_version: 1,
     project_id: projectId,
