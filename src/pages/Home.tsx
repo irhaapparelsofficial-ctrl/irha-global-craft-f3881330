@@ -13,6 +13,7 @@ import {
 
 const HomeCategoryUniverse = lazy(() => import("@/components/sections/HomeCategoryUniverse"));
 const HomeManufacturingEditorial = lazy(() => import("@/components/sections/HomeManufacturingEditorial"));
+const FactoryInfrastructure = lazy(() => import("@/components/sections/FactoryInfrastructure"));
 const ProcessTimeline = lazy(() => import("@/components/sections/ProcessTimeline"));
 const BuyerDecisionSection = lazy(() => import("@/components/sections/BuyerDecisionSection"));
 const StartProgramCTA = lazy(() => import("@/components/sections/StartProgramCTA"));
@@ -57,6 +58,13 @@ export default function Home() {
         <Suspense fallback={<div aria-hidden className="min-h-[280px]" />}>
           <div className="[content-visibility:auto] [contain-intrinsic-size:620px]">
             <HomeManufacturingEditorial />
+          </div>
+        </Suspense>
+      </ViewportDeferred>
+      <ViewportDeferred minHeight={860} rootMargin="220px 0px">
+        <Suspense fallback={<div aria-hidden className="min-h-[380px]" />}>
+          <div className="[content-visibility:auto] [contain-intrinsic-size:860px]">
+            <FactoryInfrastructure />
           </div>
         </Suspense>
       </ViewportDeferred>
