@@ -15,10 +15,12 @@ export default function StickyMobileCTA() {
     ? `/inquiry?intent=rfq&category=${encodeURIComponent(categorySlug)}&utm_source=mobile-dock&utm_content=${encodeURIComponent(pathname)}`
     : "/inquiry?intent=rfq";
   const [collapsed, setCollapsed] = useState(false);
+  const [supportOpened, setSupportOpened] = useState(false);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
     setCollapsed(false);
+    setSupportOpened(false);
     lastScrollY.current = window.scrollY;
   }, [pathname]);
 
@@ -45,9 +47,11 @@ export default function StickyMobileCTA() {
   }, []);
 
   const openLiveSupport = () => {
-    setCollapsed(true);
+    setSupportOpened(true);
     window.dispatchEvent(new CustomEvent("irha:open-irha-guide"));
   };
+
+  if (pathname.startsWith("/admin") || pathname.startsWith("/inquiry") || supportOpened) return null;
 
   return (
     <div
@@ -66,7 +70,7 @@ export default function StickyMobileCTA() {
         }`}
       >
         <span className={`relative inline-flex shrink-0 items-center justify-center rounded-full border border-emerald-300/45 bg-emerald-400/10 text-emerald-300 ${collapsed ? "h-8 w-8" : "h-9 w-9"}`}>
-          <MessageCircle size={collapsed ? 15 : 17} />
+          <MessageCircle size={collapsed ? 15 : 17} aria-hidden="true" />
           <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border-2 border-black bg-emerald-400" aria-hidden="true" />
         </span>
         {!collapsed && (
@@ -83,7 +87,7 @@ export default function StickyMobileCTA() {
           collapsed ? "min-h-[48px] px-2" : "min-h-[58px] gap-2 px-3 text-[10px] tracking-[0.15em]"
         }`}
       >
-        <FileText size={collapsed ? 16 : 15} />
+        <FileText size={collapsed ? 16 : 15} aria-hidden="true" />
         {!collapsed && "Request quote"}
       </Link>
     </div>

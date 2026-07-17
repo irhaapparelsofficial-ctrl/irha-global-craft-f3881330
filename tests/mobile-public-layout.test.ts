@@ -14,9 +14,9 @@ describe("mobile public layout", () => {
     expect(categories).toContain("line-clamp-2");
   });
 
-  it("reserves mobile content space for the professional support dock", () => {
+  it("reserves only compact mobile safe space for the contact dock", () => {
     const layout = read("src/components/layout/Layout.tsx");
-    expect(layout).toContain("pb-[calc(6.5rem+env(safe-area-inset-bottom))]");
+    expect(layout).toContain("pb-[calc(5rem+env(safe-area-inset-bottom))]");
   });
 
   it("shows one clear live-support entry with AI and human handoff", () => {
@@ -30,6 +30,9 @@ describe("mobile public layout", () => {
     expect(dock).toContain("Live support");
     expect(dock).toContain("AI guide + human team");
     expect(dock).not.toContain("WhatsApp");
+    expect(dock).toContain('pathname.startsWith("/admin")');
+    expect(dock).toContain('pathname.startsWith("/inquiry")');
+    expect(dock).toContain("supportOpened");
     expect(guide).toContain("Irha Live Support");
     expect(guide).toContain("Human Team");
     expect(guide).toContain('new CustomEvent(OPEN_HUMAN_EVENT)');
