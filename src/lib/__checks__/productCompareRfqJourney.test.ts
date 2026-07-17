@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
-describe("product shortlist and compare RFQ journey", () => {
+describe("product inquiry-cart and compare RFQ journey", () => {
   it("lets buyers add or remove a product from comparison on the product page", () => {
     const product = read("src/pages/ProductDetail.tsx");
     expect(product).toContain("useCompare");
@@ -15,12 +15,15 @@ describe("product shortlist and compare RFQ journey", () => {
     expect(product).toContain("Compare Full");
   });
 
-  it("keeps full product identity in quote and reference-design handoffs", () => {
+  it("keeps full product identity in the inquiry-cart and tech-pack handoff", () => {
     const product = read("src/pages/ProductDetail.tsx");
-    expect(product).toContain("intent=rfq&product=");
-    expect(product).toContain("&name=${encodeURIComponent(product.name)}");
-    expect(product).toContain("&category=${encodeURIComponent(category.slug)}");
-    expect(product).toContain("intent=reference");
+    expect(product).toContain("const inquiryProduct = {");
+    expect(product).toContain("productId: product.id");
+    expect(product).toContain("name: product.name");
+    expect(product).toContain("categorySlug: category.slug");
+    expect(product).toContain("onClick={() => inquiryCart.add(inquiryProduct)}");
+    expect(product).toContain('to="/inquiry-cart"');
+    expect(product).toContain("Add product & upload tech pack");
   });
 
   it("blocks structured compare RFQ until all selected products have current published specs", () => {
@@ -39,7 +42,7 @@ describe("product shortlist and compare RFQ journey", () => {
     expect(compare).toContain("WhatsApp remains available for assistance");
   });
 
-  it("keeps shortlist and compare query context compatible with the inquiry wizard", () => {
+  it("keeps legacy shortlist and compare query context compatible with the inquiry wizard", () => {
     const shortlist = read("src/pages/Shortlist.tsx");
     const compare = read("src/pages/Compare.tsx");
     const inquiry = read("src/pages/Inquiry.tsx");
