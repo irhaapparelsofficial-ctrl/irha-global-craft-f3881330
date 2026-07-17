@@ -6,7 +6,9 @@ const SITEMAP_PATH = resolve("public/sitemap.xml");
 const DIST_DIR = resolve("dist");
 const OWNER_EMAIL = "irhaapparelsofficial@gmail.com";
 const DOMAIN_EMAIL = "info@irhaapparels.com";
+const PUBLIC_ROBOTS_DIRECTIVE = "index,follow,max-image-preview:large";
 const NON_INDEXABLE_PATHS = new Set(["/studio"]);
+const NON_INDEXABLE_PREFIXES = ["/intl/"];
 const REMOVED_BLOG_PATHS = new Set([
   "/blog/dirndl-manufacturer-moq-50",
   "/blog/streetwear-oem-pakistan",
@@ -28,6 +30,12 @@ function normalizeUrlPath(value) {
   }
 }
 
+function isNonIndexablePath(pathname) {
+  return NON_INDEXABLE_PATHS.has(pathname)
+    || REMOVED_BLOG_PATHS.has(pathname)
+    || NON_INDEXABLE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 async function enforceSitemapPolicy() {
   const source = await readFile(SITEMAP_PATH, "utf8");
   const urlBlocks = source.match(/\s*<url>[\s\S]*?<\/url>/gi) ?? [];
@@ -46,7 +54,7 @@ async function enforceSitemapPolicy() {
     if (seen.has(pathname)) throw new Error(`Duplicate sitemap path: ${pathname}`);
     seen.add(pathname);
 
-    if (NON_INDEXABLE_PATHS.has(pathname) || REMOVED_BLOG_PATHS.has(pathname)) {
+    if (isNonIndexablePath(pathname)) {
       removed.push(pathname);
       continue;
     }
@@ -62,6 +70,12 @@ async function enforceSitemapPolicy() {
       throw new Error(`Non-indexable route still exists in sitemap: ${pathname}`);
     }
   }
+  for (const prefix of NON_INDEXABLE_PREFIXES) {
+    if (verification.includes(`<loc>${SITE_ORIGIN}${prefix}`)) {
+      throw new Error(`Non-indexable route prefix still exists in sitemap: ${prefix}`);
+    }
+  }
+
   console.log(`Public index policy retained ${retained.length} sitemap URLs and removed ${removed.length} non-indexable URLs`);
 }
 
@@ -74,6 +88,12 @@ async function walk(directory) {
     else if (entry.isFile()) files.push(target);
   }
   return files;
+}
+
+function robotsContent(html) {
+  return html.match(/<meta\s+[^>]*name=["']robots["'][^>]*content=["']([^"']+)["'][^>]*>/i)?.[1]
+    ?? html.match(/<meta\s+[^>]*content=["']([^"']+)["'][^>]*name=["']robots["'][^>]*>/i)?.[1]
+    ?? "";
 }
 
 async function enforceBuildPolicy() {
@@ -95,6 +115,10 @@ async function enforceBuildPolicy() {
   for (const path of coreShells) {
     const html = await readFile(resolve(DIST_DIR, path), "utf8");
     if (!html.includes(DOMAIN_EMAIL)) throw new Error(`${path} is missing the public domain email`);
+    const robots = robotsContent(html).replace(/\s+/g, "").toLowerCase();
+    if (robots !== PUBLIC_ROBOTS_DIRECTIVE) {
+      throw new Error(`${path} must use ${PUBLIC_ROBOTS_DIRECTIVE}; received ${robots || "<missing>"}`);
+    }
   }
 
   const forbiddenFiles = [
@@ -109,7 +133,7 @@ async function enforceBuildPolicy() {
     if (exists) throw new Error(`Non-indexable static route shell was generated: ${path}`);
   }
 
-  console.log(`Verified ${htmlFiles.length} public HTML files: domain email consistent and non-indexable shells absent`);
+  console.log(`Verified ${htmlFiles.length} public HTML files: canonical pages are indexable, domain email is consistent and non-indexable shells are absent`);
 }
 
 const phase = process.argv[2];
