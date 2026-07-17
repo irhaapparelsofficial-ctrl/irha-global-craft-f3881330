@@ -50,6 +50,17 @@ function entryExecutionMode(entry) {
   return entry.execution_mode || "transactional";
 }
 
+function transactionBody(sql, entry) {
+  const trimmed = String(sql).trim();
+  const wrapped = trimmed.match(/^begin\s*;\s*([\s\S]*?)\s*commit\s*;?$/i);
+  const body = (wrapped ? wrapped[1] : trimmed).trim();
+  if (!body) throw new Error(`Migration ${entry.version} has no transactional SQL body`);
+  if (/\b(begin|commit|rollback)\s*;/i.test(body)) {
+    throw new Error(`Migration ${entry.version} contains nested transaction control`);
+  }
+  return body;
+}
+
 function validateVerificationQuery(entry) {
   const query = String(entry.verification_query || "").trim();
   if (!query) throw new Error(`Migration ${entry.version} requires a verification_query`);
@@ -165,7 +176,7 @@ function validateManifest() {
     if (entry.verification_query !== undefined) {
       throw new Error(`Transactional migration ${entry.version} must not define verification_query`);
     }
-    const sql = buffer.toString("utf8");
+    const sql = transactionBody(buffer.toString("utf8"), entry);
     const forbidden = /\b(create\s+index\s+concurrently|reindex\s+concurrently|vacuum|cluster\s+|net\.http_|http_post\s*\(|cron\.schedule\s*\()/i;
     if (forbidden.test(sql)) throw new Error(`Migration ${entry.version} contains non-transactional or external side-effect SQL`);
   }
@@ -224,7 +235,7 @@ async function plan() {
       verifiedExisting.push(await verifyExistingEntry(entry));
       continue;
     }
-    const sql = readFileSync(resolve(root, entry.path), "utf8");
+    const sql = transactionBody(readFileSync(resolve(root, entry.path), "utf8"), entry);
     await databaseQuery(`begin;\n${sql}\nrollback;`);
     dryRuns.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, status: "passed" });
   }
@@ -309,7 +320,7 @@ async function apply() {
       continue;
     }
 
-    const sql = readFileSync(resolve(root, entry.path), "utf8");
+    const sql = transactionBody(readFileSync(resolve(root, entry.path), "utf8"), entry);
     await databaseQuery(`begin;\n${sql}\n${ledgerInsertSql(entry)}\ncommit;`);
     applied.push({ version: entry.version, path: entry.path, git_blob_sha: entry.git_blob_sha, ledger_state: "applied" });
   }
