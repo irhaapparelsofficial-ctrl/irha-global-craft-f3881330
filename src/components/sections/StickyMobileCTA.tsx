@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FileText, MessageCircle } from "lucide-react";
 
+const DEFAULT_QUOTE_HREF = "/inquiry?intent=rfq";
+
 function categoryFromPath(pathname: string): string | null {
   const match = pathname.match(/^(?:\/products|\/intl\/[^/]+\/products)\/([^/]+)/);
   const slug = match?.[1] ?? null;
@@ -16,8 +18,8 @@ export default function StickyMobileCTA() {
   const lastScrollY = useRef(0);
 
   const quoteHref = categorySlug
-    ? `/inquiry?intent=rfq&category=${encodeURIComponent(categorySlug)}&utm_source=mobile-dock&utm_content=${encodeURIComponent(pathname)}`
-    : "/inquiry?intent=rfq&utm_source=mobile-dock";
+    ? `${DEFAULT_QUOTE_HREF}&category=${encodeURIComponent(categorySlug)}&utm_source=mobile-dock&utm_content=${encodeURIComponent(pathname)}`
+    : `${DEFAULT_QUOTE_HREF}&utm_source=mobile-dock`;
 
   useEffect(() => {
     setSupportOpened(false);
