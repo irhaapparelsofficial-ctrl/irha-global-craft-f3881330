@@ -14,8 +14,9 @@ describe("CategoryOrProductPage empty audience routing", () => {
     expect(source).toContain('return <Navigate to={`/products/${categorySlug}`} replace />');
   });
 
-  it("keeps populated audience routes and real product routes intact", () => {
+  it("keeps populated audience routes and canonical product routing intact", () => {
     expect(source).toContain("if (audience) return <CategoryTaxonomyPage audienceOverride={audience.slug} />");
-    expect(source).toContain("return <ProductDetail />");
+    expect(source).toContain("return <CanonicalProductDetail />");
+    expect(source).toContain('import CanonicalProductDetail from "@/pages/CanonicalProductDetail"');
   });
 });
