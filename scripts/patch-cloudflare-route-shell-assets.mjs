@@ -41,6 +41,7 @@ const helperBlock = `const FUNCTIONAL_SPA_PATHS = new Set([
 
 const FUNCTIONAL_SPA_PREFIXES = ["/admin/", "/auth/", "/journal/"];
 const FUNCTIONAL_NOINDEX_PATHS = new Set(["/studio", "/shortlist", "/compare"]);
+const FUNCTIONAL_NOINDEX_PREFIXES = ["/intl/"];
 
 async function officialFaviconResponse(request, env) {
   const assetUrl = new URL(request.url);
@@ -141,6 +142,9 @@ const assetAfter = `    if (
     if (FUNCTIONAL_NOINDEX_PATHS.has(pathname)) {
       return withNoIndexHeaders(assetResponse, "functional-public-tool");
     }
+    if (FUNCTIONAL_NOINDEX_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+      return withNoIndexHeaders(assetResponse, "localized-draft");
+    }
     if (shouldNoIndex(pathname)) {
       return withNoIndexHeaders(assetResponse, "private-route");
     }
@@ -196,6 +200,8 @@ async function main() {
     "canonicalPathRedirect(request, url, pathname)",
     "FUNCTIONAL_SPA_PATHS",
     "FUNCTIONAL_NOINDEX_PATHS",
+    "FUNCTIONAL_NOINDEX_PREFIXES",
+    'withNoIndexHeaders(assetResponse, "localized-draft")',
     "return notFoundResponse(request, pathname)",
     'withNoIndexHeaders(assetResponse, "functional-public-tool")',
   ];
@@ -205,7 +211,7 @@ async function main() {
 
   await verifyRichRouteShells();
   await writeFile(WORKER_PATH, worker, "utf8");
-  console.log("Patched Cloudflare worker with the official favicon route, explicit rich route assets, missing-route 404s and functional noindex handling");
+  console.log("Patched Cloudflare worker with the official favicon route, explicit rich route assets, missing-route 404s and functional/draft noindex handling");
 }
 
 main().catch((error) => {
