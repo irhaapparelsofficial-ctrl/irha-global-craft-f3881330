@@ -40,7 +40,7 @@ describe("homepage navigation and B2B conversion journey", () => {
     const desktop = read("src/components/layout/FloatingActions.tsx");
     const mobile = read("src/components/sections/StickyMobileCTA.tsx");
     const guide = read("src/components/LiveChat.tsx");
-    const humanChat = read("src/components/HumanLiveChat.tsx");
+    const humanChat = read("src/components/HumanLiveChatPro.tsx");
 
     for (const source of [desktop, mobile]) {
       expect(source).toContain("/inquiry?intent=rfq&category=");
