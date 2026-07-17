@@ -10,7 +10,8 @@ describe("B2B conversion completion", () => {
     expect(form).toContain("Submit quote request");
     expect(form).toContain("preferred_contact");
     expect(form).toContain("target_delivery_date");
-    expect(form).toContain("Add tech pack or images");
+    expect(form).toContain("Tech pack / reference files");
+    expect(form).toContain("uploadPublicLeadFile");
     expect(form).toContain("Optional WhatsApp follow-up");
     expect(form).not.toContain("window.open(");
   });
