@@ -1,0 +1,233 @@
+name: Cloudflare Production Status
+
+run-name: Live release proof · reconcile-${{ github.event.workflow_run.id }}
+
+on:
+  workflow_run:
+    workflows: ["Cloudflare Current Main Reconcile"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  statuses: write
+
+concurrency:
+  group: cloudflare-production-status-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_RUN_ID: ${{ github.event.workflow_run.id }}
+  UPSTREAM_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+  PAGES_URL: https://irha-apparels.pages.dev
+  CANONICAL_ORIGIN: https://irhaapparels.com
+  WWW_ORIGIN: https://www.irhaapparels.com
+
+jobs:
+  prove-live-release:
+    if: github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Resolve original release SHA and upstream relevance
+        id: relevance
+        shell: bash
+        run: |
+          set -euo pipefail
+          upstream_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID")"
+          display_title="$(printf '%s' "$upstream_json" | jq -r '.display_title // ""')"
+          source_sha="$(printf '%s' "$display_title" | grep -Eo '[0-9a-f]{40}' | tail -n 1 || true)"
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          jobs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID/jobs?filter=latest&per_page=100")"
+          executed_jobs="$(printf '%s' "$jobs_json" | jq '[.jobs[] | select(.conclusion != "skipped")] | length')"
+
+          relevant=false
+          current=false
+          if [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]] && [ "$executed_jobs" -gt 0 ]; then
+            relevant=true
+            if [ "$source_sha" = "$latest_main" ]; then
+              current=true
+            fi
+          fi
+
+          echo "SOURCE_SHA=$source_sha" >> "$GITHUB_ENV"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "latest_main=$latest_main" >> "$GITHUB_OUTPUT"
+          echo "executed_jobs=$executed_jobs" >> "$GITHUB_OUTPUT"
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+          if [ "$relevant" != "true" ]; then
+            echo "Non-release Cloudflare reconcile ignored: title=$display_title executed_jobs=$executed_jobs"
+          elif [ "$current" != "true" ]; then
+            echo "Superseded Cloudflare proof skipped safely: source=$source_sha current_main=$latest_main"
+          else
+            echo "Exact current-main Cloudflare reconcile identified: source=$source_sha run=$UPSTREAM_RUN_ID"
+          fi
+
+      - name: Record ignored non-release run
+        if: steps.relevance.outputs.relevant != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare Production Status"
+            echo "- Reconcile run: \`$UPSTREAM_RUN_ID\`"
+            echo "- Executed upstream jobs: \`${{ steps.relevance.outputs.executed_jobs }}\`"
+            echo "- Result: ignored because every upstream job was skipped or no original release SHA was present"
+            echo "- Commit status mutation: \`false\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish upstream reconciliation failure without duplicate failure email
+        if: >-
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION != 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
+            -f state=failure \
+            -f context="Irha Cloudflare Production" \
+            -f description="Cloudflare reconciliation did not complete" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID" \
+            >/dev/null
+          echo "Upstream Cloudflare failure was recorded on the exact commit; this observer exits cleanly to avoid a duplicate failure email."
+
+      - name: Publish exact-live verification pending
+        if: >-
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
+            -f state=pending \
+            -f context="Irha Cloudflare Production" \
+            -f description="Verifying exact merged release on production" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
+
+      - name: Verify pages.dev, apex and www against exact merged SHA
+        id: live
+        if: >-
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "verified=false" >> "$GITHUB_OUTPUT"
+          echo "superseded=false" >> "$GITHUB_OUTPUT"
+
+          current_main_or_supersede() {
+            latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            if [ "$latest_main" != "$SOURCE_SHA" ]; then
+              echo "superseded=true" >> "$GITHUB_OUTPUT"
+              echo "Live proof superseded safely: source=$SOURCE_SHA current_main=$latest_main"
+              exit 0
+            fi
+          }
+
+          verify_origin() {
+            origin="$1"
+            label="$2"
+            output="/tmp/${label}-build.json"
+
+            for attempt in $(seq 1 30); do
+              current_main_or_supersede
+              cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
+              status="$(curl -sSL --connect-timeout 10 --max-time 35 \
+                -H 'Cache-Control: no-cache' \
+                -o "$output" -w '%{http_code}' \
+                "$origin/build.json?release_check=$cache_bust" || true)"
+
+              if [ "$status" = "200" ] \
+                && jq -e --arg sha "$SOURCE_SHA" \
+                  '.source_commit == $sha and .source_identity_state == "verified" and (.build_fingerprint | type == "string" and test("^[0-9a-f]{64}$"))' \
+                  "$output" >/dev/null 2>&1; then
+                echo "$label serves exact merged SHA $SOURCE_SHA"
+                return 0
+              fi
+
+              echo "$label not exact yet: status=$status attempt=$attempt/30"
+              sleep 8
+            done
+
+            echo "::error title=Exact production release not proven::$label did not serve merged SHA $SOURCE_SHA"
+            head -c 600 "$output" 2>/dev/null || true
+            echo
+            return 1
+          }
+
+          verify_origin "$PAGES_URL" pages
+          verify_origin "$CANONICAL_ORIGIN" apex
+          current_main_or_supersede
+
+          headers=/tmp/www-headers.txt
+          body=/tmp/www-body.txt
+          status="$(curl -sS --connect-timeout 10 --max-time 35 --max-redirs 0 \
+            -D "$headers" -o "$body" -w '%{http_code}' \
+            "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}-$RANDOM" || true)"
+          location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$headers")"
+
+          case "$status" in
+            301|302|307|308) ;;
+            *) echo "::error title=Canonical redirect failed::Unexpected www status $status"; exit 1 ;;
+          esac
+          case "$location" in
+            https://irhaapparels.com/*) ;;
+            *) echo "::error title=Canonical redirect failed::Unexpected www location $location"; exit 1 ;;
+          esac
+
+          echo "verified=true" >> "$GITHUB_OUTPUT"
+          echo "Exact production SHA and canonical www redirect verified."
+
+      - name: Publish exact live production status
+        if: >-
+          always() &&
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION == 'success'
+        shell: bash
+        env:
+          VERIFIED: ${{ steps.live.outputs.verified }}
+          SUPERSEDED: ${{ steps.live.outputs.superseded }}
+        run: |
+          set -euo pipefail
+          if [ "$SUPERSEDED" = "true" ]; then
+            echo "A newer main commit superseded this proof; no stale final status published."
+            exit 0
+          fi
+
+          state=failure
+          description="Exact merged release is not proven live"
+          if [ "$VERIFIED" = "true" ]; then
+            state=success
+            description="Exact merged release is live on Cloudflare"
+          fi
+
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
+            -f state="$state" \
+            -f context="Irha Cloudflare Production" \
+            -f description="$description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
+
+          {
+            echo "## Cloudflare Production Status"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Reconcile run: \`$UPSTREAM_RUN_ID\`"
+            echo "- pages.dev exact SHA: \`$VERIFIED\`"
+            echo "- apex exact SHA: \`$VERIFIED\`"
+            echo "- www canonical redirect: \`$VERIFIED\`"
+            echo "- Commit status: \`$state\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          test "$VERIFIED" = "true"
