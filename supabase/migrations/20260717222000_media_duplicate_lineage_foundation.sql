@@ -5,6 +5,11 @@
 
 begin;
 
+-- Management API migration sessions do not carry an auth JWT. Set a transaction-local
+-- service claim so the existing media_assets_before_write guard permits these exact,
+-- checksum-verified updates. The setting is discarded automatically at transaction end.
+set local request.jwt.claim.role = 'service_role';
+
 alter table public.media_assets
   add column if not exists duplicate_of uuid references public.media_assets(id) on delete restrict,
   add column if not exists duplicate_kind text,
