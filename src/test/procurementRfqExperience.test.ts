@@ -9,9 +9,9 @@ const sticky = read("src/components/sections/StickyMobileCTA.tsx");
 
 describe("procurement-grade RFQ experience", () => {
   it("saves the quick RFQ without forcing WhatsApp", () => {
-    expect(quickQuote).toContain("Save quote request");
+    expect(quickQuote).toContain("Submit quote request");
     expect(quickQuote).toContain("WhatsApp is optional");
-    expect(quickQuote).toContain("It does not automatically open WhatsApp");
+    expect(quickQuote).toContain("will never open automatically");
     expect(quickQuote).not.toContain("window.open(");
   });
 
@@ -23,9 +23,11 @@ describe("procurement-grade RFQ experience", () => {
     expect(quickQuote).toContain("WhatsApp / phone (optional)");
   });
 
-  it("routes buyers with files into the secure full RFQ", () => {
-    expect(quickQuote).toContain("Use full RFQ uploader");
-    expect(quickQuote).toContain("Add tech pack / full RFQ");
+  it("accepts buyer files directly and preserves the full RFQ fallback", () => {
+    expect(quickQuote).toContain("Tech pack / reference files");
+    expect(quickQuote).toContain("uploadPublicLeadFile");
+    expect(quickQuote).toContain("uploaded_file_count");
+    expect(quickQuote).toContain("Add more project detail");
     expect(fullInquiry).toContain("SecureFileUpload");
     expect(fullInquiry).toContain("Attach a tech pack, logo, brief or reference photo if useful.");
   });
@@ -33,8 +35,8 @@ describe("procurement-grade RFQ experience", () => {
   it("collapses the mobile contact dock while scrolling down", () => {
     expect(sticky).toContain('window.addEventListener("scroll"');
     expect(sticky).toContain("window.requestAnimationFrame");
-    expect(sticky).toContain('data-collapsed={collapsed ? "true" : "false"}');
-    expect(sticky).toContain('collapsed ? "w-[112px]" : "left-3"');
-    expect(sticky).toContain("min-h-[48px]");
+    expect(sticky).toContain('data-compact={compact ? "true" : "false"}');
+    expect(sticky).toContain('compact ? "rounded-full" : "rounded-2xl"');
+    expect(sticky).toContain("min-h-11");
   });
 });
