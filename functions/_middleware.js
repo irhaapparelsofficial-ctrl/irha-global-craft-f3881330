@@ -1,5 +1,9 @@
 const SITE_ORIGIN = "https://irhaapparels.com";
 const WEBMCP_SCRIPT = '<script src="/agent-webmcp.js" defer data-irha-agent-tools="true"></script>';
+const PUBLIC_ROBOTS_DIRECTIVE = "index,follow,max-image-preview:large";
+const NOINDEX_ROBOTS_DIRECTIVE = "noindex,follow";
+const NOINDEX_PATHS = new Set(["/studio"]);
+const NOINDEX_PREFIXES = ["/intl/"];
 
 const PAGE_SUMMARIES = {
   "/": { title: "Irha Apparels", summary: "B2B custom apparel manufacturer in Sialkot, Pakistan for brands, wholesalers, importers, retailers and private-label buyers." },
@@ -52,12 +56,35 @@ function canonicalPath(pathname) {
 }
 
 function isPrivateOrMachinePath(pathname) {
-  return pathname === "/auth" || pathname.startsWith("/admin") || pathname.startsWith("/.well-known/") || pathname.startsWith("/openapi/") || pathname.startsWith("/skills/") || pathname.startsWith("/docs/") || pathname === "/mcp" || pathname.startsWith("/mcp/");
+  return pathname === "/auth"
+    || pathname.startsWith("/admin")
+    || pathname.startsWith("/seo-indexing")
+    || pathname.startsWith("/catalogs/")
+    || pathname.startsWith("/inquiry-review")
+    || pathname.startsWith("/api/")
+    || pathname.startsWith("/.well-known/")
+    || pathname.startsWith("/openapi/")
+    || pathname.startsWith("/skills/")
+    || pathname.startsWith("/docs/")
+    || pathname === "/mcp"
+    || pathname.startsWith("/mcp/");
+}
+
+function isNoindexPath(pathname) {
+  return NOINDEX_PATHS.has(pathname) || NOINDEX_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 function looksLikeFile(pathname) {
   const segment = pathname.split("/").pop() || "";
   return segment.includes(".");
+}
+
+function applyRobotsMeta(html, directive) {
+  const meta = `<meta name="robots" content="${directive}" />`;
+  const robotsMeta = /<meta\s+[^>]*name=["']robots["'][^>]*>/i;
+  if (robotsMeta.test(html)) return html.replace(robotsMeta, meta);
+  if (html.includes("</head>")) return html.replace("</head>", `    ${meta}\n  </head>`);
+  return `${meta}${html}`;
 }
 
 export function pageSummaryFor(pathname) {
@@ -81,19 +108,21 @@ function markdownBody(pathname, page) {
 
 function markdownResponse(request, pathname, page, status = 200) {
   const body = request.method === "HEAD" ? null : markdownBody(pathname, page);
+  const normalized = canonicalPath(pathname);
+  const shouldNoindex = status === 404 || isNoindexPath(normalized);
   return new Response(body, {
     status,
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       "Cache-Control": "no-store, max-age=0, must-revalidate",
       "CDN-Cache-Control": "no-store",
-      "Content-Location": `${SITE_ORIGIN}${canonicalPath(pathname)}`,
+      "Content-Location": `${SITE_ORIGIN}${normalized}`,
       "Access-Control-Allow-Origin": "*",
       "Vary": "Accept",
       "Link": DISCOVERY_LINKS,
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "strict-origin-when-cross-origin",
-      ...(status === 404 ? { "X-Robots-Tag": "noindex, follow" } : {}),
+      ...(shouldNoindex ? { "X-Robots-Tag": NOINDEX_ROBOTS_DIRECTIVE } : {}),
     },
   });
 }
@@ -123,10 +152,18 @@ export async function onRequest(context) {
   const response = await context.next();
   const headers = withDiscoveryHeaders(response);
   const contentType = headers.get("Content-Type") || "";
+  const shouldNoindex = response.status === 404 || isPrivateOrMachinePath(pathname) || isNoindexPath(pathname);
+
+  if (shouldNoindex) {
+    headers.set("X-Robots-Tag", NOINDEX_ROBOTS_DIRECTIVE);
+  } else if ((headers.get("X-Robots-Tag") || "").toLowerCase().includes("noindex")) {
+    headers.delete("X-Robots-Tag");
+  }
 
   if (method === "GET" && response.status === 200 && contentType.toLowerCase().includes("text/html") && !isPrivateOrMachinePath(pathname)) {
     const original = await response.text();
-    const html = original.includes('data-irha-agent-tools="true"') ? original : original.includes("</body>") ? original.replace("</body>", `${WEBMCP_SCRIPT}</body>`) : `${original}${WEBMCP_SCRIPT}`;
+    const withAgentTools = original.includes('data-irha-agent-tools="true"') ? original : original.includes("</body>") ? original.replace("</body>", `${WEBMCP_SCRIPT}</body>`) : `${original}${WEBMCP_SCRIPT}`;
+    const html = applyRobotsMeta(withAgentTools, shouldNoindex ? NOINDEX_ROBOTS_DIRECTIVE : PUBLIC_ROBOTS_DIRECTIVE);
     headers.delete("Content-Length");
     headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return new Response(html, { status: response.status, statusText: response.statusText, headers });
