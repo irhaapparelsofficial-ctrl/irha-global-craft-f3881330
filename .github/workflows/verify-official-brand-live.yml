@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
     paths:
+      - "index.html"
+      - "public/favicon.svg"
+      - "public/_redirects"
+      - "public/manifest.webmanifest"
       - ".github/workflows/verify-official-brand-live.yml"
   workflow_dispatch:
 
@@ -53,6 +57,10 @@ jobs:
               -H 'Cache-Control: no-cache' \
               -o /tmp/favicon.svg -w '%{http_code}' \
               "$origin/favicon.svg?brand_check=$cache_bust" || true)"
+            legacy_status="$(curl -sS --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -o /tmp/favicon.ico -w '%{http_code}' \
+              "$origin/favicon.ico?brand_check=$cache_bust" || true)"
             home_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
               -H 'Cache-Control: no-cache' \
               -o /tmp/home.html -w '%{http_code}' \
@@ -60,19 +68,22 @@ jobs:
 
             if [ "$brand_status" = "200" ] \
               && [ "$favicon_status" = "200" ] \
+              && [ "$legacy_status" = "200" ] \
               && [ "$home_status" = "200" ] \
               && grep -Fq 'Official owner-supplied Irha Apparels Manufacturing Specialists logo' /tmp/irha-brand-mark.svg \
               && grep -Fq 'data:image/webp;base64,' /tmp/irha-brand-mark.svg \
               && grep -Fq 'Irha Apparels' /tmp/irha-brand-mark.svg \
-              && grep -Fq 'Official owner-supplied Irha Apparels Manufacturing Specialists crest' /tmp/favicon.svg \
+              && grep -Fq 'Official Irha Apparels Manufacturing Specialists crest supplied by the owner' /tmp/favicon.svg \
               && grep -Fq 'data:image/webp;base64,' /tmp/favicon.svg \
+              && ! grep -Fiq 'lovable' /tmp/favicon.svg \
+              && cmp -s /tmp/favicon.svg /tmp/favicon.ico \
               && grep -Fq 'href="/favicon.svg"' /tmp/home.html; then
               ready=true
-              echo "Official Irha header logo and favicon verified live on attempt $attempt."
+              echo "Official Irha header logo and direct favicon.ico verified live on attempt $attempt."
               break
             fi
 
-            echo "Brand assets not converged yet: brand=$brand_status favicon=$favicon_status home=$home_status attempt=$attempt/36"
+            echo "Brand assets not converged yet: brand=$brand_status favicon=$favicon_status legacy=$legacy_status home=$home_status attempt=$attempt/36"
             sleep 10
           done
 
@@ -83,6 +94,9 @@ jobs:
             echo
             echo "--- favicon head ---"
             head -c 400 /tmp/favicon.svg 2>/dev/null || true
+            echo
+            echo "--- legacy favicon head ---"
+            head -c 400 /tmp/favicon.ico 2>/dev/null || true
             echo
             exit 1
           }
