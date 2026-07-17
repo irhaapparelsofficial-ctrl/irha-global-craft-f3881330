@@ -9,6 +9,7 @@ import CookieConsent from "@/components/CookieConsent";
 import PageViewTracker from "@/components/PageViewTracker";
 import GlobalInteractionTracker from "@/components/GlobalInteractionTracker";
 import SiteVisitorTracker from "@/components/SiteVisitorTracker";
+import PlannedCatalogGate from "@/components/catalog/PlannedCatalogGate";
 
 const Home = lazy(() => import("./pages/Home"));
 const About = lazy(() => import("./pages/About"));
@@ -40,6 +41,7 @@ const AdminWhatsAppQuick = lazy(() => import("./pages/AdminWhatsAppQuick"));
 const AdminLeadIntake = lazy(() => import("./pages/AdminLeadIntake"));
 const AdminLeadReview = lazy(() => import("./pages/AdminLeadReview"));
 const AdminOutreachApproval = lazy(() => import("./pages/AdminOutreachApproval"));
+const AdminTaxonomyReview = lazy(() => import("./pages/AdminTaxonomyReview"));
 const SeoIndexing = lazy(() => import("./pages/SeoIndexing"));
 const ProductSpecSheet = lazy(() => import("./pages/ProductSpecSheet"));
 const Studio = lazy(() => import("./pages/Studio"));
@@ -152,12 +154,14 @@ const App = () => (
               <Route path="/admin/lead-intake" element={<AdminLeadIntake />} />
               <Route path="/admin/lead-review" element={<AdminLeadReview />} />
               <Route path="/admin/outreach-approval" element={<AdminOutreachApproval />} />
+              <Route path="/admin/taxonomy-review" element={<AdminTaxonomyReview />} />
               <Route path="/seo-indexing" element={<SeoIndexing />} />
 
               <Route
                 path="*"
                 element={
                   <Layout>
+                    <PlannedCatalogGate>
                     <Routes>
                       <Route path="/about" element={<About />} />
                       <Route path="/products" element={<GlobalCollectionsPage />} />
@@ -221,6 +225,7 @@ const App = () => (
                       <Route path="/auth/*" element={<Navigate to="/auth" replace />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    </PlannedCatalogGate>
                   </Layout>
                 }
               />
