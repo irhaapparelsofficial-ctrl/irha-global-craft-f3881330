@@ -1,0 +1,27 @@
+{
+  "asset_id": "IA-HERO-SPORTS-DESKTOP-001",
+  "category_path": "categories/sportswear",
+  "intended_page": "/categories/sportswear",
+  "intended_placement": "Custom teamwear category hero \u2014 desktop",
+  "dimensions": {
+    "width": 1920,
+    "height": 1080
+  },
+  "aspect_ratio": "1920:1080",
+  "orientation": "landscape",
+  "alt_text": "Custom sports teamwear line-up: sublimated football, basketball, rugby and cricket jerseys with tracksuit on matte black plinths in a dark studio.",
+  "clean_master_path": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001/master-clean.png",
+  "web_clean_path": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001/web-clean.webp",
+  "web_branded_path": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001/web-branded.webp",
+  "official_logo_source_path": "src/assets/irha-logo.png (CDN pointer: src/assets/irha-logo.png.asset.json \u2192 /__l5e/assets-v1/c9265db3-9f5d-44d2-a18b-c8f909ae6da0/irha-logo.png)",
+  "official_logo_extracted_from": "public/irha-brand-mark.svg (embedded WebP) + CDN pointer src/assets/irha-logo.png.asset.json",
+  "generation_prompt": "Premium B2B custom-teamwear manufacturer editorial hero. Curated arrangement on matte-black plinths in a dark charcoal studio: an original (non-branded, no real club design) navy-and-gold sublimated football/soccer jersey with matching shorts, a red-and-black basketball mesh jersey with contrast side panels, a white-and-navy rugby match jersey with reinforced collar, a cricket match shirt in cream with navy accents, and a charcoal tracksuit jacket. Original non-branded designs, visible sublimation gradients, technical mesh fabric, flatlock stitching. Cinematic gold-rim lighting. Wide 16:9 with negative space on the LEFT. Products only, no humans, no mannequins, no invisible body forms. No real-team logos, no brand names, no player names, no numbers, no text, no country flags, no watermarks, no gibberish.",
+  "negative_prompt": "no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions",
+  "generation_model": "lovable imagegen (fast/standard tier)",
+  "status": "generated_pending_review",
+  "qa_flags": [
+    "ai_hallucinated_brand_marks_visible",
+    "ai_hallucinated_text_visible"
+  ],
+  "created_at": "2026-07-17T23:05:20Z"
+}

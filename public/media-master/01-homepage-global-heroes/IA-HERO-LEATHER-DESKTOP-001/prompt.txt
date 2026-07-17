@@ -1,0 +1,8 @@
+Asset: IA-HERO-LEATHER-DESKTOP-001
+Target: 1920x1080 (landscape)
+
+--- POSITIVE PROMPT ---
+Premium B2B leather-goods manufacturer editorial hero. Curated arrangement on matte-black plinths in dark charcoal studio: a black nappa-leather biker jacket with matte gunmetal zippers, a dark-brown suede/leather bomber jacket, a black leather vest, a black leather belt with brushed buckle, and a pair of black leather gloves. Rich genuine-leather grain, subtle sheen, precise stitching, YKK-style zips. Cinematic gold-rim directional lighting. Wide 16:9 with pronounced negative space on the LEFT for website copy. Products only — no humans, no mannequins, no invisible body forms. No text, no brand names, no logos, no watermarks, no gibberish labels, no flags.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions

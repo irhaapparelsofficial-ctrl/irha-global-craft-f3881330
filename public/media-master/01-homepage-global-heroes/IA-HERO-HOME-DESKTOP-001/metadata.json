@@ -1,0 +1,24 @@
+{
+  "asset_id": "IA-HERO-HOME-DESKTOP-001",
+  "category_path": "homepage/global",
+  "intended_page": "/",
+  "intended_placement": "Homepage hero \u2014 desktop",
+  "dimensions": {
+    "width": 2400,
+    "height": 1350
+  },
+  "aspect_ratio": "2400:1350",
+  "orientation": "landscape",
+  "alt_text": "Curated dark-studio product arrangement featuring Bavarian Lederhosen, black leather biker jacket, custom navy football jersey, charcoal streetwear hoodie and joggers, and a navy satin robe on matte black plinths.",
+  "clean_master_path": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001/master-clean.png",
+  "web_clean_path": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001/web-clean.webp",
+  "web_branded_path": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001/web-branded.webp",
+  "official_logo_source_path": "src/assets/irha-logo.png (CDN pointer: src/assets/irha-logo.png.asset.json \u2192 /__l5e/assets-v1/c9265db3-9f5d-44d2-a18b-c8f909ae6da0/irha-logo.png)",
+  "official_logo_extracted_from": "public/irha-brand-mark.svg (embedded WebP) + CDN pointer src/assets/irha-logo.png.asset.json",
+  "generation_prompt": "Premium European B2B apparel-manufacturer editorial hero photograph. Cohesive curated arrangement of five distinct manufacturing categories on subtle matte-black plinths in a dark charcoal studio: (1) embroidered Bavarian Lederhosen shorts in rich brown leather with green trim and detailed embroidery, (2) a premium black leather biker jacket with matte hardware, (3) a custom football/soccer jersey in navy and gold with sublimated panels, (4) a heavyweight oversized charcoal streetwear hoodie folded next to matching joggers, (5) a premium navy satin robe / nightwear set. Products only, no humans, no mannequins, no invisible-body forms. Controlled directional gold-rim lighting, realistic fabric grain and leather texture, crisp seams and stitching, cinematic depth. Wide 16:9 composition with pronounced negative space on the LEFT half for future website copy \u2014 subjects grouped on the right two-thirds. No text, no labels, no logos, no brand names, no captions, no price tags, no watermarks, no flags, no gibberish writing, no duplicate products, no floating hardware, no props clutter.",
+  "negative_prompt": "no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions",
+  "generation_model": "lovable imagegen (fast/standard tier)",
+  "status": "generated_pending_review",
+  "qa_flags": [],
+  "created_at": "2026-07-17T23:05:20Z"
+}

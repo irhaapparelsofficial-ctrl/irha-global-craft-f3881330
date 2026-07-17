@@ -1,0 +1,8 @@
+Asset: IA-HERO-NIGHT-LEISURE-MOBILE-001
+Target: 1080x1350 (portrait)
+
+--- POSITIVE PROMPT ---
+Vertical portrait editorial for premium B2B nightwear/loungewear manufacturer. Centered composition on matte-black plinths in dark charcoal studio: navy cotton piped pajama set folded, charcoal lounge set laid flat, deep-navy satin robe with tie belt, small coordinating family sleepwear accent piece. Realistic cotton and satin textures, soft textile lighting with gold rim. Top/bottom safe zones. No humans, no mannequins, no invisible body forms, no logos, no brand names, no text, no watermarks.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions

@@ -1,0 +1,24 @@
+{
+  "asset_id": "IA-HERO-NIGHT-LEISURE-DESKTOP-001",
+  "category_path": "categories/nightwear-leisure",
+  "intended_page": "/categories/nightwear-leisure",
+  "intended_placement": "Nightwear & leisure category hero \u2014 desktop",
+  "dimensions": {
+    "width": 1920,
+    "height": 1080
+  },
+  "aspect_ratio": "1920:1080",
+  "orientation": "landscape",
+  "alt_text": "Nightwear and lounge arrangement: navy piped pajama set, charcoal lounge set, deep-navy satin robe and coordinating sleepwear accents on matte black plinths in a dark studio.",
+  "clean_master_path": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001/master-clean.png",
+  "web_clean_path": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001/web-clean.webp",
+  "web_branded_path": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001/web-branded.webp",
+  "official_logo_source_path": "src/assets/irha-logo.png (CDN pointer: src/assets/irha-logo.png.asset.json \u2192 /__l5e/assets-v1/c9265db3-9f5d-44d2-a18b-c8f909ae6da0/irha-logo.png)",
+  "official_logo_extracted_from": "public/irha-brand-mark.svg (embedded WebP) + CDN pointer src/assets/irha-logo.png.asset.json",
+  "generation_prompt": "Premium B2B nightwear and loungewear manufacturer editorial hero. Curated arrangement on matte-black plinths in a dark charcoal studio: a premium navy cotton pajama set (piped shirt and matching trousers) neatly folded, a charcoal lounge set (long-sleeve tee and jogger) laid flat, a deep-navy satin robe with subtle sheen and tie belt, and small family sleepwear accents (a smaller folded pajama shirt in coordinating navy). Soft directional textile lighting with subtle gold rim. Realistic cotton weave and satin sheen. Wide 16:9 with negative space on the LEFT for copy. Products only \u2014 no humans, no mannequins, no invisible body forms. No text, no logos, no brand names, no watermarks, no gibberish.",
+  "negative_prompt": "no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions",
+  "generation_model": "lovable imagegen (fast/standard tier)",
+  "status": "generated_pending_review",
+  "qa_flags": [],
+  "created_at": "2026-07-17T23:05:20Z"
+}

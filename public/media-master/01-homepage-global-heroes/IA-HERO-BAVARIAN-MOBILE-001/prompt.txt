@@ -1,0 +1,8 @@
+Asset: IA-HERO-BAVARIAN-MOBILE-001
+Target: 1080x1350 (portrait)
+
+--- POSITIVE PROMPT ---
+Vertical portrait B2B editorial for Bavarian Trachten manufacturer. Centered cluster on matte-black plinths in dark charcoal studio: embroidered brown Lederhosen with green suspenders, red-and-white checkered Dirndl dress with black apron (garment shape only, NO mannequin, NO invisible body form), crisp folded white Trachten shirt, embroidered green wool vest with horn buttons, small leather belt and edelweiss brooch. Authentic textures, gold-rim lighting. Generous top/bottom safe zones. No humans, no faces, no text, no logos, no flags, no watermarks.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions

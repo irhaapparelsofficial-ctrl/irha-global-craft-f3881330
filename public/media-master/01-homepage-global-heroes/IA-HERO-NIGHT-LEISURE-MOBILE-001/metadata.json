@@ -1,0 +1,24 @@
+{
+  "asset_id": "IA-HERO-NIGHT-LEISURE-MOBILE-001",
+  "category_path": "categories/nightwear-leisure",
+  "intended_page": "/categories/nightwear-leisure",
+  "intended_placement": "Nightwear & leisure category hero \u2014 mobile",
+  "dimensions": {
+    "width": 1080,
+    "height": 1350
+  },
+  "aspect_ratio": "1080:1350",
+  "orientation": "portrait",
+  "alt_text": "Vertical nightwear/lounge arrangement with pajama set and satin robe on matte black plinths in a dark studio.",
+  "clean_master_path": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001/master-clean.png",
+  "web_clean_path": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001/web-clean.webp",
+  "web_branded_path": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001/web-branded.webp",
+  "official_logo_source_path": "src/assets/irha-logo.png (CDN pointer: src/assets/irha-logo.png.asset.json \u2192 /__l5e/assets-v1/c9265db3-9f5d-44d2-a18b-c8f909ae6da0/irha-logo.png)",
+  "official_logo_extracted_from": "public/irha-brand-mark.svg (embedded WebP) + CDN pointer src/assets/irha-logo.png.asset.json",
+  "generation_prompt": "Vertical portrait editorial for premium B2B nightwear/loungewear manufacturer. Centered composition on matte-black plinths in dark charcoal studio: navy cotton piped pajama set folded, charcoal lounge set laid flat, deep-navy satin robe with tie belt, small coordinating family sleepwear accent piece. Realistic cotton and satin textures, soft textile lighting with gold rim. Top/bottom safe zones. No humans, no mannequins, no invisible body forms, no logos, no brand names, no text, no watermarks.",
+  "negative_prompt": "no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions",
+  "generation_model": "lovable imagegen (fast/standard tier)",
+  "status": "generated_pending_review",
+  "qa_flags": [],
+  "created_at": "2026-07-17T23:05:20Z"
+}

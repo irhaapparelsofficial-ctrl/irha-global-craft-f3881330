@@ -1,0 +1,231 @@
+{
+  "batch_id": "IA-HERO-001",
+  "batch_name": "Homepage & Global Category Heroes",
+  "folder_root": "public/media-master/01-homepage-global-heroes",
+  "official_logo_source_path": "src/assets/irha-logo.png (CDN pointer: src/assets/irha-logo.png.asset.json \u2192 /__l5e/assets-v1/c9265db3-9f5d-44d2-a18b-c8f909ae6da0/irha-logo.png)",
+  "official_logo_used_verbatim": true,
+  "logo_placement": "top-right, 11% of image width, ~3% safe margin, alpha-composited from exact source (no redraw)",
+  "asset_count": 12,
+  "expected_image_file_count": 36,
+  "created_at": "2026-07-17T23:05:20Z",
+  "status": "generated_pending_review",
+  "assets": [
+    {
+      "asset_id": "IA-HERO-HOME-DESKTOP-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001",
+      "dimensions": "2400x1350",
+      "orientation": "landscape",
+      "category_path": "homepage/global",
+      "intended_placement": "Homepage hero \u2014 desktop",
+      "status": "generated_pending_review",
+      "qa_flags": [],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-DESKTOP-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-HOME-MOBILE-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-MOBILE-001",
+      "dimensions": "1350x1800",
+      "orientation": "portrait",
+      "category_path": "homepage/global",
+      "intended_placement": "Homepage hero \u2014 mobile",
+      "status": "generated_pending_review",
+      "qa_flags": [],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-MOBILE-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-MOBILE-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-MOBILE-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-MOBILE-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-HOME-MOBILE-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-BAVARIAN-DESKTOP-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001",
+      "dimensions": "1920x1080",
+      "orientation": "landscape",
+      "category_path": "categories/bavarian-trachten",
+      "intended_placement": "Bavarian category hero \u2014 desktop",
+      "status": "generated_pending_review",
+      "qa_flags": [
+        "mannequin_torso_present_in_output"
+      ],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-BAVARIAN-MOBILE-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-MOBILE-001",
+      "dimensions": "1080x1350",
+      "orientation": "portrait",
+      "category_path": "categories/bavarian-trachten",
+      "intended_placement": "Bavarian category hero \u2014 mobile",
+      "status": "generated_pending_review",
+      "qa_flags": [
+        "mannequin_form_present_in_output"
+      ],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-MOBILE-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-MOBILE-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-MOBILE-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-MOBILE-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-MOBILE-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-LEATHER-DESKTOP-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-DESKTOP-001",
+      "dimensions": "1920x1080",
+      "orientation": "landscape",
+      "category_path": "categories/leatherwear",
+      "intended_placement": "Leatherwear category hero \u2014 desktop",
+      "status": "generated_pending_review",
+      "qa_flags": [],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-DESKTOP-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-DESKTOP-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-DESKTOP-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-DESKTOP-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-DESKTOP-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-LEATHER-MOBILE-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-MOBILE-001",
+      "dimensions": "1080x1350",
+      "orientation": "portrait",
+      "category_path": "categories/leatherwear",
+      "intended_placement": "Leatherwear category hero \u2014 mobile",
+      "status": "generated_pending_review",
+      "qa_flags": [],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-MOBILE-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-MOBILE-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-MOBILE-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-MOBILE-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-LEATHER-MOBILE-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-SPORTS-DESKTOP-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001",
+      "dimensions": "1920x1080",
+      "orientation": "landscape",
+      "category_path": "categories/sportswear",
+      "intended_placement": "Custom teamwear category hero \u2014 desktop",
+      "status": "generated_pending_review",
+      "qa_flags": [
+        "ai_hallucinated_brand_marks_visible",
+        "ai_hallucinated_text_visible"
+      ],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-DESKTOP-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-SPORTS-MOBILE-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-MOBILE-001",
+      "dimensions": "1080x1350",
+      "orientation": "portrait",
+      "category_path": "categories/sportswear",
+      "intended_placement": "Custom teamwear category hero \u2014 mobile",
+      "status": "generated_pending_review",
+      "qa_flags": [
+        "ai_hallucinated_brand_marks_visible"
+      ],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-MOBILE-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-MOBILE-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-MOBILE-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-MOBILE-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-SPORTS-MOBILE-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-STREET-ACTIVE-DESKTOP-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-DESKTOP-001",
+      "dimensions": "1920x1080",
+      "orientation": "landscape",
+      "category_path": "categories/streetwear-activewear",
+      "intended_placement": "Streetwear & activewear category hero \u2014 desktop",
+      "status": "generated_pending_review",
+      "qa_flags": [
+        "invisible_body_form_present_in_activewear"
+      ],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-DESKTOP-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-DESKTOP-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-DESKTOP-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-DESKTOP-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-DESKTOP-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-STREET-ACTIVE-MOBILE-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-MOBILE-001",
+      "dimensions": "1080x1350",
+      "orientation": "portrait",
+      "category_path": "categories/streetwear-activewear",
+      "intended_placement": "Streetwear & activewear category hero \u2014 mobile",
+      "status": "generated_pending_review",
+      "qa_flags": [
+        "invisible_body_form_present_in_activewear"
+      ],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-MOBILE-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-MOBILE-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-MOBILE-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-MOBILE-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-STREET-ACTIVE-MOBILE-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-NIGHT-LEISURE-DESKTOP-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001",
+      "dimensions": "1920x1080",
+      "orientation": "landscape",
+      "category_path": "categories/nightwear-leisure",
+      "intended_placement": "Nightwear & leisure category hero \u2014 desktop",
+      "status": "generated_pending_review",
+      "qa_flags": [],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-DESKTOP-001/metadata.json"
+      }
+    },
+    {
+      "asset_id": "IA-HERO-NIGHT-LEISURE-MOBILE-001",
+      "folder": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001",
+      "dimensions": "1080x1350",
+      "orientation": "portrait",
+      "category_path": "categories/nightwear-leisure",
+      "intended_placement": "Nightwear & leisure category hero \u2014 mobile",
+      "status": "generated_pending_review",
+      "qa_flags": [],
+      "files": {
+        "master_clean_png": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001/master-clean.png",
+        "web_clean_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001/web-clean.webp",
+        "web_branded_webp": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001/web-branded.webp",
+        "prompt_txt": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001/prompt.txt",
+        "metadata_json": "public/media-master/01-homepage-global-heroes/IA-HERO-NIGHT-LEISURE-MOBILE-001/metadata.json"
+      }
+    }
+  ]
+}

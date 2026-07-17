@@ -1,0 +1,8 @@
+Asset: IA-HERO-HOME-MOBILE-001
+Target: 1350x1800 (portrait)
+
+--- POSITIVE PROMPT ---
+Premium European B2B apparel-manufacturer editorial hero photograph, VERTICAL portrait composition. Centered curated arrangement of five manufacturing categories on matte-black plinths in dark charcoal studio: embroidered brown-leather Bavarian Lederhosen, premium black leather biker jacket, custom navy-and-gold football jersey, heavyweight charcoal oversized hoodie with joggers, premium navy satin robe. Products only, NO humans, NO mannequins, NO invisible garment forms. Controlled gold-rim directional lighting, realistic fabric and leather textures, crisp seams and stitching. Generous top and bottom safe zones for future copy; subjects clustered in the middle band. No text, no labels, no logos, no brand names, no captions, no watermarks, no flags, no writing.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions

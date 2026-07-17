@@ -1,0 +1,8 @@
+Asset: IA-HERO-STREET-ACTIVE-DESKTOP-001
+Target: 1920x1080 (landscape)
+
+--- POSITIVE PROMPT ---
+Premium B2B streetwear and activewear manufacturer editorial hero. Curated arrangement on matte-black plinths in a dark charcoal studio: a heavyweight oversized charcoal-black hoodie folded to show thick fleece and ribbed cuffs, a premium heavyweight T-shirt neatly folded, black tapered joggers, olive-green cargo pants with functional pockets, and a women's activewear set (matching seamless top and high-waist leggings) laid flat. Heavyweight cotton weave and technical seamless-knit texture. Cinematic gold-rim lighting. Wide 16:9 with negative space on the LEFT. Products only — no humans, no mannequins, no invisible body forms. No brand names, no logos, no printed graphics, no text, no watermarks, no gibberish labels.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions

@@ -1,0 +1,26 @@
+{
+  "asset_id": "IA-HERO-BAVARIAN-DESKTOP-001",
+  "category_path": "categories/bavarian-trachten",
+  "intended_page": "/categories/bavarian-trachten",
+  "intended_placement": "Bavarian category hero \u2014 desktop",
+  "dimensions": {
+    "width": 1920,
+    "height": 1080
+  },
+  "aspect_ratio": "1920:1080",
+  "orientation": "landscape",
+  "alt_text": "Bavarian Trachten flat-lay: embroidered Lederhosen, red-and-white checkered Dirndl, Trachten shirt, embroidered vest and accessories on matte black plinths in a dark studio.",
+  "clean_master_path": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001/master-clean.png",
+  "web_clean_path": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001/web-clean.webp",
+  "web_branded_path": "public/media-master/01-homepage-global-heroes/IA-HERO-BAVARIAN-DESKTOP-001/web-branded.webp",
+  "official_logo_source_path": "src/assets/irha-logo.png (CDN pointer: src/assets/irha-logo.png.asset.json \u2192 /__l5e/assets-v1/c9265db3-9f5d-44d2-a18b-c8f909ae6da0/irha-logo.png)",
+  "official_logo_extracted_from": "public/irha-brand-mark.svg (embedded WebP) + CDN pointer src/assets/irha-logo.png.asset.json",
+  "generation_prompt": "Premium B2B editorial product-only hero for a Bavarian Trachten manufacturer. Curated arrangement on matte-black plinths in a dark charcoal studio: embroidered brown-leather Lederhosen shorts with green suspenders, a red-and-white checkered Dirndl dress with black apron on a subtle stand (garment shape, no body inside \u2014 no mannequin, no invisible form), a crisp white Trachten shirt neatly folded, an embroidered green wool vest with horn buttons, and small Bavarian accessories (leather belt, edelweiss brooch, wool socks). Authentic leather grain, detailed embroidery threads, wool weave. Cinematic gold-rim lighting. Wide 16:9 layout with negative space on the LEFT for copy. No humans, no faces, no mannequins, no text, no logos, no brand names, no country flags, no watermarks, no gibberish labels.",
+  "negative_prompt": "no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions",
+  "generation_model": "lovable imagegen (fast/standard tier)",
+  "status": "generated_pending_review",
+  "qa_flags": [
+    "mannequin_torso_present_in_output"
+  ],
+  "created_at": "2026-07-17T23:05:20Z"
+}

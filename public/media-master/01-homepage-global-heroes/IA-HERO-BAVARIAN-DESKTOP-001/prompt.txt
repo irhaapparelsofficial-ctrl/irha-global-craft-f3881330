@@ -1,0 +1,8 @@
+Asset: IA-HERO-BAVARIAN-DESKTOP-001
+Target: 1920x1080 (landscape)
+
+--- POSITIVE PROMPT ---
+Premium B2B editorial product-only hero for a Bavarian Trachten manufacturer. Curated arrangement on matte-black plinths in a dark charcoal studio: embroidered brown-leather Lederhosen shorts with green suspenders, a red-and-white checkered Dirndl dress with black apron on a subtle stand (garment shape, no body inside — no mannequin, no invisible form), a crisp white Trachten shirt neatly folded, an embroidered green wool vest with horn buttons, and small Bavarian accessories (leather belt, edelweiss brooch, wool socks). Authentic leather grain, detailed embroidery threads, wool weave. Cinematic gold-rim lighting. Wide 16:9 layout with negative space on the LEFT for copy. No humans, no faces, no mannequins, no text, no logos, no brand names, no country flags, no watermarks, no gibberish labels.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions

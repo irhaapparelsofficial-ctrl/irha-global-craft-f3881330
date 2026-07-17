@@ -1,0 +1,8 @@
+Asset: IA-HERO-SPORTS-DESKTOP-001
+Target: 1920x1080 (landscape)
+
+--- POSITIVE PROMPT ---
+Premium B2B custom-teamwear manufacturer editorial hero. Curated arrangement on matte-black plinths in a dark charcoal studio: an original (non-branded, no real club design) navy-and-gold sublimated football/soccer jersey with matching shorts, a red-and-black basketball mesh jersey with contrast side panels, a white-and-navy rugby match jersey with reinforced collar, a cricket match shirt in cream with navy accents, and a charcoal tracksuit jacket. Original non-branded designs, visible sublimation gradients, technical mesh fabric, flatlock stitching. Cinematic gold-rim lighting. Wide 16:9 with negative space on the LEFT. Products only, no humans, no mannequins, no invisible body forms. No real-team logos, no brand names, no player names, no numbers, no text, no country flags, no watermarks, no gibberish.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions

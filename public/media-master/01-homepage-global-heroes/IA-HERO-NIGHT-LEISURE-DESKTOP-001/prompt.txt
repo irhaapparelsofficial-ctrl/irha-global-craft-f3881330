@@ -1,0 +1,8 @@
+Asset: IA-HERO-NIGHT-LEISURE-DESKTOP-001
+Target: 1920x1080 (landscape)
+
+--- POSITIVE PROMPT ---
+Premium B2B nightwear and loungewear manufacturer editorial hero. Curated arrangement on matte-black plinths in a dark charcoal studio: a premium navy cotton pajama set (piped shirt and matching trousers) neatly folded, a charcoal lounge set (long-sleeve tee and jogger) laid flat, a deep-navy satin robe with subtle sheen and tie belt, and small family sleepwear accents (a smaller folded pajama shirt in coordinating navy). Soft directional textile lighting with subtle gold rim. Realistic cotton weave and satin sheen. Wide 16:9 with negative space on the LEFT for copy. Products only — no humans, no mannequins, no invisible body forms. No text, no logos, no brand names, no watermarks, no gibberish.
+
+--- NEGATIVE PROMPT ---
+no humans, no faces, no hands, no models, no mannequins, no invisible body forms, no retail prices, no competitor logos, no country flags, no copied fashion-brand designs, no watermarks, no random text, no gibberish labels, no deformed garments, no duplicate products, no floating hardware, no excessive props, no embedded headings or captions
