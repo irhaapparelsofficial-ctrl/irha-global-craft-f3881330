@@ -25,8 +25,14 @@ describe("reviewed media duplicate lineage migration", () => {
     expect(migration).not.toContain("migrated-lovable/56/56451814-1b32-4612-b763-70a9d2022178.png");
   });
 
+  it("uses transaction-local service context for the existing protected media trigger", () => {
+    expect(migration).toContain("set local request.jwt.claim.role = 'service_role';");
+    expect(migration).not.toContain("alter table public.media_assets disable trigger");
+    expect(migration).not.toContain("drop trigger media_assets_before_write");
+  });
+
   it("registers the exact modified migration blob", () => {
     const entry = manifest.migrations.find((item) => item.version === "20260717222000");
-    expect(entry?.git_blob_sha).toBe("ae306d5ba80923739a25e17e56e591c4aa907d3a");
+    expect(entry?.git_blob_sha).toBe("f75a266dac2dfee9af8101bab482c948d76ac7ed");
   });
 });
