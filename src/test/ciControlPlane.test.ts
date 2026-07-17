@@ -105,10 +105,10 @@ describe("Irha CI control plane", () => {
     expect(database).toContain("preserved, not deleted or rewritten");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
-    expect(reconciler).toContain("transactionalBody");
-    expect(reconciler).toContain("unsupported nested transaction control");
-    expect(reconciler).toContain("begin;\\n${body}\\nrollback;");
-    expect(reconciler).toContain("begin;\\n${body}\\n${ledgerInsertSql(entry)}\\ncommit;");
+    expect(reconciler).toContain("transactionBody");
+    expect(reconciler).toContain("contains nested transaction control");
+    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
+    expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
     expect(reconciler).toContain("github_management_api_transaction");
     expect(reconciler).toContain("github_management_api_verified_existing");
     expect(reconciler).toContain("verified_present");
