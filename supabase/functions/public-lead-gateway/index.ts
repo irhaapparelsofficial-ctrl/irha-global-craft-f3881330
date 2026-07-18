@@ -245,7 +245,7 @@ async function createUpload(
   const bucket = isMockup ? MOCKUP_BUCKET : TECH_PACK_BUCKET;
 
   if (!filename || !rule || !rule.aliases.includes(mime)) {
-    const allowed = isMockup ? "PDF, JPG, PNG and WEBP" : "PDF, AI, EPS, ZIP, PNG and JPG";
+    const allowed = isMockup ? "PDF, JPG, PNG and WEBP" : "PDF, AI, EPS, ZIP, PNG, JPG and WEBP";
     return json({ error: `Only ${allowed} files are allowed` }, 400, headers);
   }
   if (!Number.isFinite(size) || size < 1 || size > maxBytes) {
