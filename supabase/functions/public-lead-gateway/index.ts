@@ -28,6 +28,7 @@ const TECH_PACK_UPLOADS: Record<string, UploadRule> = {
   png: { contentType: "image/png", aliases: ["image/png"] },
   jpg: { contentType: "image/jpeg", aliases: ["image/jpeg"] },
   jpeg: { contentType: "image/jpeg", aliases: ["image/jpeg"] },
+  webp: { contentType: "image/webp", aliases: ["image/webp"] },
 };
 
 const MOCKUP_UPLOADS: Record<string, UploadRule> = {
