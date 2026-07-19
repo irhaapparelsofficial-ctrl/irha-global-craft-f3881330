@@ -175,7 +175,7 @@ export default function WebsiteOperationsDashboard({ go }: { go: (view: AdminVie
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {stat("New inquiries", counts.newInquiries, "RFQs waiting", "inquiries", <Inbox size={16} />)}
           {stat("New catalogue requests", counts.newCatalogueRequests, "Requests waiting", "inquiries", <BookOpen size={16} />)}
-          {stat("Live chats (last 7d)", counts.waitingChats, "Recent messages", "chat", <MessageCircle size={16} />)}
+          {stat("Unread / waiting chats", counts.waitingChats, "Sessions needing a reply", "chat", <MessageCircle size={16} />)}
           {stat(
             "Products",
             `${counts.productsPublished} / ${counts.productsTotal}`,
