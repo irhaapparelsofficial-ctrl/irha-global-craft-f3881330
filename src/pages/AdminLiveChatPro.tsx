@@ -48,6 +48,7 @@ type ChatSession = {
   visitor_typing_preview: string | null;
   visitor_typing_at: string | null;
   admin_typing_at: string | null;
+  admin_seen_at: string | null;
   closed_at: string | null;
   created_at: string;
   updated_at: string;
