@@ -67,7 +67,7 @@ jobs:
           name: vitest-diagnostics-${{ github.run_id }}
           path: vitest-diagnostics.log
           if-no-files-found: error
-          retention-days: 3
+          retention-days: 1
 
       - name: Build immutable release
         shell: bash
@@ -82,7 +82,7 @@ jobs:
           name: build-diagnostics-${{ github.run_id }}
           path: build-diagnostics.log
           if-no-files-found: error
-          retention-days: 3
+          retention-days: 1
 
       - name: Verify built release identity and canonical host
         shell: bash
