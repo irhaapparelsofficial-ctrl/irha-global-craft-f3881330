@@ -266,7 +266,8 @@ export default function AdminLiveChatPro() {
 
   const markConversationSeen = useCallback(async (sessionId: string) => {
     const now = new Date().toISOString();
-    await db.from("crm_notifications").update({ status: "read", read_at: now, updated_at: now }).eq("status", "unread").contains("metadata", { channel: "human_live_chat", session_id: sessionId });
+    await db.from("chat_sessions").update({ admin_seen_at: now, updated_at: now }).eq("session_id", sessionId);
+    setSessions((current) => current.map((session) => session.session_id === sessionId ? { ...session, admin_seen_at: now } : session));
   }, []);
 
   const setAdminTyping = useCallback(async (sessionId: string, active: boolean) => {
