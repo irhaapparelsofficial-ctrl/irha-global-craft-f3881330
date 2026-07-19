@@ -40,11 +40,17 @@ type VisitorContext = {
 const SESSION_KEY = "irha:human-chat-session";
 const TOKEN_KEY = "irha:human-chat-token";
 const STARTED_KEY = "irha:human-chat-started";
+const NAME_KEY = "irha:human-chat-name";
+const COMPANY_KEY = "irha:human-chat-company";
+const EMAIL_KEY = "irha:human-chat-email";
+const WHATSAPP_KEY = "irha:human-chat-whatsapp";
+const REQUIREMENT_KEY = "irha:human-chat-requirement";
 const PRESENCE_KEY_PREFIX = "irha:human-chat-presence:";
 const OPEN_EVENT = "irha:open-human-chat";
 const TYPING_HEARTBEAT_MS = 900;
 const TYPING_IDLE_MS = 2_500;
 const ADMIN_TYPING_POLL_MS = 1_200;
+const WHATSAPP_ALLOWED = /^[+0-9()\-.\s]*$/;
 
 function randomToken() {
   const bytes = new Uint8Array(32);
