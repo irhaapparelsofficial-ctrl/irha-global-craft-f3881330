@@ -67,9 +67,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: product-media-validation-${{ env.SOURCE_SHA }}
-          path: public/product-media
-          if-no-files-found: error
-          retention-days: 3
+          path: public/product-media/**/media-manifest.json
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Confirm source branch is still fresh before repository mutation
         id: freshness
