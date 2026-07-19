@@ -75,7 +75,7 @@ jobs:
             /tmp/repository-migration-plan.json
             /tmp/repository-migration-evidence.json
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
 
       - name: Record no-mutation contract
         if: always()
