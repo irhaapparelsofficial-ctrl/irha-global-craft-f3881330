@@ -121,10 +121,10 @@ export default function WebsiteOperationsDashboard({ go }: { go: (view: AdminVie
       ] = await Promise.all([
         safeCountEq("inquiries", "status", "new"),
         safeCountEq("catalogue_leads", "status", "new"),
-        safeCountGte("chat_messages", "created_at", sinceIso),
-        safeCountEq("products", "published", true),
+        safeUnreadOrWaitingChats(),
+        safeCountEq("products", "is_published", true),
         safeCountEq("products"),
-        safeCountEq("categories", "published", true),
+        safeCountEq("categories", "is_published", true),
         safeCountEq("categories"),
         safeCountEq("media_assets", "status", "active"),
         safeCountGte("page_views", "created_at", sinceIso),
