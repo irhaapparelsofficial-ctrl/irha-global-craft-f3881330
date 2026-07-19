@@ -6,7 +6,7 @@ const appSource = readFileSync("src/App.tsx", "utf8");
 const adminRuntimeSource = readFileSync("src/components/admin/AdminRuntime.tsx", "utf8");
 
 describe("public runtime and initial paint performance contract", () => {
-  it("keeps admin CRM modules and admin CSS out of the public entry bundle", () => {
+  it("keeps admin-only modules and admin CSS out of the public entry bundle", () => {
     expect(mainSource).not.toContain("AdminBuyerActionsLauncher");
     expect(mainSource).not.toContain("AdminLiveChatLauncher");
     expect(mainSource).not.toContain("AdminLiveChatNotification");
@@ -16,7 +16,7 @@ describe("public runtime and initial paint performance contract", () => {
     expect(appSource).toContain('if (!pathname.startsWith("/admin")) return null');
     expect(adminRuntimeSource).toContain('import "@/admin-mobile-focus.css"');
     expect(adminRuntimeSource).toContain("<AdminLiveChatLauncher />");
-    expect(adminRuntimeSource).toContain("<AdminLiveChatNotification />");
+    expect(adminRuntimeSource).not.toContain("<AdminLiveChatNotification />");
   });
 
   it("preloads critical home and Germany route chunks before replacing the static shell", () => {
