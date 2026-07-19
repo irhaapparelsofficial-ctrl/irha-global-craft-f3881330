@@ -103,6 +103,26 @@ function cleanEmail(value: unknown) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
 }
 
+// Sanitize an optional WhatsApp/phone. Allowed characters: +, digits, spaces,
+// parentheses, hyphen, dot. Max 50 chars. Returns { ok, value } — value is
+// null when the field was omitted/empty.
+function cleanPhone(value: unknown): { ok: boolean; value: string | null } {
+  if (value === null || value === undefined) return { ok: true, value: null };
+  if (typeof value !== "string") return { ok: false, value: null };
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: null };
+  if (trimmed.length > 50) return { ok: false, value: null };
+  if (!/^[+0-9()\-.\s]{3,50}$/.test(trimmed)) return { ok: false, value: null };
+  if (!/[0-9]/.test(trimmed)) return { ok: false, value: null };
+  return { ok: true, value: trimmed };
+}
+
+function cleanRequirement(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().slice(0, 500);
+  return trimmed || null;
+}
+
 function cleanCountryCode(value: unknown) {
   const code = cleanText(value, 8).toUpperCase();
   return /^[A-Z]{2}$/.test(code) && code !== "XX" ? code : null;
