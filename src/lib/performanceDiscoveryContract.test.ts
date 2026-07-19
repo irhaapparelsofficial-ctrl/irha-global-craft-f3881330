@@ -16,7 +16,7 @@ describe("public performance and discovery contract", () => {
     expect(appSource).toContain('if (!pathname.startsWith("/admin")) return null');
     expect(appSource).not.toContain('import AdminOutreachCommandCenter from');
     expect(mainSource).not.toContain("AdminOutreachCommandCenter");
-    expect(adminRuntimeSource).toContain("<AdminOutreachCommandCenter />");
+    expect(adminRuntimeSource).not.toContain("<AdminOutreachCommandCenter />");
     expect(appSource).not.toContain('import { SEO_BUYER_INTENT_LANDING_PAGES }');
     expect(appSource).toContain('<Route path="/de/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />');
     expect(appSource).toContain('<Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />');

@@ -1,7 +1,5 @@
-import AdminBuyerActionsLauncher from "@/components/admin/AdminBuyerActionsLauncher";
 import AdminLiveChatLauncher from "@/components/admin/AdminLiveChatLauncher";
 import AdminLiveChatNotification from "@/components/admin/AdminLiveChatNotification";
-import AdminOutreachCommandCenter from "@/components/admin/AdminOutreachCommandCenter";
 import AdminPushNotificationSetup from "@/components/admin/AdminPushNotificationSetup";
 import AdminVisitorPulse from "@/components/admin/AdminVisitorPulse";
 import "@/admin-mobile-focus.css";
@@ -9,14 +7,15 @@ import "@/admin-mobile-focus.css";
 /**
  * Admin-only floating controls and realtime listeners.
  *
- * This module is loaded dynamically only for /admin routes so public buyer and
- * SEO pages never download CRM panels, realtime listeners or admin-only CSS.
+ * The beginner website-operations admin only mounts controls that support the
+ * website inquiries + live chat + visitor traffic surfaces. Legacy CRM
+ * launchers (buyer actions, outreach command center, etc.) are intentionally
+ * not mounted here; their components remain in the repository for rollback
+ * and historical reference only.
  */
 export default function AdminRuntime() {
   return (
     <>
-      <AdminOutreachCommandCenter />
-      <AdminBuyerActionsLauncher />
       <AdminLiveChatLauncher />
       <AdminVisitorPulse />
       <AdminLiveChatNotification />

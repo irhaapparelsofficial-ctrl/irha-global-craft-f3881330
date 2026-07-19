@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 const edge = read("supabase/functions/release-health/index.ts");
 const panel = read("src/components/admin/ReleaseHealthPanel.tsx");
-const shell = read("src/components/admin/AdminShell.tsx");
+const shell = read("src/pages/Admin.tsx");
 const config = read("supabase/config.toml");
 
 describe("admin release health", () => {

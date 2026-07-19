@@ -3,79 +3,134 @@ import fs from "node:fs";
 import path from "node:path";
 
 const shell = fs.readFileSync(path.resolve(process.cwd(), "src/components/admin/AdminShell.tsx"), "utf8");
-const plain = fs.readFileSync(path.resolve(process.cwd(), "src/components/admin/PlainOwnerMode.tsx"), "utf8");
+const admin = fs.readFileSync(path.resolve(process.cwd(), "src/pages/Admin.tsx"), "utf8");
+const runtime = fs.readFileSync(path.resolve(process.cwd(), "src/components/admin/AdminRuntime.tsx"), "utf8");
+const dashboard = fs.readFileSync(path.resolve(process.cwd(), "src/components/admin/WebsiteOperationsDashboard.tsx"), "utf8");
 
-function between(source: string, start: string, end: string) {
-  const from = source.indexOf(start);
-  const to = source.indexOf(end, from + start.length);
-  return source.slice(from, to < 0 ? source.length : to);
-}
+/**
+ * The primary admin navigation must expose only the eleven website-operations
+ * views. CRM, buyer pipeline, lead research, sales pipeline, quotations, PI,
+ * outreach mailing, WhatsApp, social automation, listings, pricing and AI
+ * business tools must not be reachable from the primary admin path.
+ */
+describe("website-operations admin (beginner mode)", () => {
+  it("exposes exactly eleven primary sections in AdminShell PRIMARY_NAV", () => {
+    const primary = shell.slice(shell.indexOf("const PRIMARY_NAV"), shell.indexOf("const PRIMARY_KEYS"));
+    const labels = [...primary.matchAll(/label:\s*"([^"]+)"/g)].map((m) => m[1]);
+    expect(labels).toEqual([
+      "Dashboard",
+      "Website Inquiries",
+      "Live Chat",
+      "Products",
+      "Categories",
+      "Media Library",
+      "Website Content",
+      "SEO / Search",
+      "PDF Catalogues",
+      "Website Visitors",
+      "System Health",
+    ]);
+  });
 
-describe("plain owner admin", () => {
-  it("shows exactly five primary business sections", () => {
-    const primary = between(shell, "const PLAIN_NAV", "const ADVANCED_NAV");
-    for (const label of ["Dashboard", "Buyers", "Inbox", "Sales", "Catalogue"]) {
-      expect(primary).toContain(`label: "${label}"`);
+  it("uses only website-operations keys in the mobile bottom nav", () => {
+    const mobile = shell.slice(shell.indexOf("const MOBILE_NAV"), shell.indexOf("export function AdminShell"));
+    const keys = [...mobile.matchAll(/PRIMARY_NAV\[(\d+)\]/g)].map((m) => Number(m[1]));
+    expect(keys).toEqual([0, 1, 2, 3, 5]);
+  });
+
+  it("does not import or mount CRM, outreach, sales-pipeline or AI-business panels in Admin.tsx", () => {
+    for (const panel of [
+      "LeadsPanel",
+      "MailingPanel",
+      "AIAssistantPanel",
+      "PIGeneratorPanel",
+      "StudioPricingPanel",
+      "SocialPanel",
+      "SocialDevOpsPanel",
+      "ExportDirectoryPanel",
+      "MacroGatewayPanel",
+      "OverviewPanel",
+      "PlainOwnerMode",
+      "PlainOwnerDashboard",
+      "CommercialHubPanel",
+      "SalesPipelinePanel",
+      "WhatsAppInboxPanel",
+      "LeadAcquisitionPanel",
+      "BusinessRulesPanel",
+    ]) {
+      expect(admin).not.toContain(panel);
     }
-    expect((primary.match(/label:/g) || []).length).toBe(5);
   });
 
-  it("uses the same five owner sections in mobile navigation", () => {
-    const mobile = between(shell, "const MOBILE_NAV", "function groupTitle");
-    const entries = [...mobile.matchAll(/\{ key: "[^"]+", label: "([^"]+)"/g)].map((match) => match[1]);
-    expect(entries).toEqual(["Dashboard", "Buyers", "Inbox", "Sales", "Catalogue"]);
+  it("routes only the eleven website-operations views from Admin.tsx", () => {
+    for (const line of [
+      'case "overview": return <WebsiteOperationsDashboard',
+      'case "inquiries": return <WebsiteInquiriesPanel',
+      'case "chat": return <LiveChatEntryPanel',
+      'case "products": return <ProductsPanel',
+      'case "media": return <MediaLibraryPanel',
+      'case "categories": return <CategoriesPanel',
+      'case "content": return <ContentCmsPanel',
+      'case "seo": return <MultilingualSeoPanel',
+      'case "catalogues": return <CatalogPanel',
+      'case "traffic": return <TrafficPanel',
+      'case "system":',
+    ]) {
+      expect(admin).toContain(line);
+    }
   });
 
-  it("keeps detailed tools hidden behind an explicit Advanced Tools toggle", () => {
-    expect(shell).toContain("Advanced Tools");
-    expect(shell).toContain("irha-admin-advanced-open");
-    expect(shell).toContain("setAdvancedOpen");
-    expect(shell).toContain("advancedOpen &&");
-    expect(shell).not.toContain("DailyOwnerCommandCenter");
+  it("mounts no CRM launchers in the admin runtime", () => {
+    for (const removed of [
+      "AdminOutreachCommandCenter",
+      "AdminBuyerActionsLauncher",
+    ]) {
+      expect(runtime).not.toContain(`<${removed}`);
+    }
   });
 
-  it("routes every plain tab to its simple business hub", () => {
-    expect(shell).toContain('view === "overview"');
-    expect(shell).toContain("<PlainOwnerDashboard go={setView} />");
-    expect(shell).toContain('view === "buyers"');
-    expect(shell).toContain("<PlainBuyersHub go={setView} />");
-    expect(shell).toContain('view === "inbox"');
-    expect(shell).toContain("<PlainInboxHub go={setView} />");
-    expect(shell).toContain('view === "sales"');
-    expect(shell).toContain("<PlainSalesHub go={setView} />");
-    expect(shell).toContain('view === "catalogue_home"');
-    expect(shell).toContain("<PlainCatalogueHub go={setView} />");
-  });
-
-  it("uses real owner database tables and keeps the plain hubs read-only", () => {
-    for (const table of [
-      "lead_candidates",
-      "b2b_leads",
+  it("beginner dashboard does not query CRM tables and never breaks on missing tables", () => {
+    // Every count call is guarded by try/catch so any CRM/admin table failure
+    // returns 0 instead of throwing.
+    expect(dashboard).toContain("safeCountEq");
+    expect(dashboard).toContain("safeCountGte");
+    // The beginner dashboard reads only website-operations tables.
+    const allowedTables = new Set([
       "inquiries",
       "catalogue_leads",
-      "crm_notifications",
-      "outreach_messages",
-      "crm_tasks",
-      "crm_quotations",
-      "crm_samples",
+      "chat_messages",
       "products",
       "categories",
       "media_assets",
-    ]) expect(plain).toContain(`from("${table}")`);
-    expect(plain).not.toContain(".insert(");
-    expect(plain).not.toContain(".update(");
-    expect(plain).not.toContain('action: "send"');
+      "page_views",
+    ]);
+    const tables = [...dashboard.matchAll(/from\("([^"]+)"/g)].map((m) => m[1]);
+    for (const t of tables) expect(allowedTables.has(t)).toBe(true);
+    // No CRM lead / outreach / WhatsApp / social queries.
+    for (const forbidden of [
+      "b2b_leads",
+      "lead_candidates",
+      "crm_",
+      "outreach_",
+      "whatsapp_",
+      "social_",
+      "automation_",
+    ]) {
+      expect(dashboard).not.toContain(`from("${forbidden}`);
+    }
   });
 
-  it("keeps human live chat prominent and truthful", () => {
-    expect(plain).toContain('href: "/admin/live-chat"');
-    expect(plain).toContain('channel: "human_live_chat"');
-    expect(plain).toContain("WhatsApp will appear as a primary inbox action only after");
-  });
-
-  it("does not show advanced page guidance on plain views", () => {
-    expect(shell).toContain("const plainView = PLAIN_VIEWS.has(view)");
-    expect(shell).toContain("!plainView &&");
-    expect(shell).toContain("Advanced workspace");
+  it("website inquiries panel uses only inquiries and catalogue_leads and never auto-sends", () => {
+    const panel = fs.readFileSync(path.resolve(process.cwd(), "src/components/admin/WebsiteInquiriesPanel.tsx"), "utf8");
+    expect(panel).toContain('from("inquiries")');
+    expect(panel).toContain('from("catalogue_leads")');
+    // Contact links must be user-driven only.
+    expect(panel).toContain("mailto:");
+    expect(panel).toContain("wa.me/");
+    // No automatic CRM/lead creation and no hard deletes.
+    expect(panel).not.toContain(".insert(");
+    expect(panel).not.toContain(".delete(");
+    // No outbound mailing / WhatsApp API sends.
+    expect(panel).not.toMatch(/functions\.invoke\(["'](?:outreach-|whatsapp-|social-)/);
   });
 });
