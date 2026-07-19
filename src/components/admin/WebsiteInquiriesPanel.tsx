@@ -209,7 +209,7 @@ export default function WebsiteInquiriesPanel() {
         {[
           { label: "Total", value: counts.total },
           { label: "New", value: counts.new },
-          { label: "In progress", value: counts.inProgress },
+          { label: "Reviewed/Open", value: counts.reviewed },
           { label: "Archived", value: counts.archived },
         ].map((stat) => (
           <div key={stat.label} className="bg-card/40 p-4 min-w-0">
