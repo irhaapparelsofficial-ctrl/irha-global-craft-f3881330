@@ -245,7 +245,7 @@ export default function AdminLiveChatPro() {
         if (statusFilter === "open" && session.status === "closed") return false;
         if (statusFilter !== "open" && statusFilter !== "all" && session.status !== statusFilter) return false;
         if (!needle) return true;
-        return [session.visitor_name, session.visitor_company, session.visitor_email, session.visitor_country, session.visitor_country_code, session.visitor_region, session.visitor_city, session.entry_path, session.referrer_host, session.session_id].filter(Boolean).join(" ").toLowerCase().includes(needle);
+        return [session.visitor_name, session.visitor_company, session.visitor_email, session.visitor_whatsapp, session.visitor_requirement, session.visitor_country, session.visitor_country_code, session.visitor_region, session.visitor_city, session.entry_path, session.referrer_host, session.session_id].filter(Boolean).join(" ").toLowerCase().includes(needle);
       })
       .sort((left, right) => {
         const leftPriority = (isVisitorTyping(left) ? 6 : 0) + (left.status === "waiting" ? 4 : left.status === "active" ? 2 : 0) + (hasUnread(left) ? 3 : 0);
