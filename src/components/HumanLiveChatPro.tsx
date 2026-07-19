@@ -178,9 +178,11 @@ export default function HumanLiveChatPro() {
   const [started, setStarted] = useState(wasStarted());
   const [messages, setMessages] = useState<LiveMessage[]>([]);
   const [status, setStatus] = useState<ConversationStatus>("waiting");
-  const [visitorName, setVisitorName] = useState("");
-  const [visitorCompany, setVisitorCompany] = useState("");
-  const [visitorEmail, setVisitorEmail] = useState("");
+  const [visitorName, setVisitorName] = useState(() => readStored(NAME_KEY));
+  const [visitorCompany, setVisitorCompany] = useState(() => readStored(COMPANY_KEY));
+  const [visitorEmail, setVisitorEmail] = useState(() => readStored(EMAIL_KEY));
+  const [visitorWhatsApp, setVisitorWhatsApp] = useState(() => readStored(WHATSAPP_KEY));
+  const [visitorRequirement, setVisitorRequirement] = useState(() => readStored(REQUIREMENT_KEY));
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [polling, setPolling] = useState(false);
