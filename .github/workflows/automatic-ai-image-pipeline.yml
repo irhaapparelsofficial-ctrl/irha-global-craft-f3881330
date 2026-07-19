@@ -129,7 +129,7 @@ jobs:
           name: image-ai-static-failures-${{ github.run_id }}
           path: image-ai-static-failures.json
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 1
 
   queue-plan:
     name: Resolve protected queue execution plan
