@@ -176,7 +176,7 @@ jobs:
           name: supabase-functions-evidence-${{ env.SOURCE_SHA }}
           path: /tmp/functions.txt
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 3
 
       - name: Record control-plane outcome
         if: always()
