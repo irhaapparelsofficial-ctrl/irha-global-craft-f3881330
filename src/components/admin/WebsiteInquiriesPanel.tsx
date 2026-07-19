@@ -12,7 +12,7 @@ import {
   Search,
 } from "lucide-react";
 
-type UnifiedStatus = "new" | "in_progress" | "closed" | "archived" | string;
+type UnifiedStatus = "new" | "reviewed" | "closed" | "archived" | string;
 
 type UnifiedInquiry = {
   id: string;
@@ -33,14 +33,14 @@ type UnifiedInquiry = {
 const STATUS_FILTERS: Array<{ key: "all" | UnifiedStatus; label: string }> = [
   { key: "all", label: "All" },
   { key: "new", label: "New" },
-  { key: "in_progress", label: "In progress" },
+  { key: "reviewed", label: "Reviewed/Open" },
   { key: "closed", label: "Closed" },
   { key: "archived", label: "Archived" },
 ];
 
 const STATUS_UPDATE_OPTIONS: Array<{ key: UnifiedStatus; label: string }> = [
-  { key: "new", label: "Mark as New" },
-  { key: "in_progress", label: "In Progress" },
+  { key: "new", label: "Mark New" },
+  { key: "reviewed", label: "Mark Reviewed" },
   { key: "closed", label: "Close" },
 ];
 
