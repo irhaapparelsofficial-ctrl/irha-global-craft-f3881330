@@ -69,6 +69,37 @@ async function safeCountGte(table: string, column: string, value: string): Promi
   }
 }
 
+/**
+ * Reads chat_sessions and computes waiting/unread count in-memory.
+ * Waiting = status === "waiting" OR (last_user_message_at exists AND
+ * (admin_seen_at is null OR last_user_message_at > admin_seen_at)).
+ * RLS scoped to admin already applies. Failure returns 0.
+ */
+async function safeUnreadOrWaitingChats(): Promise<number> {
+  try {
+    const { data, error } = await (supabase
+      .from("chat_sessions" as never)
+      .select("status,last_user_message_at,admin_seen_at")
+      .limit(1000) as unknown as Promise<{
+        data: Array<{ status: string | null; last_user_message_at: string | null; admin_seen_at: string | null }> | null;
+        error: unknown;
+      }>);
+    if (error || !data) return 0;
+    let n = 0;
+    for (const s of data) {
+      if (s.status === "waiting") { n++; continue; }
+      if (s.last_user_message_at) {
+        if (!s.admin_seen_at || new Date(s.last_user_message_at) > new Date(s.admin_seen_at)) {
+          n++;
+        }
+      }
+    }
+    return n;
+  } catch {
+    return 0;
+  }
+}
+
 export default function WebsiteOperationsDashboard({ go }: { go: (view: AdminView) => void }) {
   const [counts, setCounts] = useState<Counts>(emptyCounts);
   const [loading, setLoading] = useState(true);
