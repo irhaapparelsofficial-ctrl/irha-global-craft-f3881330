@@ -40,11 +40,17 @@ type VisitorContext = {
 const SESSION_KEY = "irha:human-chat-session";
 const TOKEN_KEY = "irha:human-chat-token";
 const STARTED_KEY = "irha:human-chat-started";
+const NAME_KEY = "irha:human-chat-name";
+const COMPANY_KEY = "irha:human-chat-company";
+const EMAIL_KEY = "irha:human-chat-email";
+const WHATSAPP_KEY = "irha:human-chat-whatsapp";
+const REQUIREMENT_KEY = "irha:human-chat-requirement";
 const PRESENCE_KEY_PREFIX = "irha:human-chat-presence:";
 const OPEN_EVENT = "irha:open-human-chat";
 const TYPING_HEARTBEAT_MS = 900;
 const TYPING_IDLE_MS = 2_500;
 const ADMIN_TYPING_POLL_MS = 1_200;
+const WHATSAPP_ALLOWED = /^[+0-9()\-.\s]*$/;
 
 function randomToken() {
   const bytes = new Uint8Array(32);
@@ -81,6 +87,24 @@ function wasStarted() {
     return false;
   }
 }
+
+function readStored(key: string) {
+  try {
+    return sessionStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStored(key: string, value: string) {
+  try {
+    if (value) sessionStorage.setItem(key, value);
+    else sessionStorage.removeItem(key);
+  } catch {
+    // Memory-only fallback.
+  }
+}
+
 
 function presenceStorageKey(sessionId: string) {
   return `${PRESENCE_KEY_PREFIX}${sessionId}`;
@@ -154,9 +178,11 @@ export default function HumanLiveChatPro() {
   const [started, setStarted] = useState(wasStarted());
   const [messages, setMessages] = useState<LiveMessage[]>([]);
   const [status, setStatus] = useState<ConversationStatus>("waiting");
-  const [visitorName, setVisitorName] = useState("");
-  const [visitorCompany, setVisitorCompany] = useState("");
-  const [visitorEmail, setVisitorEmail] = useState("");
+  const [visitorName, setVisitorName] = useState(() => readStored(NAME_KEY));
+  const [visitorCompany, setVisitorCompany] = useState(() => readStored(COMPANY_KEY));
+  const [visitorEmail, setVisitorEmail] = useState(() => readStored(EMAIL_KEY));
+  const [visitorWhatsApp, setVisitorWhatsApp] = useState(() => readStored(WHATSAPP_KEY));
+  const [visitorRequirement, setVisitorRequirement] = useState(() => readStored(REQUIREMENT_KEY));
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [polling, setPolling] = useState(false);
@@ -349,10 +375,25 @@ export default function HumanLiveChatPro() {
     event.preventDefault();
     const message = input.trim();
     if (!message || sending || status === "closed") return;
-    if (!started && !visitorName.trim()) {
+    const trimmedName = visitorName.trim();
+    const trimmedCompany = visitorCompany.trim();
+    const trimmedEmail = visitorEmail.trim();
+    const trimmedWhatsApp = visitorWhatsApp.trim().slice(0, 50);
+    const trimmedRequirement = visitorRequirement.trim().slice(0, 500);
+    if (!started && !trimmedName) {
       setError("Please add your name so the Irha team knows who is contacting them.");
       return;
     }
+    if (trimmedWhatsApp && (!WHATSAPP_ALLOWED.test(trimmedWhatsApp) || !/[0-9]/.test(trimmedWhatsApp))) {
+      setError("WhatsApp/phone can include only digits, spaces, + ( ) - . — or leave it empty.");
+      return;
+    }
+    // Persist contact fields for later sessions like existing name/company/email.
+    writeStored(NAME_KEY, trimmedName);
+    writeStored(COMPANY_KEY, trimmedCompany);
+    writeStored(EMAIL_KEY, trimmedEmail);
+    writeStored(WHATSAPP_KEY, trimmedWhatsApp);
+    writeStored(REQUIREMENT_KEY, trimmedRequirement);
     setSending(true);
     setError(null);
     try {
@@ -361,9 +402,11 @@ export default function HumanLiveChatPro() {
         action: started ? "send" : "connect",
         message,
         clientMessageId: crypto.randomUUID(),
-        visitorName: visitorName.trim(),
-        visitorCompany: visitorCompany.trim(),
-        visitorEmail: visitorEmail.trim(),
+        visitorName: trimmedName,
+        visitorCompany: trimmedCompany,
+        visitorEmail: trimmedEmail,
+        visitorWhatsApp: trimmedWhatsApp,
+        visitorRequirement: trimmedRequirement,
         ...visitorContextRef.current,
         entryPath: `${window.location.pathname}${window.location.search}`.slice(0, 500),
         referrer: document.referrer,
@@ -379,6 +422,7 @@ export default function HumanLiveChatPro() {
     } catch (submitError) {
       const code = (submitError as Error).message;
       if (code === "invalid_email") setError("Please enter a valid business email, or leave the email field empty.");
+      else if (code === "invalid_phone") setError("Please enter a valid WhatsApp/phone (digits, spaces, + ( ) - . only) or leave it empty.");
       else if (code === "conversation_closed") {
         setStatus("closed");
         setError("This conversation was closed. Start a new chat to contact the team again.");
@@ -431,7 +475,7 @@ export default function HumanLiveChatPro() {
 
           <div ref={scrollRef} role="log" aria-live="polite" className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
             <div className="max-w-[94%] rounded-xl border border-gold/30 bg-gold/[0.07] px-3.5 py-3 text-sm leading-relaxed text-foreground/85">This is a real human chat. Send your product, quantity or order question and it will appear in the Irha Apparels admin dashboard. Pricing remains subject to formal requirement review.</div>
-            {!started && <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2"><label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Your name *<input value={visitorName} onChange={(event) => setVisitorName(event.target.value)} maxLength={160} autoComplete="name" placeholder="Your name" className="mt-1 min-h-11 w-full rounded-lg border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" /></label><label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Company (optional)<input value={visitorCompany} onChange={(event) => setVisitorCompany(event.target.value)} maxLength={160} autoComplete="organization" placeholder="Company or brand" className="mt-1 min-h-11 w-full rounded-lg border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" /></label><label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground sm:col-span-2">Business email (optional)<input type="email" value={visitorEmail} onChange={(event) => setVisitorEmail(event.target.value)} maxLength={254} autoComplete="email" placeholder="name@company.com" className="mt-1 min-h-11 w-full rounded-lg border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" /></label></div>}
+            {!started && <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2"><label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Your name *<input value={visitorName} onChange={(event) => setVisitorName(event.target.value)} maxLength={160} autoComplete="name" placeholder="Your name" className="mt-1 min-h-11 w-full rounded-lg border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" /></label><label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Company (optional)<input value={visitorCompany} onChange={(event) => setVisitorCompany(event.target.value)} maxLength={160} autoComplete="organization" placeholder="Company or brand" className="mt-1 min-h-11 w-full rounded-lg border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" /></label><label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Business email (optional)<input type="email" value={visitorEmail} onChange={(event) => setVisitorEmail(event.target.value)} maxLength={254} autoComplete="email" placeholder="name@company.com" className="mt-1 min-h-11 w-full rounded-lg border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" /></label><label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">WhatsApp / phone (optional)<input type="tel" inputMode="tel" value={visitorWhatsApp} onChange={(event) => setVisitorWhatsApp(event.target.value)} maxLength={50} autoComplete="tel" placeholder="+49 30 1234567" className="mt-1 min-h-11 w-full rounded-lg border border-border/60 bg-card px-3 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" /></label><label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground sm:col-span-2">Product / requirement (optional)<textarea value={visitorRequirement} onChange={(event) => setVisitorRequirement(event.target.value)} maxLength={500} rows={2} placeholder="e.g. 500 pcs Lederhosen, EU sizes, delivery by March" className="mt-1 min-h-11 w-full rounded-lg border border-border/60 bg-card px-3 py-2 text-sm normal-case tracking-normal text-foreground outline-none focus:border-gold" /></label></div>}
             {messages.map((message) => <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}><div className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${message.role === "user" ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md border border-gold/35 bg-gold/10 text-foreground"}`}><p>{message.message}</p><p className={`mt-1.5 text-[9px] ${message.role === "user" ? "text-primary-foreground/60" : "text-muted-foreground"}`}>{message.role === "admin" ? "Irha Team · " : "You · "}{new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p></div></div>)}
             {adminTyping && status !== "closed" && <div className="flex justify-start"><div className="rounded-2xl rounded-bl-md border border-emerald-400/25 bg-emerald-400/[0.07] px-3.5 py-2.5 text-sm text-emerald-200"><span className="inline-flex items-center gap-2"><span className="flex gap-1"><i className="h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-300" /><i className="h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-300 [animation-delay:120ms]" /><i className="h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-300 [animation-delay:240ms]" /></span>Irha team is typing…</span></div></div>}
           </div>

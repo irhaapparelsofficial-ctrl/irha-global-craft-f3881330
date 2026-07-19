@@ -103,6 +103,26 @@ function cleanEmail(value: unknown) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
 }
 
+// Sanitize an optional WhatsApp/phone. Allowed characters: +, digits, spaces,
+// parentheses, hyphen, dot. Max 50 chars. Returns { ok, value } — value is
+// null when the field was omitted/empty.
+function cleanPhone(value: unknown): { ok: boolean; value: string | null } {
+  if (value === null || value === undefined) return { ok: true, value: null };
+  if (typeof value !== "string") return { ok: false, value: null };
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: null };
+  if (trimmed.length > 50) return { ok: false, value: null };
+  if (!/^[+0-9()\-.\s]{3,50}$/.test(trimmed)) return { ok: false, value: null };
+  if (!/[0-9]/.test(trimmed)) return { ok: false, value: null };
+  return { ok: true, value: trimmed };
+}
+
+function cleanRequirement(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().slice(0, 500);
+  return trimmed || null;
+}
+
 function cleanCountryCode(value: unknown) {
   const code = cleanText(value, 8).toUpperCase();
   return /^[A-Z]{2}$/.test(code) && code !== "XX" ? code : null;
@@ -397,6 +417,10 @@ Deno.serve(async (req: Request) => {
       const suppliedEmail = cleanText(body.visitorEmail, 254);
       const visitorEmail = cleanEmail(body.visitorEmail);
       if (suppliedEmail && !visitorEmail) return json({ error: "invalid_email" }, 400, headers);
+      const phone = cleanPhone(body.visitorWhatsApp);
+      if (!phone.ok) return json({ error: "invalid_phone" }, 400, headers);
+      const visitorWhatsapp = phone.value;
+      const visitorRequirement = cleanRequirement(body.visitorRequirement);
 
       if (!existing.ok && existing.reason === "invalid_token") {
         return json({ error: "invalid_session_token" }, 403, headers);
@@ -410,6 +434,8 @@ Deno.serve(async (req: Request) => {
           visitor_name: visitorName,
           visitor_company: visitorCompany,
           visitor_email: visitorEmail,
+          visitor_whatsapp: visitorWhatsapp,
+          visitor_requirement: visitorRequirement,
           human_requested_at: now,
           last_message_at: now,
           first_seen_at: now,
@@ -423,6 +449,8 @@ Deno.serve(async (req: Request) => {
           visitor_name: visitorName,
           visitor_company: visitorCompany,
           visitor_email: visitorEmail,
+          visitor_whatsapp: visitorWhatsapp,
+          visitor_requirement: visitorRequirement,
           last_seen_at: now,
           updated_at: now,
           ...geoUpdates(geo),
