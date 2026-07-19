@@ -12,7 +12,7 @@ import {
   Search,
 } from "lucide-react";
 
-type UnifiedStatus = "new" | "in_progress" | "closed" | "archived" | string;
+type UnifiedStatus = "new" | "reviewed" | "closed" | "archived" | string;
 
 type UnifiedInquiry = {
   id: string;
@@ -33,14 +33,14 @@ type UnifiedInquiry = {
 const STATUS_FILTERS: Array<{ key: "all" | UnifiedStatus; label: string }> = [
   { key: "all", label: "All" },
   { key: "new", label: "New" },
-  { key: "in_progress", label: "In progress" },
+  { key: "reviewed", label: "Reviewed/Open" },
   { key: "closed", label: "Closed" },
   { key: "archived", label: "Archived" },
 ];
 
 const STATUS_UPDATE_OPTIONS: Array<{ key: UnifiedStatus; label: string }> = [
-  { key: "new", label: "Mark as New" },
-  { key: "in_progress", label: "In Progress" },
+  { key: "new", label: "Mark New" },
+  { key: "reviewed", label: "Mark Reviewed" },
   { key: "closed", label: "Close" },
 ];
 
@@ -153,7 +153,7 @@ export default function WebsiteInquiriesPanel() {
   const counts = useMemo(() => ({
     total: rows.length,
     new: rows.filter((r) => r.status === "new").length,
-    inProgress: rows.filter((r) => r.status === "in_progress").length,
+    reviewed: rows.filter((r) => r.status === "reviewed").length,
     archived: rows.filter((r) => r.status === "archived").length,
   }), [rows]);
 
@@ -209,7 +209,7 @@ export default function WebsiteInquiriesPanel() {
         {[
           { label: "Total", value: counts.total },
           { label: "New", value: counts.new },
-          { label: "In progress", value: counts.inProgress },
+          { label: "Reviewed/Open", value: counts.reviewed },
           { label: "Archived", value: counts.archived },
         ].map((stat) => (
           <div key={stat.label} className="bg-card/40 p-4 min-w-0">
