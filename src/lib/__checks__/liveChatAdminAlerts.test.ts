@@ -15,15 +15,15 @@ describe("human live chat admin alerts", () => {
     expect(guide).toContain("Human Team");
   });
 
-  it("preserves protected admin launchers without shipping them through the public entry", () => {
+  it("keeps the protected live-chat launcher while retiring the legacy CRM-era owner inbox overlay", () => {
     const desktopLauncher = read("src/components/admin/AdminLiveChatLauncher.tsx");
-    const buyerLauncher = read("src/components/admin/AdminBuyerActionsLauncher.tsx");
     const adminRuntime = read("src/components/admin/AdminRuntime.tsx");
     const main = read("src/main.tsx");
     const mobileFocus = read("src/admin-mobile-focus.css");
 
     expect(adminRuntime).toContain("<AdminLiveChatLauncher />");
-    expect(adminRuntime).toContain("<AdminLiveChatNotification />");
+    expect(adminRuntime).not.toContain("<AdminLiveChatNotification />");
+    expect(adminRuntime).toContain("<AdminPushNotificationSetup />");
     expect(adminRuntime).toContain('import "@/admin-mobile-focus.css"');
     expect(main).not.toContain("AdminLiveChatLauncher");
     expect(main).not.toContain("AdminLiveChatNotification");
@@ -32,13 +32,9 @@ describe("human live chat admin alerts", () => {
     expect(desktopLauncher).toContain('.eq("role", "admin")');
     expect(desktopLauncher).toContain('aria-label="Open human live chat console"');
     expect(mobileFocus).toContain('[aria-label="Open human live chat console"]');
-    expect(buyerLauncher).toContain('href="/admin/live-chat"');
-    expect(buyerLauncher).toContain("md:hidden");
-    expect(buyerLauncher).toContain('aria-label="Open Human Live Chat inbox"');
-    expect(mobileFocus).not.toContain('[aria-label="Open Human Live Chat inbox"]');
   });
 
-  it("creates an internal alert for a human buyer message and clears it on reply", () => {
+  it("retains the historical internal notification trigger infrastructure for rollback and push compatibility", () => {
     const migration = read("supabase/migrations/20260714185530_live_chat_admin_notifications.sql");
     expect(migration).toContain("notify_human_live_chat_admin");
     expect(migration).toContain("chat_messages_human_admin_notification");
