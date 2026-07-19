@@ -78,11 +78,9 @@ jobs:
           name: b2-lederhosen-media-${{ github.run_id }}
           path: |
             b2-lederhosen-generator.log
-            public/product-media/traditional-knee-length-lederhosen
-            public/product-media/premium-embroidered-lederhosen
             public/product-media/b2-lederhosen-media-manifest.json
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 1
 
       - name: Commit generated assets to media branch
         shell: bash
