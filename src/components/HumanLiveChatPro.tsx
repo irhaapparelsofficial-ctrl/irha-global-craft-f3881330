@@ -375,10 +375,25 @@ export default function HumanLiveChatPro() {
     event.preventDefault();
     const message = input.trim();
     if (!message || sending || status === "closed") return;
-    if (!started && !visitorName.trim()) {
+    const trimmedName = visitorName.trim();
+    const trimmedCompany = visitorCompany.trim();
+    const trimmedEmail = visitorEmail.trim();
+    const trimmedWhatsApp = visitorWhatsApp.trim().slice(0, 50);
+    const trimmedRequirement = visitorRequirement.trim().slice(0, 500);
+    if (!started && !trimmedName) {
       setError("Please add your name so the Irha team knows who is contacting them.");
       return;
     }
+    if (trimmedWhatsApp && (!WHATSAPP_ALLOWED.test(trimmedWhatsApp) || !/[0-9]/.test(trimmedWhatsApp))) {
+      setError("WhatsApp/phone can include only digits, spaces, + ( ) - . — or leave it empty.");
+      return;
+    }
+    // Persist contact fields for later sessions like existing name/company/email.
+    writeStored(NAME_KEY, trimmedName);
+    writeStored(COMPANY_KEY, trimmedCompany);
+    writeStored(EMAIL_KEY, trimmedEmail);
+    writeStored(WHATSAPP_KEY, trimmedWhatsApp);
+    writeStored(REQUIREMENT_KEY, trimmedRequirement);
     setSending(true);
     setError(null);
     try {
@@ -387,9 +402,11 @@ export default function HumanLiveChatPro() {
         action: started ? "send" : "connect",
         message,
         clientMessageId: crypto.randomUUID(),
-        visitorName: visitorName.trim(),
-        visitorCompany: visitorCompany.trim(),
-        visitorEmail: visitorEmail.trim(),
+        visitorName: trimmedName,
+        visitorCompany: trimmedCompany,
+        visitorEmail: trimmedEmail,
+        visitorWhatsApp: trimmedWhatsApp,
+        visitorRequirement: trimmedRequirement,
         ...visitorContextRef.current,
         entryPath: `${window.location.pathname}${window.location.search}`.slice(0, 500),
         referrer: document.referrer,
@@ -405,6 +422,7 @@ export default function HumanLiveChatPro() {
     } catch (submitError) {
       const code = (submitError as Error).message;
       if (code === "invalid_email") setError("Please enter a valid business email, or leave the email field empty.");
+      else if (code === "invalid_phone") setError("Please enter a valid WhatsApp/phone (digits, spaces, + ( ) - . only) or leave it empty.");
       else if (code === "conversation_closed") {
         setStatus("closed");
         setError("This conversation was closed. Start a new chat to contact the team again.");
