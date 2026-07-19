@@ -88,6 +88,24 @@ function wasStarted() {
   }
 }
 
+function readStored(key: string) {
+  try {
+    return sessionStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStored(key: string, value: string) {
+  try {
+    if (value) sessionStorage.setItem(key, value);
+    else sessionStorage.removeItem(key);
+  } catch {
+    // Memory-only fallback.
+  }
+}
+
+
 function presenceStorageKey(sessionId: string) {
   return `${PRESENCE_KEY_PREFIX}${sessionId}`;
 }
