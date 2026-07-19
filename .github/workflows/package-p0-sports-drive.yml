@@ -59,4 +59,4 @@ jobs:
           path: |
             public/product-media/${{ matrix.product }}/${{ matrix.variant }}
             public/product-media/${{ matrix.product }}/media-manifest.json
-          retention-days: 30
+          retention-days: 3
