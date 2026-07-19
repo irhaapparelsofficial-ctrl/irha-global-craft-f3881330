@@ -27,6 +27,8 @@ type ChatSession = {
   visitor_name: string | null;
   visitor_company: string | null;
   visitor_email: string | null;
+  visitor_whatsapp: string | null;
+  visitor_requirement: string | null;
   visitor_country_code: string | null;
   visitor_country: string | null;
   visitor_region: string | null;
