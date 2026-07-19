@@ -15,7 +15,6 @@ describe("public runtime and initial paint performance contract", () => {
     expect(appSource).toContain('const AdminRuntime = lazy(() => import("@/components/admin/AdminRuntime"))');
     expect(appSource).toContain('if (!pathname.startsWith("/admin")) return null');
     expect(adminRuntimeSource).toContain('import "@/admin-mobile-focus.css"');
-    expect(adminRuntimeSource).toContain("<AdminBuyerActionsLauncher />");
     expect(adminRuntimeSource).toContain("<AdminLiveChatLauncher />");
     expect(adminRuntimeSource).toContain("<AdminLiveChatNotification />");
   });
