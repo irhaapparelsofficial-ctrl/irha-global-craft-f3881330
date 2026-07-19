@@ -86,13 +86,9 @@ jobs:
           name: p0-sports-media-${{ github.run_id }}
           path: |
             p0-sports-generator.log
-            public/product-media/baseball-jersey
-            public/product-media/basketball-mesh-jersey
-            public/product-media/cricket-match-jersey
-            public/product-media/rugby-match-jersey
             public/product-media/p0-sports-media-manifest.json
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 1
 
       - name: Commit generated assets to media branch
         if: github.event_name == 'push'
