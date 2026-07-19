@@ -164,7 +164,7 @@ export default function AdminLiveChatPro() {
     try {
       const { data: sessionRows, error: sessionError } = await db
         .from("chat_sessions")
-        .select("session_id,status,visitor_name,visitor_company,visitor_email,visitor_country_code,visitor_country,visitor_region,visitor_city,visitor_timezone,visitor_language,entry_path,referrer_host,first_seen_at,last_seen_at,presence_alerted_at,assigned_to,human_requested_at,last_message_at,last_user_message_at,last_admin_message_at,visitor_typing_preview,visitor_typing_at,admin_typing_at,closed_at,created_at,updated_at")
+        .select("session_id,status,visitor_name,visitor_company,visitor_email,visitor_whatsapp,visitor_requirement,visitor_country_code,visitor_country,visitor_region,visitor_city,visitor_timezone,visitor_language,entry_path,referrer_host,first_seen_at,last_seen_at,presence_alerted_at,assigned_to,human_requested_at,last_message_at,last_user_message_at,last_admin_message_at,visitor_typing_preview,visitor_typing_at,admin_typing_at,admin_seen_at,closed_at,created_at,updated_at")
         .order("last_message_at", { ascending: false })
         .limit(200);
       if (sessionError) throw sessionError;
