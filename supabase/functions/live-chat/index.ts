@@ -417,6 +417,10 @@ Deno.serve(async (req: Request) => {
       const suppliedEmail = cleanText(body.visitorEmail, 254);
       const visitorEmail = cleanEmail(body.visitorEmail);
       if (suppliedEmail && !visitorEmail) return json({ error: "invalid_email" }, 400, headers);
+      const phone = cleanPhone(body.visitorWhatsApp);
+      if (!phone.ok) return json({ error: "invalid_phone" }, 400, headers);
+      const visitorWhatsapp = phone.value;
+      const visitorRequirement = cleanRequirement(body.visitorRequirement);
 
       if (!existing.ok && existing.reason === "invalid_token") {
         return json({ error: "invalid_session_token" }, 403, headers);
@@ -430,6 +434,8 @@ Deno.serve(async (req: Request) => {
           visitor_name: visitorName,
           visitor_company: visitorCompany,
           visitor_email: visitorEmail,
+          visitor_whatsapp: visitorWhatsapp,
+          visitor_requirement: visitorRequirement,
           human_requested_at: now,
           last_message_at: now,
           first_seen_at: now,
@@ -443,6 +449,8 @@ Deno.serve(async (req: Request) => {
           visitor_name: visitorName,
           visitor_company: visitorCompany,
           visitor_email: visitorEmail,
+          visitor_whatsapp: visitorWhatsapp,
+          visitor_requirement: visitorRequirement,
           last_seen_at: now,
           updated_at: now,
           ...geoUpdates(geo),
