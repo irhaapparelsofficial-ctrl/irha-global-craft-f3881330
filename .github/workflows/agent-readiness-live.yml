@@ -84,7 +84,7 @@ jobs:
           name: agent-readiness-scan-${{ github.run_id }}
           path: scan-result.json
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 3
 
       - name: Record result on activation board
         if: always()
