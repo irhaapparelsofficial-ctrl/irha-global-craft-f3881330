@@ -7,6 +7,7 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  ExternalLink,
   LogOut,
   MapPin,
   MessageSquare,
@@ -15,20 +16,16 @@ import {
 } from "lucide-react";
 
 import { AdminShell, type AdminView } from "@/components/admin/AdminShell";
-import OverviewPanel from "@/components/admin/OverviewPanel";
+import WebsiteOperationsDashboard from "@/components/admin/WebsiteOperationsDashboard";
+import WebsiteInquiriesPanel from "@/components/admin/WebsiteInquiriesPanel";
 import ProductsPanel from "@/components/admin/ProductsPanel";
 import MediaLibraryPanel from "@/components/admin/MediaLibraryPanel";
 import CategoriesPanel from "@/components/admin/CategoriesPanel";
-import SocialPanel from "@/components/admin/SocialPanel";
-import AIAssistantPanel from "@/components/admin/AIAssistantPanel";
-import LeadsPanel from "@/components/admin/LeadsPanel";
-import PIGeneratorPanel from "@/components/admin/PIGeneratorPanel";
-import MailingPanel from "@/components/admin/MailingPanel";
+import ContentCmsPanel from "@/components/admin/ContentCmsPanel";
+import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
 import CatalogPanel from "@/components/admin/CatalogPanel";
-import MacroGatewayPanel from "@/components/admin/MacroGatewayPanel";
-import StudioPricingPanel from "@/components/admin/StudioPricingPanel";
-import SocialDevOpsPanel from "@/components/admin/SocialDevOpsPanel";
-import ExportDirectoryPanel from "@/components/admin/ExportDirectoryPanel";
+import ReleaseHealthPanel from "@/components/admin/ReleaseHealthPanel";
+import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
 
 type PageView = {
   id: string;
@@ -40,14 +37,6 @@ type PageView = {
   country?: string | null;
   city?: string | null;
   region?: string | null;
-};
-
-type ChatMsg = {
-  id: string;
-  session_id: string;
-  role: string;
-  message: string;
-  created_at: string;
 };
 
 export default function Admin() {
@@ -73,24 +62,37 @@ export default function Admin() {
 
 function ViewRouter({ view, setView }: { view: AdminView; setView: (view: AdminView) => void }) {
   switch (view) {
-    case "overview": return <OverviewPanel go={setView} />;
+    case "overview": return <WebsiteOperationsDashboard go={setView} />;
+    case "inquiries": return <WebsiteInquiriesPanel />;
+    case "chat": return <LiveChatEntryPanel />;
     case "products": return <ProductsPanel />;
     case "media": return <MediaLibraryPanel />;
     case "categories": return <CategoriesPanel />;
+    case "content": return <ContentCmsPanel />;
+    case "seo": return <MultilingualSeoPanel />;
     case "catalogues": return <CatalogPanel />;
-    case "leads": return <LeadsPanel />;
-    case "chat": return <ChatPanel />;
-    case "mailing": return <MailingPanel />;
-    case "ai": return <AIAssistantPanel />;
-    case "studio": return <StudioPricingPanel />;
-    case "pi": return <PIGeneratorPanel />;
-    case "directory": return <ExportDirectoryPanel />;
-    case "social": return <SocialPanel />;
-    case "devops": return <SocialDevOpsPanel />;
     case "traffic": return <TrafficPanel />;
-    case "macro": return <MacroGatewayPanel />;
-    default: return <OverviewPanel go={setView} />;
+    case "system": return <><ReleaseHealthPanel /><ProductionHealthPanel /></>;
+    default: return <WebsiteOperationsDashboard go={setView} />;
   }
+}
+
+function LiveChatEntryPanel() {
+  return (
+    <div className="border border-border/60 bg-card/30 p-6 sm:p-8 text-center">
+      <MessageSquare className="mx-auto text-gold mb-3" size={28} />
+      <h2 className="font-display text-xl">Website Live Chat</h2>
+      <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
+        The live chat inbox opens in its own workspace with realtime updates and quick replies.
+      </p>
+      <a
+        href="/admin/live-chat"
+        className="mt-5 min-h-11 inline-flex items-center gap-2 border border-gold/60 px-4 text-[10px] uppercase tracking-[0.16em] text-gold hover:bg-gold hover:text-background"
+      >
+        <ExternalLink size={12} /> Open Live Chat inbox
+      </a>
+    </div>
+  );
 }
 
 function AccessDenied({ email }: { email?: string }) {
@@ -207,16 +209,8 @@ function TrafficPanel() {
     );
   }, [trackedRows]);
 
-  const topCountries = useMemo(() => tally(
-    trackedRows.map((row) => row.country || "(unknown)"),
-    10,
-  ), [trackedRows]);
-
-  const topPaths = useMemo(() => tally(
-    trackedRows.map((row) => row.path),
-    15,
-  ), [trackedRows]);
-
+  const topCountries = useMemo(() => tally(trackedRows.map((row) => row.country || "(unknown)"), 10), [trackedRows]);
+  const topPaths = useMemo(() => tally(trackedRows.map((row) => row.path), 15), [trackedRows]);
   const topRefs = useMemo(() => tally(
     trackedRows.map((row) => {
       if (!row.referrer) return "(direct)";
@@ -292,80 +286,6 @@ function TrafficPanel() {
   );
 }
 
-function ChatPanel() {
-  const [rows, setRows] = useState<ChatMsg[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    const { data, error: queryError } = await supabase
-      .from("chat_messages")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500);
-
-    if (queryError) {
-      setError(queryError.message);
-      setLoading(false);
-      return;
-    }
-
-    setRows((data as ChatMsg[]) ?? []);
-    setError(null);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
-
-  const sessions = useMemo(() => {
-    const map = new Map<string, ChatMsg[]>();
-    [...rows].reverse().forEach((message) => {
-      const values = map.get(message.session_id) ?? [];
-      values.push(message);
-      map.set(message.session_id, values);
-    });
-    return Array.from(map.entries()).sort(
-      (a, b) => new Date(b[1][b[1].length - 1].created_at).getTime() - new Date(a[1][a[1].length - 1].created_at).getTime(),
-    );
-  }, [rows]);
-
-  if (loading && rows.length === 0) return <div className="text-sm text-muted-foreground py-10 text-center" role="status">Loading chats…</div>;
-  if (error && rows.length === 0) return <ReadError title="Chat transcripts could not load" message={error} onRetry={() => void load()} />;
-  if (sessions.length === 0) return <EmptyState icon={<MessageSquare size={28} />} title="No conversations yet" body="When visitors use Live Chat, transcripts will appear here." />;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <button type="button" onClick={() => void load()} className="min-h-11 inline-flex items-center gap-2 border border-border/60 px-3 py-2 text-[10px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold">
-          <RefreshCw size={12} /> Refresh
-        </button>
-      </div>
-      {error && <ReadWarning title="Latest refresh failed" message={error} />}
-      <StatRow stats={[
-        { label: "Conversations", value: sessions.length },
-        { label: "Total messages", value: rows.length },
-        { label: "Last 7 days", value: rows.filter((row) => new Date(row.created_at) > daysAgo(7)).length },
-      ]} />
-      {sessions.map(([sessionId, messages]) => (
-        <details key={sessionId} className="border border-border/60 bg-card/30 p-4 group">
-          <summary className="cursor-pointer flex items-start sm:items-center justify-between gap-4 text-xs uppercase tracking-[0.14em] sm:tracking-[0.2em] text-foreground/70 hover:text-primary">
-            <span>Session · {sessionId.slice(0, 8)} · {messages.length} msg</span>
-            <span className="text-muted-foreground normal-case tracking-normal text-right">{fmtDate(messages[messages.length - 1].created_at)}</span>
-          </summary>
-          <div className="mt-4 space-y-3">
-            {messages.map((message) => (
-              <div key={message.id} className={`text-sm ${message.role === "user" ? "text-foreground" : "text-foreground/70 pl-4 border-l-2 border-gold/40"}`}>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">{message.role}</p>
-                <p className="whitespace-pre-wrap break-words leading-relaxed">{message.message}</p>
-              </div>
-            ))}
-          </div>
-        </details>
-      ))}
-    </div>
-  );
-}
-
 function tally(values: string[], limit: number): [string, number][] {
   const counts: Record<string, number> = {};
   values.forEach((value) => { counts[value] = (counts[value] ?? 0) + 1; });
@@ -432,7 +352,7 @@ function ReadError({ title, message, onRetry }: { title: string; message: string
         <div className="min-w-0">
           <h2 className="font-display text-xl">{title}</h2>
           <p className="mt-2 break-words text-xs leading-relaxed">{message}</p>
-          <button type="button" onClick={onRetry} className="mt-4 min-h-10 inline-flex items-center gap-2 border border-destructive/50 px-3 py-2 text-[10px] uppercase tracking-[0.16em]">
+          <button type="button" onClick={onRetry} className="mt-3 min-h-11 inline-flex items-center gap-2 border border-destructive/50 px-3 py-2 text-[10px] uppercase tracking-[0.16em] hover:bg-destructive hover:text-destructive-foreground">
             <RefreshCw size={12} /> Retry
           </button>
         </div>
@@ -443,17 +363,8 @@ function ReadError({ title, message, onRetry }: { title: string; message: string
 
 function ReadWarning({ title, message }: { title: string; message: string }) {
   return (
-    <div className="border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-200 flex items-start gap-3">
-      <AlertTriangle size={17} className="shrink-0 mt-0.5" />
-      <div className="min-w-0"><strong>{title}:</strong> <span className="break-words">{message}</span></div>
+    <div className="border border-amber-500/40 bg-amber-500/5 p-3 text-xs text-amber-500">
+      <div className="flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-0.5" /><div className="min-w-0"><p className="font-medium">{title}</p><p className="mt-1 break-words leading-relaxed">{message}</p></div></div>
     </div>
   );
-}
-
-function daysAgo(days: number) {
-  return new Date(Date.now() - days * 86_400_000);
-}
-
-function fmtDate(value: string) {
-  return new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
