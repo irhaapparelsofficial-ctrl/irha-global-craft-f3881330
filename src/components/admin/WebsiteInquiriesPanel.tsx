@@ -153,7 +153,7 @@ export default function WebsiteInquiriesPanel() {
   const counts = useMemo(() => ({
     total: rows.length,
     new: rows.filter((r) => r.status === "new").length,
-    inProgress: rows.filter((r) => r.status === "in_progress").length,
+    reviewed: rows.filter((r) => r.status === "reviewed").length,
     archived: rows.filter((r) => r.status === "archived").length,
   }), [rows]);
 
