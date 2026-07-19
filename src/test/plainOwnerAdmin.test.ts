@@ -94,11 +94,22 @@ describe("website-operations admin (beginner mode)", () => {
     // returns 0 instead of throwing.
     expect(dashboard).toContain("safeCountEq");
     expect(dashboard).toContain("safeCountGte");
+    // Uses live-schema is_published (not the retired "published" column).
+    expect(dashboard).toContain('safeCountEq("products", "is_published", true)');
+    expect(dashboard).toContain('safeCountEq("categories", "is_published", true)');
+    expect(dashboard).not.toMatch(/safeCountEq\(\s*"products"\s*,\s*"published"/);
+    expect(dashboard).not.toMatch(/safeCountEq\(\s*"categories"\s*,\s*"published"/);
+    // Waiting/unread chats use chat_sessions (admin_seen_at logic), never chat_messages or crm_notifications.
+    expect(dashboard).toContain('from("chat_sessions"');
+    expect(dashboard).toContain("admin_seen_at");
+    expect(dashboard).toContain("last_user_message_at");
+    expect(dashboard).not.toContain('from("chat_messages"');
+    expect(dashboard).not.toContain("crm_notifications");
     // The beginner dashboard reads only website-operations tables.
     const allowedTables = new Set([
       "inquiries",
       "catalogue_leads",
-      "chat_messages",
+      "chat_sessions",
       "products",
       "categories",
       "media_assets",
@@ -132,5 +143,9 @@ describe("website-operations admin (beginner mode)", () => {
     expect(panel).not.toContain(".delete(");
     // No outbound mailing / WhatsApp API sends.
     expect(panel).not.toMatch(/functions\.invoke\(["'](?:outreach-|whatsapp-|social-)/);
+    // Simplified website-ops statuses: no in_progress action option.
+    expect(panel).not.toContain('"in_progress"');
+    expect(panel).toContain('"reviewed"');
+    expect(panel).toContain("Mark Reviewed");
   });
 });
