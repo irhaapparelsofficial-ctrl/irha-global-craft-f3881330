@@ -39,16 +39,29 @@ const emptyCounts: Counts = {
   recentVisitors: 0,
 };
 
-async function safeCount(
-  table: string,
-  filter?: (query: ReturnType<typeof supabase.from>) => unknown,
-): Promise<number> {
+async function safeCountEq(table: string, column?: string, value?: unknown): Promise<number> {
   try {
-    // Every call is a fresh head-count; failures are swallowed so a single
-    // missing/blocked table can never break the beginner dashboard.
-    let query = supabase.from(table as never).select("*", { count: "exact", head: true });
-    if (filter) query = filter(query) as typeof query;
-    const { count, error } = await query;
+    // Failures are swallowed so a single missing/blocked table can never break
+    // the beginner dashboard.
+    let q = supabase.from(table as never).select("*", { count: "exact", head: true }) as unknown as {
+      eq: (c: string, v: unknown) => typeof q;
+      then: PromiseLike<{ count: number | null; error: unknown }>["then"];
+    };
+    if (column !== undefined) q = q.eq(column, value as never);
+    const { count, error } = (await (q as unknown as Promise<{ count: number | null; error: unknown }>));
+    if (error) return 0;
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function safeCountGte(table: string, column: string, value: string): Promise<number> {
+  try {
+    const q = supabase.from(table as never).select("*", { count: "exact", head: true }) as unknown as {
+      gte: (c: string, v: string) => Promise<{ count: number | null; error: unknown }>;
+    };
+    const { count, error } = await q.gte(column, value);
     if (error) return 0;
     return count ?? 0;
   } catch {
@@ -75,15 +88,15 @@ export default function WebsiteOperationsDashboard({ go }: { go: (view: AdminVie
         mediaActive,
         recentVisitors,
       ] = await Promise.all([
-        safeCount("inquiries", (q) => (q as never as { eq: (c: string, v: string) => unknown }).eq("status", "new")),
-        safeCount("catalogue_leads", (q) => (q as never as { eq: (c: string, v: string) => unknown }).eq("status", "new")),
-        safeCount("chat_messages", (q) => (q as never as { gte: (c: string, v: string) => unknown }).gte("created_at", sinceIso)),
-        safeCount("products", (q) => (q as never as { eq: (c: string, v: unknown) => unknown }).eq("published", true)),
-        safeCount("products"),
-        safeCount("categories", (q) => (q as never as { eq: (c: string, v: unknown) => unknown }).eq("published", true)),
-        safeCount("categories"),
-        safeCount("media_assets", (q) => (q as never as { eq: (c: string, v: string) => unknown }).eq("status", "active")),
-        safeCount("page_views", (q) => (q as never as { gte: (c: string, v: string) => unknown }).gte("created_at", sinceIso)),
+        safeCountEq("inquiries", "status", "new"),
+        safeCountEq("catalogue_leads", "status", "new"),
+        safeCountGte("chat_messages", "created_at", sinceIso),
+        safeCountEq("products", "published", true),
+        safeCountEq("products"),
+        safeCountEq("categories", "published", true),
+        safeCountEq("categories"),
+        safeCountEq("media_assets", "status", "active"),
+        safeCountGte("page_views", "created_at", sinceIso),
       ]);
       if (cancelled) return;
       setCounts({
