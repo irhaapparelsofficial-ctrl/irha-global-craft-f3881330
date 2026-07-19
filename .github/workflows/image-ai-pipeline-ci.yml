@@ -124,7 +124,7 @@ jobs:
         with:
           name: image-gateway-deno-check-${{ github.run_id }}
           path: /tmp/image-gateway-deno-check.log
-          retention-days: 7
+          retention-days: 1
 
       - name: Enforce successful gateway type-check
         if: steps.deno_check.outcome != 'success'
