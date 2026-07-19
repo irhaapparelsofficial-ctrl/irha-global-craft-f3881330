@@ -113,8 +113,14 @@ function locationLabel(session: ChatSession) {
 
 function hasUnread(session: ChatSession) {
   if (!session.last_user_message_at) return session.status === "waiting";
-  if (!session.last_admin_message_at) return true;
-  return new Date(session.last_user_message_at).getTime() > new Date(session.last_admin_message_at).getTime();
+  if (!session.admin_seen_at) return true;
+  return new Date(session.last_user_message_at).getTime() > new Date(session.admin_seen_at).getTime();
+}
+
+function whatsappHref(value: string | null) {
+  if (!value) return null;
+  const digits = value.replace(/\D+/g, "");
+  return digits.length >= 6 ? `https://wa.me/${digits}` : null;
 }
 
 function isFresh(value: string | null) {
