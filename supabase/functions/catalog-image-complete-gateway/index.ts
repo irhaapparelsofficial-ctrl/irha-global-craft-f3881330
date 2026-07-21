@@ -113,7 +113,7 @@ Deno.serve(async (req: Request) => {
     const role = cleanText(driveFile.role, 40);
     const suffix = ROLE_SUFFIX[role];
     if (!suffix) return json({ error: "Unsupported catalogue media role" }, 422);
-    const roleIndex = positiveInteger(driveFile.role_index, 1);
+    const roleIndex = Number(positiveInteger(driveFile.role_index, 1));
     const baseName = `${reference.toLowerCase()}-${productSlug}`;
     const indexedSuffix = roleIndex > 1 ? `${suffix}-${String(roleIndex).padStart(2, "0")}` : suffix;
     const fileName = `${baseName}-${indexedSuffix}.webp`;
@@ -130,17 +130,17 @@ Deno.serve(async (req: Request) => {
     }
     await upload(service, thumbnailPath, variants.get(720)!);
 
-    const masterBytes = master.bytes;
-    const checksum = await sha256(masterBytes);
+    const checksum = await sha256(master.bytes);
     const publicUrl = service.storage.from(BUCKET).getPublicUrl(objectPath).data.publicUrl;
     const thumbnailUrl = service.storage.from(BUCKET).getPublicUrl(thumbnailPath).data.publicUrl;
     const totalVariantBytes = Array.from(variants.values()).reduce((sum, file) => sum + file.size, 0);
-    const masterWidth = positiveInteger(manifest.masterWidth, 0);
-    const masterHeight = positiveInteger(manifest.masterHeight, 0);
+    const masterWidth = Number(positiveInteger(manifest.masterWidth, 0));
+    const masterHeight = Number(positiveInteger(manifest.masterHeight, 0));
     if (masterWidth < 100 || masterHeight < 100) return json({ error: "Invalid master dimensions" }, 422);
     const thumbnailWidth = Math.min(720, masterWidth);
     const thumbnailHeight = Math.max(1, Math.round(masterHeight * (thumbnailWidth / masterWidth)));
 
+    const now = new Date().toISOString();
     const { error: updateMediaError } = await service
       .from("media_assets")
       .update({
@@ -173,21 +173,21 @@ Deno.serve(async (req: Request) => {
         ai_source_height_px: positiveInteger(manifest.sourceHeight, null),
         ai_master_width_px: masterWidth,
         ai_master_height_px: masterHeight,
-        ai_processed_at: new Date().toISOString(),
+        ai_processed_at: now,
         thumbnail_bucket: BUCKET,
         thumbnail_object_path: thumbnailPath,
         thumbnail_url: thumbnailUrl,
         thumbnail_width_px: thumbnailWidth,
         thumbnail_height_px: thumbnailHeight,
         thumbnail_size_bytes: variants.get(720)!.size,
-        thumbnail_generated_at: new Date().toISOString(),
+        thumbnail_generated_at: now,
         responsive_widths: [...WIDTHS],
         responsive_format: "image/webp",
         responsive_total_size_bytes: totalVariantBytes,
-        responsive_generated_at: new Date().toISOString(),
-        responsive_attempted_at: new Date().toISOString(),
+        responsive_generated_at: now,
+        responsive_attempted_at: now,
         responsive_error: null,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       })
       .eq("id", id)
       .eq("ai_processing_status", "processing")
@@ -208,8 +208,8 @@ Deno.serve(async (req: Request) => {
         height_px: masterHeight,
         import_status: "mapped",
         last_error: null,
-        imported_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        imported_at: now,
+        updated_at: now,
       })
       .eq("drive_file_id", driveFile.drive_file_id);
     if (updateDriveError) throw new Error(updateDriveError.message);
