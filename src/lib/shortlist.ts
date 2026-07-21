@@ -20,6 +20,7 @@ export type ShortlistItem = {
   image?: string;
   categorySlug?: string;
   categoryName?: string;
+  canonicalPath?: string;
   addedAt: number;
 };
 
@@ -88,6 +89,7 @@ function mirrorShortlistAdd<T extends { slug: string }>(key: string, item: T) {
     image: product.image,
     categorySlug: product.categorySlug,
     categoryName: product.categoryName,
+    canonicalPath: product.canonicalPath,
     addedAt: product.addedAt || Date.now(),
   });
 }
@@ -96,7 +98,9 @@ function mirrorShortlistRemove(key: string, slug: string) {
   if (key === SHORTLIST_KEY) removeInquiryItem(slug);
 }
 
-export function shortlistProductPath(item: Pick<ShortlistItem, "slug" | "categorySlug">) {
+export function shortlistProductPath(item: Pick<ShortlistItem, "slug" | "categorySlug" | "canonicalPath">) {
+  const canonicalPath = item.canonicalPath?.trim();
+  if (canonicalPath?.startsWith("/products/") && !canonicalPath.includes("..")) return canonicalPath;
   const slug = item.slug.trim();
   const categorySlug = item.categorySlug?.trim();
   if (!slug || !categorySlug) return "/products";
