@@ -13,6 +13,7 @@ const COMPARE_KEY = "irha_compare_v1";
 const MAX_SHORTLIST = 30;
 const MAX_RECENT = 12;
 const MAX_COMPARE = 4;
+const CANONICAL_PRODUCT_PATH = /^\/products\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/;
 
 export type ShortlistItem = {
   slug: string;
@@ -31,6 +32,15 @@ function normalizeStoredImage<T>(item: T): T {
   return { ...value, image: thumbnailUrl(value.image) };
 }
 
+function withCurrentCanonicalPath<T>(item: T): T {
+  if (!item || typeof item !== "object" || typeof window === "undefined") return item;
+  const value = item as T & { canonicalPath?: unknown };
+  if (typeof value.canonicalPath === "string" && CANONICAL_PRODUCT_PATH.test(value.canonicalPath)) return item;
+  const pathname = window.location.pathname.replace(/\/$/, "");
+  if (!CANONICAL_PRODUCT_PATH.test(pathname)) return item;
+  return { ...value, canonicalPath: pathname } as T;
+}
+
 function hasStoredSlug<T extends { slug: string }>(value: unknown): value is T {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const slug = (value as { slug?: unknown }).slug;
@@ -46,14 +56,14 @@ export function sanitizeStoredList<T extends { slug: string }>(value: unknown): 
 
 export function addUniqueStoredItem<T extends { slug: string }>(currentValue: unknown, item: T, max: number): T[] {
   if (!hasStoredSlug<T>(item) || max <= 0) return sanitizeStoredList<T>(currentValue).slice(0, Math.max(0, max));
-  const normalized = normalizeStoredImage(item);
+  const normalized = normalizeStoredImage(withCurrentCanonicalPath(item));
   const current = sanitizeStoredList<T>(currentValue).filter((stored) => stored.slug !== normalized.slug);
   return [normalized, ...current].slice(0, max);
 }
 
 export function toggleStoredItem<T extends { slug: string }>(currentValue: unknown, item: T, max: number): T[] {
   if (!hasStoredSlug<T>(item)) return sanitizeStoredList<T>(currentValue).slice(0, Math.max(0, max));
-  const normalized = normalizeStoredImage(item);
+  const normalized = normalizeStoredImage(withCurrentCanonicalPath(item));
   const current = sanitizeStoredList<T>(currentValue);
   if (current.some((stored) => stored.slug === normalized.slug)) {
     return current.filter((stored) => stored.slug !== normalized.slug);
@@ -82,7 +92,7 @@ const write = (key: string, value: unknown) => {
 
 function mirrorShortlistAdd<T extends { slug: string }>(key: string, item: T) {
   if (key !== SHORTLIST_KEY) return;
-  const product = item as T & Partial<ShortlistItem>;
+  const product = withCurrentCanonicalPath(item) as T & Partial<ShortlistItem>;
   addInquiryItem({
     slug: product.slug,
     name: product.name || product.slug,
@@ -100,7 +110,7 @@ function mirrorShortlistRemove(key: string, slug: string) {
 
 export function shortlistProductPath(item: Pick<ShortlistItem, "slug" | "categorySlug" | "canonicalPath">) {
   const canonicalPath = item.canonicalPath?.trim();
-  if (canonicalPath?.startsWith("/products/") && !canonicalPath.includes("..")) return canonicalPath;
+  if (canonicalPath && CANONICAL_PRODUCT_PATH.test(canonicalPath)) return canonicalPath;
   const slug = item.slug.trim();
   const categorySlug = item.categorySlug?.trim();
   if (!slug || !categorySlug) return "/products";
@@ -126,8 +136,9 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
 
   const add = useCallback(
     (item: T) => {
-      write(key, addUniqueStoredItem<T>(read<T>(key), item, max));
-      mirrorShortlistAdd(key, item);
+      const normalized = withCurrentCanonicalPath(item);
+      write(key, addUniqueStoredItem<T>(read<T>(key), normalized, max));
+      mirrorShortlistAdd(key, normalized);
     },
     [key, max],
   );
@@ -149,11 +160,12 @@ function useLocalList<T extends { slug: string }>(key: string, max: number) {
   const has = useCallback((slug: string) => items.some((item) => item.slug === slug), [items]);
   const toggle = useCallback(
     (item: T) => {
+      const normalized = withCurrentCanonicalPath(item);
       const current = read<T>(key);
-      const wasStored = current.some((stored) => stored.slug === item.slug);
-      write(key, toggleStoredItem<T>(current, item, max));
-      if (wasStored) mirrorShortlistRemove(key, item.slug);
-      else mirrorShortlistAdd(key, item);
+      const wasStored = current.some((stored) => stored.slug === normalized.slug);
+      write(key, toggleStoredItem<T>(current, normalized, max));
+      if (wasStored) mirrorShortlistRemove(key, normalized.slug);
+      else mirrorShortlistAdd(key, normalized);
     },
     [key, max],
   );
@@ -168,9 +180,10 @@ export const useCompare = () => useLocalList<ShortlistItem>(COMPARE_KEY, MAX_COM
 /** Add to recently viewed without a hook — safe to call from any effect. */
 export function pushRecentlyViewed(item: Omit<ShortlistItem, "addedAt">) {
   if (!hasStoredSlug<ShortlistItem>(item)) return;
+  const normalized = withCurrentCanonicalPath(item);
   const next = addUniqueStoredItem<ShortlistItem>(
     read<ShortlistItem>(RECENT_KEY),
-    { ...normalizeStoredImage(item), addedAt: Date.now() },
+    { ...normalizeStoredImage(normalized), addedAt: Date.now() },
     MAX_RECENT,
   );
   write(RECENT_KEY, next);
