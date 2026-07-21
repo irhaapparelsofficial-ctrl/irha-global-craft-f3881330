@@ -56,7 +56,7 @@ jobs:
           fi
 
           database_changed=false
-          if grep -Eq '^(supabase/migrations/|supabase/repository-migrations\.json$|scripts/verify-migration-order\.mjs$|scripts/ci/reconcile-repository-migrations\.mjs$|scripts/ci/sql-transaction-body\.mjs$)' "$changed_files"; then
+          if grep -Eq '^(supabase/migrations/|supabase/repository-migrations\.json$|scripts/verify-migration-order\.mjs$|scripts/ci/reconcile-repository-migrations\.mjs$|scripts/ci/sql-transaction-body\.mjs$|\.github/workflows/supabase-database-auto\.yml$|src/test/repositoryMigrationManifestStatic\.test\.ts$)' "$changed_files"; then
             database_changed=true
           fi
 
@@ -119,6 +119,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       REPO_MIGRATION_PLAN_PATH: /tmp/repository-migration-plan.json
       REPO_MIGRATION_EVIDENCE_PATH: /tmp/repository-migration-evidence.json
+      REPO_MIGRATION_RUNTIME_LOG: /tmp/repository-migration-runtime.log
 
     steps:
       - name: Checkout exact green main source
@@ -136,7 +137,10 @@ jobs:
       - name: Validate manifest and transactionally dry-run pending migrations
         env:
           REPO_MIGRATION_MODE: plan
-        run: node scripts/ci/reconcile-repository-migrations.mjs
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/ci/reconcile-repository-migrations.mjs 2>&1 | tee "$REPO_MIGRATION_RUNTIME_LOG"
 
       - name: Reconfirm exact current main immediately before database mutation
         id: freshness
@@ -158,13 +162,19 @@ jobs:
         if: steps.freshness.outputs.fresh == 'true'
         env:
           REPO_MIGRATION_MODE: apply
-        run: node scripts/ci/reconcile-repository-migrations.mjs
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/ci/reconcile-repository-migrations.mjs 2>&1 | tee -a "$REPO_MIGRATION_RUNTIME_LOG"
 
       - name: Verify private repository migration ledger parity
         if: steps.freshness.outputs.fresh == 'true'
         env:
           REPO_MIGRATION_MODE: verify
-        run: node scripts/ci/reconcile-repository-migrations.mjs
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/ci/reconcile-repository-migrations.mjs 2>&1 | tee -a "$REPO_MIGRATION_RUNTIME_LOG"
 
       - name: Preserve repository migration evidence
         if: always()
@@ -174,6 +184,7 @@ jobs:
           path: |
             /tmp/repository-migration-plan.json
             /tmp/repository-migration-evidence.json
+            /tmp/repository-migration-runtime.log
           if-no-files-found: warn
           retention-days: 2
 
@@ -188,6 +199,9 @@ jobs:
             echo "- Ledger: \`private.irha_repository_migration_ledger\`"
             echo "- Runs only when database-related files changed"
             echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
+            if [ -s "$REPO_MIGRATION_RUNTIME_LOG" ]; then
+              echo "- Runtime result: \`$(tail -n 1 "$REPO_MIGRATION_RUNTIME_LOG" | tr '\r\n' ' ' | cut -c1-180)\`"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact commit database status
@@ -207,7 +221,8 @@ jobs:
               ;;
             failure)
               state=failure
-              description="Relevant database migration needs developer review"
+              description="$(grep -Ev '^\s*$' "$REPO_MIGRATION_RUNTIME_LOG" 2>/dev/null | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-140 || true)"
+              [ -n "$description" ] || description="Relevant database migration needs developer review"
               ;;
             cancelled)
               state=error
