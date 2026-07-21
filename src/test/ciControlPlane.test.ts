@@ -7,16 +7,19 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 describe("Irha CI control plane", () => {
   it("runs required repository verification independently from deployment secrets", () => {
     const quality = read(".github/workflows/quality.yml");
-    expect(quality).toContain("Checkout exact event source");
+    expect(quality).toContain("Checkout current source");
     expect(quality).toContain("Verify deployment source lock");
     expect(quality).toContain("Verify secret safety");
-    expect(quality).toContain("Verify migration order");
-    expect(quality).toContain("Typecheck");
-    expect(quality).toContain("Test");
-    expect(quality).toContain("Build immutable release");
-    expect(quality).toContain("Publish exact main build artifact");
+    expect(quality).toContain("Verify migration registry");
+    expect(quality).toContain("TypeScript check");
+    expect(quality).toContain("Unit and integration tests");
+    expect(quality).toContain("Build deployable website");
+    expect(quality).toContain("Publish main build artifact");
     expect(quality).toContain("production-dist-${{ github.sha }}");
     expect(quality).toContain("statuses: write");
+    expect(quality).toContain("issues: write");
+    expect(quality).toContain("Upload failed quality diagnostics");
+    expect(quality).toContain("Publish sanitized PR test diagnostic");
     expect(quality).toContain("Publish exact commit Quality Gate status");
     expect(quality).toContain('context="Irha Quality Gate"');
     expect(quality).not.toContain("Detect full-verification readiness");
@@ -110,8 +113,8 @@ describe("Irha CI control plane", () => {
     expect(transactionParser).toContain("contains nested transaction control");
     expect(transactionParser).toContain("trimSqlEdgeTrivia");
     expect(transactionParser).toContain("sqlCodeOnly");
-    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
-    expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
+    expect(reconciler).toContain("begin;\n${sql}\nrollback;");
+    expect(reconciler).toContain("begin;\n${sql}\n${ledgerInsertSql(entry)}\ncommit;");
     expect(reconciler).toContain("github_management_api_transaction");
     expect(reconciler).toContain("github_management_api_verified_existing");
     expect(reconciler).toContain("verified_present");
