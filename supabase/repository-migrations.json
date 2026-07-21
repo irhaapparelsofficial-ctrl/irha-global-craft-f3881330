@@ -114,7 +114,7 @@
       "version": "20260717161000",
       "name": "realtime_site_visitor_alerts",
       "path": "supabase/migrations/20260717161000_realtime_site_visitor_alerts.sql",
-      "git_blob_sha": "8e7931e3f37649c7b07242e9ea9cd4c5bff5845e",
+      "git_blob_sha": "8e7931e3f37649c7b07242e9ea9cd4c5bff5845",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     },
@@ -262,6 +262,50 @@
       "git_blob_sha": "ac6440366d34636529644763b0c7929149dc964c",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260721165904",
+      "name": "restore_atomic_drive_claim_20260721",
+      "path": "supabase/migrations/20260721165904_restore_atomic_drive_claim_20260721.sql",
+      "git_blob_sha": "b7ce413d451f17861dcc98843e403430af60040d",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regprocedure('public.claim_catalog_drive_files(integer)') is not null and has_function_privilege('service_role','public.claim_catalog_drive_files(integer)','execute')) as verified"
+    },
+    {
+      "version": "20260721171524",
+      "name": "public_catalog_media_and_sitemap_rpc_20260721",
+      "path": "supabase/migrations/20260721171524_public_catalog_media_and_sitemap_rpc_20260721.sql",
+      "git_blob_sha": "1bef746ca3f5bdaf57ec1c39db045c327c17f1bb",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regprocedure('public.get_public_homepage_media()') is not null and to_regprocedure('public.get_public_sitemap_entries()') is not null and has_function_privilege('anon','public.get_public_homepage_media()','execute') and has_function_privilege('anon','public.get_public_sitemap_entries()','execute')) as verified"
+    },
+    {
+      "version": "20260721171737",
+      "name": "restore_strict_media_dimensions_20260721",
+      "path": "supabase/migrations/20260721171737_restore_strict_media_dimensions_20260721.sql",
+      "git_blob_sha": "bf6d84f1e1bd05ea221f00b7c41d05a25b5cb00b",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regprocedure('public.media_assets_before_write()') is not null and pg_get_functiondef('public.media_assets_before_write()'::regprocedure) ilike '%verified media requires valid dimensions%') as verified"
+    },
+    {
+      "version": "20260721172500",
+      "name": "catalog_drive_worker_claim_filter",
+      "path": "supabase/migrations/20260721172500_catalog_drive_worker_claim_filter.sql",
+      "git_blob_sha": "ac910f3013606becc0e106c5f2fa78a17a1e26ac",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260721172519",
+      "name": "catalog_drive_canonical_media_metadata_20260721",
+      "path": "supabase/migrations/20260721172519_catalog_drive_canonical_media_metadata_20260721.sql",
+      "git_blob_sha": "0432f28bd5f5d028f2b442b1b20ab045324b8217",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select ((select count(*) = 4 from information_schema.columns where table_schema = 'public' and table_name = 'catalog_drive_files' and column_name in ('mime_type','size_bytes','width_px','height_px')) and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_mime_type_check') and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_size_check') and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_dimensions_check')) as verified"
     }
   ]
 }
