@@ -6,7 +6,7 @@ import { PRODUCT_SLUG_RENAMES, readExplicitTaxonomyRoutes } from "../../scripts/
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("canonical explicit B2B taxonomy release", () => {
-  it("locks all 86 reviewed products to unique four-level paths", () => {
+  it("retains the historical 86-product map only as migration evidence", () => {
     const { products, categories } = readExplicitTaxonomyRoutes();
 
     expect(products).toHaveLength(86);
@@ -20,7 +20,7 @@ describe("canonical explicit B2B taxonomy release", () => {
     }
   });
 
-  it("preserves critical semantic placements after approved slug cleanup", () => {
+  it("preserves critical historical semantic placements for redirect migration", () => {
     const { products } = readExplicitTaxonomyRoutes();
     const path = (slug: string) => products.find((route) => route.productSlug === slug)?.fullSlugPath;
 
@@ -31,7 +31,7 @@ describe("canonical explicit B2B taxonomy release", () => {
     expect(path("leather-wallet")).toBe("premium-leather-apparel/accessories/leather-wallets");
   });
 
-  it("keeps historical product paths as one-hop aliases to the new canonicals", () => {
+  it("preserves historical product slug aliases as migration inputs", () => {
     const { products } = readExplicitTaxonomyRoutes();
     expect(Object.keys(PRODUCT_SLUG_RENAMES)).toHaveLength(13);
 
@@ -44,7 +44,7 @@ describe("canonical explicit B2B taxonomy release", () => {
     }
   });
 
-  it("extends the existing owner-approved runtime without duplicating database migrations", () => {
+  it("keeps owner-controlled taxonomy publication migrations registered once", () => {
     const controls = read("supabase/migrations/20260717235000_catalog_taxonomy_owner_release_controls.sql");
     const approval = read("supabase/migrations/20260717235100_catalog_taxonomy_verified_review_approval.sql");
     const manifest = JSON.parse(read("supabase/repository-migrations.json")) as {
@@ -61,6 +61,8 @@ describe("canonical explicit B2B taxonomy release", () => {
     expect(approval).toContain("public_publish_performed', false");
     expect(manifest.migrations.filter((item) => item.version === "20260717235000")).toHaveLength(1);
     expect(manifest.migrations.filter((item) => item.version === "20260717235100")).toHaveLength(1);
+    expect(manifest.migrations.filter((item) => item.version === "20260722103000")).toHaveLength(1);
+    expect(manifest.migrations.filter((item) => item.version === "20260722111000")).toHaveLength(1);
   });
 
   it("resolves canonical product pages through the published Supabase taxonomy", () => {
@@ -78,38 +80,44 @@ describe("canonical explicit B2B taxonomy release", () => {
     expect(app).toContain('/products/:categorySlug/:audienceSlug/:collectionSlug/:productSlug');
   });
 
-  it("generates real Cloudflare 301s, canonical sitemap entries and current plus historical route shells", () => {
-    const generator = read("scripts/generate-taxonomy-release-assets.ts");
+  it("uses one 254-product manifest for runtime, sitemap, HTML shells and redirects", () => {
+    const manifest = read("scripts/generate-buyer-ready-catalog-manifest.ts");
+    const redirects = read("scripts/generate-buyer-ready-redirects.ts");
+    const shells = read("scripts/generate-static-route-shells.ts");
+    const sitemap = read("scripts/augment-sitemap-with-live-catalog.ts");
     const vite = read("vite.config.ts");
+    const packageJson = read("package.json");
 
-    expect(generator).toContain("# BEGIN GENERATED TAXONOMY REDIRECTS");
-    expect(generator).toContain("PRODUCT_SLUG_RENAMES");
-    expect(generator).toContain("sourceLegacyPath");
-    expect(generator).toContain("deprecatedCanonicalPath");
-    expect(generator).toContain(" 301");
-    expect(generator).toContain("Expected 86 explicit product routes");
-    expect(generator).toContain("location.startsWith(`${SITE}/intl/`)");
-    expect(generator).toContain("route.canonicalPath");
-    expect(generator).toContain("route.sourceLegacyPath");
-    expect(vite).toContain("taxonomyReleaseAssets()");
-    expect(vite).toContain("generateTaxonomyReleaseAssets()");
-    expect(vite).toContain("generateTaxonomyProductShells()");
+    expect(manifest).toContain("const EXPECTED_PRODUCTS = 254");
+    expect(manifest).toContain("row.gallery[0] !== row.image_url");
+    expect(manifest).toContain('fetchRpc<ReleasePayload>("catalog_get_public_release")');
+    expect(manifest).toContain('fetchRpc<TaxonomyPayload>("catalog_get_public_taxonomy")');
+    expect(shells).toContain('data-irha-product-shell="true"');
+    expect(shells).toContain('"@type": "Product"');
+    expect(shells).toContain('"@type": "BreadcrumbList"');
+    expect(sitemap).toContain("manifest.products");
+    expect(redirects).toContain("BEGIN GENERATED BUYER-READY REDIRECTS");
+    expect(redirects).toContain("get_public_legacy_redirects");
+    expect(redirects).toContain("zero dead product targets");
+    expect(vite).not.toContain("taxonomyReleaseAssets()");
+    expect(vite).not.toContain("generateTaxonomyProductShells()");
+    expect(packageJson).toContain("generate-buyer-ready-catalog-manifest.ts");
+    expect(packageJson).toContain("generate-buyer-ready-redirects.ts");
   });
 
-  it("uses a verifier-only legacy route without leaking it into the final sitemap", () => {
-    const prepare = read("scripts/prepare-taxonomy-shell-verification.ts");
+  it("verifies exactly 254 canonical shells and excludes legacy sitemap routes", () => {
     const finalize = read("scripts/finalize-taxonomy-static-shells.ts");
     const packageJson = read("package.json");
 
-    expect(prepare).toContain("taxonomy-legacy-shell-verification-only");
-    expect(finalize).toContain("Verifier-only legacy product URL leaked into the final sitemap");
-    expect(finalize).toContain('generateTaxonomyProductShells(process.cwd(), "dist")');
-    expect(finalize).toContain("Taxonomy product shells do not point to the reviewed four-level canonical URL");
-    expect(packageJson).toContain("prepare-taxonomy-shell-verification.ts");
-    expect(packageJson).toContain("generate-static-route-shells.ts");
-    expect(packageJson).toContain("finalize-taxonomy-static-shells.ts");
-    expect(packageJson.indexOf("prepare-taxonomy-shell-verification.ts"))
-      .toBeLessThan(packageJson.indexOf("generate-static-route-shells.ts"));
+    expect(finalize).toContain("manifest.productCount !== 254");
+    expect(finalize).toContain('data-irha-product-shell="true"');
+    expect(finalize).toContain('"@type":"Product"');
+    expect(finalize).toContain('"@type":"BreadcrumbList"');
+    expect(finalize).toContain("Reference-style legacy URL leaked into the final sitemap");
+    expect(finalize).not.toContain("generateTaxonomyProductShells");
+    expect(packageJson).not.toContain("prepare-taxonomy-shell-verification.ts");
+    expect(packageJson.indexOf("generate-buyer-ready-catalog-manifest.ts"))
+      .toBeLessThan(packageJson.indexOf("generate-buyer-ready-redirects.ts"));
     expect(packageJson.indexOf("generate-static-route-shells.ts"))
       .toBeLessThan(packageJson.indexOf("finalize-taxonomy-static-shells.ts"));
   });
