@@ -57,11 +57,31 @@ export default function Manufacturing() {
       about: { "@id": ORGANIZATION_ID },
       inLanguage: "en",
     },
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${pageUrl}#service`,
+      name: "Custom B2B Apparel Manufacturing",
+      serviceType: "Apparel manufacturing (OEM, ODM, private label)",
+      description,
+      provider: { "@id": ORGANIZATION_ID },
+      areaServed: "Worldwide",
+      url: pageUrl,
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Manufacturing capabilities",
+        itemListElement: CAPABILITIES.map((capability) => ({
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: capability },
+        })),
+      },
+    },
     breadcrumbSchema([
       { name: "Home", path: "/" },
       { name: "Manufacturing", path: "/manufacturing" },
     ]),
   ];
+
 
   return (
     <>
