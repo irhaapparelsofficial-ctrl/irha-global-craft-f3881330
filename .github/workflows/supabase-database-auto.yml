@@ -30,15 +30,45 @@ jobs:
       should_sync: ${{ steps.ready.outputs.should_sync }}
       source_sha: ${{ steps.ready.outputs.source_sha }}
       secrets_ready: ${{ steps.ready.outputs.secrets_ready }}
+      database_changed: ${{ steps.changes.outputs.database_changed }}
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
 
     steps:
+      - name: Checkout exact green main source for change detection
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Detect repository database changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed_files=/tmp/database-changed-files.txt
+          if git rev-parse "${SOURCE_SHA}^" >/dev/null 2>&1; then
+            git diff --name-only "${SOURCE_SHA}^" "$SOURCE_SHA" > "$changed_files"
+          else
+            git diff-tree --root --no-commit-id --name-only -r "$SOURCE_SHA" > "$changed_files"
+          fi
+
+          database_changed=false
+          if grep -Eq '^(supabase/migrations/|supabase/repository-migrations\.json$|scripts/verify-migration-order\.mjs$|scripts/ci/reconcile-repository-migrations\.mjs$|scripts/ci/sql-transaction-body\.mjs$)' "$changed_files"; then
+            database_changed=true
+          fi
+
+          echo "database_changed=$database_changed" >> "$GITHUB_OUTPUT"
+          echo "Repository database changes detected: $database_changed"
+          cat "$changed_files"
+
       - name: Confirm exact current main and Management API readiness
         id: ready
         env:
-          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
           GH_TOKEN: ${{ github.token }}
+          DATABASE_CHANGED: ${{ steps.changes.outputs.database_changed }}
         shell: bash
         run: |
           set -euo pipefail
@@ -53,24 +83,28 @@ jobs:
           if [ "$latest_main" != "$SOURCE_SHA" ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
             echo "Superseded green run skipped safely: $SOURCE_SHA; current main is $latest_main"
+          elif [ "$DATABASE_CHANGED" != "true" ]; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "No repository database change in $SOURCE_SHA; database sync skipped without failure."
           elif [ "$secrets_ready" != "true" ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "Exact current main is green, but SUPABASE_ACCESS_TOKEN is unavailable. Waiting without failure."
+            echo "Exact current main changed database sources, but SUPABASE_ACCESS_TOKEN is unavailable. Waiting without failure."
           else
             echo "should_sync=true" >> "$GITHUB_OUTPUT"
-            echo "Exact current main and Management API secret readiness verified: $SOURCE_SHA"
+            echo "Exact current main, database change and Management API readiness verified: $SOURCE_SHA"
           fi
 
-      - name: Record waiting state without a red failure
-        if: steps.ready.outputs.secrets_ready != 'true'
+      - name: Record clean non-sync state
+        if: steps.ready.outputs.should_sync != 'true'
         shell: bash
         run: |
           {
-            echo "## Supabase repository migration waiting state"
+            echo "## Supabase repository migration control plane"
             echo "- Quality Gate: green"
             echo "- Source: \`${{ steps.ready.outputs.source_sha }}\`"
-            echo "- Status: waiting for \`SUPABASE_ACCESS_TOKEN\`"
-            echo "- Result: no database query, dry-run, or mutation attempted"
+            echo "- Database-related source changed: \`${{ steps.changes.outputs.database_changed }}\`"
+            echo "- Secrets ready: \`${{ steps.ready.outputs.secrets_ready }}\`"
+            echo "- Result: no database mutation attempted and no red failure raised"
           } >> "$GITHUB_STEP_SUMMARY"
 
   sync-database:
