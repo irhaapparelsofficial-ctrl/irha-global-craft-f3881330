@@ -79,6 +79,17 @@ export default function Compliance() {
       about: { "@id": ORGANIZATION_ID },
       inLanguage: "en",
     },
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${pageUrl}#service`,
+      name: "Compliance & Documentation Review",
+      serviceType: "Buyer requirement, material and destination-market documentation review",
+      description,
+      provider: { "@id": ORGANIZATION_ID },
+      areaServed: "Worldwide",
+      url: pageUrl,
+    },
     breadcrumbSchema([
       { name: "Home", path: "/" },
       { name: "Compliance", path: "/compliance" },
