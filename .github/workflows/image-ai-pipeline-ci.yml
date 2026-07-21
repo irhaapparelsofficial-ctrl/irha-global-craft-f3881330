@@ -2,6 +2,8 @@ name: Image AI Pipeline CI
 
 on:
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "scripts/image-ai/**"
       - "scripts/generate-image-thumbnails.mjs"
@@ -16,8 +18,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: image-ai-ci-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   image-ai:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
@@ -33,7 +40,7 @@ jobs:
           cache-dependency-path: scripts/image-ai/requirements.txt
 
       - name: Install locked processor dependencies
-        run: python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements.txt
+        run: bash scripts/ci/retry.sh 3 5 -- python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements.txt
 
       - name: Download official EDSR x2 model
         shell: bash
