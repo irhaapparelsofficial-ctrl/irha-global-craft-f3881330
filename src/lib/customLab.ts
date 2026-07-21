@@ -5,13 +5,13 @@ export type HubId = "bavarian" | "textile";
 export const HUBS: Record<HubId, { label: string; tagline: string; categorySlugPrefixes: string[] }> = {
   bavarian: {
     label: "Bavarian Heritage & Leather",
-    tagline: "Lederhosen, Trachten, full-grain leather",
-    categorySlugPrefixes: ["bavarian", "leatherwear"],
+    tagline: "Lederhosen, Trachten and custom leather programs",
+    categorySlugPrefixes: ["bavarian-trachten-wear", "premium-leather-apparel"],
   },
   textile: {
     label: "Textile, Streetwear & Active",
-    tagline: "Sportswear, streetwear, leisure & sleep",
-    categorySlugPrefixes: ["sportswear", "streetwear", "leisurewear", "nightwear"],
+    tagline: "Sportswear, streetwear, leisurewear and sleepwear programs",
+    categorySlugPrefixes: ["sportswear", "streetwear-activewear", "leisure-nightwear"],
   },
 };
 
@@ -48,18 +48,18 @@ export type Preset = { id: string; label: string; description: string };
 
 export const PRESETS_BY_HUB: Record<HubId, Preset[]> = {
   bavarian: [
-    { id: "edelweiss",  label: "Edelweiss Bloom", description: "Classic alpine floral embroidery" },
-    { id: "oak-leaf",   label: "Oak Leaf",        description: "Traditional Bavarian oak motif" },
-    { id: "crest",      label: "Alpine Crest",    description: "Heraldic shield outline" },
-    { id: "monogram",   label: "Monogram Block",  description: "Bold serif initial mark" },
-    { id: "script",     label: "Heritage Script", description: "Flowing cursive lettering" },
+    { id: "edelweiss",  label: "Edelweiss Bloom", description: "Classic alpine floral embroidery direction" },
+    { id: "oak-leaf",   label: "Oak Leaf",        description: "Traditional Bavarian oak motif direction" },
+    { id: "crest",      label: "Alpine Crest",    description: "Heraldic shield outline direction" },
+    { id: "monogram",   label: "Monogram Block",  description: "Bold serif initial mark direction" },
+    { id: "script",     label: "Heritage Script", description: "Flowing cursive lettering direction" },
   ],
   textile: [
-    { id: "sport-block", label: "Sport Block",    description: "Bold athletic blocky letters" },
-    { id: "athletic",    label: "Athletic Script",description: "Varsity-style script" },
-    { id: "minimal",     label: "Minimal Mark",   description: "Clean small-scale logo placement" },
-    { id: "crest",       label: "Circle Crest",   description: "Centered circular badge" },
-    { id: "outline",     label: "Bold Outline",   description: "Thick outline embroidery" },
+    { id: "sport-block", label: "Sport Block",    description: "Bold athletic lettering direction" },
+    { id: "athletic",    label: "Athletic Script",description: "Varsity-style script direction" },
+    { id: "minimal",     label: "Minimal Mark",   description: "Clean small-scale logo placement direction" },
+    { id: "crest",       label: "Circle Crest",   description: "Centered circular badge direction" },
+    { id: "outline",     label: "Bold Outline",   description: "Thick outline decoration direction" },
   ],
 };
 
@@ -71,6 +71,6 @@ export function buildWhatsAppLink(opts: {
   placement: string;
   preset: string;
 }) {
-  const msg = `Custom Design: ${opts.productName} | Color: ${opts.color} | Logo: ${opts.placement} | Pattern: ${opts.preset} | Qty: 50+ | Please send FOB Sialkot quote.`;
+  const msg = `Custom visual requirement: ${opts.productName} | Preferred color: ${opts.color} | Logo placement: ${opts.placement} | Design direction: ${opts.preset}. Please review feasibility, material, quantity, sampling, pricing, production and delivery requirements before quotation.`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
