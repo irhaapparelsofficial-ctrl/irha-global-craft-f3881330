@@ -41,7 +41,7 @@ describe("buyer-critical public platform contracts", () => {
       '["/terms", "/terms-of-service"]',
       '["/terms/", "/terms-of-service"]',
       '["/terms-and-conditions", "/terms-of-service"]',
-      '["/catalogs/master-catalogue-2026.pdf", "/catalogue"]',
+      '["/catalogs/master-catalogue-2026.pdf", "/products"]',
     ];
 
     for (const redirect of expectedRedirects) expect(app).toContain(redirect);
