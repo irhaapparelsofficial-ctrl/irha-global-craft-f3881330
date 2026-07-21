@@ -26,7 +26,7 @@ jobs:
   quality:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout current source
@@ -44,10 +44,20 @@ jobs:
       - name: Install dependencies
         run: bash scripts/ci/retry.sh 2 3 -- npm install --legacy-peer-deps --no-audit --no-fund
 
-      - name: Advisory TypeScript check
-        id: typecheck
-        continue-on-error: true
+      - name: Verify deployment source lock
+        run: node scripts/verify-deployment-source.mjs
+
+      - name: Verify secret safety
+        run: node scripts/verify-secret-safety.mjs
+
+      - name: Verify migration registry
+        run: node scripts/verify-migration-order.mjs
+
+      - name: TypeScript check
         run: npx tsc --noEmit
+
+      - name: Unit and integration tests
+        run: npm test
 
       - name: Build deployable website
         shell: bash
@@ -72,8 +82,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          message="$(grep -Ei 'error|failed|missing|mismatch|refusing|cannot|unable' quality-build.log | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-130)"
-          if [ -z "$message" ]; then message="Production build failed; inspect diagnostic artifact"; fi
+          message="$(grep -Ei 'error|failed|missing|mismatch|refusing|cannot|unable' quality-build.log 2>/dev/null | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-130)"
+          if [ -z "$message" ]; then message="Quality Gate failed; inspect the workflow steps and diagnostic artifact"; fi
           gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state=failure \
             -f context="Irha Build Diagnostic" \
@@ -89,9 +99,12 @@ jobs:
           test -s dist/release.txt
           test -s dist/_redirects
           test -s dist/_headers
+          test -s dist/catalog-route-manifest.json
           jq -e --arg sha "$GITHUB_SHA" \
             '.source_commit == $sha and .source_identity_state == "verified"' \
             dist/build.json >/dev/null
+          jq -e '.schemaVersion == 1 and .productCount == 254 and (.products | length) == 254' \
+            dist/catalog-route-manifest.json >/dev/null
 
       - name: Publish main build artifact
         if: >-
@@ -105,16 +118,19 @@ jobs:
           retention-days: 2
           compression-level: 6
 
-      - name: Record fast-release result
+      - name: Record release result
         if: always()
         shell: bash
         run: |
           {
-            echo "## Fast Quality Gate"
+            echo "## Buyer-ready Quality Gate"
             echo "- Source: \`$GITHUB_SHA\`"
-            echo "- Blocking check: deployable production build"
-            echo "- TypeScript check: \`${{ steps.typecheck.outcome || 'not-run' }}\` (advisory)"
-            echo "- Full tests, migration dry-runs and image processing: non-blocking/manual"
+            echo "- Deployment source lock: required"
+            echo "- Secret safety: required"
+            echo "- Migration registry: required"
+            echo "- TypeScript: required"
+            echo "- Tests: required"
+            echo "- Production build and release identity: required"
             echo "- Production writes: none"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -127,15 +143,15 @@ jobs:
         run: |
           set -euo pipefail
           state=error
-          description="Fast build gate did not complete"
+          description="Buyer-ready Quality Gate did not complete"
           case "$QUALITY_JOB_STATUS" in
             success)
               state=success
-              description="Deployable website build passed"
+              description="Buyer-ready source, tests and build passed"
               ;;
             failure)
               state=failure
-              description="Website production build failed"
+              description="Buyer-ready Quality Gate failed"
               ;;
             cancelled)
               state=error
