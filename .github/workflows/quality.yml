@@ -123,7 +123,7 @@ jobs:
             fi
             echo '```'
           } > quality-comment.md
-          gh pr comment "$PR_NUMBER" --body-file quality-comment.md
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --raw-field body="$(cat quality-comment.md)" >/dev/null
 
       - name: Verify minimum deployment artifact
         shell: bash
