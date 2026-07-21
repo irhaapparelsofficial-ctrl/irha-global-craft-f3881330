@@ -7,7 +7,6 @@ import {
 
 const OUTPUT_PATH = resolve("public/catalog-route-manifest.json");
 const EXPECTED_PRODUCTS = 254;
-const PAGE_SIZE = 1000;
 
 export type BuyerReadyCatalogRoute = {
   product_id: string;
@@ -31,31 +30,133 @@ export type BuyerReadyCatalogRoute = {
   updated_at: string;
 };
 
-async function fetchManifest(): Promise<BuyerReadyCatalogRoute[]> {
-  const rows: BuyerReadyCatalogRoute[] = [];
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const response = await fetch(
-      `${OWNER_SUPABASE_URL}/rest/v1/rpc/get_public_catalog_route_manifest`,
-      {
-        method: "POST",
-        headers: {
-          apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
-          "Content-Type": "application/json",
-          Range: `${offset}-${offset + PAGE_SIZE - 1}`,
-          "Range-Unit": "items",
-        },
-        body: "{}",
-      },
-    );
-    if (!response.ok) {
-      throw new Error(`Could not fetch buyer-ready catalogue manifest: ${response.status} ${await response.text()}`);
-    }
-    const page = (await response.json()) as BuyerReadyCatalogRoute[];
-    rows.push(...page);
-    if (page.length < PAGE_SIZE) break;
+type ReleaseProduct = {
+  id: string;
+  slug: string;
+  name: string;
+  sku?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  short_description?: string | null;
+  description?: string | null;
+  image_url?: string | null;
+  gallery?: string[] | null;
+  updated_at?: string | null;
+};
+
+type ReleasePayload = {
+  products: ReleaseProduct[];
+};
+
+type TaxonomyNode = {
+  id: string;
+  parent_id: string | null;
+  depth: number;
+  slug: string;
+  name: string;
+  full_slug_path: string;
+  updated_at?: string | null;
+};
+
+type TaxonomyAssignment = {
+  product_id: string;
+  product_slug: string;
+  taxonomy_node_id: string;
+  full_slug_path: string;
+  canonical_path: string;
+  approved_at?: string | null;
+};
+
+type TaxonomyPayload = {
+  nodes: TaxonomyNode[];
+  assignments: TaxonomyAssignment[];
+};
+
+async function fetchRpc<T>(name: string): Promise<T> {
+  const response = await fetch(`${OWNER_SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: {
+      apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: "{}",
+  });
+  if (!response.ok) {
+    throw new Error(`Could not fetch ${name}: ${response.status} ${await response.text()}`);
   }
-  return rows;
+  return (await response.json()) as T;
+}
+
+function referenceCode(product: ReleaseProduct) {
+  const match = product.sku?.match(/P\d{3}/i)?.[0];
+  return match?.toUpperCase() ?? product.slug;
+}
+
+function newestTimestamp(values: Array<string | null | undefined>) {
+  const valid = values.filter((value): value is string => Boolean(value));
+  if (!valid.length) return new Date(0).toISOString();
+  return valid.sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+}
+
+async function fetchManifest(): Promise<BuyerReadyCatalogRoute[]> {
+  const [release, taxonomy] = await Promise.all([
+    fetchRpc<ReleasePayload>("catalog_get_public_release"),
+    fetchRpc<TaxonomyPayload>("catalog_get_public_taxonomy"),
+  ]);
+
+  if (!Array.isArray(release.products) || !Array.isArray(taxonomy.nodes) || !Array.isArray(taxonomy.assignments)) {
+    throw new Error("Published catalogue APIs returned an invalid payload");
+  }
+
+  const productsById = new Map(release.products.map((product) => [product.id, product]));
+  const nodesById = new Map(taxonomy.nodes.map((node) => [node.id, node]));
+  const rows: BuyerReadyCatalogRoute[] = [];
+
+  for (const assignment of taxonomy.assignments) {
+    const product = productsById.get(assignment.product_id);
+    const leaf = nodesById.get(assignment.taxonomy_node_id);
+    const audience = leaf?.parent_id ? nodesById.get(leaf.parent_id) : undefined;
+    const root = audience?.parent_id ? nodesById.get(audience.parent_id) : undefined;
+    if (!product || !leaf || !audience || !root) {
+      throw new Error(`Published taxonomy assignment cannot be resolved: ${assignment.product_id}`);
+    }
+
+    const gallery = Array.isArray(product.gallery) ? product.gallery.filter(Boolean) : [];
+    const imageUrl = product.image_url ?? gallery[0] ?? "";
+    rows.push({
+      product_id: product.id,
+      reference_code: referenceCode(product),
+      product_slug: product.slug,
+      product_name: product.name,
+      canonical_path: assignment.canonical_path,
+      main_category_slug: root.slug,
+      main_category_name: root.name,
+      audience_slug: audience.slug,
+      audience_name: audience.name,
+      product_type_slug: leaf.slug,
+      product_type_name: leaf.name,
+      seo_title: product.seo_title ?? null,
+      seo_description: product.seo_description ?? null,
+      seo_h1: null,
+      short_description: product.short_description ?? null,
+      product_description: product.description ?? null,
+      image_url: imageUrl,
+      gallery,
+      updated_at: newestTimestamp([
+        product.updated_at,
+        assignment.approved_at,
+        leaf.updated_at,
+        audience.updated_at,
+        root.updated_at,
+      ]),
+    });
+  }
+
+  return rows.sort((a, b) =>
+    a.reference_code.localeCompare(b.reference_code, undefined, { numeric: true })
+    || a.canonical_path.localeCompare(b.canonical_path),
+  );
 }
 
 function safeProgramDescription(row: BuyerReadyCatalogRoute) {
