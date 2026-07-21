@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import ResilientImage from "@/components/ResilientImage";
 import {
   COLORS_BY_HUB,
   HUBS,
@@ -16,18 +17,48 @@ import {
 import { forceDownload } from "@/lib/download";
 import { Loader2, Upload, Check, MessageCircle, Download, Sparkles, RotateCcw } from "lucide-react";
 
+type PublicCatalogRouteRow = {
+  product_id: string;
+  product_slug: string;
+  product_name: string;
+  canonical_path: string;
+  main_category_slug: string;
+  main_category_name: string;
+  audience_slug: string;
+  audience_name: string;
+  product_type_slug: string;
+  product_type_name: string;
+  image_url: string;
+};
+
 type ProductRow = {
   id: string;
   slug: string;
   name: string;
-  image_url: string | null;
-  category_id: string;
-  categories: { slug: string; name: string } | null;
+  image_url: string;
+  canonical_path: string;
+  main_category_slug: string;
+  main_category_name: string;
+  audience_slug: string;
+  audience_name: string;
+  product_type_slug: string;
+  product_type_name: string;
+  collectionKey: string;
 };
 
-function classifyHub(slug: string): HubId | null {
-  if (HUBS.bavarian.categorySlugPrefixes.some((p) => slug.startsWith(p))) return "bavarian";
-  if (HUBS.textile.categorySlugPrefixes.some((p) => slug.startsWith(p))) return "textile";
+type PublicRpcClient = {
+  rpc: (
+    functionName: "get_public_catalog_route_manifest",
+    args?: Record<string, never>,
+  ) => Promise<{
+    data: PublicCatalogRouteRow[] | null;
+    error: { message: string } | null;
+  }>;
+};
+
+function classifyHub(mainCategorySlug: string): HubId | null {
+  if (HUBS.bavarian.categorySlugPrefixes.includes(mainCategorySlug)) return "bavarian";
+  if (HUBS.textile.categorySlugPrefixes.includes(mainCategorySlug)) return "textile";
   return null;
 }
 
@@ -45,33 +76,47 @@ export default function Studio() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["studio-products"],
+    queryKey: ["studio-products", "canonical-route-manifest"],
     queryFn: async (): Promise<ProductRow[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, slug, name, image_url, category_id, categories!inner(slug, name)")
-        .eq("is_published", true)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as unknown as ProductRow[];
+      const publicRpc = supabase as unknown as PublicRpcClient;
+      const { data, error } = await publicRpc.rpc("get_public_catalog_route_manifest");
+      if (error) throw new Error(error.message);
+
+      return (data ?? []).map((row) => ({
+        id: row.product_id,
+        slug: row.product_slug,
+        name: row.product_name,
+        image_url: row.image_url,
+        canonical_path: row.canonical_path,
+        main_category_slug: row.main_category_slug,
+        main_category_name: row.main_category_name,
+        audience_slug: row.audience_slug,
+        audience_name: row.audience_name,
+        product_type_slug: row.product_type_slug,
+        product_type_name: row.product_type_name,
+        collectionKey: `${row.audience_slug}/${row.product_type_slug}`,
+      }));
     },
+    staleTime: 10 * 60 * 1000,
   });
 
   const hubProducts = useMemo(
-    () => products.filter((p) => p.categories && classifyHub(p.categories.slug) === hub),
+    () => products.filter((item) => classifyHub(item.main_category_slug) === hub),
     [products, hub],
   );
 
   const categories = useMemo(() => {
     const map = new Map<string, string>();
-    hubProducts.forEach((p) => {
-      if (p.categories) map.set(p.categories.slug, p.categories.name);
+    hubProducts.forEach((item) => {
+      map.set(item.collectionKey, `${item.audience_name} · ${item.product_type_name}`);
     });
-    return Array.from(map.entries()).map(([slug, name]) => ({ slug, name }));
+    return Array.from(map.entries())
+      .map(([key, name]) => ({ key, name }))
+      .sort((left, right) => left.name.localeCompare(right.name));
   }, [hubProducts]);
 
   const visible = useMemo(
-    () => (activeCat === "all" ? hubProducts : hubProducts.filter((p) => p.categories?.slug === activeCat)),
+    () => (activeCat === "all" ? hubProducts : hubProducts.filter((item) => item.collectionKey === activeCat)),
     [hubProducts, activeCat],
   );
 
@@ -117,8 +162,8 @@ export default function Studio() {
       if (error) throw error;
       if (!data?.frontUrl || !data?.backUrl) throw new Error("Mockup generation failed");
       setResult({ frontUrl: data.frontUrl, backUrl: data.backUrl, fallback: !!data.fallback, message: data.message });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Generation failed — please retry");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Generation failed — please retry");
     } finally {
       setGenerating(false);
     }
@@ -146,7 +191,7 @@ export default function Studio() {
         <title>B2B Custom Lab — Visual Requirement Builder | Irha Apparels</title>
         <meta
           name="description"
-          content="Build a non-binding visual direction for custom Bavarian, leather, sportswear and streetwear programs. Upload a logo and select preferred colors, placement and decoration before submitting a B2B requirement review."
+          content="Build a non-binding visual direction from the published Irha Apparels catalogue. Upload a logo and select preferred colors, placement and decoration before submitting a B2B requirement review."
         />
         <link rel="canonical" href="https://irhaapparels.com/studio" />
       </Helmet>
@@ -154,19 +199,19 @@ export default function Studio() {
       <div className="sticky top-20 z-30 border-b border-border/60 bg-background/95 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-primary">B2B Custom Lab · Sialkot Manufacturing Review</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-primary">B2B Custom Lab · Published Product References</p>
             <h1 className="font-serif text-xl md:text-2xl leading-tight">Build a Visual Requirement Direction</h1>
           </div>
           <div className="inline-flex border border-border rounded-full p-1 bg-card/40 self-start md:self-auto">
-            {(Object.keys(HUBS) as HubId[]).map((h) => (
+            {(Object.keys(HUBS) as HubId[]).map((item) => (
               <button
-                key={h}
-                onClick={() => setHub(h)}
+                key={item}
+                onClick={() => setHub(item)}
                 className={`px-4 py-2 rounded-full text-[11px] uppercase tracking-[0.2em] transition ${
-                  hub === h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  hub === item ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {HUBS[h].label.split(" ")[0]}
+                {HUBS[item].label.split(" ")[0]}
               </button>
             ))}
           </div>
@@ -184,23 +229,26 @@ export default function Studio() {
             { k: "color", n: 2, label: "Color" },
             { k: "logo", n: 3, label: "Logo" },
             { k: "preset", n: 4, label: "Pattern" },
-          ].map((s) => (
+          ].map((step) => (
             <li
-              key={s.k}
+              key={step.k}
               className={`flex items-center gap-2 px-3 py-1.5 border ${
-                stepDone[s.k as keyof typeof stepDone]
+                stepDone[step.k as keyof typeof stepDone]
                   ? "border-primary/60 text-primary"
                   : "border-border/60 text-muted-foreground"
               }`}
             >
-              <span className="font-mono">{s.n}</span> {s.label}
-              {stepDone[s.k as keyof typeof stepDone] && <Check className="h-3 w-3" />}
+              <span className="font-mono">{step.n}</span> {step.label}
+              {stepDone[step.k as keyof typeof stepDone] && <Check className="h-3 w-3" />}
             </li>
           ))}
         </ol>
 
         <section className="mb-10">
           <h2 className="font-serif text-lg md:text-xl mb-3">1. Choose your product</h2>
+          <p className="mb-4 text-xs leading-6 text-muted-foreground">
+            Showing approved, published products from the same canonical catalogue used by product pages and search.
+          </p>
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
               <button
@@ -211,45 +259,45 @@ export default function Studio() {
               >
                 All ({hubProducts.length})
               </button>
-              {categories.map((c) => (
+              {categories.map((category) => (
                 <button
-                  key={c.slug}
-                  onClick={() => setActiveCat(c.slug)}
+                  key={category.key}
+                  onClick={() => setActiveCat(category.key)}
                   className={`px-3 py-1 text-[10px] uppercase tracking-[0.2em] border ${
-                    activeCat === c.slug ? "border-primary text-primary" : "border-border/60 text-muted-foreground hover:text-foreground"
+                    activeCat === category.key ? "border-primary text-primary" : "border-border/60 text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {c.name}
+                  {category.name}
                 </button>
               ))}
             </div>
           )}
           {isLoading ? (
-            <div className="text-muted-foreground text-sm">Loading catalog…</div>
+            <div className="text-muted-foreground text-sm">Loading published catalogue…</div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {visible.map((p) => (
+              {visible.map((item) => (
                 <button
-                  key={p.id}
-                  onClick={() => { setProduct(p); setResult(null); }}
+                  key={item.id}
+                  onClick={() => { setProduct(item); setResult(null); }}
                   className={`group relative aspect-[3/4] overflow-hidden border-2 transition ${
-                    product?.id === p.id ? "border-primary" : "border-border/60 hover:border-foreground/40"
+                    product?.id === item.id ? "border-primary" : "border-border/60 hover:border-foreground/40"
                   }`}
                 >
-                  {p.image_url ? (
-                    <img
-                      src={p.image_url}
-                      alt={p.name}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-muted" />
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                    <p className="text-[10px] text-white line-clamp-2">{p.name}</p>
+                  <ResilientImage
+                    sources={[item.image_url]}
+                    alt={`${item.name} product reference`}
+                    loading="lazy"
+                    decoding="async"
+                    width={640}
+                    height={853}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2">
+                    <p className="text-[10px] text-white line-clamp-2">{item.name}</p>
+                    <p className="mt-1 text-[8px] uppercase tracking-[0.12em] text-white/65">{item.audience_name} · {item.product_type_name}</p>
                   </div>
-                  {product?.id === p.id && (
+                  {product?.id === item.id && (
                     <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
                       <Check className="h-3 w-3" />
                     </div>
@@ -263,16 +311,16 @@ export default function Studio() {
         <section className={`mb-10 ${!product ? "opacity-40 pointer-events-none" : ""}`}>
           <h2 className="font-serif text-lg md:text-xl mb-3">2. Select a preferred base color</h2>
           <div className="flex flex-wrap gap-3">
-            {swatches.map((s) => (
+            {swatches.map((swatch) => (
               <button
-                key={s.id}
-                onClick={() => { setColor(s); setResult(null); }}
+                key={swatch.id}
+                onClick={() => { setColor(swatch); setResult(null); }}
                 className={`flex items-center gap-3 px-3 py-2 border-2 ${
-                  color?.id === s.id ? "border-primary" : "border-border/60 hover:border-foreground/40"
+                  color?.id === swatch.id ? "border-primary" : "border-border/60 hover:border-foreground/40"
                 }`}
               >
-                <span className="h-6 w-6 rounded-full border border-border/60" style={{ background: s.hex }} />
-                <span className="text-xs uppercase tracking-[0.15em]">{s.label}</span>
+                <span className="h-6 w-6 rounded-full border border-border/60" style={{ background: swatch.hex }} />
+                <span className="text-xs uppercase tracking-[0.15em]">{swatch.label}</span>
               </button>
             ))}
           </div>
@@ -287,7 +335,7 @@ export default function Studio() {
                 type="file"
                 accept="image/png,image/svg+xml,image/jpeg"
                 className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleLogo(e.target.files[0])}
+                onChange={(event) => event.target.files?.[0] && handleLogo(event.target.files[0])}
               />
               <button
                 onClick={() => fileRef.current?.click()}
@@ -308,15 +356,15 @@ export default function Studio() {
             </div>
             <div className="flex flex-col gap-2">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Placement</p>
-              {PLACEMENTS.map((p) => (
+              {PLACEMENTS.map((item) => (
                 <button
-                  key={p.id}
-                  onClick={() => { setPlacement(p); setResult(null); }}
+                  key={item.id}
+                  onClick={() => { setPlacement(item); setResult(null); }}
                   className={`px-4 py-3 border text-left text-xs uppercase tracking-[0.15em] ${
-                    placement.id === p.id ? "border-primary text-primary" : "border-border/60 text-muted-foreground hover:text-foreground"
+                    placement.id === item.id ? "border-primary text-primary" : "border-border/60 text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {p.label}
+                  {item.label}
                 </button>
               ))}
             </div>
@@ -326,16 +374,16 @@ export default function Studio() {
         <section className={`mb-10 ${!color ? "opacity-40 pointer-events-none" : ""}`}>
           <h2 className="font-serif text-lg md:text-xl mb-3">4. Choose a decoration direction</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {presets.map((p) => (
+            {presets.map((item) => (
               <button
-                key={p.id}
-                onClick={() => { setPreset(p); setResult(null); }}
+                key={item.id}
+                onClick={() => { setPreset(item); setResult(null); }}
                 className={`p-4 border-2 text-left ${
-                  preset?.id === p.id ? "border-primary" : "border-border/60 hover:border-foreground/40"
+                  preset?.id === item.id ? "border-primary" : "border-border/60 hover:border-foreground/40"
                 }`}
               >
-                <p className="text-sm font-medium">{p.label}</p>
-                <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{p.description}</p>
+                <p className="text-sm font-medium">{item.label}</p>
+                <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{item.description}</p>
               </button>
             ))}
           </div>
@@ -380,20 +428,20 @@ export default function Studio() {
               </div>
             )}
             <div className="grid md:grid-cols-2 gap-6">
-              {(["frontUrl", "backUrl"] as const).map((k, i) => (
-                <div key={k} className="border border-border/60 bg-card/30">
+              {(["frontUrl", "backUrl"] as const).map((key, index) => (
+                <div key={key} className="border border-border/60 bg-card/30">
                   <div className="aspect-[3/4] bg-muted/40 flex items-center justify-center overflow-hidden">
-                    {result?.[k] ? (
-                      <img src={result[k]} alt={i === 0 ? "Front view" : "Back view"} className="h-full w-full object-cover" />
+                    {result?.[key] ? (
+                      <img src={result[key]} alt={index === 0 ? "Front concept view" : "Back concept view"} className="h-full w-full object-cover" />
                     ) : (
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     )}
                   </div>
                   <div className="p-3 flex items-center justify-between">
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{i === 0 ? "Front" : "Back"}</span>
-                    {result?.[k] && (
+                    <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{index === 0 ? "Front" : "Back"}</span>
+                    {result?.[key] && (
                       <button
-                        onClick={() => forceDownload(result[k], `irha-mockup-${product?.slug}-${i === 0 ? "front" : "back"}.png`)}
+                        onClick={() => forceDownload(result[key], `irha-mockup-${product?.slug}-${index === 0 ? "front" : "back"}.png`)}
                         className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] hover:text-primary"
                       >
                         <Download className="h-3 w-3" /> PNG
@@ -420,7 +468,7 @@ export default function Studio() {
                   <MessageCircle className="h-4 w-4" /> Send Requirements to WhatsApp
                 </a>
                 <span className="inline-flex items-center gap-2 border border-primary/40 bg-primary/10 px-3 py-3 text-[10px] uppercase tracking-[0.25em] text-primary">
-                  <Sparkles className="h-3 w-3" /> Requirements Reviewed Before Quote
+                  <Sparkles className="h-3 w-3" /> Reference Visualization · Review Before Quote
                 </span>
               </div>
             )}
