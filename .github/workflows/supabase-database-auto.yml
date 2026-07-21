@@ -175,7 +175,7 @@ jobs:
             /tmp/repository-migration-plan.json
             /tmp/repository-migration-evidence.json
           if-no-files-found: warn
-          retention-days: 2
+          retention-days: 3
 
       - name: Record control-plane outcome
         if: always()
@@ -186,8 +186,13 @@ jobs:
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Project: \`$SUPABASE_PROJECT_ID\`"
             echo "- Ledger: \`private.irha_repository_migration_ledger\`"
-            echo "- Runs only when database-related files changed"
+            echo "- API: official Supabase Management API database/query endpoint"
+            echo "- Validation: manifest completeness + Git blob checksum + forbidden side-effect scan"
+            echo "- Dry-run: transactional \`BEGIN ... ROLLBACK\` for every pending migration"
+            echo "- Shared production lock: \`irha-production-mutation\`"
             echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
+            echo "- Apply policy: one exact transaction per migration with ledger insert in the same commit"
+            echo "- Legacy drifted \`supabase_migrations\` history: preserved, not deleted or rewritten"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact commit database status
@@ -207,7 +212,7 @@ jobs:
               ;;
             failure)
               state=failure
-              description="Relevant database migration needs developer review"
+              description="Supabase repository migration sync failed"
               ;;
             cancelled)
               state=error
