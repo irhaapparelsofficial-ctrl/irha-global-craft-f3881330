@@ -58,6 +58,37 @@ async function fetchManifest(): Promise<BuyerReadyCatalogRoute[]> {
   return rows;
 }
 
+function safeProgramDescription(row: BuyerReadyCatalogRoute) {
+  const product = row.product_name;
+  const type = row.product_type_name;
+  switch (row.main_category_slug) {
+    case "bavarian-trachten-wear":
+      return `${product} custom manufacturing for Trachten retailers, wholesalers and private-label buyers. Material, embroidery, trims, sizing, packaging and order requirements are confirmed after buyer and factory review.`;
+    case "premium-leather-apparel":
+      return `${product} custom development for wholesale and private-label leather apparel programs. Leather type, construction, hardware, lining, fit, branding and packaging are confirmed against the approved buyer specification.`;
+    case "sportswear":
+      return `${product} custom development for teams, clubs, distributors and private-label sportswear buyers. Fabric, panel construction, sizing, decoration, colors, packaging and production requirements are confirmed after review.`;
+    case "streetwear-activewear":
+      return `${product} custom manufacturing for streetwear, activewear and private-label brand programs. Fabric, weight, fit, construction, decoration, labels, colors and packaging are confirmed against the buyer brief.`;
+    case "leisure-nightwear":
+      return `${product} custom manufacturing for leisurewear, loungewear, sleepwear and hospitality buyer programs. Fabric, comfort, fit, construction, trims, branding and packaging are confirmed after requirement review.`;
+    default:
+      return `${product} custom manufacturing within ${type} for wholesale, OEM, ODM and private-label buyers. Specifications are confirmed after buyer and factory review.`;
+  }
+}
+
+function buyerSafeRow(row: BuyerReadyCatalogRoute): BuyerReadyCatalogRoute {
+  const description = safeProgramDescription(row);
+  return {
+    ...row,
+    seo_title: `${row.product_name} Manufacturer | Irha Apparels`,
+    seo_h1: `Custom ${row.product_name} Manufacturing`,
+    seo_description: description,
+    short_description: description,
+    product_description: description,
+  };
+}
+
 function assertManifest(rows: BuyerReadyCatalogRoute[]) {
   if (rows.length !== EXPECTED_PRODUCTS) {
     throw new Error(`Buyer-ready manifest must contain ${EXPECTED_PRODUCTS} products; received ${rows.length}`);
@@ -84,16 +115,18 @@ function assertManifest(rows: BuyerReadyCatalogRoute[]) {
 }
 
 async function main() {
-  const rows = await fetchManifest();
-  assertManifest(rows);
+  const rawRows = await fetchManifest();
+  assertManifest(rawRows);
+  const rows = rawRows.map(buyerSafeRow);
   const payload = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     productCount: rows.length,
+    contentPolicy: "buyer-safe-unverified-specifications",
     products: rows,
   };
   writeFileSync(OUTPUT_PATH, `${JSON.stringify(payload, null, 2)}\n`);
-  console.log(`Generated buyer-ready route manifest for ${rows.length} products`);
+  console.log(`Generated buyer-ready route manifest for ${rows.length} products with category-safe content`);
 }
 
 main().catch((error) => {
