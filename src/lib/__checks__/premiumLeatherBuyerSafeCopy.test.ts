@@ -38,7 +38,7 @@ const unsupportedClaims = [
 ];
 
 describe("Premium Leather Apparel buyer-safe public copy", () => {
-  it("covers every existing leatherwear product without removing its gallery", () => {
+  it("covers every historical leatherwear product without removing its gallery", () => {
     expect(leatherProducts).toHaveLength(8);
     expect([...leatherSlugs].sort()).toEqual([...expectedLeatherSlugs].sort());
 
@@ -76,12 +76,14 @@ describe("Premium Leather Apparel buyer-safe public copy", () => {
     }
   });
 
-  it("keeps the catalogue engine unchanged while applying copy and SEO overrides", () => {
+  it("uses the approved Supabase release and leather-specific buyer-safe runtime copy", () => {
     const publicCatalogSource = readFileSync(resolve(root, "src/hooks/usePublicCatalog.ts"), "utf8");
-    expect(publicCatalogSource).toContain("description: override?.description ?? product.description ?? null");
-    expect(publicCatalogSource).toContain("specs: override?.specs ?? product.specs ?? []");
-    expect(publicCatalogSource).toContain("seo_title: override?.seoTitle");
-    expect(publicCatalogSource).toContain("short_description: override?.shortDescription");
+    expect(publicCatalogSource).toContain("No local, supplemental, demo or legacy catalogue is allowed to render publicly");
+    expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_release")');
+    expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_taxonomy")');
+    expect(publicCatalogSource).toContain('case "premium-leather-apparel"');
+    expect(publicCatalogSource).toContain("description: safe.description");
+    expect(publicCatalogSource).toContain("specs: safe.specs");
     expect(PRODUCT_SEO_OVERRIDES["full-grain-leather-belt"].seoTitle).toContain("Custom Leather Belt");
     expect(PRODUCT_SEO_OVERRIDES["premium-leather-bag"].seoTitle).toContain("Custom Leather Bag");
   });
