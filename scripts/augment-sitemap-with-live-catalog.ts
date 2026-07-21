@@ -10,6 +10,7 @@ const SITE_URL = "https://irhaapparels.com";
 const SITEMAP_PATH = resolve("public/sitemap.xml");
 const MANIFEST_PATH = resolve("public/catalog-route-manifest.json");
 const PAGE_SIZE = 1000;
+const MAX_PAGES = 10;
 
 type SitemapRpcRow = {
   path: string;
@@ -24,31 +25,66 @@ type BuyerReadyManifest = {
   products: BuyerReadyCatalogRoute[];
 };
 
+function sitemapRowKey(row: SitemapRpcRow) {
+  return `${row.entry_kind}:${row.path}`;
+}
+
 async function fetchSitemapRows(): Promise<SitemapRpcRow[]> {
-  const rows: SitemapRpcRow[] = [];
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const response = await fetch(
-      `${OWNER_SUPABASE_URL}/rest/v1/rpc/get_public_sitemap_entries`,
-      {
-        method: "POST",
-        headers: {
-          apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
-          "Content-Type": "application/json",
-          Range: `${offset}-${offset + PAGE_SIZE - 1}`,
-          "Range-Unit": "items",
-        },
-        body: "{}",
+  const rows = new Map<string, SitemapRpcRow>();
+  let offset = 0;
+  let paginationComplete = false;
+
+  for (let pageNumber = 0; pageNumber < MAX_PAGES; pageNumber += 1) {
+    const endpoint = new URL(`${OWNER_SUPABASE_URL}/rest/v1/rpc/get_public_sitemap_entries`);
+    endpoint.searchParams.set("select", "path,image_url,lastmod,entry_kind");
+    endpoint.searchParams.set("order", "entry_kind.asc,path.asc");
+    endpoint.searchParams.set("limit", String(PAGE_SIZE));
+    endpoint.searchParams.set("offset", String(offset));
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: "{}",
+    });
     if (!response.ok) {
       throw new Error(`Could not fetch public sitemap entries: ${response.status} ${await response.text()}`);
     }
+
     const page = (await response.json()) as SitemapRpcRow[];
-    rows.push(...page);
-    if (page.length < PAGE_SIZE) break;
+    if (page.length === 0) {
+      paginationComplete = true;
+      break;
+    }
+
+    let added = 0;
+    for (const row of page) {
+      if (!row.path || !row.entry_kind) throw new Error("Public sitemap RPC returned an invalid row");
+      const key = sitemapRowKey(row);
+      if (rows.has(key)) continue;
+      rows.set(key, row);
+      added += 1;
+    }
+
+    if (added === 0) {
+      throw new Error(`Public sitemap RPC pagination made no progress at offset ${offset}`);
+    }
+
+    offset += page.length;
+    if (page.length < PAGE_SIZE) {
+      paginationComplete = true;
+      break;
+    }
   }
-  return rows;
+
+  if (!paginationComplete) {
+    throw new Error(`Public sitemap RPC exceeded the safe ${MAX_PAGES}-page pagination limit`);
+  }
+
+  return [...rows.values()];
 }
 
 function absoluteUrl(path: string) {
