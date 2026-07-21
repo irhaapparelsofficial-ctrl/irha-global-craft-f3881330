@@ -65,6 +65,21 @@ jobs:
           retention-days: 2
           compression-level: 0
 
+      - name: Publish concise build failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          message="$(grep -Ei 'error|failed|missing|mismatch|refusing|cannot|unable' quality-build.log | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-130)"
+          if [ -z "$message" ]; then message="Production build failed; inspect diagnostic artifact"; fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state=failure \
+            -f context="Irha Build Diagnostic" \
+            -f description="$message" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >/dev/null
+
       - name: Verify minimum deployment artifact
         shell: bash
         run: |
