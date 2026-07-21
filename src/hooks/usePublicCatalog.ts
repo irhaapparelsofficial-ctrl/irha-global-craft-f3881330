@@ -58,9 +58,9 @@ const EXPECTED_ROOTS = 5;
 const EXPECTED_PUBLISHED_PRODUCTS = 254;
 
 const K = {
-  tree: ["public-catalog", "buyer-ready-taxonomy-v2"] as const,
+  tree: ["public-catalog", "buyer-ready-taxonomy-v3"] as const,
   product: (category: string, product: string) =>
-    ["public-catalog", "buyer-ready-product-v2", category, product] as const,
+    ["public-catalog", "buyer-ready-product-v3", category, product] as const,
 };
 
 const BLOCKED_PUBLIC_TERMS = [
@@ -92,23 +92,84 @@ function uniqueStrings(values: string[]): string[] {
   return values.filter((value, index) => Boolean(value) && values.indexOf(value) === index);
 }
 
-function sanitizePublicProduct(product: ReleaseProduct): DbProduct {
+function categoryCopy(mainCategorySlug: string, productName: string) {
+  switch (mainCategorySlug) {
+    case "bavarian-trachten-wear":
+      return {
+        description: `${productName} custom manufacturing for Trachten retailers, wholesalers and private-label buyers. Material, embroidery, trims, sizing, packaging and order requirements are confirmed after buyer and factory review.`,
+        specs: [
+          "Trachten construction, embroidery and trim direction confirmed against the buyer brief",
+          "Material, color, sizing and finishing reviewed before sampling or quotation",
+          "Private labels and packaging developed to approved buyer requirements",
+        ],
+      };
+    case "premium-leather-apparel":
+      return {
+        description: `${productName} custom development for wholesale and private-label leather apparel programs. Leather type, construction, hardware, lining, fit, branding and packaging are confirmed against the approved buyer specification.`,
+        specs: [
+          "Leather type, grade, thickness and finish selected to buyer requirements",
+          "Construction, lining, hardware and fit confirmed during development",
+          "Branding, labels and packaging reviewed before production commitment",
+        ],
+      };
+    case "sportswear":
+      return {
+        description: `${productName} custom development for teams, clubs, distributors and private-label sportswear buyers. Fabric, panel construction, sizing, decoration, colors, packaging and production requirements are confirmed after review.`,
+        specs: [
+          "Sport-specific fabric and construction selected against intended use",
+          "Team colors, sizing and decoration method confirmed from the buyer brief",
+          "Labels, numbering and packaging reviewed before quotation or production",
+        ],
+      };
+    case "streetwear-activewear":
+      return {
+        description: `${productName} custom manufacturing for streetwear, activewear and private-label brand programs. Fabric, weight, fit, construction, decoration, labels, colors and packaging are confirmed against the buyer brief.`,
+        specs: [
+          "Fabric, weight, fit and construction developed to the brand specification",
+          "Print, embroidery, trims and private labels reviewed before sampling",
+          "Colors, size range and packaging confirmed before production commitment",
+        ],
+      };
+    case "leisure-nightwear":
+      return {
+        description: `${productName} custom manufacturing for leisurewear, loungewear, sleepwear and hospitality buyer programs. Fabric, comfort, fit, construction, trims, branding and packaging are confirmed after requirement review.`,
+        specs: [
+          "Fabric, comfort, fit and construction selected for the intended buyer program",
+          "Trims, closures, decoration and private labels confirmed during development",
+          "Size range, colors and packaging reviewed before quotation or production",
+        ],
+      };
+    default:
+      return {
+        description: `${productName} custom manufacturing for wholesale, OEM, ODM and private-label buyers. Materials, construction, sizing, branding and packaging are confirmed after buyer and factory review.`,
+        specs: [
+          "Material and construction confirmed against the approved buyer specification",
+          "Sizing, colors and decoration reviewed during development",
+          "Labels and packaging confirmed before production commitment",
+        ],
+      };
+  }
+}
+
+function sanitizePublicProduct(product: ReleaseProduct, mainCategorySlug: string): DbProduct {
   const name = keywordLedProductName(product.slug, product.name);
   const gallery = uniqueStrings((Array.isArray(product.gallery) ? product.gallery : []).filter(Boolean));
-  const details = (Array.isArray(product.details) ? product.details : []).filter(
+  const safe = categoryCopy(mainCategorySlug, name);
+  const verifiedDetails = (Array.isArray(product.details) ? product.details : []).filter(
     (detail) => !hasBlockedPublicTerm(`${detail.label} ${detail.value}`),
-  );
-  const specs = (Array.isArray(product.specs) ? product.specs : []).filter(
-    (spec) => !hasBlockedPublicTerm(spec),
   );
 
   return {
     ...product,
     name,
+    description: safe.description,
+    short_description: safe.description,
+    seo_description: safe.description,
     image_url: product.image_url ?? gallery[0] ?? null,
     gallery,
-    details,
-    specs,
+    details: verifiedDetails.length > 0 ? verifiedDetails : [],
+    specs: safe.specs,
+    material_specifications: null,
     moq_display: null,
     moq_min: null,
     production_timeline: null,
@@ -166,7 +227,7 @@ function rootForLeaf(nodeById: Map<string, TaxonomyNode>, leaf: TaxonomyNode): T
 
 function buildBuyerReadyTree(catalogue: CatalogRelease, taxonomy: TaxonomyRelease): PublicTopCategory[] {
   const nodeById = new Map(taxonomy.nodes.map((node) => [node.id, node]));
-  const productById = new Map(catalogue.products.map((product) => [product.id, sanitizePublicProduct(product)]));
+  const rawProductById = new Map(catalogue.products.map((product) => [product.id, product]));
   const roots = taxonomy.nodes
     .filter((node) => node.depth === 0 && node.node_type === "main_category")
     .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
@@ -191,10 +252,11 @@ function buildBuyerReadyTree(catalogue: CatalogRelease, taxonomy: TaxonomyReleas
         const products = taxonomy.assignments
           .filter((assignment) => assignment.taxonomy_node_id === leaf.id)
           .map((assignment) => {
-            const product = productById.get(assignment.product_id);
-            if (!product) {
+            const rawProduct = rawProductById.get(assignment.product_id);
+            if (!rawProduct) {
               throw new Error(`Approved product ${assignment.product_id} is missing from the public release`);
             }
+            const product = sanitizePublicProduct(rawProduct, root.slug);
             assignedProducts.add(product.id);
             return product;
           })
@@ -281,17 +343,16 @@ export function usePublicProduct(categorySlug?: string, productSlug?: string) {
 }
 
 export function adaptDbProduct(product: DbProduct): LegacyProduct & { slug: string; id: string } {
-  const clean = sanitizePublicProduct(product);
-  const gallery = clean.gallery.length ? clean.gallery : clean.image_url ? [clean.image_url] : [];
-  const details: ProductDetailSpec[] = Array.isArray(clean.details) ? clean.details : [];
+  const gallery = product.gallery.length ? product.gallery : product.image_url ? [product.image_url] : [];
+  const details: ProductDetailSpec[] = Array.isArray(product.details) ? product.details : [];
   return {
-    id: clean.id,
-    slug: clean.slug,
-    name: clean.name,
-    image: clean.image_url ?? gallery[0] ?? "",
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    image: product.image_url ?? gallery[0] ?? "",
     gallery,
-    description: clean.description ?? "",
-    specs: clean.specs ?? [],
+    description: product.description ?? "",
+    specs: product.specs ?? [],
     details,
   };
 }
