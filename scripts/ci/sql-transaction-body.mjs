@@ -54,7 +54,7 @@ function trimSqlEdgeTrivia(value) {
   return trimTrailingSqlTrivia(trimLeadingSqlTrivia(value)).trim();
 }
 
-function sqlCodeOnly(value) {
+export function sqlCodeOnly(value) {
   const sql = String(value);
   let output = "";
   let index = 0;
