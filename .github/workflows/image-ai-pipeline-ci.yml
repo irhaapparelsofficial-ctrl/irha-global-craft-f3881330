@@ -16,6 +16,12 @@ on:
 permissions:
   contents: read
 
+# Only the newest commit on a PR is useful. Cancel older expensive image runs
+# before model downloads and processing generate duplicate failure alerts.
+concurrency:
+  group: image-ai-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   image-ai:
     runs-on: ubuntu-24.04
@@ -32,17 +38,27 @@ jobs:
           cache: pip
           cache-dependency-path: scripts/image-ai/requirements.txt
 
+      - name: Cache AI models
+        uses: actions/cache@v4
+        with:
+          path: |
+            models/EDSR_x2.pb
+            ~/.u2net
+          key: irha-image-ci-models-v1-${{ runner.os }}
+
       - name: Install locked processor dependencies
         run: python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements.txt
 
-      - name: Download official EDSR x2 model
+      - name: Download official EDSR x2 model when absent
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p models
-          curl --fail --location --retry 4 --retry-all-errors \
-            --output "$IRHA_EDSR_MODEL" \
-            https://github.com/Saafke/EDSR_Tensorflow/raw/master/models/EDSR_x2.pb
+          if [ ! -s "$IRHA_EDSR_MODEL" ]; then
+            curl --fail --location --retry 4 --retry-all-errors \
+              --output "$IRHA_EDSR_MODEL" \
+              https://github.com/Saafke/EDSR_Tensorflow/raw/master/models/EDSR_x2.pb
+          fi
           test "$(wc -c < "$IRHA_EDSR_MODEL")" -gt 1000000
 
       - name: Download one real public catalog source image
