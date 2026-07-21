@@ -11,7 +11,10 @@ import requests
 from PIL import Image, ImageOps
 
 GATEWAY_URL = os.environ.get("IMAGE_GATEWAY_URL", "").strip()
-COMPLETE_GATEWAY_URL = os.environ.get("CATALOG_COMPLETE_GATEWAY_URL", "").strip()
+COMPLETE_GATEWAY_URL = os.environ.get(
+    "CATALOG_COMPLETE_GATEWAY_URL",
+    "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/catalog-image-complete-gateway",
+).strip()
 FALLBACK_OIDC_TOKEN = os.environ.get("IRHA_GITHUB_OIDC_TOKEN", "").strip()
 OIDC_REQUEST_URL = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL", "").strip()
 OIDC_REQUEST_TOKEN = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "").strip()
