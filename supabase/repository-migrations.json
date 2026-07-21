@@ -262,6 +262,14 @@
       "git_blob_sha": "ac6440366d34636529644763b0c7929149dc964c",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260721172500",
+      "name": "catalog_drive_worker_claim_filter",
+      "path": "supabase/migrations/20260721172500_catalog_drive_worker_claim_filter.sql",
+      "git_blob_sha": "ac910f3013606becc0e106c5f2fa78a17a1e26ac",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
