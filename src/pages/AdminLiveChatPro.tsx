@@ -112,9 +112,22 @@ function locationLabel(session: ChatSession) {
 }
 
 function hasUnread(session: ChatSession) {
+  // Closed conversations are never unread — an admin has already handled them.
+  if (session.status === "closed") return false;
   if (!session.last_user_message_at) return session.status === "waiting";
-  if (!session.admin_seen_at) return true;
-  return new Date(session.last_user_message_at).getTime() > new Date(session.admin_seen_at).getTime();
+  const userAt = new Date(session.last_user_message_at).getTime();
+  // Prefer explicit admin_seen_at when present.
+  if (session.admin_seen_at) {
+    return userAt > new Date(session.admin_seen_at).getTime();
+  }
+  // Fallback for legacy rows without admin_seen_at backfill: treat an admin
+  // reply as "seen up to that point" so historical answered chats don't inflate
+  // the unread count. Only rows where the visitor spoke *after* the last admin
+  // reply (or where no admin ever replied) count as unread.
+  if (session.last_admin_message_at) {
+    return userAt > new Date(session.last_admin_message_at).getTime();
+  }
+  return true;
 }
 
 function whatsappHref(value: string | null) {
