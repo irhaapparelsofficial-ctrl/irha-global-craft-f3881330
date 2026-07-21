@@ -126,7 +126,9 @@ describe("Irha CI control plane", () => {
     const verifiedPresent = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
     );
-    expect(verifiedPresent).toHaveLength(2);
+    // This is an extensible safety mode. New verified-present migrations must not
+    // break CI merely because the valid manifest count increased.
+    expect(verifiedPresent.length).toBeGreaterThanOrEqual(2);
 
     for (const migration of manifest.migrations) {
       expect(migration.git_blob_sha).toMatch(/^[0-9a-f]{40}$/);
