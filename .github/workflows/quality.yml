@@ -14,6 +14,7 @@ on:
 permissions:
   contents: read
   statuses: write
+  issues: write
 
 concurrency:
   group: quality-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }}
@@ -97,6 +98,32 @@ jobs:
             -f context="Irha Build Diagnostic" \
             -f description="$message" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >/dev/null
+
+      - name: Publish sanitized PR test diagnostic
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -u
+          {
+            echo '<!-- irha-quality-test-diagnostic -->'
+            echo '## Buyer-ready Quality Gate diagnostic'
+            echo
+            echo "Source: \`$GITHUB_SHA\`"
+            echo
+            echo '```text'
+            if [ -s quality-test.log ]; then
+              grep -nEi 'FAIL|AssertionError|Error:|expected|received|src/test|Test Files|Tests ' quality-test.log | tail -n 80 || tail -n 80 quality-test.log
+            elif [ -s quality-build.log ]; then
+              grep -nEi 'error|failed|missing|mismatch|refusing|cannot|unable' quality-build.log | tail -n 80 || tail -n 80 quality-build.log
+            else
+              echo 'No diagnostic log was generated.'
+            fi
+            echo '```'
+          } > quality-comment.md
+          gh pr comment "$PR_NUMBER" --body-file quality-comment.md
 
       - name: Verify minimum deployment artifact
         shell: bash
