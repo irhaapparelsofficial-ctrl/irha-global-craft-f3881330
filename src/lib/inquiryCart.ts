@@ -12,6 +12,7 @@ export type InquiryCartItem = {
   image?: string;
   categorySlug?: string;
   categoryName?: string;
+  canonicalPath?: string;
   targetQuantity: string;
   sizeBreakdown: string;
   notes: string;
@@ -30,6 +31,12 @@ function sanitizeText(value: unknown, max: number) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+function sanitizeCanonicalPath(value: unknown) {
+  const path = sanitizeText(value, 800);
+  if (!path.startsWith("/products/") || path.includes("..") || /[\r\n\t ]/.test(path)) return undefined;
+  return path.replace(/\/{2,}/g, "/").replace(/\/$/, "");
+}
+
 function sanitizeItem(value: unknown): InquiryCartItem | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const item = value as Record<string, unknown>;
@@ -44,6 +51,7 @@ function sanitizeItem(value: unknown): InquiryCartItem | null {
     image: sanitizeText(item.image, 2000) ? thumbnailUrl(sanitizeText(item.image, 2000)) : undefined,
     categorySlug: sanitizeText(item.categorySlug, 180) || undefined,
     categoryName: sanitizeText(item.categoryName, 180) || undefined,
+    canonicalPath: sanitizeCanonicalPath(item.canonicalPath),
     targetQuantity: sanitizeText(item.targetQuantity, 12),
     sizeBreakdown: sanitizeText(item.sizeBreakdown, 1000),
     notes: sanitizeText(item.notes, 2000),
@@ -153,7 +161,8 @@ function normalizeIncoming(item: IncomingCartItem): InquiryCartItem | null {
   });
 }
 
-export function inquiryCartProductPath(item: Pick<InquiryCartItem, "slug" | "categorySlug">) {
+export function inquiryCartProductPath(item: Pick<InquiryCartItem, "slug" | "categorySlug" | "canonicalPath">) {
+  if (item.canonicalPath) return item.canonicalPath;
   const category = item.categorySlug?.trim();
   if (!category) return "/products";
   return `/products/${encodeURIComponent(category)}/${encodeURIComponent(item.slug)}`;
