@@ -25,8 +25,8 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function redirectShell(canonicalPath: string) {
-  const canonical = `${SITE}${canonicalPath}`;
+function redirectShell(targetPath: string) {
+  const canonical = `${SITE}${targetPath}`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -34,10 +34,10 @@ function redirectShell(canonicalPath: string) {
   <meta name="robots" content="noindex,follow" />
   <meta http-equiv="refresh" content="0;url=${escapeHtml(canonical)}" />
   <link rel="canonical" href="${escapeHtml(canonical)}" />
-  <title>Redirecting to the canonical Irha Apparels product page</title>
+  <title>Redirecting to Irha Apparels</title>
 </head>
 <body>
-  <p>This product URL has moved. <a href="${escapeHtml(canonical)}">Open the canonical product page</a>.</p>
+  <p>This URL has moved. <a href="${escapeHtml(canonical)}">Open the current Irha Apparels page</a>.</p>
 </body>
 </html>`;
 }
@@ -57,17 +57,22 @@ let sitemap = readFileSync(sitemapPath, "utf8");
 const { products } = readExplicitTaxonomyRoutes();
 let legacyShellCount = 0;
 let resolvedProducts = 0;
+let retiredProducts = 0;
 
 for (const route of products) {
   const current = manifestBySlug.get(route.productSlug);
-  if (!current) throw new Error(`Historical product alias cannot resolve to current manifest: ${route.productSlug}`);
-  resolvedProducts += 1;
+  const targetPath = current?.canonical_path ?? `/products/${route.categorySlug}`;
 
-  const canonicalFile = resolve("dist", current.canonical_path.slice(1), "index.html");
-  const canonicalShell = readFileSync(canonicalFile, "utf8");
-  const expectedCanonical = `<link rel="canonical" href="${SITE}${current.canonical_path}"`;
-  if (!canonicalShell.includes(expectedCanonical) || !canonicalShell.includes('data-irha-product-shell="true"')) {
-    throw new Error(`Buyer-ready canonical shell is missing or was overwritten: ${current.canonical_path}`);
+  if (current) {
+    resolvedProducts += 1;
+    const canonicalFile = resolve("dist", current.canonical_path.slice(1), "index.html");
+    const canonicalShell = readFileSync(canonicalFile, "utf8");
+    const expectedCanonical = `<link rel="canonical" href="${SITE}${current.canonical_path}"`;
+    if (!canonicalShell.includes(expectedCanonical) || !canonicalShell.includes('data-irha-product-shell="true"')) {
+      throw new Error(`Buyer-ready canonical shell is missing or was overwritten: ${current.canonical_path}`);
+    }
+  } else {
+    retiredProducts += 1;
   }
 
   const legacyPaths = new Set([
@@ -76,9 +81,9 @@ for (const route of products) {
     route.deprecatedCanonicalPath,
     route.canonicalPath,
   ]);
-  legacyPaths.delete(current.canonical_path);
+  legacyPaths.delete(targetPath);
   for (const legacyPath of legacyPaths) {
-    writeShell(legacyPath, redirectShell(current.canonical_path));
+    writeShell(legacyPath, redirectShell(targetPath));
     legacyShellCount += 1;
     const absoluteLegacy = `${SITE}${legacyPath}`;
     sitemap = sitemap.replace(
@@ -88,9 +93,10 @@ for (const route of products) {
   }
 }
 
-if (resolvedProducts !== products.length) throw new Error("Not all historical product aliases were resolved");
 if (/reference-style-0[23]/i.test(sitemap)) {
   throw new Error("Reference-style legacy URL leaked into the final sitemap");
 }
 writeFileSync(sitemapPath, sitemap, "utf8");
-console.log(`Resolved ${resolvedProducts} historical products and generated ${legacyShellCount} noindex legacy redirect shells`);
+console.log(
+  `Resolved ${resolvedProducts} historical products, retired ${retiredProducts}, and generated ${legacyShellCount} noindex redirect shells`,
+);
