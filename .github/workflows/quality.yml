@@ -68,7 +68,7 @@ jobs:
           set -euo pipefail
           npm --ignore-scripts run build 2>&1 | tee quality-build.log
 
-      - name: Collect failure label
+      - name: Collect failing test names
         id: failure-label
         if: failure()
         shell: bash
