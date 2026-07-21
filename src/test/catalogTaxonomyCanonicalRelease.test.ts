@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readExplicitTaxonomyRoutes } from "../../scripts/generate-taxonomy-release-assets";
+import { PRODUCT_SLUG_RENAMES, readExplicitTaxonomyRoutes } from "../../scripts/generate-taxonomy-release-assets";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -20,15 +20,28 @@ describe("canonical explicit B2B taxonomy release", () => {
     }
   });
 
-  it("preserves critical semantic placements", () => {
+  it("preserves critical semantic placements after approved slug cleanup", () => {
     const { products } = readExplicitTaxonomyRoutes();
     const path = (slug: string) => products.find((route) => route.productSlug === slug)?.fullSlugPath;
 
-    expect(path("traditional-lederhosen")).toBe("bavarian-trachten-wear/men/short-lederhosen");
-    expect(path("traditional-dirndl-dress")).toBe("bavarian-trachten-wear/women/dirndl-dresses");
+    expect(path("short-lederhosen")).toBe("bavarian-trachten-wear/men/short-lederhosen");
+    expect(path("traditional-dirndl")).toBe("bavarian-trachten-wear/women/dirndl-dresses");
     expect(path("children-s-dirndl")).toBe("bavarian-trachten-wear/kids/girls-dirndl");
-    expect(path("sublimated-soccer-uniform-kit")).toBe("sportswear/team-club/football-kits");
+    expect(path("custom-soccer-uniform-kit")).toBe("sportswear/team-club/football-kits");
     expect(path("leather-wallet")).toBe("premium-leather-apparel/accessories/leather-wallets");
+  });
+
+  it("keeps historical product paths as one-hop aliases to the new canonicals", () => {
+    const { products } = readExplicitTaxonomyRoutes();
+    expect(Object.keys(PRODUCT_SLUG_RENAMES)).toHaveLength(13);
+
+    for (const [sourceSlug, targetSlug] of Object.entries(PRODUCT_SLUG_RENAMES)) {
+      const route = products.find((candidate) => candidate.sourceProductSlug === sourceSlug);
+      expect(route?.productSlug).toBe(targetSlug);
+      expect(route?.sourceLegacyPath).toContain(`/${sourceSlug}`);
+      expect(route?.deprecatedCanonicalPath).toContain(`/${sourceSlug}`);
+      expect(route?.canonicalPath.endsWith(`/${targetSlug}`)).toBe(true);
+    }
   });
 
   it("extends the existing owner-approved runtime without duplicating database migrations", () => {
@@ -65,16 +78,19 @@ describe("canonical explicit B2B taxonomy release", () => {
     expect(app).toContain('/products/:categorySlug/:audienceSlug/:collectionSlug/:productSlug');
   });
 
-  it("generates real Cloudflare 301s, canonical sitemap entries and both route shells", () => {
+  it("generates real Cloudflare 301s, canonical sitemap entries and current plus historical route shells", () => {
     const generator = read("scripts/generate-taxonomy-release-assets.ts");
     const vite = read("vite.config.ts");
 
     expect(generator).toContain("# BEGIN GENERATED TAXONOMY REDIRECTS");
+    expect(generator).toContain("PRODUCT_SLUG_RENAMES");
+    expect(generator).toContain("sourceLegacyPath");
+    expect(generator).toContain("deprecatedCanonicalPath");
     expect(generator).toContain(" 301");
     expect(generator).toContain("Expected 86 explicit product routes");
     expect(generator).toContain("location.startsWith(`${SITE}/intl/`)");
-    expect(generator).toContain("writeProductShell(outputRoot, route.canonicalPath, html)");
-    expect(generator).toContain("writeProductShell(outputRoot, route.legacyPath, html)");
+    expect(generator).toContain("route.canonicalPath");
+    expect(generator).toContain("route.sourceLegacyPath");
     expect(vite).toContain("taxonomyReleaseAssets()");
     expect(vite).toContain("generateTaxonomyReleaseAssets()");
     expect(vite).toContain("generateTaxonomyProductShells()");
@@ -87,7 +103,7 @@ describe("canonical explicit B2B taxonomy release", () => {
 
     expect(prepare).toContain("taxonomy-legacy-shell-verification-only");
     expect(finalize).toContain("Verifier-only legacy product URL leaked into the final sitemap");
-    expect(finalize).toContain("generateTaxonomyProductShells(process.cwd(), \"dist\")");
+    expect(finalize).toContain('generateTaxonomyProductShells(process.cwd(), "dist")');
     expect(finalize).toContain("Taxonomy product shells do not point to the reviewed four-level canonical URL");
     expect(packageJson).toContain("prepare-taxonomy-shell-verification.ts");
     expect(packageJson).toContain("generate-static-route-shells.ts");
