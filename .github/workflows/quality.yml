@@ -78,6 +78,24 @@ jobs:
           if [ -z "$label" ]; then label="build-or-unknown"; fi
           echo "label=$label" >> "$GITHUB_OUTPUT"
 
+      - name: Publish failing test path statuses
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -u
+          index=0
+          grep -oE 'src/[^[:space:]:]+\.(test|spec)\.[tj]sx?' quality-test.log 2>/dev/null | sort -u | while IFS= read -r test_path; do
+            index=$((index + 1))
+            [ "$index" -le 40 ] || break
+            gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+              -f state=failure \
+              -f context="Irha failing test $index" \
+              -f description="$(printf '%s' "$test_path" | cut -c1-140)" \
+              -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >/dev/null || true
+          done
+
       - name: Upload failed quality diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
