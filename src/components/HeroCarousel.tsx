@@ -55,7 +55,6 @@ export default function HeroCarousel() {
             src={desktopHero}
             alt=""
             aria-hidden="true"
-            fetchPriority="low"
             decoding="async"
             className="h-full w-full object-cover object-center opacity-35"
           />
