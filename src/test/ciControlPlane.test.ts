@@ -17,11 +17,13 @@ describe("Irha CI control plane", () => {
     expect(quality).toContain("Publish main build artifact");
     expect(quality).toContain("production-dist-${{ github.sha }}");
     expect(quality).toContain("statuses: write");
-    expect(quality).toContain("issues: write");
+    expect(quality).toContain("Collect failing test names");
     expect(quality).toContain("Upload failed quality diagnostics");
-    expect(quality).toContain("Publish sanitized PR test diagnostic");
+    expect(quality).toContain("quality-${{ steps.failure-label.outputs.label }}-${{ github.sha }}");
     expect(quality).toContain("Publish exact commit Quality Gate status");
     expect(quality).toContain('context="Irha Quality Gate"');
+    expect(quality).not.toContain("issues: write");
+    expect(quality).not.toContain("Publish sanitized PR test diagnostic");
     expect(quality).not.toContain("Detect full-verification readiness");
     expect(quality).not.toContain("steps.mode.outputs.full_verify");
     expect(quality).not.toContain("CLOUDFLARE_API_TOKEN");
