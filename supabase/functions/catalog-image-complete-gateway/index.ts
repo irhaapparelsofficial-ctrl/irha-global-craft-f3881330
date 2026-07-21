@@ -34,6 +34,17 @@ type Manifest = {
 };
 
 type ServiceError = { message: string };
+type UploadClient = {
+  storage: {
+    from: (bucket: string) => {
+      upload: (
+        path: string,
+        file: File,
+        options: { upsert: boolean; cacheControl: string; contentType: string },
+      ) => Promise<{ error: ServiceError | null }>;
+    };
+  };
+};
 
 function json(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
@@ -60,6 +71,7 @@ Deno.serve(async (req: Request) => {
       requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
+    const uploadClient = service as unknown as UploadClient;
 
     const form = await req.formData();
     if (cleanText(form.get("action"), 40) !== "catalog_complete") {
@@ -77,7 +89,10 @@ Deno.serve(async (req: Request) => {
 
     const master = await requiredWebp(form, "master");
     const variants = new Map<number, File>();
-    for (const width of WIDTHS) variants.set(width, await requiredWebp(form, `variant_${width}`));
+    for (const width of WIDTHS) {
+      const variant = await requiredWebp(form, `variant_${width}`);
+      variants.set(width, variant.file);
+    }
 
     const { data: media, error: mediaError } = await service
       .from("media_assets")
@@ -124,11 +139,11 @@ Deno.serve(async (req: Request) => {
       variantPaths.set(width, `catalog/products/${baseName}/responsive/${width}/${fileName}`);
     }
 
-    await upload(service, objectPath, master.file);
+    await upload(uploadClient, objectPath, master.file);
     for (const width of WIDTHS) {
-      await upload(service, variantPaths.get(width)!, variants.get(width)!);
+      await upload(uploadClient, variantPaths.get(width)!, variants.get(width)!);
     }
-    await upload(service, thumbnailPath, variants.get(720)!);
+    await upload(uploadClient, thumbnailPath, variants.get(720)!);
 
     const checksum = await sha256(master.bytes);
     const publicUrl = service.storage.from(BUCKET).getPublicUrl(objectPath).data.publicUrl;
@@ -280,17 +295,18 @@ async function requiredWebp(form: FormData, key: string): Promise<{ file: File; 
   return { file: value, bytes };
 }
 
-async function upload(service: ReturnType<typeof createClient>, path: string, file: File) {
+async function upload(service: UploadClient, path: string, file: File) {
   const { error } = await service.storage.from(BUCKET).upload(path, file, {
     upsert: true,
     cacheControl: CACHE_SECONDS,
     contentType: "image/webp",
   });
-  if (error) throw new Error(`Could not upload ${path}: ${(error as ServiceError).message}`);
+  if (error) throw new Error(`Could not upload ${path}: ${error.message}`);
 }
 
 async function sha256(bytes: Uint8Array): Promise<string> {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const buffer = bytes.slice().buffer as ArrayBuffer;
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", buffer));
   return Array.from(digest).map((value) => value.toString(16).padStart(2, "0")).join("");
 }
 
