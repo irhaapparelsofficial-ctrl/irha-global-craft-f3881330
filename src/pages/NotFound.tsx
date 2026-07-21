@@ -5,8 +5,8 @@ import SEO from "@/components/SEO";
 import { whatsappLink } from "@/lib/constants";
 
 const CATEGORIES = [
-  { slug: "bavarian-trachten", name: "Bavarian & Trachten" },
-  { slug: "premium-leather", name: "Premium Leather" },
+  { slug: "bavarian-trachten-wear", name: "Bavarian & Trachten" },
+  { slug: "premium-leather-apparel", name: "Premium Leather" },
   { slug: "sportswear", name: "Sportswear" },
   { slug: "streetwear-activewear", name: "Streetwear & Activewear" },
   { slug: "leisure-nightwear", name: "Leisure & Nightwear" },
