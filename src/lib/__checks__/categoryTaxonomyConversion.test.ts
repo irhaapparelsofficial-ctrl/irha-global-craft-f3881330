@@ -36,7 +36,9 @@ describe("taxonomy collection conversion journey", () => {
   it("keeps product detail routes and the explicit taxonomy hierarchy intact", () => {
     expect(source).toContain("taxonomyAudiencePath");
     expect(source).toContain("taxonomyCollectionPath");
-    expect(source).toContain("const productPath = `/products/${category.slug}/${product.slug}`");
+    expect(source).toContain("const productPath = (productSlug: string) =>");
+    expect(source).toContain("`/products/${category.slug}/${audience.slug}/${collection.slug}/${productSlug}`");
+    expect(source).toContain("`/products/${category.slug}/${productSlug}`");
     expect(source).toContain("<CategoryAudienceNavigator category={category} locale={locale} taxonomy={taxonomy} />");
     expect(source).toContain("publishedTaxonomy.taxonomy ?? buildCategoryTaxonomy(category)");
   });

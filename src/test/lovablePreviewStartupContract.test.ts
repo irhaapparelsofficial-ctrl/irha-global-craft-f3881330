@@ -17,7 +17,7 @@ describe("Lovable preview and frontend build contract", () => {
     expect(pkg.scripts.predev).not.toContain("generate:catalog-pdfs");
   });
 
-  it("retains the complete production asset preparation separately", () => {
+  it("retains complete production asset preparation exactly once in the build command", () => {
     const pkg = JSON.parse(read("package.json")) as {
       scripts: Record<string, string>;
     };
@@ -25,10 +25,11 @@ describe("Lovable preview and frontend build contract", () => {
     expect(pkg.scripts["prepare:public-assets"]).toContain("generate-sitemap.ts");
     expect(pkg.scripts["prepare:public-assets"]).toContain("generate:thumbnails");
     expect(pkg.scripts["prepare:public-assets"]).toContain("generate:catalog-pdfs");
+    expect(pkg.scripts.build).toContain("npm run prepare:public-assets");
     expect(pkg.scripts["build:frontend"]).toBe(
-      "node scripts/clean-transient-public-builds.mjs && npm run prepare:public-assets && npm --ignore-scripts run build",
+      "node scripts/clean-transient-public-builds.mjs && npm --ignore-scripts run build",
     );
     expect(pkg.scripts.prebuild).toContain("verify-migration-order.mjs");
-    expect(pkg.scripts.prebuild).toContain("npm run prepare:public-assets");
+    expect(pkg.scripts.prebuild).not.toContain("npm run prepare:public-assets");
   });
 });

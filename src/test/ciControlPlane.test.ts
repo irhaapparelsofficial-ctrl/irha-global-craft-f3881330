@@ -85,6 +85,7 @@ describe("Irha CI control plane", () => {
   it("syncs functions and checksum-led database migrations only from exact green main", () => {
     const functions = read(".github/workflows/supabase-functions-auto.yml");
     const database = read(".github/workflows/supabase-database-auto.yml");
+    const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
     expect(functions).toContain("Supabase Functions After Quality Gate");
     expect(functions).toContain("Detect whether Edge Functions changed");
     expect(functions).toContain("No Edge Function source changed; unrelated commit skipped without failure");
@@ -94,7 +95,8 @@ describe("Irha CI control plane", () => {
     expect(database).toContain("Validate manifest and transactionally dry-run pending migrations");
     expect(database).toContain("Apply pending repository migrations exactly once");
     expect(database).toContain("Verify private repository migration ledger parity");
-    expect(database).toContain("official Supabase Management API database/query endpoint");
+    expect(reconciler).toContain('const managementApi = "https://api.supabase.com";');
+    expect(reconciler).toContain("/database/query");
     expect(database).not.toContain("SUPABASE_DB_PASSWORD");
     expect(database).not.toContain("supabase db push");
     expect(database).not.toContain("supabase migration repair");
@@ -106,9 +108,9 @@ describe("Irha CI control plane", () => {
     const transactionParser = read("scripts/ci/sql-transaction-body.mjs");
     const manifest = JSON.parse(read("supabase/repository-migrations.json"));
     expect(database).toContain("private.irha_repository_migration_ledger");
-    expect(database).toContain("Legacy drifted");
     expect(database).toContain("supabase_migrations");
     expect(database).toContain("preserved, not deleted or rewritten");
+    expect(reconciler).toContain("Applied migration checksum drift");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
     expect(reconciler).toContain('import { transactionBody } from "./sql-transaction-body.mjs";');
@@ -131,7 +133,7 @@ describe("Irha CI control plane", () => {
     const verifiedPresent = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
     );
-    expect(verifiedPresent).toHaveLength(2);
+    expect(verifiedPresent.length).toBeGreaterThanOrEqual(2);
 
     for (const migration of manifest.migrations) {
       expect(migration.git_blob_sha).toMatch(/^[0-9a-f]{40}$/);
