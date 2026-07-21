@@ -5,6 +5,7 @@ run-name: Supabase dry-run · PR #${{ github.event.pull_request.number }} · ${{
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "supabase/migrations/**"
       - "supabase/repository-migrations.json"
@@ -29,7 +30,7 @@ env:
 
 jobs:
   transactional-dry-run:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
