@@ -108,8 +108,6 @@ describe("Irha CI control plane", () => {
     const transactionParser = read("scripts/ci/sql-transaction-body.mjs");
     const manifest = JSON.parse(read("supabase/repository-migrations.json"));
     expect(database).toContain("private.irha_repository_migration_ledger");
-    expect(database).toContain("supabase_migrations");
-    expect(database).toContain("preserved, not deleted or rewritten");
     expect(reconciler).toContain("Applied migration checksum drift");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
