@@ -39,7 +39,7 @@ const unsupportedClaims = [
 ];
 
 describe("Streetwear & Activewear buyer-safe public copy", () => {
-  it("covers every existing streetwear product without removing its gallery", () => {
+  it("covers every historical streetwear product without removing its gallery", () => {
     expect(streetwearProducts).toHaveLength(7);
     expect([...streetwearSlugs].sort()).toEqual([...expectedStreetwearSlugs].sort());
 
@@ -90,12 +90,14 @@ describe("Streetwear & Activewear buyer-safe public copy", () => {
     );
   });
 
-  it("keeps the catalogue engine unchanged while applying copy and SEO overrides", () => {
+  it("uses the approved Supabase release and streetwear-specific buyer-safe runtime copy", () => {
     const publicCatalogSource = readFileSync(resolve(root, "src/hooks/usePublicCatalog.ts"), "utf8");
-    expect(publicCatalogSource).toContain("description: override?.description ?? product.description ?? null");
-    expect(publicCatalogSource).toContain("specs: override?.specs ?? product.specs ?? []");
-    expect(publicCatalogSource).toContain("seo_title: override?.seoTitle");
-    expect(publicCatalogSource).toContain("short_description: override?.shortDescription");
+    expect(publicCatalogSource).toContain("No local, supplemental, demo or legacy catalogue is allowed to render publicly");
+    expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_release")');
+    expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_taxonomy")');
+    expect(publicCatalogSource).toContain('case "streetwear-activewear"');
+    expect(publicCatalogSource).toContain("description: safe.description");
+    expect(publicCatalogSource).toContain("specs: safe.specs");
     expect(PRODUCT_SEO_OVERRIDES["oversized-streetwear-hoodie"].seoTitle).toContain(
       "Oversized Streetwear Hoodie",
     );
