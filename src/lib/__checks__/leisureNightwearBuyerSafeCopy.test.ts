@@ -58,7 +58,7 @@ const unsupportedClaims = [
 ];
 
 describe("Leisurewear & Nightwear buyer-safe public copy", () => {
-  it("covers all existing Leisurewear and Nightwear products without removing galleries", () => {
+  it("covers all historical Leisurewear and Nightwear products without removing galleries", () => {
     expect(leisurewearProducts).toHaveLength(7);
     expect(nightwearProducts).toHaveLength(6);
     expect(lifestyleProducts).toHaveLength(13);
@@ -114,7 +114,7 @@ describe("Leisurewear & Nightwear buyer-safe public copy", () => {
     expect(PRODUCT_SEO_OVERRIDES["silk-nightgown-slip"].specs.join(" ")).toContain("strap");
   });
 
-  it("registers once through the existing catalogue bootstrap without changing the public engine", () => {
+  it("keeps historical overrides idempotent while public runtime uses the approved Supabase release", () => {
     const batch10Source = readFileSync(resolve(root, "src/lib/supplementalCatalogBatch10.ts"), "utf8");
     const publicCatalogSource = readFileSync(resolve(root, "src/hooks/usePublicCatalog.ts"), "utf8");
     const existing = PRODUCT_SEO_OVERRIDES["casual-button-up-shirt"];
@@ -122,9 +122,11 @@ describe("Leisurewear & Nightwear buyer-safe public copy", () => {
     registerLeisureNightwearSeoOverrides();
     expect(PRODUCT_SEO_OVERRIDES["casual-button-up-shirt"]).toBe(existing);
     expect(batch10Source).toContain("registerLeisureNightwearSeoOverrides();");
-    expect(publicCatalogSource).toContain("description: override?.description ?? product.description ?? null");
-    expect(publicCatalogSource).toContain("specs: override?.specs ?? product.specs ?? []");
-    expect(publicCatalogSource).toContain("seo_title: override?.seoTitle");
-    expect(publicCatalogSource).toContain("short_description: override?.shortDescription");
+    expect(publicCatalogSource).toContain("No local, supplemental, demo or legacy catalogue is allowed to render publicly");
+    expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_release")');
+    expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_taxonomy")');
+    expect(publicCatalogSource).toContain('case "leisure-nightwear"');
+    expect(publicCatalogSource).toContain("description: safe.description");
+    expect(publicCatalogSource).toContain("specs: safe.specs");
   });
 });
