@@ -111,6 +111,12 @@ verify_jwt = false
 [functions.whatsapp-admin]
 verify_jwt = true
 
+# GitHub Actions sends an OIDC token with the fixed irha-image-pipeline audience.
+# Supabase JWT verification is disabled here because the function itself verifies
+# issuer, audience, repository, protected main ref and exact workflow identity.
+[functions.catalog-image-complete-gateway]
+verify_jwt = false
+
 # GET verification uses META_WEBHOOK_VERIFY_TOKEN. POST requests require the
 # Meta x-hub-signature-256 HMAC before any payload is persisted.
 [functions.meta-webhook]
