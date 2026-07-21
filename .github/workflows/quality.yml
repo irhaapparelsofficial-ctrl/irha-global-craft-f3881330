@@ -26,10 +26,10 @@ jobs:
   quality:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
 
     steps:
-      - name: Checkout current source
+      - name: Checkout exact event source
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -41,34 +41,105 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
-        run: bash scripts/ci/retry.sh 2 3 -- npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Install dependencies with bounded retry
+        run: bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
 
-      - name: Advisory TypeScript check
-        id: typecheck
-        continue-on-error: true
+      - name: Verify deployment source lock
+        run: npm run verify:deployment-source
+
+      - name: Verify secret safety
+        run: npm run verify:secrets
+
+      - name: Verify migration order
+        run: npm run verify:migrations
+
+      - name: Typecheck
         run: npx tsc --noEmit
 
-      - name: Build deployable website
+      - name: Test
         shell: bash
         run: |
-          set -euo pipefail
-          npm --ignore-scripts run build
+          set -o pipefail
+          npm test -- --passWithNoTests --reporter=verbose 2>&1 | tee vitest-diagnostics.log
 
-      - name: Verify minimum deployment artifact
+      - name: Upload test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-diagnostics-${{ github.run_id }}
+          path: vitest-diagnostics.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Build immutable release
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build-diagnostics.log
+
+      - name: Upload build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-diagnostics-${{ github.run_id }}
+          path: build-diagnostics.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Verify built release identity and canonical host
         shell: bash
         run: |
           set -euo pipefail
-          test -s dist/index.html
-          test -s dist/build.json
-          test -s dist/release.txt
-          test -s dist/_redirects
-          test -s dist/_headers
-          jq -e --arg sha "$GITHUB_SHA" \
-            '.source_commit == $sha and .source_identity_state == "verified"' \
+          npm run verify:release-identity
+          grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
+          grep -F '"expected_origin": "https://irhaapparels.com"' dist/build.json
+          grep -F 'Sitemap: https://irhaapparels.com/sitemap.xml' dist/robots.txt
+          jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" \
+            '.source_commit == $sha and .source_identity_state == "verified" and .repository == $repo and .supabase_project_id == "pvzjiozismyxqrzmtfbi"' \
             dist/build.json >/dev/null
 
-      - name: Publish main build artifact
+          if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'https://www.irhaapparels.com' dist; then
+            echo "Built output still contains the redirecting www host"
+            exit 1
+          fi
+          if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
+            echo "Built output references the retired Lovable Cloud database"
+            exit 1
+          fi
+          if ! grep -R -qF --include='*.js' 'pvzjiozismyxqrzmtfbi' dist/assets; then
+            echo "Built frontend is missing the immutable owner Supabase identity"
+            exit 1
+          fi
+
+      - name: Guard production text output against legacy claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          terms=(
+            "Since 2014"
+            "MOQ 50"
+            "45-day delivery"
+            "45-Day Production"
+            "reply within 12 hours"
+            "OEKO-TEX® 100"
+            "BSCI Audited"
+            "ISO 9001:2015"
+            "SEDEX Member"
+          )
+          mapfile -d '' files < <(
+            find dist -type f \
+              \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.txt' -o -name '*.xml' \) \
+              -print0
+          )
+          files+=(index.html)
+          for term in "${terms[@]}"; do
+            if grep -niF -- "$term" "${files[@]}"; then
+              echo "Forbidden legacy production claim found in deployable text output: $term"
+              exit 1
+            fi
+          done
+
+      - name: Publish exact main build artifact
         if: >-
           github.ref == 'refs/heads/main' &&
           (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
@@ -77,20 +148,20 @@ jobs:
           name: production-dist-${{ github.sha }}
           path: dist
           if-no-files-found: error
-          retention-days: 2
+          retention-days: 3
           compression-level: 6
 
-      - name: Record fast-release result
+      - name: Record validation-only contract
         if: always()
         shell: bash
         run: |
           {
-            echo "## Fast Quality Gate"
+            echo "## Quality Gate"
             echo "- Source: \`$GITHUB_SHA\`"
-            echo "- Blocking check: deployable production build"
-            echo "- TypeScript check: \`${{ steps.typecheck.outcome || 'not-run' }}\` (advisory)"
-            echo "- Full tests, migration dry-runs and image processing: non-blocking/manual"
+            echo "- Required checks: source lock, secret scan, migrations, typecheck, tests, build, release identity and legacy-claim guard"
+            echo "- Deployment secrets required: \`false\`"
             echo "- Production writes: none"
+            echo "- Deployment authority: guarded downstream workflows"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact commit Quality Gate status
@@ -102,23 +173,23 @@ jobs:
         run: |
           set -euo pipefail
           state=error
-          description="Fast build gate did not complete"
+          description="Quality Gate did not complete"
           case "$QUALITY_JOB_STATUS" in
             success)
               state=success
-              description="Deployable website build passed"
+              description="Quality Gate passed"
               ;;
             failure)
               state=failure
-              description="Website production build failed"
+              description="Quality Gate failed"
               ;;
             cancelled)
               state=error
-              description="Superseded by a newer commit"
+              description="Quality Gate cancelled"
               ;;
           esac
 
-          bash scripts/ci/retry.sh 2 2 -- gh api \
+          bash scripts/ci/retry.sh 3 3 -- gh api \
             --method POST \
             "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state="$state" \
