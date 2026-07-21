@@ -52,6 +52,11 @@ function taxonomyTranslationsReleased() {
   return import.meta.env.VITE_TAXONOMY_TRANSLATIONS_RELEASED === "true";
 }
 
+function schemaHasType(schema: object, expected: string) {
+  const type = (schema as Record<string, unknown>)["@type"];
+  return Array.isArray(type) ? type.includes(expected) : type === expected;
+}
+
 export default function SEO({
   title,
   description,
@@ -78,6 +83,37 @@ export default function SEO({
   const url = canonicalUrl(canonicalValue);
   const ogImage = assetUrl(override?.og_image_url || image || defaultSocialImage);
   const effectiveJsonLd = override?.json_ld || jsonLd;
+  const suppliedSchemas = effectiveJsonLd
+    ? (Array.isArray(effectiveJsonLd) ? effectiveJsonLd : [effectiveJsonLd])
+    : [];
+  const hasProductSchema = suppliedSchemas.some(
+    (schema) => schemaHasType(schema, "Product") || schemaHasType(schema, "ProductGroup"),
+  );
+  const productSchema = type === "product" && !hasProductSchema
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "@id": `${url}#product`,
+        name: effectiveTitle.replace(/\s*[|—].*$/, "").trim(),
+        description: effectiveDescription,
+        image: [ogImage],
+        url,
+        brand: { "@type": "Brand", name: "Irha Apparels" },
+        manufacturer: {
+          "@type": "Organization",
+          "@id": `${SITE_URL}/#organization`,
+          name: "Irha Apparels",
+          url: SITE_URL,
+        },
+        category: "Custom B2B apparel manufacturing",
+        additionalProperty: [
+          { "@type": "PropertyValue", name: "Program", value: "OEM, ODM and private label" },
+          { "@type": "PropertyValue", name: "Production model", value: "Made to order" },
+          { "@type": "PropertyValue", name: "Country of origin", value: "Pakistan" },
+        ],
+      }
+    : null;
+  const schemas = productSchema ? [...suppliedSchemas, productSchema] : suppliedSchemas;
   const isCategoryRoute = /^\/products\/[^/]+(?:\/all-products)?\/?$/.test(location.pathname);
   const functionalCategoryVariant = isCategoryRoute && shouldNoIndexCategorySearchParams(location.search);
   const isUnreviewedLocalizedTaxonomy = /^\/intl\/(de|fr|es)\/products\//.test(location.pathname)
@@ -125,12 +161,11 @@ export default function SEO({
       <meta name="twitter:image" content={ogImage} />
       <meta name="twitter:image:alt" content={`${effectiveTitle} — Irha Apparels`} />
 
-      {effectiveJsonLd &&
-        (Array.isArray(effectiveJsonLd) ? effectiveJsonLd : [effectiveJsonLd]).map((schema, index) => (
-          <script key={index} type="application/ld+json">
-            {safeJson(schema)}
-          </script>
-        ))}
+      {schemas.map((schema, index) => (
+        <script key={index} type="application/ld+json">
+          {safeJson(schema)}
+        </script>
+      ))}
     </Helmet>
   );
 }

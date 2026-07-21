@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Eye, PackageCheck, Scissors, Tags, Video } from "lucide-react";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
+import { useHomepageMedia } from "@/hooks/useHomepageMedia";
 
 const VERIFY = [
   { Icon: Eye, title: "Live factory view", text: "A scheduled video call can show the working environment and discuss the buyer’s actual requirement." },
@@ -10,18 +11,21 @@ const VERIFY = [
 ];
 
 export default function HomeManufacturingEditorial() {
+  const { data: approvedMedia = {} } = useHomepageMedia();
+  const privateLabelVisual = approvedMedia.private_label_visual || approvedMedia.private_label || factoryCinematic;
+
   return (
     <section className="relative overflow-hidden border-y border-border/60 bg-[#090909] py-12 text-white md:py-18">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_90%_20%,hsl(var(--primary)/0.10),transparent_28%)]" />
       <div className="container-luxe relative grid gap-7 lg:grid-cols-12 lg:items-center lg:gap-12">
         <div className="lg:col-span-5">
           <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-white/15 bg-black shadow-elegant sm:rounded-none">
-            <img src={factoryCinematic} alt="Apparel manufacturing workflow reference for buyer verification" loading="lazy" decoding="async" width={1400} height={875} className="h-full w-full object-cover" />
+            <img src={privateLabelVisual} alt="Private-label apparel branding, labels and packaging options" loading="lazy" decoding="async" width={1400} height={875} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/94 via-black/15 to-transparent" />
             <div className="absolute inset-x-4 bottom-4 text-white">
-              <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-primary sm:text-[8px]">Buyer verification</p>
-              <p className="mt-1.5 max-w-lg font-display text-xl leading-tight sm:text-2xl">Scheduled live factory view available.</p>
-              <p className="mt-2 max-w-md text-[10px] leading-5 text-white/62 sm:text-xs">Website visuals are references; the live discussion is focused on the actual product, quantity and customization request.</p>
+              <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-primary sm:text-[8px]">Private-label manufacturing</p>
+              <p className="mt-1.5 max-w-lg font-display text-xl leading-tight sm:text-2xl">Branding, labels and packaging reviewed before bulk production.</p>
+              <p className="mt-2 max-w-md text-[10px] leading-5 text-white/62 sm:text-xs">The buyer’s approved specification controls artwork placement, trims, woven labels, care labels, hangtags and packing.</p>
             </div>
           </div>
         </div>

@@ -1,10 +1,5 @@
-// PR #5 — Site-wide media placement manifest.
-//
-// Declarative list of every buyer-facing image slot on the site.
-// Actual media_asset_id links live in `public.site_media_placements`
-// (page_type + page_slug + role). This file is the read-side spine that
-// admin dashboards use to compute "mapped vs missing" placements without
-// guessing what pages exist.
+// Site-wide buyer-facing media placement manifest.
+// Actual media_asset_id links live in public.site_media_placements.
 
 import { MAIN_CATEGORIES } from "@/lib/catalogTaxonomyManifest";
 
@@ -22,46 +17,72 @@ export type PlacementSpec = {
   role: string;
   isLcpEligible?: boolean;
   description: string;
-  /** Static asset path when the placement is wired via bundled asset,
-   *  independent of `site_media_placements` DB row. Kept in review state
-   *  until owner QA marks the placement verified. */
   localAssetPath?: string;
   localAssetStatus?: "pending_qa" | "approved" | "rejected" | "unassigned";
-  /** Owner/admin note explaining why an asset was rejected or is pending. */
   reviewNote?: string;
 };
 
-
 const HOMEPAGE: PlacementSpec[] = [
-  // Homepage hero (desktop + mobile) — currently UNASSIGNED. The previous
-  // generated candidates were rejected by the owner as generic suit-only
-  // tailoring imagery that does not represent Irha Apparels' multi-category
-  // B2B range (Bavarian/Trachten, sportswear, leatherwear, streetwear/
-  // activewear, nightwear/private-label). See
-  // docs/PR5A_HOMEPAGE_HERO_BRIEF_V2.md for the corrected brief. Do NOT
-  // wire a public hero image until the admin approves the new candidate.
   {
     pageType: "home",
     pageSlug: "/",
     role: "hero_desktop",
     isLcpEligible: true,
-    description: "Above-the-fold desktop hero (21:9)",
-    localAssetStatus: "unassigned",
-    reviewNote:
-      "Rejected 20260717: 'hero-b2b-manufacturer-desktop.jpg' — generic suit-only concept; does not represent multi-category B2B manufacturing. Awaiting corrected candidate per PR5A_HOMEPAGE_HERO_BRIEF_V2.md.",
+    description: "Approved desktop homepage hero from the protected Drive media source",
+    localAssetStatus: "approved",
+    reviewNote: "Mapped through site_media_placements; the source original remains protected in catalog-originals.",
   },
   {
     pageType: "home",
     pageSlug: "/",
     role: "hero_mobile",
     isLcpEligible: true,
-    description: "Above-the-fold mobile hero (4:5)",
-    localAssetStatus: "unassigned",
-    reviewNote:
-      "Rejected 20260717: 'hero-b2b-manufacturer-mobile.jpg' — generic suit-only concept; does not represent multi-category B2B manufacturing. Awaiting corrected candidate per PR5A_HOMEPAGE_HERO_BRIEF_V2.md.",
+    description: "Approved mobile homepage hero from the protected Drive media source",
+    localAssetStatus: "approved",
+    reviewNote: "Mapped through site_media_placements; the source original remains protected in catalog-originals.",
   },
-
-  { pageType: "home", pageSlug: "/", role: "private_label_visual", description: "Woven labels + hang tags + packaging" },
+  {
+    pageType: "home",
+    pageSlug: "/",
+    role: "category_bavarian_trachten",
+    description: "Homepage Bavarian and Trachten featured-category visual",
+    localAssetStatus: "approved",
+  },
+  {
+    pageType: "home",
+    pageSlug: "/",
+    role: "category_leather",
+    description: "Homepage premium leather featured-category visual",
+    localAssetStatus: "approved",
+  },
+  {
+    pageType: "home",
+    pageSlug: "/",
+    role: "category_sportswear",
+    description: "Homepage sportswear and teamwear featured-category visual",
+    localAssetStatus: "approved",
+  },
+  {
+    pageType: "home",
+    pageSlug: "/",
+    role: "category_streetwear_activewear",
+    description: "Homepage streetwear and activewear featured-category visual",
+    localAssetStatus: "approved",
+  },
+  {
+    pageType: "home",
+    pageSlug: "/",
+    role: "category_leisure_nightwear",
+    description: "Homepage leisurewear and nightwear featured-category visual",
+    localAssetStatus: "approved",
+  },
+  {
+    pageType: "home",
+    pageSlug: "/",
+    role: "private_label_visual",
+    description: "Approved private-label branding, labels and packaging visual",
+    localAssetStatus: "approved",
+  },
   { pageType: "home", pageSlug: "/", role: "sampling_qc_visual", description: "Sampling / QC / customization" },
   { pageType: "home", pageSlug: "/", role: "factory_call_cta", description: "Factory live-video-call CTA visual" },
   { pageType: "home", pageSlug: "/", role: "quotation_cta", description: "Final quotation / catalogue CTA visual" },

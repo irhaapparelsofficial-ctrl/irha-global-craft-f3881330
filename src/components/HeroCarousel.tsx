@@ -2,20 +2,14 @@ import { Link } from "react-router-dom";
 import { ArrowRight, FileText, Headphones, Video } from "lucide-react";
 import ResilientImage from "@/components/ResilientImage";
 import { CATEGORY_HERO_MEDIA } from "@/lib/heroMedia";
-
-// Homepage hero backdrop is intentionally NOT wired. Previous generated
-// candidates (hero-b2b-manufacturer-desktop.jpg / .mobile.jpg) were rejected
-// by the owner as generic suit-only tailoring imagery that misrepresents
-// Irha's multi-category B2B range. Corrected brief lives at
-// docs/PR5A_HOMEPAGE_HERO_BRIEF_V2.md. Do not add a public hero image
-// here until an admin-approved replacement is available.
-
+import { useHomepageMedia } from "@/hooks/useHomepageMedia";
 
 const SECONDARY_PROGRAMS = [
   {
     slug: "sportswear",
     title: "Sportswear",
     eyebrow: "Teamwear",
+    role: "category_sportswear",
     image: CATEGORY_HERO_MEDIA.sportswear,
     alt: "Custom performance tracksuit for sportswear and teamwear manufacturing",
   },
@@ -23,6 +17,7 @@ const SECONDARY_PROGRAMS = [
     slug: "premium-leather-apparel",
     title: "Leatherwear",
     eyebrow: "Jackets & vests",
+    role: "category_leather",
     image: CATEGORY_HERO_MEDIA["premium-leather-apparel"],
     alt: "Custom classic biker jacket for premium leather apparel manufacturing",
   },
@@ -30,6 +25,7 @@ const SECONDARY_PROGRAMS = [
     slug: "streetwear-activewear",
     title: "Streetwear",
     eyebrow: "Private label",
+    role: "category_streetwear_activewear",
     image: CATEGORY_HERO_MEDIA["streetwear-activewear"],
     alt: "Custom oversized hoodie for streetwear and activewear manufacturing",
   },
@@ -37,6 +33,7 @@ const SECONDARY_PROGRAMS = [
     slug: "leisure-nightwear",
     title: "Leisurewear",
     eyebrow: "Nightwear & lounge",
+    role: "category_leisure_nightwear",
     image: CATEGORY_HERO_MEDIA["leisure-nightwear"],
     alt: "Custom plush robe for leisurewear and nightwear manufacturing",
   },
@@ -44,14 +41,30 @@ const SECONDARY_PROGRAMS = [
 
 export default function HeroCarousel() {
   const openLiveChat = () => window.dispatchEvent(new CustomEvent("irha:open-human-chat"));
+  const { data: approvedMedia = {} } = useHomepageMedia();
+  const desktopHero = approvedMedia.hero_desktop;
+  const mobileHero = approvedMedia.hero_mobile || desktopHero;
+  const bavarianImage = approvedMedia.category_bavarian_trachten || CATEGORY_HERO_MEDIA["bavarian-trachten-wear"];
 
   return (
     <section className="relative overflow-hidden border-b border-border/60 bg-background text-foreground">
-      {/* Rejected suit-only backdrop removed — see PR5A_HOMEPAGE_HERO_BRIEF_V2.md */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40" />
+      {desktopHero && (
+        <picture className="pointer-events-none absolute inset-0">
+          {mobileHero && <source media="(max-width: 639px)" srcSet={mobileHero} />}
+          <img
+            src={desktopHero}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            className="h-full w-full object-cover object-center opacity-35"
+          />
+        </picture>
+      )}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/55" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_90%_8%,hsl(var(--primary)/0.14),transparent_27%)]" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.025] [background-image:linear-gradient(rgba(255,255,255,.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.35)_1px,transparent_1px)] [background-size:72px_72px]" />
-
 
       <div className="container-luxe relative pb-10 pt-20 sm:pb-14 sm:pt-28 lg:pb-16 lg:pt-32">
         <p className="inline-flex rounded-full border border-border/70 bg-card/60 px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:py-2 sm:text-[9px]">
@@ -102,8 +115,8 @@ export default function HeroCarousel() {
             >
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(213,173,77,.18),transparent_52%)]" />
               <ResilientImage
-                sources={[CATEGORY_HERO_MEDIA["bavarian-trachten-wear"]]}
-                alt="Premium embroidered Lederhosen shown upright for Bavarian and Trachten manufacturing"
+                sources={[bavarianImage]}
+                alt="Premium Bavarian and Trachten manufacturing collection"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
@@ -128,7 +141,7 @@ export default function HeroCarousel() {
               >
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(213,173,77,.12),transparent_58%)]" />
                 <ResilientImage
-                  sources={[program.image]}
+                  sources={[approvedMedia[program.role] || program.image]}
                   alt={program.alt}
                   loading="lazy"
                   fetchPriority="low"
