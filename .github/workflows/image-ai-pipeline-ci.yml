@@ -36,6 +36,9 @@ jobs:
       - name: Install locked processor dependencies
         run: python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements.txt
 
+      - name: Compile catalogue WebP worker
+        run: python -m py_compile scripts/image-ai/run_catalog_queue.py
+
       - name: Download official EDSR x2 model
         shell: bash
         run: |
