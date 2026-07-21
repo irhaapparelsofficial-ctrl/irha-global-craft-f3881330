@@ -79,19 +79,28 @@ async function safeUnreadOrWaitingChats(): Promise<number> {
   try {
     const { data, error } = await (supabase
       .from("chat_sessions" as never)
-      .select("status,last_user_message_at,admin_seen_at")
+      .select("status,last_user_message_at,last_admin_message_at,admin_seen_at")
+      .neq("status", "closed")
       .limit(1000) as unknown as Promise<{
-        data: Array<{ status: string | null; last_user_message_at: string | null; admin_seen_at: string | null }> | null;
+        data: Array<{ status: string | null; last_user_message_at: string | null; last_admin_message_at: string | null; admin_seen_at: string | null }> | null;
         error: unknown;
       }>);
     if (error || !data) return 0;
     let n = 0;
     for (const s of data) {
       if (s.status === "waiting") { n++; continue; }
-      if (s.last_user_message_at) {
-        if (!s.admin_seen_at || new Date(s.last_user_message_at) > new Date(s.admin_seen_at)) {
-          n++;
-        }
+      if (!s.last_user_message_at) continue;
+      const userAt = new Date(s.last_user_message_at).getTime();
+      if (s.admin_seen_at) {
+        if (userAt > new Date(s.admin_seen_at).getTime()) n++;
+        continue;
+      }
+      // Legacy rows without admin_seen_at: fall back to last_admin_message_at
+      // so already-answered historical chats aren't counted as unread.
+      if (s.last_admin_message_at) {
+        if (userAt > new Date(s.last_admin_message_at).getTime()) n++;
+      } else {
+        n++;
       }
     }
     return n;
