@@ -5,10 +5,6 @@ import { rmSync } from "fs";
 import { componentTagger } from "lovable-tagger";
 import { imagetools } from "vite-imagetools";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
-import {
-  generateTaxonomyProductShells,
-  generateTaxonomyReleaseAssets,
-} from "./scripts/generate-taxonomy-release-assets";
 
 function verifiedReleaseMetadata(): Plugin {
   return {
@@ -25,19 +21,6 @@ function verifiedReleaseMetadata(): Plugin {
         .replace(/<meta data-irha-fallback-seo="true" name="twitter:title" content="[^"]*"\s*\/?>/i, '<meta data-irha-fallback-seo="true" name="twitter:title" content="Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers" />')
         .replace(/<meta data-irha-fallback-seo="true" name="twitter:description" content="[^"]*"\s*\/?>/i, '<meta data-irha-fallback-seo="true" name="twitter:description" content="OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan for global B2B buyers." />')
         .replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, "");
-    },
-  };
-}
-
-function taxonomyReleaseAssets(): Plugin {
-  return {
-    name: "irha-explicit-taxonomy-release-assets",
-    apply: "build",
-    buildStart() {
-      generateTaxonomyReleaseAssets();
-    },
-    closeBundle() {
-      generateTaxonomyProductShells();
     },
   };
 }
@@ -60,7 +43,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     verifiedReleaseMetadata(),
-    taxonomyReleaseAssets(),
     retireLegacyCatalogueFiles(),
     react(),
     imagetools(),
