@@ -53,7 +53,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm --ignore-scripts run build
+          npm --ignore-scripts run build 2>&1 | tee quality-build.log
+
+      - name: Upload failed build diagnostic
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-build-diagnostic-${{ github.sha }}
+          path: quality-build.log
+          if-no-files-found: warn
+          retention-days: 2
+          compression-level: 0
 
       - name: Verify minimum deployment artifact
         shell: bash
