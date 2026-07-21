@@ -1,19 +1,57 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import ResilientImage from "@/components/ResilientImage";
+import { useHomepageMedia } from "@/hooks/useHomepageMedia";
 import { CATEGORY_HERO_MEDIA } from "@/lib/heroMedia";
 
 const PROGRAMS = [
-  { slug: "bavarian-trachten-wear", name: "Bavarian & Trachten Wear", description: "Lederhosen, dirndl, shirts, vests and accessories", image: CATEGORY_HERO_MEDIA["bavarian-trachten-wear"], alt: "Traditional embroidered Lederhosen manufacturing reference" },
-  { slug: "sportswear", name: "Sportswear", description: "Team uniforms, tracksuits, training and club programs", image: CATEGORY_HERO_MEDIA.sportswear, alt: "Performance tracksuit manufacturing reference" },
-  { slug: "premium-leather-apparel", name: "Premium Leather Apparel", description: "Biker jackets, bombers, vests and leather bottoms", image: CATEGORY_HERO_MEDIA["premium-leather-apparel"], alt: "Classic leather biker jacket manufacturing reference" },
-  { slug: "streetwear-activewear", name: "Streetwear & Activewear", description: "Hoodies, tees, joggers and private-label sets", image: CATEGORY_HERO_MEDIA["streetwear-activewear"], alt: "Oversized streetwear hoodie manufacturing reference" },
-  { slug: "leisure-nightwear", name: "Leisure & Nightwear", description: "Sleepwear, loungewear and custom leisure programs", image: CATEGORY_HERO_MEDIA["leisure-nightwear"], alt: "Plush leisure and sleep robe manufacturing reference" },
+  {
+    slug: "bavarian-trachten-wear",
+    role: "category_bavarian_trachten",
+    name: "Bavarian & Trachten Wear",
+    description: "Lederhosen, dirndl, shirts, vests and accessories",
+    image: CATEGORY_HERO_MEDIA["bavarian-trachten-wear"],
+    alt: "Bavarian and Trachten clothing manufacturing collection",
+  },
+  {
+    slug: "sportswear",
+    role: "category_sportswear",
+    name: "Sportswear",
+    description: "Team uniforms, tracksuits, training and club programs",
+    image: CATEGORY_HERO_MEDIA.sportswear,
+    alt: "Custom sportswear and teamwear manufacturing collection",
+  },
+  {
+    slug: "premium-leather-apparel",
+    role: "category_leather",
+    name: "Premium Leather Apparel",
+    description: "Biker jackets, bombers, vests and leather bottoms",
+    image: CATEGORY_HERO_MEDIA["premium-leather-apparel"],
+    alt: "Premium leather apparel manufacturing collection",
+  },
+  {
+    slug: "streetwear-activewear",
+    role: "category_streetwear_activewear",
+    name: "Streetwear & Activewear",
+    description: "Hoodies, tees, joggers and private-label sets",
+    image: CATEGORY_HERO_MEDIA["streetwear-activewear"],
+    alt: "Private label streetwear and activewear manufacturing collection",
+  },
+  {
+    slug: "leisure-nightwear",
+    role: "category_leisure_nightwear",
+    name: "Leisure & Nightwear",
+    description: "Sleepwear, loungewear and custom leisure programs",
+    image: CATEGORY_HERO_MEDIA["leisure-nightwear"],
+    alt: "Private label leisurewear and nightwear manufacturing collection",
+  },
 ] as const;
 
 const LAYOUTS = ["lg:col-span-7", "lg:col-span-5", "lg:col-span-4", "lg:col-span-4", "lg:col-span-4"] as const;
 
 export default function HomeCategoryUniverse() {
+  const { data: approvedMedia = {} } = useHomepageMedia();
+
   return (
     <section id="programs" className="relative overflow-hidden bg-background py-11 text-foreground md:py-18">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,hsl(var(--primary)/0.08),transparent_28%)]" />
@@ -32,11 +70,12 @@ export default function HomeCategoryUniverse() {
         <div className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-12">
           {PROGRAMS.map((program, index) => {
             const featuredRow = index < 2;
+            const image = approvedMedia[program.role] || program.image;
             return (
               <Link key={program.slug} to={`/products/${program.slug}`} className={`group min-w-[82%] max-w-[330px] snap-start overflow-hidden rounded-xl border border-border/70 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:shadow-elegant sm:min-w-0 sm:max-w-none sm:rounded-none ${LAYOUTS[index] ?? "lg:col-span-4"}`}>
                 <div className={`relative aspect-[16/10] overflow-hidden bg-[#101722] ${featuredRow ? "sm:aspect-[16/9]" : "sm:aspect-[4/3]"}`}>
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(213,173,77,.12),transparent_58%)]" />
-                  <ResilientImage sources={[program.image]} alt={program.alt} loading="lazy" decoding="async" width={1200} height={800} className="relative h-full w-full object-contain p-4 transition-transform duration-700 group-hover:scale-[1.025] sm:p-6" />
+                  <ResilientImage sources={[image, program.image]} alt={program.alt} loading="lazy" decoding="async" width={1200} height={800} className="relative h-full w-full object-contain p-4 transition-transform duration-700 group-hover:scale-[1.025] sm:p-6" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/84 via-black/5 to-transparent" />
                   <span className="absolute bottom-3 left-3 text-[7px] font-semibold uppercase tracking-[0.14em] text-white/80 sm:left-4 sm:text-[8px]">Made-to-order program</span>
                 </div>
