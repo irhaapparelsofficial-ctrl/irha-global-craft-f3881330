@@ -5,13 +5,13 @@ import io
 import json
 import os
 import sys
-from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
 from PIL import Image, ImageOps
 
 GATEWAY_URL = os.environ.get("IMAGE_GATEWAY_URL", "").strip()
+COMPLETE_GATEWAY_URL = os.environ.get("CATALOG_COMPLETE_GATEWAY_URL", "").strip()
 FALLBACK_OIDC_TOKEN = os.environ.get("IRHA_GITHUB_OIDC_TOKEN", "").strip()
 OIDC_REQUEST_URL = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL", "").strip()
 OIDC_REQUEST_TOKEN = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "").strip()
@@ -80,7 +80,7 @@ def report_failure(job: dict, message: str) -> None:
             "message": message[:1800],
             "review_required": False,
         })
-    except Exception as error:  # noqa: BLE001 - preserve original processing error
+    except Exception as error:
         print(f"Could not report failure for {job.get('id')}: {error}", file=sys.stderr)
 
 
@@ -115,13 +115,7 @@ def resized_variant(master: Image.Image, requested_width: int) -> Image.Image:
 
 def webp_bytes(image: Image.Image) -> bytes:
     output = io.BytesIO()
-    image.save(
-        output,
-        format="WEBP",
-        quality=WEBP_QUALITY,
-        method=6,
-        exact=True,
-    )
+    image.save(output, format="WEBP", quality=WEBP_QUALITY, method=6, exact=True)
     value = output.getvalue()
     if len(value) < 24 or value[:4] != b"RIFF" or value[8:12] != b"WEBP":
         raise RuntimeError("Generated WebP failed signature validation")
@@ -152,12 +146,7 @@ def process_job(job: dict) -> dict:
 
         manifest = {
             "status": "ready",
-            "backgroundStyle": "source_preserved",
-            "backgroundHex": "#101722",
-            "enhanced": False,
-            "upscaled": False,
             "qualityScore": 95,
-            "reviewReason": None,
             "sourceWidth": source_width,
             "sourceHeight": source_height,
             "masterWidth": master.width,
@@ -173,14 +162,12 @@ def process_job(job: dict) -> dict:
         files[f"variant_{width}"] = (f"{width}.webp", payload, "image/webp")
 
     upload = requests.post(
-        GATEWAY_URL,
+        COMPLETE_GATEWAY_URL,
         headers=auth_headers(),
         data={
-            "action": "complete",
+            "action": "catalog_complete",
             "id": job["id"],
             "lock_token": job["lock_token"],
-            "bucket": job.get("bucket") or "site-media",
-            "object_path": job["object_path"],
             "manifest": json.dumps(manifest, separators=(",", ":")),
         },
         files=files,
@@ -195,6 +182,8 @@ def process_job(job: dict) -> dict:
 def main() -> int:
     if not GATEWAY_URL:
         raise RuntimeError("IMAGE_GATEWAY_URL is missing")
+    if not COMPLETE_GATEWAY_URL:
+        raise RuntimeError("CATALOG_COMPLETE_GATEWAY_URL is missing")
 
     failed = 0
     ready = 0
@@ -220,7 +209,7 @@ def main() -> int:
                 result = process_job(job)
                 ready += 1 if result.get("status") == "ready" else 0
                 print(json.dumps({"id": job["id"], "result": result}, separators=(",", ":")))
-            except Exception as error:  # noqa: BLE001 - each asset must be failure-isolated
+            except Exception as error:
                 failed += 1
                 message = str(error)
                 report_failure(job, message)
