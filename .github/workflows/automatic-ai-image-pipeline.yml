@@ -25,6 +25,7 @@ on:
         options:
           - canary
           - drain
+          - catalog-drain
   issue_comment:
     types: [created]
 
@@ -140,7 +141,8 @@ jobs:
        github.event.issue.number == 375 &&
        github.event.comment.user.login == 'irhaapparelsofficial-ctrl' &&
        (github.event.comment.body == '/run-image-ai-canary' ||
-        github.event.comment.body == '/run-image-ai-drain'))
+        github.event.comment.body == '/run-image-ai-drain' ||
+        github.event.comment.body == '/run-catalog-webp-drain'))
     runs-on: ubuntu-24.04
     outputs:
       workers: ${{ steps.plan.outputs.workers }}
@@ -168,11 +170,16 @@ jobs:
             case "$comment_body" in
               /run-image-ai-drain) mode="drain" ;;
               /run-image-ai-canary) mode="canary" ;;
+              /run-catalog-webp-drain) mode="catalog-drain" ;;
               *) echo "Unsupported issue command in event payload: ${comment_body:-missing}"; exit 1 ;;
             esac
           fi
 
-          if [ "$mode" = "drain" ]; then
+          if [ "$mode" = "catalog-drain" ]; then
+            workers='["1","2","3","4","5","6","7","8"]'
+            batch_limit=5
+            max_jobs=100
+          elif [ "$mode" = "drain" ]; then
             workers='["1","2","3","4"]'
             batch_limit=3
             max_jobs=6
@@ -204,7 +211,7 @@ jobs:
       matrix:
         worker: ${{ fromJSON(needs.queue-plan.outputs.workers) }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 150
+    timeout-minutes: 180
     steps:
       - name: Checkout exact protected main source
         uses: actions/checkout@v4
@@ -230,9 +237,12 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-dependency-path: scripts/image-ai/requirements.txt
+          cache-dependency-path: |
+            scripts/image-ai/requirements.txt
+            scripts/image-ai/requirements-catalog.txt
 
       - name: Cache AI models
+        if: needs.queue-plan.outputs.mode != 'catalog-drain'
         uses: actions/cache@v4
         with:
           path: |
@@ -240,10 +250,16 @@ jobs:
             ~/.u2net
           key: irha-image-models-v2-${{ runner.os }}
 
-      - name: Install locked image dependencies
+      - name: Install locked AI image dependencies
+        if: needs.queue-plan.outputs.mode != 'catalog-drain'
         run: python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements.txt
 
+      - name: Install locked catalogue WebP dependencies
+        if: needs.queue-plan.outputs.mode == 'catalog-drain'
+        run: python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements-catalog.txt
+
       - name: Download Apache-2.0 EDSR x2 model when absent
+        if: needs.queue-plan.outputs.mode != 'catalog-drain'
         shell: bash
         run: |
           set -euo pipefail
@@ -261,7 +277,15 @@ jobs:
           IRHA_IMAGE_BATCH_LIMIT: ${{ needs.queue-plan.outputs.batch_limit }}
           IRHA_IMAGE_MAX_JOBS: ${{ needs.queue-plan.outputs.max_jobs }}
           IRHA_IMAGE_WORKER: ${{ matrix.worker }}
-        run: python scripts/image-ai/run_queue.py
+          IRHA_QUEUE_MODE: ${{ needs.queue-plan.outputs.mode }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$IRHA_QUEUE_MODE" = "catalog-drain" ]; then
+            python scripts/image-ai/run_catalog_queue.py
+          else
+            python scripts/image-ai/run_queue.py
+          fi
 
       - name: Record worker outcome
         if: always()
@@ -274,5 +298,6 @@ jobs:
             echo "- Claim limit: \`${{ needs.queue-plan.outputs.batch_limit }}\`"
             echo "- Maximum jobs: \`${{ needs.queue-plan.outputs.max_jobs }}\`"
             echo "- Original images: preserved"
+            echo "- Catalogue mode: content-preserving WebP and responsive variants"
             echo "- Stale lock policy: database-controlled reclaim after 30 minutes"
           } >> "$GITHUB_STEP_SUMMARY"
