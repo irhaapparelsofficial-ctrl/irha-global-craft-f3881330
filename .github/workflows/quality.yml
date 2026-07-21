@@ -86,8 +86,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          set -euo pipefail
-          message="$(cat quality-test.log quality-build.log 2>/dev/null | grep -Ei 'FAIL|AssertionError|Error:|failed|missing|mismatch|refusing|cannot|unable' | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-130)"
+          set -u
+          message="$({
+            cat quality-test.log 2>/dev/null || true
+            cat quality-build.log 2>/dev/null || true
+          } | grep -Ei 'FAIL|AssertionError|Error:|failed|missing|mismatch|refusing|cannot|unable' | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-130 || true)"
           if [ -z "$message" ]; then message="Quality Gate failed; inspect the workflow steps and diagnostic artifact"; fi
           gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state=failure \
