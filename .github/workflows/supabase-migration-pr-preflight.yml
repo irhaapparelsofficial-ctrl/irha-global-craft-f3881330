@@ -1,10 +1,11 @@
 name: Supabase Migration PR Preflight
 
-run-name: Supabase advisory · ${{ github.event_name }} · ${{ github.sha }}
+run-name: Supabase dry-run · PR #${{ github.event.pull_request.number }} · ${{ github.event.pull_request.head.sha }}
 
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "supabase/migrations/**"
       - "supabase/repository-migrations.json"
@@ -12,55 +13,35 @@ on:
       - "scripts/ci/reconcile-repository-migrations.mjs"
       - "scripts/ci/sql-transaction-body.mjs"
       - ".github/workflows/supabase-migration-pr-preflight.yml"
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: Branch, tag or SHA to inspect manually
-        required: false
-        default: "main"
-        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: supabase-migration-advisory-${{ github.event.pull_request.number || github.run_id }}
+  group: supabase-migration-preflight-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 env:
   SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
   REPO_MIGRATION_MODE: plan
   REPO_MIGRATION_PLAN_PATH: /tmp/repository-migration-plan.json
   REPO_MIGRATION_EVIDENCE_PATH: /tmp/repository-migration-evidence.json
 
 jobs:
-  pr-advisory:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Allow PR to continue
-        run: |
-          {
-            echo "## Supabase migration advisory"
-            echo "- Automatic transactional dry-run: disabled"
-            echo "- Merge blocking: disabled"
-            echo "- Database apply remains limited to relevant changes after merge"
-            echo "- Full inspection can be started manually when needed"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  manual-dry-run:
-    if: github.event_name == 'workflow_dispatch'
+  transactional-dry-run:
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       GH_TOKEN: ${{ github.token }}
+
     steps:
-      - name: Checkout requested source
+      - name: Checkout exact PR head
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
           persist-credentials: false
 
@@ -69,44 +50,43 @@ jobs:
         with:
           node-version: 24
 
-      - name: Detect manual credential readiness
-        id: credentials
+      - name: Verify owner Supabase preflight credentials
         shell: bash
         run: |
           set -euo pipefail
           token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
-          if [ -n "$token" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "SUPABASE_ACCESS_TOKEN is unavailable; manual remote dry-run skipped without failure."
-          fi
+          test -n "$token" || {
+            echo "::error title=Supabase migration preflight unavailable::SUPABASE_ACCESS_TOKEN is missing, so this database-changing PR cannot be proven safe before merge."
+            exit 1
+          }
+          echo "Owner Supabase transactional dry-run credentials are available."
 
       - name: Verify migration ordering and repository manifest
-        if: steps.credentials.outputs.ready == 'true'
         run: node scripts/verify-migration-order.mjs
 
-      - name: Transactionally dry-run pending migrations
-        if: steps.credentials.outputs.ready == 'true'
+      - name: Transactionally dry-run every pending migration
         run: node scripts/ci/reconcile-repository-migrations.mjs
 
-      - name: Preserve manual evidence
+      - name: Preserve exact preflight evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: supabase-manual-preflight-${{ github.run_id }}
+          name: supabase-pr-preflight-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
           path: |
             /tmp/repository-migration-plan.json
             /tmp/repository-migration-evidence.json
-          if-no-files-found: ignore
-          retention-days: 2
+          if-no-files-found: warn
+          retention-days: 3
 
-      - name: Record manual result
+      - name: Record no-mutation contract
         if: always()
+        shell: bash
         run: |
           {
-            echo "## Manual Supabase migration inspection"
-            echo "- Requested ref: \`${{ inputs.ref }}\`"
-            echo "- Credentials ready: \`${{ steps.credentials.outputs.ready || 'unknown' }}\`"
+            echo "## Supabase Migration PR Preflight"
+            echo "- PR head: \`${SOURCE_SHA}\`"
+            echo "- Owner project: \`${SUPABASE_PROJECT_ID}\`"
+            echo "- Mode: transactional plan and rollback"
             echo "- Production mutation: \`false\`"
+            echo "- Merge eligibility: only after manifest validation and every pending migration dry-run passes"
           } >> "$GITHUB_STEP_SUMMARY"
