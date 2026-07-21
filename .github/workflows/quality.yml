@@ -68,7 +68,7 @@ jobs:
           set -euo pipefail
           npm --ignore-scripts run build 2>&1 | tee quality-build.log
 
-      - name: Collect failing test names
+      - name: Collect failure label
         id: failure-label
         if: failure()
         shell: bash
@@ -78,36 +78,6 @@ jobs:
           label="$(printf '%s\n' "$failed_tests" | sed '/^$/d; s#/#-#g' | paste -sd '_' - | cut -c1-180 || true)"
           if [ -z "$label" ]; then label="build-or-unknown"; fi
           echo "label=$label" >> "$GITHUB_OUTPUT"
-
-      - name: Publish exact failing test statuses
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -u
-          failed_tests="$(sed -nE 's/^[[:space:]]*FAIL[[:space:]]+(src\/[^ >]+\.(test|spec)\.[tj]sx?).*/\1/p' quality-test.log 2>/dev/null | sort -u || true)"
-          index=0
-          while IFS= read -r test_path; do
-            [ -n "$test_path" ] || continue
-            index=$((index + 1))
-            [ "$index" -le 40 ] || break
-            test_name="$(basename "$test_path")"
-            context="$(printf 'Irha fail: %s' "$test_name" | cut -c1-100)"
-            gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-              -f state=failure \
-              -f context="$context" \
-              -f description="$(printf '%s' "$test_path" | cut -c1-140)" \
-              -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >/dev/null || true
-          done <<< "$failed_tests"
-
-          if [ "$index" -eq 0 ] && [ -s quality-test.log ]; then
-            gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-              -f state=failure \
-              -f context="Irha fail: test-output-unparsed" \
-              -f description="Test failure exists; inspect diagnostic artifact" \
-              -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >/dev/null || true
-          fi
 
       - name: Upload failed quality diagnostics
         if: failure()
@@ -120,24 +90,6 @@ jobs:
           if-no-files-found: warn
           retention-days: 2
           compression-level: 0
-
-      - name: Publish concise quality failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -u
-          message="$({
-            cat quality-test.log 2>/dev/null || true
-            cat quality-build.log 2>/dev/null || true
-          } | grep -Ei 'FAIL|AssertionError|Error:|failed|missing|mismatch|refusing|cannot|unable' | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-130 || true)"
-          if [ -z "$message" ]; then message="Quality Gate failed; inspect the workflow steps and diagnostic artifact"; fi
-          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -f state=failure \
-            -f context="Irha Build Diagnostic" \
-            -f description="$message" \
-            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >/dev/null
 
       - name: Verify minimum deployment artifact
         shell: bash
@@ -180,6 +132,7 @@ jobs:
             echo "- TypeScript: required"
             echo "- Tests: required"
             echo "- Production build and release identity: required"
+            echo "- One merge signal: \`Irha Quality Gate\`"
             echo "- Production writes: none"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -200,7 +153,11 @@ jobs:
               ;;
             failure)
               state=failure
-              description="Buyer-ready Quality Gate failed"
+              description="$({
+                cat quality-test.log 2>/dev/null || true
+                cat quality-build.log 2>/dev/null || true
+              } | grep -Ei 'FAIL|AssertionError|Error:|failed|missing|mismatch|refusing|cannot|unable' | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-140 || true)"
+              [ -n "$description" ] || description="Buyer-ready Quality Gate failed; open diagnostic artifact"
               ;;
             cancelled)
               state=error
