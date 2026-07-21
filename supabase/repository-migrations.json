@@ -254,6 +254,14 @@
       "git_blob_sha": "a8c232256844e36be6ffe6e0c5ad7814981264c9",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260719120000",
+      "name": "live_chat_visitor_contact_and_admin_seen",
+      "path": "supabase/migrations/20260719120000_live_chat_visitor_contact_and_admin_seen.sql",
+      "git_blob_sha": "ac6440366d34636529644763b0c7929149dc964c",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
