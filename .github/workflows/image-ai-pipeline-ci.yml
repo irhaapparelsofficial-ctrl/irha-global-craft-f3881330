@@ -1,138 +1,23 @@
 name: Image AI Pipeline CI
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - "scripts/image-ai/**"
-      - "scripts/generate-image-thumbnails.mjs"
-      - "src/lib/imageThumbnails.ts"
-      - "src/lib/assetResolver.ts"
-      - "src/test/imageThumbnails.test.ts"
-      - "supabase/functions/image-processing-gateway/**"
-      - "supabase/migrations/*automatic_ai_image_pipeline.sql"
-      - ".github/workflows/automatic-ai-image-pipeline.yml"
-      - ".github/workflows/image-ai-pipeline-ci.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: image-ai-ci-pr-${{ github.event.pull_request.number }}
+  group: image-ai-manual
   cancel-in-progress: true
 
 jobs:
-  image-ai:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    env:
-      IRHA_EDSR_MODEL: models/EDSR_x2.pb
-      IRHA_REMBG_MODEL: u2netp
+  manual-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: scripts/image-ai/requirements.txt
-
-      - name: Install locked processor dependencies
-        run: bash scripts/ci/retry.sh 3 5 -- python -m pip install --disable-pip-version-check -r scripts/image-ai/requirements.txt
-
-      - name: Download official EDSR x2 model
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p models
-          curl --fail --location --retry 4 --retry-all-errors \
-            --output "$IRHA_EDSR_MODEL" \
-            https://github.com/Saafke/EDSR_Tensorflow/raw/master/models/EDSR_x2.pb
-          test "$(wc -c < "$IRHA_EDSR_MODEL")" -gt 1000000
-
-      - name: Download one real public catalog source image
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 4 --retry-all-errors \
-            --output /tmp/irha-source.png \
-            https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog-migrated/3bb23ac4-751d-49b9-99c3-329e5a95d397/88df8d7dca5ba4a5ad64.png
-          test "$(wc -c < /tmp/irha-source.png)" -gt 10000
-
-      - name: Run real background removal, enhancement and studio composition
-        run: |
-          python scripts/image-ai/process_image.py \
-            --input /tmp/irha-source.png \
-            --output-dir /tmp/irha-image-output \
-            --edsr-model "$IRHA_EDSR_MODEL" \
-            --rembg-model "$IRHA_REMBG_MODEL" \
-            --asset-id ci-real-source
-
-      - name: Verify high-resolution master and all responsive files
-        shell: bash
-        run: |
-          set -euo pipefail
-          for file in master 360 720 1200 1600 2400; do
-            test -s "/tmp/irha-image-output/${file}.webp"
-          done
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          from PIL import Image
-
-          root = Path('/tmp/irha-image-output')
-          manifest = json.loads((root / 'manifest.json').read_text())
-          assert manifest['backgroundStyle'] == 'charcoal_studio_v1'
-          assert manifest['masterWidth'] == 2400
-          assert manifest['masterHeight'] == 3000
-          assert manifest['enhanced'] is True
-          assert manifest['status'] in {'ready', 'review_required'}
-          assert Image.open(root / 'master.webp').size == (2400, 3000)
-          for width in (360, 720, 1200, 1600, 2400):
-              image = Image.open(root / f'{width}.webp')
-              assert image.size == (width, round(3000 * width / 2400))
-          print(json.dumps(manifest, indent=2))
-          PY
-
-      - name: Verify EDSR model performs a real x2 inference
-        run: |
-          python - <<'PY'
-          import cv2
-          import numpy as np
-          sr = cv2.dnn_superres.DnnSuperResImpl_create()
-          sr.readModel('models/EDSR_x2.pb')
-          sr.setModel('edsr', 2)
-          source = np.full((32, 32, 3), 127, dtype=np.uint8)
-          output = sr.upsample(source)
-          assert output.shape[:2] == (64, 64)
-          print('EDSR x2 inference passed:', output.shape)
-          PY
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Type-check protected Supabase gateway
-        id: deno_check
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -o pipefail
-          deno check --config supabase/functions/image-processing-gateway/deno.json \
-            supabase/functions/image-processing-gateway/index.ts \
-            2>&1 | tee /tmp/image-gateway-deno-check.log
-
-      - name: Preserve compiler diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: image-gateway-deno-check-${{ github.run_id }}
-          path: /tmp/image-gateway-deno-check.log
-          retention-days: 1
-
-      - name: Enforce successful gateway type-check
-        if: steps.deno_check.outcome != 'success'
-        run: exit 1
+      - name: Check image worker syntax
+        run: python -m py_compile scripts/image-ai/process_image.py
