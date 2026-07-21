@@ -1,9 +1,11 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import type { BuyerReadyCatalogRoute } from "./generate-buyer-ready-catalog-manifest";
 
 const DIST_DIR = resolve("dist");
 const SITE_URL = "https://irhaapparels.com";
 const HOME_TITLE = "Irha Apparels — Custom Apparel Manufacturing for Global B2B Buyers";
+const MANIFEST_PATH = join(DIST_DIR, "catalog-route-manifest.json");
 
 const STATIC_META: Record<string, { title: string; heading: string; description: string }> = {
   "/products": {
@@ -91,6 +93,19 @@ const CATEGORY_NAMES: Record<string, string> = {
   "leisure-nightwear": "Leisurewear and Nightwear",
 };
 
+type ManifestPayload = {
+  schemaVersion: number;
+  productCount: number;
+  products: BuyerReadyCatalogRoute[];
+};
+
+type RouteMeta = {
+  title: string;
+  heading: string;
+  description: string;
+  locale: string;
+};
+
 function titleCase(slug: string): string {
   return slug
     .split("-")
@@ -108,19 +123,20 @@ function cleanPath(pathname: string): string {
   return pathname.replace(/\/+$/, "") || "/";
 }
 
-function routeMeta(pathname: string) {
+function localeAndRoute(pathname: string) {
+  const segments = cleanPath(pathname).split("/").filter(Boolean);
+  if (segments[0] === "intl" && segments.length > 3) {
+    return { locale: segments[1], route: segments.slice(2) };
+  }
+  return { locale: "en", route: segments };
+}
+
+function genericRouteMeta(pathname: string): RouteMeta {
   const path = cleanPath(pathname);
   const exact = STATIC_META[path];
-  if (exact) return exact;
+  if (exact) return { ...exact, locale: "en" };
 
-  const segments = path.split("/").filter(Boolean);
-  let locale = "en";
-  let route = segments;
-  if (segments[0] === "intl" && segments.length > 3) {
-    locale = segments[1];
-    route = segments.slice(2);
-  }
-
+  const { locale, route } = localeAndRoute(path);
   if (route[0] === "products") {
     const categorySlug = route[1] ?? "custom-apparel";
     const categoryName = CATEGORY_NAMES[categorySlug] ?? titleCase(categorySlug);
@@ -132,15 +148,6 @@ function routeMeta(pathname: string) {
         title: `${categoryName} Manufacturer | Irha Apparels`,
         heading: `Custom ${categoryName} Manufacturing`,
         description: `${categoryName} manufacturing for wholesale, OEM, ODM and private-label buyer programs from Irha Apparels in Sialkot, Pakistan.`,
-        locale,
-      };
-    }
-
-    if (route.length === 3) {
-      return {
-        title: `${leafName} Manufacturer | Irha Apparels`,
-        heading: `Custom ${leafName} Manufacturing`,
-        description: `${leafName} for wholesale, OEM and private-label buyer programs. Materials, construction, branding and packaging are confirmed against buyer requirements.`,
         locale,
       };
     }
@@ -192,19 +199,20 @@ function escapeHtml(value: string): string {
 }
 
 function truncate(value: string, max = 160): string {
-  if (value.length <= max) return value;
-  return `${value.slice(0, max - 1).trimEnd()}…`;
+  const clean = value.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max - 1).trimEnd()}…`;
 }
 
-function buildShell(pathname: string, heading: string, description: string): string {
+function genericShell(pathname: string, meta: RouteMeta): string {
   const categoryPath = pathname.startsWith("/products/")
     ? pathname.split("/").slice(0, 3).join("/")
     : "/products";
   return `<main id="irha-static-crawler-shell" data-irha-route-shell="${escapeHtml(pathname)}" style="min-height:100vh;background:#0a0a0a;color:#f5f1e8;padding:48px 24px;font-family:Arial,sans-serif;line-height:1.6">
         <div style="max-width:960px;margin:0 auto">
           <p style="margin:0 0 12px;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#c9a45c">Irha Apparels · Sialkot, Pakistan</p>
-          <h1 style="margin:0 0 20px;font-size:clamp(34px,7vw,68px);line-height:1.08">${escapeHtml(heading)}</h1>
-          <p style="max-width:760px;font-size:18px;color:#d7d0c4">${escapeHtml(description)}</p>
+          <h1 style="margin:0 0 20px;font-size:clamp(34px,7vw,68px);line-height:1.08">${escapeHtml(meta.heading)}</h1>
+          <p style="max-width:760px;font-size:18px;color:#d7d0c4">${escapeHtml(meta.description)}</p>
           <p style="max-width:760px;color:#aaa29a">Requirements are reviewed before materials, sampling, quantity, pricing, production timing and shipping are confirmed.</p>
           <nav aria-label="Route crawler links" style="display:flex;flex-wrap:wrap;gap:16px;margin-top:34px">
             <a href="${escapeHtml(categoryPath)}" style="color:#e8c477">Explore Related Collection</a>
@@ -217,27 +225,109 @@ function buildShell(pathname: string, heading: string, description: string): str
       </main>`;
 }
 
-function replaceMeta(html: string, pathname: string): string {
-  const meta = routeMeta(pathname);
+function productMeta(product: BuyerReadyCatalogRoute): RouteMeta {
+  const description = product.seo_description
+    || product.short_description
+    || product.product_description
+    || `${product.product_name} custom manufacturing for wholesale, OEM, ODM and private-label buyers.`;
+  return {
+    title: product.seo_title || `${product.product_name} Wholesale Manufacturer | Irha Apparels`,
+    heading: product.seo_h1 || product.product_name,
+    description,
+    locale: "en",
+  };
+}
+
+function productShell(product: BuyerReadyCatalogRoute, meta: RouteMeta): string {
+  const categoryPath = `/products/${product.main_category_slug}`;
+  const audiencePath = `${categoryPath}/${product.audience_slug}`;
+  const typePath = `${audiencePath}/${product.product_type_slug}`;
+  return `<main id="irha-static-crawler-shell" data-irha-route-shell="${escapeHtml(product.canonical_path)}" data-irha-product-shell="true" style="min-height:100vh;background:#0a0a0a;color:#f5f1e8;padding:40px 24px;font-family:Arial,sans-serif;line-height:1.6">
+        <div style="max-width:1120px;margin:0 auto">
+          <nav aria-label="Breadcrumb" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;font-size:14px">
+            <a href="/products" style="color:#e8c477">Products</a><span>/</span>
+            <a href="${escapeHtml(categoryPath)}" style="color:#e8c477">${escapeHtml(product.main_category_name)}</a><span>/</span>
+            <a href="${escapeHtml(audiencePath)}" style="color:#e8c477">${escapeHtml(product.audience_name)}</a><span>/</span>
+            <a href="${escapeHtml(typePath)}" style="color:#e8c477">${escapeHtml(product.product_type_name)}</a>
+          </nav>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start">
+            <img src="${escapeHtml(product.image_url)}" alt="Front view of ${escapeHtml(product.product_name)} custom manufactured by Irha Apparels" width="1200" height="1200" style="width:100%;height:auto;display:block;background:#151515;object-fit:contain" />
+            <section>
+              <p style="margin:0 0 12px;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#c9a45c">${escapeHtml(product.reference_code)} · Custom B2B Manufacturing</p>
+              <h1 style="margin:0 0 20px;font-size:clamp(34px,6vw,64px);line-height:1.08">${escapeHtml(meta.heading)}</h1>
+              <p style="font-size:18px;color:#d7d0c4">${escapeHtml(meta.description)}</p>
+              <p style="color:#aaa29a">Material, construction, sizing, branding, packaging, sampling, quantity and production timing are confirmed against the buyer-approved specification.</p>
+              <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:30px">
+                <a href="/inquiry?product=${encodeURIComponent(product.product_slug)}" style="color:#0a0a0a;background:#e8c477;padding:12px 18px;text-decoration:none">Request a Manufacturing Quote</a>
+                <a href="/contact" style="color:#e8c477;padding:11px 18px;border:1px solid #e8c477;text-decoration:none">Contact Irha Apparels</a>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>`;
+}
+
+function jsonLdScripts(pathname: string, meta: RouteMeta, product?: BuyerReadyCatalogRoute) {
+  const canonical = pathname === "/" ? `${SITE_URL}/` : `${SITE_URL}${pathname}`;
+  if (!product) {
+    const webPage = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      url: canonical,
+      name: meta.title,
+      description: meta.description,
+      isPartOf: { "@id": `${SITE_URL}/#website` },
+      about: { "@id": `${SITE_URL}/#organization` },
+      inLanguage: meta.locale,
+    };
+    return `<script data-irha-route-jsonld="true" type="application/ld+json">${JSON.stringify(webPage).replace(/</g, "\\u003c")}</script>`;
+  }
+
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "@id": `${canonical}#product`,
+    url: canonical,
+    name: product.product_name,
+    description: meta.description,
+    image: product.gallery,
+    sku: product.reference_code,
+    category: `${product.main_category_name} > ${product.audience_name} > ${product.product_type_name}`,
+    brand: { "@type": "Brand", name: "Irha Apparels" },
+    manufacturer: { "@id": `${SITE_URL}/#organization` },
+  };
+  const breadcrumbs = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Products", item: `${SITE_URL}/products` },
+      { "@type": "ListItem", position: 2, name: product.main_category_name, item: `${SITE_URL}/products/${product.main_category_slug}` },
+      { "@type": "ListItem", position: 3, name: product.audience_name, item: `${SITE_URL}/products/${product.main_category_slug}/${product.audience_slug}` },
+      { "@type": "ListItem", position: 4, name: product.product_type_name, item: `${SITE_URL}/products/${product.main_category_slug}/${product.audience_slug}/${product.product_type_slug}` },
+      { "@type": "ListItem", position: 5, name: product.product_name, item: canonical },
+    ],
+  };
+  return [productSchema, breadcrumbs]
+    .map((value) => `<script data-irha-route-jsonld="true" type="application/ld+json">${JSON.stringify(value).replace(/</g, "\\u003c")}</script>`)
+    .join("\n    ");
+}
+
+function replaceMeta(
+  html: string,
+  pathname: string,
+  productByPath: Map<string, BuyerReadyCatalogRoute>,
+): string {
+  const product = productByPath.get(pathname);
+  const meta = product ? productMeta(product) : genericRouteMeta(pathname);
   const title = escapeHtml(meta.title);
   const description = escapeHtml(truncate(meta.description));
   const canonical = pathname === "/" ? `${SITE_URL}/` : `${SITE_URL}${pathname}`;
-  const shell = buildShell(pathname, meta.heading, meta.description);
-  const locale = "locale" in meta && typeof meta.locale === "string" ? meta.locale : "en";
+  const shell = product ? productShell(product, meta) : genericShell(pathname, meta);
+  const scripts = jsonLdScripts(pathname, meta, product);
+  const ogImage = product?.image_url;
 
-  const jsonLd = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    url: canonical,
-    name: meta.title,
-    description: meta.description,
-    isPartOf: { "@id": `${SITE_URL}/#website` },
-    about: { "@id": `${SITE_URL}/#organization` },
-    inLanguage: locale,
-  }).replace(/</g, "\\u003c");
-
-  return html
-    .replace(/<html lang="[^"]*">/i, `<html lang="${escapeHtml(locale)}">`)
+  let output = html
+    .replace(/<html lang="[^"]*">/i, `<html lang="${escapeHtml(meta.locale)}">`)
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`)
     .replace(/<meta data-irha-fallback-seo="true" name="description" content="[^"]*"\s*\/?>/i, `<meta data-irha-fallback-seo="true" name="description" content="${description}" />`)
     .replace(/<link rel="canonical" href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${canonical}" />`)
@@ -247,7 +337,14 @@ function replaceMeta(html: string, pathname: string): string {
     .replace(/<meta data-irha-fallback-seo="true" name="twitter:title" content="[^"]*"\s*\/?>/i, `<meta data-irha-fallback-seo="true" name="twitter:title" content="${title}" />`)
     .replace(/<meta data-irha-fallback-seo="true" name="twitter:description" content="[^"]*"\s*\/?>/i, `<meta data-irha-fallback-seo="true" name="twitter:description" content="${description}" />`)
     .replace(/<main id="irha-static-crawler-shell"[\s\S]*?<\/main>/i, shell)
-    .replace("</head>", `    <script type="application/ld+json">${jsonLd}</script>\n  </head>`);
+    .replace(/\s*<script data-irha-route-jsonld="true"[\s\S]*?<\/script>/gi, "")
+    .replace("</head>", `    ${scripts}\n  </head>`);
+
+  if (ogImage) {
+    const tag = `<meta data-irha-product-image="true" property="og:image" content="${escapeHtml(ogImage)}" />`;
+    output = output.replace("</head>", `    ${tag}\n  </head>`);
+  }
+  return output;
 }
 
 function extractPaths(sitemap: string): string[] {
@@ -263,42 +360,55 @@ function extractPaths(sitemap: string): string[] {
   return [...paths].sort();
 }
 
-async function verify(paths: string[]) {
-  const required = [
-    "/buyer-trust",
-    "/faq",
-    "/products/bavarian-trachten-wear",
-    "/products/leisure-nightwear/plush-bathrobe-sleep-robe",
-  ];
+async function readManifest(): Promise<ManifestPayload> {
+  const manifest = JSON.parse(await readFile(MANIFEST_PATH, "utf8")) as ManifestPayload;
+  if (manifest.schemaVersion !== 1 || manifest.productCount !== 254 || manifest.products.length !== 254) {
+    throw new Error("Buyer-ready catalogue manifest is incomplete");
+  }
+  return manifest;
+}
+
+async function verify(paths: string[], manifest: ManifestPayload) {
+  const required = ["/buyer-trust", "/faq", "/products/bavarian-trachten-wear"];
   for (const path of required) {
     if (!paths.includes(path)) throw new Error(`Static route shell is missing required path: ${path}`);
-    const output = await readFile(join(DIST_DIR, path.slice(1), "index.html"), "utf8");
-    if (!output.includes(`data-irha-route-shell="${path}"`)) {
-      throw new Error(`Route shell marker is missing for ${path}`);
+  }
+
+  for (const product of manifest.products) {
+    if (!paths.includes(product.canonical_path)) {
+      throw new Error(`Product shell path missing from sitemap: ${product.canonical_path}`);
     }
-    if (!output.includes(`<link rel="canonical" href="${SITE_URL}${path}"`)) {
-      throw new Error(`Canonical is incorrect for ${path}`);
+    const output = await readFile(join(DIST_DIR, product.canonical_path.slice(1), "index.html"), "utf8");
+    const expectedTitle = escapeHtml(product.seo_title || `${product.product_name} Wholesale Manufacturer | Irha Apparels`);
+    const expectedH1 = escapeHtml(product.seo_h1 || product.product_name);
+    if (!output.includes(`<title>${expectedTitle}</title>`)) throw new Error(`${product.reference_code} title mismatch`);
+    if (!output.includes(`<link rel="canonical" href="${SITE_URL}${product.canonical_path}"`)) throw new Error(`${product.reference_code} canonical mismatch`);
+    if (!output.includes(`data-irha-product-shell="true"`)) throw new Error(`${product.reference_code} product shell missing`);
+    if (!output.includes(`>${expectedH1}</h1>`)) throw new Error(`${product.reference_code} H1 mismatch`);
+    if (!output.includes(product.image_url)) throw new Error(`${product.reference_code} front image missing`);
+    if (!output.includes('"@type":"Product"')) throw new Error(`${product.reference_code} Product schema missing`);
+    if (!output.includes('"@type":"BreadcrumbList"')) throw new Error(`${product.reference_code} Breadcrumb schema missing`);
+    if (output.includes(`<title>${HOME_TITLE}</title>`) || /Loading product/i.test(output)) {
+      throw new Error(`${product.reference_code} still exposes a generic or loading shell`);
     }
-    if (path.includes("plush-bathrobe") && output.includes(`<title>${HOME_TITLE}</title>`)) {
-      throw new Error("Product route still uses the generic homepage title");
-    }
-    if (/Loading product/i.test(output)) throw new Error(`Loading placeholder leaked into ${path}`);
   }
 }
 
 async function main() {
   const template = await readFile(join(DIST_DIR, "index.html"), "utf8");
   const sitemap = await readFile(join(DIST_DIR, "sitemap.xml"), "utf8");
+  const manifest = await readManifest();
+  const productByPath = new Map(manifest.products.map((product) => [product.canonical_path, product]));
   const paths = extractPaths(sitemap).filter((path) => path !== "/");
 
   for (const path of paths) {
     const outputPath = join(DIST_DIR, path.slice(1), "index.html");
     await mkdir(dirname(outputPath), { recursive: true });
-    await writeFile(outputPath, replaceMeta(template, path), "utf8");
+    await writeFile(outputPath, replaceMeta(template, path, productByPath), "utf8");
   }
 
-  await verify(paths);
-  console.log(`Generated ${paths.length} route-specific static HTML shells from sitemap.xml`);
+  await verify(paths, manifest);
+  console.log(`Generated ${paths.length} route-specific shells, including ${manifest.products.length} verified product shells`);
 }
 
 main().catch((error) => {

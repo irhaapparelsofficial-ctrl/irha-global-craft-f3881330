@@ -34,6 +34,7 @@ export default function HomeManufacturingEditorial() {
           <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-primary sm:text-[10px]">Manufacturing proof</p>
           <h2 className="mt-2 max-w-3xl font-display text-3xl leading-[1.08] sm:text-4xl lg:text-5xl">See what can be verified before bulk production.</h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/66 sm:leading-7">A professional B2B order should move forward on an approved specification, not broad promises. These are the checkpoints buyers can discuss and verify.</p>
+          <p className="mt-2 max-w-3xl text-xs leading-5 text-white/52">Website visuals are references; final materials, construction, branding and packaging follow the buyer-approved specification.</p>
           <div className="mt-5 grid gap-px overflow-hidden rounded-xl border border-white/12 bg-white/12 sm:grid-cols-2 sm:rounded-none">
             {VERIFY.map(({ Icon, title, text }) => (
               <article key={title} className="bg-[#0c0c0c] p-4 sm:p-5">

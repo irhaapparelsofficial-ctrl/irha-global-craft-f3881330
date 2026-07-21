@@ -4,10 +4,13 @@ import {
   OWNER_SUPABASE_PUBLISHABLE_KEY,
   OWNER_SUPABASE_URL,
 } from "../src/integrations/supabase/ownerRuntime";
+import type { BuyerReadyCatalogRoute } from "./generate-buyer-ready-catalog-manifest";
 
 const SITE_URL = "https://irhaapparels.com";
 const SITEMAP_PATH = resolve("public/sitemap.xml");
+const MANIFEST_PATH = resolve("public/catalog-route-manifest.json");
 const PAGE_SIZE = 1000;
+const MAX_PAGES = 10;
 
 type SitemapRpcRow = {
   path: string;
@@ -16,31 +19,72 @@ type SitemapRpcRow = {
   entry_kind: "product" | "localized_product" | "taxonomy";
 };
 
+type BuyerReadyManifest = {
+  schemaVersion: number;
+  productCount: number;
+  products: BuyerReadyCatalogRoute[];
+};
+
+function sitemapRowKey(row: SitemapRpcRow) {
+  return `${row.entry_kind}:${row.path}`;
+}
+
 async function fetchSitemapRows(): Promise<SitemapRpcRow[]> {
-  const rows: SitemapRpcRow[] = [];
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const response = await fetch(
-      `${OWNER_SUPABASE_URL}/rest/v1/rpc/get_public_sitemap_entries`,
-      {
-        method: "POST",
-        headers: {
-          apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
-          "Content-Type": "application/json",
-          Range: `${offset}-${offset + PAGE_SIZE - 1}`,
-          "Range-Unit": "items",
-        },
-        body: "{}",
+  const rows = new Map<string, SitemapRpcRow>();
+  let offset = 0;
+  let paginationComplete = false;
+
+  for (let pageNumber = 0; pageNumber < MAX_PAGES; pageNumber += 1) {
+    const endpoint = new URL(`${OWNER_SUPABASE_URL}/rest/v1/rpc/get_public_sitemap_entries`);
+    endpoint.searchParams.set("select", "path,image_url,lastmod,entry_kind");
+    endpoint.searchParams.set("order", "entry_kind.asc,path.asc");
+    endpoint.searchParams.set("limit", String(PAGE_SIZE));
+    endpoint.searchParams.set("offset", String(offset));
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: "{}",
+    });
     if (!response.ok) {
       throw new Error(`Could not fetch public sitemap entries: ${response.status} ${await response.text()}`);
     }
+
     const page = (await response.json()) as SitemapRpcRow[];
-    rows.push(...page);
-    if (page.length < PAGE_SIZE) break;
+    if (page.length === 0) {
+      paginationComplete = true;
+      break;
+    }
+
+    let added = 0;
+    for (const row of page) {
+      if (!row.path || !row.entry_kind) throw new Error("Public sitemap RPC returned an invalid row");
+      const key = sitemapRowKey(row);
+      if (rows.has(key)) continue;
+      rows.set(key, row);
+      added += 1;
+    }
+
+    if (added === 0) {
+      throw new Error(`Public sitemap RPC pagination made no progress at offset ${offset}`);
+    }
+
+    offset += page.length;
+    if (page.length < PAGE_SIZE) {
+      paginationComplete = true;
+      break;
+    }
   }
-  return rows;
+
+  if (!paginationComplete) {
+    throw new Error(`Public sitemap RPC exceeded the safe ${MAX_PAGES}-page pagination limit`);
+  }
+
+  return [...rows.values()];
 }
 
 function absoluteUrl(path: string) {
@@ -89,13 +133,22 @@ function pathFromBlock(block: string) {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
   try {
-    return new URL(decoded).pathname;
+    return new URL(decoded).pathname.replace(/\/+$/, "") || "/";
   } catch {
     return null;
   }
 }
 
+function readManifest(): BuyerReadyManifest {
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as BuyerReadyManifest;
+  if (manifest.schemaVersion !== 1 || manifest.productCount !== 254 || manifest.products.length !== 254) {
+    throw new Error("Buyer-ready route manifest is incomplete");
+  }
+  return manifest;
+}
+
 async function main() {
+  const manifest = readManifest();
   const rows = await fetchSitemapRows();
   const products = rows.filter((row) => row.entry_kind === "product");
   const localizedPages = rows.filter((row) => row.entry_kind === "localized_product");
@@ -108,13 +161,22 @@ async function main() {
     throw new Error(`Refusing stale localized sitemap: expected 1778 published product pages, received ${localizedPages.length}`);
   }
 
+  const manifestPaths = new Set(manifest.products.map((row) => row.canonical_path));
+  const sitemapProductPaths = new Set(products.map((row) => row.path));
+  if (manifestPaths.size !== 254 || sitemapProductPaths.size !== 254) {
+    throw new Error("Canonical product paths are not unique");
+  }
+  for (const path of manifestPaths) {
+    if (!sitemapProductPaths.has(path)) throw new Error(`Sitemap is missing canonical product path: ${path}`);
+  }
+
   const taxonomyPaths = new Set(taxonomyPages.map((row) => row.path));
-  const productPaths = new Set(products.map((row) => row.path));
   const allowedProductPaths = new Set([
     "/products",
     "/products/all",
+    "/products/all-products",
     ...taxonomyPaths,
-    ...productPaths,
+    ...manifestPaths,
   ]);
 
   const current = readFileSync(SITEMAP_PATH, "utf8");
@@ -123,13 +185,7 @@ async function main() {
   for (const block of urlBlocks) {
     const path = pathFromBlock(block);
     if (!path) continue;
-    const segments = path.split("/").filter(Boolean);
-    const looksLikeLegacyTwoLevelProduct =
-      segments[0] === "products" &&
-      segments.length === 3 &&
-      segments[2] !== "all-products" &&
-      !allowedProductPaths.has(path);
-    if (looksLikeLegacyTwoLevelProduct) continue;
+    if ((path === "/products" || path.startsWith("/products/")) && !allowedProductPaths.has(path)) continue;
     preserved.set(path, block.trim());
   }
 
@@ -151,9 +207,13 @@ async function main() {
     "</urlset>",
   ].join("\n");
 
+  for (const forbidden of ["reference-style-02", "reference-style-03", "loading-product"] as const) {
+    if (xml.includes(forbidden)) throw new Error(`Legacy catalogue token leaked into sitemap: ${forbidden}`);
+  }
+
   writeFileSync(SITEMAP_PATH, `${xml}\n`);
   console.log(
-    `sitemap.xml augmented with ${products.length} canonical Drive products, ${localizedPages.length} localized product pages and ${taxonomyPages.length} taxonomy routes (${ordered.length} total URLs)`,
+    `sitemap.xml locked to ${products.length} canonical products, ${localizedPages.length} localized product pages and ${taxonomyPages.length} taxonomy routes (${ordered.length} total URLs)`,
   );
 }
 

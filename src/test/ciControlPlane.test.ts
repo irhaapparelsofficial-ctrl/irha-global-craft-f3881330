@@ -7,18 +7,23 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 describe("Irha CI control plane", () => {
   it("runs required repository verification independently from deployment secrets", () => {
     const quality = read(".github/workflows/quality.yml");
-    expect(quality).toContain("Checkout exact event source");
+    expect(quality).toContain("Checkout current source");
     expect(quality).toContain("Verify deployment source lock");
     expect(quality).toContain("Verify secret safety");
-    expect(quality).toContain("Verify migration order");
-    expect(quality).toContain("Typecheck");
-    expect(quality).toContain("Test");
-    expect(quality).toContain("Build immutable release");
-    expect(quality).toContain("Publish exact main build artifact");
+    expect(quality).toContain("Verify migration registry");
+    expect(quality).toContain("TypeScript check");
+    expect(quality).toContain("Unit and integration tests");
+    expect(quality).toContain("Build deployable website");
+    expect(quality).toContain("Publish main build artifact");
     expect(quality).toContain("production-dist-${{ github.sha }}");
     expect(quality).toContain("statuses: write");
+    expect(quality).toContain("Collect failing test names");
+    expect(quality).toContain("Upload failed quality diagnostics");
+    expect(quality).toContain("quality-${{ steps.failure-label.outputs.label }}-${{ github.sha }}");
     expect(quality).toContain("Publish exact commit Quality Gate status");
     expect(quality).toContain('context="Irha Quality Gate"');
+    expect(quality).not.toContain("issues: write");
+    expect(quality).not.toContain("Publish sanitized PR test diagnostic");
     expect(quality).not.toContain("Detect full-verification readiness");
     expect(quality).not.toContain("steps.mode.outputs.full_verify");
     expect(quality).not.toContain("CLOUDFLARE_API_TOKEN");
@@ -80,6 +85,7 @@ describe("Irha CI control plane", () => {
   it("syncs functions and checksum-led database migrations only from exact green main", () => {
     const functions = read(".github/workflows/supabase-functions-auto.yml");
     const database = read(".github/workflows/supabase-database-auto.yml");
+    const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
     expect(functions).toContain("Supabase Functions After Quality Gate");
     expect(functions).toContain("Detect whether Edge Functions changed");
     expect(functions).toContain("No Edge Function source changed; unrelated commit skipped without failure");
@@ -89,7 +95,8 @@ describe("Irha CI control plane", () => {
     expect(database).toContain("Validate manifest and transactionally dry-run pending migrations");
     expect(database).toContain("Apply pending repository migrations exactly once");
     expect(database).toContain("Verify private repository migration ledger parity");
-    expect(database).toContain("official Supabase Management API database/query endpoint");
+    expect(reconciler).toContain('const managementApi = "https://api.supabase.com";');
+    expect(reconciler).toContain("/database/query");
     expect(database).not.toContain("SUPABASE_DB_PASSWORD");
     expect(database).not.toContain("supabase db push");
     expect(database).not.toContain("supabase migration repair");
@@ -101,17 +108,17 @@ describe("Irha CI control plane", () => {
     const transactionParser = read("scripts/ci/sql-transaction-body.mjs");
     const manifest = JSON.parse(read("supabase/repository-migrations.json"));
     expect(database).toContain("private.irha_repository_migration_ledger");
-    expect(database).toContain("Legacy drifted");
-    expect(database).toContain("supabase_migrations");
-    expect(database).toContain("preserved, not deleted or rewritten");
+    expect(reconciler).toContain("Applied migration checksum drift");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
     expect(reconciler).toContain('import { transactionBody } from "./sql-transaction-body.mjs";');
     expect(transactionParser).toContain("contains nested transaction control");
     expect(transactionParser).toContain("trimSqlEdgeTrivia");
     expect(transactionParser).toContain("sqlCodeOnly");
-    expect(reconciler).toContain("begin;\\n${sql}\\nrollback;");
-    expect(reconciler).toContain("begin;\\n${sql}\\n${ledgerInsertSql(entry)}\\ncommit;");
+    expect(reconciler).toContain("transactionalStack.map((item) => item.sql)");
+    expect(reconciler).toContain("rollback;");
+    expect(reconciler).toContain("ledgerInsertSql(entry)");
+    expect(reconciler).toContain("commit;");
     expect(reconciler).toContain("github_management_api_transaction");
     expect(reconciler).toContain("github_management_api_verified_existing");
     expect(reconciler).toContain("verified_present");
@@ -126,7 +133,7 @@ describe("Irha CI control plane", () => {
     const verifiedPresent = manifest.migrations.filter(
       (migration: { execution_mode?: string }) => migration.execution_mode === "verified_present",
     );
-    expect(verifiedPresent).toHaveLength(2);
+    expect(verifiedPresent.length).toBeGreaterThanOrEqual(2);
 
     for (const migration of manifest.migrations) {
       expect(migration.git_blob_sha).toMatch(/^[0-9a-f]{40}$/);

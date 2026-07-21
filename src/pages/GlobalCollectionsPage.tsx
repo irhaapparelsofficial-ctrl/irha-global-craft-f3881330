@@ -4,7 +4,8 @@ import SEO from "@/components/SEO";
 import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
 import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import ThumbnailImage from "@/components/ThumbnailImage";
-import { usePublicCategories } from "@/hooks/usePublicCategoryData";
+import { usePublicCategories, type NormalizedCategory } from "@/hooks/usePublicCategoryData";
+import { usePublishedCategoryTaxonomy } from "@/hooks/usePublishedCatalogTaxonomy";
 import { buildCategoryTaxonomy } from "@/lib/globalCategoryTaxonomy";
 import { whatsappLink } from "@/lib/constants";
 import bavarianHero from "@/assets/og/og-bavarian-hero.jpg?w=960&format=webp&quality=68";
@@ -13,6 +14,53 @@ import leatherHero from "@/assets/og/og-leather.jpg?w=960&format=webp&quality=68
 
 const SITE = "https://irhaapparels.com";
 const FALLBACK_HERO_IMAGES = [bavarianHero, sportswearHero, leatherHero];
+
+function PublishedCategorySection({ category }: { category: NormalizedCategory }) {
+  const published = usePublishedCategoryTaxonomy(category);
+  const taxonomy = published.taxonomy ?? buildCategoryTaxonomy(category);
+  const audienceCount = taxonomy.audiences.length;
+  const collectionCount = taxonomy.audiences.reduce((total, audience) => total + audience.collections.length, 0);
+
+  return (
+    <article className="border-b border-border/60 pb-20 last:border-b-0">
+      <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-8">
+        <Link to={`/products/${category.slug}`} className="lg:col-span-4 block group">
+          <div className="aspect-[4/3] overflow-hidden bg-card">
+            {category.image && (
+              <ThumbnailImage
+                src={category.image}
+                originalSrc={category.originalImage}
+                alt={category.name}
+                loading="lazy"
+                fetchPriority="low"
+                width={960}
+                height={720}
+                sizes="(max-width: 1023px) 92vw, 30vw"
+                className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-700"
+              />
+            )}
+          </div>
+        </Link>
+        <div className="lg:col-span-8">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-gold mb-3 inline-flex items-center gap-2">
+            <Layers3 size={13} aria-hidden="true" /> {audienceCount} buyer groups · {collectionCount} product categories
+          </p>
+          <h2 className="font-display text-3xl md:text-5xl">
+            <Link to={`/products/${category.slug}`} className="hover:text-primary">{category.name}</Link>
+          </h2>
+          <p className="mt-4 text-foreground/65 leading-relaxed max-w-3xl">{category.description}</p>
+          <Link
+            to={`/products/${category.slug}`}
+            className="mt-5 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-primary"
+          >
+            Open category hierarchy <ArrowRight size={13} aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+      <CategoryAudienceNavigator category={category} compact taxonomy={taxonomy} />
+    </article>
+  );
+}
 
 export default function GlobalCollectionsPage() {
   const { categories, isLoading } = usePublicCategories();
@@ -27,7 +75,7 @@ export default function GlobalCollectionsPage() {
   const heroSlides = [...categoryHeroImages, ...heroImages]
     .filter((image, index, items) => items.findIndex((item) => item.src === image.src) === index)
     .slice(0, 6)
-    .map((image) => ({ src: image.src, alt: image.alt, fit: "cover" as const }));
+    .map((image) => ({ src: image.src, alt: image.alt, fit: "contain" as const, backgroundClassName: "bg-[#f4f0e7]" }));
 
   if (isLoading && categories.length === 0) {
     return <div className="pt-40 pb-24 container-luxe text-sm text-foreground/60">Loading collections…</div>;
@@ -79,7 +127,7 @@ export default function GlobalCollectionsPage() {
               <a
                 href={whatsappLink("Hello Irha Apparels — please help me choose the right product category for my B2B program.")}
                 target="_blank"
-                rel="noreferrer"
+                rel="noreferrer noopener"
                 className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
               >
                 <MessageCircle size={15} aria-hidden="true" /> Discuss a buyer program
@@ -104,50 +152,9 @@ export default function GlobalCollectionsPage() {
 
       <section className="py-16">
         <div className="container-luxe space-y-20">
-          {categories.map((category) => {
-            const taxonomy = buildCategoryTaxonomy(category);
-            const audienceCount = taxonomy.audiences.length;
-            const collectionCount = taxonomy.audiences.reduce((total, audience) => total + audience.collections.length, 0);
-            return (
-              <article key={category.slug} className="border-b border-border/60 pb-20 last:border-b-0">
-                <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-8">
-                  <Link to={`/products/${category.slug}`} className="lg:col-span-4 block group">
-                    <div className="aspect-[4/3] overflow-hidden bg-card">
-                      {category.image && (
-                        <ThumbnailImage
-                          src={category.image}
-                          originalSrc={category.originalImage}
-                          alt={category.name}
-                          loading="lazy"
-                          fetchPriority="low"
-                          width={960}
-                          height={720}
-                          sizes="(max-width: 1023px) 92vw, 30vw"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                      )}
-                    </div>
-                  </Link>
-                  <div className="lg:col-span-8">
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-gold mb-3 inline-flex items-center gap-2">
-                      <Layers3 size={13} aria-hidden="true" /> {audienceCount} buyer groups · {collectionCount} product categories
-                    </p>
-                    <h2 className="font-display text-3xl md:text-5xl">
-                      <Link to={`/products/${category.slug}`} className="hover:text-primary">{category.name}</Link>
-                    </h2>
-                    <p className="mt-4 text-foreground/65 leading-relaxed max-w-3xl">{category.description}</p>
-                    <Link
-                      to={`/products/${category.slug}`}
-                      className="mt-5 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-primary"
-                    >
-                      Open category hierarchy <ArrowRight size={13} aria-hidden="true" />
-                    </Link>
-                  </div>
-                </div>
-                <CategoryAudienceNavigator category={category} compact />
-              </article>
-            );
-          })}
+          {categories.map((category) => (
+            <PublishedCategorySection key={category.slug} category={category} />
+          ))}
         </div>
       </section>
     </>
