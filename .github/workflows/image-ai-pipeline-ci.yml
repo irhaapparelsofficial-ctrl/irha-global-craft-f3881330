@@ -9,6 +9,7 @@ on:
       - "src/lib/assetResolver.ts"
       - "src/test/imageThumbnails.test.ts"
       - "supabase/functions/image-processing-gateway/**"
+      - "supabase/functions/catalog-image-complete-gateway/**"
       - "supabase/migrations/*automatic_ai_image_pipeline.sql"
       - ".github/workflows/automatic-ai-image-pipeline.yml"
       - ".github/workflows/image-ai-pipeline-ci.yml"
@@ -108,15 +109,18 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Type-check protected Supabase gateway
+      - name: Type-check protected Supabase gateways
         id: deno_check
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          deno check --config supabase/functions/image-processing-gateway/deno.json \
-            supabase/functions/image-processing-gateway/index.ts \
-            2>&1 | tee /tmp/image-gateway-deno-check.log
+          {
+            deno check --config supabase/functions/image-processing-gateway/deno.json \
+              supabase/functions/image-processing-gateway/index.ts
+            deno check --config supabase/functions/catalog-image-complete-gateway/deno.json \
+              supabase/functions/catalog-image-complete-gateway/index.ts
+          } 2>&1 | tee /tmp/image-gateway-deno-check.log
 
       - name: Preserve compiler diagnostics
         if: always()
