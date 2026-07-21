@@ -9,37 +9,34 @@ const SITE_URL = "https://irhaapparels.com";
 const SITEMAP_PATH = resolve("public/sitemap.xml");
 const PAGE_SIZE = 1000;
 
-type ProductRow = {
-  canonical_path: string | null;
+type SitemapRpcRow = {
+  path: string;
   image_url: string | null;
-  updated_at: string | null;
+  lastmod: string | null;
+  entry_kind: "product" | "localized_product" | "taxonomy";
 };
 
-type LocalizedRow = {
-  path: string | null;
-  base_route: string | null;
-  updated_at: string | null;
-};
-
-type TaxonomyRow = {
-  full_slug_path: string | null;
-};
-
-async function fetchAll<T>(resource: string, query: string): Promise<T[]> {
-  const rows: T[] = [];
+async function fetchSitemapRows(): Promise<SitemapRpcRow[]> {
+  const rows: SitemapRpcRow[] = [];
   for (let offset = 0; ; offset += PAGE_SIZE) {
-    const response = await fetch(`${OWNER_SUPABASE_URL}/rest/v1/${resource}?${query}`, {
-      headers: {
-        apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
-        Range: `${offset}-${offset + PAGE_SIZE - 1}`,
-        "Range-Unit": "items",
+    const response = await fetch(
+      `${OWNER_SUPABASE_URL}/rest/v1/rpc/get_public_sitemap_entries`,
+      {
+        method: "POST",
+        headers: {
+          apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
+          "Content-Type": "application/json",
+          Range: `${offset}-${offset + PAGE_SIZE - 1}`,
+          "Range-Unit": "items",
+        },
+        body: "{}",
       },
-    });
+    );
     if (!response.ok) {
-      throw new Error(`Could not fetch ${resource} for sitemap: ${response.status} ${await response.text()}`);
+      throw new Error(`Could not fetch public sitemap entries: ${response.status} ${await response.text()}`);
     }
-    const page = (await response.json()) as T[];
+    const page = (await response.json()) as SitemapRpcRow[];
     rows.push(...page);
     if (page.length < PAGE_SIZE) break;
   }
@@ -99,40 +96,25 @@ function pathFromBlock(block: string) {
 }
 
 async function main() {
-  const [products, localizedPages, taxonomyNodes] = await Promise.all([
-    fetchAll<ProductRow>(
-      "products",
-      "select=canonical_path,image_url,updated_at&source_drive_folder_id=not.is.null&is_published=eq.true&order=canonical_path.asc",
-    ),
-    fetchAll<LocalizedRow>(
-      "seo_localized_pages",
-      "select=path,base_route,updated_at&status=eq.published&noindex=eq.false&order=path.asc",
-    ),
-    fetchAll<TaxonomyRow>(
-      "catalog_taxonomy_nodes",
-      "select=full_slug_path&publish_state=eq.published&order=full_slug_path.asc",
-    ),
-  ]);
+  const rows = await fetchSitemapRows();
+  const products = rows.filter((row) => row.entry_kind === "product");
+  const localizedPages = rows.filter((row) => row.entry_kind === "localized_product");
+  const taxonomyPages = rows.filter((row) => row.entry_kind === "taxonomy");
 
-  const canonicalProducts = products.filter(
-    (product): product is ProductRow & { canonical_path: string } => Boolean(product.canonical_path?.startsWith("/products/")),
-  );
-  if (canonicalProducts.length !== 254) {
-    throw new Error(`Refusing stale catalogue sitemap: expected 254 published Drive products, received ${canonicalProducts.length}`);
+  if (products.length !== 254) {
+    throw new Error(`Refusing stale catalogue sitemap: expected 254 published Drive products, received ${products.length}`);
+  }
+  if (localizedPages.length !== 1778) {
+    throw new Error(`Refusing stale localized sitemap: expected 1778 published product pages, received ${localizedPages.length}`);
   }
 
-  const productByPath = new Map(canonicalProducts.map((product) => [product.canonical_path, product]));
-  const taxonomyPaths = new Set(
-    taxonomyNodes
-      .map((node) => node.full_slug_path)
-      .filter((path): path is string => Boolean(path))
-      .map((path) => `/products/${path.replace(/^\/+/, "")}`),
-  );
+  const taxonomyPaths = new Set(taxonomyPages.map((row) => row.path));
+  const productPaths = new Set(products.map((row) => row.path));
   const allowedProductPaths = new Set([
     "/products",
     "/products/all",
     ...taxonomyPaths,
-    ...productByPath.keys(),
+    ...productPaths,
   ]);
 
   const current = readFileSync(SITEMAP_PATH, "utf8");
@@ -151,23 +133,9 @@ async function main() {
     preserved.set(path, block.trim());
   }
 
-  for (const product of canonicalProducts) {
-    preserved.set(
-      product.canonical_path,
-      entry(product.canonical_path, dateOnly(product.updated_at), "0.86", product.image_url),
-    );
-  }
-
-  let localizedCount = 0;
-  for (const page of localizedPages) {
-    if (!page.path?.startsWith("/intl/") || !page.base_route) continue;
-    const product = productByPath.get(page.base_route);
-    if (!product) continue;
-    preserved.set(page.path, entry(page.path, dateOnly(page.updated_at), "0.74", product.image_url));
-    localizedCount += 1;
-  }
-  if (localizedCount !== 1778) {
-    throw new Error(`Refusing stale localized sitemap: expected 1778 published product pages, received ${localizedCount}`);
+  for (const row of [...taxonomyPages, ...products, ...localizedPages]) {
+    const priority = row.entry_kind === "product" ? "0.86" : row.entry_kind === "localized_product" ? "0.74" : "0.82";
+    preserved.set(row.path, entry(row.path, dateOnly(row.lastmod), priority, row.image_url));
   }
 
   const ordered = [...preserved.entries()].sort(([a], [b]) => {
@@ -184,7 +152,9 @@ async function main() {
   ].join("\n");
 
   writeFileSync(SITEMAP_PATH, `${xml}\n`);
-  console.log(`sitemap.xml augmented with ${canonicalProducts.length} canonical Drive products and ${localizedCount} localized product pages (${ordered.length} total URLs)`);
+  console.log(
+    `sitemap.xml augmented with ${products.length} canonical Drive products, ${localizedPages.length} localized product pages and ${taxonomyPages.length} taxonomy routes (${ordered.length} total URLs)`,
+  );
 }
 
 main().catch((error) => {
