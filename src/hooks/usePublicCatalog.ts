@@ -1,30 +1,11 @@
-// Public catalog data layer for the live buyer-facing website.
-// Verified committed media/catalog data remains a resilient fallback, while the
-// audited database release overlays owner-approved edits, new records and
-// unpublish controls from Admin.
+// Buyer-facing catalogue data must come from the approved production release only.
+// No local, supplemental, demo or legacy catalogue is allowed to render publicly.
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
-import { CATEGORIES, type Product as LegacyProduct } from "@/lib/categories";
-import { CATALOG, type CategoryGroup, type SubCategory } from "@/lib/catalog";
-import { CATEGORY_SEO } from "@/lib/categorySeo";
-import { PRODUCT_SEO_OVERRIDES } from "@/lib/productSeoOverrides";
-import {
-  keywordLedProductName,
-  keywordLedSubcategoryName,
-  keywordLedTopCategoryName,
-} from "@/lib/catalogSearchNames";
-import { createSupplementalProductsForSubcategory } from "@/lib/supplementalCatalog";
-import { createSupplementalBatch02ProductsForSubcategory } from "@/lib/supplementalCatalogBatch02";
-import { createSupplementalBatch03ProductsForSubcategory } from "@/lib/supplementalCatalogBatch03";
-import { createSupplementalBatch04ProductsForSubcategory } from "@/lib/supplementalCatalogBatch04";
-import { createSupplementalBatch05ProductsForSubcategory } from "@/lib/supplementalCatalogBatch05";
-import { createSupplementalBatch06ProductsForSubcategory } from "@/lib/supplementalCatalogBatch06";
-import { createSupplementalBatch07ProductsForSubcategory } from "@/lib/supplementalCatalogBatch07";
-import { createSupplementalBatch08ProductsForSubcategory } from "@/lib/supplementalCatalogBatch08";
-import { createSupplementalBatch09ProductsForSubcategory } from "@/lib/supplementalCatalogBatch09";
-import { createSupplementalBatch10ProductsForSubcategory } from "@/lib/supplementalCatalogBatch10";
+import type { Product as LegacyProduct } from "@/lib/categories";
+import { keywordLedProductName } from "@/lib/catalogSearchNames";
 
 export type PublicSubCategory = DbCategory & { products: DbProduct[] };
 export type PublicTopCategory = DbCategory & {
@@ -32,34 +13,54 @@ export type PublicTopCategory = DbCategory & {
   directProducts: DbProduct[];
 };
 
-type ReleaseCategory = DbCategory & {
-  parent_slug?: string | null;
-  updated_at?: string;
-};
-
 type ReleaseProduct = DbProduct & {
-  category_slug: string;
+  category_slug?: string | null;
   parent_slug?: string | null;
   updated_at?: string;
-};
-
-type HiddenProduct = {
-  category_slug: string;
-  parent_slug?: string | null;
-  product_slug: string;
 };
 
 type CatalogRelease = {
-  categories: ReleaseCategory[];
   products: ReleaseProduct[];
-  hiddenCategorySlugs: string[];
-  hiddenProducts: HiddenProduct[];
   releasedAt: string | null;
 };
 
+type TaxonomyNode = {
+  id: string;
+  parent_id: string | null;
+  node_type: string;
+  slug: string;
+  name: string;
+  depth: number;
+  full_slug_path: string;
+  description: string | null;
+  image_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  sort_order: number;
+  updated_at?: string;
+};
+
+type TaxonomyAssignment = {
+  product_id: string;
+  product_slug: string;
+  taxonomy_node_id: string;
+  full_slug_path: string;
+  canonical_path: string;
+  approved_at: string;
+};
+
+type TaxonomyRelease = {
+  nodes: TaxonomyNode[];
+  assignments: TaxonomyAssignment[];
+};
+
+const EXPECTED_ROOTS = 5;
+const EXPECTED_PUBLISHED_PRODUCTS = 254;
+
 const K = {
-  tree: ["public-catalog", "release-tree-v1"] as const,
-  product: (category: string, product: string) => ["public-catalog", "release-product-v1", category, product] as const,
+  tree: ["public-catalog", "buyer-ready-taxonomy-v2"] as const,
+  product: (category: string, product: string) =>
+    ["public-catalog", "buyer-ready-product-v2", category, product] as const,
 };
 
 const BLOCKED_PUBLIC_TERMS = [
@@ -82,61 +83,25 @@ const BLOCKED_PUBLIC_TERMS = [
   "container load",
 ];
 
-const TOP_CONFIG = [
-  {
-    slug: "bavarian-trachten-wear",
-    name: "Bavarian & Trachten Wear",
-    short: "Lederhosen, Dirndl & Trachten Manufacturer",
-    sources: ["bavarian"],
-  },
-  {
-    slug: "premium-leather-apparel",
-    name: "Premium Leather Apparel",
-    short: "Custom Leather Jackets, Garments & Accessories",
-    sources: ["leatherwear"],
-  },
-  {
-    slug: "sportswear",
-    name: "Custom Sportswear & Teamwear",
-    short: "Custom Team Uniforms, Jerseys & Performance Wear",
-    sources: ["sportswear"],
-  },
-  {
-    slug: "streetwear-activewear",
-    name: "Streetwear & Activewear",
-    short: "Private Label Hoodies, T-Shirts, Joggers & Activewear",
-    sources: ["streetwear"],
-  },
-  {
-    slug: "leisure-nightwear",
-    name: "Leisurewear & Nightwear",
-    short: "Private Label Casualwear, Loungewear & Sleepwear",
-    sources: ["leisurewear", "nightwear"],
-  },
-] as const;
-
 function hasBlockedPublicTerm(value: string): boolean {
   const lower = value.toLowerCase();
   return BLOCKED_PUBLIC_TERMS.some((term) => lower.includes(term));
-}
-
-function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function uniqueStrings(values: string[]): string[] {
   return values.filter((value, index) => Boolean(value) && values.indexOf(value) === index);
 }
 
-function sanitizePublicProduct(product: DbProduct): DbProduct {
+function sanitizePublicProduct(product: ReleaseProduct): DbProduct {
   const name = keywordLedProductName(product.slug, product.name);
+  const gallery = uniqueStrings((Array.isArray(product.gallery) ? product.gallery : []).filter(Boolean));
   const details = (Array.isArray(product.details) ? product.details : []).filter(
     (detail) => !hasBlockedPublicTerm(`${detail.label} ${detail.value}`),
   );
   const specs = (Array.isArray(product.specs) ? product.specs : []).filter(
     (spec) => !hasBlockedPublicTerm(spec),
   );
-  const gallery = uniqueStrings((Array.isArray(product.gallery) ? product.gallery : []).filter(Boolean));
+
   return {
     ...product,
     name,
@@ -151,279 +116,141 @@ function sanitizePublicProduct(product: DbProduct): DbProduct {
   };
 }
 
-function legacyProductToDb(product: LegacyProduct, categoryId: string, sortOrder: number): DbProduct {
-  const productSlug = slugify(product.name);
-  const productName = keywordLedProductName(productSlug, product.name);
-  const gallery = uniqueStrings([product.image, ...(product.gallery ?? [])].filter(Boolean));
-  const override = PRODUCT_SEO_OVERRIDES[productSlug];
-
-  return sanitizePublicProduct({
-    id: `local-product-${categoryId}-${productSlug}`,
-    category_id: categoryId,
-    slug: productSlug,
-    name: productName,
-    description: override?.description ?? product.description ?? null,
-    image_url: gallery[0] ?? null,
-    gallery,
-    specs: override?.specs ?? product.specs ?? [],
-    details: override ? [] : Array.isArray(product.details) ? product.details : [],
-    material_specifications: null,
-    seo_title: override?.seoTitle ?? `${productName} Manufacturer | Irha Apparels`,
-    seo_description:
-      override?.seoDescription ??
-      `${productName} for wholesale, OEM and private-label buyer programs from Irha Apparels, an experienced B2B garment manufacturer in Sialkot, Pakistan.`,
-    sort_order: sortOrder,
-    is_published: true,
-    sku: null,
-    is_featured: false,
-    short_description: override?.shortDescription ?? product.description ?? null,
-    moq_display: null,
-    moq_min: null,
-    sample_available: null,
-    sample_timeline: null,
-    production_timeline: null,
-    country_of_origin: null,
-    primary_material: null,
-    fabric_composition: null,
-    gsm: null,
-    available_sizes: [],
-    size_notes: null,
-    available_colors: [],
-    custom_colors: null,
-    customization: {},
-    packaging_standard: null,
-    packaging_custom: null,
-    related_product_ids: [],
-  });
-}
-
-function supplementalProducts(top: DbCategory, sub: DbCategory): DbProduct[] {
-  return [
-    ...createSupplementalProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch02ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch03ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch04ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch05ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch06ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch07ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch08ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch09ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-    ...createSupplementalBatch10ProductsForSubcategory(top.slug, sub.slug, sub.name, sub.id),
-  ].map(sanitizePublicProduct);
-}
-
-function canonicalSubSlug(sourceSlug: string, subSlug: string, mergedTop: boolean): string {
-  if (!mergedTop) return subSlug;
-  if (sourceSlug === "nightwear") return `leisure-nightwear-${subSlug}`;
-  return `${sourceSlug}-${subSlug}`;
-}
-
-function buildSubCategory(
-  top: DbCategory,
-  group: CategoryGroup,
-  sub: SubCategory,
-  mergedTop: boolean,
-  sourceOrder: number,
-  subOrder: number,
-): PublicSubCategory {
-  const slug = canonicalSubSlug(group.slug, sub.slug, mergedTop);
-  const id = `local-category-${top.slug}-${slug}`;
-  const sourceName = mergedTop ? `${group.name}: ${sub.name}` : sub.name;
-  const name = keywordLedSubcategoryName(top.slug, slug, sourceName);
-  const category: DbCategory = {
-    id,
-    parent_id: top.id,
-    slug,
-    name,
-    short: sub.short || null,
-    description: sub.short || null,
-    image_url: sub.products[0]?.image ?? top.image_url,
-    catalog_url: top.catalog_url,
-    details: [],
-    seo_title: `${name} Manufacturer | Irha Apparels`,
-    seo_description: `${name} for wholesale, OEM and private-label buyer programs from Irha Apparels.`,
-    sort_order: sourceOrder * 100 + subOrder,
-    is_published: true,
-  };
-
-  const products = sub.products.map((product, index) => legacyProductToDb(product, id, index));
-  const seenSlugs = new Set(products.map((product) => product.slug));
-  for (const supplemental of supplementalProducts(top, category)) {
-    if (!seenSlugs.has(supplemental.slug)) {
-      products.push(supplemental);
-      seenSlugs.add(supplemental.slug);
-    }
-  }
-  products.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-  return { ...category, products };
-}
-
-function buildLocalTree(): PublicTopCategory[] {
-  return TOP_CONFIG.map((config, topIndex) => {
-    const sourceCategories = config.sources
-      .map((source) => CATEGORIES.find((category) => category.slug === source))
-      .filter(Boolean) as Array<(typeof CATEGORIES)[number]>;
-    const sourceGroups = config.sources
-      .map((source) => CATALOG.find((group) => group.slug === source))
-      .filter(Boolean) as CategoryGroup[];
-    const primary = sourceCategories[0];
-    const seo = CATEGORY_SEO[config.slug];
-    const top: DbCategory = {
-      id: `local-top-${config.slug}`,
-      parent_id: null,
-      slug: config.slug,
-      name: config.name,
-      short: config.short,
-      description: seo?.intro ?? primary?.description ?? config.short,
-      image_url: primary?.image ?? null,
-      catalog_url: primary?.catalog ?? null,
-      details: uniqueStrings(sourceCategories.flatMap((category) => category.details ?? [])),
-      seo_title: seo?.title ?? `${config.name} Manufacturer | Irha Apparels`,
-      seo_description: seo?.description ?? primary?.description ?? config.short,
-      sort_order: topIndex,
-      is_published: true,
-    };
-    const mergedTop = config.sources.length > 1;
-    const subs = sourceGroups.flatMap((group, sourceOrder) =>
-      group.subs.map((sub, subOrder) => buildSubCategory(top, group, sub, mergedTop, sourceOrder, subOrder)),
-    );
-    return { ...top, subs, directProducts: [] };
-  });
-}
-
-const LOCAL_TREE = buildLocalTree();
-
-function cloneLocalTree(): PublicTopCategory[] {
-  return LOCAL_TREE.map((top) => ({
-    ...top,
-    details: [...(top.details ?? [])],
-    directProducts: top.directProducts.map((product) => ({ ...product })),
-    subs: top.subs.map((sub) => ({
-      ...sub,
-      details: [...(sub.details ?? [])],
-      products: sub.products.map((product) => ({ ...product })),
-    })),
-  }));
-}
-
-function categoryMatches(local: PublicSubCategory, released: ReleaseCategory) {
-  if (local.slug === released.slug) return true;
-  if (released.slug.endsWith(`-${local.slug}`)) return true;
-  return slugify(local.name) === slugify(released.name);
-}
-
-function normalizeRelease(value: unknown): CatalogRelease | null {
-  if (!value || typeof value !== "object") return null;
-  const release = value as Partial<CatalogRelease>;
-  if (!Array.isArray(release.categories) || !Array.isArray(release.products)) return null;
+function asCatalogRelease(value: unknown): CatalogRelease {
+  if (!value || typeof value !== "object") throw new Error("Published catalogue returned an invalid payload");
+  const candidate = value as Partial<CatalogRelease>;
+  if (!Array.isArray(candidate.products)) throw new Error("Published catalogue products are missing");
   return {
-    categories: release.categories,
-    products: release.products,
-    hiddenCategorySlugs: Array.isArray(release.hiddenCategorySlugs) ? release.hiddenCategorySlugs : [],
-    hiddenProducts: Array.isArray(release.hiddenProducts) ? release.hiddenProducts : [],
-    releasedAt: typeof release.releasedAt === "string" ? release.releasedAt : null,
+    products: candidate.products,
+    releasedAt: typeof candidate.releasedAt === "string" ? candidate.releasedAt : null,
   };
 }
 
-function mergeRelease(release: CatalogRelease): PublicTopCategory[] {
-  const tree = cloneLocalTree();
-  const hiddenCategories = new Set(release.hiddenCategorySlugs);
-  const hiddenProducts = new Set(
-    release.hiddenProducts.map((item) => `${item.category_slug}:${item.product_slug}`),
-  );
-  const releasedTop = release.categories.filter((category) => !category.parent_id);
-  const releasedSubs = release.categories.filter((category) => Boolean(category.parent_id));
+function asTaxonomyRelease(value: unknown): TaxonomyRelease {
+  if (!value || typeof value !== "object") throw new Error("Published taxonomy returned an invalid payload");
+  const candidate = value as Partial<TaxonomyRelease>;
+  if (!Array.isArray(candidate.nodes) || !Array.isArray(candidate.assignments)) {
+    throw new Error("Published taxonomy nodes or assignments are missing");
+  }
+  return { nodes: candidate.nodes, assignments: candidate.assignments };
+}
 
-  return tree
-    .filter((top) => !hiddenCategories.has(top.slug))
-    .map((localTop) => {
-      const topOverride = releasedTop.find((category) => category.slug === localTop.slug);
-      const top: PublicTopCategory = {
-        ...localTop,
-        ...(topOverride || {}),
-        parent_id: null,
-        subs: [],
-        directProducts: [],
-      };
+function nodeAsCategory(node: TaxonomyNode, parentId: string | null): DbCategory {
+  return {
+    id: node.id,
+    parent_id: parentId,
+    slug: node.slug,
+    name: node.name,
+    short: node.description,
+    description: node.description,
+    image_url: node.image_url,
+    catalog_url: null,
+    details: [],
+    seo_title: node.seo_title,
+    seo_description: node.seo_description,
+    sort_order: node.sort_order,
+    is_published: true,
+  };
+}
 
-      top.name = keywordLedTopCategoryName(top.slug, top.name);
+function rootForLeaf(nodeById: Map<string, TaxonomyNode>, leaf: TaxonomyNode): TaxonomyNode | null {
+  let current: TaxonomyNode | undefined = leaf;
+  const visited = new Set<string>();
+  while (current && current.parent_id) {
+    if (visited.has(current.id)) return null;
+    visited.add(current.id);
+    current = nodeById.get(current.parent_id);
+  }
+  return current?.depth === 0 ? current : null;
+}
 
-      const topReleasedSubs = releasedSubs.filter((category) => category.parent_slug === top.slug);
-      const matchedReleasedIds = new Set<string>();
-
-      for (const localSub of localTop.subs) {
-        const releasedSub = topReleasedSubs.find((category) => categoryMatches(localSub, category));
-        if (releasedSub && hiddenCategories.has(releasedSub.slug)) continue;
-        if (releasedSub) matchedReleasedIds.add(releasedSub.id);
-
-        const categorySlug = releasedSub?.slug ?? localSub.slug;
-        const databaseProducts = release.products.filter((product) => product.category_slug === categorySlug);
-        const databaseBySlug = new Map(databaseProducts.map((product) => [product.slug, product]));
-        const products = localSub.products
-          .filter((product) => !hiddenProducts.has(`${categorySlug}:${product.slug}`))
-          .map((product) => {
-            const override = databaseBySlug.get(product.slug);
-            if (!override) return sanitizePublicProduct(product);
-            databaseBySlug.delete(product.slug);
-            return sanitizePublicProduct({ ...product, ...override });
-          });
-
-        for (const product of databaseBySlug.values()) {
-          products.push(sanitizePublicProduct(product));
-        }
-
-        products.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-        const mergedSub: PublicSubCategory = {
-          ...localSub,
-          ...(releasedSub || {}),
-          parent_id: top.id,
-          products,
-        };
-        mergedSub.name = keywordLedSubcategoryName(top.slug, categorySlug, mergedSub.name);
-        top.subs.push(mergedSub);
-      }
-
-      for (const releasedSub of topReleasedSubs) {
-        if (matchedReleasedIds.has(releasedSub.id) || hiddenCategories.has(releasedSub.slug)) continue;
-        const products = release.products
-          .filter((product) => product.category_slug === releasedSub.slug)
-          .map(sanitizePublicProduct)
-          .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-        top.subs.push({
-          ...releasedSub,
-          parent_id: top.id,
-          name: keywordLedSubcategoryName(top.slug, releasedSub.slug, releasedSub.name),
-          products,
-        });
-      }
-
-      top.directProducts = release.products
-        .filter((product) => product.category_slug === top.slug)
-        .map(sanitizePublicProduct)
-        .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-      top.subs.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-      return top;
-    })
+function buildBuyerReadyTree(catalogue: CatalogRelease, taxonomy: TaxonomyRelease): PublicTopCategory[] {
+  const nodeById = new Map(taxonomy.nodes.map((node) => [node.id, node]));
+  const productById = new Map(catalogue.products.map((product) => [product.id, sanitizePublicProduct(product)]));
+  const roots = taxonomy.nodes
+    .filter((node) => node.depth === 0 && node.node_type === "main_category")
     .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+
+  if (roots.length !== EXPECTED_ROOTS) {
+    throw new Error(`Refusing incomplete public catalogue: expected ${EXPECTED_ROOTS} main categories, received ${roots.length}`);
+  }
+  if (taxonomy.assignments.length !== EXPECTED_PUBLISHED_PRODUCTS) {
+    throw new Error(
+      `Refusing incomplete public catalogue: expected ${EXPECTED_PUBLISHED_PRODUCTS} approved assignments, received ${taxonomy.assignments.length}`,
+    );
+  }
+
+  const assignedProducts = new Set<string>();
+  const tree = roots.map((root): PublicTopCategory => {
+    const leafNodes = taxonomy.nodes
+      .filter((node) => node.depth === 2 && rootForLeaf(nodeById, node)?.id === root.id)
+      .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+
+    const subs = leafNodes
+      .map((leaf): PublicSubCategory => {
+        const products = taxonomy.assignments
+          .filter((assignment) => assignment.taxonomy_node_id === leaf.id)
+          .map((assignment) => {
+            const product = productById.get(assignment.product_id);
+            if (!product) {
+              throw new Error(`Approved product ${assignment.product_id} is missing from the public release`);
+            }
+            assignedProducts.add(product.id);
+            return product;
+          })
+          .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+
+        return { ...nodeAsCategory(leaf, root.id), products };
+      })
+      .filter((sub) => sub.products.length > 0);
+
+    return {
+      ...nodeAsCategory(root, null),
+      subs,
+      directProducts: [],
+    };
+  });
+
+  if (assignedProducts.size !== EXPECTED_PUBLISHED_PRODUCTS) {
+    throw new Error(
+      `Refusing incomplete public catalogue: expected ${EXPECTED_PUBLISHED_PRODUCTS} unique products, received ${assignedProducts.size}`,
+    );
+  }
+
+  return tree;
 }
 
 async function fetchTree(): Promise<PublicTopCategory[]> {
-  const db = supabase as any;
-  const { data, error } = await db.rpc("catalog_get_public_release");
-  if (error) return cloneLocalTree();
-  const release = normalizeRelease(data);
-  return release ? mergeRelease(release) : cloneLocalTree();
+  const db = supabase as unknown as {
+    rpc: (name: string) => Promise<{ data: unknown; error: { message?: string } | null }>;
+  };
+
+  const [catalogueResult, taxonomyResult] = await Promise.all([
+    db.rpc("catalog_get_public_release"),
+    db.rpc("catalog_get_public_taxonomy"),
+  ]);
+
+  if (catalogueResult.error) {
+    throw new Error(catalogueResult.error.message || "Published catalogue could not be loaded");
+  }
+  if (taxonomyResult.error) {
+    throw new Error(taxonomyResult.error.message || "Published taxonomy could not be loaded");
+  }
+
+  return buildBuyerReadyTree(
+    asCatalogRelease(catalogueResult.data),
+    asTaxonomyRelease(taxonomyResult.data),
+  );
 }
 
 export function usePublicCatalogTree() {
   return useQuery({
     queryKey: K.tree,
     queryFn: fetchTree,
-    initialData: cloneLocalTree,
-    initialDataUpdatedAt: 0,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     refetchOnWindowFocus: true,
+    retry: 1,
   });
 }
 
@@ -434,32 +261,16 @@ export function usePublicTopCategory(slug?: string) {
 }
 
 export function usePublicProduct(categorySlug?: string, productSlug?: string) {
-  const localProduct = () => {
-    if (!categorySlug || !productSlug) return undefined;
-    const top = LOCAL_TREE.find((category) => category.slug === categorySlug) ?? null;
-    if (!top) return null;
-    const directProduct = top.directProducts.find((candidate) => candidate.slug === productSlug);
-    if (directProduct) return { product: directProduct, subCategory: null, topCategory: top };
-    for (const sub of top.subs) {
-      const product = sub.products.find((candidate) => candidate.slug === productSlug);
-      if (product) return { product, subCategory: sub, topCategory: top };
-    }
-    return null;
-  };
-
   return useQuery({
     queryKey: K.product(categorySlug ?? "", productSlug ?? ""),
     enabled: Boolean(categorySlug && productSlug),
-    initialData: localProduct,
-    initialDataUpdatedAt: 0,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
+    retry: 1,
     queryFn: async () => {
       const tree = await fetchTree();
       const top = tree.find((category) => category.slug === categorySlug) ?? null;
       if (!top) return null;
-      const directProduct = top.directProducts.find((candidate) => candidate.slug === productSlug);
-      if (directProduct) return { product: directProduct, subCategory: null, topCategory: top };
       for (const sub of top.subs) {
         const product = sub.products.find((candidate) => candidate.slug === productSlug);
         if (product) return { product, subCategory: sub, topCategory: top };
