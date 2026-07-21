@@ -3,6 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export type ExplicitProductRoute = {
+  sourceProductSlug: string;
   productSlug: string;
   productName: string;
   fullSlugPath: string;
@@ -10,6 +11,8 @@ export type ExplicitProductRoute = {
   audienceSlug: string;
   collectionSlug: string;
   legacyPath: string;
+  sourceLegacyPath: string;
+  deprecatedCanonicalPath: string;
   canonicalPath: string;
 };
 
@@ -24,6 +27,27 @@ const MIGRATION_PATH = "supabase/migrations/20260717230000_explicit_catalog_taxo
 const GENERATED_REDIRECT_START = "# BEGIN GENERATED TAXONOMY REDIRECTS";
 const GENERATED_REDIRECT_END = "# END GENERATED TAXONOMY REDIRECTS";
 const SITE = "https://irhaapparels.com";
+
+/**
+ * Production product slugs approved during the staged catalogue rebuild.
+ * The original taxonomy migration is immutable, so build assets translate the
+ * historical slug into the current database slug while retaining 301 aliases.
+ */
+export const PRODUCT_SLUG_RENAMES: Readonly<Record<string, string>> = {
+  "traditional-lederhosen": "short-lederhosen",
+  "traditional-lederhosen-reference-style-02": "premium-embroidered-lederhosen",
+  "traditional-lederhosen-reference-style-03": "knee-length-lederhosen",
+  "bavarian-checkered-shirt": "checked-trachten-shirt",
+  "traditional-dirndl-dress": "traditional-dirndl",
+  "classic-biker-leather-jacket": "classic-leather-biker-jacket",
+  "bomber-leather-jacket": "leather-bomber-jacket",
+  "sublimated-soccer-uniform-kit": "custom-soccer-uniform-kit",
+  "performance-tracksuit-set": "team-tracksuit",
+  "compression-performance-top": "compression-shirt",
+  "oversized-streetwear-hoodie": "oversized-pullover-hoodie",
+  "plush-bathrobe-sleep-robe": "womens-plush-robe",
+  "silk-nightgown-slip": "womens-silk-nightgown",
+} as const;
 
 function decodeSqlText(value: string) {
   return value.replaceAll("''", "'");
@@ -42,36 +66,32 @@ function parseRows(block: string) {
   return rows;
 }
 
-function productNames(sql: string) {
-  const names = new Map<string, string>();
-  const block = valuesBlock(
-    sql,
-    /with\s+mapping\(product_slug,\s*target_path\)\s+as\s*\(\s*values([\s\S]*?)\n\),\s*resolved\s+as/i,
-    "product mapping block",
-  );
-  for (const [productSlug] of parseRows(block)) names.set(productSlug, productSlug.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" "));
-  return names;
+function titleFromSlug(slug: string) {
+  return slug.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
 
 export function readExplicitTaxonomyRoutes(root = process.cwd()) {
   const sql = readFileSync(resolve(root, MIGRATION_PATH), "utf8");
-  const nameBySlug = productNames(sql);
   const productBlock = valuesBlock(
     sql,
     /with\s+mapping\(product_slug,\s*target_path\)\s+as\s*\(\s*values([\s\S]*?)\n\),\s*resolved\s+as/i,
     "product mapping block",
   );
-  const products: ExplicitProductRoute[] = parseRows(productBlock).map(([productSlug, fullSlugPath]) => {
+  const products: ExplicitProductRoute[] = parseRows(productBlock).map(([sourceProductSlug, fullSlugPath]) => {
     const [categorySlug, audienceSlug, collectionSlug] = fullSlugPath.split("/");
     if (!categorySlug || !audienceSlug || !collectionSlug) throw new Error(`Invalid taxonomy path: ${fullSlugPath}`);
+    const productSlug = PRODUCT_SLUG_RENAMES[sourceProductSlug] ?? sourceProductSlug;
     return {
+      sourceProductSlug,
       productSlug,
-      productName: nameBySlug.get(productSlug) ?? productSlug,
+      productName: titleFromSlug(productSlug),
       fullSlugPath,
       categorySlug,
       audienceSlug,
       collectionSlug,
       legacyPath: `/products/${categorySlug}/${productSlug}`,
+      sourceLegacyPath: `/products/${categorySlug}/${sourceProductSlug}`,
+      deprecatedCanonicalPath: `/products/${fullSlugPath}/${sourceProductSlug}`,
       canonicalPath: `/products/${fullSlugPath}/${productSlug}`,
     };
   });
@@ -102,6 +122,12 @@ function withoutGeneratedRedirects(source: string) {
   return `${source.slice(0, start).trimEnd()}\n${source.slice(end + GENERATED_REDIRECT_END.length).trimStart()}`.trimEnd();
 }
 
+function productRedirectLines(route: ExplicitProductRoute) {
+  const sources = new Set([route.legacyPath, route.sourceLegacyPath, route.deprecatedCanonicalPath]);
+  sources.delete(route.canonicalPath);
+  return [...sources].map((source) => `${source} ${route.canonicalPath} 301`);
+}
+
 export function generateTaxonomyRedirects(root = process.cwd()) {
   const { products, categories } = readExplicitTaxonomyRoutes(root);
   const redirectPath = resolve(root, "public/_redirects");
@@ -111,7 +137,7 @@ export function generateTaxonomyRedirects(root = process.cwd()) {
     "# Owner-reviewed Main Category → Audience/Buyer Group → Product Type → Product canonicals.",
     ...categories.map((route) => `${route.sourcePath} ${route.targetPath} 301`),
     "/products/nightwear /products/leisure-nightwear 301",
-    ...products.map((route) => `${route.legacyPath} ${route.canonicalPath} 301`),
+    ...products.flatMap(productRedirectLines),
     GENERATED_REDIRECT_END,
   ].join("\n");
   writeFileSync(redirectPath, `${withoutGeneratedRedirects(current)}\n\n${generated}\n`, "utf8");
@@ -125,7 +151,12 @@ export function generateTaxonomySitemapEntries(root = process.cwd()) {
   const { products } = readExplicitTaxonomyRoutes(root);
   const sitemapPath = resolve(root, "public/sitemap.xml");
   let xml = readFileSync(sitemapPath, "utf8");
-  const oldLocations = new Set(products.flatMap((route) => [`${SITE}${route.legacyPath}`, `${SITE}${route.canonicalPath}`]));
+  const oldLocations = new Set(products.flatMap((route) => [
+    `${SITE}${route.legacyPath}`,
+    `${SITE}${route.sourceLegacyPath}`,
+    `${SITE}${route.deprecatedCanonicalPath}`,
+    `${SITE}${route.canonicalPath}`,
+  ]));
   xml = removeUrlBlocks(xml, (location) => oldLocations.has(location) || location.startsWith(`${SITE}/intl/`));
   const entries = products.map((route) => [
     "  <url>",
@@ -162,8 +193,13 @@ export function generateTaxonomyProductShells(root = process.cwd(), outputDir = 
       .replace(/<meta data-irha-fallback-seo="true" name="description" content="[^"]*"\s*\/?>/i, `<meta data-irha-fallback-seo="true" name="description" content="${escapeHtml(description)}" />`)
       .replace(/\s*<link rel="canonical"[^>]*>/gi, "")
       .replace("</head>", `  <link rel="canonical" href="${canonical}" />\n</head>`);
-    writeProductShell(outputRoot, route.canonicalPath, html);
-    writeProductShell(outputRoot, route.legacyPath, html);
+    const shellPaths = new Set([
+      route.canonicalPath,
+      route.legacyPath,
+      route.sourceLegacyPath,
+      route.deprecatedCanonicalPath,
+    ]);
+    for (const shellPath of shellPaths) writeProductShell(outputRoot, shellPath, html);
   }
 }
 
