@@ -1,4 +1,6 @@
--- Buyer-ready public taxonomy, deterministic media ordering and catalogue RPC hardening.
+-- Buyer-ready public taxonomy and catalogue RPC hardening.
+-- Media order is validated by the public manifest and is not bulk-rewritten here,
+-- because product_slot_media has per-row gallery synchronization triggers.
 
 -- Empty audience nodes must not render as public "0 styles" pages.
 update public.catalog_taxonomy_nodes audience
@@ -21,37 +23,6 @@ where audience.full_slug_path in ('sportswear/women', 'sportswear/unisex')
     where leaf.parent_id = audience.id
       and leaf.publish_state = 'published'
   );
-
--- Use fixed role bands so the verified front/hero image is always first,
--- including after future gallery refreshes.
-with ranked as (
-  select
-    id,
-    case role::text
-      when 'hero' then 100
-      when 'three_quarter' then 200
-      when 'side' then 300
-      when 'rear_three_quarter' then 400
-      when 'back' then 500
-      when 'macro' then 600
-      when 'branding_detail' then 700
-      when 'packaging' then 800
-      else 900
-    end + row_number() over (
-      partition by reference_code, role
-      order by sort_order, created_at, id
-    )::integer as normalized_sort_order
-  from public.product_slot_media
-  where approved
-)
-update public.product_slot_media slot
-set sort_order = ranked.normalized_sort_order,
-    updated_at = now()
-from ranked
-where slot.id = ranked.id
-  and slot.sort_order is distinct from ranked.normalized_sort_order;
-
-select public.refresh_all_drive_product_galleries();
 
 -- Trigger functions remain usable by PostgreSQL triggers, but must never be
 -- directly executable through the public API by anonymous or generic users.
