@@ -39,8 +39,8 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies with bounded retry
-        run: bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Install exact lockfile dependencies with bounded retry
+        run: bash scripts/ci/retry.sh 3 5 -- npm ci --legacy-peer-deps --no-audit --no-fund
 
       - name: Run targeted Workers AI contract test
         run: npx vitest run src/lib/__checks__/cloudflareWorkersAiGuide.test.ts --reporter=verbose
