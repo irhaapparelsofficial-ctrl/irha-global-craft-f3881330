@@ -1,18 +1,18 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const catalogue = readFileSync("src/pages/Catalogue.tsx", "utf8");
 const products = readFileSync("src/pages/GlobalCollectionsPage.tsx", "utf8");
+const homePrograms = readFileSync("src/components/sections/HomeCategoryUniverse.tsx", "utf8");
 const slideshow = readFileSync("src/components/HeroMediaSlideshow.tsx", "utf8");
 const main = readFileSync("src/main.tsx", "utf8");
 
 describe("buyer route image performance contracts", () => {
-  it("keeps the catalogue index static and optimized above the fold", () => {
-    expect(catalogue).not.toContain("@/integrations/supabase/client");
-    expect(catalogue).not.toContain("groupImages");
-    expect(catalogue).toContain("?w=960&format=webp&quality=68");
-    expect(catalogue).toContain("STATIC_GROUP_IMAGES[group.slug]");
-    expect(catalogue).toContain("const HERO_SLIDES = [");
+  it("uses approved homepage media with resilient lazy fallbacks", () => {
+    expect(homePrograms).toContain("useHomepageMedia");
+    expect(homePrograms).toContain("approvedMedia[program.role] || program.image");
+    expect(homePrograms).toContain("<ResilientImage");
+    expect(homePrograms).toContain('loading="lazy"');
+    expect(homePrograms).toContain('decoding="async"');
   });
 
   it("uses category thumbnails rather than originals in the products hero", () => {
