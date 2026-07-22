@@ -1,0 +1,159 @@
+name: Supabase Auth Security After Quality Gate
+
+run-name: Supabase Auth security · ${{ github.event.workflow_run.head_sha }}
+
+on:
+  workflow_run:
+    workflows: ["Quality Gate"]
+    types: [completed]
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: irha-production-mutation
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+
+jobs:
+  preflight:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    outputs:
+      should_reconcile: ${{ steps.ready.outputs.should_reconcile }}
+      source_sha: ${{ steps.ready.outputs.source_sha }}
+
+    env:
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout exact green main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Detect Auth security control changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed_files=/tmp/auth-security-changed-files.txt
+          if git rev-parse "${SOURCE_SHA}^" >/dev/null 2>&1; then
+            git diff --name-only "${SOURCE_SHA}^" "$SOURCE_SHA" > "$changed_files"
+          else
+            git diff-tree --root --no-commit-id --name-only -r "$SOURCE_SHA" > "$changed_files"
+          fi
+
+          auth_changed=false
+          if grep -Eq '^(scripts/ci/reconcile-supabase-auth-security\.mjs$|\.github/workflows/supabase-auth-security\.yml$|src/test/supabaseAuthSecurityControl\.test\.ts$)' "$changed_files"; then
+            auth_changed=true
+          fi
+          echo "auth_changed=$auth_changed" >> "$GITHUB_OUTPUT"
+          cat "$changed_files"
+
+      - name: Confirm exact current main and Auth API readiness
+        id: ready
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTH_CHANGED: ${{ steps.changes.outputs.auth_changed }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          access_token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          should_reconcile=false
+
+          if [ "$latest_main" != "$SOURCE_SHA" ]; then
+            echo "Superseded green source skipped safely: $SOURCE_SHA; current main is $latest_main"
+          elif [ "$AUTH_CHANGED" != "true" ]; then
+            echo "No Auth security control change; reconciliation skipped without failure."
+          elif [ -z "$access_token" ]; then
+            echo "SUPABASE_ACCESS_TOKEN unavailable; Auth security reconciliation skipped without failure."
+          else
+            should_reconcile=true
+            echo "Exact current main and Auth Management API readiness verified: $SOURCE_SHA"
+          fi
+
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "should_reconcile=$should_reconcile" >> "$GITHUB_OUTPUT"
+
+  reconcile-auth-security:
+    needs: preflight
+    if: needs.preflight.outputs.should_reconcile == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_AUTH_EVIDENCE_PATH: /tmp/supabase-auth-security-evidence.json
+
+    steps:
+      - name: Checkout exact green main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Reconfirm exact current main before Auth mutation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$SOURCE_SHA" || {
+            echo "Source $SOURCE_SHA was superseded by $latest_main; refusing Auth mutation"
+            exit 1
+          }
+
+      - name: Enable and verify leaked-password protection
+        run: node scripts/ci/reconcile-supabase-auth-security.mjs
+
+      - name: Preserve Auth security evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-auth-security-${{ env.SOURCE_SHA }}
+          path: /tmp/supabase-auth-security-evidence.json
+          if-no-files-found: warn
+          retention-days: 2
+          compression-level: 0
+
+      - name: Publish exact commit Auth security status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          state=failure
+          description="Supabase leaked-password protection reconciliation failed"
+          if [ "$JOB_STATUS" = "success" ]; then
+            state=success
+            description="Supabase leaked-password protection enabled and verified"
+          fi
+
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
+            -f state="$state" \
+            -f context="Irha Supabase Auth Security" \
+            -f description="$description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
