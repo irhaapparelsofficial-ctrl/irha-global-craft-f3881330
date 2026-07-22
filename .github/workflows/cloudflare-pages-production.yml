@@ -106,8 +106,8 @@ jobs:
             echo "CLOUDFLARE_PROJECT_NAME=$project_name"
           } >> "$GITHUB_ENV"
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Install exact lockfile dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
 
       - name: Run deterministic release checks
         run: |
