@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -21,5 +21,15 @@ describe("canonical sitemap source", () => {
     expect(liveAugment).toContain("expected 254 published Drive products");
     expect(liveAugment).toContain("manifestPaths");
     expect(liveAugment).toContain("taxonomyPages");
+  });
+
+  it("keeps the retired duplicate catalogue implementation deleted", () => {
+    for (const path of [
+      "src/pages/Catalogue.tsx",
+      "src/pages/CatalogueCategory.tsx",
+      "src/lib/catalogueGroups.ts",
+    ]) {
+      expect(existsSync(resolve(process.cwd(), path))).toBe(false);
+    }
   });
 });
