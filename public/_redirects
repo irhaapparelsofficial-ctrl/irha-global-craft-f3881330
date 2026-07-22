@@ -17,15 +17,15 @@
 /shipping-returns /resources 301
 /privacy /privacy-policy 301
 /terms /terms-of-service 301
-/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe /products/leisure-nightwear/plush-bathrobe-sleep-robe 301
-/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe/ /products/leisure-nightwear/plush-bathrobe-sleep-robe 301
+/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe /products/leisure-nightwear/women/robes/womens-plush-robe 301
+/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe/ /products/leisure-nightwear/women/robes/womens-plush-robe 301
 
 # Consolidate legacy category and product URLs into the current public taxonomy.
 /products/bavarian-garments /products/bavarian-trachten-wear 301
 /products/leather-garments /products/premium-leather-apparel 301
 /products/streetwear /products/streetwear-activewear 301
 /products/activewear /products/streetwear-activewear 301
-/products/streetwear/oversized-hoodie /products/streetwear-activewear/oversized-streetwear-hoodie 301
+/products/streetwear/oversized-hoodie /products/streetwear-activewear/unisex/tops/oversized-pullover-hoodie 301
 
 # Retire unsupported legacy editorial pages while preserving the buyer-safe Custom Lab.
 /blog/dirndl-manufacturer-moq-50 /products/bavarian-trachten-wear/women/dirndl-dresses 301
