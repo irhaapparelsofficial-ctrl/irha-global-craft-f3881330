@@ -1,47 +1,31 @@
 name: Production Route Parity
 
-run-name: Production crawl · ${{ github.event.pull_request.number || github.ref_name }} · ${{ github.run_number }}
+run-name: Production crawl · ${{ github.ref_name }} · ${{ github.run_number }}
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - ".github/workflows/production-route-parity.yml"
-      - "scripts/crawl-production-route-parity.ts"
-      - "scripts/generate-sitemap.ts"
-      - "scripts/augment-sitemap-with-live-catalog.ts"
-      - "scripts/generate-buyer-ready-catalog-manifest.ts"
-      - "scripts/generate-buyer-ready-redirects.ts"
-      - "scripts/generate-static-route-shells.ts"
-      - "scripts/finalize-taxonomy-static-shells.ts"
-      - "scripts/generate-static-redirect-shells.ts"
-      - "scripts/enforce-public-index-policy.mjs"
-      - "public/_redirects"
-      - "public/robots.txt"
-      - "src/test/productionRouteParityCrawler.test.ts"
-      - "package.json"
-      - "package-lock.json"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: production-route-parity-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: production-route-parity-main
+  cancel-in-progress: false
 
 env:
   CRAWL_ORIGIN: https://irhaapparels.com
+  CANONICAL_ORIGIN: https://irhaapparels.com
   CRAWL_OUTPUT_DIR: artifacts/production-route-parity
-  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  SOURCE_SHA: ${{ github.sha }}
 
 jobs:
   crawl:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
     steps:
-      - name: Checkout exact event source
+      - name: Checkout exact dispatched main source
         uses: actions/checkout@v4
         with:
           ref: ${{ env.SOURCE_SHA }}
@@ -53,9 +37,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$CRAWL_OUTPUT_DIR"
-          printf 'source_sha=%s\norigin=%s\n' "$SOURCE_SHA" "$CRAWL_ORIGIN" > "$CRAWL_OUTPUT_DIR/baseline.txt"
+          printf 'source_sha=%s\norigin=%s\ncanonical_origin=%s\n' "$SOURCE_SHA" "$CRAWL_ORIGIN" "$CANONICAL_ORIGIN" > "$CRAWL_OUTPUT_DIR/baseline.txt"
 
-      - name: Confirm exact current-main production baseline
+      - name: Confirm exact current main
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -64,28 +48,15 @@ jobs:
           latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
           checked_out="$(git rev-parse HEAD)"
           test "$checked_out" = "$SOURCE_SHA" || {
-            echo "Checked out $checked_out instead of exact source $SOURCE_SHA"
+            echo "Checked out $checked_out instead of dispatched source $SOURCE_SHA"
             exit 1
           }
-
-          compare_json="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/compare/${latest_main}...${SOURCE_SHA}")"
-          merge_base="$(printf '%s' "$compare_json" | jq -r '.merge_base_commit.sha // empty')"
-          compare_status="$(printf '%s' "$compare_json" | jq -r '.status // empty')"
-          test "$merge_base" = "$latest_main" || {
-            echo "Route-parity source is stale: merge base ${merge_base:-missing}, current main $latest_main"
+          test "$SOURCE_SHA" = "$latest_main" || {
+            echo "Refusing stale production crawl: dispatched $SOURCE_SHA, current main $latest_main"
             exit 1
           }
-          case "$compare_status" in
-            ahead|identical) ;;
-            *)
-              echo "Route-parity source has unsafe compare status: ${compare_status:-missing}"
-              exit 1
-              ;;
-          esac
-
-          echo "EXPECTED_PRODUCTION_SHA=$latest_main" >> "$GITHUB_ENV"
-          printf 'expected_production_sha=%s\ncompare_status=%s\nmerge_base=%s\n' "$latest_main" "$compare_status" "$merge_base" >> "$CRAWL_OUTPUT_DIR/baseline.txt"
-          echo "Exact green-main baseline: $latest_main"
+          echo "EXPECTED_SOURCE_SHA=$latest_main" >> "$GITHUB_ENV"
+          printf 'expected_source_sha=%s\n' "$latest_main" >> "$CRAWL_OUTPUT_DIR/baseline.txt"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -124,7 +95,6 @@ jobs:
           {
             echo "## Production Route Parity"
             echo "- Source: \`$SOURCE_SHA\`"
-            echo "- Expected production baseline: \`${EXPECTED_PRODUCTION_SHA:-not-resolved}\`"
             echo "- Origin: \`$CRAWL_ORIGIN\`"
             echo "- Crawl exit code: \`${{ steps.crawl.outputs.crawl_code || 'not-run' }}\`"
             echo
@@ -146,7 +116,7 @@ jobs:
           name: production-route-parity-${{ env.SOURCE_SHA }}
           path: artifacts/production-route-parity
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
 
       - name: Enforce crawl result
         if: always()
