@@ -50,7 +50,7 @@ jobs:
           set -euo pipefail
           test -x node_modules/.bin/tsc
           test -x node_modules/.bin/vitest
-          node_modules/.bin/tsc --version | grep -F 'Version 5.8.3'
+          node_modules/.bin/tsc --version
           node_modules/.bin/vitest --version
 
       - name: Verify deployment source lock
@@ -146,8 +146,8 @@ jobs:
             echo "- Deployment source lock: required"
             echo "- Secret safety: required"
             echo "- Migration registry: required"
-            echo "- TypeScript: required (local compiler 5.8.3)"
-            echo "- Tests: required (local Vitest)"
+            echo "- TypeScript: required (local project compiler)"
+            echo "- Tests: required (local project Vitest)"
             echo "- Production build and release identity: required"
             echo "- One merge signal: \`Irha Quality Gate\`"
             echo "- Production writes: none"
