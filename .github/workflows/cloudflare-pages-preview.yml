@@ -8,6 +8,24 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/cloudflare-pages-preview.yml"
+      - ".github/workflows/production-route-parity.yml"
+      - "scripts/crawl-production-route-parity.ts"
+      - "scripts/generate-buyer-ready-catalog-manifest.ts"
+      - "scripts/generate-buyer-ready-redirects.ts"
+      - "scripts/generate-static-route-shells.ts"
+      - "scripts/enrich-generic-static-route-shells.mjs"
+      - "scripts/enhance-product-route-shells.ts"
+      - "scripts/align-taxonomy-route-shells.ts"
+      - "scripts/patch-worker-route-parity.mjs"
+      - "scripts/verify-route-parity-build.ts"
+      - "scripts/strengthen-brand-search-signals.mjs"
+      - "public/_redirects"
+      - "public/_worker.js"
+      - "src/pages/Home.tsx"
+      - "src/components/HeroCarousel.tsx"
+      - "src/test/productionRouteParityCrawler.test.ts"
+      - "package.json"
+      - "package-lock.json"
 
 permissions:
   contents: read
@@ -19,6 +37,7 @@ concurrency:
 env:
   PREVIEW_BRANCH: github-preview
   PREVIEW_URL: https://github-preview.irha-apparels.pages.dev
+  CANONICAL_ORIGIN: https://irhaapparels.com
 
 jobs:
   preflight:
@@ -35,65 +54,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
           account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
           project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
-
           test -n "$token" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
           test -n "$account_id" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
           test -n "$project_name" || { echo "CLOUDFLARE_PROJECT_NAME is missing"; exit 1; }
-
-          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || {
-            echo "CLOUDFLARE_ACCOUNT_ID must be the 32-character Account ID only"
-            exit 1
-          }
-          [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || {
-            echo "CLOUDFLARE_PROJECT_NAME contains invalid characters"
-            exit 1
-          }
-
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]] || { echo "CLOUDFLARE_ACCOUNT_ID must be the 32-character Account ID only"; exit 1; }
+          [[ "$project_name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]] || { echo "CLOUDFLARE_PROJECT_NAME contains invalid characters"; exit 1; }
           echo "::add-mask::$token"
           echo "::add-mask::$account_id"
-
-          verify_json="$(curl -sS \
-            -H "Authorization: Bearer $token" \
-            -H 'Content-Type: application/json' \
-            https://api.cloudflare.com/client/v4/user/tokens/verify)"
-
-          if [ "$(printf '%s' "$verify_json" | jq -r '.success // false')" != "true" ]; then
-            echo "Cloudflare API token verification failed"
+          verify_json="$(curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          test "$(printf '%s' "$verify_json" | jq -r '.success // false')" = "true" || {
             printf '%s' "$verify_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
             exit 1
-          fi
-
-          project_json="$(curl -sS \
-            -H "Authorization: Bearer $token" \
-            -H 'Content-Type: application/json' \
-            "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
-
-          if [ "$(printf '%s' "$project_json" | jq -r '.success // false')" != "true" ]; then
-            echo "Cloudflare Pages project lookup failed"
+          }
+          project_json="$(curl -sS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.cloudflare.com/client/v4/accounts/$account_id/pages/projects/$project_name")"
+          test "$(printf '%s' "$project_json" | jq -r '.success // false')" = "true" || {
             printf '%s' "$project_json" | jq -r '.errors[]? | "Cloudflare error \(.code // "unknown"): \(.message // "unknown")"'
             exit 1
-          fi
-
-          actual_name="$(printf '%s' "$project_json" | jq -r '.result.name // empty')"
-          test "$actual_name" = "$project_name" || {
-            echo "Cloudflare project mismatch: expected $project_name, got $actual_name"
-            exit 1
           }
-
-          echo "Cloudflare credentials valid and Pages project confirmed: $actual_name"
+          test "$(printf '%s' "$project_json" | jq -r '.result.name // empty')" = "$project_name"
 
   preview:
     needs: preflight
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 75
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+      CRAWL_OUTPUT_DIR: artifacts/preview-route-parity
 
     steps:
       - name: Normalize Cloudflare environment
@@ -114,15 +105,21 @@ jobs:
             echo "CLOUDFLARE_API_TOKEN=$token"
             echo "CLOUDFLARE_ACCOUNT_ID=$account_id"
             echo "CLOUDFLARE_PROJECT_NAME=$project_name"
+            echo "EXPECTED_SOURCE_SHA=$GITHUB_SHA"
+            echo "CRAWL_ORIGIN=$PREVIEW_URL"
           } >> "$GITHUB_ENV"
 
       - name: Checkout exact source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
 
       - name: Install exact lockfile dependencies
         run: npm ci --legacy-peer-deps --no-audit --no-fund
@@ -137,6 +134,7 @@ jobs:
           test -s dist/index.html
           test -s dist/build.json
           test -s dist/release.txt
+          test -s dist/catalog-route-manifest.json
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
           grep -F 'Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers' dist/index.html
           grep -F '"repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330"' dist/build.json
@@ -163,26 +161,15 @@ jobs:
         run: |
           set -euo pipefail
           ready=0
-
-          for attempt in $(seq 1 18); do
-            if curl -fsS \
-              --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              "$PREVIEW_URL/?release_check=${GITHUB_SHA::12}" \
-              -o /tmp/preview-home.html \
-              -D /tmp/preview-headers \
-              && curl -fsS \
-              --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              "$PREVIEW_URL/build.json?release_check=${GITHUB_SHA::12}" \
-              -o /tmp/preview-build.json; then
-
+          for attempt in $(seq 1 24); do
+            if curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+              "$PREVIEW_URL/?release_check=${GITHUB_SHA::12}-$attempt" -o /tmp/preview-home.html -D /tmp/preview-headers \
+              && curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+              "$PREVIEW_URL/build.json?release_check=${GITHUB_SHA::12}-$attempt" -o /tmp/preview-build.json; then
               if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/preview-headers \
                 && grep -Fq 'Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers' /tmp/preview-home.html \
-                && jq -e \
-                  --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
-                  --arg supabase 'pvzjiozismyxqrzmtfbi' \
-                  --arg source "$GITHUB_SHA" \
+                && jq -e --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
+                  --arg supabase 'pvzjiozismyxqrzmtfbi' --arg source "$GITHUB_SHA" \
                   '.repository == $repo and .supabase_project_id == $supabase and .source_commit == $source and .source_identity_state == "verified"' \
                   /tmp/preview-build.json >/dev/null; then
                 ready=1
@@ -190,22 +177,53 @@ jobs:
                 break
               fi
             fi
-
-            echo "Preview not ready yet (attempt $attempt/18)"
+            echo "Preview not ready yet (attempt $attempt/24)"
             sleep 10
           done
-
-          test "$ready" = "1" || {
-            echo "Cloudflare preview did not converge safely"
-            exit 1
-          }
-
+          test "$ready" = "1" || { echo "Cloudflare preview did not converge safely"; exit 1; }
           if grep -Eiq 'Since 2014|MOQ 50|45-Day Delivery|reply within 12 hours|BSCI Audited|ISO 9001:2015' /tmp/preview-home.html; then
             echo "Legacy production claims are present in preview"
             exit 1
           fi
 
-          echo "Preview URL: $PREVIEW_URL" >> "$GITHUB_STEP_SUMMARY"
-          echo "Preview branch: $PREVIEW_BRANCH" >> "$GITHUB_STEP_SUMMARY"
-          echo "Preview source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo "No custom domain or production branch was changed." >> "$GITHUB_STEP_SUMMARY"
+      - name: Run complete preview route parity crawl
+        id: parity
+        shell: bash
+        run: |
+          set +e
+          mkdir -p "$CRAWL_OUTPUT_DIR"
+          npx tsx scripts/crawl-production-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/run.log"
+          parity_code="${PIPESTATUS[0]}"
+          echo "$parity_code" > /tmp/preview-route-parity-exit-code
+          echo "parity_code=$parity_code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Preserve preview route-parity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-route-parity-${{ github.sha }}
+          path: artifacts/preview-route-parity
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Publish preview summary and enforce parity
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare Preview Route Parity"
+            echo "- Preview URL: $PREVIEW_URL"
+            echo "- Preview branch: $PREVIEW_BRANCH"
+            echo "- Preview source: \`$GITHUB_SHA\`"
+            echo "- Canonical origin: $CANONICAL_ORIGIN"
+            echo "- Production custom domain changed: no"
+            echo
+            if [ -s "$CRAWL_OUTPUT_DIR/summary.md" ]; then cat "$CRAWL_OUTPUT_DIR/summary.md"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          test -s /tmp/preview-route-parity-exit-code || { echo "Preview route crawl did not run"; exit 1; }
+          parity_code="$(cat /tmp/preview-route-parity-exit-code)"
+          test "$parity_code" = "0" || {
+            echo "Preview route parity found blocking failures; inspect the artifact."
+            exit "$parity_code"
+          }
