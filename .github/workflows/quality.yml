@@ -57,7 +57,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx tsc --noEmit 2>&1 | tee quality-tsc.log
+          npm exec --yes --package=typescript@5.8.3 -- tsc --noEmit 2>&1 | tee quality-tsc.log
 
       - name: Unit and integration tests
         shell: bash
@@ -136,7 +136,7 @@ jobs:
             echo "- Deployment source lock: required"
             echo "- Secret safety: required"
             echo "- Migration registry: required"
-            echo "- TypeScript: required"
+            echo "- TypeScript: required (pinned compiler 5.8.3)"
             echo "- Tests: required"
             echo "- Production build and release identity: required"
             echo "- One merge signal: \`Irha Quality Gate\`"
