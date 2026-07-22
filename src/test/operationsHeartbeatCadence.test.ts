@@ -13,6 +13,8 @@ describe("operations heartbeat cadence", () => {
     expect(migration).toContain("irha-operations-heartbeat");
     expect(migration).toContain("*/15 * * * *");
     expect(migration).toContain("cron.alter_job");
+    expect(migration).not.toContain("cron.schedule");
+    expect(migration).toContain("heartbeat_job_count <> 1");
     expect(migration).toContain("matching_jobs <> 1");
     expect(migration).not.toContain("irha-notification-dispatcher");
   });
@@ -37,7 +39,7 @@ describe("operations heartbeat cadence", () => {
       version: "20260722184000",
       name: "reduce_operations_heartbeat_cadence",
       path: "supabase/migrations/20260722184000_reduce_operations_heartbeat_cadence.sql",
-      git_blob_sha: "e365eae491d575b9f75a5ed38dcce0ee597d3f43",
+      git_blob_sha: "ac19180a174a101b0dbe1c7c4d0710aff3aa3009",
       execution_mode: "transactional",
       transactional_dry_run: true,
     });
