@@ -134,7 +134,7 @@ jobs:
           test -n "$token"
           echo "::add-mask::$token"
           grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
-          bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
+          bash scripts/ci/retry.sh 3 5 -- npm ci --legacy-peer-deps --no-audit --no-fund
           npm run verify:deployment-source
           npm run verify:secrets
           npm run verify:migrations
