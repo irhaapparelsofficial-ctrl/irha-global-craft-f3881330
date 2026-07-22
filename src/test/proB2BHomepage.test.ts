@@ -32,12 +32,8 @@ describe("polished B2B homepage", () => {
   });
 
   it("presents clean product-first studio hero media with one LCP image", () => {
-    for (const label of ["Bavarian &amp; Trachten", "Sportswear", "Leatherwear", "Streetwear", "Leisurewear"]) {
-      expect(hero).toContain(label);
-    }
-    for (const slug of ["bavarian-trachten-wear", "sportswear", "premium-leather-apparel", "streetwear-activewear", "leisure-nightwear"]) {
-      expect(heroMedia).toContain(`"${slug}"`);
-    }
+    for (const label of ["Bavarian &amp; Trachten", "Sportswear", "Leatherwear", "Streetwear", "Leisurewear"]) expect(hero).toContain(label);
+    for (const slug of ["bavarian-trachten-wear", "sportswear", "premium-leather-apparel", "streetwear-activewear", "leisure-nightwear"]) expect(heroMedia).toContain(`"${slug}"`);
     expect(hero).toContain("CATEGORY_HERO_MEDIA");
     expect(hero).toContain("SECONDARY_PROGRAMS.map");
     expect(hero).toContain("object-contain");
@@ -85,7 +81,7 @@ describe("polished B2B homepage", () => {
     expect(manufacturing).toContain("Live factory view");
     expect(decision).toContain("Clear answers before you move forward.");
     expect(decision).toContain("Buyer trust center");
-    expect(finalCta).toContain("Start a verified manufacturing conversation");
+    expect(finalCta).toContain("Send the product brief and receive a scoped manufacturing response.");
   });
 
   it("keeps mobile navigation and buyer help clear", () => {
@@ -94,7 +90,8 @@ describe("polished B2B homepage", () => {
     expect(navbar).toContain("Factory call");
     expect(navbar).toContain("Request a quote");
     expect(layout).toContain("StickyMobileCTA");
-    expect(sticky).toContain("Ask Irha");
+    expect(sticky).toContain("Live support");
+    expect(sticky).toContain("AI guide + human team");
     expect(sticky).toContain("Request quote");
     expect(guide).toContain("Ask Irha Guide");
     expect(guide).toContain("Talk to Irha team");
@@ -109,7 +106,8 @@ describe("polished B2B homepage", () => {
     expect(consent).toContain("Essential only");
     expect(consent).toContain("Accept optional");
     expect(consent).toContain("Settings");
-    expect(brand).toContain("IRHA APPARELS");
+    expect(brand).toContain("Irha Apparels");
+    expect(brand).toContain("B2B CUSTOM MANUFACTURING");
     expect(styles).toContain("--font-display");
   });
 });
