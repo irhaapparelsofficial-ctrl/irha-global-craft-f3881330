@@ -41,8 +41,34 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
-        run: bash scripts/ci/retry.sh 2 3 -- npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Install complete isolated quality dependency graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .quality-node node_modules
+          mkdir -p .quality-node
+          node <<'NODE'
+          const fs = require('node:fs');
+          const project = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const dependencies = {
+            ...(project.dependencies || {}),
+            ...(project.devDependencies || {}),
+            typescript: '5.8.3',
+            vitest: '4.1.10',
+            vite: '8.1.4',
+            '@vitejs/plugin-react-swc': '4.3.1',
+            tsx: '4.22.4'
+          };
+          fs.writeFileSync('.quality-node/package.json', JSON.stringify({
+            name: 'irha-quality-toolchain',
+            private: true,
+            type: 'module',
+            dependencies
+          }, null, 2) + '\n');
+          NODE
+          bash scripts/ci/retry.sh 2 3 -- npm install --prefix .quality-node --legacy-peer-deps --no-audit --no-fund
+          ln -s "$PWD/.quality-node/node_modules" node_modules
+          node -e "const ts=require('./node_modules/typescript/package.json'); const vt=require('./node_modules/vitest/package.json'); console.log('quality toolchain typescript='+ts.version+' vitest='+vt.version)"
 
       - name: Verify deployment source lock
         run: node scripts/verify-deployment-source.mjs
@@ -57,13 +83,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx tsc --noEmit 2>&1 | tee quality-tsc.log
+          node node_modules/typescript/bin/tsc --noEmit 2>&1 | tee quality-tsc.log
 
       - name: Unit and integration tests
         shell: bash
         run: |
           set -euo pipefail
-          npm test -- --reporter=verbose 2>&1 | tee quality-test.log
+          node node_modules/vitest/vitest.mjs run --reporter=verbose 2>&1 | tee quality-test.log
 
       - name: Build deployable website
         shell: bash
@@ -71,7 +97,7 @@ jobs:
           set -euo pipefail
           npm --ignore-scripts run build 2>&1 | tee quality-build.log
 
-      - name: Collect failing test names
+      - name: Collect failure label
         id: failure-label
         if: failure()
         shell: bash
@@ -133,6 +159,7 @@ jobs:
           {
             echo "## Buyer-ready Quality Gate"
             echo "- Source: \`$GITHUB_SHA\`"
+            echo "- Complete isolated dependency graph: required"
             echo "- Deployment source lock: required"
             echo "- Secret safety: required"
             echo "- Migration registry: required"
