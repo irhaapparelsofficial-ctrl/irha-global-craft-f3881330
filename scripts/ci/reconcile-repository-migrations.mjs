@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { transactionBody } from "./sql-transaction-body.mjs";
+import { sqlCodeOnly, transactionBody } from "./sql-transaction-body.mjs";
 
 const root = process.cwd();
 const manifestPath = resolve(root, "supabase/repository-migrations.json");
@@ -58,11 +58,11 @@ function validateVerificationQuery(entry) {
     throw new Error(`Migration ${entry.version} verification_query must begin with SELECT`);
   }
   const withoutTrailingSemicolon = query.replace(/;\s*$/, "");
-  if (withoutTrailingSemicolon.includes(";")) {
+  if (sqlCodeOnly(withoutTrailingSemicolon).includes(";")) {
     throw new Error(`Migration ${entry.version} verification_query must contain one read-only statement`);
   }
   const forbidden = /\b(insert|update|delete|merge|create|alter|drop|truncate|grant|revoke|comment|call|do|copy|vacuum|cluster|reindex|refresh|execute|perform)\b/i;
-  if (forbidden.test(withoutTrailingSemicolon)) {
+  if (forbidden.test(sqlCodeOnly(withoutTrailingSemicolon))) {
     throw new Error(`Migration ${entry.version} verification_query contains a mutation keyword`);
   }
   return query;

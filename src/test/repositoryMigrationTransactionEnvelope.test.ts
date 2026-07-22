@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { transactionBody } from "../../scripts/ci/sql-transaction-body.mjs";
+import { sqlCodeOnly, transactionBody } from "../../scripts/ci/sql-transaction-body.mjs";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -9,7 +9,8 @@ describe("repository migration transaction envelope", () => {
   it("uses one SQL-aware parser for manifest validation, dry-run and apply", () => {
     const reconciler = read("scripts/ci/reconcile-repository-migrations.mjs");
 
-    expect(reconciler).toContain('import { transactionBody } from "./sql-transaction-body.mjs";');
+    expect(reconciler).toContain('import { sqlCodeOnly, transactionBody } from "./sql-transaction-body.mjs";');
+    expect(reconciler).toContain('forbidden.test(sqlCodeOnly(withoutTrailingSemicolon))');
     expect(reconciler).toContain('const sql = transactionBody(buffer.toString("utf8"), entry);');
     expect(reconciler).toContain('const sql = transactionBody(readFileSync(resolve(root, entry.path), "utf8"), entry);');
     expect(reconciler.match(/transactionBody\(readFileSync/g)).toHaveLength(2);
@@ -34,6 +35,20 @@ describe("repository migration transaction envelope", () => {
 
     expect(body).toContain("wrapper_probe");
     expect(body).toContain("select 'commit;' as note");
+  });
+
+  it("masks comments and string literals before read-only keyword validation", () => {
+    const query = "select has_function_privilege('anon', 'public.example()', 'execute') as verified -- execute is a privilege literal";
+    const code = sqlCodeOnly(query);
+
+    expect(code).toContain("select has_function_privilege");
+    expect(code).not.toMatch(/\bexecute\b/i);
+    expect(code).not.toContain("anon");
+  });
+
+  it("keeps actual SQL commands visible to the validator", () => {
+    expect(sqlCodeOnly("select 1; execute dangerous_plan")).toMatch(/\bexecute\b/i);
+    expect(sqlCodeOnly("select 1; update public.products set name = 'safe-looking'")).toMatch(/\bupdate\b/i);
   });
 
   it("rejects actual nested transaction control", () => {

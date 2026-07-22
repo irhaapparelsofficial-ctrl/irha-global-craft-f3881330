@@ -111,10 +111,10 @@ describe("Irha CI control plane", () => {
     expect(reconciler).toContain("Applied migration checksum drift");
     expect(reconciler).toContain("gitBlobSha");
     expect(reconciler).toContain("Every migration at or after");
-    expect(reconciler).toContain('import { transactionBody } from "./sql-transaction-body.mjs";');
+    expect(reconciler).toContain('import { sqlCodeOnly, transactionBody } from "./sql-transaction-body.mjs";');
     expect(transactionParser).toContain("contains nested transaction control");
     expect(transactionParser).toContain("trimSqlEdgeTrivia");
-    expect(transactionParser).toContain("sqlCodeOnly");
+    expect(transactionParser).toContain("export function sqlCodeOnly");
     expect(reconciler).toContain("transactionalStack.map((item) => item.sql)");
     expect(reconciler).toContain("rollback;");
     expect(reconciler).toContain("ledgerInsertSql(entry)");
