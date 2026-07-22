@@ -103,6 +103,11 @@ jobs:
           token="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')"
           account_id="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')"
           project_name="$(printf '%s' "$CLOUDFLARE_PROJECT_NAME" | tr -d '[:space:]')"
+          expected_preview_url="https://${PREVIEW_BRANCH}.${project_name}.pages.dev"
+          test "$PREVIEW_URL" = "$expected_preview_url" || {
+            echo "Preview URL mismatch: expected $expected_preview_url, got $PREVIEW_URL"
+            exit 1
+          }
           echo "::add-mask::$token"
           echo "::add-mask::$account_id"
           {
@@ -119,8 +124,8 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Install exact lockfile dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
 
       - name: Build exact source
         run: npm run build
@@ -133,8 +138,11 @@ jobs:
           test -s dist/build.json
           test -s dist/release.txt
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
+          grep -F 'Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers' dist/index.html
           grep -F '"repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330"' dist/build.json
           grep -F '"supabase_project_id": "pvzjiozismyxqrzmtfbi"' dist/build.json
+          grep -F "\"source_commit\": \"$GITHUB_SHA\"" dist/build.json
+          grep -F '"source_identity_state": "verified"' dist/build.json
           if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
             echo "Built frontend references the retired Lovable Cloud database"
             exit 1
@@ -146,7 +154,9 @@ jobs:
           set -euo pipefail
           npx --yes wrangler@4 pages deploy dist \
             --project-name="$CLOUDFLARE_PROJECT_NAME" \
-            --branch="$PREVIEW_BRANCH"
+            --branch="$PREVIEW_BRANCH" \
+            --commit-hash="$GITHUB_SHA" \
+            --commit-dirty=false
 
       - name: Verify isolated preview deployment
         shell: bash
@@ -168,11 +178,12 @@ jobs:
               -o /tmp/preview-build.json; then
 
               if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/preview-headers \
-                && grep -Fq 'Custom Apparel Manufacturing for Global B2B Buyers' /tmp/preview-home.html \
+                && grep -Fq 'Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers' /tmp/preview-home.html \
                 && jq -e \
                   --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
                   --arg supabase 'pvzjiozismyxqrzmtfbi' \
-                  '.repository == $repo and .supabase_project_id == $supabase' \
+                  --arg source "$GITHUB_SHA" \
+                  '.repository == $repo and .supabase_project_id == $supabase and .source_commit == $source and .source_identity_state == "verified"' \
                   /tmp/preview-build.json >/dev/null; then
                 ready=1
                 echo "Preview verified on attempt $attempt"
@@ -195,4 +206,6 @@ jobs:
           fi
 
           echo "Preview URL: $PREVIEW_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "Preview branch: $PREVIEW_BRANCH" >> "$GITHUB_STEP_SUMMARY"
+          echo "Preview source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo "No custom domain or production branch was changed." >> "$GITHUB_STEP_SUMMARY"
