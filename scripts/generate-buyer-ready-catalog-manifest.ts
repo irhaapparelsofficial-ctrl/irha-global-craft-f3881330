@@ -44,10 +44,7 @@ type ReleaseProduct = {
   updated_at?: string | null;
 };
 
-type ReleasePayload = {
-  products: ReleaseProduct[];
-};
-
+type ReleasePayload = { products: ReleaseProduct[] };
 type TaxonomyNode = {
   id: string;
   parent_id: string | null;
@@ -57,7 +54,6 @@ type TaxonomyNode = {
   full_slug_path: string;
   updated_at?: string | null;
 };
-
 type TaxonomyAssignment = {
   product_id: string;
   product_slug: string;
@@ -66,11 +62,7 @@ type TaxonomyAssignment = {
   canonical_path: string;
   approved_at?: string | null;
 };
-
-type TaxonomyPayload = {
-  nodes: TaxonomyNode[];
-  assignments: TaxonomyAssignment[];
-};
+type TaxonomyPayload = { nodes: TaxonomyNode[]; assignments: TaxonomyAssignment[] };
 
 async function fetchRpc<T>(name: string): Promise<T> {
   const response = await fetch(`${OWNER_SUPABASE_URL}/rest/v1/rpc/${name}`, {
@@ -82,21 +74,47 @@ async function fetchRpc<T>(name: string): Promise<T> {
     },
     body: "{}",
   });
-  if (!response.ok) {
-    throw new Error(`Could not fetch ${name}: ${response.status} ${await response.text()}`);
-  }
+  if (!response.ok) throw new Error(`Could not fetch ${name}: ${response.status} ${await response.text()}`);
   return (await response.json()) as T;
 }
 
 function referenceCode(product: ReleaseProduct) {
-  const match = product.sku?.match(/P\d{3}/i)?.[0];
-  return match?.toUpperCase() ?? product.slug;
+  return product.sku?.match(/P\d{3}/i)?.[0]?.toUpperCase() ?? product.slug;
 }
 
 function newestTimestamp(values: Array<string | null | undefined>) {
   const valid = values.filter((value): value is string => Boolean(value));
-  if (!valid.length) return new Date(0).toISOString();
-  return valid.sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+  return valid.length ? valid.sort((a, b) => Date.parse(b) - Date.parse(a))[0] : new Date(0).toISOString();
+}
+
+function safeProgramDescription(row: BuyerReadyCatalogRoute) {
+  const product = row.product_name;
+  switch (row.main_category_slug) {
+    case "bavarian-trachten-wear":
+      return `${product} custom manufacturing for Trachten retailers, wholesalers and private-label buyers. Material, embroidery, trims, sizing, packaging and order requirements are confirmed after buyer and factory review.`;
+    case "premium-leather-apparel":
+      return `${product} custom development for wholesale and private-label leather apparel programs. Leather type, construction, hardware, lining, fit, branding and packaging are confirmed against the approved buyer specification.`;
+    case "sportswear":
+      return `${product} custom development for teams, clubs, distributors and private-label sportswear buyers. Fabric, panel construction, sizing, decoration, colors, packaging and production requirements are confirmed after review.`;
+    case "streetwear-activewear":
+      return `${product} custom manufacturing for streetwear, activewear and private-label brand programs. Fabric, weight, fit, construction, decoration, labels, colors and packaging are confirmed against the buyer brief.`;
+    case "leisure-nightwear":
+      return `${product} custom manufacturing for leisurewear, loungewear, sleepwear and hospitality buyer programs. Fabric, comfort, fit, construction, trims, branding and packaging are confirmed after requirement review.`;
+    default:
+      return `${product} custom manufacturing within ${row.product_type_name} for wholesale, OEM, ODM and private-label buyers. Specifications are confirmed after buyer and factory review.`;
+  }
+}
+
+function buyerSafeRow(row: BuyerReadyCatalogRoute): BuyerReadyCatalogRoute {
+  const fallback = safeProgramDescription(row);
+  return {
+    ...row,
+    seo_title: row.seo_title?.trim() || `${row.product_name} Wholesale Manufacturer | Sialkot Garment Factory`,
+    seo_h1: row.product_name,
+    seo_description: row.seo_description?.trim() || fallback,
+    short_description: row.short_description?.trim() || fallback,
+    product_description: row.product_description?.trim() || fallback,
+  };
 }
 
 async function fetchManifest(): Promise<BuyerReadyCatalogRoute[]> {
@@ -104,7 +122,6 @@ async function fetchManifest(): Promise<BuyerReadyCatalogRoute[]> {
     fetchRpc<ReleasePayload>("catalog_get_public_release"),
     fetchRpc<TaxonomyPayload>("catalog_get_public_taxonomy"),
   ]);
-
   if (!Array.isArray(release.products) || !Array.isArray(taxonomy.nodes) || !Array.isArray(taxonomy.assignments)) {
     throw new Error("Published catalogue APIs returned an invalid payload");
   }
@@ -121,7 +138,6 @@ async function fetchManifest(): Promise<BuyerReadyCatalogRoute[]> {
     if (!product || !leaf || !audience || !root) {
       throw new Error(`Published taxonomy assignment cannot be resolved: ${assignment.product_id}`);
     }
-
     const gallery = Array.isArray(product.gallery) ? product.gallery.filter(Boolean) : [];
     const imageUrl = product.image_url ?? gallery[0] ?? "";
     rows.push({
@@ -138,75 +154,33 @@ async function fetchManifest(): Promise<BuyerReadyCatalogRoute[]> {
       product_type_name: leaf.name,
       seo_title: product.seo_title ?? null,
       seo_description: product.seo_description ?? null,
-      seo_h1: null,
+      seo_h1: product.name,
       short_description: product.short_description ?? null,
       product_description: product.description ?? null,
       image_url: imageUrl,
       gallery,
-      updated_at: newestTimestamp([
-        product.updated_at,
-        assignment.approved_at,
-        leaf.updated_at,
-        audience.updated_at,
-        root.updated_at,
-      ]),
+      updated_at: newestTimestamp([product.updated_at, assignment.approved_at, leaf.updated_at, audience.updated_at, root.updated_at]),
     });
   }
 
-  return rows.sort((a, b) =>
-    a.reference_code.localeCompare(b.reference_code, undefined, { numeric: true })
-    || a.canonical_path.localeCompare(b.canonical_path),
-  );
-}
-
-function safeProgramDescription(row: BuyerReadyCatalogRoute) {
-  const product = row.product_name;
-  const type = row.product_type_name;
-  switch (row.main_category_slug) {
-    case "bavarian-trachten-wear":
-      return `${product} custom manufacturing for Trachten retailers, wholesalers and private-label buyers. Material, embroidery, trims, sizing, packaging and order requirements are confirmed after buyer and factory review.`;
-    case "premium-leather-apparel":
-      return `${product} custom development for wholesale and private-label leather apparel programs. Leather type, construction, hardware, lining, fit, branding and packaging are confirmed against the approved buyer specification.`;
-    case "sportswear":
-      return `${product} custom development for teams, clubs, distributors and private-label sportswear buyers. Fabric, panel construction, sizing, decoration, colors, packaging and production requirements are confirmed after review.`;
-    case "streetwear-activewear":
-      return `${product} custom manufacturing for streetwear, activewear and private-label brand programs. Fabric, weight, fit, construction, decoration, labels, colors and packaging are confirmed against the buyer brief.`;
-    case "leisure-nightwear":
-      return `${product} custom manufacturing for leisurewear, loungewear, sleepwear and hospitality buyer programs. Fabric, comfort, fit, construction, trims, branding and packaging are confirmed after requirement review.`;
-    default:
-      return `${product} custom manufacturing within ${type} for wholesale, OEM, ODM and private-label buyers. Specifications are confirmed after buyer and factory review.`;
-  }
-}
-
-function buyerSafeRow(row: BuyerReadyCatalogRoute): BuyerReadyCatalogRoute {
-  const description = safeProgramDescription(row);
-  return {
-    ...row,
-    seo_title: `${row.product_name} Manufacturer | Irha Apparels`,
-    seo_h1: `Custom ${row.product_name} Manufacturing`,
-    seo_description: description,
-    short_description: description,
-    product_description: description,
-  };
+  return rows
+    .map(buyerSafeRow)
+    .sort((a, b) => a.reference_code.localeCompare(b.reference_code, undefined, { numeric: true }) || a.canonical_path.localeCompare(b.canonical_path));
 }
 
 function assertManifest(rows: BuyerReadyCatalogRoute[]) {
   if (rows.length !== EXPECTED_PRODUCTS) {
     throw new Error(`Buyer-ready manifest must contain ${EXPECTED_PRODUCTS} products; received ${rows.length}`);
   }
-
   const productIds = new Set<string>();
   const paths = new Set<string>();
   for (const row of rows) {
     const expectedPath = `/products/${row.main_category_slug}/${row.audience_slug}/${row.product_type_slug}/${row.product_slug}`;
-    if (row.canonical_path !== expectedPath) {
-      throw new Error(`${row.reference_code} canonical mismatch: ${row.canonical_path} !== ${expectedPath}`);
-    }
-    if (!row.image_url || !Array.isArray(row.gallery) || row.gallery.length === 0) {
-      throw new Error(`${row.reference_code} is missing buyer-ready media`);
-    }
-    if (row.gallery[0] !== row.image_url) {
-      throw new Error(`${row.reference_code} front image is not gallery slot 1`);
+    if (row.canonical_path !== expectedPath) throw new Error(`${row.reference_code} canonical mismatch: ${row.canonical_path} !== ${expectedPath}`);
+    if (!row.image_url || !row.gallery.length) throw new Error(`${row.reference_code} is missing buyer-ready media`);
+    if (row.gallery[0] !== row.image_url) throw new Error(`${row.reference_code} front image is not gallery slot 1`);
+    if (!row.seo_title || row.seo_h1 !== row.product_name || !row.seo_description) {
+      throw new Error(`${row.reference_code} runtime-parity metadata is incomplete`);
     }
     if (productIds.has(row.product_id)) throw new Error(`Duplicate manifest product: ${row.product_id}`);
     if (paths.has(row.canonical_path)) throw new Error(`Duplicate manifest path: ${row.canonical_path}`);
@@ -216,18 +190,16 @@ function assertManifest(rows: BuyerReadyCatalogRoute[]) {
 }
 
 async function main() {
-  const rawRows = await fetchManifest();
-  assertManifest(rawRows);
-  const rows = rawRows.map(buyerSafeRow);
-  const payload = {
+  const rows = await fetchManifest();
+  assertManifest(rows);
+  writeFileSync(OUTPUT_PATH, `${JSON.stringify({
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     productCount: rows.length,
-    contentPolicy: "buyer-safe-unverified-specifications",
+    contentPolicy: "source-preserving-buyer-safe-fallbacks",
     products: rows,
-  };
-  writeFileSync(OUTPUT_PATH, `${JSON.stringify(payload, null, 2)}\n`);
-  console.log(`Generated buyer-ready route manifest for ${rows.length} products with category-safe content`);
+  }, null, 2)}\n`);
+  console.log(`Generated buyer-ready route manifest for ${rows.length} products with runtime-parity metadata`);
 }
 
 main().catch((error) => {
