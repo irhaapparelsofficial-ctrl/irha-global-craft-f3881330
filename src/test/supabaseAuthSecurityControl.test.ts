@@ -14,12 +14,14 @@ describe("Supabase Auth security control", () => {
     expect(script).not.toContain("SUPABASE_DB_PASSWORD");
   });
 
-  it("runs only from exact green current main with production serialization", () => {
-    expect(workflow).toContain('workflows: ["Quality Gate"]');
-    expect(workflow).toContain("github.event.workflow_run.conclusion == 'success'");
-    expect(workflow).toContain("github.event.workflow_run.head_branch == 'main'");
+  it("runs only from an exact green current-main push with production serialization", () => {
+    expect(workflow).toContain("branches: [main]");
+    expect(workflow).toContain('".github/workflows/supabase-auth-security.yml"');
+    expect(workflow).toContain('select(.context == "Irha Quality Gate")');
+    expect(workflow).toContain('test "$quality_state" = "success"');
     expect(workflow).toContain("group: irha-production-mutation");
     expect(workflow).toContain("Reconfirm exact current main before Auth mutation");
+    expect(workflow).toContain("refusing Auth mutation");
   });
 
   it("keeps the access token secret and publishes only sanitized evidence", () => {
