@@ -21,10 +21,24 @@ describe("localized SEO native-review index gate", () => {
     );
   });
 
-  it("requires native-review approval in public reads and sitemap output", () => {
+  it("replaces every known public read policy with the review gate", () => {
     const migration = readFileSync(migrationPath, "utf8");
 
-    expect(migration).toContain('CREATE POLICY "Public reads published localized pages"');
+    expect(migration).toContain(
+      'DROP POLICY IF EXISTS "Public reads published localized pages"',
+    );
+    expect(migration).toContain(
+      "DROP POLICY IF EXISTS seo_localized_pages_anon_read",
+    );
+    expect(migration).toContain(
+      "DROP POLICY IF EXISTS seo_localized_pages_authenticated_read",
+    );
+    expect(migration).toContain(
+      "CREATE POLICY seo_localized_pages_anon_read",
+    );
+    expect(migration).toContain(
+      "CREATE POLICY seo_localized_pages_authenticated_read",
+    );
     expect(migration).toContain(
       "native_review_status IN ('approved', 'not_required')",
     );
@@ -64,7 +78,7 @@ describe("localized SEO native-review index gate", () => {
       version: "20260722134500",
       name: "localized_seo_native_review_index_gate",
       path: "supabase/migrations/20260722134500_localized_seo_native_review_index_gate.sql",
-      git_blob_sha: "cccb8d2a99282975013267e4408a22ab4ba2b535",
+      git_blob_sha: "b1d064e80ce5b01bdfb6c8efaaf8f1305630582a",
       execution_mode: "transactional",
       transactional_dry_run: true,
     });
