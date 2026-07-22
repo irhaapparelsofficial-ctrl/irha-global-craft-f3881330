@@ -11,8 +11,9 @@ describe("admin connected-health contracts", () => {
     expect(workflow).toContain("PREVIEW_BRANCH: github-preview");
     expect(workflow).toContain("PREVIEW_URL: https://github-preview.irha-apparels.pages.dev");
     expect(workflow).toContain('--branch="$PREVIEW_BRANCH"');
-    expect(workflow).toContain("No custom domain or production branch was changed.");
+    expect(workflow).toContain("Production custom domain changed: no");
     expect(workflow).not.toContain("--branch=main");
+    expect(workflow).not.toContain("wrangler pages deploy dist --branch main");
   });
 
   it("validates Cloudflare credentials before building or deploying", () => {
