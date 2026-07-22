@@ -41,8 +41,11 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
-        run: bash scripts/ci/retry.sh 2 3 -- npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Install exact lockfile dependencies
+        run: bash scripts/ci/retry.sh 2 3 -- npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify dependency manifests stayed immutable
+        run: git diff --exit-code -- package.json package-lock.json
 
       - name: Verify deployment source lock
         run: node scripts/verify-deployment-source.mjs
@@ -126,6 +129,8 @@ jobs:
           {
             echo "## Buyer-ready Quality Gate"
             echo "- Source: \`$GITHUB_SHA\`"
+            echo "- Dependency install: exact npm lockfile via \`npm ci\`"
+            echo "- Dependency manifests: immutable"
             echo "- Deployment source lock: required"
             echo "- Secret safety: required"
             echo "- Migration registry: required"
