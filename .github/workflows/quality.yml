@@ -44,23 +44,11 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install project dependencies and pinned development tools
+      - name: Install project dependencies including development tools
         shell: bash
         run: |
           set -euo pipefail
           bash scripts/ci/retry.sh 2 3 -- npm install --include=dev --legacy-peer-deps --no-audit --no-fund
-          bash scripts/ci/retry.sh 2 3 -- npm install --no-save --package-lock=false --legacy-peer-deps --no-audit --no-fund \
-            typescript@5.8.3 vitest@4.1.10 tsx@4.22.4 vite@8.1.4
-
-      - name: Verify pinned project toolchain
-        shell: bash
-        run: |
-          set -euo pipefail
-          node -e "const ts=require('./node_modules/typescript/package.json'); const vt=require('./node_modules/vitest/package.json'); if(ts.version!=='5.8.3'||vt.version!=='4.1.10') process.exit(1); console.log('typescript='+ts.version+' vitest='+vt.version)"
-          test -f node_modules/typescript/bin/tsc
-          test -f node_modules/vitest/vitest.mjs
-          test -f node_modules/tsx/dist/cli.mjs
-          test -f node_modules/vite/bin/vite.js
 
       - name: Verify deployment source lock
         run: node scripts/verify-deployment-source.mjs
@@ -75,13 +63,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node node_modules/typescript/bin/tsc --noEmit 2>&1 | tee quality-tsc.log
+          npm exec --yes --package=typescript@5.8.3 -- tsc --noEmit 2>&1 | tee quality-tsc.log
 
       - name: Unit and integration tests
         shell: bash
         run: |
           set -euo pipefail
-          node node_modules/vitest/vitest.mjs run --reporter=verbose 2>&1 | tee quality-test.log
+          npm exec --yes --package=vitest@4.1.10 -- vitest run --reporter=verbose 2>&1 | tee quality-test.log
 
       - name: Build deployable website
         shell: bash
@@ -100,7 +88,7 @@ jobs:
           if [ -z "$label" ]; then
             label="$(grep -Eo 'src/[^(: ]+\.[tj]sx?' quality-tsc.log 2>/dev/null | head -n 1 | sed 's#/#-#g' | cut -c1-180 || true)"
           fi
-          if [ -z "$label" ]; then label="toolchain-build-or-unknown"; fi
+          if [ -z "$label" ]; then label="build-or-unknown"; fi
           echo "label=$label" >> "$GITHUB_OUTPUT"
 
       - name: Upload failed quality diagnostics
@@ -151,12 +139,11 @@ jobs:
           {
             echo "## Buyer-ready Quality Gate"
             echo "- Source: \`$GITHUB_SHA\`"
-            echo "- Pinned project toolchain: required"
             echo "- Deployment source lock: required"
             echo "- Secret safety: required"
             echo "- Migration registry: required"
-            echo "- TypeScript: required"
-            echo "- Tests: required"
+            echo "- TypeScript: exact package 5.8.3"
+            echo "- Tests: exact Vitest package 4.1.10"
             echo "- Production build and release identity: required"
             echo "- One merge signal: \`Irha Quality Gate\`"
             echo "- Production writes: none"
