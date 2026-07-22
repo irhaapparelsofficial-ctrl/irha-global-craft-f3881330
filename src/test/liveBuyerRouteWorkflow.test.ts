@@ -19,6 +19,12 @@ describe("live buyer route verification", () => {
     expect(workflow).toContain("--max-redirs 0");
   });
 
+  it("allows Cloudflare propagation before declaring the live route contract failed", () => {
+    expect(workflow).toContain("for attempt in $(seq 1 18)");
+    expect(workflow).toContain("Route proof attempt $attempt/18");
+    expect(workflow).toContain("sleep 10");
+  });
+
   it("publishes one combined live-brand and buyer-route status", () => {
     expect(workflow).toContain("Official brand and canonical buyer routes verified live");
     expect(workflow).toContain('context="Irha Brand Live"');
