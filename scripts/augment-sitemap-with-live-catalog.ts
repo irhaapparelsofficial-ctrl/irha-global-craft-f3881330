@@ -157,8 +157,18 @@ async function main() {
   if (products.length !== 254) {
     throw new Error(`Refusing stale catalogue sitemap: expected 254 published Drive products, received ${products.length}`);
   }
-  if (localizedPages.length !== 1778) {
-    throw new Error(`Refusing stale localized sitemap: expected 1778 published product pages, received ${localizedPages.length}`);
+
+  // Localized page count is intentionally dynamic. The database review gate is
+  // the source of truth: only native-review-approved, non-noindex pages may be
+  // returned by get_public_sitemap_entries(). Zero is valid while review is pending.
+  const localizedPaths = new Set(localizedPages.map((row) => row.path));
+  if (localizedPaths.size !== localizedPages.length) {
+    throw new Error("Localized sitemap paths are not unique");
+  }
+  for (const row of localizedPages) {
+    if (!row.path.startsWith("/intl/")) {
+      throw new Error(`Localized sitemap entry is outside /intl/: ${row.path}`);
+    }
   }
 
   const manifestPaths = new Set(manifest.products.map((row) => row.canonical_path));
@@ -213,7 +223,7 @@ async function main() {
 
   writeFileSync(SITEMAP_PATH, `${xml}\n`);
   console.log(
-    `sitemap.xml locked to ${products.length} canonical products, ${localizedPages.length} localized product pages and ${taxonomyPages.length} taxonomy routes (${ordered.length} total URLs)`,
+    `sitemap.xml locked to ${products.length} canonical products, ${localizedPages.length} review-approved localized product pages and ${taxonomyPages.length} taxonomy routes (${ordered.length} total URLs)`,
   );
 }
 
