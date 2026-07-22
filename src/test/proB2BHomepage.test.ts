@@ -93,9 +93,10 @@ describe("polished B2B homepage", () => {
     expect(sticky).toContain("Live support");
     expect(sticky).toContain("AI guide + human team");
     expect(sticky).toContain("Request quote");
-    expect(guide).toContain("Ask Irha Guide");
-    expect(guide).toContain("Talk to Irha team");
-    expect(guide).toContain("Request a quote");
+    expect(guide).toContain("Irha Live Support");
+    expect(guide).toContain("AI Guide");
+    expect(guide).toContain("Human Team");
+    expect(guide).toContain('aria-label="Message Irha AI Guide"');
   });
 
   it("keeps visible policy, company and consent controls", () => {
@@ -108,6 +109,7 @@ describe("polished B2B homepage", () => {
     expect(consent).toContain("Settings");
     expect(brand).toContain("Irha Apparels");
     expect(brand).toContain("B2B CUSTOM MANUFACTURING");
-    expect(styles).toContain("--font-display");
+    expect(styles).toContain(".font-display");
+    expect(styles).toContain("'Playfair Display', Georgia, serif");
   });
 });
