@@ -5,11 +5,20 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("Cloudflare crawler route asset contract", () => {
-  it("patches production builds to serve explicit nested route HTML", () => {
-    const packageJson = read("package.json");
+  it("patches production builds after product and taxonomy parity transforms", () => {
+    const packageJson = JSON.parse(read("package.json")) as { scripts: { build: string; "build:dev": string } };
     const patcher = read("scripts/patch-cloudflare-route-shell-assets.mjs");
 
-    expect(packageJson).toContain("node scripts/enrich-generic-static-route-shells.mjs && node scripts/patch-cloudflare-route-shell-assets.mjs");
+    for (const command of [packageJson.scripts.build, packageJson.scripts["build:dev"]]) {
+      const generic = command.indexOf("node scripts/enrich-generic-static-route-shells.mjs");
+      const product = command.indexOf("npx tsx scripts/enhance-product-route-shells.ts");
+      const taxonomy = command.indexOf("npx tsx scripts/align-taxonomy-route-shells.ts");
+      const assets = command.indexOf("node scripts/patch-cloudflare-route-shell-assets.mjs");
+      expect(generic).toBeGreaterThan(-1);
+      expect(product).toBeGreaterThan(generic);
+      expect(taxonomy).toBeGreaterThan(product);
+      expect(assets).toBeGreaterThan(taxonomy);
+    }
     expect(patcher).toContain('return `${normalized}/index.html`');
     expect(patcher).toContain("routeShellAssetResponse");
     expect(patcher).toContain("X-Irha-Route-Shell-Asset");
