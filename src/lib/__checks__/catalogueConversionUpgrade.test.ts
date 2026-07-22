@@ -5,40 +5,38 @@ import { resolve } from "node:path";
 const root = process.cwd();
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
-describe("catalogue conversion upgrade", () => {
-  it("uses optimized representative programme imagery without an initial product-media query", () => {
-    const catalogue = read("src/pages/Catalogue.tsx");
-    expect(catalogue).not.toContain('from("products")');
-    expect(catalogue).not.toContain('select("category_id, image_url")');
-    expect(catalogue).not.toContain("groupImages[group.slug]");
-    expect(catalogue).toContain("STATIC_GROUP_IMAGES[group.slug]");
-    expect(catalogue).toContain("?w=960&format=webp&quality=68");
-    expect(catalogue).toContain("<ThumbnailImage");
+describe("canonical catalogue conversion journey", () => {
+  it("uses the published category and taxonomy sources", () => {
+    const collections = read("src/pages/GlobalCollectionsPage.tsx");
+    expect(collections).toContain("usePublicCategories");
+    expect(collections).toContain("usePublishedCategoryTaxonomy");
+    expect(collections).toContain("<CategoryAudienceNavigator");
+    expect(collections).toContain("Main category to");
+    expect(collections).not.toContain("CATALOGUE_GROUPS");
   });
 
-  it("shows buyer-facing manufacturing chips from real product fields", () => {
-    const category = read("src/pages/CatalogueCategory.tsx");
-    expect(category).toContain("function productChips(product: ProductRow)");
-    expect(category).toContain("product.primary_material");
-    expect(category).toContain("product.sample_available");
-    expect(category).toContain("product.customization?.[key]");
-    expect(category).toContain("product.moq_display");
+  it("shows buyer-facing manufacturing facts from real product fields", () => {
+    const product = read("src/pages/CanonicalProductDetail.tsx");
+    expect(product).toContain("product.moq_display");
+    expect(product).toContain("product.sample_available");
+    expect(product).toContain("product.production_timeline");
+    expect(product).toContain("product.primary_material");
+    expect(product).toContain("product.customization");
+    expect(product).toContain("Confirmed after buyer brief");
   });
 
-  it("preserves exact selected-product context in catalogue lead handoff", () => {
-    const category = read("src/pages/CatalogueCategory.tsx");
-    const form = read("src/components/CatalogueLeadForm.tsx");
-    expect(category).toContain("setSelectedProduct({ name: product.name, slug: product.slug, url: productUrl })");
-    expect(category).toContain("productInterest={selectedProduct?.name}");
-    expect(category).toContain("productUrl={selectedProduct?.url}");
-    expect(form).toContain("Selected product: ${productInterest}");
-    expect(form).toContain("Product page: ${productUrl}");
+  it("preserves exact selected-product context in buyer handoff", () => {
+    const product = read("src/pages/CanonicalProductDetail.tsx");
+    expect(product).toContain("const canonicalPath");
+    expect(product).toContain("Product page: ${url}");
+    expect(product).toContain("whatsappLink");
+    expect(product).toContain("shortlist.has(product.slug)");
   });
 
-  it("uses clearer catalogue and bulk-requirement calls to action", () => {
-    const catalogue = read("src/pages/Catalogue.tsx");
-    const category = read("src/pages/CatalogueCategory.tsx");
-    expect(catalogue).toContain("Get Full Catalogue");
-    expect(category).toContain("Discuss Bulk Requirement");
+  it("uses clear category and programme calls to action", () => {
+    const collections = read("src/pages/GlobalCollectionsPage.tsx");
+    expect(collections).toContain("Search all");
+    expect(collections).toContain("Discuss a buyer program");
+    expect(collections).toContain("Open category hierarchy");
   });
 });
