@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const patch = readFileSync(resolve(process.cwd(), "scripts/patch-cloudflare-route-shell-assets.mjs"), "utf8");
+const functionalFinalizer = readFileSync(resolve(process.cwd(), "scripts/finalize-cloudflare-functional-routes.mjs"), "utf8");
+const packageJson = readFileSync(resolve(process.cwd(), "package.json"), "utf8");
 const worker = readFileSync(resolve(process.cwd(), "public/_worker.js"), "utf8");
 
 describe("Cloudflare exact catalogue route contract", () => {
@@ -18,6 +20,13 @@ describe("Cloudflare exact catalogue route contract", () => {
     expect(patch).toContain('resolve("dist/_redirects")');
     expect(patch).toContain("GENERATED_LEGACY_ALIASES");
     expect(patch).toContain("generatedLegacyAliasTarget(pathname) || legacyAliasTarget(pathname)");
+  });
+
+  it("keeps exact valid spec sheets on SPA rendering without weakening unknown-route 404s", () => {
+    expect(patch).toContain('/spec-sheet`');
+    expect(functionalFinalizer).toContain('normalized.endsWith("/spec-sheet")');
+    expect(functionalFinalizer).toContain("!isPublishedHtmlRoute(normalized)");
+    expect(packageJson).toContain("node scripts/finalize-cloudflare-functional-routes.mjs");
   });
 
   it("returns a real edge 404 for unknown catalogue paths", () => {
