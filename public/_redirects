@@ -3,6 +3,11 @@
 # A 200 rewrite avoids retaining the old Lovable redirect/icon in crawler caches.
 /favicon.ico /favicon.svg 200
 
+# Canonical catalogue entry point. These must redirect at the edge before the SPA.
+/catalogue /products 301
+/catalog /products 301
+/de/katalog /products 301
+
 # SPA fallback is intentionally omitted because Pages handles React SPA routes
 # automatically when no top-level 404.html exists.
 /buyer-trust-center /buyer-trust 301
@@ -78,82 +83,4 @@
 /products/sportswear/basketball-uniform-kit /products/sportswear/team-club/basketball-uniforms/basketball-uniform-kit 301
 /products/bavarian-trachten-wear/bavarian-checkered-shirt /products/bavarian-trachten-wear/men/trachten-shirts/bavarian-checkered-shirt 301
 /products/bavarian-trachten-wear/bavarian-embroidered-vest /products/bavarian-trachten-wear/men/trachten-vests/bavarian-embroidered-vest 301
-/products/bavarian-trachten-wear/bavarian-embroidered-vest-reference-style-02 /products/bavarian-trachten-wear/men/trachten-vests/bavarian-embroidered-vest-reference-style-02 301
-/products/bavarian-trachten-wear/bavarian-embroidered-vest-reference-style-03 /products/bavarian-trachten-wear/men/trachten-vests/bavarian-embroidered-vest-reference-style-03 301
-/products/bavarian-trachten-wear/bavarian-leather-belt /products/bavarian-trachten-wear/accessories/trachten-belts/bavarian-leather-belt 301
-/products/bavarian-trachten-wear/bavarian-leather-belt-reference-style-02 /products/bavarian-trachten-wear/accessories/trachten-belts/bavarian-leather-belt-reference-style-02 301
-/products/bavarian-trachten-wear/bavarian-men-s-checkered-shirt /products/bavarian-trachten-wear/men/trachten-shirts/bavarian-men-s-checkered-shirt 301
-/products/bavarian-trachten-wear/bavarian-men-s-checkered-shirt-reference-style-02 /products/bavarian-trachten-wear/men/trachten-shirts/bavarian-men-s-checkered-shirt-reference-style-02 301
-/products/bavarian-trachten-wear/bavarian-men-s-checkered-shirt-reference-style-03 /products/bavarian-trachten-wear/men/trachten-shirts/bavarian-men-s-checkered-shirt-reference-style-03 301
-/products/bavarian-trachten-wear/bavarian-neckerchief /products/bavarian-trachten-wear/accessories/neckerchiefs-scarves/bavarian-neckerchief 301
-/products/bavarian-trachten-wear/bavarian-suspenders /products/bavarian-trachten-wear/accessories/trachten-suspenders/bavarian-suspenders 301
-/products/streetwear-activewear/bomber-jacket /products/streetwear-activewear/unisex/jackets-bombers/bomber-jacket 301
-/products/premium-leather-apparel/bomber-leather-jacket /products/premium-leather-apparel/men/bomber-jackets/bomber-leather-jacket 301
-/products/leisure-nightwear/casual-button-up-shirt /products/leisure-nightwear/unisex/casual-shirts/casual-button-up-shirt 301
-/products/streetwear-activewear/casual-sweatpants /products/streetwear-activewear/unisex/joggers-sweatpants/casual-sweatpants 301
-/products/bavarian-trachten-wear/children-s-dirndl /products/bavarian-trachten-wear/kids/girls-dirndl/children-s-dirndl 301
-/products/bavarian-trachten-wear/children-s-lederhosen /products/bavarian-trachten-wear/kids/boys-lederhosen/children-s-lederhosen 301
-/products/bavarian-trachten-wear/children-s-lederhosen-reference-style-02 /products/bavarian-trachten-wear/kids/boys-lederhosen/children-s-lederhosen-reference-style-02 301
-/products/premium-leather-apparel/classic-biker-leather-jacket /products/premium-leather-apparel/men/biker-jackets/classic-biker-leather-jacket 301
-/products/sportswear/compression-performance-top /products/sportswear/unisex/performance-tops/compression-performance-top 301
-/products/leisure-nightwear/cotton-nightshirt /products/leisure-nightwear/men/nightshirts/cotton-nightshirt 301
-/products/leisure-nightwear/cotton-sleep-pants /products/leisure-nightwear/men/pajama-pants/cotton-sleep-pants 301
-/products/sportswear/cricket-jersey /products/sportswear/team-club/cricket-uniforms/cricket-jersey 301
-/products/sportswear/cricket-uniform-kit /products/sportswear/team-club/cricket-uniforms/cricket-uniform-kit 301
-/products/bavarian-trachten-wear/dirndl-apron /products/bavarian-trachten-wear/women/dirndl-aprons/dirndl-apron 301
-/products/bavarian-trachten-wear/dirndl-blouse /products/bavarian-trachten-wear/women/dirndl-blouses/dirndl-blouse 301
-/products/bavarian-trachten-wear/dirndl-blouse-reference-style-02 /products/bavarian-trachten-wear/women/dirndl-blouses/dirndl-blouse-reference-style-02 301
-/products/bavarian-trachten-wear/dirndl-blouse-reference-style-03 /products/bavarian-trachten-wear/women/dirndl-blouses/dirndl-blouse-reference-style-03 301
-/products/leisure-nightwear/essential-v-neck-t-shirt /products/leisure-nightwear/unisex/t-shirts-tops/essential-v-neck-t-shirt 301
-/products/premium-leather-apparel/full-grain-leather-belt /products/premium-leather-apparel/accessories/leather-belts/full-grain-leather-belt 301
-/products/sportswear/gym-leggings /products/sportswear/women/leggings-performance-bottoms/gym-leggings 301
-/products/sportswear/gym-tank-top /products/sportswear/unisex/performance-tops/gym-tank-top 301
-/products/bavarian-trachten-wear/haferl-leather-shoes /products/bavarian-trachten-wear/accessories/haferl-shoes/haferl-leather-shoes 301
-/products/bavarian-trachten-wear/haferl-leather-shoes-reference-style-02 /products/bavarian-trachten-wear/accessories/haferl-shoes/haferl-leather-shoes-reference-style-02 301
-/products/bavarian-trachten-wear/haferl-leather-shoes-reference-style-03 /products/bavarian-trachten-wear/accessories/haferl-shoes/haferl-leather-shoes-reference-style-03 301
-/products/leisure-nightwear/henley-long-sleeve-shirt /products/leisure-nightwear/unisex/henley-shirts/henley-long-sleeve-shirt 301
-/products/bavarian-trachten-wear/knee-high-bavarian-socks /products/bavarian-trachten-wear/accessories/trachten-socks/knee-high-bavarian-socks 301
-/products/bavarian-trachten-wear/knee-high-bavarian-socks-reference-style-02 /products/bavarian-trachten-wear/accessories/trachten-socks/knee-high-bavarian-socks-reference-style-02 301
-/products/bavarian-trachten-wear/knee-high-bavarian-socks-reference-style-03 /products/bavarian-trachten-wear/accessories/trachten-socks/knee-high-bavarian-socks-reference-style-03 301
-/products/premium-leather-apparel/leather-gloves /products/premium-leather-apparel/accessories/leather-gloves/leather-gloves 301
-/products/premium-leather-apparel/leather-gloves-reference-style-02 /products/premium-leather-apparel/accessories/leather-gloves/leather-gloves-reference-style-02 301
-/products/premium-leather-apparel/leather-gloves-reference-style-03 /products/premium-leather-apparel/accessories/leather-gloves/leather-gloves-reference-style-03 301
-/products/premium-leather-apparel/leather-trousers /products/premium-leather-apparel/men/leather-trousers/leather-trousers 301
-/products/premium-leather-apparel/leather-trousers-reference-style-02 /products/premium-leather-apparel/men/leather-trousers/leather-trousers-reference-style-02 301
-/products/premium-leather-apparel/leather-trousers-reference-style-03 /products/premium-leather-apparel/men/leather-trousers/leather-trousers-reference-style-03 301
-/products/premium-leather-apparel/leather-vest-waistcoat /products/premium-leather-apparel/men/leather-vests/leather-vest-waistcoat 301
-/products/premium-leather-apparel/leather-wallet /products/premium-leather-apparel/accessories/leather-wallets/leather-wallet 301
-/products/streetwear-activewear/long-sleeve-streetwear-tee /products/streetwear-activewear/unisex/t-shirts-tops/long-sleeve-streetwear-tee 301
-/products/leisure-nightwear/lounge-shorts /products/leisure-nightwear/unisex/casual-shorts/lounge-shorts 301
-/products/streetwear-activewear/oversized-graphic-t-shirt /products/streetwear-activewear/unisex/t-shirts-tops/oversized-graphic-t-shirt 301
-/products/streetwear-activewear/oversized-streetwear-hoodie /products/streetwear-activewear/unisex/hoodies-sweatshirts/oversized-streetwear-hoodie 301
-/products/sportswear/performance-gym-hoodie /products/sportswear/unisex/training-outerwear/performance-gym-hoodie 301
-/products/sportswear/performance-sports-bra /products/sportswear/women/sports-bras/performance-sports-bra 301
-/products/sportswear/performance-tracksuit-set /products/sportswear/unisex/tracksuits-track-pants/performance-tracksuit-set 301
-/products/leisure-nightwear/pique-polo-shirt /products/leisure-nightwear/unisex/polo-shirts/pique-polo-shirt 301
-/products/leisure-nightwear/plush-bathrobe-sleep-robe /products/leisure-nightwear/women/bathrobes/plush-bathrobe-sleep-robe 301
-/products/leisure-nightwear/premium-basic-crewneck-tee /products/leisure-nightwear/unisex/t-shirts-tops/premium-basic-crewneck-tee 301
-/products/leisure-nightwear/premium-chino-shorts /products/leisure-nightwear/unisex/casual-shorts/premium-chino-shorts 301
-/products/premium-leather-apparel/premium-leather-bag /products/premium-leather-apparel/accessories/leather-bags/premium-leather-bag 301
-/products/premium-leather-apparel/premium-leather-bag-reference-style-02 /products/premium-leather-apparel/accessories/leather-bags/premium-leather-bag-reference-style-02 301
-/products/premium-leather-apparel/premium-leather-bag-reference-style-03 /products/premium-leather-apparel/accessories/leather-bags/premium-leather-bag-reference-style-03 301
-/products/sportswear/quarter-zip-pullover /products/sportswear/unisex/training-outerwear/quarter-zip-pullover 301
-/products/sportswear/rugby-jersey /products/sportswear/team-club/rugby-kits/rugby-jersey 301
-/products/sportswear/rugby-uniform-kit /products/sportswear/team-club/rugby-kits/rugby-uniform-kit 301
-/products/sportswear/running-shorts /products/sportswear/unisex/running-shorts/running-shorts 301
-/products/leisure-nightwear/silk-nightgown-slip /products/leisure-nightwear/women/nightgowns-slips/silk-nightgown-slip 301
-/products/leisure-nightwear/sleep-shorts-set /products/leisure-nightwear/men/pajama-sets/sleep-shorts-set 301
-/products/leisure-nightwear/sleep-t-shirt /products/leisure-nightwear/men/sleep-t-shirts/sleep-t-shirt 301
-/products/streetwear-activewear/streetwear-shorts /products/streetwear-activewear/unisex/streetwear-shorts/streetwear-shorts 301
-/products/sportswear/sublimated-soccer-uniform-kit /products/sportswear/team-club/football-kits/sublimated-soccer-uniform-kit 301
-/products/streetwear-activewear/tactical-cargo-pants /products/streetwear-activewear/unisex/cargo-pants/tactical-cargo-pants 301
-/products/sportswear/track-pants /products/sportswear/unisex/tracksuits-track-pants/track-pants 301
-/products/bavarian-trachten-wear/traditional-dirndl-dress /products/bavarian-trachten-wear/women/dirndl-dresses/traditional-dirndl-dress 301
-/products/bavarian-trachten-wear/traditional-dirndl-dress-reference-style-02 /products/bavarian-trachten-wear/women/dirndl-dresses/traditional-dirndl-dress-reference-style-02 301
-/products/bavarian-trachten-wear/traditional-dirndl-dress-reference-style-03 /products/bavarian-trachten-wear/women/dirndl-dresses/traditional-dirndl-dress-reference-style-03 301
-/products/bavarian-trachten-wear/traditional-lederhosen /products/bavarian-trachten-wear/men/short-lederhosen/traditional-lederhosen 301
-/products/bavarian-trachten-wear/traditional-lederhosen-reference-style-02 /products/bavarian-trachten-wear/men/short-lederhosen/traditional-lederhosen-reference-style-02 301
-/products/bavarian-trachten-wear/traditional-lederhosen-reference-style-03 /products/bavarian-trachten-wear/men/short-lederhosen/traditional-lederhosen-reference-style-03 301
-/products/sportswear/training-shirt /products/sportswear/unisex/performance-tops/training-shirt 301
-/products/sportswear/zip-up-fleece-jacket /products/sportswear/unisex/training-outerwear/zip-up-fleece-jacket 301
 # END GENERATED TAXONOMY REDIRECTS
