@@ -18,18 +18,21 @@ describe("Google brand visibility controls", () => {
     expect(patch).toContain("/products/streetwear-activewear");
   });
 
-  it("consolidates stale category and unsupported editorial URLs into relevant canonical pages", () => {
+  it("consolidates stale category and unsupported editorial URLs into verified canonical pages", () => {
     const redirects = read("public/_redirects");
 
     for (const redirect of [
       "/products/bavarian-garments /products/bavarian-trachten-wear 301",
       "/products/leather-garments /products/premium-leather-apparel 301",
       "/products/streetwear /products/streetwear-activewear 301",
-      "/products/streetwear/oversized-hoodie /products/streetwear-activewear/oversized-streetwear-hoodie 301",
+      "/products/streetwear/oversized-hoodie /products/streetwear-activewear/unisex/tops/oversized-pullover-hoodie 301",
+      "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe /products/leisure-nightwear/women/robes/womens-plush-robe 301",
       "/blog/dirndl-manufacturer-moq-50 /products/bavarian-trachten-wear/women/dirndl-dresses 301",
     ]) {
       expect(redirects).toContain(redirect);
     }
+    expect(redirects).not.toContain("/products/streetwear-activewear/oversized-streetwear-hoodie 301");
+    expect(redirects).not.toContain("/products/leisure-nightwear/plush-bathrobe-sleep-robe 301");
   });
 
   it("keeps the buyer-safe Custom Lab accessible but temporarily outside the public search index", () => {
