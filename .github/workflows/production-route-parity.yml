@@ -45,8 +45,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ env.SOURCE_SHA }}
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
+
+      - name: Initialize evidence directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$CRAWL_OUTPUT_DIR"
+          printf 'source_sha=%s\norigin=%s\n' "$SOURCE_SHA" "$CRAWL_ORIGIN" > "$CRAWL_OUTPUT_DIR/baseline.txt"
 
       - name: Confirm exact current-main production baseline
         shell: bash
@@ -60,13 +67,24 @@ jobs:
             echo "Checked out $checked_out instead of exact source $SOURCE_SHA"
             exit 1
           }
-          git fetch --no-tags origin main
-          merge_base="$(git merge-base "$SOURCE_SHA" origin/main)"
+
+          compare_json="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/compare/${latest_main}...${SOURCE_SHA}")"
+          merge_base="$(printf '%s' "$compare_json" | jq -r '.merge_base_commit.sha // empty')"
+          compare_status="$(printf '%s' "$compare_json" | jq -r '.status // empty')"
           test "$merge_base" = "$latest_main" || {
-            echo "Route-parity source is stale: merge base $merge_base, current main $latest_main"
+            echo "Route-parity source is stale: merge base ${merge_base:-missing}, current main $latest_main"
             exit 1
           }
+          case "$compare_status" in
+            ahead|identical) ;;
+            *)
+              echo "Route-parity source has unsafe compare status: ${compare_status:-missing}"
+              exit 1
+              ;;
+          esac
+
           echo "EXPECTED_PRODUCTION_SHA=$latest_main" >> "$GITHUB_ENV"
+          printf 'expected_production_sha=%s\ncompare_status=%s\nmerge_base=%s\n' "$latest_main" "$compare_status" "$merge_base" >> "$CRAWL_OUTPUT_DIR/baseline.txt"
           echo "Exact green-main baseline: $latest_main"
 
       - name: Setup Node
@@ -93,7 +111,6 @@ jobs:
         shell: bash
         run: |
           set +e
-          mkdir -p "$CRAWL_OUTPUT_DIR"
           npx tsx scripts/crawl-production-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/run.log"
           crawl_code="${PIPESTATUS[0]}"
           echo "$crawl_code" > /tmp/production-route-parity-exit-code
@@ -107,7 +124,7 @@ jobs:
           {
             echo "## Production Route Parity"
             echo "- Source: \`$SOURCE_SHA\`"
-            echo "- Expected production baseline: \`$EXPECTED_PRODUCTION_SHA\`"
+            echo "- Expected production baseline: \`${EXPECTED_PRODUCTION_SHA:-not-resolved}\`"
             echo "- Origin: \`$CRAWL_ORIGIN\`"
             echo "- Crawl exit code: \`${{ steps.crawl.outputs.crawl_code || 'not-run' }}\`"
             echo
