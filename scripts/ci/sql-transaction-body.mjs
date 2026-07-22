@@ -54,6 +54,11 @@ function trimSqlEdgeTrivia(value) {
   return trimTrailingSqlTrivia(trimLeadingSqlTrivia(value)).trim();
 }
 
+/**
+ * Preserve executable SQL while masking comments, identifiers and literal
+ * values. Repository verification may inspect privilege strings such as
+ * 'execute' without treating those values as executable mutation commands.
+ */
 export function sqlCodeOnly(value) {
   const sql = String(value);
   let output = "";
