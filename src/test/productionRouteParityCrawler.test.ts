@@ -8,13 +8,13 @@ describe("production route parity crawler", () => {
   it("uses the approved production sources and exact catalogue counts", () => {
     const crawler = readFileSync(crawlerPath, "utf8");
 
-    expect(crawler).toContain('const EXPECTED_PRODUCTS = 254');
-    expect(crawler).toContain('const EXPECTED_TAXONOMY = 105');
+    expect(crawler).toContain("const EXPECTED_PRODUCTS = 254");
+    expect(crawler).toContain("const EXPECTED_TAXONOMY = 105");
     expect(crawler).toContain('rpc<ReleasePayload>("catalog_get_public_release")');
     expect(crawler).toContain('rpc<TaxonomyPayload>("catalog_get_public_taxonomy")');
     expect(crawler).toContain('rpc<SitemapEntry[]>("get_public_sitemap_entries")');
     expect(crawler).toContain('rpc<RedirectRow[]>("get_public_legacy_redirects")');
-    expect(crawler).toContain('buildIdentity.supabase_project_id !== OWNER_SUPABASE_PROJECT_ID');
+    expect(crawler).toContain("buildIdentity.supabase_project_id !== OWNER_SUPABASE_PROJECT_ID");
   });
 
   it("keeps critical route, sitemap, redirect and schema assertions blocking", () => {
@@ -44,6 +44,16 @@ describe("production route parity crawler", () => {
     expect(crawler).not.toContain("process.exitCode = 0");
   });
 
+  it("uses authenticated compare evidence without restoring checkout credentials", () => {
+    const workflow = readFileSync(workflowPath, "utf8");
+
+    expect(workflow).toContain('gh api "repos/$GITHUB_REPOSITORY/compare/${latest_main}...${SOURCE_SHA}"');
+    expect(workflow).toContain(".merge_base_commit.sha // empty");
+    expect(workflow).toContain("ahead|identical");
+    expect(workflow).toContain("persist-credentials: false");
+    expect(workflow).not.toContain("git fetch --no-tags origin main");
+  });
+
   it("preserves machine-readable evidence even when the crawl fails", () => {
     const crawler = readFileSync(crawlerPath, "utf8");
     const workflow = readFileSync(workflowPath, "utf8");
@@ -53,6 +63,7 @@ describe("production route parity crawler", () => {
     expect(crawler).toContain("redirects.csv");
     expect(crawler).toContain("inventory.json");
     expect(crawler).toContain("summary.md");
+    expect(workflow).toContain("Initialize evidence directory");
     expect(workflow).toContain("if: always()");
     expect(workflow).toContain("actions/upload-artifact@v4");
     expect(workflow).toContain("npm ci --legacy-peer-deps --no-audit --no-fund");
