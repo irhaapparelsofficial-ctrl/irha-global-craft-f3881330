@@ -33,11 +33,15 @@ describe("localized SEO native-review index gate", () => {
     );
   });
 
-  it("does not hard-code the unsafe localized page count into builds", () => {
+  it("gates the immutable build even before the database migration sync", () => {
     const sitemapScript = readFileSync(sitemapScriptPath, "utf8");
 
     expect(sitemapScript).not.toContain("expected 1778 published product pages");
     expect(sitemapScript).toContain("Localized page count is intentionally dynamic");
+    expect(sitemapScript).toContain("/rest/v1/seo_localized_pages");
+    expect(sitemapScript).toContain('"native_review_status"');
+    expect(sitemapScript).toContain('"in.(approved,not_required)"');
+    expect(sitemapScript).toContain('if (path.startsWith("/intl/")) continue;');
     expect(sitemapScript).toContain("Localized sitemap paths are not unique");
   });
 
@@ -45,6 +49,7 @@ describe("localized SEO native-review index gate", () => {
     const registry = JSON.parse(readFileSync(registryPath, "utf8")) as {
       migrations: Array<{
         version: string;
+        name: string;
         path: string;
         git_blob_sha: string;
         execution_mode?: string;
