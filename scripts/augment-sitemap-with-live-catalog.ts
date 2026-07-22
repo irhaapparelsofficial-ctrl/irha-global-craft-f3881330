@@ -19,10 +19,23 @@ type SitemapRpcRow = {
   entry_kind: "product" | "localized_product" | "taxonomy";
 };
 
+type LocalizedReviewRow = {
+  path: string;
+  base_route: string;
+  updated_at: string | null;
+  native_review_status: "approved" | "not_required";
+};
+
 type BuyerReadyManifest = {
   schemaVersion: number;
   productCount: number;
   products: BuyerReadyCatalogRoute[];
+};
+
+const publicHeaders = {
+  apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
+  Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
+  "Content-Type": "application/json",
 };
 
 function sitemapRowKey(row: SitemapRpcRow) {
@@ -43,11 +56,7 @@ async function fetchSitemapRows(): Promise<SitemapRpcRow[]> {
 
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        apikey: OWNER_SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${OWNER_SUPABASE_PUBLISHABLE_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: publicHeaders,
       body: "{}",
     });
     if (!response.ok) {
@@ -82,6 +91,87 @@ async function fetchSitemapRows(): Promise<SitemapRpcRow[]> {
 
   if (!paginationComplete) {
     throw new Error(`Public sitemap RPC exceeded the safe ${MAX_PAGES}-page pagination limit`);
+  }
+
+  return [...rows.values()];
+}
+
+async function fetchReviewApprovedLocalizedPages(
+  products: SitemapRpcRow[],
+): Promise<SitemapRpcRow[]> {
+  const productImages = new Map(
+    products.map((product) => [product.path, product.image_url] as const),
+  );
+  const rows = new Map<string, SitemapRpcRow>();
+  let offset = 0;
+  let paginationComplete = false;
+
+  for (let pageNumber = 0; pageNumber < MAX_PAGES; pageNumber += 1) {
+    const endpoint = new URL(`${OWNER_SUPABASE_URL}/rest/v1/seo_localized_pages`);
+    endpoint.searchParams.set(
+      "select",
+      "path,base_route,updated_at,native_review_status",
+    );
+    endpoint.searchParams.set("status", "eq.published");
+    endpoint.searchParams.set("noindex", "eq.false");
+    endpoint.searchParams.set(
+      "native_review_status",
+      "in.(approved,not_required)",
+    );
+    endpoint.searchParams.set("order", "path.asc");
+    endpoint.searchParams.set("limit", String(PAGE_SIZE));
+    endpoint.searchParams.set("offset", String(offset));
+
+    const response = await fetch(endpoint, { headers: publicHeaders });
+    if (!response.ok) {
+      throw new Error(
+        `Could not fetch review-approved localized pages: ${response.status} ${await response.text()}`,
+      );
+    }
+
+    const page = (await response.json()) as LocalizedReviewRow[];
+    if (page.length === 0) {
+      paginationComplete = true;
+      break;
+    }
+
+    let added = 0;
+    for (const row of page) {
+      if (!row.path.startsWith("/intl/")) {
+        throw new Error(`Localized sitemap entry is outside /intl/: ${row.path}`);
+      }
+      if (!productImages.has(row.base_route)) {
+        throw new Error(
+          `Localized sitemap entry references a non-canonical product: ${row.path} -> ${row.base_route}`,
+        );
+      }
+      if (rows.has(row.path)) continue;
+      rows.set(row.path, {
+        path: row.path,
+        image_url: productImages.get(row.base_route) ?? null,
+        lastmod: row.updated_at,
+        entry_kind: "localized_product",
+      });
+      added += 1;
+    }
+
+    if (added === 0) {
+      throw new Error(
+        `Localized review pagination made no progress at offset ${offset}`,
+      );
+    }
+
+    offset += page.length;
+    if (page.length < PAGE_SIZE) {
+      paginationComplete = true;
+      break;
+    }
+  }
+
+  if (!paginationComplete) {
+    throw new Error(
+      `Review-approved localized pages exceeded the safe ${MAX_PAGES}-page pagination limit`,
+    );
   }
 
   return [...rows.values()];
@@ -149,26 +239,22 @@ function readManifest(): BuyerReadyManifest {
 
 async function main() {
   const manifest = readManifest();
-  const rows = await fetchSitemapRows();
-  const products = rows.filter((row) => row.entry_kind === "product");
-  const localizedPages = rows.filter((row) => row.entry_kind === "localized_product");
-  const taxonomyPages = rows.filter((row) => row.entry_kind === "taxonomy");
+  const rpcRows = await fetchSitemapRows();
+  const products = rpcRows.filter((row) => row.entry_kind === "product");
+  const taxonomyPages = rpcRows.filter((row) => row.entry_kind === "taxonomy");
+  const localizedPages = await fetchReviewApprovedLocalizedPages(products);
 
   if (products.length !== 254) {
     throw new Error(`Refusing stale catalogue sitemap: expected 254 published Drive products, received ${products.length}`);
   }
 
-  // Localized page count is intentionally dynamic. The database review gate is
-  // the source of truth: only native-review-approved, non-noindex pages may be
-  // returned by get_public_sitemap_entries(). Zero is valid while review is pending.
+  // Localized page count is intentionally dynamic. The direct table query and
+  // database constraint require native review before a page can enter the build.
+  // Zero is valid while review is pending, including before the migration sync
+  // that tightens RLS and the public sitemap RPC on the same release.
   const localizedPaths = new Set(localizedPages.map((row) => row.path));
   if (localizedPaths.size !== localizedPages.length) {
     throw new Error("Localized sitemap paths are not unique");
-  }
-  for (const row of localizedPages) {
-    if (!row.path.startsWith("/intl/")) {
-      throw new Error(`Localized sitemap entry is outside /intl/: ${row.path}`);
-    }
   }
 
   const manifestPaths = new Set(manifest.products.map((row) => row.canonical_path));
@@ -196,6 +282,7 @@ async function main() {
     const path = pathFromBlock(block);
     if (!path) continue;
     if ((path === "/products" || path.startsWith("/products/")) && !allowedProductPaths.has(path)) continue;
+    if (path.startsWith("/intl/")) continue;
     preserved.set(path, block.trim());
   }
 
