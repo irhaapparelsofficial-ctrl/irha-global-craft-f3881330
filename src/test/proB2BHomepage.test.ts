@@ -35,13 +35,7 @@ describe("polished B2B homepage", () => {
     for (const label of ["Bavarian &amp; Trachten", "Sportswear", "Leatherwear", "Streetwear", "Leisurewear"]) {
       expect(hero).toContain(label);
     }
-    for (const slug of [
-      "bavarian-trachten-wear",
-      "sportswear",
-      "premium-leather-apparel",
-      "streetwear-activewear",
-      "leisure-nightwear",
-    ]) {
+    for (const slug of ["bavarian-trachten-wear", "sportswear", "premium-leather-apparel", "streetwear-activewear", "leisure-nightwear"]) {
       expect(heroMedia).toContain(`"${slug}"`);
     }
     expect(hero).toContain("CATEGORY_HERO_MEDIA");
@@ -77,7 +71,7 @@ describe("polished B2B homepage", () => {
     expect(processSource).toContain("Swipe through the order process");
   });
 
-  it("uses buyer language, clean stable category images and evidence-led proof", () => {
+  it("uses buyer language, stable category images and evidence-led proof", () => {
     expect(capabilities).toContain("OEM, ODM & Private Label");
     expect(capabilities).toContain("Sample Before Bulk");
     expect(categories).toContain("Choose the product line your business needs");
@@ -89,13 +83,16 @@ describe("polished B2B homepage", () => {
     expect(categories).not.toContain("featuredProductRank");
     expect(manufacturing).toContain("See what can be verified before bulk production");
     expect(manufacturing).toContain("Live factory view");
-    expect(decision).toContain("Choose how you want to verify and start");
+    expect(decision).toContain("Clear answers before you move forward.");
+    expect(decision).toContain("Buyer trust center");
     expect(finalCta).toContain("Start a verified manufacturing conversation");
   });
 
   it("keeps mobile navigation and buyer help clear", () => {
-    expect(navbar).toContain("Browse product programs");
-    expect(navbar).toContain("Request quote");
+    expect(navbar).toContain('aria-label="Mobile navigation"');
+    expect(navbar).toContain('label: "Products"');
+    expect(navbar).toContain("Factory call");
+    expect(navbar).toContain("Request a quote");
     expect(layout).toContain("StickyMobileCTA");
     expect(sticky).toContain("Ask Irha");
     expect(sticky).toContain("Request quote");
@@ -105,11 +102,13 @@ describe("polished B2B homepage", () => {
   });
 
   it("keeps visible policy, company and consent controls", () => {
-    expect(footer).toContain("Privacy Policy");
-    expect(footer).toContain("Terms of Service");
-    expect(footer).toContain("Cookie Policy");
-    expect(consent).toContain("Manage cookies");
-    expect(consent).toContain("Privacy choices");
+    expect(footer).toContain("Privacy / GDPR");
+    expect(footer).toContain("Terms");
+    expect(footer).toContain("Cookie settings");
+    expect(consent).toContain("Optional cookies");
+    expect(consent).toContain("Essential only");
+    expect(consent).toContain("Accept optional");
+    expect(consent).toContain("Settings");
     expect(brand).toContain("IRHA APPARELS");
     expect(styles).toContain("--font-display");
   });
