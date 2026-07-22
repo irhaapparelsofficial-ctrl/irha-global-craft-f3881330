@@ -18,7 +18,8 @@ const GlobalCollectionsPage = lazy(() => import("./pages/GlobalCollectionsPage")
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const CategoryTaxonomyPage = lazy(() => import("./pages/CategoryTaxonomyPage"));
 const CategoryOrProductPage = lazy(() => import("./pages/CategoryOrProductPage"));
-const CanonicalProductDetail = lazy(() => import("./pages/CanonicalProductDetail"));
+const CanonicalProductRoute = lazy(() => import("./pages/CanonicalProductRoute"));
+const LegacyCatalogueRedirect = lazy(() => import("./pages/LegacyCatalogueRedirect"));
 const BavarianMensCollection = lazy(() => import("./pages/BavarianMensCollection"));
 const BavarianWomensCollection = lazy(() => import("./pages/BavarianWomensCollection"));
 const Markets = lazy(() => import("./pages/Markets"));
@@ -53,8 +54,6 @@ const Compliance = lazy(() => import("./pages/Compliance"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Connect = lazy(() => import("./pages/Connect"));
-const Catalogue = lazy(() => import("./pages/Catalogue"));
-const CatalogueCategory = lazy(() => import("./pages/CatalogueCategory"));
 const Compare = lazy(() => import("./pages/Compare"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const BuyerTrust = lazy(() => import("./pages/BuyerTrust"));
@@ -67,7 +66,7 @@ const AdminRuntime = lazy(() => import("@/components/admin/AdminRuntime"));
 const queryClient = new QueryClient();
 
 const LEGACY_REDIRECTS = [
-  ["/catalogs/master-catalogue-2026.pdf", "/catalogue"],
+  ["/catalogs/master-catalogue-2026.pdf", "/products"],
   ["/privacy", "/privacy-policy"],
   ["/privacy/", "/privacy-policy"],
   ["/terms", "/terms-of-service"],
@@ -180,7 +179,7 @@ const App = () => (
                       <Route path="/products/bavarian-trachten-wear/mens-trachten/:collectionSlug" element={<BavarianMensCollection />} />
                       <Route path="/products/bavarian-trachten-wear/womens-trachten" element={<Navigate to="/products/bavarian-trachten-wear/women" replace />} />
                       <Route path="/products/bavarian-trachten-wear/womens-trachten/:collectionSlug" element={<BavarianWomensCollection />} />
-                      <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug/:productSlug" element={<CanonicalProductDetail />} />
+                      <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug/:productSlug" element={<CanonicalProductRoute />} />
                       <Route path="/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />
                       <Route path="/products/:categorySlug/:productSlug/spec-sheet" element={<ProductSpecSheet />} />
                       <Route path="/products/:categorySlug/:productSlug" element={<CategoryOrProductPage />} />
@@ -209,12 +208,12 @@ const App = () => (
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                       <Route path="/terms-of-service" element={<TermsOfService />} />
                       <Route path="/connect" element={<Connect />} />
-                      <Route path="/catalogue" element={<Catalogue />} />
-                      <Route path="/catalogue/:slug" element={<CatalogueCategory />} />
+                      <Route path="/catalogue" element={<Navigate to="/products" replace />} />
+                      <Route path="/catalogue/:slug" element={<LegacyCatalogueRedirect />} />
                       <Route path="/de/bavarian-wear" element={<GermanBavarianWear />} />
-                      <Route path="/de/katalog" element={<Navigate to="/catalogue" replace />} />
-                      <Route path="/de/katalog/:slug" element={<Navigate to="/catalogue" replace />} />
-                      <Route path="/catalog" element={<Navigate to="/catalogue" replace />} />
+                      <Route path="/de/katalog" element={<Navigate to="/products" replace />} />
+                      <Route path="/de/katalog/:slug" element={<Navigate to="/products" replace />} />
+                      <Route path="/catalog" element={<Navigate to="/products" replace />} />
                       <Route path="/intl/:locale/:slug" element={<LocalizedSeoPage />} />
                       <Route path="/de/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
                       <Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />
