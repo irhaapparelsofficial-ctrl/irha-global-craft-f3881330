@@ -151,7 +151,7 @@ describe("production route parity completion", () => {
     expect(workflow).toContain("scripts/crawl-production-route-parity.ts");
     expect(workflow).toContain("preview-route-parity");
     expect(workflow).toContain("EXPECTED_SOURCE_SHA=$GITHUB_SHA");
-    expect(workflow).toContain("CANONICAL_ORIGIN=https://irhaapparels.com");
+    expect(workflow).toContain("CANONICAL_ORIGIN: https://irhaapparels.com");
     expect(workflow).toContain("actions/upload-artifact@v4");
   });
 });
