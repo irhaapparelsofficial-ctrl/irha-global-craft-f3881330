@@ -44,11 +44,17 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install project dependencies including development tools
+      - name: Install project dependencies and exact local test toolchain
         shell: bash
         run: |
           set -euo pipefail
           bash scripts/ci/retry.sh 2 3 -- npm install --include=dev --legacy-peer-deps --no-audit --no-fund
+          bash scripts/ci/retry.sh 2 3 -- npm install --no-save --package-lock=false --legacy-peer-deps --no-audit --no-fund \
+            typescript@5.8.3 \
+            vitest@4.1.10 \
+            vite@8.1.4 \
+            @vitejs/plugin-react-swc@4.3.1 \
+            tsx@4.22.4
 
       - name: Verify deployment source lock
         run: node scripts/verify-deployment-source.mjs
@@ -63,13 +69,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm exec --yes --package=typescript@5.8.3 -- tsc --noEmit 2>&1 | tee quality-tsc.log
+          node node_modules/typescript/bin/tsc --noEmit 2>&1 | tee quality-tsc.log
 
       - name: Unit and integration tests
         shell: bash
         run: |
           set -euo pipefail
-          npm exec --yes --package=vitest@4.1.10 -- vitest run --reporter=verbose 2>&1 | tee quality-test.log
+          npm test -- --reporter=verbose 2>&1 | tee quality-test.log
 
       - name: Build deployable website
         shell: bash
@@ -139,11 +145,12 @@ jobs:
           {
             echo "## Buyer-ready Quality Gate"
             echo "- Source: \`$GITHUB_SHA\`"
+            echo "- Exact local TypeScript/Vitest/Vite toolchain: required"
             echo "- Deployment source lock: required"
             echo "- Secret safety: required"
             echo "- Migration registry: required"
-            echo "- TypeScript: exact package 5.8.3"
-            echo "- Tests: exact Vitest package 4.1.10"
+            echo "- TypeScript: required"
+            echo "- Tests: required"
             echo "- Production build and release identity: required"
             echo "- One merge signal: \`Irha Quality Gate\`"
             echo "- Production writes: none"
