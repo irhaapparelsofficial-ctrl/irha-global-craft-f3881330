@@ -16,7 +16,6 @@ describe("Supabase Auth security control", () => {
 
   it("runs only from an exact green current-main push with production serialization", () => {
     expect(workflow).toContain("branches: [main]");
-    expect(workflow).toContain('".github/workflows/supabase-auth-security.yml"');
     expect(workflow).toContain('select(.context == "Irha Quality Gate")');
     expect(workflow).toContain('test "$quality_state" = "success"');
     expect(workflow).toContain("group: irha-production-mutation");
@@ -24,11 +23,29 @@ describe("Supabase Auth security control", () => {
     expect(workflow).toContain("refusing Auth mutation");
   });
 
-  it("keeps the access token secret and publishes only sanitized evidence", () => {
-    expect(workflow).toContain("SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}");
-    expect(script).toContain("publicEvidence");
+  it("writes sanitized evidence for successful, blocked and failed reconciliation", () => {
+    expect(script).toContain("class ManagementApiError extends Error");
+    expect(script).toContain("safeErrorPayload");
+    expect(script).toContain("redactText");
+    expect(script).toContain('blocked_reason: "supabase_pro_plan_required"');
+    expect(script).toContain('parity = classification.blocked_reason ? "blocked" : "failed"');
+    expect(script).toContain("writeEvidence");
     expect(script).not.toContain("console.log(accessToken)");
-    expect(workflow).toContain("supabase-auth-security-${{ env.SOURCE_SHA }}");
+  });
+
+  it("does not turn a known plan restriction into a recurring failed job", () => {
+    expect(workflow).toContain("blocked:supabase_pro_plan_required");
+    expect(workflow).toContain("result_state=blocked_plan");
+    expect(workflow).toContain("Leaked-password protection requires Supabase Pro; no unsafe change");
+    expect(workflow).toContain("verified|blocked_plan");
+  });
+
+  it("preserves only sanitized short-lived diagnostics", () => {
+    expect(workflow).toContain("SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}");
+    expect(workflow).toContain("SUPABASE_AUTH_LOG_PATH: /tmp/supabase-auth-security.log");
+    expect(workflow).toContain("/tmp/supabase-auth-security-evidence.json");
+    expect(workflow).toContain("/tmp/supabase-auth-security.log");
+    expect(workflow).toContain("retention-days: 2");
     expect(workflow).toContain('context="Irha Supabase Auth Security"');
   });
 });
