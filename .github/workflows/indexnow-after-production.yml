@@ -18,12 +18,13 @@ concurrency:
 
 env:
   CANONICAL_ORIGIN: https://irhaapparels.com
+  SEARCH_DISCOVERY_DIAGNOSTIC: /tmp/search-discovery-diagnostic.txt
 
 jobs:
   notify:
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - name: Resolve exact current-main production source
         id: resolve
@@ -64,7 +65,7 @@ jobs:
             "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state=pending \
             -f context="Irha Search Discovery" \
-            -f description="Submitting verified canonical sitemap to IndexNow" \
+            -f description="Verifying live canonical sitemap for IndexNow" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
 
@@ -82,28 +83,76 @@ jobs:
           SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
         run: |
           set -euo pipefail
-          cache_bust="${SOURCE_SHA::12}-$RANDOM"
-          curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-            "$CANONICAL_ORIGIN/build.json?search_discovery=$cache_bust" -o /tmp/live-build.json
-          jq -e --arg sha "$SOURCE_SHA" \
-            '.source_commit == $sha and .source_identity_state == "verified" and .expected_origin == "https://irhaapparels.com"' \
-            /tmp/live-build.json >/dev/null
+          : > "$SEARCH_DISCOVERY_DIAGNOSTIC"
+          verified=false
 
-          curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-            "$CANONICAL_ORIGIN/sitemap.xml?search_discovery=$cache_bust" -o public/sitemap.xml
-          url_count="$(grep -c '<loc>' public/sitemap.xml)"
-          test "$url_count" -gt 0
-          test "$url_count" -le 10000
-          grep -F '<loc>https://irhaapparels.com/' public/sitemap.xml >/dev/null
-          ! grep -F '<loc>https://www.irhaapparels.com/' public/sitemap.xml
-          ! grep -F '<loc>https://irhaapparels.com/intl/' public/sitemap.xml
-          ! grep -F '<loc>https://irhaapparels.com/studio' public/sitemap.xml
+          for attempt in $(seq 1 12); do
+            cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
+            build_ok=false
+            sitemap_ok=false
+            key_ok=false
+            reason=""
 
-          curl -fsSL --connect-timeout 10 --max-time 40 \
-            "$CANONICAL_ORIGIN/19d2833c43fe6e05e2a4416f65a53cdc.txt?search_discovery=$cache_bust" \
-            -o /tmp/indexnow-key.txt
-          grep -Fx '19d2833c43fe6e05e2a4416f65a53cdc' /tmp/indexnow-key.txt
-          echo "Verified live canonical sitemap for IndexNow: urls=$url_count source=$SOURCE_SHA"
+            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+              "$CANONICAL_ORIGIN/build.json?search_discovery=$cache_bust" -o /tmp/live-build.json; then
+              if jq -e --arg sha "$SOURCE_SHA" \
+                '.source_commit == $sha and .source_identity_state == "verified" and .expected_origin == "https://irhaapparels.com"' \
+                /tmp/live-build.json >/dev/null; then
+                build_ok=true
+              else
+                live_sha="$(jq -r '.source_commit // "missing"' /tmp/live-build.json 2>/dev/null || echo invalid-json)"
+                reason="live build source is $live_sha, expected $SOURCE_SHA"
+              fi
+            else
+              reason="build.json unavailable"
+            fi
+
+            if [ "$build_ok" = "true" ]; then
+              if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                "$CANONICAL_ORIGIN/sitemap.xml?search_discovery=$cache_bust" -o /tmp/live-sitemap.xml; then
+                url_count="$(grep -c '<loc>' /tmp/live-sitemap.xml || true)"
+                if [ "$url_count" -gt 0 ] && [ "$url_count" -le 10000 ] && \
+                  grep -F '<loc>https://irhaapparels.com/' /tmp/live-sitemap.xml >/dev/null && \
+                  ! grep -F '<loc>https://www.irhaapparels.com/' /tmp/live-sitemap.xml >/dev/null && \
+                  ! grep -F '<loc>https://irhaapparels.com/intl/' /tmp/live-sitemap.xml >/dev/null && \
+                  ! grep -F '<loc>https://irhaapparels.com/studio' /tmp/live-sitemap.xml >/dev/null; then
+                  sitemap_ok=true
+                else
+                  reason="canonical sitemap contract failed; urls=${url_count:-0}"
+                fi
+              else
+                reason="sitemap.xml unavailable"
+              fi
+            fi
+
+            if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ]; then
+              if curl -fsSL --connect-timeout 10 --max-time 40 \
+                "$CANONICAL_ORIGIN/19d2833c43fe6e05e2a4416f65a53cdc.txt?search_discovery=$cache_bust" \
+                -o /tmp/indexnow-key.txt && \
+                grep -Fx '19d2833c43fe6e05e2a4416f65a53cdc' /tmp/indexnow-key.txt >/dev/null; then
+                key_ok=true
+              else
+                reason="IndexNow ownership key unavailable or invalid"
+              fi
+            fi
+
+            printf 'attempt=%s build=%s sitemap=%s key=%s reason=%s\n' \
+              "$attempt" "$build_ok" "$sitemap_ok" "$key_ok" "$reason" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
+
+            if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ] && [ "$key_ok" = "true" ]; then
+              cp /tmp/live-sitemap.xml public/sitemap.xml
+              verified=true
+              echo "Verified live canonical sitemap for IndexNow: urls=$url_count source=$SOURCE_SHA"
+              break
+            fi
+
+            sleep 5
+          done
+
+          if [ "$verified" != "true" ]; then
+            echo "Live canonical sitemap did not reach exact release parity after 12 attempts" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
+            exit 1
+          fi
 
       - name: Submit verified sitemap URLs to IndexNow
         if: steps.resolve.outputs.relevant == 'true'
@@ -113,6 +162,16 @@ jobs:
         run: |
           set -euo pipefail
           bash scripts/ci/retry.sh 3 10 -- node scripts/ping-search-engines.mjs
+
+      - name: Preserve search discovery diagnostics
+        if: always() && steps.resolve.outputs.relevant == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: search-discovery-${{ steps.resolve.outputs.source_sha }}
+          path: /tmp/search-discovery-diagnostic.txt
+          if-no-files-found: warn
+          retention-days: 2
+          compression-level: 0
 
       - name: Publish search discovery status
         if: always() && steps.resolve.outputs.relevant == 'true'
@@ -124,7 +183,8 @@ jobs:
         run: |
           set -euo pipefail
           state=failure
-          description="IndexNow canonical sitemap submission failed"
+          description="$(tail -n 1 "$SEARCH_DISCOVERY_DIAGNOSTIC" 2>/dev/null | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-140 || true)"
+          [ -n "$description" ] || description="IndexNow canonical sitemap submission failed"
           if [ "$JOB_STATUS" = "success" ]; then
             state=success
             description="Verified canonical sitemap accepted by IndexNow"

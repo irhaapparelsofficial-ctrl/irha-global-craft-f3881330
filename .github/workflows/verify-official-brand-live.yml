@@ -23,7 +23,7 @@ jobs:
         github.event.workflow_run.head_repository.full_name == github.repository
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
 
     steps:
       - name: Resolve exact deployed production SHA
@@ -70,7 +70,7 @@ jobs:
             "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state=pending \
             -f context="Irha Brand Live" \
-            -f description="Checking official Irha logo and favicon on production" \
+            -f description="Checking official brand and buyer routes on production" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
 
@@ -146,12 +146,77 @@ jobs:
             exit 1
           }
 
+      - name: Verify canonical buyer routes on production
+        id: routes
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin="https://irhaapparels.com"
+          ready=false
+
+          for attempt in $(seq 1 18); do
+            cache_bust="${SOURCE_SHA::12}-routes-$attempt-$RANDOM"
+            manifest_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -o /tmp/catalog-route-manifest.json -w '%{http_code}' \
+              "$origin/catalog-route-manifest.json?route_check=$cache_bust" || true)"
+            manifest_ok=false
+            valid_path=""
+            if [ "$manifest_status" = "200" ] \
+              && jq -e '.schemaVersion == 1 and .productCount == 254 and (.products | length) == 254' /tmp/catalog-route-manifest.json >/dev/null 2>&1; then
+              valid_path="$(jq -r '.products[0].canonical_path // empty' /tmp/catalog-route-manifest.json)"
+              if [[ "$valid_path" == /products/* ]]; then manifest_ok=true; fi
+            fi
+
+            valid_status="000"
+            if [ "$manifest_ok" = "true" ]; then
+              valid_status="$(curl -sS --connect-timeout 10 --max-time 40 \
+                -H 'Cache-Control: no-cache' \
+                -o /tmp/valid-product.html -w '%{http_code}' \
+                "$origin$valid_path?route_check=$cache_bust" || true)"
+            fi
+
+            legacy_status="$(curl -sS --max-redirs 0 --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -D /tmp/catalogue-headers.txt -o /dev/null -w '%{http_code}' \
+              "$origin/catalogue?route_check=$cache_bust" || true)"
+            legacy_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' /tmp/catalogue-headers.txt | tail -n 1)"
+
+            missing_status="$(curl -sS --max-redirs 0 --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -D /tmp/missing-headers.txt -o /tmp/missing.html -w '%{http_code}' \
+              "$origin/products/not-a-real-irha-product-$cache_bust" || true)"
+            missing_marker="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-route-status:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' /tmp/missing-headers.txt | tail -n 1)"
+
+            echo "Route proof attempt $attempt/18: manifest=$manifest_status valid=$valid_status legacy=$legacy_status location=${legacy_location:-none} missing=$missing_status marker=${missing_marker:-none}"
+
+            if [ "$manifest_ok" = "true" ] \
+              && [ "$valid_status" = "200" ] \
+              && [ "$legacy_status" = "301" ] \
+              && [[ "$legacy_location" == *"/products"* ]] \
+              && [ "$missing_status" = "404" ] \
+              && [ "$missing_marker" = "not-found" ]; then
+              ready=true
+              echo "Canonical product, legacy redirect and real missing-route 404 verified live."
+              break
+            fi
+
+            sleep 10
+          done
+
+          test "$ready" = "true" || {
+            echo "::error title=Buyer route verification failed::Production did not satisfy canonical 200, one-hop 301 and real 404 contracts."
+            exit 1
+          }
+
       - name: Publish final live-brand status
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
-          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+          JOB_STATUS: ${{ job.status }}
         shell: bash
         run: |
           set -euo pipefail
@@ -161,10 +226,10 @@ jobs:
           fi
 
           state=failure
-          description="Official Irha brand assets are not verified live"
-          if [ "$VERIFY_OUTCOME" = "success" ]; then
+          description="Official brand or buyer route verification failed"
+          if [ "$JOB_STATUS" = "success" ]; then
             state=success
-            description="Official Irha logo and favicon verified live"
+            description="Official brand and canonical buyer routes verified live"
           fi
 
           gh api --method POST \
