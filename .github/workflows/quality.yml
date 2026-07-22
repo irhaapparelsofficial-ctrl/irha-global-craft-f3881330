@@ -54,7 +54,10 @@ jobs:
         run: node scripts/verify-migration-order.mjs
 
       - name: TypeScript check
-        run: npx tsc --noEmit
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit 2>&1 | tee quality-tsc.log
 
       - name: Unit and integration tests
         shell: bash
@@ -76,6 +79,9 @@ jobs:
           set -u
           failed_tests="$(sed -nE 's/^[[:space:]]*FAIL[[:space:]]+(src\/[^ >]+\.(test|spec)\.[tj]sx?).*/\1/p' quality-test.log 2>/dev/null | sort -u || true)"
           label="$(printf '%s\n' "$failed_tests" | sed '/^$/d; s#/#-#g' | paste -sd '_' - | cut -c1-180 || true)"
+          if [ -z "$label" ]; then
+            label="$(grep -Eo 'src/[^(: ]+\.[tj]sx?' quality-tsc.log 2>/dev/null | head -n 1 | sed 's#/#-#g' | cut -c1-180 || true)"
+          fi
           if [ -z "$label" ]; then label="build-or-unknown"; fi
           echo "label=$label" >> "$GITHUB_OUTPUT"
 
@@ -85,6 +91,7 @@ jobs:
         with:
           name: quality-${{ steps.failure-label.outputs.label }}-${{ github.sha }}
           path: |
+            quality-tsc.log
             quality-test.log
             quality-build.log
           if-no-files-found: warn
@@ -154,9 +161,10 @@ jobs:
             failure)
               state=failure
               description="$({
+                cat quality-tsc.log 2>/dev/null || true
                 cat quality-test.log 2>/dev/null || true
                 cat quality-build.log 2>/dev/null || true
-              } | grep -Ei 'FAIL|AssertionError|Error:|failed|missing|mismatch|refusing|cannot|unable' | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-140 || true)"
+              } | grep -Ei 'error TS|FAIL|AssertionError|Error:|failed|missing|mismatch|refusing|cannot|unable' | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-140 || true)"
               [ -n "$description" ] || description="Buyer-ready Quality Gate failed; open diagnostic artifact"
               ;;
             cancelled)
