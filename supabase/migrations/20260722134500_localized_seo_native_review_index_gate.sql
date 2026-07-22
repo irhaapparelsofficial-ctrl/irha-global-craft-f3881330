@@ -21,13 +21,29 @@ ALTER TABLE public.seo_localized_pages
 ALTER TABLE public.seo_localized_pages
   VALIDATE CONSTRAINT seo_localized_pages_indexability_review_check;
 
+-- Remove both the original combined policy name and the current split read
+-- policies so no older permissive policy can survive this gate.
 DROP POLICY IF EXISTS "Public reads published localized pages"
   ON public.seo_localized_pages;
+DROP POLICY IF EXISTS seo_localized_pages_anon_read
+  ON public.seo_localized_pages;
+DROP POLICY IF EXISTS seo_localized_pages_authenticated_read
+  ON public.seo_localized_pages;
 
-CREATE POLICY "Public reads published localized pages"
+CREATE POLICY seo_localized_pages_anon_read
   ON public.seo_localized_pages
   FOR SELECT
-  TO anon, authenticated
+  TO anon
+  USING (
+    status = 'published'
+    AND noindex = false
+    AND native_review_status IN ('approved', 'not_required')
+  );
+
+CREATE POLICY seo_localized_pages_authenticated_read
+  ON public.seo_localized_pages
+  FOR SELECT
+  TO authenticated
   USING (
     (
       status = 'published'
