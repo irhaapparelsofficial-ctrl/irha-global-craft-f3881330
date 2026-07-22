@@ -14,21 +14,41 @@ const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
 
 type Manifest = { schemaVersion: number; productCount: number; products: BuyerReadyCatalogRoute[] };
-type RouteNames = { rootName: string; audienceName?: string; collectionName?: string };
+type RouteNames = {
+  rootName: string;
+  audienceName?: string;
+  collectionName?: string;
+  productCount: number;
+  children: Set<string>;
+};
 
 function escapeHtml(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+function upsert(routes: Map<string, RouteNames>, path: string, names: Omit<RouteNames, "productCount" | "children">) {
+  const existing = routes.get(path);
+  if (existing) return existing;
+  const created: RouteNames = { ...names, productCount: 0, children: new Set<string>() };
+  routes.set(path, created);
+  return created;
+}
+
 function taxonomyRoutes(products: BuyerReadyCatalogRoute[]) {
   const routes = new Map<string, RouteNames>();
   for (const product of products) {
-    const root = `/products/${product.main_category_slug}`;
-    const audience = `${root}/${product.audience_slug}`;
-    const collection = `${audience}/${product.product_type_slug}`;
-    routes.set(root, { rootName: product.main_category_name });
-    routes.set(audience, { rootName: product.main_category_name, audienceName: product.audience_name });
-    routes.set(collection, { rootName: product.main_category_name, audienceName: product.audience_name, collectionName: product.product_type_name });
+    const rootPath = `/products/${product.main_category_slug}`;
+    const audiencePath = `${rootPath}/${product.audience_slug}`;
+    const collectionPath = `${audiencePath}/${product.product_type_slug}`;
+    const root = upsert(routes, rootPath, { rootName: product.main_category_name });
+    const audience = upsert(routes, audiencePath, { rootName: product.main_category_name, audienceName: product.audience_name });
+    const collection = upsert(routes, collectionPath, { rootName: product.main_category_name, audienceName: product.audience_name, collectionName: product.product_type_name });
+    root.productCount += 1;
+    audience.productCount += 1;
+    collection.productCount += 1;
+    root.children.add(audiencePath);
+    audience.children.add(collectionPath);
+    collection.children.add(product.canonical_path);
   }
   return routes;
 }
@@ -48,6 +68,7 @@ async function verifyProduct(product: BuyerReadyCatalogRoute) {
   const html = await readFile(file, "utf8");
   const required = [
     `<title>${escapeHtml(product.seo_title || "")}</title>`,
+    `<meta data-irha-fallback-seo="true" name="description" content="${escapeHtml(product.seo_description || "")}"`,
     `<link rel="canonical" href="${SITE}${product.canonical_path}"`,
     'data-irha-product-shell="true"',
     `>${escapeHtml(product.product_name)}</h1>`,
@@ -56,13 +77,13 @@ async function verifyProduct(product: BuyerReadyCatalogRoute) {
     'aria-label="Breadcrumb"',
     '"@type":"Product"',
     '"@type":"BreadcrumbList"',
+    'data-irha-related-products="true"',
   ];
-  for (const token of required) {
-    if (!html.includes(token)) throw new Error(`${product.reference_code} final product shell missing: ${token}`);
-  }
-  if (html.includes('data-irha-rich-route-shell="true"')) {
-    throw new Error(`${product.reference_code} product shell was overwritten by generic enrichment`);
-  }
+  for (const token of required) if (!html.includes(token)) throw new Error(`${product.reference_code} final product shell missing: ${token}`);
+  if (html.includes('data-irha-rich-route-shell="true"')) throw new Error(`${product.reference_code} product shell was overwritten by generic enrichment`);
+  const groupPrefix = `/products/${product.main_category_slug}/${product.audience_slug}/${product.product_type_slug}/`;
+  const relatedMatches = [...html.matchAll(/<a href="([^"]+)"/g)].map((match) => match[1]).filter((path) => path.startsWith(groupPrefix) && path !== product.canonical_path);
+  if (!relatedMatches.length) throw new Error(`${product.reference_code} final shell has no related canonical product`);
 }
 
 async function verifyTaxonomy(pathname: string, names: RouteNames) {
@@ -71,37 +92,38 @@ async function verifyTaxonomy(pathname: string, names: RouteNames) {
   const seo = taxonomySeo(pathname, names);
   const required = [
     `<title>${escapeHtml(seo.title)}</title>`,
+    `<meta data-irha-fallback-seo="true" name="description" content="${escapeHtml(seo.description)}"`,
     `>${escapeHtml(seo.h1)}</h1>`,
     `<link rel="canonical" href="${SITE}${pathname}"`,
     'data-irha-rich-route-shell="true" data-irha-taxonomy-parity="true"',
+    'data-irha-taxonomy-children="true"',
+    `data-irha-product-count="${names.productCount}"`,
     'aria-label="Breadcrumb"',
     '"@type":"CollectionPage"',
     '"@type":"BreadcrumbList"',
   ];
-  for (const token of required) {
-    if (!html.includes(token)) throw new Error(`Final taxonomy shell ${pathname} missing: ${token}`);
-  }
+  for (const token of required) if (!html.includes(token)) throw new Error(`Final taxonomy shell ${pathname} missing: ${token}`);
+  for (const child of names.children) if (!html.includes(`href="${child}"`)) throw new Error(`Final taxonomy shell ${pathname} missing child: ${child}`);
   if (html.includes('data-irha-product-shell="true"')) throw new Error(`Taxonomy shell became a product shell: ${pathname}`);
 }
 
 function parseRedirects(source: string) {
-  const rows: Array<{ from: string; to: string; status: string }> = [];
+  const rows: Array<{ from: string; to: string }> = [];
   for (const raw of source.split("\n")) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) continue;
     const [from, to, status] = line.split(/\s+/);
-    if (from?.startsWith("/") && to?.startsWith("/") && status === "301") rows.push({ from, to, status });
+    if (from?.startsWith("/") && to?.startsWith("/") && status === "301") rows.push({ from, to });
   }
   return rows;
 }
 
 async function main() {
   const manifest = JSON.parse(await readFile(join(DIST, "catalog-route-manifest.json"), "utf8")) as Manifest;
-  if (manifest.schemaVersion !== 1 || manifest.productCount !== EXPECTED_PRODUCTS || manifest.products.length !== EXPECTED_PRODUCTS) {
-    throw new Error("Final route parity verification requires the complete 254-product manifest");
-  }
+  if (manifest.schemaVersion !== 1 || manifest.productCount !== EXPECTED_PRODUCTS || manifest.products.length !== EXPECTED_PRODUCTS) throw new Error("Final route parity verification requires the complete 254-product manifest");
   const taxonomy = taxonomyRoutes(manifest.products);
   if (taxonomy.size !== EXPECTED_TAXONOMY) throw new Error(`Expected ${EXPECTED_TAXONOMY} taxonomy shells; received ${taxonomy.size}`);
+  for (const [path, names] of taxonomy) if (names.productCount < 1 || names.children.size < 1) throw new Error(`Empty final taxonomy route: ${path}`);
 
   await Promise.all(manifest.products.map(verifyProduct));
   await Promise.all([...taxonomy].map(([path, names]) => verifyTaxonomy(path, names)));
@@ -110,8 +132,7 @@ async function main() {
   const sitemap = await readFile(join(DIST, "sitemap.xml"), "utf8");
   for (const match of sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)) validTargets.add(new URL(match[1].replace(/&amp;/g, "&")).pathname.replace(/\/$/, "") || "/");
 
-  const redirectsSource = await readFile(join(DIST, "_redirects"), "utf8");
-  const redirects = parseRedirects(redirectsSource);
+  const redirects = parseRedirects(await readFile(join(DIST, "_redirects"), "utf8"));
   const fromPaths = new Set<string>();
   for (const row of redirects) {
     const from = row.from.replace(/\/$/, "") || "/";
@@ -127,7 +148,7 @@ async function main() {
   if (worker.includes("/products/leisure-nightwear/plush-bathrobe-sleep-robe")) throw new Error("Final worker contains the dead plush robe target");
   if (!worker.includes("/products/leisure-nightwear/women/robes/womens-plush-robe")) throw new Error("Final worker is missing the verified plush robe canonical");
 
-  console.log(`Verified final route artifacts: ${manifest.products.length} products, ${taxonomy.size} taxonomy pages and ${redirects.length} one-hop canonical redirects`);
+  console.log(`Verified final route artifacts: ${manifest.products.length} products, ${taxonomy.size} non-empty taxonomy pages and ${redirects.length} one-hop canonical redirects`);
 }
 
 main().catch((error) => {
