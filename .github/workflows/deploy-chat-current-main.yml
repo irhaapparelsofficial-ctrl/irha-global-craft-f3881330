@@ -73,7 +73,7 @@ jobs:
           grep -F '[functions.chat]' supabase/config.toml
           grep -F 'verify_jwt = false' supabase/config.toml
           test -s supabase/functions/chat/index.ts
-          bash scripts/ci/retry.sh 3 5 -- npm install --legacy-peer-deps --no-audit --no-fund
+          bash scripts/ci/retry.sh 3 5 -- npm ci --legacy-peer-deps --no-audit --no-fund
           npm run verify:deployment-source
           npm run verify:secrets
           npm run verify:migrations
