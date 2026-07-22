@@ -45,6 +45,7 @@
     {"version":"20260722103000","name":"public_buyer_ready_route_manifest","path":"supabase/migrations/20260722103000_public_buyer_ready_route_manifest.sql","git_blob_sha":"95672a12cb589f30b6c152bc94bdbeedc8b2def2","execution_mode":"transactional","transactional_dry_run":true},
     {"version":"20260722104500","name":"buyer_ready_taxonomy_media_security","path":"supabase/migrations/20260722104500_buyer_ready_taxonomy_media_security.sql","git_blob_sha":"b5c684e66c2e85c11b28bdeb6ae3f743e2c9e6ac","execution_mode":"transactional","transactional_dry_run":true},
     {"version":"20260722111000","name":"buyer_ready_legacy_redirects","path":"supabase/migrations/20260722111000_buyer_ready_legacy_redirects.sql","git_blob_sha":"846c75893f239ad193b3efbd95f1f04835ebf09a","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260722111500","name":"drive_import_table_service_role_lock","path":"supabase/migrations/20260722111500_drive_import_table_service_role_lock.sql","git_blob_sha":"c288ae7f500e0931a45862c2587784abe37f1efe","execution_mode":"transactional","transactional_dry_run":true}
+    {"version":"20260722111500","name":"drive_import_table_service_role_lock","path":"supabase/migrations/20260722111500_drive_import_table_service_role_lock.sql","git_blob_sha":"c288ae7f500e0931a45862c2587784abe37f1efe","execution_mode":"transactional","transactional_dry_run":true},
+    {"version":"20260722134500","name":"localized_seo_native_review_index_gate","path":"supabase/migrations/20260722134500_localized_seo_native_review_index_gate.sql","git_blob_sha":"b1d064e80ce5b01bdfb6c8efaaf8f1305630582a","execution_mode":"transactional","transactional_dry_run":true}
   ]
 }
