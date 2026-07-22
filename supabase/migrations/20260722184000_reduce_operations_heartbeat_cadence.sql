@@ -3,6 +3,8 @@
 -- average runtime ~1.1 seconds. Notification dispatch remains unchanged at one minute.
 -- The existing heartbeat job is part of the verified operations foundation; this
 -- migration deliberately refuses to create a replacement or duplicate job.
+-- Database and username are verified after the change but are not passed to
+-- cron.alter_job because changing either field requires a superuser role.
 
 DO $$
 DECLARE
@@ -22,8 +24,6 @@ BEGIN
     job_id := heartbeat_job_id,
     schedule := '*/15 * * * *',
     command := 'select public.invoke_irha_operations(''heartbeat'',''cron'',''{}''::jsonb);',
-    database := 'postgres',
-    username := 'postgres',
     active := true
   );
 END
