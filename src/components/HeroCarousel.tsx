@@ -75,7 +75,7 @@ export default function HeroCarousel() {
               Custom manufacturing partner
             </p>
             <h1 className="mt-2 max-w-[17ch] font-display text-[2rem] leading-[1.01] tracking-[-0.035em] text-foreground sm:mt-2.5 sm:text-5xl lg:text-[4rem]">
-              B2B Apparel Manufacturer for Brands &amp; Wholesalers
+              Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground/68 sm:mt-3.5 sm:text-base sm:leading-7">
               Made-to-order Bavarian wear, sportswear, leatherwear, streetwear and leisure apparel with private-label branding and packaging.
