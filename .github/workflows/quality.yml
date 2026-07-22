@@ -41,8 +41,17 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
-        run: bash scripts/ci/retry.sh 2 3 -- npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Install project dependencies including development tools
+        run: bash scripts/ci/retry.sh 2 3 -- npm install --include=dev --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify project compiler and test runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x node_modules/.bin/tsc
+          test -x node_modules/.bin/vitest
+          node_modules/.bin/tsc --version | grep -F 'Version 5.8.3'
+          node_modules/.bin/vitest --version
 
       - name: Verify deployment source lock
         run: node scripts/verify-deployment-source.mjs
@@ -57,7 +66,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm exec --yes --package=typescript@5.8.3 -- tsc --noEmit 2>&1 | tee quality-tsc.log
+          node_modules/.bin/tsc --noEmit 2>&1 | tee quality-tsc.log
 
       - name: Unit and integration tests
         shell: bash
@@ -133,11 +142,12 @@ jobs:
           {
             echo "## Buyer-ready Quality Gate"
             echo "- Source: \`$GITHUB_SHA\`"
+            echo "- Project dev dependencies: required"
             echo "- Deployment source lock: required"
             echo "- Secret safety: required"
             echo "- Migration registry: required"
-            echo "- TypeScript: required (pinned compiler 5.8.3)"
-            echo "- Tests: required"
+            echo "- TypeScript: required (local compiler 5.8.3)"
+            echo "- Tests: required (local Vitest)"
             echo "- Production build and release identity: required"
             echo "- One merge signal: \`Irha Quality Gate\`"
             echo "- Production writes: none"
@@ -164,7 +174,7 @@ jobs:
                 cat quality-tsc.log 2>/dev/null || true
                 cat quality-test.log 2>/dev/null || true
                 cat quality-build.log 2>/dev/null || true
-              } | grep -Ei 'error TS|FAIL|AssertionError|Error:|failed|missing|mismatch|refusing|cannot|unable' | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-140 || true)"
+              } | grep -Ei 'error TS|FAIL|AssertionError|Error:|failed|missing|mismatch|refusing|cannot|unable|not found' | tail -n 1 | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-140 || true)"
               [ -n "$description" ] || description="Buyer-ready Quality Gate failed; open diagnostic artifact"
               ;;
             cancelled)
