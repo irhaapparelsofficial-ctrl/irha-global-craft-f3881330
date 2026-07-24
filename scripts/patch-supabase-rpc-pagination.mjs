@@ -1,6 +1,12 @@
 const nativeFetch = globalThis.fetch.bind(globalThis);
 const RPC_PATH = "/rest/v1/rpc/get_public_legacy_redirects";
 const MAX_PAGES = 100;
+const PREVIEW_PROPAGATION_RETRIES = 6;
+const CRAWL_ORIGIN = (process.env.CRAWL_ORIGIN || "").replace(/\/$/, "");
+const CANONICAL_ORIGIN = (process.env.CANONICAL_ORIGIN || "").replace(/\/$/, "");
+const PREVIEW_ORIGIN = CRAWL_ORIGIN && CRAWL_ORIGIN !== CANONICAL_ORIGIN
+  ? new URL(CRAWL_ORIGIN).origin
+  : "";
 const seenFingerprints = new Map();
 
 function inputUrl(input) {
@@ -14,6 +20,10 @@ function requestHeaders(input, init) {
   if (init?.headers) return new Headers(init.headers);
   if (input instanceof Request) return new Headers(input.headers);
   return new Headers();
+}
+
+function requestMethod(input, init) {
+  return String(init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
 }
 
 function pageRange(headers) {
@@ -41,13 +51,37 @@ function fingerprintPage(page) {
   ]);
 }
 
+async function fetchWithPreviewPropagationRetry(input, init) {
+  const url = inputUrl(input);
+  const method = requestMethod(input, init);
+  const retryablePreviewRequest = Boolean(
+    url
+      && PREVIEW_ORIGIN
+      && url.origin === PREVIEW_ORIGIN
+      && (method === "GET" || method === "HEAD"),
+  );
+  const attempts = retryablePreviewRequest ? PREVIEW_PROPAGATION_RETRIES : 1;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const response = await nativeFetch(input, init);
+    if (!retryablePreviewRequest || response.status !== 404 || attempt === attempts) return response;
+
+    const body = await response.clone().text();
+    if (!/deployment\s+not\s+found/i.test(body)) return response;
+
+    await new Promise((resolve) => setTimeout(resolve, Math.min(attempt * 1500, 6000)));
+  }
+
+  throw new Error("Preview propagation retry loop ended unexpectedly");
+}
+
 globalThis.fetch = async (input, init) => {
   const url = inputUrl(input);
-  if (!url || url.pathname !== RPC_PATH) return nativeFetch(input, init);
+  if (!url || url.pathname !== RPC_PATH) return fetchWithPreviewPropagationRetry(input, init);
 
   const headers = requestHeaders(input, init);
   const range = pageRange(headers);
-  if (!range) return nativeFetch(input, init);
+  if (!range) return fetchWithPreviewPropagationRetry(input, init);
 
   const pageNumber = Math.floor(range.offset / range.limit);
   if (pageNumber >= MAX_PAGES) {
@@ -59,7 +93,7 @@ globalThis.fetch = async (input, init) => {
   headers.delete("range");
 
   const requestInput = input instanceof Request ? new Request(url, input) : url;
-  const response = await nativeFetch(requestInput, { ...init, headers });
+  const response = await fetchWithPreviewPropagationRetry(requestInput, { ...init, headers });
   if (!response.ok) return response;
 
   const page = await response.clone().json();
