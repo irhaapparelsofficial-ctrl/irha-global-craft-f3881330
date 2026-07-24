@@ -117,6 +117,7 @@ describe("Leisurewear & Nightwear buyer-safe public copy", () => {
   it("keeps historical overrides idempotent while public runtime uses the approved Supabase release", () => {
     const batch10Source = readFileSync(resolve(root, "src/lib/supplementalCatalogBatch10.ts"), "utf8");
     const publicCatalogSource = readFileSync(resolve(root, "src/hooks/usePublicCatalog.ts"), "utf8");
+    const policySource = readFileSync(resolve(root, "src/lib/buyerReadyProductContent.ts"), "utf8");
     const existing = PRODUCT_SEO_OVERRIDES["casual-button-up-shirt"];
 
     registerLeisureNightwearSeoOverrides();
@@ -125,8 +126,9 @@ describe("Leisurewear & Nightwear buyer-safe public copy", () => {
     expect(publicCatalogSource).toContain("No local, supplemental, demo or legacy catalogue is allowed to render publicly");
     expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_release")');
     expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_taxonomy")');
-    expect(publicCatalogSource).toContain('case "leisure-nightwear"');
-    expect(publicCatalogSource).toContain("description: safe.description");
+    expect(publicCatalogSource).toContain("resolveBuyerReadyProductContent");
+    expect(publicCatalogSource).toContain("description: content.description");
     expect(publicCatalogSource).toContain("specs: safe.specs");
+    expect(policySource).toContain('case "leisure-nightwear"');
   });
 });
