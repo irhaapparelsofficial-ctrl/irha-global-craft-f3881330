@@ -8,14 +8,19 @@ const source = readFileSync(
 );
 
 describe("CategoryOrProductPage empty audience routing", () => {
-  it("redirects configured audiences that have no published products", () => {
-    expect(source).toContain("audience?.productCount === 0");
-    expect(source).toContain("audience && audience.collections.length === 0");
+  it("uses published depth-one audience nodes before legacy empty-audience handling", () => {
+    expect(source).toContain("usePublishedCatalogTaxonomyRelease");
+    expect(source).toContain("const explicitAudience = root");
+    expect(source).toContain("node.depth === 1");
+    expect(source).toContain("node.parent_id === root.id");
+    expect(source).toContain("<CategoryTaxonomyPage audienceOverride={explicitAudience.slug}");
+    expect(source).toContain("legacyAudience?.productCount === 0");
+    expect(source).toContain("legacyAudience && legacyAudience.collections.length === 0");
     expect(source).toContain('return <Navigate to={`/products/${categorySlug}`} replace />');
   });
 
-  it("keeps populated audience routes and canonical product routing intact", () => {
-    expect(source).toContain("if (audience) return <CategoryTaxonomyPage audienceOverride={audience.slug} />");
+  it("keeps populated legacy audience routes and canonical product routing intact", () => {
+    expect(source).toContain("if (legacyAudience) return <CategoryTaxonomyPage audienceOverride={legacyAudience.slug} />");
     expect(source).toContain("return <CanonicalProductDetail />");
     expect(source).toContain('import CanonicalProductDetail from "@/pages/CanonicalProductDetail"');
   });
