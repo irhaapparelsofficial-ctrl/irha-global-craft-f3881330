@@ -180,6 +180,23 @@ describe("production route parity completion", () => {
     expect(workflow).toContain("Refusing stale production crawl");
   });
 
+  it("waits for deployed exact main and generates the complete redirect inventory before crawling", () => {
+    const workflow = read(productionWorkflowPath);
+    const wait = workflow.indexOf("Wait for exact current-main production release");
+    const manifest = workflow.indexOf("generate-buyer-ready-catalog-manifest.ts");
+    const redirects = workflow.indexOf("generate-buyer-ready-redirects.ts");
+    const crawl = workflow.indexOf("Run complete live production crawl");
+    expect(wait).toBeGreaterThan(-1);
+    expect(manifest).toBeGreaterThan(wait);
+    expect(redirects).toBeGreaterThan(manifest);
+    expect(crawl).toBeGreaterThan(redirects);
+    expect(workflow).toContain('.source_commit == $source and .source_identity_state == "verified"');
+    expect(workflow).toContain("Production did not converge to exact current main");
+    expect(workflow).toContain("Generated redirect inventory is incomplete");
+    expect(workflow).toContain('test "$generated_redirects" -ge 1258');
+    expect(workflow).not.toContain("wrangler pages deploy");
+  });
+
   it("requires an immutable preview deployment and context-safe blocking evaluation", () => {
     const workflow = read(previewWorkflowPath);
     const resolver = read("scripts/resolve-cloudflare-preview-deployment.mjs");
