@@ -101,6 +101,9 @@ describe("production route parity completion", () => {
     expect(redirects).toContain("/products/streetwear-activewear/unisex/tops/oversized-pullover-hoodie 301");
     expect(redirects).not.toContain("/products/leisure-nightwear/plush-bathrobe-sleep-robe 301");
     expect(workerPatch).toContain("womens-plush-robe");
+    expect(workerPatch).toContain("aliasPattern");
+    expect(workerPatch).toContain("missing the verified plush robe legacy alias");
+    expect(workerPatch).toContain("unexpected target");
     expect(workerPatch).toContain("dead plush robe target");
   });
 
