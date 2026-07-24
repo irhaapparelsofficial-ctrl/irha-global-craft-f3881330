@@ -22,6 +22,7 @@ describe("Google brand visibility controls", () => {
     const redirects = read("public/_redirects");
     const generator = read("scripts/generate-buyer-ready-redirects.ts");
     const verifier = read("scripts/verify-route-parity-build.ts");
+    const workerPatch = read("scripts/patch-worker-route-parity.mjs");
     const plushSource = "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe";
     const plushCanonical = "/products/leisure-nightwear/women/robes/womens-plush-robe";
 
@@ -35,8 +36,11 @@ describe("Google brand visibility controls", () => {
       expect(redirects).toContain(redirect);
     }
     expect(redirects).not.toContain(plushSource);
-    expect(generator).toContain(plushCanonical);
+    expect(generator).toContain("reference_code.toLowerCase()");
+    expect(generator).toContain("if (localizedCanonical) return localizedCanonical");
     expect(generator).toContain("approvedRows.forEach(add)");
+    expect(workerPatch).toContain(plushCanonical);
+    expect(verifier).toContain(plushCanonical);
     expect(verifier).toContain("Duplicate final redirect source");
     expect(verifier).toContain("Final redirect target is not canonical");
     expect(redirects).not.toContain("/products/streetwear-activewear/oversized-streetwear-hoodie 301");
