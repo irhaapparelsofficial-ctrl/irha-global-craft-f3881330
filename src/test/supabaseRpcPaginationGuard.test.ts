@@ -16,6 +16,16 @@ describe("Supabase set-returning RPC pagination guard", () => {
     expect(productionWorkflow).toContain(`${scopedCommand} npx tsx scripts/crawl-production-route-parity.ts`);
   });
 
+  it("keeps the runtime Helmet import declared in both dependency manifests", () => {
+    const packageJson = JSON.parse(read("package.json")) as { dependencies?: Record<string, string> };
+    const packageLock = JSON.parse(read("package-lock.json")) as {
+      packages?: Record<string, { dependencies?: Record<string, string> }>;
+    };
+
+    expect(packageJson.dependencies?.["react-helmet-async"]).toBe("^3.0.0");
+    expect(packageLock.packages?.[""]?.dependencies?.["react-helmet-async"]).toBe("^3.0.0");
+  });
+
   it("translates ignored Range headers into PostgREST limit/offset queries", () => {
     const shim = read("scripts/patch-supabase-rpc-pagination.mjs");
 
