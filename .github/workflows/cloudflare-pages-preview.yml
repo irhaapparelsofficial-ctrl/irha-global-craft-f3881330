@@ -12,6 +12,7 @@ on:
       - "scripts/crawl-production-route-parity.ts"
       - "scripts/evaluate-preview-route-parity.ts"
       - "scripts/resolve-cloudflare-preview-deployment.mjs"
+      - "scripts/wait-for-cloudflare-preview-propagation.ts"
       - "scripts/generate-buyer-ready-catalog-manifest.ts"
       - "scripts/generate-buyer-ready-redirects.ts"
       - "scripts/patch-supabase-rpc-pagination.mjs"
@@ -31,6 +32,7 @@ on:
       - "src/components/HeroCarousel.tsx"
       - "src/test/productionRouteParityCrawler.test.ts"
       - "src/test/supabaseRpcPaginationGuard.test.ts"
+      - "src/test/cloudflarePreviewPropagation.test.ts"
       - "package.json"
       - "package-lock.json"
 
@@ -196,6 +198,9 @@ jobs:
             echo "Legacy production claims are present in preview"
             exit 1
           fi
+
+      - name: Wait for full immutable preview propagation
+        run: npx tsx scripts/wait-for-cloudflare-preview-propagation.ts
 
       - name: Run complete preview route parity crawl
         id: parity
