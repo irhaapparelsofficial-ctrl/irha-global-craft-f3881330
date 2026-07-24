@@ -4,6 +4,7 @@ import {
   OWNER_SUPABASE_PUBLISHABLE_KEY,
   OWNER_SUPABASE_URL,
 } from "../src/integrations/supabase/ownerRuntime";
+import { resolveBuyerReadyProductContent } from "../src/lib/buyerReadyProductContent";
 
 const OUTPUT_PATH = resolve("public/catalog-route-manifest.json");
 const EXPECTED_PRODUCTS = 254;
@@ -87,33 +88,22 @@ function newestTimestamp(values: Array<string | null | undefined>) {
   return valid.length ? valid.sort((a, b) => Date.parse(b) - Date.parse(a))[0] : new Date(0).toISOString();
 }
 
-function safeProgramDescription(row: BuyerReadyCatalogRoute) {
-  const product = row.product_name;
-  switch (row.main_category_slug) {
-    case "bavarian-trachten-wear":
-      return `${product} custom manufacturing for Trachten retailers, wholesalers and private-label buyers. Material, embroidery, trims, sizing, packaging and order requirements are confirmed after buyer and factory review.`;
-    case "premium-leather-apparel":
-      return `${product} custom development for wholesale and private-label leather apparel programs. Leather type, construction, hardware, lining, fit, branding and packaging are confirmed against the approved buyer specification.`;
-    case "sportswear":
-      return `${product} custom development for teams, clubs, distributors and private-label sportswear buyers. Fabric, panel construction, sizing, decoration, colors, packaging and production requirements are confirmed after review.`;
-    case "streetwear-activewear":
-      return `${product} custom manufacturing for streetwear, activewear and private-label brand programs. Fabric, weight, fit, construction, decoration, labels, colors and packaging are confirmed against the buyer brief.`;
-    case "leisure-nightwear":
-      return `${product} custom manufacturing for leisurewear, loungewear, sleepwear and hospitality buyer programs. Fabric, comfort, fit, construction, trims, branding and packaging are confirmed after requirement review.`;
-    default:
-      return `${product} custom manufacturing within ${row.product_type_name} for wholesale, OEM, ODM and private-label buyers. Specifications are confirmed after buyer and factory review.`;
-  }
-}
-
 function buyerSafeRow(row: BuyerReadyCatalogRoute): BuyerReadyCatalogRoute {
-  const fallback = safeProgramDescription(row);
+  const content = resolveBuyerReadyProductContent({
+    name: row.product_name,
+    seo_title: row.seo_title,
+    seo_description: row.seo_description,
+    short_description: row.short_description,
+    description: row.product_description,
+  }, row.main_category_slug);
   return {
     ...row,
-    seo_title: row.seo_title?.trim() || `${row.product_name} Wholesale Manufacturer | Sialkot Garment Factory`,
-    seo_h1: row.product_name,
-    seo_description: row.seo_description?.trim() || fallback,
-    short_description: row.short_description?.trim() || fallback,
-    product_description: row.product_description?.trim() || fallback,
+    product_name: content.name,
+    seo_title: content.seoTitle,
+    seo_h1: content.h1,
+    seo_description: content.description,
+    short_description: content.description,
+    product_description: content.description,
   };
 }
 
@@ -196,10 +186,10 @@ async function main() {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     productCount: rows.length,
-    contentPolicy: "source-preserving-buyer-safe-fallbacks",
+    contentPolicy: "shared-buyer-ready-source-with-safe-fallbacks",
     products: rows,
   }, null, 2)}\n`);
-  console.log(`Generated buyer-ready route manifest for ${rows.length} products with runtime-parity metadata`);
+  console.log(`Generated buyer-ready route manifest for ${rows.length} products with shared runtime-parity metadata`);
 }
 
 main().catch((error) => {
