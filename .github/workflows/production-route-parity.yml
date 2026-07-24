@@ -8,11 +8,14 @@ on:
     paths:
       - ".github/workflows/production-route-parity.yml"
       - "scripts/crawl-production-route-parity.ts"
+      - "scripts/wait-for-production-convergence.ts"
       - "scripts/reconcile-related-product-route-findings.ts"
       - "scripts/related-product-policy.ts"
       - "scripts/generate-buyer-ready-catalog-manifest.ts"
+      - "scripts/generate-buyer-ready-redirects.ts"
       - "scripts/patch-supabase-rpc-pagination.mjs"
       - "src/lib/buyerReadyProductContent.ts"
+      - "src/test/productionConvergenceBarrier.test.ts"
       - "src/test/productionRouteParityCrawler.test.ts"
       - "src/test/relatedProductRouteParity.test.ts"
       - "src/test/supabaseRpcPaginationGuard.test.ts"
@@ -34,6 +37,8 @@ env:
   CRAWL_OUTPUT_DIR: artifacts/production-route-parity
   SOURCE_SHA: ${{ github.sha }}
   STATUS_CONTEXT: Irha Production Route Parity
+  PRODUCTION_CONVERGENCE_ATTEMPTS: "45"
+  PRODUCTION_CONVERGENCE_INTERVAL_MS: "8000"
 
 jobs:
   crawl:
@@ -98,6 +103,12 @@ jobs:
       - name: Install exact lockfile dependencies
         run: npm ci --legacy-peer-deps --no-audit --no-fund
 
+      - name: Wait for exact production convergence
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsx scripts/wait-for-production-convergence.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/production-convergence.log"
+
       - name: Verify repository release contracts
         shell: bash
         run: |
@@ -106,10 +117,14 @@ jobs:
           npm run verify:secrets
           npm run verify:migrations
           npx tsc --noEmit
-          npx vitest run src/test/productionRouteParityCrawler.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
+          npx vitest run src/test/productionConvergenceBarrier.test.ts src/test/productionRouteParityCrawler.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
 
-      - name: Generate exact production catalogue route manifest
-        run: npx tsx scripts/generate-buyer-ready-catalog-manifest.ts
+      - name: Generate exact production catalogue and redirect manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsx scripts/generate-buyer-ready-catalog-manifest.ts
+          NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/generate-buyer-ready-redirects.ts
 
       - name: Run complete live production crawl
         id: crawl
