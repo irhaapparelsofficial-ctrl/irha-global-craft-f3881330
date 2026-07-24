@@ -78,12 +78,14 @@ describe("Premium Leather Apparel buyer-safe public copy", () => {
 
   it("uses the approved Supabase release and leather-specific buyer-safe runtime copy", () => {
     const publicCatalogSource = readFileSync(resolve(root, "src/hooks/usePublicCatalog.ts"), "utf8");
+    const policySource = readFileSync(resolve(root, "src/lib/buyerReadyProductContent.ts"), "utf8");
     expect(publicCatalogSource).toContain("No local, supplemental, demo or legacy catalogue is allowed to render publicly");
     expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_release")');
     expect(publicCatalogSource).toContain('db.rpc("catalog_get_public_taxonomy")');
-    expect(publicCatalogSource).toContain('case "premium-leather-apparel"');
-    expect(publicCatalogSource).toContain("description: safe.description");
+    expect(publicCatalogSource).toContain("resolveBuyerReadyProductContent");
+    expect(publicCatalogSource).toContain("description: content.description");
     expect(publicCatalogSource).toContain("specs: safe.specs");
+    expect(policySource).toContain('case "premium-leather-apparel"');
     expect(PRODUCT_SEO_OVERRIDES["full-grain-leather-belt"].seoTitle).toContain("Custom Leather Belt");
     expect(PRODUCT_SEO_OVERRIDES["premium-leather-bag"].seoTitle).toContain("Custom Leather Bag");
   });
