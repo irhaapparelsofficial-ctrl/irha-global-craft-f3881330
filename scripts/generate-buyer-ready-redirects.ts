@@ -173,6 +173,16 @@ async function main() {
   }
 
   const source = readFileSync(REDIRECTS_PATH, "utf8");
+  const base = stripBlock(stripBlock(source, OLD_START, OLD_END), START, END);
+  const staticRedirects = new Map<string, string>();
+  for (const rawLine of base.split("\n")) {
+    const row = parseRedirect(rawLine.trim());
+    if (!row) continue;
+    const existing = staticRedirects.get(row.from_path);
+    if (existing) throw new Error(`Duplicate static redirect source: ${row.from_path}`);
+    staticRedirects.set(row.from_path, row.to_path);
+  }
+
   const committedRows = [...blockLines(source, OLD_START, OLD_END), ...blockLines(source, START, END)]
     .map(parseRedirect)
     .filter((row): row is RedirectRow => Boolean(row));
@@ -186,6 +196,11 @@ async function main() {
     if (!from) return;
     const to = resolveRedirectTarget(row, validTargets, canonicalBySlug, canonicalByLegacyKey);
     if (!to || from === to) return;
+    const staticTarget = staticRedirects.get(from);
+    if (staticTarget) {
+      if (staticTarget !== to) throw new Error(`Static/generated redirect conflict: ${from} -> ${staticTarget} versus ${to}`);
+      return;
+    }
     redirects.set(from, to);
   };
 
@@ -202,7 +217,6 @@ async function main() {
   }
   if (approvedRows.length < 1258) throw new Error(`Approved redirect pagination is incomplete: ${approvedRows.length}`);
 
-  const base = stripBlock(stripBlock(source, OLD_START, OLD_END), START, END);
   const generated = [
     START,
     `# Generated from ${approvedRows.length} approved aliases and the 254-product canonical manifest.`,
@@ -211,7 +225,7 @@ async function main() {
   ].join("\n");
 
   writeFileSync(REDIRECTS_PATH, `${base}\n\n${generated}\n`);
-  console.log(`Generated ${redirects.size} one-hop redirects from ${approvedRows.length} approved rows with zero localized or dead targets`);
+  console.log(`Generated ${redirects.size} non-overlapping one-hop redirects from ${approvedRows.length} approved rows with zero localized or dead targets`);
 }
 
 main().catch((error) => {
