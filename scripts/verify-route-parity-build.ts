@@ -63,7 +63,19 @@ function taxonomySeo(pathname: string, names: RouteNames) {
   });
 }
 
-async function verifyProduct(product: BuyerReadyCatalogRoute) {
+function expectedRelatedTier(product: BuyerReadyCatalogRoute, products: BuyerReadyCatalogRoute[]) {
+  const candidates = products.filter((item) => item.product_id !== product.product_id);
+  const sameType = candidates.filter((item) => item.main_category_slug === product.main_category_slug
+    && item.audience_slug === product.audience_slug
+    && item.product_type_slug === product.product_type_slug);
+  if (sameType.length) return sameType;
+  const sameAudience = candidates.filter((item) => item.main_category_slug === product.main_category_slug
+    && item.audience_slug === product.audience_slug);
+  if (sameAudience.length) return sameAudience;
+  return candidates.filter((item) => item.main_category_slug === product.main_category_slug);
+}
+
+async function verifyProduct(product: BuyerReadyCatalogRoute, products: BuyerReadyCatalogRoute[]) {
   const file = join(DIST, product.canonical_path.slice(1), "index.html");
   const html = await readFile(file, "utf8");
   const required = [
@@ -81,9 +93,13 @@ async function verifyProduct(product: BuyerReadyCatalogRoute) {
   ];
   for (const token of required) if (!html.includes(token)) throw new Error(`${product.reference_code} final product shell missing: ${token}`);
   if (html.includes('data-irha-rich-route-shell="true"')) throw new Error(`${product.reference_code} product shell was overwritten by generic enrichment`);
-  const groupPrefix = `/products/${product.main_category_slug}/${product.audience_slug}/${product.product_type_slug}/`;
-  const relatedMatches = [...html.matchAll(/<a href="([^"]+)"/g)].map((match) => match[1]).filter((path) => path.startsWith(groupPrefix) && path !== product.canonical_path);
-  if (!relatedMatches.length) throw new Error(`${product.reference_code} final shell has no related canonical product`);
+
+  const expectedPool = new Set(expectedRelatedTier(product, products).map((item) => item.canonical_path));
+  if (!expectedPool.size) throw new Error(`${product.reference_code} has no valid related-product fallback tier`);
+  const relatedMatches = [...html.matchAll(/<a href="([^"]+)"/g)]
+    .map((match) => match[1])
+    .filter((path) => expectedPool.has(path));
+  if (!relatedMatches.length) throw new Error(`${product.reference_code} final shell has no related canonical product from the expected fallback tier`);
 }
 
 async function verifyTaxonomy(pathname: string, names: RouteNames) {
@@ -125,7 +141,7 @@ async function main() {
   if (taxonomy.size !== EXPECTED_TAXONOMY) throw new Error(`Expected ${EXPECTED_TAXONOMY} taxonomy shells; received ${taxonomy.size}`);
   for (const [path, names] of taxonomy) if (names.productCount < 1 || names.children.size < 1) throw new Error(`Empty final taxonomy route: ${path}`);
 
-  await Promise.all(manifest.products.map(verifyProduct));
+  await Promise.all(manifest.products.map((product) => verifyProduct(product, manifest.products)));
   await Promise.all([...taxonomy].map(([path, names]) => verifyTaxonomy(path, names)));
 
   const validTargets = new Set<string>(["/", "/products", ...manifest.products.map((product) => product.canonical_path), ...taxonomy.keys()]);
