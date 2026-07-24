@@ -107,12 +107,20 @@ describe("production convergence barrier", () => {
       resolve(".github/workflows/production-route-parity.yml"),
       "utf8",
     );
-    const barrier = workflow.indexOf("Wait for exact production convergence");
-    const redirectGeneration = workflow.indexOf("generate-buyer-ready-redirects.ts");
-    const crawl = workflow.indexOf("Run complete live production crawl");
+    const barrier = workflow.indexOf("- name: Wait for exact production convergence");
+    const redirectStep = workflow.indexOf(
+      "- name: Generate exact production catalogue and redirect manifests",
+      barrier,
+    );
+    const redirectGeneration = workflow.indexOf(
+      "npx tsx scripts/generate-buyer-ready-redirects.ts",
+      redirectStep,
+    );
+    const crawl = workflow.indexOf("- name: Run complete live production crawl", redirectGeneration);
 
     expect(barrier).toBeGreaterThan(-1);
-    expect(redirectGeneration).toBeGreaterThan(barrier);
+    expect(redirectStep).toBeGreaterThan(barrier);
+    expect(redirectGeneration).toBeGreaterThan(redirectStep);
     expect(crawl).toBeGreaterThan(redirectGeneration);
     expect(workflow).toContain("EXPECTED_SOURCE_SHA");
     expect(workflow).toContain("PRODUCTION_CONVERGENCE_ATTEMPTS");
