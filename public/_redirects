@@ -8,6 +8,22 @@
 /catalog /products 301
 /de/katalog /products 301
 
+# Legacy deep /catalogue/:slug links (still indexed and linked from landing pages).
+# Must redirect at the edge because the worker returns 404 before the SPA route
+# `/catalogue/:slug` (LegacyCatalogueRedirect) can run.
+/catalogue/bavarian-garments /products/bavarian-trachten-wear 301
+/catalogue/lederhosen /products/bavarian-trachten-wear/men/lederhosen 301
+/catalogue/dirndl-dresses /products/bavarian-trachten-wear/women/dirndl-dresses 301
+/catalogue/trachten-accessories /products/bavarian-trachten-wear/accessories 301
+/catalogue/kids-trachten /products/bavarian-trachten-wear/kids 301
+/catalogue/leather-garments /products/premium-leather-apparel 301
+/catalogue/sportswear /products/sportswear 301
+/catalogue/activewear /products/sportswear/fitness-activewear/performance-activewear 301
+/catalogue/streetwear /products/streetwear-activewear 301
+/catalogue/leisurewear /products/leisure-nightwear 301
+/catalogue/nightwear /products/leisure-nightwear 301
+/catalogue/* /products 301
+
 # SPA fallback is intentionally omitted because Pages handles React SPA routes
 # automatically when no top-level 404.html exists.
 /buyer-trust-center /buyer-trust 301
