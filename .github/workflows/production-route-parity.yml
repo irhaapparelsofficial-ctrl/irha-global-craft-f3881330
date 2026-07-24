@@ -11,6 +11,7 @@ on:
       - "scripts/reconcile-related-product-route-findings.ts"
       - "scripts/related-product-policy.ts"
       - "scripts/generate-buyer-ready-catalog-manifest.ts"
+      - "scripts/generate-buyer-ready-redirects.ts"
       - "scripts/patch-supabase-rpc-pagination.mjs"
       - "src/lib/buyerReadyProductContent.ts"
       - "src/test/productionRouteParityCrawler.test.ts"
@@ -108,8 +109,53 @@ jobs:
           npx tsc --noEmit
           npx vitest run src/test/productionRouteParityCrawler.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
 
-      - name: Generate exact production catalogue route manifest
-        run: npx tsx scripts/generate-buyer-ready-catalog-manifest.ts
+      - name: Wait for exact current-main production release
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 60); do
+            if curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+              "$CRAWL_ORIGIN/build.json?route_parity_release=${EXPECTED_SOURCE_SHA::12}-$attempt" \
+              -o /tmp/production-build.json; then
+              if jq -e \
+                --arg repo 'irhaapparelsofficial-ctrl/irha-global-craft-f3881330' \
+                --arg supabase 'pvzjiozismyxqrzmtfbi' \
+                --arg source "$EXPECTED_SOURCE_SHA" \
+                '.repository == $repo and .supabase_project_id == $supabase and .source_commit == $source and .source_identity_state == "verified"' \
+                /tmp/production-build.json >/dev/null; then
+                ready=1
+                echo "Exact current-main production release verified on attempt $attempt"
+                break
+              fi
+            fi
+            echo "Production release identity has not converged yet (attempt $attempt/60)"
+            sleep 10
+          done
+          test "$ready" = "1" || {
+            echo "Production did not converge to exact current main $EXPECTED_SOURCE_SHA"
+            exit 1
+          }
+          cp /tmp/production-build.json "$CRAWL_OUTPUT_DIR/live-build.json"
+
+      - name: Generate exact production route inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsx scripts/generate-buyer-ready-catalog-manifest.ts
+          NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs \
+            npx tsx scripts/generate-buyer-ready-redirects.ts
+          generated_redirects="$(awk '
+            /# BEGIN GENERATED BUYER-READY REDIRECTS/ { inside=1; next }
+            /# END GENERATED BUYER-READY REDIRECTS/ { inside=0 }
+            inside && $0 !~ /^#/ && NF >= 3 { count++ }
+            END { print count + 0 }
+          ' public/_redirects)"
+          test "$generated_redirects" -ge 1258 || {
+            echo "Generated redirect inventory is incomplete: $generated_redirects"
+            exit 1
+          }
+          printf 'generated_redirects=%s\n' "$generated_redirects" >> "$CRAWL_OUTPUT_DIR/baseline.txt"
 
       - name: Run complete live production crawl
         id: crawl
