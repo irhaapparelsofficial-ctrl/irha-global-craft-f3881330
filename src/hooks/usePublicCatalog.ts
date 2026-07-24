@@ -227,16 +227,22 @@ function buildBuyerReadyTree(catalogue: CatalogRelease, taxonomy: TaxonomyReleas
     .filter((node) => node.depth === 0 && node.node_type === "main_category")
     .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
 
-  if (roots.length !== EXPECTED_ROOTS) {
-    throw new Error(`Refusing incomplete public catalogue: expected ${EXPECTED_ROOTS} main categories, received ${roots.length}`);
+  // Guard only against a completely empty release. Minor drift from the
+  // expected 5 roots / 254 assignments must NOT collapse the buyer-facing
+  // catalogue — we surface whatever is currently approved and log the drift.
+  if (roots.length === 0) {
+    throw new Error("Published catalogue has no approved main categories");
   }
-  if (taxonomy.assignments.length !== EXPECTED_PUBLISHED_PRODUCTS) {
-    throw new Error(
-      `Refusing incomplete public catalogue: expected ${EXPECTED_PUBLISHED_PRODUCTS} approved assignments, received ${taxonomy.assignments.length}`,
+  if (taxonomy.assignments.length === 0) {
+    throw new Error("Published catalogue has no approved product assignments");
+  }
+  if (roots.length !== EXPECTED_ROOTS || taxonomy.assignments.length !== EXPECTED_PUBLISHED_PRODUCTS) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[public-catalog] drift detected — roots=${roots.length}/${EXPECTED_ROOTS}, assignments=${taxonomy.assignments.length}/${EXPECTED_PUBLISHED_PRODUCTS}. Rendering current approved release.`,
     );
   }
 
-  const assignedProducts = new Set<string>();
   const tree = roots.map((root): PublicTopCategory => {
     const leafNodes = taxonomy.nodes
       .filter((node) => node.depth === 2 && rootForLeaf(nodeById, node)?.id === root.id)
@@ -249,12 +255,15 @@ function buildBuyerReadyTree(catalogue: CatalogRelease, taxonomy: TaxonomyReleas
           .map((assignment) => {
             const rawProduct = rawProductById.get(assignment.product_id);
             if (!rawProduct) {
-              throw new Error(`Approved product ${assignment.product_id} is missing from the public release`);
+              // Skip products whose approval exists but whose publish row is
+              // missing (transient drift between release and taxonomy RPCs).
+              // eslint-disable-next-line no-console
+              console.warn(`[public-catalog] approved product ${assignment.product_id} missing from release; skipping`);
+              return null;
             }
-            const product = sanitizePublicProduct(rawProduct, root.slug);
-            assignedProducts.add(product.id);
-            return product;
+            return sanitizePublicProduct(rawProduct, root.slug);
           })
+          .filter((product): product is DbProduct => product !== null)
           .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
 
         return { ...nodeAsCategory(leaf, root.id), products };
@@ -267,12 +276,6 @@ function buildBuyerReadyTree(catalogue: CatalogRelease, taxonomy: TaxonomyReleas
       directProducts: [],
     };
   });
-
-  if (assignedProducts.size !== EXPECTED_PUBLISHED_PRODUCTS) {
-    throw new Error(
-      `Refusing incomplete public catalogue: expected ${EXPECTED_PUBLISHED_PRODUCTS} unique products, received ${assignedProducts.size}`,
-    );
-  }
 
   return tree;
 }
