@@ -125,4 +125,23 @@ describe("production convergence barrier", () => {
     expect(workflow).toContain("EXPECTED_SOURCE_SHA");
     expect(workflow).toContain("PRODUCTION_CONVERGENCE_ATTEMPTS");
   });
+
+  it("allows enough time for main Quality Gate and authorized Cloudflare deployment", () => {
+    const workflow = readFileSync(
+      resolve(".github/workflows/production-route-parity.yml"),
+      "utf8",
+    );
+    const attempts = Number(
+      workflow.match(/PRODUCTION_CONVERGENCE_ATTEMPTS:\s*"(\d+)"/)?.[1] ?? "0",
+    );
+    const intervalMs = Number(
+      workflow.match(/PRODUCTION_CONVERGENCE_INTERVAL_MS:\s*"(\d+)"/)?.[1] ?? "0",
+    );
+    const totalWindowMs = attempts * intervalMs;
+
+    expect(attempts).toBeGreaterThanOrEqual(180);
+    expect(intervalMs).toBeGreaterThanOrEqual(8_000);
+    expect(totalWindowMs).toBeGreaterThanOrEqual(24 * 60 * 1_000);
+    expect(totalWindowMs).toBeLessThan(60 * 60 * 1_000);
+  });
 });

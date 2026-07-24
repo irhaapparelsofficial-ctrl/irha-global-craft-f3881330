@@ -37,7 +37,7 @@ env:
   CRAWL_OUTPUT_DIR: artifacts/production-route-parity
   SOURCE_SHA: ${{ github.sha }}
   STATUS_CONTEXT: Irha Production Route Parity
-  PRODUCTION_CONVERGENCE_ATTEMPTS: "45"
+  PRODUCTION_CONVERGENCE_ATTEMPTS: "180"
   PRODUCTION_CONVERGENCE_INTERVAL_MS: "8000"
 
 jobs:
