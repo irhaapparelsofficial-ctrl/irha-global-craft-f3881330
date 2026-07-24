@@ -75,14 +75,14 @@ jobs:
           npm run verify:secrets
           npm run verify:migrations
           npx tsc --noEmit
-          npx vitest run src/test/productionRouteParityCrawler.test.ts --reporter=verbose
+          npx vitest run src/test/productionRouteParityCrawler.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
 
       - name: Run complete live production crawl
         id: crawl
         shell: bash
         run: |
           set +e
-          npx tsx scripts/crawl-production-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/run.log"
+          NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/crawl-production-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/run.log"
           crawl_code="${PIPESTATUS[0]}"
           echo "$crawl_code" > /tmp/production-route-parity-exit-code
           echo "crawl_code=$crawl_code" >> "$GITHUB_OUTPUT"
