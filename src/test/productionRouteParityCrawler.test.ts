@@ -88,7 +88,7 @@ describe("production route parity completion", () => {
     expect(verifier).toContain("names.productCount < 1 || names.children.size < 1");
   });
 
-  it("paginates redirects and prohibits localized or dead targets", () => {
+  it("paginates redirects and prohibits localized, duplicate or dead targets", () => {
     const generator = read("scripts/generate-buyer-ready-redirects.ts");
     const redirects = read("public/_redirects");
     const workerPatch = read("scripts/patch-worker-route-parity.mjs");
@@ -97,7 +97,9 @@ describe("production route parity completion", () => {
     expect(generator).toContain("localizedLegacyKey");
     expect(generator).toContain('to.startsWith("/intl/")');
     expect(generator).toContain("approvedRows.length < 1258");
-    expect(redirects).toContain("/products/leisure-nightwear/women/robes/womens-plush-robe 301");
+    expect(generator).toContain("/products/leisure-nightwear/women/robes/womens-plush-robe");
+    expect(generator).toContain("Static/generated redirect conflict");
+    expect(redirects).not.toContain("/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe");
     expect(redirects).toContain("/products/streetwear-activewear/unisex/tops/oversized-pullover-hoodie 301");
     expect(redirects).not.toContain("/products/leisure-nightwear/plush-bathrobe-sleep-robe 301");
     expect(workerPatch).toContain("womens-plush-robe");
