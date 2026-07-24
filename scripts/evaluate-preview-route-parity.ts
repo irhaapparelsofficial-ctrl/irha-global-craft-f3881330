@@ -38,18 +38,6 @@ type CrawlReport = {
 };
 type Manifest = { productCount: number; products: BuyerReadyCatalogRoute[] };
 
-function relatedTier(product: BuyerReadyCatalogRoute, products: BuyerReadyCatalogRoute[]) {
-  const candidates = products.filter((item) => item.product_id !== product.product_id);
-  const sameType = candidates.filter((item) => item.main_category_slug === product.main_category_slug
-    && item.audience_slug === product.audience_slug
-    && item.product_type_slug === product.product_type_slug);
-  if (sameType.length) return sameType;
-  const sameAudience = candidates.filter((item) => item.main_category_slug === product.main_category_slug
-    && item.audience_slug === product.audience_slug);
-  if (sameAudience.length) return sameAudience;
-  return candidates.filter((item) => item.main_category_slug === product.main_category_slug);
-}
-
 const report = JSON.parse(await readFile(rawPath, "utf8")) as CrawlReport;
 const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as Manifest;
 
@@ -73,7 +61,6 @@ if (report.summary.redirectsFailed || report.summary.functionalFailed || report.
 }
 
 const canonicalByPath = new Map(report.canonicalResults.map((item) => [item.path, item]));
-const productByPath = new Map(manifest.products.map((item) => [item.canonical_path, item]));
 const ignored: Finding[] = [];
 const blocking: Finding[] = [];
 
@@ -85,18 +72,6 @@ for (const finding of report.findings) {
     if (previewHeaderNoindex && !documentNoindex) {
       ignored.push(finding);
       continue;
-    }
-  }
-
-  if (finding.code === "missing_related_product_link") {
-    const page = canonicalByPath.get(finding.path);
-    const product = productByPath.get(finding.path);
-    if (page && product) {
-      const allowed = new Set(relatedTier(product, manifest.products).map((item) => item.canonical_path));
-      if (page.internalLinks.some((link) => allowed.has(link))) {
-        ignored.push(finding);
-        continue;
-      }
     }
   }
 
@@ -133,7 +108,7 @@ await writeFile(summaryPath, [
   `- Products: ${report.inventory.dynamicProducts}`,
   `- Taxonomy routes: ${report.inventory.dynamicTaxonomy}`,
   `- Redirects verified: ${report.inventory.redirectsVerified}`,
-  `- Ignored preview-platform noindex/valid-related findings: ${ignored.length}`,
+  `- Ignored preview-platform noindex findings: ${ignored.length}`,
   `- Blocking findings: critical ${blockingCounts.critical}, high ${blockingCounts.high}, medium ${blockingCounts.medium}, low ${blockingCounts.low}`,
   "",
   ...(blocking.length
@@ -142,5 +117,5 @@ await writeFile(summaryPath, [
   "",
 ].join("\n"), "utf8");
 
-console.log(`Preview evaluation ignored ${ignored.length} context-proven findings and retained ${blocking.length} findings`);
+console.log(`Preview evaluation ignored ${ignored.length} preview-platform findings and retained ${blocking.length} findings`);
 if (blockingCounts.critical || blockingCounts.high) process.exitCode = 1;
