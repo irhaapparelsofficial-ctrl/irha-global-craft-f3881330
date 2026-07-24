@@ -109,7 +109,7 @@ export async function waitForProductionConvergence({
   const normalizedOrigin = origin.replace(/\/$/, "");
   const normalizedExpected = normalizeSha(expectedSha);
   if (!normalizedExpected) throw new Error(`Invalid expected production SHA: ${expectedSha}`);
-  if (!Number.isInteger(attempts) || attempts < 1 || attempts > 120) {
+  if (!Number.isInteger(attempts) || attempts < 1 || attempts > 180) {
     throw new Error(`Invalid convergence attempt count: ${attempts}`);
   }
   if (!Number.isFinite(intervalMs) || intervalMs < 0 || intervalMs > 60_000) {
