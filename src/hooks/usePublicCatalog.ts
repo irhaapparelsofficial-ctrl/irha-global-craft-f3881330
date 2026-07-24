@@ -630,7 +630,12 @@ export async function loadPublicCatalogTree({
 
 async function fetchTree(): Promise<PublicTopCategory[]> {
   const db = supabase as unknown as { rpc: (name: string) => Promise<RpcResult> };
-  return loadPublicCatalogTree({ rpc: (name) => db.rpc(name) });
+  return loadPublicCatalogTree({
+    rpc: (name) =>
+      name === "catalog_get_public_release"
+        ? db.rpc("catalog_get_public_release")
+        : db.rpc("catalog_get_public_taxonomy"),
+  });
 }
 
 export function usePublicCatalogTree() {
