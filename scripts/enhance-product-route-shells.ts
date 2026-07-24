@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { BuyerReadyCatalogRoute } from "./generate-buyer-ready-catalog-manifest";
+import { relatedCandidates } from "./related-product-policy";
 
 const DIST = resolve("dist");
 const MANIFEST = join(DIST, "catalog-route-manifest.json");
@@ -10,34 +11,6 @@ type Payload = { schemaVersion: number; productCount: number; products: BuyerRea
 
 function escapeHtml(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-
-function sameType(left: BuyerReadyCatalogRoute, right: BuyerReadyCatalogRoute) {
-  return left.main_category_slug === right.main_category_slug
-    && left.audience_slug === right.audience_slug
-    && left.product_type_slug === right.product_type_slug;
-}
-
-function sameAudience(left: BuyerReadyCatalogRoute, right: BuyerReadyCatalogRoute) {
-  return left.main_category_slug === right.main_category_slug
-    && left.audience_slug === right.audience_slug;
-}
-
-export function relatedCandidates(products: BuyerReadyCatalogRoute[], product: BuyerReadyCatalogRoute) {
-  const candidates = products.filter((item) => item.product_id !== product.product_id);
-  const tiers = [
-    candidates.filter((item) => sameType(item, product)),
-    candidates.filter((item) => sameAudience(item, product)),
-    candidates.filter((item) => item.main_category_slug === product.main_category_slug),
-  ];
-  const selected = new Map<string, BuyerReadyCatalogRoute>();
-  for (const tier of tiers) {
-    for (const item of tier) {
-      selected.set(item.product_id, item);
-      if (selected.size === 4) return [...selected.values()];
-    }
-  }
-  return [...selected.values()];
 }
 
 function relatedSection(product: BuyerReadyCatalogRoute, related: BuyerReadyCatalogRoute[]) {
