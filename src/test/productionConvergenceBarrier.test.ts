@@ -1,0 +1,120 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  classifyBuildIdentity,
+  waitForProductionConvergence,
+} from "../../scripts/wait-for-production-convergence";
+
+const EXPECTED_SHA = "9407644564af227eab0ea61e00d5e8c97a436efb";
+const PREVIOUS_SHA = "b5bf60a06a7fd15cb9d97d4991e11166c4da75da";
+
+function jsonResponse(payload: unknown, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+describe("production convergence barrier", () => {
+  it("accepts only the exact verified production commit", () => {
+    expect(
+      classifyBuildIdentity(
+        {
+          source_commit: EXPECTED_SHA,
+          source_identity_state: "verified",
+        },
+        EXPECTED_SHA,
+      ),
+    ).toMatchObject({
+      state: "verified_match",
+      sourceCommit: EXPECTED_SHA,
+      sourceIdentityState: "verified",
+    });
+  });
+
+  it("classifies an older verified deployment as still propagating", () => {
+    expect(
+      classifyBuildIdentity(
+        {
+          source_commit: PREVIOUS_SHA,
+          source_identity_state: "verified",
+        },
+        EXPECTED_SHA,
+      ),
+    ).toMatchObject({
+      state: "deployment_propagating",
+      sourceCommit: PREVIOUS_SHA,
+      sourceIdentityState: "verified",
+    });
+  });
+
+  it("rejects missing or unverified build identity", () => {
+    expect(classifyBuildIdentity({}, EXPECTED_SHA).state).toBe("identity_missing");
+    expect(
+      classifyBuildIdentity(
+        {
+          source_commit: EXPECTED_SHA,
+          source_identity_state: "unverified",
+        },
+        EXPECTED_SHA,
+      ).state,
+    ).toBe("identity_unverified");
+  });
+
+  it("waits through an older deployment and succeeds only after exact convergence", async () => {
+    const responses = [
+      jsonResponse({ source_commit: PREVIOUS_SHA, source_identity_state: "verified" }),
+      jsonResponse({ source_commit: EXPECTED_SHA, source_identity_state: "verified" }),
+    ];
+    const fetchImpl = vi.fn(async () => responses.shift() ?? responses.at(-1)!);
+    const sleep = vi.fn(async () => undefined);
+
+    const result = await waitForProductionConvergence({
+      origin: "https://irhaapparels.com",
+      expectedSha: EXPECTED_SHA,
+      attempts: 2,
+      intervalMs: 0,
+      fetchImpl: fetchImpl as typeof fetch,
+      sleep,
+      log: () => undefined,
+    });
+
+    expect(result.state).toBe("verified_match");
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails closed when production never reaches the triggering commit", async () => {
+    const fetchImpl = vi.fn(async () =>
+      jsonResponse({ source_commit: PREVIOUS_SHA, source_identity_state: "verified" }),
+    );
+
+    await expect(
+      waitForProductionConvergence({
+        origin: "https://irhaapparels.com",
+        expectedSha: EXPECTED_SHA,
+        attempts: 2,
+        intervalMs: 0,
+        fetchImpl: fetchImpl as typeof fetch,
+        sleep: async () => undefined,
+        log: () => undefined,
+      }),
+    ).rejects.toThrow(`Production did not converge to ${EXPECTED_SHA}`);
+  });
+
+  it("keeps convergence and generated redirect parity ahead of the live crawl", () => {
+    const workflow = readFileSync(
+      resolve(".github/workflows/production-route-parity.yml"),
+      "utf8",
+    );
+    const barrier = workflow.indexOf("Wait for exact production convergence");
+    const redirectGeneration = workflow.indexOf("generate-buyer-ready-redirects.ts");
+    const crawl = workflow.indexOf("Run complete live production crawl");
+
+    expect(barrier).toBeGreaterThan(-1);
+    expect(redirectGeneration).toBeGreaterThan(barrier);
+    expect(crawl).toBeGreaterThan(redirectGeneration);
+    expect(workflow).toContain("EXPECTED_SOURCE_SHA");
+    expect(workflow).toContain("PRODUCTION_CONVERGENCE_ATTEMPTS");
+  });
+});
