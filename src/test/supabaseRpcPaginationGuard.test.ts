@@ -46,4 +46,16 @@ describe("Supabase set-returning RPC pagination guard", () => {
     expect(shim).toContain("response.clone().json()");
     expect(shim).not.toContain('return new Response("[]")');
   });
+
+  it("retries only identifiable immutable-preview propagation failures", () => {
+    const shim = read("scripts/patch-supabase-rpc-pagination.mjs");
+
+    expect(shim).toContain("const PREVIEW_PROPAGATION_RETRIES = 6");
+    expect(shim).toContain('CRAWL_ORIGIN !== CANONICAL_ORIGIN');
+    expect(shim).toContain('method === "GET" || method === "HEAD"');
+    expect(shim).toContain('/deployment\\s+not\\s+found/i');
+    expect(shim).toContain("response.status !== 404");
+    expect(shim).toContain("response.clone().text()");
+    expect(shim).not.toContain("response.status >= 400");
+  });
 });
