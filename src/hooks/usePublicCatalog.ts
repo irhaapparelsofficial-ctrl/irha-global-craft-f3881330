@@ -1,4 +1,5 @@
 // Buyer-facing catalogue data must come from a complete approved production release.
+// No local, supplemental, demo or legacy catalogue is allowed to render publicly.
 // Live RPC data is preferred; the build-generated verified manifest is the only runtime fallback.
 
 import { useQuery } from "@tanstack/react-query";
