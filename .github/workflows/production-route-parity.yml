@@ -75,7 +75,10 @@ jobs:
           npm run verify:secrets
           npm run verify:migrations
           npx tsc --noEmit
-          npx vitest run src/test/productionRouteParityCrawler.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
+          npx vitest run src/test/productionRouteParityCrawler.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
+
+      - name: Generate exact production catalogue route manifest
+        run: npx tsx scripts/generate-buyer-ready-catalog-manifest.ts
 
       - name: Run complete live production crawl
         id: crawl
@@ -84,9 +87,45 @@ jobs:
           set +e
           NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/crawl-production-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/run.log"
           crawl_code="${PIPESTATUS[0]}"
-          echo "$crawl_code" > /tmp/production-route-parity-exit-code
+          echo "$crawl_code" > /tmp/production-route-parity-raw-exit-code
           echo "crawl_code=$crawl_code" >> "$GITHUB_OUTPUT"
           exit 0
+
+      - name: Reconcile related-product route evidence
+        id: reconciliation
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          npx tsx scripts/reconcile-related-product-route-findings.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/reconciliation.log"
+          reconciliation_code="${PIPESTATUS[0]}"
+          echo "$reconciliation_code" > /tmp/production-route-parity-reconciliation-exit-code
+          echo "reconciliation_code=$reconciliation_code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Calculate authoritative production crawl result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$CRAWL_OUTPUT_DIR/production-route-parity.json" || {
+            echo "Production route report is missing"
+            exit 1
+          }
+          test "$(cat /tmp/production-route-parity-reconciliation-exit-code 2>/dev/null || printf '1')" = "0" || {
+            echo "Related-product route evidence could not be reconciled safely"
+            exit 1
+          }
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = `${process.env.CRAWL_OUTPUT_DIR}/production-route-parity.json`;
+          const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const critical = Number(report?.summary?.findings?.critical ?? -1);
+          const high = Number(report?.summary?.findings?.high ?? -1);
+          if (critical < 0 || high < 0) throw new Error('Production route finding counts are missing');
+          fs.writeFileSync('/tmp/production-route-parity-exit-code', critical || high ? '1\n' : '0\n');
+          console.log(`Authoritative production findings: critical ${critical}, high ${high}`);
+          NODE
 
       - name: Publish crawl summary
         if: always()
@@ -96,7 +135,8 @@ jobs:
             echo "## Production Route Parity"
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Origin: \`$CRAWL_ORIGIN\`"
-            echo "- Crawl exit code: \`${{ steps.crawl.outputs.crawl_code || 'not-run' }}\`"
+            echo "- Raw crawl exit code: \`${{ steps.crawl.outputs.crawl_code || 'not-run' }}\`"
+            echo "- Related-policy reconciliation exit: \`${{ steps.reconciliation.outputs.reconciliation_code || 'not-run' }}\`"
             echo
             if [ -s "$CRAWL_OUTPUT_DIR/summary.md" ]; then
               cat "$CRAWL_OUTPUT_DIR/summary.md"
@@ -124,7 +164,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s /tmp/production-route-parity-exit-code || {
-            echo "Production crawl did not produce an exit code"
+            echo "Production crawl did not produce an authoritative exit code"
             exit 1
           }
           crawl_code="$(cat /tmp/production-route-parity-exit-code)"

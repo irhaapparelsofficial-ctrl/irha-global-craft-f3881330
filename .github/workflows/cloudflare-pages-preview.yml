@@ -11,6 +11,8 @@ on:
       - ".github/workflows/production-route-parity.yml"
       - "scripts/crawl-production-route-parity.ts"
       - "scripts/evaluate-preview-route-parity.ts"
+      - "scripts/reconcile-related-product-route-findings.ts"
+      - "scripts/related-product-policy.ts"
       - "scripts/resolve-cloudflare-preview-deployment.mjs"
       - "scripts/wait-for-cloudflare-preview-propagation.ts"
       - "scripts/generate-buyer-ready-catalog-manifest.ts"
@@ -31,6 +33,7 @@ on:
       - "src/pages/Home.tsx"
       - "src/components/HeroCarousel.tsx"
       - "src/test/productionRouteParityCrawler.test.ts"
+      - "src/test/relatedProductRouteParity.test.ts"
       - "src/test/supabaseRpcPaginationGuard.test.ts"
       - "src/test/cloudflarePreviewPropagation.test.ts"
       - "package.json"
@@ -213,6 +216,9 @@ jobs:
           echo "$parity_code" > /tmp/preview-route-parity-raw-exit-code
           echo "parity_code=$parity_code" >> "$GITHUB_OUTPUT"
           exit 0
+
+      - name: Reconcile related-product route evidence
+        run: npx tsx scripts/reconcile-related-product-route-findings.ts
 
       - name: Evaluate preview-only parity context
         id: evaluation

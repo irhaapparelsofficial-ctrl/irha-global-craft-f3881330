@@ -171,8 +171,10 @@ describe("production route parity completion", () => {
     const workflow = read(previewWorkflowPath);
     const resolver = read("scripts/resolve-cloudflare-preview-deployment.mjs");
     const evaluator = read("scripts/evaluate-preview-route-parity.ts");
+    const reconciliation = read("scripts/reconcile-related-product-route-findings.ts");
     expect(workflow).toContain("Resolve immutable preview deployment URL");
     expect(workflow).toContain("scripts/crawl-production-route-parity.ts");
+    expect(workflow).toContain("scripts/reconcile-related-product-route-findings.ts");
     expect(workflow).toContain("scripts/evaluate-preview-route-parity.ts");
     expect(workflow).toContain("PREVIEW_ALIAS_URL");
     expect(workflow).toContain("Context-safe evaluation exit");
@@ -180,7 +182,9 @@ describe("production route parity completion", () => {
     expect(resolver).toContain("metadata.branch === branch");
     expect(evaluator).toContain("Preview evaluator refuses to run against the production canonical origin");
     expect(evaluator).toContain("sitemap_noindex");
-    expect(evaluator).toContain("missing_related_product_link");
+    expect(evaluator).not.toContain('finding.code === "missing_related_product_link"');
+    expect(reconciliation).toContain("missing_related_product_link");
+    expect(reconciliation).toContain("relatedCandidates(manifest.products, product)");
     expect(evaluator).toContain("if (blockingCounts.critical || blockingCounts.high)");
     expect(workflow).toContain("CANONICAL_ORIGIN: https://irhaapparels.com");
     expect(workflow).toContain("actions/upload-artifact@v4");
