@@ -17,8 +17,6 @@
 /shipping-returns /resources 301
 /privacy /privacy-policy 301
 /terms /terms-of-service 301
-/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe /products/leisure-nightwear/women/robes/womens-plush-robe 301
-/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe/ /products/leisure-nightwear/women/robes/womens-plush-robe 301
 
 # Consolidate legacy category and product URLs into the current public taxonomy.
 /products/bavarian-garments /products/bavarian-trachten-wear 301
