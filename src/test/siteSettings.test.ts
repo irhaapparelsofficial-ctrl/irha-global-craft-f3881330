@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
 import {
   DEFAULT_GLOBAL_SITE_SETTINGS,
   normalizeGlobalSiteSettings,
@@ -12,7 +13,7 @@ describe("global site settings", () => {
     expect(DEFAULT_GLOBAL_SITE_SETTINGS.brand.email).toBe("info@irhaapparels.com");
   });
 
-  it("rejects unsafe logo and navigation protocols", () => {
+  it("rejects unsafe identity and navigation protocols", () => {
     const value = normalizeGlobalSiteSettings({
       brand: { ...DEFAULT_GLOBAL_SITE_SETTINGS.brand, logoUrl: "javascript:alert(1)" },
       navigation: {
@@ -20,7 +21,8 @@ describe("global site settings", () => {
         main: [{ label: "Unsafe", href: "https://evil.example", enabled: true }],
       },
     });
-    expect(value.brand.logoUrl).toBe("");
+    expect(value.brand.logoUrl).toBe("/irha-brand-mark.svg");
+    expect(value.brand.logoUrl).toBe(new URL(PUBLIC_IDENTITY.logoUrl).pathname);
     expect(value.navigation.main[0].href).toBe("/");
   });
 

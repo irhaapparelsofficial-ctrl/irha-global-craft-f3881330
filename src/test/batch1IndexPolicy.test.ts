@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
+import { DEFAULT_GLOBAL_SITE_SETTINGS, normalizeGlobalSiteSettings } from "@/lib/siteSettings";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -17,16 +19,20 @@ describe("Batch 1 public index cleanup", () => {
     expect(policy).toContain("/blog/fob-sialkot-vs-cif-pricing-explained");
   });
 
-  it("locks the verified domain email into public HTML", () => {
+  it("locks the verified domain email into public identity and HTML policy", () => {
     const policy = read("scripts/enforce-public-index-policy.mjs");
     const constants = read("src/lib/constants.ts");
-    const settings = read("src/lib/siteSettings.ts");
+    const normalized = normalizeGlobalSiteSettings({
+      brand: { ...DEFAULT_GLOBAL_SITE_SETTINGS.brand, email: "other@example.com" },
+    });
 
     expect(policy).toContain('const OWNER_EMAIL = "irhaapparelsofficial@gmail.com"');
     expect(policy).toContain('const DOMAIN_EMAIL = "info@irhaapparels.com"');
     expect(policy).toContain("Owner Gmail leaked into public HTML");
     expect(constants).toContain('email: "info@irhaapparels.com"');
-    expect(settings).toContain('email: "info@irhaapparels.com"');
+    expect(PUBLIC_IDENTITY.email).toBe("info@irhaapparels.com");
+    expect(DEFAULT_GLOBAL_SITE_SETTINGS.brand.email).toBe(PUBLIC_IDENTITY.email);
+    expect(normalized.brand.email).toBe(PUBLIC_IDENTITY.email);
   });
 
   it("returns real 404s for missing published route assets instead of the homepage", () => {

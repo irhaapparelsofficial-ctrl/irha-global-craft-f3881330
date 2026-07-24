@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+  PUBLIC_IDENTITY,
+  buildCanonicalOrganizationSchema,
+  buildCanonicalWebsiteSchema,
+} from "@/lib/publicIdentity.mjs";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -8,9 +13,25 @@ describe("Google brand visibility controls", () => {
   it("strengthens the exact Irha Apparels homepage entity signals during every build", () => {
     const ensureHome = read("scripts/ensure-home-structured-data.mjs");
     const patch = read("scripts/strengthen-brand-search-signals.mjs");
+    const organization = buildCanonicalOrganizationSchema();
+    const website = buildCanonicalWebsiteSchema();
 
+    expect(ensureHome).toContain('from "../src/lib/publicIdentity.mjs"');
+    expect(ensureHome).toContain('data-irha-static-site-identity="true"');
     expect(ensureHome).toContain('await import("./strengthen-brand-search-signals.mjs")');
-    expect(ensureHome).toContain('alternateName: "Irha Apparels Sialkot"');
+    expect(ensureHome).not.toContain("alternateName");
+    expect(organization).toMatchObject({
+      "@id": PUBLIC_IDENTITY.organizationId,
+      name: PUBLIC_IDENTITY.name,
+      logo: PUBLIC_IDENTITY.logoUrl,
+      email: PUBLIC_IDENTITY.email,
+      telephone: PUBLIC_IDENTITY.telephone,
+      sameAs: PUBLIC_IDENTITY.sameAs,
+    });
+    expect(website).toMatchObject({
+      "@id": PUBLIC_IDENTITY.websiteId,
+      publisher: { "@id": PUBLIC_IDENTITY.organizationId },
+    });
     expect(patch).toContain("Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan");
     expect(patch).toContain("Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers");
     expect(patch).toContain("/products/bavarian-trachten-wear");
