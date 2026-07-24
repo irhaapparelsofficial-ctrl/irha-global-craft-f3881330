@@ -7,8 +7,6 @@ import {
   ORGANIZATION_ID,
   SITE_URL,
   WEBSITE_ID,
-  organizationSchema,
-  websiteSchema,
 } from "@/lib/seoSchema";
 
 const HOME_TITLE = "Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan";
@@ -22,21 +20,17 @@ const BuyerDecisionSection = lazy(() => import("@/components/sections/BuyerDecis
 const StartProgramCTA = lazy(() => import("@/components/sections/StartProgramCTA"));
 
 export default function Home() {
-  const jsonLd = [
-    organizationSchema,
-    websiteSchema,
-    {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "@id": `${SITE_URL}/#webpage`,
-      url: `${SITE_URL}/`,
-      name: HOME_TITLE,
-      description: HOME_DESCRIPTION,
-      isPartOf: { "@id": WEBSITE_ID },
-      about: { "@id": ORGANIZATION_ID },
-      inLanguage: "en",
-    },
-  ];
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${SITE_URL}/#webpage`,
+    url: `${SITE_URL}/`,
+    name: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORGANIZATION_ID },
+    inLanguage: "en",
+  };
 
   return (
     <>

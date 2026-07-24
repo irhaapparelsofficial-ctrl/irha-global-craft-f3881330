@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 import defaultSocialImage from "@/assets/banners/products-flatlay.jpg";
-import { SITE_URL } from "@/lib/seoSchema";
+import { ORGANIZATION_ID, SITE_URL } from "@/lib/seoSchema";
+import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
 import { usePublicPageTools } from "@/hooks/usePublicContent";
 import { shouldNoIndexCategorySearchParams } from "@/lib/categoryIndexing";
 
@@ -44,8 +45,25 @@ function ogLocale(locale: string) {
   return locale.replace("-", "_");
 }
 
+export function normalizeOrganizationReferences(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(normalizeOrganizationReferences);
+  if (!value || typeof value !== "object") return value;
+
+  const source = value as Record<string, unknown>;
+  const type = source["@type"];
+  const isIrhaOrganization =
+    type === "Organization" &&
+    (source["@id"] === ORGANIZATION_ID || source.name === PUBLIC_IDENTITY.name);
+
+  if (isIrhaOrganization) return { "@id": ORGANIZATION_ID };
+
+  return Object.fromEntries(
+    Object.entries(source).map(([key, child]) => [key, normalizeOrganizationReferences(child)]),
+  );
+}
+
 function safeJson(value: object) {
-  return JSON.stringify(value).replace(/</g, "\u003c");
+  return JSON.stringify(normalizeOrganizationReferences(value)).replace(/</g, "\u003c");
 }
 
 function taxonomyTranslationsReleased() {
@@ -98,13 +116,8 @@ export default function SEO({
         description: effectiveDescription,
         image: [ogImage],
         url,
-        brand: { "@type": "Brand", name: "Irha Apparels" },
-        manufacturer: {
-          "@type": "Organization",
-          "@id": `${SITE_URL}/#organization`,
-          name: "Irha Apparels",
-          url: SITE_URL,
-        },
+        brand: { "@type": "Brand", name: PUBLIC_IDENTITY.name },
+        manufacturer: { "@id": ORGANIZATION_ID },
         category: "Custom B2B apparel manufacturing",
         additionalProperty: [
           { "@type": "PropertyValue", name: "Program", value: "OEM, ODM and private label" },
@@ -151,15 +164,15 @@ export default function SEO({
       <meta property="og:url" content={url} />
       <meta property="og:type" content={type} />
       <meta property="og:locale" content={ogLocale(locale)} />
-      <meta property="og:site_name" content="Irha Apparels" />
+      <meta property="og:site_name" content={PUBLIC_IDENTITY.name} />
       <meta property="og:image" content={ogImage} />
-      <meta property="og:image:alt" content={`${effectiveTitle} — Irha Apparels`} />
+      <meta property="og:image:alt" content={`${effectiveTitle} — ${PUBLIC_IDENTITY.name}`} />
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={effectiveTitle} />
       <meta name="twitter:description" content={effectiveDescription} />
       <meta name="twitter:image" content={ogImage} />
-      <meta name="twitter:image:alt" content={`${effectiveTitle} — Irha Apparels`} />
+      <meta name="twitter:image:alt" content={`${effectiveTitle} — ${PUBLIC_IDENTITY.name}`} />
 
       {schemas.map((schema, index) => (
         <script key={index} type="application/ld+json">

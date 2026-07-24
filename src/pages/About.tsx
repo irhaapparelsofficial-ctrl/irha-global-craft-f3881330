@@ -3,13 +3,14 @@ import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import manufacturingImg from "@/assets/manufacturing.jpg";
 import factoryCinematic from "@/assets/banners/factory-cinematic.jpg";
 import { Link } from "react-router-dom";
-import { Factory, MessageCircle, PackageCheck } from "lucide-react";
+import { Clock3, Factory, Mail, MapPin, MessageCircle, PackageCheck, Phone, UserRound } from "lucide-react";
 import {
   ORGANIZATION_ID,
   SITE_URL,
   WEBSITE_ID,
   breadcrumbSchema,
 } from "@/lib/seoSchema";
+import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
 
 const principles = [
   {
@@ -134,7 +135,28 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-24 md:py-32 bg-secondary/40 border-y border-border/60">
+      <section className="py-20 md:py-24 border-y border-border/60 bg-card/20" aria-labelledby="public-accountability-title">
+        <div className="container-luxe grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-start">
+          <div>
+            <p className="eyebrow mb-4">Public accountability</p>
+            <h2 id="public-accountability-title" className="font-display text-4xl md:text-5xl leading-[1.05]">
+              A named contact for <span className="text-gold italic">business buyers</span>.
+            </h2>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-foreground/65">
+              This contact block identifies the public business representative for Irha Apparels. It does not state legal ownership or registration status.
+            </p>
+          </div>
+          <div className="grid gap-px border border-border/60 bg-border/60 sm:grid-cols-2">
+            <AccountabilityItem Icon={UserRound} label="Responsible person" value={PUBLIC_IDENTITY.responsiblePerson.name} note={`${PUBLIC_IDENTITY.responsiblePerson.title}, ${PUBLIC_IDENTITY.name}`} />
+            <AccountabilityItem Icon={MapPin} label="Public location" value={PUBLIC_IDENTITY.address.display} note={PUBLIC_IDENTITY.availability.appointmentPolicy} />
+            <AccountabilityItem Icon={Phone} label="Telephone / WhatsApp" value={PUBLIC_IDENTITY.telephone} href={`tel:${PUBLIC_IDENTITY.telephoneHref}`} />
+            <AccountabilityItem Icon={Mail} label="Business email" value={PUBLIC_IDENTITY.email} href={`mailto:${PUBLIC_IDENTITY.email}`} />
+            <AccountabilityItem Icon={Clock3} label="Business availability" value={PUBLIC_IDENTITY.availability.days} note={PUBLIC_IDENTITY.availability.hours} className="sm:col-span-2" />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24 md:py-32 bg-secondary/40 border-b border-border/60">
         <div className="container-luxe grid md:grid-cols-2 gap-px bg-border/60 border border-border/60">
           {principles.map(({ Icon, title, body }) => (
             <article key={title} className="bg-background p-8 md:p-10">
@@ -160,5 +182,30 @@ export default function About() {
         </div>
       </section>
     </>
+  );
+}
+
+function AccountabilityItem({
+  Icon,
+  label,
+  value,
+  note,
+  href,
+  className = "",
+}: {
+  Icon: typeof UserRound;
+  label: string;
+  value: string;
+  note?: string;
+  href?: string;
+  className?: string;
+}) {
+  const content = <span className="font-display text-2xl text-foreground break-words">{value}</span>;
+  return (
+    <article className={`bg-background p-6 md:p-7 ${className}`}>
+      <div className="flex items-center gap-3 text-primary"><Icon size={18} /><p className="text-[10px] uppercase tracking-[0.22em]">{label}</p></div>
+      <div className="mt-4">{href ? <a href={href} className="hover:text-primary transition-colors">{content}</a> : content}</div>
+      {note && <p className="mt-2 text-xs leading-5 text-foreground/55">{note}</p>}
+    </article>
   );
 }

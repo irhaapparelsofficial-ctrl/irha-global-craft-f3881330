@@ -1,3 +1,5 @@
+import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
+
 export const GLOBAL_SITE_SETTINGS_KEY = "site.global.settings";
 
 export type SiteLink = {
@@ -52,6 +54,7 @@ export type GlobalSiteSettings = {
   socials: {
     instagram: string;
     facebook: string;
+    linkedin: string;
     tiktok: string;
   };
   footer: {
@@ -69,15 +72,15 @@ export type GlobalSiteSettings = {
 
 export const DEFAULT_GLOBAL_SITE_SETTINGS: GlobalSiteSettings = {
   brand: {
-    name: "Irha Apparels",
+    name: PUBLIC_IDENTITY.name,
     tagline: "B2B Custom Apparel Manufacturer",
-    location: "Sialkot, Pakistan",
-    address: "Sialkot, Punjab, Pakistan",
-    email: "info@irhaapparels.com",
-    phone: "+923204110066",
-    phoneDisplay: "+92 320 411 0066",
-    whatsappNumber: "923204110066",
-    logoUrl: "",
+    location: PUBLIC_IDENTITY.address.display,
+    address: PUBLIC_IDENTITY.address.display,
+    email: PUBLIC_IDENTITY.email,
+    phone: PUBLIC_IDENTITY.telephoneHref,
+    phoneDisplay: PUBLIC_IDENTITY.telephone,
+    whatsappNumber: PUBLIC_IDENTITY.whatsappNumber,
+    logoUrl: "/irha-brand-mark.svg",
   },
   navigation: {
     main: [
@@ -110,9 +113,10 @@ export const DEFAULT_GLOBAL_SITE_SETTINGS: GlobalSiteSettings = {
     whatsappLabel: "WhatsApp",
   },
   socials: {
-    instagram: "https://www.instagram.com/irhaapparels",
-    facebook: "https://web.facebook.com/profile.php?id=61590950402472",
-    tiktok: "https://www.tiktok.com/@irhaapparels",
+    instagram: PUBLIC_IDENTITY.socialProfiles.instagram,
+    facebook: PUBLIC_IDENTITY.socialProfiles.facebook,
+    linkedin: PUBLIC_IDENTITY.socialProfiles.linkedin,
+    tiktok: PUBLIC_IDENTITY.socialProfiles.tiktok,
   },
   footer: {
     intro: "B2B Custom Apparel Manufacturer",
@@ -206,10 +210,8 @@ function readiness(value: unknown) {
 
 export function normalizeGlobalSiteSettings(value: unknown): GlobalSiteSettings {
   const root = value && typeof value === "object" ? value as Partial<GlobalSiteSettings> : {};
-  const brand = root.brand && typeof root.brand === "object" ? root.brand : {} as GlobalSiteSettings["brand"];
   const nav = root.navigation && typeof root.navigation === "object" ? root.navigation : {} as GlobalSiteSettings["navigation"];
   const ctas = root.ctas && typeof root.ctas === "object" ? root.ctas : {} as GlobalSiteSettings["ctas"];
-  const socials = root.socials && typeof root.socials === "object" ? root.socials : {} as GlobalSiteSettings["socials"];
   const footer = root.footer && typeof root.footer === "object" ? root.footer : {} as GlobalSiteSettings["footer"];
   const announcement = root.announcement && typeof root.announcement === "object" ? root.announcement : {} as GlobalSiteSettings["announcement"];
   const d = DEFAULT_GLOBAL_SITE_SETTINGS;
@@ -220,15 +222,8 @@ export function normalizeGlobalSiteSettings(value: unknown): GlobalSiteSettings 
 
   return {
     brand: {
-      name: text(brand.name, d.brand.name, 80),
-      tagline: text(brand.tagline, d.brand.tagline, 160),
-      location: text(brand.location, d.brand.location, 120),
-      address: text(brand.address, d.brand.address, 220),
-      email: text(brand.email, d.brand.email, 160).toLowerCase(),
-      phone: text(brand.phone, d.brand.phone, 40),
-      phoneDisplay: text(brand.phoneDisplay, d.brand.phoneDisplay, 40),
-      whatsappNumber: text(brand.whatsappNumber, d.brand.whatsappNumber, 24).replace(/\D/g, ""),
-      logoUrl: safePublicUrl(brand.logoUrl, ""),
+      ...d.brand,
+      tagline: text(root.brand?.tagline, d.brand.tagline, 160),
     },
     navigation: {
       main: links(nav.main, d.navigation.main, 8),
@@ -243,11 +238,7 @@ export function normalizeGlobalSiteSettings(value: unknown): GlobalSiteSettings 
       studioHref: safeInternalHref(ctas.studioHref, d.ctas.studioHref),
       whatsappLabel: text(ctas.whatsappLabel, d.ctas.whatsappLabel, 40),
     },
-    socials: {
-      instagram: safePublicUrl(socials.instagram, d.socials.instagram),
-      facebook: safePublicUrl(socials.facebook, d.socials.facebook),
-      tiktok: safePublicUrl(socials.tiktok, d.socials.tiktok),
-    },
+    socials: { ...d.socials },
     footer: {
       intro: text(footer.intro, d.footer.intro, 160),
       collectionLinks: links(footer.collectionLinks, d.footer.collectionLinks, 10),
