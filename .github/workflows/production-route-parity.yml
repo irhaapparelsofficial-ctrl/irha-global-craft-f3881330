@@ -123,6 +123,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          npx tsx scripts/generate-sitemap.ts
+          npx tsx scripts/augment-sitemap-with-buyer-intent.ts
+          npx tsx scripts/merge-market-sitemap.ts
+          node scripts/append-b2b-platform-sitemap.mjs
+          node scripts/normalize-public-origin.mjs
+          node scripts/normalize-sitemap-lastmod.mjs
           npx tsx scripts/generate-buyer-ready-catalog-manifest.ts
           NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/generate-buyer-ready-redirects.ts
 
