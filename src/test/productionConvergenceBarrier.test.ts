@@ -84,6 +84,37 @@ describe("production convergence barrier", () => {
     expect(sleep).toHaveBeenCalledTimes(1);
   });
 
+  it("accepts the authorized 180-attempt release window and rejects larger values", async () => {
+    const fetchImpl = vi.fn(async () =>
+      jsonResponse({ source_commit: EXPECTED_SHA, source_identity_state: "verified" }),
+    );
+
+    await expect(
+      waitForProductionConvergence({
+        origin: "https://irhaapparels.com",
+        expectedSha: EXPECTED_SHA,
+        attempts: 180,
+        intervalMs: 0,
+        fetchImpl: fetchImpl as typeof fetch,
+        sleep: async () => undefined,
+        log: () => undefined,
+      }),
+    ).resolves.toMatchObject({ state: "verified_match", sourceCommit: EXPECTED_SHA });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+
+    await expect(
+      waitForProductionConvergence({
+        origin: "https://irhaapparels.com",
+        expectedSha: EXPECTED_SHA,
+        attempts: 181,
+        intervalMs: 0,
+        fetchImpl: fetchImpl as typeof fetch,
+        sleep: async () => undefined,
+        log: () => undefined,
+      }),
+    ).rejects.toThrow("Invalid convergence attempt count: 181");
+  });
+
   it("fails closed when production never reaches the triggering commit", async () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({ source_commit: PREVIOUS_SHA, source_identity_state: "verified" }),
