@@ -11,6 +11,9 @@ import {
   websiteSchema,
 } from "@/lib/seoSchema";
 
+const HOME_TITLE = "Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan";
+const HOME_DESCRIPTION = "Irha Apparels is a B2B apparel manufacturer in Sialkot, Pakistan, supplying custom Lederhosen, Dirndl, leather apparel, sportswear, streetwear and private-label clothing programs.";
+
 const HomeCategoryUniverse = lazy(() => import("@/components/sections/HomeCategoryUniverse"));
 const HomeManufacturingEditorial = lazy(() => import("@/components/sections/HomeManufacturingEditorial"));
 const FactoryInfrastructure = lazy(() => import("@/components/sections/FactoryInfrastructure"));
@@ -27,9 +30,8 @@ export default function Home() {
       "@type": "WebPage",
       "@id": `${SITE_URL}/#webpage`,
       url: `${SITE_URL}/`,
-      name: "Irha Apparels — B2B Custom Apparel Manufacturer",
-      description:
-        "Made-to-order OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan for brands, wholesalers and importers.",
+      name: HOME_TITLE,
+      description: HOME_DESCRIPTION,
       isPartOf: { "@id": WEBSITE_ID },
       about: { "@id": ORGANIZATION_ID },
       inLanguage: "en",
@@ -39,8 +41,8 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Irha Apparels — B2B Custom Apparel Manufacturer"
-        description="Made-to-order OEM, ODM and private-label apparel manufacturing in Sialkot, Pakistan. Bavarian wear, sportswear, leatherwear, streetwear and leisure apparel for brands, wholesalers and importers."
+        title={HOME_TITLE}
+        description={HOME_DESCRIPTION}
         path="/"
         jsonLd={jsonLd}
       />

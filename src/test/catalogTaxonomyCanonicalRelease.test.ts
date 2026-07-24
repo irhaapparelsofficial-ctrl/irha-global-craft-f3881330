@@ -98,7 +98,9 @@ describe("canonical explicit B2B taxonomy release", () => {
     expect(sitemap).toContain("manifest.products");
     expect(redirects).toContain("BEGIN GENERATED BUYER-READY REDIRECTS");
     expect(redirects).toContain("get_public_legacy_redirects");
-    expect(redirects).toContain("zero dead product targets");
+    expect(redirects).toContain("fetchAllApprovedRedirects");
+    expect(redirects).toContain("zero localized or dead targets");
+    expect(redirects).toContain("approvedRows.length < 1258");
     expect(vite).not.toContain("taxonomyReleaseAssets()");
     expect(vite).not.toContain("generateTaxonomyProductShells()");
     expect(packageJson).toContain("generate-buyer-ready-catalog-manifest.ts");
