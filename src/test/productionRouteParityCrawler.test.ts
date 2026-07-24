@@ -66,14 +66,26 @@ describe("production route parity completion", () => {
     expect(verifier).toContain('data-irha-related-products="true"');
   });
 
-  it("preserves source product metadata and uses fallbacks only when missing", () => {
+  it("uses one buyer-ready product metadata policy for build and browser runtime", () => {
     const manifest = read("scripts/generate-buyer-ready-catalog-manifest.ts");
-    expect(manifest).toContain("row.seo_title?.trim() ||");
-    expect(manifest).toContain("seo_h1: row.product_name");
-    expect(manifest).toContain("row.seo_description?.trim() || fallback");
-    expect(manifest).toContain("row.short_description?.trim() || fallback");
-    expect(manifest).toContain("row.product_description?.trim() || fallback");
-    expect(manifest).toContain('contentPolicy: "source-preserving-buyer-safe-fallbacks"');
+    const runtime = read("src/hooks/usePublicCatalog.ts");
+    const policy = read("src/lib/buyerReadyProductContent.ts");
+    expect(manifest).toContain("resolveBuyerReadyProductContent");
+    expect(runtime).toContain("resolveBuyerReadyProductContent");
+    expect(manifest).toContain("product_name: content.name");
+    expect(manifest).toContain("seo_description: content.description");
+    expect(runtime).toContain("seo_description: content.description");
+    expect(policy).toContain("hasBlockedBuyerReadyTerm");
+    expect(policy).toContain("safeSource");
+    expect(manifest).toContain('contentPolicy: "shared-buyer-ready-source-with-safe-fallbacks"');
+  });
+
+  it("resolves explicit depth-one taxonomy audiences before legacy product paths", () => {
+    const resolver = read("src/pages/CategoryOrProductPage.tsx");
+    expect(resolver).toContain("usePublishedCatalogTaxonomyRelease");
+    expect(resolver).toContain("node.depth === 1");
+    expect(resolver).toContain("node.parent_id === root.id");
+    expect(resolver).toContain("<CategoryTaxonomyPage audienceOverride={explicitAudience.slug}");
   });
 
   it("aligns taxonomy shells to runtime SEO, schema, counts and canonical children", () => {
@@ -155,11 +167,21 @@ describe("production route parity completion", () => {
     expect(workflow).not.toContain("supabase db push");
   });
 
-  it("requires isolated Cloudflare preview to run complete parity crawl", () => {
+  it("requires an immutable preview deployment and context-safe blocking evaluation", () => {
     const workflow = read(previewWorkflowPath);
+    const resolver = read("scripts/resolve-cloudflare-preview-deployment.mjs");
+    const evaluator = read("scripts/evaluate-preview-route-parity.ts");
+    expect(workflow).toContain("Resolve immutable preview deployment URL");
     expect(workflow).toContain("scripts/crawl-production-route-parity.ts");
-    expect(workflow).toContain("preview-route-parity");
-    expect(workflow).toContain("EXPECTED_SOURCE_SHA=$GITHUB_SHA");
+    expect(workflow).toContain("scripts/evaluate-preview-route-parity.ts");
+    expect(workflow).toContain("PREVIEW_ALIAS_URL");
+    expect(workflow).toContain("Context-safe evaluation exit");
+    expect(resolver).toContain("metadata.commit_hash === sourceSha");
+    expect(resolver).toContain("metadata.branch === branch");
+    expect(evaluator).toContain("Preview evaluator refuses to run against the production canonical origin");
+    expect(evaluator).toContain("sitemap_noindex");
+    expect(evaluator).toContain("missing_related_product_link");
+    expect(evaluator).toContain("if (blockingCounts.critical || blockingCounts.high)");
     expect(workflow).toContain("CANONICAL_ORIGIN: https://irhaapparels.com");
     expect(workflow).toContain("actions/upload-artifact@v4");
   });
