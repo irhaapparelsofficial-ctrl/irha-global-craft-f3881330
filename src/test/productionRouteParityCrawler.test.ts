@@ -167,6 +167,19 @@ describe("production route parity completion", () => {
     expect(workflow).not.toContain("supabase db push");
   });
 
+  it("automatically verifies exact main and publishes a commit-bound result", () => {
+    const workflow = read(productionWorkflowPath);
+    expect(workflow).toContain("push:");
+    expect(workflow).toContain("branches: [main]");
+    expect(workflow).toContain("statuses: write");
+    expect(workflow).toContain("Publish pending crawl status");
+    expect(workflow).toContain("Publish exact commit crawl status");
+    expect(workflow).toContain("Irha Production Route Parity");
+    expect(workflow).toContain("statuses/$SOURCE_SHA");
+    expect(workflow).toContain("Full live route crawl passed with zero critical/high findings");
+    expect(workflow).toContain("Refusing stale production crawl");
+  });
+
   it("requires an immutable preview deployment and context-safe blocking evaluation", () => {
     const workflow = read(previewWorkflowPath);
     const resolver = read("scripts/resolve-cloudflare-preview-deployment.mjs");
