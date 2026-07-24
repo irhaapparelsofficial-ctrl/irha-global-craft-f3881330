@@ -6,12 +6,29 @@ const sourcePath = "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrob
 const staleTarget = "/products/leisure-nightwear/plush-bathrobe-sleep-robe";
 const canonicalTarget = "/products/leisure-nightwear/women/robes/womens-plush-robe";
 
-let worker = await readFile(workerPath, "utf8");
-const stalePair = `["${sourcePath}",\n    "${staleTarget}",\n  ]`;
-const canonicalPair = `["${sourcePath}",\n    "${canonicalTarget}",\n  ]`;
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const aliasPattern = new RegExp(
+  `\\[\\s*["']${escapeRegExp(sourcePath)}["']\\s*,\\s*["']([^"']+)["']\\s*,?\\s*\\]`,
+);
 
-if (worker.includes(stalePair)) worker = worker.replace(stalePair, canonicalPair);
-if (!worker.includes(canonicalPair)) {
+let worker = await readFile(workerPath, "utf8");
+const initialMatch = worker.match(aliasPattern);
+if (!initialMatch) {
+  throw new Error("Cloudflare worker is missing the verified plush robe legacy alias");
+}
+
+const initialTarget = initialMatch[1];
+if (initialTarget === staleTarget) {
+  worker = worker.replace(
+    aliasPattern,
+    `["${sourcePath}", "${canonicalTarget}"]`,
+  );
+} else if (initialTarget !== canonicalTarget) {
+  throw new Error(`Cloudflare worker plush robe alias points to an unexpected target: ${initialTarget}`);
+}
+
+const verifiedMatch = worker.match(aliasPattern);
+if (!verifiedMatch || verifiedMatch[1] !== canonicalTarget) {
   throw new Error("Cloudflare worker alias could not be aligned to the verified plush robe canonical");
 }
 if (worker.includes(staleTarget)) {
@@ -19,4 +36,4 @@ if (worker.includes(staleTarget)) {
 }
 
 await writeFile(workerPath, worker, "utf8");
-console.log("Aligned Cloudflare worker legacy plush robe alias to the verified live canonical");
+console.log("Verified Cloudflare worker legacy plush robe alias against the live canonical");
