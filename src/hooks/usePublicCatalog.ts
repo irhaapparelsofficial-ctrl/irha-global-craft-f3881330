@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbCategory, DbProduct, ProductDetailSpec } from "./useCatalog";
 import type { Product as LegacyProduct } from "@/lib/categories";
-import { keywordLedProductName } from "@/lib/catalogSearchNames";
+import { resolveBuyerReadyProductContent } from "@/lib/buyerReadyProductContent";
 
 export type PublicSubCategory = DbCategory & { products: DbProduct[] };
 export type PublicTopCategory = DbCategory & {
@@ -96,7 +96,6 @@ function categoryCopy(mainCategorySlug: string, productName: string) {
   switch (mainCategorySlug) {
     case "bavarian-trachten-wear":
       return {
-        description: `${productName} custom manufacturing for Trachten retailers, wholesalers and private-label buyers. Material, embroidery, trims, sizing, packaging and order requirements are confirmed after buyer and factory review.`,
         specs: [
           "Trachten construction, embroidery and trim direction confirmed against the buyer brief",
           "Material, color, sizing and finishing reviewed before sampling or quotation",
@@ -105,7 +104,6 @@ function categoryCopy(mainCategorySlug: string, productName: string) {
       };
     case "premium-leather-apparel":
       return {
-        description: `${productName} custom development for wholesale and private-label leather apparel programs. Leather type, construction, hardware, lining, fit, branding and packaging are confirmed against the approved buyer specification.`,
         specs: [
           "Leather type, grade, thickness and finish selected to buyer requirements",
           "Construction, lining, hardware and fit confirmed during development",
@@ -114,7 +112,6 @@ function categoryCopy(mainCategorySlug: string, productName: string) {
       };
     case "sportswear":
       return {
-        description: `${productName} custom development for teams, clubs, distributors and private-label sportswear buyers. Fabric, panel construction, sizing, decoration, colors, packaging and production requirements are confirmed after review.`,
         specs: [
           "Sport-specific fabric and construction selected against intended use",
           "Team colors, sizing and decoration method confirmed from the buyer brief",
@@ -123,7 +120,6 @@ function categoryCopy(mainCategorySlug: string, productName: string) {
       };
     case "streetwear-activewear":
       return {
-        description: `${productName} custom manufacturing for streetwear, activewear and private-label brand programs. Fabric, weight, fit, construction, decoration, labels, colors and packaging are confirmed against the buyer brief.`,
         specs: [
           "Fabric, weight, fit and construction developed to the brand specification",
           "Print, embroidery, trims and private labels reviewed before sampling",
@@ -132,7 +128,6 @@ function categoryCopy(mainCategorySlug: string, productName: string) {
       };
     case "leisure-nightwear":
       return {
-        description: `${productName} custom manufacturing for leisurewear, loungewear, sleepwear and hospitality buyer programs. Fabric, comfort, fit, construction, trims, branding and packaging are confirmed after requirement review.`,
         specs: [
           "Fabric, comfort, fit and construction selected for the intended buyer program",
           "Trims, closures, decoration and private labels confirmed during development",
@@ -141,7 +136,6 @@ function categoryCopy(mainCategorySlug: string, productName: string) {
       };
     default:
       return {
-        description: `${productName} custom manufacturing for wholesale, OEM, ODM and private-label buyers. Materials, construction, sizing, branding and packaging are confirmed after buyer and factory review.`,
         specs: [
           "Material and construction confirmed against the approved buyer specification",
           "Sizing, colors and decoration reviewed during development",
@@ -152,19 +146,20 @@ function categoryCopy(mainCategorySlug: string, productName: string) {
 }
 
 function sanitizePublicProduct(product: ReleaseProduct, mainCategorySlug: string): DbProduct {
-  const name = keywordLedProductName(product.slug, product.name);
+  const content = resolveBuyerReadyProductContent(product, mainCategorySlug);
   const gallery = uniqueStrings((Array.isArray(product.gallery) ? product.gallery : []).filter(Boolean));
-  const safe = categoryCopy(mainCategorySlug, name);
+  const safe = categoryCopy(mainCategorySlug, content.name);
   const verifiedDetails = (Array.isArray(product.details) ? product.details : []).filter(
     (detail) => !hasBlockedPublicTerm(`${detail.label} ${detail.value}`),
   );
 
   return {
     ...product,
-    name,
-    description: safe.description,
-    short_description: safe.description,
-    seo_description: safe.description,
+    name: content.name,
+    description: content.description,
+    short_description: content.description,
+    seo_title: content.seoTitle,
+    seo_description: content.description,
     image_url: product.image_url ?? gallery[0] ?? null,
     gallery,
     details: verifiedDetails.length > 0 ? verifiedDetails : [],
