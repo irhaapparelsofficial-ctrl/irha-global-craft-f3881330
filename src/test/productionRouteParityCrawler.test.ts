@@ -118,9 +118,10 @@ describe("production route parity completion", () => {
     expect(redirects).not.toContain("/products/leisure-nightwear/plush-bathrobe-sleep-robe 301");
     expect(workerPatch).toContain("womens-plush-robe");
     expect(workerPatch).toContain("aliasPattern");
-    expect(workerPatch).toContain("missing the verified plush robe legacy alias");
-    expect(workerPatch).toContain("unexpected target");
-    expect(workerPatch).toContain("dead plush robe target");
+    expect(workerPatch).toContain("Cloudflare worker legacy alias map is missing");
+    expect(workerPatch).toContain("Cloudflare worker legacy alias map is incomplete");
+    expect(workerPatch).toContain("points to unexpected target");
+    expect(workerPatch).toContain("alias could not be aligned");
     expect(verifier).toContain("Duplicate final redirect source");
     expect(verifier).toContain("Final redirect target is not canonical");
   });
