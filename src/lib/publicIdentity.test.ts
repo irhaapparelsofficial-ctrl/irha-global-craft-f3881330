@@ -37,6 +37,14 @@ describe("canonical public identity", () => {
     ]);
   });
 
+  it("keeps sameAs limited to four unique controlled profiles and excludes WhatsApp", () => {
+    const configuredProfiles = Object.values(PUBLIC_IDENTITY.socialProfiles);
+    expect(PUBLIC_IDENTITY.sameAs).toHaveLength(4);
+    expect(new Set(PUBLIC_IDENTITY.sameAs).size).toBe(4);
+    expect(PUBLIC_IDENTITY.sameAs).toEqual(configuredProfiles);
+    expect(PUBLIC_IDENTITY.sameAs.join(" ")).not.toMatch(/wa\.me|whatsapp/i);
+  });
+
   it("omits unapproved legal, local-business, address and market claims", () => {
     const organization = buildCanonicalOrganizationSchema() as Record<string, unknown>;
     for (const forbidden of [
