@@ -1,76 +1,48 @@
+# Automation Tasks — Duplicate Detection Report (read-only)
 
-# Daily Automation Inspection — Read-Only Report
+Source: live owner Supabase (`pvzjiozismyxqrzmtfbi`), `public.automation_tasks`. No writes performed.
 
-Source: live owner Supabase (`pvzjiozismyxqrzmtfbi`), inspected at request time. No writes performed.
+## Method
 
-## 1. `public.automation_settings` (row id = `default`)
+Three duplicate signals were compared:
 
-```json
-{
-  "enabled": true,
-  "timezone": "Asia/Karachi",
-  "daily_run_time": "08:30:00",
-  "last_run_at": "2026-07-21T03:30:00.190812+00:00",
-  "next_run_at": "2026-07-22T03:30:00+00:00",
-  "modules": {
-    "leads_enabled": true,
-    "seo_enabled": true,
-    "listings_enabled": true,
-    "social_enabled": true,
-    "canva_handoff_enabled": true
-  },
-  "auto_publish_flags": {
-    "lead_auto_import": false,
-    "seo_auto_publish": false,
-    "social_auto_publish": false,
-    "external_listing_publish": false
-  },
-  "rotations": {
-    "lead_markets": ["Germany","Austria","Switzerland","United Kingdom","United States","Canada","Australia","United Arab Emirates"],
-    "lead_product_focus": ["Bavarian & Trachten","Premium Leather","Sportswear","Streetwear & Activewear","Leisurewear & Nightwear"],
-    "seo_locales": ["de-DE","de-AT","de-CH","fr-FR","es-ES","it-IT","nl-NL","ar-AE"],
-    "social_platforms": ["instagram","facebook","linkedin","tiktok"]
-  },
-  "daily_limits": { "leads": 20, "seo_drafts": 2, "listings": 3, "social_drafts": 2 },
-  "weekly_reel_target": 3
-}
-```
+1. **Exact idempotency-key collisions** — `GROUP BY idempotency_key HAVING count(*) > 1`.
+2. **Semantic duplicates** — same `(module, action, title)` appearing in more than one active row (`status IN draft, ready_for_review, approved, blocked`).
+3. **Overlapping scheduled windows** — for the same `(module, action)`, any two active rows whose `scheduled_for` timestamps fall within ±60 minutes.
 
-Notes:
-- All 5 modules enabled; **all auto-publish flags OFF** (approval-gated, matches operating policy).
-- Last run 2026-07-21 03:30 UTC (= 08:30 Asia/Karachi). Next run scheduled 2026-07-22 03:30 UTC.
+Scope: 61 total tasks; 60 active. Terminal statuses (`executed`, `failed`, `cancelled`) excluded from duplicate-risk scoring.
 
-## 2. Pending / due `automation_tasks`
+## Result summary
 
-All open tasks have `status = ready_for_review`, `external_action = false`, `scheduled_for = null` (planning-cycle tasks; no time gating), and `result IS NOT NULL` (drafts/evidence already attached). No tasks in `pending`, `scheduled`, `running`, `blocked`, or `failed`.
+| Signal | Count |
+|---|---|
+| Exact idempotency-key duplicates | **0** (unique constraint enforced) |
+| Semantic `(module, action, title)` duplicate groups | **5** (21 rows) |
+| Overlapping scheduled-window pairs (±60 min) | **0** (`scheduled_for` is NULL for all planning-cycle tasks) |
 
-Latest cycle — day `2026-07-21` (market rotation: Austria / Premium Leather; locale de-AT; platform facebook):
+No true duplicate exists at the database-integrity level: every row has a distinct idempotency key and none share a scheduled window. The 21 semantically-similar rows are legitimate **daily-cycle repeats** of the same rotation slot across different `automation:<date>:…` cycles, held in `ready_for_review` because the owner has not yet actioned prior drafts. They are backlog, not duplicates.
 
-| id | module | action | title | requires_approval | idempotency_key |
+## Semantic-repeat groups (21 rows across 5 groups)
+
+| module | action | title | rows | first day | last day |
 |---|---|---|---|---|---|
-| f05ed081… | listings | prepare_listing_updates | Prepare truthful B2B listing profiles and posts | true | automation:2026-07-21:listings |
-| 40eb945e… | seo | create_localized_drafts | de-AT · Premium Leather | false | automation:2026-07-21:seo:de-AT:Premium Leather |
-| e89603e5… | leads | discover_and_verify | Austria · Premium Leather | false | automation:2026-07-21:leads:Austria:Premium Leather |
-| 7c3e131a… | creative | create_canva_reel | Premium Leather (reel day) | false | automation:2026-07-21:creative:reel:Premium Leather |
-| 5a22645a… | social | create_social_drafts | facebook · Premium Leather | false | automation:2026-07-21:social:facebook:Premium Leather |
+| listings | prepare_listing_updates | Prepare truthful B2B listing profiles and posts | 13 | 2026-07-12 | 2026-07-24 |
+| creative | create_canva_reel | Create premium B2B Canva reel draft · Premium Leather | 2 | 2026-07-16 | 2026-07-21 |
+| creative | create_canva_reel | Create premium B2B Canva reel draft · Streetwear & Activewear | 2 | 2026-07-18 | 2026-07-23 |
+| leads | discover_and_verify | Discover verified B2B buyers · Germany · Bavarian & Trachten | 2 | 2026-07-12 | 2026-07-20 |
+| seo | create_localized_drafts | Prepare useful localized SEO drafts · de-DE · Bavarian & Trachten | 2 | 2026-07-12 | 2026-07-20 |
 
-Older `ready_for_review` backlog present for cycles 2026-07-20, 07-19, 07-18, 07-17, 07-16 (same 4–5 modules per day). Backlog is accumulating because owner has not yet actioned prior daily drafts.
+All 21 rows carry distinct idempotency keys of the form `automation:<YYYY-MM-DD>:<module>[:<axis>]`. Two minor key-format variants exist for pre/post-refactor rows (e.g. `…:leads:germany:bavarian` vs `…:leads:Germany:Bavarian & Trachten`) but they still represent different daily cycles, not collisions.
 
-## 3. Duplicate check
+## Interpretation
 
-Query: `GROUP BY idempotency_key HAVING count(*) > 1` → **0 rows**. Each day/module/market/product/locale/platform combination has exactly one task. The `automation:<date>:<module>[:<axis>]` idempotency key is enforced (planner uses `ON CONFLICT DO NOTHING`), so re-running the planner for the same day cannot duplicate tasks.
+- Duplicate-guard integrity is intact: unique constraint + `ON CONFLICT DO NOTHING` in the planner prevent same-day re-inserts.
+- Scheduled-window overlap check returns 0 because planning-cycle tasks are not time-gated; overlap can only occur once tasks acquire `scheduled_for`.
+- The 13-row `listings` repeat is the largest cluster; it recurs daily by design and will keep growing one row per day until the owner reviews and closes them.
 
-No semantic duplicates observed either: rotation index cycles daily by `extract(doy)`, and each cycle's (market, product, locale, platform) tuple differs from the previous day's.
+## Recommended non-destructive follow-up (owner decision only)
 
-## 4. Latest `automation_runs`
+- Owner reviews and closes older `ready_for_review` cycles (2026-07-12 … 2026-07-20) so the daily planner's rotation coverage reads as fresh.
+- If desired, add a scheduled auto-cancel for `ready_for_review` tasks older than N days; not implemented in this report.
 
-Most recent run rows are all `status = completed`, `external_execution = false`, trigger `cron`, one per calendar day at 03:30 UTC. No `failed` or `running` runs.
-
-## Summary
-
-- Automation is armed, gated (no auto-publish, no external send).
-- 2026-07-21 cycle executed cleanly; 5 draft tasks await owner review.
-- Multi-day `ready_for_review` backlog (~5 cycles) — informational only; no duplication, no failures.
-- No action required from a system-integrity standpoint. Owner review needed to clear the draft backlog.
-
-_No code, database, settings, content, or external-system changes were performed. This plan is a report only — no build step is needed; you can decline it._
+_No code, database, settings, content, or external-system changes were performed. This is a read-only report._
