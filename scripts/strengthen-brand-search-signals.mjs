@@ -1,5 +1,10 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import {
+  PUBLIC_IDENTITY,
+  buildCanonicalOrganizationSchema,
+  buildCanonicalWebsiteSchema,
+} from "../src/lib/publicIdentity.mjs";
 
 const INDEX_PATH = resolve("dist/index.html");
 const BRAND_TITLE = "Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan";
@@ -13,44 +18,43 @@ function replaceRequired(source, pattern, replacement, label) {
   return source.replace(pattern, replacement);
 }
 
-function patchEntityGraph(source) {
-  const scriptPattern = /<script([^>]*)type=["']application\/ld\+json["']([^>]*)>([\s\S]*?)<\/script>/gi;
-  let match;
-
-  while ((match = scriptPattern.exec(source)) !== null) {
-    let graph;
-    try {
-      graph = JSON.parse(match[3]);
-    } catch {
-      continue;
-    }
-
-    const entities = Array.isArray(graph?.["@graph"]) ? graph["@graph"] : [];
-    const organization = entities.find((item) => item?.["@id"] === "https://irhaapparels.com/#organization");
-    const website = entities.find((item) => item?.["@id"] === "https://irhaapparels.com/#website");
-    const webpage = entities.find((item) => item?.["@id"] === "https://irhaapparels.com/#webpage");
-    if (!organization || !website || !webpage) continue;
-
-    organization.name = "Irha Apparels";
-    organization.alternateName = "Irha Apparels Sialkot";
-    organization.url = "https://irhaapparels.com/";
-    organization.description = "Irha Apparels is a B2B custom apparel manufacturer in Sialkot, Pakistan providing OEM, ODM and private-label manufacturing programs.";
-    website.name = "Irha Apparels";
-    website.url = "https://irhaapparels.com/";
-    webpage.name = BRAND_TITLE;
-    webpage.url = "https://irhaapparels.com/";
-    webpage.description = "Irha Apparels manufactures custom apparel and private-label programs in Sialkot, Pakistan for brands, wholesalers and importers worldwide.";
-
-    const attributes = `${match[1]}type="application/ld+json"${match[2]}`.replace(/\s+/g, " ").trim();
-    const replacement = `<script ${attributes} data-irha-brand-entity>${JSON.stringify(graph).replace(/</g, "\\u003c")}</script>`;
-    return `${source.slice(0, match.index)}${replacement}${source.slice(match.index + match[0].length)}`;
+function assertCanonicalEntityGraph(source) {
+  const scriptPattern = /<script[^>]*data-irha-static-site-identity=["']true["'][^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i;
+  const match = source.match(scriptPattern);
+  if (!match) {
+    throw new Error("Brand search signal patch could not find the canonical Organization/WebSite graph");
   }
 
-  throw new Error("Brand search signal patch could not find the homepage Organization/WebSite/WebPage graph");
+  let graph;
+  try {
+    graph = JSON.parse(match[1]);
+  } catch (error) {
+    throw new Error(`Canonical brand graph is invalid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  const entities = Array.isArray(graph?.["@graph"]) ? graph["@graph"] : [];
+  const organizations = entities.filter((item) => item?.["@type"] === "Organization");
+  const websites = entities.filter((item) => item?.["@type"] === "WebSite");
+  if (organizations.length !== 1 || websites.length !== 1) {
+    throw new Error(`Canonical brand graph must contain one Organization and one WebSite; found ${organizations.length}/${websites.length}`);
+  }
+
+  const expectedOrganization = buildCanonicalOrganizationSchema({ includeContext: false });
+  const expectedWebsite = buildCanonicalWebsiteSchema({ includeContext: false });
+  if (JSON.stringify(organizations[0]) !== JSON.stringify(expectedOrganization)) {
+    throw new Error("Canonical Organization graph does not match publicIdentity.mjs");
+  }
+  if (JSON.stringify(websites[0]) !== JSON.stringify(expectedWebsite)) {
+    throw new Error("Canonical WebSite graph does not match publicIdentity.mjs");
+  }
+  if (websites[0].publisher?.["@id"] !== PUBLIC_IDENTITY.organizationId) {
+    throw new Error("Canonical WebSite publisher does not reference the Organization @id");
+  }
 }
 
 let html = await readFile(INDEX_PATH, "utf8");
 
+assertCanonicalEntityGraph(html);
 html = replaceRequired(html, /<title>[^<]*<\/title>/, `<title>${BRAND_TITLE}</title>`, "homepage title");
 html = replaceRequired(
   html,
@@ -82,7 +86,6 @@ html = replaceRequired(
   "$1Irha Apparels manufactures custom apparel and private-label programs for global B2B buyers.$2",
   "Twitter description",
 );
-html = patchEntityGraph(html);
 html = replaceRequired(
   html,
   />Custom Apparel Manufacturer for Global B2B Buyers<\/h1>/,
@@ -106,14 +109,21 @@ for (const required of [
   BRAND_TITLE,
   BRAND_H1,
   BRAND_DESCRIPTION,
-  '"alternateName":"Irha Apparels Sialkot"',
-  "https://irhaapparels.com/",
+  PUBLIC_IDENTITY.organizationId,
+  PUBLIC_IDENTITY.websiteId,
+  PUBLIC_IDENTITY.logoUrl,
+  PUBLIC_IDENTITY.telephone,
+  PUBLIC_IDENTITY.email,
+  ...PUBLIC_IDENTITY.sameAs,
   "/products/bavarian-trachten-wear",
   "/products/premium-leather-apparel",
   "/products/streetwear-activewear",
 ]) {
   if (!html.includes(required)) throw new Error(`Missing strengthened brand signal: ${required}`);
 }
+if (html.includes('"alternateName"') || html.includes('"legalName"') || html.includes('"@type":"LocalBusiness"')) {
+  throw new Error("Canonical homepage identity contains an unapproved entity property or type");
+}
 
 await writeFile(INDEX_PATH, html, "utf8");
-console.log("Strengthened exact Irha Apparels homepage brand signals and canonical category links");
+console.log("Validated canonical Irha Apparels entity graph and strengthened homepage brand signals");
