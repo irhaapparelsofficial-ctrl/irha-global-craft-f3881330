@@ -204,8 +204,8 @@ async function main() {
     redirects.set(from, to);
   };
 
-  approvedRows.forEach(add);
   committedRows.forEach(add);
+  approvedRows.forEach(add);
   for (const product of manifest.products) {
     add({ from_path: `/products/${product.product_slug}`, to_path: product.canonical_path });
     add({ from_path: `/products/${product.main_category_slug}/${product.product_slug}`, to_path: product.canonical_path });
