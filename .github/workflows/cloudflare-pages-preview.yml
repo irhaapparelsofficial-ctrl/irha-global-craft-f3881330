@@ -12,6 +12,7 @@ on:
       - "scripts/crawl-production-route-parity.ts"
       - "scripts/generate-buyer-ready-catalog-manifest.ts"
       - "scripts/generate-buyer-ready-redirects.ts"
+      - "scripts/patch-supabase-rpc-pagination.mjs"
       - "scripts/generate-static-route-shells.ts"
       - "scripts/enrich-generic-static-route-shells.mjs"
       - "scripts/enhance-product-route-shells.ts"
@@ -24,6 +25,7 @@ on:
       - "src/pages/Home.tsx"
       - "src/components/HeroCarousel.tsx"
       - "src/test/productionRouteParityCrawler.test.ts"
+      - "src/test/supabaseRpcPaginationGuard.test.ts"
       - "package.json"
       - "package-lock.json"
 
@@ -192,7 +194,7 @@ jobs:
         run: |
           set +e
           mkdir -p "$CRAWL_OUTPUT_DIR"
-          npx tsx scripts/crawl-production-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/run.log"
+          NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/crawl-production-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/run.log"
           parity_code="${PIPESTATUS[0]}"
           echo "$parity_code" > /tmp/preview-route-parity-exit-code
           echo "parity_code=$parity_code" >> "$GITHUB_OUTPUT"
