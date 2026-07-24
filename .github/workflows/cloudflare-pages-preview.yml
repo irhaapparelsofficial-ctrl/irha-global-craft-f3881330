@@ -10,6 +10,8 @@ on:
       - ".github/workflows/cloudflare-pages-preview.yml"
       - ".github/workflows/production-route-parity.yml"
       - "scripts/crawl-production-route-parity.ts"
+      - "scripts/evaluate-preview-route-parity.ts"
+      - "scripts/resolve-cloudflare-preview-deployment.mjs"
       - "scripts/generate-buyer-ready-catalog-manifest.ts"
       - "scripts/generate-buyer-ready-redirects.ts"
       - "scripts/patch-supabase-rpc-pagination.mjs"
@@ -22,6 +24,9 @@ on:
       - "scripts/strengthen-brand-search-signals.mjs"
       - "public/_redirects"
       - "public/_worker.js"
+      - "src/hooks/usePublicCatalog.ts"
+      - "src/lib/buyerReadyProductContent.ts"
+      - "src/pages/CategoryOrProductPage.tsx"
       - "src/pages/Home.tsx"
       - "src/components/HeroCarousel.tsx"
       - "src/test/productionRouteParityCrawler.test.ts"
@@ -108,7 +113,7 @@ jobs:
             echo "CLOUDFLARE_ACCOUNT_ID=$account_id"
             echo "CLOUDFLARE_PROJECT_NAME=$project_name"
             echo "EXPECTED_SOURCE_SHA=$GITHUB_SHA"
-            echo "CRAWL_ORIGIN=$PREVIEW_URL"
+            echo "PREVIEW_ALIAS_URL=$PREVIEW_URL"
           } >> "$GITHUB_ENV"
 
       - name: Checkout exact source
@@ -158,10 +163,14 @@ jobs:
             --commit-hash="$GITHUB_SHA" \
             --commit-dirty=false
 
+      - name: Resolve immutable preview deployment URL
+        run: node scripts/resolve-cloudflare-preview-deployment.mjs
+
       - name: Verify isolated preview deployment
         shell: bash
         run: |
           set -euo pipefail
+          test "$PREVIEW_URL" != "$PREVIEW_ALIAS_URL" || { echo "Immutable deployment URL was not resolved"; exit 1; }
           ready=0
           for attempt in $(seq 1 24); do
             if curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
@@ -175,11 +184,11 @@ jobs:
                   '.repository == $repo and .supabase_project_id == $supabase and .source_commit == $source and .source_identity_state == "verified"' \
                   /tmp/preview-build.json >/dev/null; then
                 ready=1
-                echo "Preview verified on attempt $attempt"
+                echo "Immutable preview verified on attempt $attempt"
                 break
               fi
             fi
-            echo "Preview not ready yet (attempt $attempt/24)"
+            echo "Immutable preview not ready yet (attempt $attempt/24)"
             sleep 10
           done
           test "$ready" = "1" || { echo "Cloudflare preview did not converge safely"; exit 1; }
@@ -196,8 +205,19 @@ jobs:
           mkdir -p "$CRAWL_OUTPUT_DIR"
           NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/crawl-production-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/run.log"
           parity_code="${PIPESTATUS[0]}"
-          echo "$parity_code" > /tmp/preview-route-parity-exit-code
+          echo "$parity_code" > /tmp/preview-route-parity-raw-exit-code
           echo "parity_code=$parity_code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Evaluate preview-only parity context
+        id: evaluation
+        shell: bash
+        run: |
+          set +e
+          npx tsx scripts/evaluate-preview-route-parity.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/evaluation.log"
+          evaluation_code="${PIPESTATUS[0]}"
+          echo "$evaluation_code" > /tmp/preview-route-parity-exit-code
+          echo "evaluation_code=$evaluation_code" >> "$GITHUB_OUTPUT"
           exit 0
 
       - name: Preserve preview route-parity evidence
@@ -215,17 +235,24 @@ jobs:
         run: |
           {
             echo "## Cloudflare Preview Route Parity"
-            echo "- Preview URL: $PREVIEW_URL"
+            echo "- Immutable preview URL: $PREVIEW_URL"
+            echo "- Branch alias: $PREVIEW_ALIAS_URL"
             echo "- Preview branch: $PREVIEW_BRANCH"
             echo "- Preview source: \`$GITHUB_SHA\`"
             echo "- Canonical origin: $CANONICAL_ORIGIN"
+            echo "- Raw crawl exit: \`${{ steps.parity.outputs.parity_code || 'not-run' }}\`"
+            echo "- Context-safe evaluation exit: \`${{ steps.evaluation.outputs.evaluation_code || 'not-run' }}\`"
             echo "- Production custom domain changed: no"
             echo
-            if [ -s "$CRAWL_OUTPUT_DIR/summary.md" ]; then cat "$CRAWL_OUTPUT_DIR/summary.md"; fi
+            if [ -s "$CRAWL_OUTPUT_DIR/preview-summary.md" ]; then
+              cat "$CRAWL_OUTPUT_DIR/preview-summary.md"
+            elif [ -s "$CRAWL_OUTPUT_DIR/summary.md" ]; then
+              cat "$CRAWL_OUTPUT_DIR/summary.md"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
-          test -s /tmp/preview-route-parity-exit-code || { echo "Preview route crawl did not run"; exit 1; }
-          parity_code="$(cat /tmp/preview-route-parity-exit-code)"
-          test "$parity_code" = "0" || {
-            echo "Preview route parity found blocking failures; inspect the artifact."
-            exit "$parity_code"
+          test -s /tmp/preview-route-parity-exit-code || { echo "Preview route evaluation did not run"; exit 1; }
+          evaluation_code="$(cat /tmp/preview-route-parity-exit-code)"
+          test "$evaluation_code" = "0" || {
+            echo "Preview route parity retained blocking failures; inspect the artifact."
+            exit "$evaluation_code"
           }
