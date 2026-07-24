@@ -19,7 +19,7 @@
     "generate:thumbnails": "node scripts/generate-image-thumbnails.mjs",
     "generate:catalog-pdfs": "node scripts/generate-catalog-pdfs.mjs",
     "generate:market-sitemap": "npx tsx scripts/merge-market-sitemap.ts",
-    "prepare:public-assets": "npx tsx scripts/generate-sitemap.ts && npx tsx scripts/augment-sitemap-with-buyer-intent.ts && npx tsx scripts/merge-market-sitemap.ts && node scripts/append-b2b-platform-sitemap.mjs && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs && npx tsx scripts/generate-buyer-ready-catalog-manifest.ts && npx tsx scripts/generate-buyer-ready-redirects.ts && npx tsx scripts/augment-sitemap-with-live-catalog.ts && node scripts/enforce-public-index-policy.mjs sitemap && npm run generate:thumbnails && npm run generate:catalog-pdfs",
+    "prepare:public-assets": "npx tsx scripts/generate-sitemap.ts && npx tsx scripts/augment-sitemap-with-buyer-intent.ts && npx tsx scripts/merge-market-sitemap.ts && node scripts/append-b2b-platform-sitemap.mjs && node scripts/normalize-public-origin.mjs && node scripts/normalize-sitemap-lastmod.mjs && npx tsx scripts/generate-buyer-ready-catalog-manifest.ts && NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/generate-buyer-ready-redirects.ts && npx tsx scripts/augment-sitemap-with-live-catalog.ts && node scripts/enforce-public-index-policy.mjs sitemap && npm run generate:thumbnails && npm run generate:catalog-pdfs",
     "predev": "node scripts/clean-transient-public-builds.mjs && node -e \"console.log('Preview workspace ready')\"",
     "prebuild": "node scripts/clean-transient-public-builds.mjs && node scripts/verify-deployment-source.mjs && node scripts/verify-secret-safety.mjs && node scripts/verify-migration-order.mjs",
     "notify:search": "node scripts/ping-search-engines.mjs"
@@ -98,6 +98,7 @@
     "jsdom": "^20.0.3",
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
     "sharp": "^0.35.1",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.22.4",
