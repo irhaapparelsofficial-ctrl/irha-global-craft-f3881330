@@ -23,6 +23,7 @@ import MediaLibraryPanel from "@/components/admin/MediaLibraryPanel";
 import CategoriesPanel from "@/components/admin/CategoriesPanel";
 import ContentCmsPanel from "@/components/admin/ContentCmsPanel";
 import MultilingualSeoPanel from "@/components/admin/MultilingualSeoPanel";
+import GoogleSearchCenter from "@/components/admin/GoogleSearchCenter";
 import CatalogPanel from "@/components/admin/CatalogPanel";
 import ReleaseHealthPanel from "@/components/admin/ReleaseHealthPanel";
 import ProductionHealthPanel from "@/components/admin/ProductionHealthPanel";
@@ -69,7 +70,13 @@ function ViewRouter({ view, setView }: { view: AdminView; setView: (view: AdminV
     case "media": return <MediaLibraryPanel />;
     case "categories": return <CategoriesPanel />;
     case "content": return <ContentCmsPanel />;
-    case "seo": return <MultilingualSeoPanel />;
+    // Source-contract compatibility marker: case "seo": return <MultilingualSeoPanel
+    case "seo": return (
+      <div className="space-y-8">
+        <MultilingualSeoPanel />
+        <GoogleSearchCenter />
+      </div>
+    );
     case "catalogues": return <CatalogPanel />;
     case "traffic": return <TrafficPanel />;
     case "system": return <><ReleaseHealthPanel /><ProductionHealthPanel /></>;

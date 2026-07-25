@@ -1,323 +1,458 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ExternalLink,
-  FileSearch,
-  Globe2,
-  Loader2,
-  RefreshCw,
-  Search,
-  XCircle,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { CheckCircle2, Copy, FileSearch, Loader2, Search, ShieldCheck, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-type Tab = "performance" | "indexing";
-type Dimension = "query" | "page" | "country";
-type GSCRow = { keys: string[]; clicks: number; impressions: number; ctr: number; position: number };
-type Inspection = {
-  url: string;
-  verdict?: string;
-  coverageState?: string;
-  robotsTxtState?: string;
-  indexingState?: string;
-  pageFetchState?: string;
-  lastCrawlTime?: string;
-  googleCanonical?: string;
-  userCanonical?: string;
-  sitemap?: string[];
-  inspectionLink?: string;
-  error?: string;
+const SITE = "https://irhaapparels.com";
+const HOME_URL = `${SITE}/`;
+const GSC_PROPERTY = "sc-domain:irhaapparels.com";
+const ALLOWED_HOSTNAMES = new Set(["irhaapparels.com", "www.irhaapparels.com"]);
+
+type GSCRow = {
+  keys?: string[];
+  clicks?: number;
+  impressions?: number;
+  ctr?: number;
+  position?: number;
 };
 
-const SITE = "https://irhaapparels.com";
-const PRIORITY_URLS = [
-  `${SITE}/`,
-  `${SITE}/products`,
-  `${SITE}/catalogue`,
-  `${SITE}/manufacturing`,
-  `${SITE}/buyer-trust`,
-  `${SITE}/factory-video-call`,
-  `${SITE}/resources`,
-  `${SITE}/faq`,
-  `${SITE}/inquiry`,
-  `${SITE}/repeat-order`,
-];
+type HealthProof = {
+  functionSuccess: boolean;
+  ok: boolean;
+  ready: boolean;
+  state: string;
+  connectorGatewayConfigured: boolean;
+  gscConnectionConfigured: boolean;
+  effectiveProperty: string;
+  pass: boolean;
+  error: string | null;
+};
 
-function normalizeUrls(value: string) {
-  return [...new Set(value
-    .split(/[\n,\s]+/)
-    .map((item) => item.trim())
-    .filter((item) => item.startsWith(`${SITE}/`) || item === `${SITE}/`))]
-    .slice(0, 25);
+type AnalyticsProof = {
+  dimension: "query" | "page";
+  days: 28;
+  functionSuccess: boolean;
+  property: string;
+  rowCount: number;
+  totalClicks: number;
+  totalImpressions: number;
+  weightedCtr: number | null;
+  weightedAveragePosition: number | null;
+  pass: boolean;
+  error: string | null;
+};
+
+type InspectionProof = {
+  functionSuccess: boolean;
+  url: string;
+  property: string;
+  verdict: string;
+  coverageState: string;
+  robotsTxtState: string;
+  indexingState: string;
+  pageFetchState: string;
+  lastCrawlTime: string;
+  userCanonical: string;
+  googleCanonical: string;
+  sitemapAssociation: string[];
+  pass: boolean;
+  error: string | null;
+};
+
+type ProofState = {
+  executionTimestamp: string;
+  productionBuildSha: string | null;
+  health: HealthProof;
+  queryAnalytics: AnalyticsProof;
+  pageAnalytics: AnalyticsProof;
+  homepageInspection: InspectionProof;
+  pass: boolean;
+};
+
+function safeText(value: unknown, fallback = "—") {
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, 240) : fallback;
 }
 
-function statusTone(result: Inspection) {
-  if (result.error) return "blocked" as const;
-  const verdict = String(result.verdict || "").toUpperCase();
-  const indexing = String(result.indexingState || "").toUpperCase();
-  if (verdict === "PASS" && indexing.includes("INDEXING_ALLOWED")) return "ready" as const;
-  if (verdict === "NEUTRAL" || verdict === "PARTIAL") return "partial" as const;
-  return "blocked" as const;
+function sanitizeError(value: unknown) {
+  const message = value instanceof Error ? value.message : typeof value === "string" ? value : "Read-only request failed";
+  return message
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [redacted]")
+    .replace(/(?:access|refresh|oauth|authorization|connector)[_-]?(?:token|key)\s*[:=]\s*\S+/gi, "credential=[redacted]")
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[redacted-jwt]")
+    .slice(0, 240);
 }
 
-function formatDate(value?: string) {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+function aggregateRows(rows: GSCRow[]) {
+  const rowCount = rows.length;
+  const totalClicks = rows.reduce((sum, row) => sum + Number(row.clicks || 0), 0);
+  const totalImpressions = rows.reduce((sum, row) => sum + Number(row.impressions || 0), 0);
+  const weightedPositionNumerator = rows.reduce(
+    (sum, row) => sum + Number(row.position || 0) * Number(row.impressions || 0),
+    0,
+  );
+  return {
+    rowCount,
+    totalClicks,
+    totalImpressions,
+    weightedCtr: totalImpressions > 0 ? totalClicks / totalImpressions : null,
+    weightedAveragePosition: totalImpressions > 0 ? weightedPositionNumerator / totalImpressions : null,
+  };
+}
+
+async function readProductionBuildSha() {
+  try {
+    const response = await fetch(`/build.json?gsc-proof=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return null;
+    const data = await response.json() as Record<string, unknown>;
+    const candidate = [data.source_commit, data.sourceCommit, data.commit, data.sha]
+      .find((value) => typeof value === "string" && /^[0-9a-f]{40}$/i.test(value));
+    return typeof candidate === "string" ? candidate.toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+async function runHealthProof(): Promise<HealthProof> {
+  const { data, error } = await supabase.functions.invoke("gsc-analytics", {
+    body: { action: "health" },
+  });
+  const effectiveProperty = safeText(data?.site_url, "");
+  const proof: HealthProof = {
+    functionSuccess: !error && data?.ok === true,
+    ok: data?.ok === true,
+    ready: data?.ready === true,
+    state: safeText(data?.state, "unknown"),
+    connectorGatewayConfigured: data?.configuration?.connector_gateway_key === true,
+    gscConnectionConfigured: data?.configuration?.search_console_connection_key === true,
+    effectiveProperty,
+    pass: false,
+    error: error || data?.error ? sanitizeError(data?.error || error) : null,
+  };
+  proof.pass = proof.functionSuccess
+    && proof.ok
+    && proof.ready
+    && proof.state === "ready"
+    && proof.connectorGatewayConfigured
+    && proof.gscConnectionConfigured
+    && proof.effectiveProperty === GSC_PROPERTY;
+  return proof;
+}
+
+async function runAnalyticsProof(dimension: "query" | "page"): Promise<AnalyticsProof> {
+  const { data, error } = await supabase.functions.invoke("gsc-analytics", {
+    body: { dimension, days: 28 },
+  });
+  const rows = Array.isArray(data?.rows) ? data.rows as GSCRow[] : [];
+  const aggregate = aggregateRows(rows);
+  const property = safeText(data?.property || data?.site_url, "");
+  const functionSuccess = !error && data?.ok === true;
+  return {
+    dimension,
+    days: 28,
+    functionSuccess,
+    property,
+    ...aggregate,
+    pass: functionSuccess
+      && property === GSC_PROPERTY
+      && data?.dimension === dimension
+      && Number(data?.days) === 28,
+    error: error || data?.error ? sanitizeError(data?.error || error) : null,
+  };
+}
+
+async function runHomepageInspectionProof(): Promise<InspectionProof> {
+  const { data, error } = await supabase.functions.invoke("gsc-inspect", {
+    body: { urls: [HOME_URL] },
+  });
+  const result = Array.isArray(data?.results) ? data.results[0] ?? {} : {};
+  const property = safeText(data?.property, "");
+  const resultError = error || data?.error || result?.error;
+  const functionSuccess = !resultError && data?.ok === true;
+  return {
+    functionSuccess,
+    url: safeText(result?.url, HOME_URL),
+    property,
+    verdict: safeText(result?.verdict),
+    coverageState: safeText(result?.coverageState),
+    robotsTxtState: safeText(result?.robotsTxtState),
+    indexingState: safeText(result?.indexingState),
+    pageFetchState: safeText(result?.pageFetchState),
+    lastCrawlTime: safeText(result?.lastCrawlTime),
+    userCanonical: safeText(result?.userCanonical),
+    googleCanonical: safeText(result?.googleCanonical),
+    sitemapAssociation: Array.isArray(result?.sitemap)
+      ? result.sitemap.filter((value: unknown): value is string => typeof value === "string").slice(0, 10)
+      : [],
+    pass: functionSuccess && property === GSC_PROPERTY && result?.url === HOME_URL,
+    error: resultError ? sanitizeError(resultError) : null,
+  };
+}
+
+function buildSafeProofReport(proof: ProofState) {
+  return {
+    executionTimestamp: proof.executionTimestamp,
+    productionBuildSha: proof.productionBuildSha,
+    health: {
+      functionSuccess: proof.health.functionSuccess,
+      ok: proof.health.ok,
+      ready: proof.health.ready,
+      state: proof.health.state,
+      connectorGatewayConfigured: proof.health.connectorGatewayConfigured,
+      gscConnectionConfigured: proof.health.gscConnectionConfigured,
+      effectiveProperty: proof.health.effectiveProperty,
+      pass: proof.health.pass,
+    },
+    queryAnalytics: {
+      dimension: proof.queryAnalytics.dimension,
+      days: proof.queryAnalytics.days,
+      property: proof.queryAnalytics.property,
+      rowCount: proof.queryAnalytics.rowCount,
+      totalClicks: proof.queryAnalytics.totalClicks,
+      totalImpressions: proof.queryAnalytics.totalImpressions,
+      weightedCtr: proof.queryAnalytics.weightedCtr,
+      weightedAveragePosition: proof.queryAnalytics.weightedAveragePosition,
+      pass: proof.queryAnalytics.pass,
+    },
+    pageAnalytics: {
+      dimension: proof.pageAnalytics.dimension,
+      days: proof.pageAnalytics.days,
+      property: proof.pageAnalytics.property,
+      rowCount: proof.pageAnalytics.rowCount,
+      totalClicks: proof.pageAnalytics.totalClicks,
+      totalImpressions: proof.pageAnalytics.totalImpressions,
+      weightedCtr: proof.pageAnalytics.weightedCtr,
+      weightedAveragePosition: proof.pageAnalytics.weightedAveragePosition,
+      pass: proof.pageAnalytics.pass,
+    },
+    homepageInspection: {
+      url: proof.homepageInspection.url,
+      property: proof.homepageInspection.property,
+      verdict: proof.homepageInspection.verdict,
+      coverageState: proof.homepageInspection.coverageState,
+      robotsTxtState: proof.homepageInspection.robotsTxtState,
+      indexingState: proof.homepageInspection.indexingState,
+      pageFetchState: proof.homepageInspection.pageFetchState,
+      lastCrawlTime: proof.homepageInspection.lastCrawlTime,
+      userCanonical: proof.homepageInspection.userCanonical,
+      googleCanonical: proof.homepageInspection.googleCanonical,
+      sitemapAssociation: proof.homepageInspection.sitemapAssociation,
+      pass: proof.homepageInspection.pass,
+    },
+    pass: proof.pass,
+  };
 }
 
 export default function GoogleSearchCenter() {
-  const [tab, setTab] = useState<Tab>("performance");
-  const [dimension, setDimension] = useState<Dimension>("query");
-  const [days, setDays] = useState(28);
-  const [rows, setRows] = useState<GSCRow[]>([]);
-  const [performanceLoading, setPerformanceLoading] = useState(false);
-  const [performanceError, setPerformanceError] = useState<string | null>(null);
-  const [urlText, setUrlText] = useState(PRIORITY_URLS.join("\n"));
-  const [inspections, setInspections] = useState<Inspection[]>([]);
-  const [inspectionLoading, setInspectionLoading] = useState(false);
-  const [sitemapLoading, setSitemapLoading] = useState(false);
-  const [inspectionError, setInspectionError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [proof, setProof] = useState<ProofState | null>(null);
+  const [manualQuery, setManualQuery] = useState<AnalyticsProof | null>(null);
+  const [manualPage, setManualPage] = useState<AnalyticsProof | null>(null);
+  const [manualInspection, setManualInspection] = useState<InspectionProof | null>(null);
+  const [manualLoading, setManualLoading] = useState<string | null>(null);
 
-  const loadPerformance = async (nextDimension = dimension, nextDays = days) => {
-    setPerformanceLoading(true);
-    setPerformanceError(null);
-    const { data, error } = await supabase.functions.invoke("gsc-analytics", {
-      body: { dimension: nextDimension, days: nextDays },
-    });
-    if (error || data?.error) {
-      setPerformanceError(data?.error || error?.message || "Search Console analytics failed");
-      setRows([]);
-    } else {
-      setRows((data?.rows ?? []) as GSCRow[]);
-    }
-    setPerformanceLoading(false);
-  };
+  const proofStatus = useMemo(() => {
+    if (!proof) return "Not run";
+    return proof.pass ? "PASS" : "REVIEW";
+  }, [proof]);
 
-  useEffect(() => { void loadPerformance("query", 28); }, []);
-
-  const totals = useMemo(() => ({
-    clicks: rows.reduce((sum, row) => sum + Number(row.clicks || 0), 0),
-    impressions: rows.reduce((sum, row) => sum + Number(row.impressions || 0), 0),
-  }), [rows]);
-
-  const loadSitemapUrls = async () => {
-    setSitemapLoading(true);
+  const runProof = async () => {
+    setRunning(true);
     try {
-      const response = await fetch(`/sitemap.xml?gsc=${Date.now()}`, { cache: "no-store" });
-      if (!response.ok) throw new Error(`Sitemap returned HTTP ${response.status}`);
-      const xml = await response.text();
-      const documentNode = new DOMParser().parseFromString(xml, "application/xml");
-      if (documentNode.querySelector("parsererror")) throw new Error("Sitemap XML could not be parsed");
-      const all = Array.from(documentNode.querySelectorAll("url > loc"))
-        .map((node) => node.textContent?.trim() || "")
-        .filter((url) => url.startsWith(`${SITE}/`) || url === `${SITE}/`);
-      const selected = [...new Set([...PRIORITY_URLS, ...all])].slice(0, 25);
-      setUrlText(selected.join("\n"));
-      toast({ title: "Sitemap URLs loaded", description: `${selected.length} URLs selected for the next read-only inspection.` });
-    } catch (error) {
-      toast({ title: "Sitemap could not load", description: error instanceof Error ? error.message : "Unknown error", variant: "destructive" });
+      const executionTimestamp = new Date().toISOString();
+      const productionBuildSha = await readProductionBuildSha();
+      const health = await runHealthProof();
+      const queryAnalytics = await runAnalyticsProof("query");
+      const pageAnalytics = await runAnalyticsProof("page");
+      const homepageInspection = await runHomepageInspectionProof();
+      const next: ProofState = {
+        executionTimestamp,
+        productionBuildSha,
+        health,
+        queryAnalytics,
+        pageAnalytics,
+        homepageInspection,
+        pass: health.pass && queryAnalytics.pass && pageAnalytics.pass && homepageInspection.pass,
+      };
+      setProof(next);
+      setManualQuery(queryAnalytics);
+      setManualPage(pageAnalytics);
+      setManualInspection(homepageInspection);
+      toast({
+        title: next.pass ? "Read-only GSC proof passed" : "Read-only GSC proof needs review",
+        description: "No credentials or individual search queries were added to the proof report.",
+        variant: next.pass ? undefined : "destructive",
+      });
     } finally {
-      setSitemapLoading(false);
+      setRunning(false);
     }
   };
 
-  const inspectUrls = async () => {
-    const urls = normalizeUrls(urlText);
-    if (urls.length === 0) {
-      toast({ title: "Add at least one irhaapparels.com URL", variant: "destructive" });
-      return;
+  const copySafeReport = async () => {
+    if (!proof) return;
+    setCopying(true);
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(buildSafeProofReport(proof), null, 2));
+      toast({ title: "Safe proof report copied", description: "Aggregate read-only evidence is ready to paste into the Execution Chat." });
+    } catch (error) {
+      toast({ title: "Copy failed", description: sanitizeError(error), variant: "destructive" });
+    } finally {
+      setCopying(false);
     }
-    setInspectionLoading(true);
-    setInspectionError(null);
-    const { data, error } = await supabase.functions.invoke("gsc-inspect", { body: { urls } });
-    if (error || data?.error) {
-      setInspectionError(data?.error || error?.message || "URL Inspection failed");
-      setInspections([]);
-    } else {
-      setInspections((data?.results ?? []) as Inspection[]);
-    }
-    setInspectionLoading(false);
   };
 
-  const counts = useMemo(() => ({
-    ready: inspections.filter((result) => statusTone(result) === "ready").length,
-    partial: inspections.filter((result) => statusTone(result) === "partial").length,
-    blocked: inspections.filter((result) => statusTone(result) === "blocked").length,
-  }), [inspections]);
+  const runManualAnalytics = async (dimension: "query" | "page") => {
+    setManualLoading(dimension);
+    try {
+      const result = await runAnalyticsProof(dimension);
+      if (dimension === "query") setManualQuery(result);
+      else setManualPage(result);
+    } finally {
+      setManualLoading(null);
+    }
+  };
+
+  const runManualInspection = async () => {
+    setManualLoading("inspection");
+    try {
+      setManualInspection(await runHomepageInspectionProof());
+    } finally {
+      setManualLoading(null);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <section className="border border-gold/40 bg-gradient-to-br from-gold/10 via-card/40 to-background p-6 md:p-8">
-        <p className="eyebrow mb-2">Google Search & Indexing Center</p>
-        <h2 className="font-display text-3xl md:text-4xl">Performance and URL evidence in one workspace.</h2>
+    <section className="space-y-6" aria-labelledby="gsc-proof-heading">
+      <div className="border border-gold/40 bg-gradient-to-br from-gold/10 via-card/40 to-background p-6 md:p-8">
+        <p className="eyebrow mb-2">Google Search Center</p>
+        <h2 id="gsc-proof-heading" className="font-display text-3xl md:text-4xl">Authenticated, read-only GSC evidence.</h2>
         <p className="text-sm text-foreground/68 mt-3 max-w-3xl leading-relaxed">
-          Search Console analytics show demand and visibility. URL Inspection shows Google's latest known crawl, canonical, robots and indexing state. This workspace does not claim that Google will index a page or submit hidden indexing requests.
+          This admin-only console uses the signed-in Supabase browser client. It reads Search Analytics and homepage URL Inspection for {GSC_PROPERTY}. It never reads the browser session token manually.
         </p>
-      </section>
-
-      <div className="flex gap-2 border-b border-border/60 overflow-x-auto">
-        <TabButton active={tab === "performance"} onClick={() => setTab("performance")} icon={<Search size={13} />} label="Performance" />
-        <TabButton active={tab === "indexing"} onClick={() => setTab("indexing")} icon={<FileSearch size={13} />} label="URL Inspection" />
+        <p className="text-xs text-foreground/55 mt-2">
+          Approved inspection hosts: irhaapparels.com and www.irhaapparels.com. Canonical homepage: {HOME_URL}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button type="button" onClick={() => void runProof()} disabled={running} className="min-h-11 inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-3 text-[10px] uppercase tracking-[0.18em] disabled:opacity-50">
+            {running ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />} Run read-only GSC proof
+          </button>
+          <button type="button" onClick={() => void copySafeReport()} disabled={!proof || copying} className="min-h-11 inline-flex items-center gap-2 border border-border/60 px-5 py-3 text-[10px] uppercase tracking-[0.18em] hover:border-gold hover:text-gold disabled:opacity-40">
+            {copying ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />} Copy safe proof report
+          </button>
+          <StatusBadge pass={proof?.pass ?? false} label={proofStatus} idle={!proof} />
+        </div>
       </div>
 
-      {tab === "performance" ? (
-        <section className="space-y-5">
-          <div className="flex gap-2 flex-wrap items-center">
-            {(["query", "page", "country"] as Dimension[]).map((item) => (
-              <button key={item} type="button" onClick={() => { setDimension(item); void loadPerformance(item, days); }} className={`border px-3 py-2 text-[10px] uppercase tracking-[0.18em] ${dimension === item ? "border-gold text-gold bg-gold/10" : "border-border/60 text-foreground/55"}`}>
-                By {item}
-              </button>
-            ))}
-            {[28, 90].map((value) => (
-              <button key={value} type="button" onClick={() => { setDays(value); void loadPerformance(dimension, value); }} className={`border px-3 py-2 text-[10px] uppercase tracking-[0.18em] ${days === value ? "border-gold text-gold bg-gold/10" : "border-border/60 text-foreground/55"}`}>
-                {value} days
-              </button>
-            ))}
-            <button type="button" onClick={() => void loadPerformance()} disabled={performanceLoading} className="ml-auto inline-flex items-center gap-2 border border-border/60 px-3 py-2 text-[10px] uppercase tracking-[0.18em] hover:border-gold hover:text-gold disabled:opacity-50">
-              <RefreshCw size={12} className={performanceLoading ? "animate-spin" : ""} /> Refresh
-            </button>
+      {proof && (
+        <div className="space-y-4">
+          <HealthCard proof={proof.health} buildSha={proof.productionBuildSha} timestamp={proof.executionTimestamp} />
+          <div className="grid lg:grid-cols-2 gap-4">
+            <AnalyticsCard title="28-day query Analytics" proof={proof.queryAnalytics} />
+            <AnalyticsCard title="28-day page Analytics" proof={proof.pageAnalytics} />
           </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Metric label="Clicks in loaded rows" value={totals.clicks.toLocaleString()} />
-            <Metric label="Impressions in loaded rows" value={totals.impressions.toLocaleString()} />
-            <Metric label="Rows" value={rows.length.toLocaleString()} />
-            <Metric label="Window" value={`${days} days`} />
-          </div>
-
-          {performanceError && <ErrorBox message={performanceError} />}
-          {performanceLoading ? (
-            <Loading label="Loading Search Console performance…" />
-          ) : rows.length === 0 && !performanceError ? (
-            <Empty title="No Search Console rows yet" detail="The connected property may need impressions, or the connector may not yet have access to this property." />
-          ) : (
-            <div className="border border-border/60 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-secondary/40 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  <tr><th className="text-left py-3 px-4">{dimension}</th><th className="text-right py-3 px-4">Clicks</th><th className="text-right py-3 px-4">Impressions</th><th className="text-right py-3 px-4">CTR</th><th className="text-right py-3 px-4">Position</th></tr>
-                </thead>
-                <tbody>
-                  {rows.slice(0, 100).map((row, index) => (
-                    <tr key={`${row.keys[0]}-${index}`} className="border-t border-border/40">
-                      <td className="py-2.5 px-4 text-foreground/85 max-w-md break-all">{row.keys[0]}</td>
-                      <td className="py-2.5 px-4 text-right tabular-nums">{row.clicks}</td>
-                      <td className="py-2.5 px-4 text-right tabular-nums text-foreground/70">{row.impressions}</td>
-                      <td className="py-2.5 px-4 text-right tabular-nums text-foreground/70">{(row.ctr * 100).toFixed(1)}%</td>
-                      <td className="py-2.5 px-4 text-right tabular-nums text-foreground/70">{Number(row.position || 0).toFixed(1)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      ) : (
-        <section className="space-y-5">
-          <div className="border border-border/60 bg-card/25 p-5 md:p-6">
-            <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-              <div>
-                <h3 className="font-display text-2xl">Inspect up to 25 canonical URLs</h3>
-                <p className="text-xs text-foreground/55 mt-2">One URL per line. Only URLs on www.irhaapparels.com are accepted by this interface.</p>
-              </div>
-              <button type="button" onClick={() => void loadSitemapUrls()} disabled={sitemapLoading} className="inline-flex items-center gap-2 border border-border/60 px-3 py-2 text-[10px] uppercase tracking-[0.18em] hover:border-gold hover:text-gold disabled:opacity-50">
-                {sitemapLoading ? <Loader2 size={12} className="animate-spin" /> : <Globe2 size={12} />} Load sitemap URLs
-              </button>
-            </div>
-            <textarea value={urlText} onChange={(event) => setUrlText(event.target.value)} rows={11} className="w-full bg-input border border-border focus:border-gold outline-none px-4 py-3 text-xs font-mono resize-y" />
-            <div className="mt-4 flex items-center justify-between gap-4 flex-wrap">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-foreground/45">{normalizeUrls(urlText).length} URL{normalizeUrls(urlText).length === 1 ? "" : "s"} selected</p>
-              <button type="button" onClick={() => void inspectUrls()} disabled={inspectionLoading} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-5 py-3 text-[10px] uppercase tracking-[0.18em] disabled:opacity-50">
-                {inspectionLoading ? <Loader2 size={12} className="animate-spin" /> : <FileSearch size={12} />} Run read-only inspection
-              </button>
-            </div>
-          </div>
-
-          {inspections.length > 0 && (
-            <div className="grid grid-cols-3 gap-3">
-              <Metric label="Pass" value={counts.ready.toString()} tone="ready" />
-              <Metric label="Review" value={counts.partial.toString()} tone="partial" />
-              <Metric label="Blocked / error" value={counts.blocked.toString()} tone="blocked" />
-            </div>
-          )}
-
-          {inspectionError && <ErrorBox message={inspectionError} />}
-          {inspectionLoading ? (
-            <Loading label="Inspecting Google's latest known URL state…" />
-          ) : inspections.length === 0 && !inspectionError ? (
-            <Empty title="No URLs inspected in this session" detail="Run the read-only inspection to see coverage, robots, crawl and canonical evidence." />
-          ) : (
-            <div className="space-y-3">
-              {inspections.map((result) => <InspectionCard key={result.url} result={result} />)}
-            </div>
-          )}
-        </section>
+          <InspectionCard proof={proof.homepageInspection} />
+        </div>
       )}
-    </div>
+
+      <div className="border border-border/60 bg-card/25 p-5 md:p-6">
+        <h3 className="font-display text-2xl">Individual read-only checks</h3>
+        <p className="text-xs text-foreground/55 mt-2">These controls call only gsc-analytics and gsc-inspect and show aggregate or homepage-only evidence.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <ManualButton label="Load query aggregate" loading={manualLoading === "query"} onClick={() => void runManualAnalytics("query")} icon={<Search size={12} />} />
+          <ManualButton label="Load page aggregate" loading={manualLoading === "page"} onClick={() => void runManualAnalytics("page")} icon={<Search size={12} />} />
+          <ManualButton label="Inspect canonical homepage" loading={manualLoading === "inspection"} onClick={() => void runManualInspection()} icon={<FileSearch size={12} />} />
+        </div>
+        {(manualQuery || manualPage || manualInspection) && (
+          <div className="mt-5 grid lg:grid-cols-3 gap-3">
+            {manualQuery && <CompactResult label="Query" pass={manualQuery.pass} value={`${manualQuery.rowCount} rows · ${manualQuery.totalImpressions} impressions`} error={manualQuery.error} />}
+            {manualPage && <CompactResult label="Page" pass={manualPage.pass} value={`${manualPage.rowCount} rows · ${manualPage.totalImpressions} impressions`} error={manualPage.error} />}
+            {manualInspection && <CompactResult label="Homepage" pass={manualInspection.pass} value={`${manualInspection.verdict} · ${manualInspection.coverageState}`} error={manualInspection.error} />}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
-function InspectionCard({ result }: { result: Inspection }) {
-  const tone = statusTone(result);
-  const style = tone === "ready" ? "border-emerald-500/40 text-emerald-300" : tone === "partial" ? "border-amber-500/40 text-amber-300" : "border-red-500/40 text-red-300";
-  const Icon = tone === "ready" ? CheckCircle2 : tone === "partial" ? AlertTriangle : XCircle;
-  const canonicalMismatch = Boolean(result.userCanonical && result.googleCanonical && result.userCanonical !== result.googleCanonical);
+function StatusBadge({ pass, label, idle = false }: { pass: boolean; label: string; idle?: boolean }) {
+  const style = idle ? "border-border/60 text-muted-foreground" : pass ? "border-emerald-500/50 text-emerald-300" : "border-amber-500/50 text-amber-300";
+  const Icon = pass ? CheckCircle2 : XCircle;
+  return <span className={`min-h-11 inline-flex items-center gap-2 border px-4 text-[10px] uppercase tracking-[0.16em] ${style}`}><Icon size={13} />{label}</span>;
+}
+
+function HealthCard({ proof, buildSha, timestamp }: { proof: HealthProof; buildSha: string | null; timestamp: string }) {
   return (
     <article className="border border-border/60 bg-card/25 p-5">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="min-w-0">
-          <a href={result.url} target="_blank" rel="noreferrer noopener" className="font-mono text-xs text-gold hover:underline break-all inline-flex items-center gap-1">{result.url}<ExternalLink size={10} /></a>
-          <p className="text-sm mt-2">{result.error || result.coverageState || "No coverage state returned"}</p>
-        </div>
-        <span className={`inline-flex items-center gap-1.5 border px-2 py-1 text-[9px] uppercase tracking-[0.14em] ${style}`}><Icon size={11} />{result.error ? "Error" : result.verdict || "Unknown"}</span>
+      <div className="flex items-center justify-between gap-3"><h3 className="font-display text-2xl">Health proof</h3><StatusBadge pass={proof.pass} label={proof.pass ? "PASS" : "FAIL"} /></div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+        <Evidence label="Function result" value={proof.functionSuccess ? "2xx / success" : "failed"} />
+        <Evidence label="ok / ready" value={`${proof.ok} / ${proof.ready}`} />
+        <Evidence label="State" value={proof.state} />
+        <Evidence label="Effective property" value={proof.effectiveProperty || "—"} />
+        <Evidence label="Connector gateway" value={String(proof.connectorGatewayConfigured)} />
+        <Evidence label="GSC connection" value={String(proof.gscConnectionConfigured)} />
+        <Evidence label="Production SHA" value={buildSha || "Unavailable"} />
+        <Evidence label="Executed" value={timestamp} />
       </div>
-      {!result.error && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 text-xs">
-          <Evidence label="Indexing" value={result.indexingState} />
-          <Evidence label="Robots" value={result.robotsTxtState} />
-          <Evidence label="Page fetch" value={result.pageFetchState} />
-          <Evidence label="Last crawl" value={formatDate(result.lastCrawlTime)} />
-        </div>
-      )}
-      {canonicalMismatch && <div className="mt-4 border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">Google canonical differs from the declared canonical. Review both URLs before changing code.</div>}
-      {!result.error && (
-        <details className="mt-4 border-t border-border/40 pt-3">
-          <summary className="cursor-pointer text-[9px] uppercase tracking-[0.16em] text-gold/80">Canonical and sitemap evidence</summary>
-          <div className="mt-3 space-y-2 text-xs text-foreground/60 break-all">
-            <p><span className="text-foreground/40">Declared:</span> {result.userCanonical || "—"}</p>
-            <p><span className="text-foreground/40">Google:</span> {result.googleCanonical || "—"}</p>
-            <p><span className="text-foreground/40">Sitemap:</span> {result.sitemap?.join(", ") || "—"}</p>
-            {result.inspectionLink && <a href={result.inspectionLink} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-gold hover:underline">Open in Search Console <ExternalLink size={10} /></a>}
-          </div>
-        </details>
-      )}
+      {proof.error && <SafeError message={proof.error} />}
     </article>
   );
 }
 
-function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
-  return <button type="button" onClick={onClick} className={`inline-flex items-center gap-2 px-4 py-3 text-[10px] uppercase tracking-[0.18em] border-b-2 ${active ? "border-gold text-gold" : "border-transparent text-foreground/50"}`}>{icon}{label}</button>;
+function AnalyticsCard({ title, proof }: { title: string; proof: AnalyticsProof }) {
+  return (
+    <article className="border border-border/60 bg-card/25 p-5">
+      <div className="flex items-center justify-between gap-3"><h3 className="font-display text-xl">{title}</h3><StatusBadge pass={proof.pass} label={proof.pass ? "PASS" : "FAIL"} /></div>
+      <div className="grid grid-cols-2 gap-3 mt-4">
+        <Evidence label="Function result" value={proof.functionSuccess ? "2xx / success" : "failed"} />
+        <Evidence label="Property" value={proof.property || "—"} />
+        <Evidence label="Rows" value={proof.rowCount.toLocaleString()} />
+        <Evidence label="Clicks" value={proof.totalClicks.toLocaleString()} />
+        <Evidence label="Impressions" value={proof.totalImpressions.toLocaleString()} />
+        <Evidence label="Weighted CTR" value={proof.weightedCtr === null ? "—" : `${(proof.weightedCtr * 100).toFixed(2)}%`} />
+        <Evidence label="Weighted position" value={proof.weightedAveragePosition === null ? "—" : proof.weightedAveragePosition.toFixed(2)} />
+        <Evidence label="Window" value={`${proof.days} days`} />
+      </div>
+      {proof.error && <SafeError message={proof.error} />}
+    </article>
+  );
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone?: "ready" | "partial" | "blocked" }) {
-  const color = tone === "ready" ? "text-emerald-300" : tone === "partial" ? "text-amber-300" : tone === "blocked" ? "text-red-300" : "text-foreground";
-  return <div className="border border-border/60 bg-card/25 p-4"><p className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p><p className={`font-display text-3xl mt-1 ${color}`}>{value}</p></div>;
+function InspectionCard({ proof }: { proof: InspectionProof }) {
+  return (
+    <article className="border border-border/60 bg-card/25 p-5">
+      <div className="flex items-center justify-between gap-3"><h3 className="font-display text-2xl">Homepage Inspection proof</h3><StatusBadge pass={proof.pass} label={proof.pass ? "PASS" : "FAIL"} /></div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+        <Evidence label="Function result" value={proof.functionSuccess ? "2xx / success" : "failed"} />
+        <Evidence label="URL" value={proof.url} />
+        <Evidence label="Property" value={proof.property || "—"} />
+        <Evidence label="Verdict" value={proof.verdict} />
+        <Evidence label="Coverage" value={proof.coverageState} />
+        <Evidence label="Robots" value={proof.robotsTxtState} />
+        <Evidence label="Indexing" value={proof.indexingState} />
+        <Evidence label="Page fetch" value={proof.pageFetchState} />
+        <Evidence label="Last crawl" value={proof.lastCrawlTime} />
+        <Evidence label="User canonical" value={proof.userCanonical} />
+        <Evidence label="Google canonical" value={proof.googleCanonical} />
+        <Evidence label="Sitemap association" value={proof.sitemapAssociation.join(", ") || "—"} />
+      </div>
+      {proof.error && <SafeError message={proof.error} />}
+    </article>
+  );
 }
 
-function Evidence({ label, value }: { label: string; value?: string }) {
-  return <div className="border border-border/50 bg-background/35 p-3"><p className="text-[9px] uppercase tracking-[0.14em] text-foreground/40">{label}</p><p className="mt-1 break-words">{value || "—"}</p></div>;
+function Evidence({ label, value }: { label: string; value: string }) {
+  return <div className="border border-border/50 bg-background/35 p-3 min-w-0"><p className="text-[9px] uppercase tracking-[0.14em] text-foreground/40">{label}</p><p className="mt-1 text-xs break-words">{value}</p></div>;
 }
 
-function ErrorBox({ message }: { message: string }) {
-  return <div className="border border-red-500/40 bg-red-500/10 text-red-200 p-4 text-sm flex gap-3"><XCircle size={17} className="shrink-0 mt-0.5" /><span>{message}</span></div>;
+function SafeError({ message }: { message: string }) {
+  return <p className="mt-4 border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200 break-words">Sanitized error: {message}</p>;
 }
 
-function Loading({ label }: { label: string }) {
-  return <div className="py-12 text-center text-sm text-muted-foreground"><Loader2 size={22} className="animate-spin mx-auto mb-3" />{label}</div>;
+function ManualButton({ label, loading, onClick, icon }: { label: string; loading: boolean; onClick: () => void; icon: React.ReactNode }) {
+  return <button type="button" onClick={onClick} disabled={loading} className="min-h-11 inline-flex items-center gap-2 border border-border/60 px-3 py-2 text-[10px] uppercase tracking-[0.16em] hover:border-gold hover:text-gold disabled:opacity-50">{loading ? <Loader2 size={12} className="animate-spin" /> : icon}{label}</button>;
 }
 
-function Empty({ title, detail }: { title: string; detail: string }) {
-  return <div className="border border-dashed border-border/60 bg-card/20 p-10 text-center"><Search size={25} className="mx-auto text-muted-foreground mb-3" /><h3 className="font-display text-xl">{title}</h3><p className="text-xs text-muted-foreground mt-2 max-w-xl mx-auto">{detail}</p></div>;
+function CompactResult({ label, pass, value, error }: { label: string; pass: boolean; value: string; error: string | null }) {
+  return <div className="border border-border/50 bg-background/35 p-4"><p className="text-[9px] uppercase tracking-[0.14em] text-foreground/40">{label}</p><p className={pass ? "mt-1 text-xs text-emerald-300" : "mt-1 text-xs text-amber-300"}>{pass ? "PASS" : "REVIEW"} · {value}</p>{error && <p className="mt-2 text-xs text-red-200 break-words">{error}</p>}</div>;
 }
