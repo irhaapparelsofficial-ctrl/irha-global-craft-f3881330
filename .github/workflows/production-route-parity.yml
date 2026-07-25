@@ -20,12 +20,14 @@ on:
       - "scripts/verify-built-crawler-shell.mjs"
       - "scripts/enrich-generic-static-route-shells.mjs"
       - "scripts/align-taxonomy-route-shells.ts"
+      - "scripts/patch-cloudflare-route-shell-assets.mjs"
       - "scripts/verify-route-content-fidelity.mjs"
       - "scripts/verify-route-parity-build.ts"
       - "src/lib/publicIdentity.mjs"
       - "src/lib/publicIdentity.test.ts"
       - "src/lib/routeContent.mjs"
       - "src/test/routeContentStaticFidelity.test.ts"
+      - "src/test/cloudflareRouteShellAssets.test.ts"
       - "src/test/googleBrandVisibility.test.ts"
       - "src/lib/buyerReadyProductContent.ts"
       - "src/test/productionConvergenceBarrier.test.ts"
@@ -130,7 +132,7 @@ jobs:
           npm run verify:secrets
           npm run verify:migrations
           npx tsc --noEmit
-          npx vitest run src/test/routeContentStaticFidelity.test.ts src/test/productionConvergenceBarrier.test.ts src/test/productionRouteParityCrawler.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
+          npx vitest run src/test/routeContentStaticFidelity.test.ts src/test/cloudflareRouteShellAssets.test.ts src/test/productionConvergenceBarrier.test.ts src/test/productionRouteParityCrawler.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
 
       - name: Generate exact production catalogue and redirect manifests
         shell: bash

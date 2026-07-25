@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { CORE_ROUTE_CONTENT } from "@/lib/routeContent.mjs";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
+const requiredCoreRoutes = ["/products", "/contact", "/inquiry"] as const;
 
 describe("Cloudflare crawler route asset contract", () => {
   it("patches production builds after product and taxonomy parity transforms", () => {
@@ -23,19 +25,28 @@ describe("Cloudflare crawler route asset contract", () => {
     expect(patcher).toContain("routeShellAssetResponse");
     expect(patcher).toContain("X-Irha-Route-Shell-Asset");
     expect(patcher).toContain("canonicalPathRedirect(request, url, pathname)");
-    expect(patcher).toContain('const REQUIRED_ROUTE_SHELLS = ["products", "contact", "inquiry"]');
+    expect(patcher).toContain('const REQUIRED_CORE_ROUTE_SHELLS = ["/products", "/contact", "/inquiry"]');
   });
 
-  it("fails the build unless core route shells contain conversion and trust content", () => {
+  it("validates route-specific core shells from the canonical content and identity sources", () => {
     const patcher = read("scripts/patch-cloudflare-route-shell-assets.mjs");
+    for (const route of requiredCoreRoutes) {
+      expect(CORE_ROUTE_CONTENT[route]?.route).toBe(route);
+    }
     for (const token of [
-      'data-irha-rich-route-shell="true"',
-      "info@irhaapparels.com",
-      "+92 320 4110066",
-      "Five specialist apparel categories",
-      "Request a Manufacturing Quote",
+      "CORE_ROUTE_CONTENT",
+      "PUBLIC_IDENTITY",
+      'data-irha-route-shell="${route}"',
+      'data-irha-route-content="core"',
+      "content.h1",
+      "content.intro",
+      "content.sections.flatMap",
+      "verifyCanonicalOrganization",
+      "OBSOLETE_GENERIC_FINGERPRINTS",
     ]) {
       expect(patcher).toContain(token);
     }
+    expect(patcher).not.toContain("function verifyRichRouteShells");
+    expect(patcher).not.toContain('const REQUIRED_ROUTE_SHELLS = ["products", "contact", "inquiry"]');
   });
 });
