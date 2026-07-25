@@ -25,6 +25,7 @@ const requiredCoreRoutes = [
 describe("route-specific static content architecture", () => {
   it("keeps one controlled content model for every core canonical route", () => {
     expect(CORE_ROUTE_PATHS).toEqual(requiredCoreRoutes);
+    expect(new Set(CORE_ROUTE_PATHS).size).toBe(CORE_ROUTE_PATHS.length);
     for (const path of requiredCoreRoutes) {
       const content = CORE_ROUTE_CONTENT[path];
       expect(content.route).toBe(path);
