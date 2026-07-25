@@ -34,10 +34,59 @@ const TRANSIENT_PATTERNS = [
   /network.*error/i,
 ];
 
+const DETERMINISTIC_PATTERNS = [
+  /\bAssertionError\b/i,
+  /(?:^|\n)\s*(?:FAIL|×)\s+/im,
+  /\bTest Files?\b[^\n]*\bfailed\b/i,
+  /\bTests?\b[^\n]*\bfailed\b/i,
+  /\bexpected\b[^\n]*(?:received|to\s+(?:be|equal|contain|match)|mismatch)/i,
+  /\bExpected:\s*/i,
+  /\bReceived:\s*/i,
+  /\berror\s+TS\d{4}\b/i,
+  /\bTS\d{4}:/i,
+  /\b(?:canonical|schema|redirect|route|migration|deployment-source|secret-safety)\b[^\n]*(?:mismatch|drift|missing|invalid|refus(?:e|ed|ing))/i,
+  /\b(?:contract|parity|verification)\b[^\n]*(?:expected|mismatch|drift|missing|required|refus(?:e|ed|ing))/i,
+];
+
+const ANSI_PATTERN = /\u001b\[[0-?]*[ -/]*[@-~]/g;
+const FAILURE_LINE_PATTERNS = [
+  /##\[error\]/i,
+  /^\s*(?:curl|wget|git|gh|npm|npx|node|wrangler|bash|sh):/i,
+  /\bcurl:\s*\(\d+\)/i,
+  /\b(?:fatal|error|failed|failure)\b/i,
+  /\bProcess completed with exit code\b/i,
+  /\bHTTP\s*(?:429|502|503|504)\b/i,
+  /\b(?:ECONNRESET|ETIMEDOUT)\b/i,
+  /\brunner.*(?:lost|disconnected)\b/i,
+  /\bthe operation was canceled\b/i,
+  /\bnetwork.*error\b/i,
+];
+
 function normalizeJobs(jobs) {
   if (Array.isArray(jobs)) return jobs;
   if (Array.isArray(jobs?.jobs)) return jobs.jobs;
   return [];
+}
+
+function stripAnsi(value) {
+  return String(value ?? "").replace(ANSI_PATTERN, "");
+}
+
+function collectFailureContext(logs) {
+  const lines = stripAnsi(logs).split(/\r?\n/);
+  const selected = new Set();
+  const successfulTestLine = /^\s*(?:✓|√|PASS)\b/i;
+
+  lines.forEach((line, index) => {
+    if (successfulTestLine.test(line)) return;
+    if (!FAILURE_LINE_PATTERNS.some((pattern) => pattern.test(line))) return;
+    for (let offset = -2; offset <= 2; offset += 1) {
+      const candidate = index + offset;
+      if (candidate >= 0 && candidate < lines.length) selected.add(candidate);
+    }
+  });
+
+  return [...selected].sort((left, right) => left - right).map((index) => lines[index]).join("\n");
 }
 
 function result({ classification, retryable, recoveryAction = "none", reason, workflowName, runAttempt }) {
@@ -104,8 +153,19 @@ export function classifyFailure(input) {
     });
   }
 
-  const evidence = [logs, JSON.stringify(normalizedJobs)].join("\n");
-  const capacityPattern = CAPACITY_PATTERNS.find((pattern) => pattern.test(evidence));
+  const normalizedLogs = stripAnsi(logs);
+  const deterministicPattern = DETERMINISTIC_PATTERNS.find((pattern) => pattern.test(normalizedLogs));
+  if (deterministicPattern) {
+    return result({
+      classification: "deterministic",
+      retryable: false,
+      reason: `explicit deterministic failure evidence matched ${deterministicPattern}`,
+      workflowName,
+      runAttempt,
+    });
+  }
+
+  const capacityPattern = CAPACITY_PATTERNS.find((pattern) => pattern.test(normalizedLogs));
   if (capacityPattern) {
     return result({
       classification: "capacity",
@@ -116,14 +176,15 @@ export function classifyFailure(input) {
     });
   }
 
-  const transientPattern = TRANSIENT_PATTERNS.find((pattern) => pattern.test(evidence));
+  const failedOperationEvidence = collectFailureContext(normalizedLogs);
+  const transientPattern = TRANSIENT_PATTERNS.find((pattern) => pattern.test(failedOperationEvidence));
   if (transientPattern) {
     const retryable = Number(runAttempt) < 2;
     return result({
       classification: "transient",
       retryable,
       recoveryAction: retryable ? "rerun-failed-jobs" : "none",
-      reason: `transient infrastructure signal matched ${transientPattern}`,
+      reason: `transient infrastructure signal matched failed-operation evidence ${transientPattern}`,
       workflowName,
       runAttempt,
     });

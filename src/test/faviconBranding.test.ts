@@ -37,12 +37,15 @@ describe("Irha favicon branding", () => {
     expect(workerPatch).toContain('headers.delete("Location")');
     expect(workerPatch).toContain("status: 200");
 
-    expect(liveVerification).toContain('workflows: ["Cloudflare Production Status"]');
-    expect(liveVerification).not.toContain("push:\n");
-    expect(liveVerification).toContain("Resolve exact deployed production SHA");
+    expect(liveVerification).toContain('workflows: ["IndexNow After Verified Production"]');
+    expect(liveVerification).not.toContain("\n  push:\n");
+    expect(liveVerification).toContain("Resolve exact search-verified production SHA");
     expect(liveVerification).toContain("source_identity_state");
-    expect(liveVerification).toContain("Official Irha Apparels Manufacturing Specialists crest supplied by the owner");
+    expect(liveVerification).toContain('.context == "Irha Search Discovery"');
+    expect(liveVerification).toContain('[ "$source_sha" = "$latest_main" ]');
+    expect(liveVerification).toContain('"repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA"');
     expect(liveVerification).toContain('context="Irha Brand Live"');
+    expect(liveVerification).toContain("Official Irha Apparels Manufacturing Specialists crest supplied by the owner");
 
     expect(manifest.icons[0]).toEqual({
       src: "/favicon.svg",

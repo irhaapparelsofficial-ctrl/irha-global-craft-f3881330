@@ -165,13 +165,38 @@ describe("Irha CI control plane", () => {
     expect(retry).toContain('echo "[retry] transient failure (exit $status); waiting ${sleep_for}s before retry" >&2');
   });
 
-  it("has an automatic one-attempt transient failure guardian", () => {
+  it("has bounded startup and transient recovery without unrelated fan-out", () => {
     const guardian = read(".github/workflows/ci-guardian.yml");
+    const classifier = read("scripts/ci/classify-failure.mjs");
+
     expect(guardian).toContain("Irha CI Guardian");
-    expect(guardian).toContain("rerun-failed-jobs");
-    expect(guardian).toContain("classify-failure.mjs");
-    expect(guardian).toContain("one automatic failed-job rerun requested");
-    expect(guardian).toContain("Database migration workflow is never blindly rerun");
+    expect(guardian).toContain('"repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/rerun"');
+    expect(guardian).toContain('"repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/rerun-failed-jobs"');
+    expect(guardian).toContain("steps.decision.outputs.recovery_action == 'rerun-run'");
+    expect(guardian).toContain("steps.decision.outputs.recovery_action == 'rerun-failed-jobs'");
+    expect(guardian).toContain("one full workflow rerun requested because no runnable job graph existed");
+    expect(guardian).toContain("one failed-job rerun requested");
+    expect(classifier).toContain('recoveryAction: Number(runAttempt) < 2 ? "rerun-run" : "none"');
+    expect(classifier).toContain('recoveryAction: retryable ? "rerun-failed-jobs" : "none"');
+    expect(classifier).toContain('classification: "deterministic"');
+    expect(classifier).toContain("retryable: false");
+
+    for (const unrelated of [
+      "Supabase Functions After Quality Gate",
+      "Supabase Database After Quality Gate",
+      "Owner Supabase Guarded Release",
+      "Workers AI Guide Gate",
+      "Automatic AI Image Pipeline",
+      "Secret Bootstrap Controller",
+      "Cloudflare Free Zone Hardening",
+    ]) {
+      expect(guardian).not.toContain(`- ${unrelated}`);
+    }
+
+    expect(guardian).not.toContain("- Irha CI Guardian");
+    expect(guardian).not.toContain("gh workflow run");
+    expect(guardian).toContain("Supabase, Workers AI, image, bootstrap and hardening workflows are outside Guardian fan-out");
+    expect(guardian).toContain("CI Guardian never subscribes to or dispatches itself");
   });
 
   it("keeps obsolete duplicate and one-time workflows removed", () => {

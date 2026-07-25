@@ -167,17 +167,30 @@ describe("production route parity completion", () => {
     expect(workflow).not.toContain("supabase db push");
   });
 
-  it("automatically verifies exact main and publishes a commit-bound result", () => {
+  it("runs only after exact-SHA release convergence and publishes complete live evidence", () => {
     const workflow = read(productionWorkflowPath);
-    expect(workflow).toContain("push:");
-    expect(workflow).toContain("branches: [main]");
-    expect(workflow).toContain("statuses: write");
+    expect(workflow).toContain("on:\n  workflow_dispatch:");
+    expect(workflow).not.toContain("\n  push:\n");
+    expect(workflow).toContain("Confirm exact current main and release statuses");
+    expect(workflow).toContain('latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq \'.sha\')"');
+    for (const context of [
+      "Irha Quality Gate",
+      "Irha Cloudflare Production",
+      "Irha Search Discovery",
+      "Irha Brand Live",
+    ]) {
+      expect(workflow).toContain(`"${context}"`);
+    }
+    expect(workflow).toContain("Required exact-SHA release status is not green");
+    expect(workflow).toContain("Refusing stale production crawl");
+    expect(workflow).toContain("Run complete live production crawl");
+    expect(workflow).toContain("Calculate authoritative production crawl result");
+    expect(workflow).toContain("Preserve machine-readable crawl evidence");
     expect(workflow).toContain("Publish pending crawl status");
     expect(workflow).toContain("Publish exact commit crawl status");
     expect(workflow).toContain("Irha Production Route Parity");
     expect(workflow).toContain("statuses/$SOURCE_SHA");
     expect(workflow).toContain("Full live route crawl passed with zero critical/high findings");
-    expect(workflow).toContain("Refusing stale production crawl");
   });
 
   it("requires an immutable preview deployment and context-safe blocking evaluation", () => {
