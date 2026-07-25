@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 import defaultSocialImage from "@/assets/banners/products-flatlay.jpg";
 import { ORGANIZATION_ID, SITE_URL } from "@/lib/seoSchema";
+import { productImageAlt, productNameFromImageUrl } from "@/lib/imageSeo";
 import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
 import { usePublicPageTools } from "@/hooks/usePublicContent";
 import { shouldNoIndexCategorySearchParams } from "@/lib/categoryIndexing";
@@ -15,6 +16,7 @@ type Props = {
   path?: string;
   canonical?: string;
   image?: string;
+  imageAlt?: string;
   jsonLd?: object | object[];
   noindex?: boolean;
   type?: "website" | "article" | "product";
@@ -75,12 +77,17 @@ function schemaHasType(schema: object, expected: string) {
   return Array.isArray(type) ? type.includes(expected) : type === expected;
 }
 
+function imageObject(url: string) {
+  return { "@type": "ImageObject", url, contentUrl: url };
+}
+
 export default function SEO({
   title,
   description,
   path,
   canonical,
   image,
+  imageAlt,
   jsonLd,
   noindex,
   type = "website",
@@ -100,6 +107,12 @@ export default function SEO({
   const canonicalValue = override?.canonical_url || canonical || effectivePath;
   const url = canonicalUrl(canonicalValue);
   const ogImage = assetUrl(override?.og_image_url || image || defaultSocialImage);
+  const derivedProductName = productNameFromImageUrl(ogImage);
+  const effectiveImageAlt = imageAlt?.trim()
+    || productImageAlt(
+      ogImage,
+      derivedProductName || effectiveTitle.replace(/\s*[|—].*$/, "").trim(),
+    );
   const effectiveJsonLd = override?.json_ld || jsonLd;
   const suppliedSchemas = effectiveJsonLd
     ? (Array.isArray(effectiveJsonLd) ? effectiveJsonLd : [effectiveJsonLd])
@@ -107,11 +120,12 @@ export default function SEO({
   const hasProductSchema = suppliedSchemas.some(
     (schema) => schemaHasType(schema, "Product") || schemaHasType(schema, "ProductGroup"),
   );
+  const productId = `${url}#product`;
   const productSchema = type === "product" && !hasProductSchema
     ? {
         "@context": "https://schema.org",
         "@type": "Product",
-        "@id": `${url}#product`,
+        "@id": productId,
         name: effectiveTitle.replace(/\s*[|—].*$/, "").trim(),
         description: effectiveDescription,
         image: [ogImage],
@@ -126,7 +140,39 @@ export default function SEO({
         ],
       }
     : null;
-  const schemas = productSchema ? [...suppliedSchemas, productSchema] : suppliedSchemas;
+  const baseSchemas = productSchema ? [...suppliedSchemas, productSchema] : suppliedSchemas;
+  const schemas = baseSchemas.map((schema) => {
+    if (!schema || typeof schema !== "object") return schema;
+    const value = schema as Record<string, unknown>;
+    if (schemaHasType(schema, "Product") || schemaHasType(schema, "ProductGroup")) {
+      const images = Array.isArray(value.image) ? value.image.filter(Boolean) : value.image ? [value.image] : [];
+      return { ...value, image: [ogImage, ...images.filter((candidate) => candidate !== ogImage)], url };
+    }
+    if (schemaHasType(schema, "WebPage") || schemaHasType(schema, "CollectionPage")) {
+      return {
+        ...value,
+        primaryImageOfPage: imageObject(ogImage),
+        ...(type === "product" ? { mainEntity: { "@id": productId } } : {}),
+      };
+    }
+    return schema;
+  });
+  const hasWebPageSchema = schemas.some((schema) => schemaHasType(schema, "WebPage"));
+  if (type === "product" && !hasWebPageSchema) {
+    schemas.unshift({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: effectiveTitle,
+      description: effectiveDescription,
+      isPartOf: { "@id": `${SITE_URL}/#website` },
+      mainEntity: { "@id": productId },
+      primaryImageOfPage: imageObject(ogImage),
+      inLanguage: locale,
+    });
+  }
+
   const isCategoryRoute = /^\/products\/[^/]+(?:\/all-products)?\/?$/.test(location.pathname);
   const functionalCategoryVariant = isCategoryRoute && shouldNoIndexCategorySearchParams(location.search);
   const isUnreviewedLocalizedTaxonomy = /^\/intl\/(de|fr|es)\/products\//.test(location.pathname)
@@ -166,13 +212,13 @@ export default function SEO({
       <meta property="og:locale" content={ogLocale(locale)} />
       <meta property="og:site_name" content={PUBLIC_IDENTITY.name} />
       <meta property="og:image" content={ogImage} />
-      <meta property="og:image:alt" content={`${effectiveTitle} — ${PUBLIC_IDENTITY.name}`} />
+      <meta property="og:image:alt" content={effectiveImageAlt} />
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={effectiveTitle} />
       <meta name="twitter:description" content={effectiveDescription} />
       <meta name="twitter:image" content={ogImage} />
-      <meta name="twitter:image:alt" content={`${effectiveTitle} — ${PUBLIC_IDENTITY.name}`} />
+      <meta name="twitter:image:alt" content={effectiveImageAlt} />
 
       {schemas.map((schema, index) => (
         <script key={index} type="application/ld+json">

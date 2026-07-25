@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ImgHTMLAttributes, type SyntheticEvent } from "react";
 import { responsiveImageAttributes, thumbnailUrl } from "@/lib/imageThumbnails";
+import { semanticImageAlt } from "@/lib/imageSeo";
 import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";
 import leatherHero from "@/assets/og/og-leather.jpg";
 import sportswearHero from "@/assets/og/og-sportswear.jpg";
@@ -63,6 +64,7 @@ export default function ThumbnailImage({
     && !responsiveFailed
     && sourceIndex === 0
     && Boolean(responsiveAttributes.srcSet || srcSet);
+  const resolvedAlt = semanticImageAlt(original, props.alt);
 
   const handleError = (event: SyntheticEvent<HTMLImageElement>) => {
     if (useResponsiveSet) {
@@ -80,6 +82,7 @@ export default function ThumbnailImage({
     <img
       {...props}
       src={currentSrc}
+      alt={resolvedAlt}
       srcSet={useResponsiveSet ? srcSet || responsiveAttributes.srcSet : undefined}
       sizes={useResponsiveSet ? sizes || DEFAULT_RESPONSIVE_SIZES : sizes}
       loading={loading}

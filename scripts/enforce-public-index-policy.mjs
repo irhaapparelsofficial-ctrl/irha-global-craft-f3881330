@@ -7,6 +7,7 @@ const DIST_DIR = resolve("dist");
 const OWNER_EMAIL = "irhaapparelsofficial@gmail.com";
 const DOMAIN_EMAIL = "info@irhaapparels.com";
 const PUBLIC_ROBOTS_DIRECTIVE = "index,follow,max-image-preview:large";
+const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
 const NON_INDEXABLE_PATHS = new Set(["/studio"]);
 const NON_INDEXABLE_PREFIXES = ["/intl/"];
 const REMOVED_BLOG_PATHS = new Set([
@@ -61,10 +62,15 @@ async function enforceSitemapPolicy() {
     retained.push(block.trim());
   }
 
-  const rebuilt = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${retained.map((block) => `  ${block.replace(/\n/g, "\n  ")}`).join("\n")}\n</urlset>\n`;
+  const containsImages = retained.some((block) => /<image:image>[\s\S]*?<image:loc>/i.test(block));
+  const namespace = containsImages ? ` xmlns:image="${IMAGE_NAMESPACE}"` : "";
+  const rebuilt = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${namespace}>\n${retained.map((block) => `  ${block.replace(/\n/g, "\n  ")}`).join("\n")}\n</urlset>\n`;
   await writeFile(SITEMAP_PATH, rebuilt, "utf8");
 
   const verification = await readFile(SITEMAP_PATH, "utf8");
+  if (verification.includes("<image:image>") && !verification.includes(`xmlns:image="${IMAGE_NAMESPACE}"`)) {
+    throw new Error("Image sitemap entries exist without the Google image namespace");
+  }
   for (const pathname of [...NON_INDEXABLE_PATHS, ...REMOVED_BLOG_PATHS]) {
     if (verification.includes(`<loc>${SITE_ORIGIN}${pathname}</loc>`)) {
       throw new Error(`Non-indexable route still exists in sitemap: ${pathname}`);
