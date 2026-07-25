@@ -9,8 +9,9 @@ const sitemapFunctionSource = readFileSync("supabase/functions/sitemap-ping/inde
 describe("Google Search Console inspection contract", () => {
   it("uses the verified domain property for canonical apex URLs", () => {
     expect(monitorSource).toContain('const SITE_PROPERTY = "sc-domain:irhaapparels.com"');
-    expect(inspectionFunctionSource).toContain('const DEFAULT_SITE_URL = "sc-domain:irhaapparels.com"');
+    expect(inspectionFunctionSource).toContain('const GSC_SITE_PROPERTY = "sc-domain:irhaapparels.com"');
     expect(inspectionFunctionSource).toContain('Deno.env.get("GSC_SITE_URL")');
+    expect(inspectionFunctionSource).not.toContain('const DEFAULT_SITE_URL = "sc-domain:irhaapparels.com"');
     expect(inspectionFunctionSource).not.toContain('const SITE_URL = "https://www.irhaapparels.com/"');
   });
 
