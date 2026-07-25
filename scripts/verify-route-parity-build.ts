@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { BuyerReadyCatalogRoute } from "./generate-buyer-ready-catalog-manifest";
+import { verifyRouteContentFidelity } from "./verify-route-content-fidelity.mjs";
 import {
   localizedAudienceName,
   localizedCollectionName,
@@ -111,7 +112,8 @@ async function verifyTaxonomy(pathname: string, names: RouteNames) {
     `<meta data-irha-fallback-seo="true" name="description" content="${escapeHtml(seo.description)}"`,
     `>${escapeHtml(seo.h1)}</h1>`,
     `<link rel="canonical" href="${SITE}${pathname}"`,
-    'data-irha-rich-route-shell="true" data-irha-taxonomy-parity="true"',
+    'data-irha-route-content="taxonomy"',
+    'data-irha-taxonomy-parity="true"',
     'data-irha-taxonomy-children="true"',
     `data-irha-product-count="${names.productCount}"`,
     'aria-label="Breadcrumb"',
@@ -121,6 +123,7 @@ async function verifyTaxonomy(pathname: string, names: RouteNames) {
   for (const token of required) if (!html.includes(token)) throw new Error(`Final taxonomy shell ${pathname} missing: ${token}`);
   for (const child of names.children) if (!html.includes(`href="${child}"`)) throw new Error(`Final taxonomy shell ${pathname} missing child: ${child}`);
   if (html.includes('data-irha-product-shell="true"')) throw new Error(`Taxonomy shell became a product shell: ${pathname}`);
+  if (html.includes('data-irha-rich-route-shell="true"')) throw new Error(`Taxonomy shell retained the generic universal shell: ${pathname}`);
 }
 
 function parseRedirects(source: string) {
@@ -135,6 +138,8 @@ function parseRedirects(source: string) {
 }
 
 async function main() {
+  await verifyRouteContentFidelity();
+
   const manifest = JSON.parse(await readFile(join(DIST, "catalog-route-manifest.json"), "utf8")) as Manifest;
   if (manifest.schemaVersion !== 1 || manifest.productCount !== EXPECTED_PRODUCTS || manifest.products.length !== EXPECTED_PRODUCTS) throw new Error("Final route parity verification requires the complete 254-product manifest");
   const taxonomy = taxonomyRoutes(manifest.products);

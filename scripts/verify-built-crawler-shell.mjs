@@ -1,6 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
+import { verifyRouteContentFidelity } from "./verify-route-content-fidelity.mjs";
 
 const DIST = resolve("dist");
 const read = (name) => readFile(join(DIST, name), "utf8");
@@ -107,5 +108,7 @@ assert(sitemap.includes(`<loc>${canonical}/</loc>`), "sitemap is missing the can
 assert(llms.includes(`${canonical}/`), "llms.txt is missing absolute canonical URLs");
 assert(llmsFull.toLowerCase().includes("two production hubs"), "llms-full.txt is missing the current homepage structure");
 assert(await readFile(join(DIST, "irha-brand-mark.svg"), "utf8").then((value) => value.includes("Official owner-supplied Irha Apparels")), "Canonical crest asset is missing or unverified");
+
+await verifyRouteContentFidelity();
 
 console.log(`PASS ${htmlFiles.length} built HTML files with one canonical Organization, one WebSite, one homepage WebPage, ${sitemapCount} sitemap URLs, valid contact identity and preserved crawler contracts`);
