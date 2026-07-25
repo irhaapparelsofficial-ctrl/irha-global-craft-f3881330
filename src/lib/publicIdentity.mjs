@@ -10,6 +10,7 @@ export const PUBLIC_IDENTITY = Object.freeze({
   url: "https://irhaapparels.com/",
   organizationId: "https://irhaapparels.com/#organization",
   websiteId: "https://irhaapparels.com/#website",
+  homepageId: "https://irhaapparels.com/#webpage",
   logoUrl: "https://irhaapparels.com/irha-brand-mark.svg",
   telephone: "+92 320 411 0066",
   telephoneHref: "+923204110066",
@@ -20,6 +21,11 @@ export const PUBLIC_IDENTITY = Object.freeze({
     region: "Punjab",
     country: "PK",
     display: "Sialkot, Punjab, Pakistan",
+  }),
+  homepage: Object.freeze({
+    title: "Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan",
+    heading: "Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers",
+    description: "Irha Apparels is a B2B apparel manufacturer in Sialkot, Pakistan, supplying custom Lederhosen, Dirndl, leather apparel, sportswear, streetwear and private-label clothing programs.",
   }),
   responsiblePerson: Object.freeze({
     name: "Daim Ali",
@@ -67,6 +73,21 @@ export function buildCanonicalWebsiteSchema({ includeContext = true } = {}) {
     "@id": PUBLIC_IDENTITY.websiteId,
     url: PUBLIC_IDENTITY.url,
     name: PUBLIC_IDENTITY.name,
+    publisher: { "@id": PUBLIC_IDENTITY.organizationId },
+    inLanguage: "en",
+  };
+}
+
+export function buildCanonicalHomepageWebPageSchema({ includeContext = true } = {}) {
+  return {
+    ...(includeContext ? { "@context": "https://schema.org" } : {}),
+    "@type": "WebPage",
+    "@id": PUBLIC_IDENTITY.homepageId,
+    url: PUBLIC_IDENTITY.url,
+    name: PUBLIC_IDENTITY.homepage.title,
+    description: PUBLIC_IDENTITY.homepage.description,
+    isPartOf: { "@id": PUBLIC_IDENTITY.websiteId },
+    about: { "@id": PUBLIC_IDENTITY.organizationId },
     publisher: { "@id": PUBLIC_IDENTITY.organizationId },
     inLanguage: "en",
   };
