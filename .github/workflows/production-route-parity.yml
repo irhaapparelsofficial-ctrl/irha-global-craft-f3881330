@@ -42,7 +42,7 @@ permissions:
 
 concurrency:
   group: production-route-parity-main
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   CRAWL_ORIGIN: https://irhaapparels.com
