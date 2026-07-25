@@ -223,14 +223,99 @@ function verifyProduct(pathname, html, product) {
   assert(nodes.some((node) => node["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
 }
 
+function normalizeJsxText(value) {
+  return value
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([.,!?;:])/g, "$1")
+    .trim();
+}
+
+function reactH1Of(source) {
+  return normalizeJsxText(source.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? "");
+}
+
+function verifyAboutReactParity(source, content) {
+  assert(
+    /import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']@\/lib\/publicIdentity\.mjs["'];?/.test(source),
+    "/about React source must import PUBLIC_IDENTITY from the canonical identity source",
+  );
+
+  const accountabilityItems = [...source.matchAll(/<AccountabilityItem\b[\s\S]*?\/>/g)].map((match) => match[0]);
+  const responsiblePersonBlock = accountabilityItems.find((item) => item.includes('label="Responsible person"')) ?? "";
+  assert(responsiblePersonBlock, "/about React source is missing the visible responsible-person block");
+  assert(
+    responsiblePersonBlock.includes("value={PUBLIC_IDENTITY.responsiblePerson.name}"),
+    "/about responsible-person block must visibly render PUBLIC_IDENTITY.responsiblePerson.name",
+  );
+  assert(
+    responsiblePersonBlock.includes("PUBLIC_IDENTITY.responsiblePerson.title"),
+    "/about responsible-person block must visibly render PUBLIC_IDENTITY.responsiblePerson.title",
+  );
+  assert(
+    responsiblePersonBlock.includes("PUBLIC_IDENTITY.name"),
+    "/about responsible-person block must retain the canonical organization context",
+  );
+  assert(reactH1Of(source) === content.h1, `/about React H1 differs from the approved static H1: ${reactH1Of(source)}`);
+  assert(!source.includes(PUBLIC_IDENTITY.responsiblePerson.name), "/about must not duplicate the responsible-person name outside publicIdentity.mjs");
+  assert(!source.includes(PUBLIC_IDENTITY.responsiblePerson.title), "/about must not duplicate the responsible-person title outside publicIdentity.mjs");
+}
+
+async function verifyStaticIdentitySource() {
+  const sourcePath = join(SOURCE_ROOT, "src/lib/routeContent.mjs");
+  const source = await readFile(sourcePath, "utf8");
+  assert(
+    /import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']\.\/publicIdentity\.mjs["'];?/.test(source),
+    "routeContent.mjs must import PUBLIC_IDENTITY from publicIdentity.mjs",
+  );
+  const aboutDefinition = source.match(/"\/about":\s*route\(\{([\s\S]*?)\n\s*\}\),\n\s*"\/contact":/)?.[1] ?? "";
+  assert(aboutDefinition, "routeContent.mjs is missing the controlled /about definition");
+  assert(
+    aboutDefinition.includes("PUBLIC_IDENTITY.responsiblePerson.display"),
+    "Static /about content must derive the responsible-person identity from PUBLIC_IDENTITY",
+  );
+}
+
+function verifyAboutStaticParity(html) {
+  const content = CORE_ROUTE_CONTENT["/about"];
+  const main = primaryMain(html);
+  const accountability = content.sections.find((section) => section.heading === "Public accountability");
+  assert(accountability, "/about route content is missing the approved accountability section");
+  assert(h1Of(html) === content.h1, "/about static H1 differs from the approved route-content H1");
+  assert(main.includes(escapeHtml(accountability.heading)), "/about static output is missing the public-accountability heading");
+  assert(main.includes(escapeHtml(accountability.body)), "/about static output is missing the approved accountable-person context");
+  for (const token of [
+    PUBLIC_IDENTITY.responsiblePerson.name,
+    PUBLIC_IDENTITY.responsiblePerson.title,
+    PUBLIC_IDENTITY.address.display,
+    PUBLIC_IDENTITY.email,
+    PUBLIC_IDENTITY.telephone,
+  ]) {
+    assert(main.includes(escapeHtml(token)), `/about is missing approved identity value: ${token}`);
+  }
+}
+
 async function verifyReactParity() {
   let checked = 0;
+  await verifyStaticIdentitySource();
   for (const pathname of CORE_ROUTE_PATHS) {
     const content = CORE_ROUTE_CONTENT[pathname];
     const sourcePath = join(SOURCE_ROOT, content.sourceFile);
     if (!await exists(sourcePath)) continue;
     const source = await readFile(sourcePath, "utf8");
-    for (const token of content.parityTokens) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
+    if (pathname === "/about") {
+      const importedIdentityValues = new Set([
+        PUBLIC_IDENTITY.responsiblePerson.name,
+        PUBLIC_IDENTITY.responsiblePerson.title,
+      ]);
+      for (const token of content.parityTokens) {
+        if (!importedIdentityValues.has(token)) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
+      }
+      verifyAboutReactParity(source, content);
+    } else {
+      for (const token of content.parityTokens) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
+    }
     checked += 1;
   }
   if (await exists(join(SOURCE_ROOT, "src/pages/CategoryTaxonomyPage.tsx"))) {
@@ -309,8 +394,7 @@ export async function verifyRouteContentFidelity() {
   }
   assert(new Set(mainCategoryBodies).size === MAIN_CATEGORY_LINKS.length, "Two main-category routes expose identical primary static content");
 
-  const about = await readRoute("/about");
-  for (const token of [PUBLIC_IDENTITY.responsiblePerson.name, PUBLIC_IDENTITY.responsiblePerson.title, PUBLIC_IDENTITY.address.display, PUBLIC_IDENTITY.email, PUBLIC_IDENTITY.telephone]) assert(about.includes(escapeHtml(token)), `/about is missing approved identity value: ${token}`);
+  verifyAboutStaticParity(await readRoute("/about"));
   const manufacturing = stripHtml(primaryMain(await readRoute("/manufacturing")));
   for (const token of ["Requirement review", "sample discussion", "Material and construction alignment", "Quality review", "Packing and dispatch planning"]) assert(manufacturing.includes(token), `/manufacturing is missing process content: ${token}`);
   const buyerTrust = stripHtml(primaryMain(await readRoute("/buyer-trust")));
