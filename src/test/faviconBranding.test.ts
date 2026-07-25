@@ -10,6 +10,7 @@ describe("Irha favicon branding", () => {
     const favicon = read("public/favicon.svg");
     const redirects = read("public/_redirects");
     const workerPatch = read("scripts/patch-cloudflare-route-shell-assets.mjs");
+    const brandDispatch = read(".github/workflows/brand-live-dispatch-controller.yml");
     const liveVerification = read(".github/workflows/verify-official-brand-live.yml");
     const manifest = JSON.parse(read("public/manifest.webmanifest")) as {
       icons: Array<{ src: string; sizes: string; type: string; purpose?: string }>;
@@ -36,6 +37,19 @@ describe("Irha favicon branding", () => {
     expect(workerPatch).toContain('X-Irha-Favicon-Source\", \"official-owner-crest');
     expect(workerPatch).toContain('headers.delete("Location")');
     expect(workerPatch).toContain("status: 200");
+
+    expect(brandDispatch).toContain("issue_comment:");
+    expect(brandDispatch).toContain("github.event.issue.number == 375");
+    expect(brandDispatch).toContain("github.event.comment.body == '/run-brand-live'");
+    expect(brandDispatch).toContain("Require exact search-verified current-main release");
+    expect(brandDispatch).toContain('"Irha Quality Gate"');
+    expect(brandDispatch).toContain('"Irha Cloudflare Production"');
+    expect(brandDispatch).toContain('"Irha Search Discovery"');
+    expect(brandDispatch).toContain('.source_commit == $sha and .source_identity_state == "verified"');
+    expect(brandDispatch).toContain("gh workflow run verify-official-brand-live.yml");
+    expect(brandDispatch).toContain("exact-main Brand Live already active");
+    expect(brandDispatch).not.toContain("wrangler pages deploy");
+    expect(brandDispatch).not.toContain("supabase db push");
 
     expect(liveVerification).toContain('workflows: ["IndexNow After Verified Production"]');
     expect(liveVerification).not.toContain("\n  push:\n");

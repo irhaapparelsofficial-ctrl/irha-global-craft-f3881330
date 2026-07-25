@@ -1,0 +1,113 @@
+name: Brand Live Dispatch Controller
+
+run-name: Brand live dispatch · issue-${{ github.event.issue.number }} · ${{ github.run_number }}
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write
+  contents: read
+  statuses: read
+
+concurrency:
+  group: brand-live-dispatch-${{ github.event.comment.id }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    if: >-
+      github.event.issue.number == 375 &&
+      github.event.comment.body == '/run-brand-live' &&
+      (
+        github.actor == 'irhaapparelsofficial-ctrl' ||
+        github.event.comment.user.login == 'irhaapparelsofficial-ctrl' ||
+        github.event.comment.author_association == 'OWNER' ||
+        github.event.comment.author_association == 'MEMBER' ||
+        github.event.comment.author_association == 'COLLABORATOR'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout exact current main utilities
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Require exact search-verified current-main release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          main_sha="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          checked_out="$(git rev-parse HEAD)"
+          test "$checked_out" = "$main_sha" || {
+            echo "Checked out $checked_out instead of current main $main_sha"
+            exit 1
+          }
+
+          status_json="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/$main_sha/status")"
+          required_contexts=(
+            "Irha Quality Gate"
+            "Irha Cloudflare Production"
+            "Irha Search Discovery"
+          )
+          for context in "${required_contexts[@]}"; do
+            state="$(printf '%s' "$status_json" | jq -r --arg context "$context" '[.statuses[] | select(.context == $context)][0].state // "missing"')"
+            test "$state" = "success" || {
+              echo "Required exact-main status is not green: $context=$state"
+              exit 1
+            }
+          done
+
+          cache_bust="${main_sha::12}-$GITHUB_RUN_ID-$RANDOM"
+          bash scripts/ci/retry.sh 3 5 -- curl -fsSL --connect-timeout 10 --max-time 40 \
+            -H 'Cache-Control: no-cache' \
+            "https://irhaapparels.com/build.json?brand_dispatch=$cache_bust" \
+            -o /tmp/live-build.json
+          jq -e --arg sha "$main_sha" \
+            '.source_branch == "main" and .source_commit == $sha and .source_identity_state == "verified"' \
+            /tmp/live-build.json >/dev/null
+
+          echo "source_sha=$main_sha" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Authorized Brand Live dispatch"
+            echo "- Exact current main: \`$main_sha\`"
+            echo "- Required release statuses: all green"
+            echo "- Live build identity: exact and verified"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dispatch exact-main Brand Live once
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.release.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$SOURCE_SHA" || {
+            echo "Main advanced from $SOURCE_SHA to $latest_main; Brand Live dispatch refused"
+            exit 1
+          }
+
+          runs_json="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/actions/workflows/verify-official-brand-live.yml/runs?branch=main&per_page=50")"
+          active_count="$(printf '%s' "$runs_json" | jq --arg sha "$SOURCE_SHA" '[.workflow_runs[] | select(.head_sha == $sha and (.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "requested" or .status == "pending"))] | length')"
+          successful_count="$(printf '%s' "$runs_json" | jq --arg sha "$SOURCE_SHA" '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")] | length')"
+
+          if [ "$successful_count" -gt 0 ]; then
+            echo "- Action: skipped; exact-main Brand Live already succeeded" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$active_count" -gt 0 ]; then
+            echo "- Action: skipped; exact-main Brand Live already active" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          bash scripts/ci/retry.sh 3 5 -- gh workflow run verify-official-brand-live.yml --repo "$GITHUB_REPOSITORY" --ref main
+          echo "- Action: exact-main Brand Live dispatched" >> "$GITHUB_STEP_SUMMARY"
