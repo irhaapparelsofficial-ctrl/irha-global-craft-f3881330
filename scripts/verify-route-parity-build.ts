@@ -86,7 +86,7 @@ async function verifyProduct(product: BuyerReadyCatalogRoute, products: BuyerRea
     'data-irha-product-shell="true"',
     `>${escapeHtml(product.product_name)}</h1>`,
     product.image_url,
-    `alt="Front view of ${escapeHtml(product.product_name)} custom manufactured by Irha Apparels"`,
+    `alt="Front view of ${escapeHtml(product.product_name)}"`,
     'aria-label="Breadcrumb"',
     '"@type":"Product"',
     '"@type":"BreadcrumbList"',
