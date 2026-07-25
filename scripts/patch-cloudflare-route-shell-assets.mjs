@@ -129,7 +129,7 @@ function explicitRouteAssetPath(pathname) {
   if (FUNCTIONAL_SPA_PATHS.has(normalized)) return null;
   if (FUNCTIONAL_SPA_PREFIXES.some((prefix) => normalized.startsWith(prefix))) return null;
   if (!isPublishedHtmlRoute(normalized)) return null;
-  return `\${normalized}/index.html`;
+  return \`\${normalized}/index.html\`;
 }
 
 async function routeShellAssetResponse(request, env, pathname, assetPath) {
@@ -150,7 +150,7 @@ async function routeShellAssetResponse(request, env, pathname, assetPath) {
   const headers = new Headers(explicitResponse.headers);
   headers.delete("Location");
   headers.set("Content-Type", "text/html; charset=utf-8");
-  headers.set("Content-Location", pathname === "/" ? APEX_ORIGIN : `\${APEX_ORIGIN}\${pathname}`);
+  headers.set("Content-Location", pathname === "/" ? APEX_ORIGIN : \`\${APEX_ORIGIN}\${pathname}\`);
   headers.set("Cache-Control", "public, max-age=300, must-revalidate");
   headers.set("X-Irha-Route-Shell-Asset", assetPath);
 
