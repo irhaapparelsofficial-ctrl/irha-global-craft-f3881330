@@ -62,6 +62,8 @@ const sitemapCount = [...sitemap.matchAll(/<loc>/g)].length;
 assert(sitemapCount === 407, `Expected 407 sitemap URLs, found ${sitemapCount}`);
 assert(htmlFiles.length >= 407, `Expected at least 407 rendered HTML files, found ${htmlFiles.length}`);
 
+await verifyRouteContentFidelity();
+
 const forbiddenProperties = ["legalName", "taxID", "vatID", "foundingDate", "numberOfEmployees", "award", "aggregateRating", "review", "streetAddress", "postalCode", "geo", "openingHoursSpecification", "areaServed"];
 for (const file of htmlFiles) {
   const relativePath = relative(DIST, file);
@@ -108,7 +110,5 @@ assert(sitemap.includes(`<loc>${canonical}/</loc>`), "sitemap is missing the can
 assert(llms.includes(`${canonical}/`), "llms.txt is missing absolute canonical URLs");
 assert(llmsFull.toLowerCase().includes("two production hubs"), "llms-full.txt is missing the current homepage structure");
 assert(await readFile(join(DIST, "irha-brand-mark.svg"), "utf8").then((value) => value.includes("Official owner-supplied Irha Apparels")), "Canonical crest asset is missing or unverified");
-
-await verifyRouteContentFidelity();
 
 console.log(`PASS ${htmlFiles.length} built HTML files with one canonical Organization, one WebSite, one homepage WebPage, ${sitemapCount} sitemap URLs, valid contact identity and preserved crawler contracts`);
