@@ -1,10 +1,20 @@
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { CORE_ROUTE_CONTENT } from "../src/lib/routeContent.mjs";
+import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
 
 const WORKER_PATH = resolve("dist/_worker.js");
 const REDIRECTS_PATH = resolve("dist/_redirects");
 const CATALOG_MANIFEST_PATH = resolve("dist/catalog-route-manifest.json");
-const REQUIRED_ROUTE_SHELLS = ["products", "contact", "inquiry"];
+const SITE_URL = "https://irhaapparels.com";
+const REQUIRED_CORE_ROUTE_SHELLS = ["/products", "/contact", "/inquiry"];
+const OBSOLETE_GENERIC_FINGERPRINTS = [
+  'data-irha-rich-route-shell="true"',
+  "Five specialist apparel categories",
+  "Request a Manufacturing Quote",
+  "Experienced manufacturer. Newly built website.",
+  "From requirement to shipping review.",
+];
 
 const canonicalBefore = `    if (isStaticBuyerPath(pathname) && url.pathname !== pathname) {
       return canonicalPathRedirect(request, url, pathname);
@@ -119,7 +129,7 @@ function explicitRouteAssetPath(pathname) {
   if (FUNCTIONAL_SPA_PATHS.has(normalized)) return null;
   if (FUNCTIONAL_SPA_PREFIXES.some((prefix) => normalized.startsWith(prefix))) return null;
   if (!isPublishedHtmlRoute(normalized)) return null;
-  return \`\${normalized}/index.html\`;
+  return `\${normalized}/index.html`;
 }
 
 async function routeShellAssetResponse(request, env, pathname, assetPath) {
@@ -140,7 +150,7 @@ async function routeShellAssetResponse(request, env, pathname, assetPath) {
   const headers = new Headers(explicitResponse.headers);
   headers.delete("Location");
   headers.set("Content-Type", "text/html; charset=utf-8");
-  headers.set("Content-Location", pathname === "/" ? APEX_ORIGIN : \`\${APEX_ORIGIN}\${pathname}\`);
+  headers.set("Content-Location", pathname === "/" ? APEX_ORIGIN : `\${APEX_ORIGIN}\${pathname}`);
   headers.set("Cache-Control", "public, max-age=300, must-revalidate");
   headers.set("X-Irha-Route-Shell-Asset", assetPath);
 
@@ -194,6 +204,72 @@ function normalizeGeneratedPath(value) {
   return normalized;
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function collectSchemaNodes(value, nodes = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectSchemaNodes(item, nodes));
+    return nodes;
+  }
+  if (!value || typeof value !== "object") return nodes;
+  if (value["@type"] || value["@id"]) nodes.push(value);
+  if (Array.isArray(value["@graph"])) value["@graph"].forEach((item) => collectSchemaNodes(item, nodes));
+  for (const [key, child] of Object.entries(value)) {
+    if (key === "@graph") continue;
+    if (child && typeof child === "object") collectSchemaNodes(child, nodes);
+  }
+  return nodes;
+}
+
+function parseSchemaNodes(html, route) {
+  const nodes = [];
+  for (const match of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      collectSchemaNodes(JSON.parse(match[1]), nodes);
+    } catch (error) {
+      throw new Error(`${route}/index.html contains invalid JSON-LD: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  return nodes;
+}
+
+function verifyCanonicalOrganization(html, route) {
+  const organizations = parseSchemaNodes(html, route).filter((node) =>
+    node["@type"] === "Organization" && node["@id"] === PUBLIC_IDENTITY.organizationId,
+  );
+  if (organizations.length !== 1) {
+    throw new Error(`${route}/index.html must contain exactly one canonical Organization node; found ${organizations.length}`);
+  }
+  const organization = organizations[0];
+  const requiredIdentity = {
+    name: PUBLIC_IDENTITY.name,
+    url: PUBLIC_IDENTITY.url,
+    logo: PUBLIC_IDENTITY.logoUrl,
+    telephone: PUBLIC_IDENTITY.telephone,
+    email: PUBLIC_IDENTITY.email,
+  };
+  for (const [field, expected] of Object.entries(requiredIdentity)) {
+    if (organization[field] !== expected) {
+      throw new Error(`${route}/index.html canonical Organization ${field} drift`);
+    }
+  }
+  if (organization.address?.addressLocality !== PUBLIC_IDENTITY.address.locality
+    || organization.address?.addressRegion !== PUBLIC_IDENTITY.address.region
+    || organization.address?.addressCountry !== PUBLIC_IDENTITY.address.country) {
+    throw new Error(`${route}/index.html canonical Organization address drift`);
+  }
+  if (JSON.stringify(organization.sameAs) !== JSON.stringify(PUBLIC_IDENTITY.sameAs)) {
+    throw new Error(`${route}/index.html canonical Organization sameAs drift`);
+  }
+}
+
 async function collectIndexRoutes(directory, prefix = "") {
   const routes = [];
   const entries = await readdir(directory, { withFileTypes: true });
@@ -244,20 +320,38 @@ async function generatedRedirects() {
   return [...redirects.entries()].sort(([left], [right]) => left.localeCompare(right));
 }
 
-async function verifyRichRouteShells() {
-  for (const route of REQUIRED_ROUTE_SHELLS) {
-    const path = resolve("dist", route, "index.html");
+async function verifyCoreRouteShells() {
+  for (const route of REQUIRED_CORE_ROUTE_SHELLS) {
+    const content = CORE_ROUTE_CONTENT[route];
+    if (!content || content.route !== route) {
+      throw new Error(`Cloudflare core route verifier has no canonical route-content source for ${route}`);
+    }
+    const path = resolve("dist", route.slice(1), "index.html");
     const html = await readFile(path, "utf8");
+    const canonical = `${SITE_URL}${route}`;
     const required = [
-      'data-irha-rich-route-shell="true"',
-      "info@irhaapparels.com",
-      "+92 320 4110066",
-      "Five specialist apparel categories",
-      "Request a Manufacturing Quote",
+      `data-irha-route-shell="${route}"`,
+      'data-irha-route-content="core"',
+      `<link rel="canonical" href="${canonical}"`,
+      `<title>${escapeHtml(content.title)}</title>`,
+      `>${escapeHtml(content.h1)}</h1>`,
+      escapeHtml(content.intro),
+      ...content.sections.flatMap((section) => [
+        section.heading,
+        section.body,
+        ...(section.items ?? []),
+        ...(section.links ?? []).map((link) => link.label),
+      ]).map(escapeHtml),
+      escapeHtml(content.primaryCta.label),
+      ...(content.secondaryCta ? [escapeHtml(content.secondaryCta.label)] : []),
     ];
     for (const token of required) {
-      if (!html.includes(token)) throw new Error(`${route}/index.html is missing crawler token: ${token}`);
+      if (!html.includes(token)) throw new Error(`${route}/index.html is missing route-specific crawler token: ${token}`);
     }
+    for (const fingerprint of OBSOLETE_GENERIC_FINGERPRINTS) {
+      if (html.includes(fingerprint)) throw new Error(`${route}/index.html retained obsolete generic-shell fingerprint: ${fingerprint}`);
+    }
+    verifyCanonicalOrganization(html, route);
   }
 }
 
@@ -316,7 +410,7 @@ async function main() {
     if (!worker.includes(token)) throw new Error(`Patched Cloudflare worker is missing: ${token}`);
   }
 
-  await verifyRichRouteShells();
+  await verifyCoreRouteShells();
   await writeFile(WORKER_PATH, worker, "utf8");
   console.log(`Patched Cloudflare worker with ${routePaths.length} exact catalogue routes, ${redirectEntries.length} one-hop redirects, real missing-route 404s and functional/draft noindex handling`);
 }
