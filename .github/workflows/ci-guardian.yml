@@ -6,17 +6,11 @@ on:
   workflow_run:
     workflows:
       - Quality Gate
-      - Workers AI Guide Gate
       - Cloudflare Current Main Reconcile
-      - Supabase Functions After Quality Gate
-      - Supabase Database After Quality Gate
-      - Secret Bootstrap Controller
-      - Owner Supabase Guarded Release
-      - Production Smoke
-      - Live crawler parity
-      - Deploy Chat Function Current Main
-      - Sync Product Media
-      - Agent Readiness Live
+      - Cloudflare Production Status
+      - IndexNow After Verified Production
+      - Verify Official Brand Live
+      - Production Route Parity
     types: [completed]
 
 permissions:
@@ -29,26 +23,41 @@ concurrency:
 
 jobs:
   classify-and-heal:
-    if: github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       RUN_ID: ${{ github.event.workflow_run.id }}
       RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
       WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+      UPSTREAM_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
       HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       EVENT_NAME: ${{ github.event.workflow_run.event }}
       GH_TOKEN: ${{ github.token }}
 
     steps:
+      - name: Record non-failure completion without fan-out
+        if: env.UPSTREAM_CONCLUSION != 'failure'
+        shell: bash
+        run: |
+          {
+            echo "## Irha CI Guardian"
+            echo "- Workflow: \`$WORKFLOW_NAME\`"
+            echo "- Run: \`$RUN_ID\` attempt \`${RUN_ATTEMPT:-1}\`"
+            echo "- Conclusion: \`$UPSTREAM_CONCLUSION\`"
+            echo "- Recovery: not required"
+            echo "- Additional workflow dispatch: \`false\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout guardian source
+        if: env.UPSTREAM_CONCLUSION == 'failure'
         uses: actions/checkout@v4
         with:
           ref: main
           persist-credentials: false
 
-      - name: Collect exact run evidence
+      - name: Collect exact failed-run evidence
+        if: env.UPSTREAM_CONCLUSION == 'failure'
         shell: bash
         run: |
           set -euo pipefail
@@ -58,7 +67,7 @@ jobs:
 
           jq -n \
             --arg workflowName "$WORKFLOW_NAME" \
-            --arg conclusion "failure" \
+            --arg conclusion "$UPSTREAM_CONCLUSION" \
             --arg headBranch "$HEAD_BRANCH" \
             --arg headSha "$HEAD_SHA" \
             --arg latestMain "$latest_main" \
@@ -70,24 +79,27 @@ jobs:
           node scripts/ci/classify-failure.mjs /tmp/context.json /tmp/failed.log > /tmp/classification.json
           cat /tmp/classification.json
 
-      - name: Decide safe automatic recovery
+      - name: Decide bounded recovery
+        if: env.UPSTREAM_CONCLUSION == 'failure'
         id: decision
         shell: bash
         run: |
           set -euo pipefail
           classification="$(jq -r '.classification' /tmp/classification.json)"
           retryable="$(jq -r '.retryable' /tmp/classification.json)"
+          recovery_action="$(jq -r '.recoveryAction // "none"' /tmp/classification.json)"
           reason="$(jq -r '.reason' /tmp/classification.json)"
-          allowed=false
 
+          allowed=false
           case "$WORKFLOW_NAME" in
-            "Quality Gate"|"Workers AI Guide Gate"|"Cloudflare Current Main Reconcile"|"Supabase Functions After Quality Gate"|"Secret Bootstrap Controller"|"Production Smoke"|"Live crawler parity"|"Deploy Chat Function Current Main"|"Sync Product Media"|"Agent Readiness Live")
+            "Quality Gate"|"Cloudflare Current Main Reconcile"|"Cloudflare Production Status"|"IndexNow After Verified Production"|"Verify Official Brand Live"|"Production Route Parity")
               allowed=true
               ;;
           esac
 
           echo "classification=$classification" >> "$GITHUB_OUTPUT"
           echo "retryable=$retryable" >> "$GITHUB_OUTPUT"
+          echo "recovery_action=$recovery_action" >> "$GITHUB_OUTPUT"
           echo "allowed=$allowed" >> "$GITHUB_OUTPUT"
           echo "reason=$reason" >> "$GITHUB_OUTPUT"
 
@@ -97,27 +109,52 @@ jobs:
             echo "- Run: \`$RUN_ID\` attempt \`${RUN_ATTEMPT:-1}\`"
             echo "- Source: \`${HEAD_BRANCH:-unknown}\` / \`${HEAD_SHA:-unknown}\`"
             echo "- Classification: \`$classification\`"
+            echo "- Recovery action: \`$recovery_action\`"
             echo "- Reason: $reason"
-            echo "- PR deterministic repair: delegated to \`Irha PR Auto Fixer\`"
+            echo "- Additional workflow dispatch: \`false\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Re-run one transient failure
-        if: steps.decision.outputs.retryable == 'true' && steps.decision.outputs.allowed == 'true'
+      - name: Re-run complete workflow after startup failure
+        if: >-
+          env.UPSTREAM_CONCLUSION == 'failure' &&
+          steps.decision.outputs.retryable == 'true' &&
+          steps.decision.outputs.allowed == 'true' &&
+          steps.decision.outputs.recovery_action == 'rerun-run'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ci/retry.sh 3 5 -- gh api \
+            --method POST \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/rerun"
+          echo "- Recovery: one full workflow rerun requested because no runnable job graph existed" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Re-run only failed jobs after transient failure
+        if: >-
+          env.UPSTREAM_CONCLUSION == 'failure' &&
+          steps.decision.outputs.retryable == 'true' &&
+          steps.decision.outputs.allowed == 'true' &&
+          steps.decision.outputs.recovery_action == 'rerun-failed-jobs'
         shell: bash
         run: |
           set -euo pipefail
           bash scripts/ci/retry.sh 3 5 -- gh api \
             --method POST \
             "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/rerun-failed-jobs"
-          echo "- Recovery: one automatic failed-job rerun requested" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Recovery: one failed-job rerun requested" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Preserve deterministic and database safety boundaries
-        if: steps.decision.outputs.retryable != 'true' || steps.decision.outputs.allowed != 'true'
+      - name: Preserve deterministic and safety boundaries
+        if: >-
+          env.UPSTREAM_CONCLUSION == 'failure' &&
+          (
+            steps.decision.outputs.retryable != 'true' ||
+            steps.decision.outputs.allowed != 'true' ||
+            steps.decision.outputs.recovery_action == 'none'
+          )
         shell: bash
         run: |
           {
             echo "- Recovery: no blind rerun performed"
-            echo "- Stale/superseded runs: ignored as resolved noise"
-            echo "- Deterministic PR failures: safe mechanical repair is attempted by Irha PR Auto Fixer"
-            echo "- Database migration workflow is never blindly rerun because an interrupted apply requires ledger inspection"
+            echo "- Stale or deterministic failures remain available for exact inspection"
+            echo "- Supabase, Workers AI, image, bootstrap and hardening workflows are outside Guardian fan-out"
+            echo "- CI Guardian never subscribes to or dispatches itself"
           } >> "$GITHUB_STEP_SUMMARY"

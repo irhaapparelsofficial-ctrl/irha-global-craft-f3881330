@@ -2,7 +2,7 @@ name: Verify Official Brand Live
 
 on:
   workflow_run:
-    workflows: ["Cloudflare Production Status"]
+    workflows: ["IndexNow After Verified Production"]
     types: [completed]
   workflow_dispatch:
 
@@ -16,18 +16,18 @@ concurrency:
 
 jobs:
   verify-brand:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_repository.full_name == github.repository
-      )
     runs-on: ubuntu-latest
     timeout-minutes: 12
 
     steps:
-      - name: Resolve exact deployed production SHA
+      - name: Resolve exact search-verified production SHA
         id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_RUN_ID: ${{ github.event.workflow_run.id || github.run_id }}
+          UPSTREAM_CONCLUSION: ${{ github.event.workflow_run.conclusion || 'success' }}
+          UPSTREAM_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name || github.repository }}
+          DISPATCH_SOURCE_SHA: ${{ github.sha }}
         shell: bash
         run: |
           set -euo pipefail
@@ -51,15 +51,56 @@ jobs:
             sleep 10
           done
 
-          test "$source_sha" != "" || {
-            echo "::error title=Brand verification source unavailable::Production build.json did not expose a verified source SHA."
-            exit 1
-          }
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          relevant=false
+          exact_search_success=0
+
+          if [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              if [ "$source_sha" = "$latest_main" ] && [ "$source_sha" = "$DISPATCH_SOURCE_SHA" ]; then
+                status_json="$(gh api "repos/$GITHUB_REPOSITORY/commits/$source_sha/status")"
+                exact_search_success="$(printf '%s' "$status_json" | jq '[.statuses[] | select(.context == "Irha Search Discovery" and .state == "success")] | length')"
+                [ "$exact_search_success" -gt 0 ] && relevant=true
+              fi
+            else
+              expected_target="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID"
+              status_json="$(gh api "repos/$GITHUB_REPOSITORY/commits/$source_sha/status")"
+              exact_search_success="$(printf '%s' "$status_json" | jq \
+                --arg target "$expected_target" \
+                '[.statuses[] | select(.context == "Irha Search Discovery" and .state == "success" and .target_url == $target)] | length')"
+              if [ "$UPSTREAM_CONCLUSION" = "success" ] \
+                && [ "$UPSTREAM_REPOSITORY" = "$GITHUB_REPOSITORY" ] \
+                && [ "$source_sha" = "$latest_main" ] \
+                && [ "$exact_search_success" -gt 0 ]; then
+                relevant=true
+              fi
+            fi
+          fi
 
           echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
-          echo "Resolved live production source: $source_sha"
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+          echo "search_status_matches=$exact_search_success" >> "$GITHUB_OUTPUT"
+
+          if [ "$relevant" = "true" ]; then
+            echo "Resolved exact Search Discovery-verified production source: $source_sha"
+          else
+            echo "Brand verification skipped safely: live_source=${source_sha:-missing} current_main=$latest_main search_status=$exact_search_success"
+          fi
+
+      - name: Record ignored non-release completion
+        if: steps.source.outputs.relevant != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Brand Live"
+            echo "- Live source: \`${{ steps.source.outputs.source_sha || 'missing' }}\`"
+            echo "- Exact Search Discovery status matches: \`${{ steps.source.outputs.search_status_matches }}\`"
+            echo "- Verification attempted: \`false\`"
+            echo "- Result: upstream completion was not the exact search-verified current-main release"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish pending live-brand status
+        if: steps.source.outputs.relevant == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
@@ -75,6 +116,7 @@ jobs:
             >/dev/null
 
       - name: Verify official logo and favicon on production
+        if: steps.source.outputs.relevant == 'true'
         id: verify
         env:
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
@@ -147,6 +189,7 @@ jobs:
           }
 
       - name: Verify canonical buyer routes on production
+        if: steps.source.outputs.relevant == 'true'
         id: routes
         env:
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
@@ -212,7 +255,7 @@ jobs:
           }
 
       - name: Publish final live-brand status
-        if: always()
+        if: always() && steps.source.outputs.relevant == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}

@@ -5,13 +5,15 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("IndexNow post-production contract", () => {
-  it("runs only after the exact Cloudflare current-main reconciliation", () => {
+  it("runs only after the exact Cloudflare Production proof", () => {
     const workflow = read(".github/workflows/indexnow-after-production.yml");
 
-    expect(workflow).toContain('workflows: ["Cloudflare Current Main Reconcile"]');
-    expect(workflow).toContain("github.event.workflow_run.conclusion == 'success'");
-    expect(workflow).toContain("grep -Eo '[0-9a-f]{40}'");
-    expect(workflow).toContain('source_sha" = "$latest_main');
+    expect(workflow).toContain('workflows: ["Cloudflare Production Status"]');
+    expect(workflow).toContain('UPSTREAM_CONCLUSION: ${{ github.event.workflow_run.conclusion }}');
+    expect(workflow).toContain('UPSTREAM_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}');
+    expect(workflow).toContain('.context == "Irha Cloudflare Production"');
+    expect(workflow).toContain('.target_url == $target');
+    expect(workflow).toContain('[ "$SOURCE_SHA" = "$latest_main" ]');
   });
 
   it("proves the live build identity and canonical sitemap before submission", () => {
@@ -32,9 +34,17 @@ describe("IndexNow post-production contract", () => {
   it("uses strict retrying IndexNow submission and publishes a dedicated status", () => {
     const workflow = read(".github/workflows/indexnow-after-production.yml");
 
-    expect(workflow).toContain("INDEXNOW_STRICT: \"1\"");
+    expect(workflow).toContain('INDEXNOW_STRICT: "1"');
     expect(workflow).toContain("bash scripts/ci/retry.sh 3 10 -- node scripts/ping-search-engines.mjs");
     expect(workflow).toContain('context="Irha Search Discovery"');
     expect(workflow).toContain("Verified canonical sitemap accepted by IndexNow");
+  });
+
+  it("creates a real observer job for irrelevant upstream completions", () => {
+    const workflow = read(".github/workflows/indexnow-after-production.yml");
+
+    expect(workflow).not.toMatch(/notify:\n\s+if:/);
+    expect(workflow).toContain("Record ignored non-release completion");
+    expect(workflow).toContain("Submission attempted: \\`false\\`");
   });
 });

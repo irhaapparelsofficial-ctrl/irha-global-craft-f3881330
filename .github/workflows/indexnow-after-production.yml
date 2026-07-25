@@ -1,10 +1,10 @@
 name: IndexNow After Verified Production
 
-run-name: IndexNow discovery · ${{ github.event.workflow_run.display_title }}
+run-name: IndexNow discovery · production-${{ github.event.workflow_run.id }}
 
 on:
   workflow_run:
-    workflows: ["Cloudflare Current Main Reconcile"]
+    workflows: ["Cloudflare Production Status"]
     types: [completed]
 
 permissions:
@@ -22,36 +22,58 @@ env:
 
 jobs:
   notify:
-    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Resolve exact current-main production source
+      - name: Resolve exact proven-production source
         id: resolve
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           UPSTREAM_RUN_ID: ${{ github.event.workflow_run.id }}
+          UPSTREAM_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          UPSTREAM_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-          display_title="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID" --jq '.display_title // ""')"
-          source_sha="$(printf '%s' "$display_title" | grep -Eo '[0-9a-f]{40}' | tail -n 1 || true)"
           latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          expected_target="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID"
+          status_json="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/status")"
+          exact_production_success="$(printf '%s' "$status_json" | jq \
+            --arg target "$expected_target" \
+            '[.statuses[] | select(.context == "Irha Cloudflare Production" and .state == "success" and .target_url == $target)] | length')"
 
           relevant=false
-          if [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]] && [ "$source_sha" = "$latest_main" ]; then
+          if [ "$UPSTREAM_CONCLUSION" = "success" ] \
+            && [ "$UPSTREAM_REPOSITORY" = "$GITHUB_REPOSITORY" ] \
+            && [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] \
+            && [ "$SOURCE_SHA" = "$latest_main" ] \
+            && [ "$exact_production_success" -gt 0 ]; then
             relevant=true
           fi
 
-          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
           echo "latest_main=$latest_main" >> "$GITHUB_OUTPUT"
           echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+          echo "production_status_matches=$exact_production_success" >> "$GITHUB_OUTPUT"
 
           if [ "$relevant" = "true" ]; then
-            echo "Exact current-main production source resolved: $source_sha"
+            echo "Exact current-main Cloudflare Production success resolved: $SOURCE_SHA"
           else
-            echo "IndexNow notification skipped safely: source=$source_sha current_main=$latest_main"
+            echo "IndexNow skipped safely: source=$SOURCE_SHA current_main=$latest_main upstream=$UPSTREAM_CONCLUSION exact_status=$exact_production_success"
           fi
+
+      - name: Record ignored non-release completion
+        if: steps.resolve.outputs.relevant != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Search Discovery"
+            echo "- Source: \`${{ steps.resolve.outputs.source_sha }}\`"
+            echo "- Exact Cloudflare Production status matches: \`${{ steps.resolve.outputs.production_status_matches }}\`"
+            echo "- Submission attempted: \`false\`"
+            echo "- Result: upstream completion was not an exact proven-production release"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Mark search discovery pending
         if: steps.resolve.outputs.relevant == 'true'
