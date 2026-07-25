@@ -40,7 +40,9 @@ describe("Google brand visibility controls", () => {
       publisher: { "@id": PUBLIC_IDENTITY.organizationId },
     });
     expect(patch).toContain("PUBLIC_IDENTITY.homepage.title");
-    expect(patch).toContain("PUBLIC_IDENTITY.homepage.heading");
+    expect(patch).toContain(`const BRAND_H1 = "${PUBLIC_IDENTITY.homepage.heading}"`);
+    expect(patch).toContain("if (BRAND_H1 !== PUBLIC_IDENTITY.homepage.heading)");
+    expect(patch).toContain("Homepage H1 contract drifted from publicIdentity.mjs");
     expect(patch).toContain("/products/bavarian-trachten-wear");
     expect(patch).toContain("/products/premium-leather-apparel");
     expect(patch).toContain("/products/streetwear-activewear");
