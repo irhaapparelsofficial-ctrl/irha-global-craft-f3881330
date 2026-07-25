@@ -2,12 +2,11 @@
 // Read-only: validates the caller, checks admin role and returns exact connector results.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-function irhaLovableRuntimeKey(): string | undefined {
-  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+function gscManagedConnectorKey(): string | undefined {
   return Deno.env.get("LOVABLE_API_KEY") || undefined;
 }
 
-const DEFAULT_SITE_URL = "https://irhaapparels.com/";
+const GSC_SITE_PROPERTY = "sc-domain:irhaapparels.com";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
 const ALLOWED_DIMENSIONS = new Set(["query", "page", "country", "device"]);
 const ALLOWED_WINDOWS = new Set([28, 90]);
@@ -68,18 +67,27 @@ async function requireAdmin(req: Request, headers: Record<string, string>) {
   return { response: null };
 }
 
+function effectiveSearchConsoleProperty() {
+  const configured = Deno.env.get("GSC_SITE_URL")?.trim();
+  if (configured && configured !== GSC_SITE_PROPERTY) {
+    return { property: null, error: "Invalid Google Search Console property configuration" };
+  }
+  return { property: GSC_SITE_PROPERTY, error: null };
+}
+
 function connectionState() {
-  const connectorGatewayKey = Boolean(irhaLovableRuntimeKey());
+  const connectorGatewayKey = Boolean(gscManagedConnectorKey());
   const searchConsoleConnectionKey = Boolean(Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY"));
-  const siteUrl = (Deno.env.get("GSC_SITE_URL") || DEFAULT_SITE_URL).trim();
+  const site = effectiveSearchConsoleProperty();
   return {
-    ready: connectorGatewayKey && searchConsoleConnectionKey && Boolean(siteUrl),
+    ready: connectorGatewayKey && searchConsoleConnectionKey && Boolean(site.property) && !site.error,
     configuration: {
       connector_gateway_key: connectorGatewayKey,
       search_console_connection_key: searchConsoleConnectionKey,
-      site_url: Boolean(siteUrl),
+      site_url: Boolean(site.property) && !site.error,
     },
-    site_url: siteUrl,
+    site_url: site.property,
+    configuration_error: site.error,
   };
 }
 
@@ -98,6 +106,14 @@ Deno.serve(async (req) => {
     const action = typeof body?.action === "string" ? body.action : "query";
     const state = connectionState();
 
+    if (state.configuration_error) {
+      return json({
+        error: state.configuration_error,
+        code: "gsc_property_configuration_invalid",
+        configuration: state.configuration,
+      }, 503, headers);
+    }
+
     if (action === "health") {
       return json({
         ok: true,
@@ -109,7 +125,7 @@ Deno.serve(async (req) => {
       }, 200, headers);
     }
 
-    if (!state.ready) {
+    if (!state.ready || !state.site_url) {
       return json({
         error: "Google Search Console connection is not configured",
         code: "gsc_connection_not_configured",
@@ -125,7 +141,7 @@ Deno.serve(async (req) => {
     const end = new Date();
     const start = new Date(end.getTime() - days * 86_400_000);
     const formatDate = (date: Date) => date.toISOString().slice(0, 10);
-    const connectorToken = irhaLovableRuntimeKey()!;
+    const connectorToken = gscManagedConnectorKey()!;
     const connectionKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY")!;
     const endpoint = `${GATEWAY}/webmasters/v3/sites/${encodeURIComponent(state.site_url)}/searchAnalytics/query`;
 
@@ -144,14 +160,11 @@ Deno.serve(async (req) => {
       }),
     });
 
-    const raw = await upstream.text();
-    let payload: Record<string, unknown> = {};
-    try { payload = JSON.parse(raw) as Record<string, unknown>; } catch { payload = { raw: raw.slice(0, 1000) }; }
+    const payload = await upstream.json().catch(() => ({})) as Record<string, unknown>;
     if (!upstream.ok) {
       return json({
         error: `Google Search Console returned HTTP ${upstream.status}`,
         code: "gsc_upstream_error",
-        detail: payload,
       }, 502, headers);
     }
 
@@ -159,6 +172,7 @@ Deno.serve(async (req) => {
       ok: true,
       dimension,
       days,
+      property: state.site_url,
       site_url: state.site_url,
       rows: Array.isArray(payload.rows) ? payload.rows : [],
     }, 200, headers);

@@ -9,19 +9,44 @@ function filesUnder(root: string): string[] {
   });
 }
 
+function normalized(path: string) {
+  return path.replaceAll("\\", "/");
+}
+
+const GSC_SCOPED_EXCEPTIONS = [
+  "supabase/functions/gsc-analytics/index.ts",
+  "supabase/functions/gsc-inspect/index.ts",
+] as const;
+
+const GSC_SCOPED_EXCEPTION_SET = new Set<string>(GSC_SCOPED_EXCEPTIONS);
+
 describe("Lovable runtime is explicit opt-in only", () => {
-  it("recursively gates every Edge Function key read", () => {
+  it("recursively gates every non-GSC Edge Function key read and allows exactly two scoped GSC consumers", () => {
     const sources = filesUnder("supabase/functions").filter((path) => /\.(ts|js)$/.test(path));
     const consumers = sources.filter((path) => readFileSync(path, "utf8").includes("LOVABLE_API_KEY"));
     expect(consumers.length).toBeGreaterThan(0);
+
+    const scopedConsumers: string[] = [];
     for (const path of consumers) {
       const source = readFileSync(path, "utf8");
+      const repositoryPath = normalized(path);
       const directReads = source.match(/Deno\.env\.get\(["']LOVABLE_API_KEY["']\)/g) ?? [];
-      expect(source, path).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
-      expect(source, path).toContain("function irhaLovableRuntimeKey()");
-      expect(directReads.length, path).toBe(1);
-      expect(source, path).toContain('Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true"');
+      expect(directReads.length, repositoryPath).toBe(1);
+
+      if (GSC_SCOPED_EXCEPTION_SET.has(repositoryPath)) {
+        scopedConsumers.push(repositoryPath);
+        expect(source, repositoryPath).toContain("function gscManagedConnectorKey()");
+        expect(source, repositoryPath).not.toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
+        expect(source, repositoryPath).not.toContain("function irhaLovableRuntimeKey()");
+        continue;
+      }
+
+      expect(source, repositoryPath).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
+      expect(source, repositoryPath).toContain("function irhaLovableRuntimeKey()");
+      expect(source, repositoryPath).toContain('Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true"');
     }
+
+    expect(scopedConsumers.sort()).toEqual([...GSC_SCOPED_EXCEPTIONS].sort());
   });
 
   it("does not enable the opt-in flag in the committed Supabase configuration", () => {

@@ -1,9 +1,8 @@
-// Inspects Google Search Console indexing status for a batch of URLs.
+// Inspects Google Search Console indexing status for a batch of Irha Apparels URLs.
 // Admin-only: validates JWT and `user_roles.role = 'admin'`.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-function irhaLovableRuntimeKey(): string | undefined {
-  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
+function gscManagedConnectorKey(): string | undefined {
   return Deno.env.get("LOVABLE_API_KEY") || undefined;
 }
 
@@ -13,18 +12,37 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const DEFAULT_SITE_URL = "sc-domain:irhaapparels.com";
+const GSC_SITE_PROPERTY = "sc-domain:irhaapparels.com";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
+const MAX_INSPECTION_URLS = 25;
+const ALLOWED_HOSTNAMES = new Set(["irhaapparels.com", "www.irhaapparels.com"]);
 
 function jsonResp(payload: unknown, status: number) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
   });
 }
 
-function searchConsoleProperty() {
-  return (Deno.env.get("GSC_SITE_URL") || DEFAULT_SITE_URL).trim();
+function effectiveSearchConsoleProperty() {
+  const configured = Deno.env.get("GSC_SITE_URL")?.trim();
+  if (configured && configured !== GSC_SITE_PROPERTY) {
+    return { property: null, error: "Invalid Google Search Console property configuration" };
+  }
+  return { property: GSC_SITE_PROPERTY, error: null };
+}
+
+function allowedInspectionUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:"
+      && !url.username
+      && !url.password
+      && ALLOWED_HOSTNAMES.has(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 async function requireAdmin(req: Request): Promise<Response | null> {
@@ -32,11 +50,18 @@ async function requireAdmin(req: Request): Promise<Response | null> {
   if (!token) return jsonResp({ error: "Unauthorized" }, 401);
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
     global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: ud } = await sb.auth.getUser();
-  if (!ud?.user) return jsonResp({ error: "Unauthorized" }, 401);
-  const { data: roleRow } = await sb.from("user_roles").select("role").eq("user_id", ud.user.id).eq("role", "admin").maybeSingle();
-  if (!roleRow) return jsonResp({ error: "Forbidden — admin only" }, 403);
+  const { data: userResult, error: userError } = await sb.auth.getUser();
+  const user = userResult?.user;
+  if (userError || !user) return jsonResp({ error: "Unauthorized" }, 401);
+  const { data: roleRow, error: roleError } = await sb
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (roleError || !roleRow) return jsonResp({ error: "Forbidden — admin only" }, 403);
   return null;
 }
 
@@ -55,77 +80,78 @@ interface InspectResult {
   error?: string;
 }
 
-async function inspect(url: string): Promise<InspectResult> {
-  const lovableKey = irhaLovableRuntimeKey();
-  const gscKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
-  if (!lovableKey || !gscKey) return { url, error: "Missing API credentials" };
+async function inspect(url: string, property: string): Promise<InspectResult> {
+  const connectorToken = gscManagedConnectorKey();
+  const connectionKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
+  if (!connectorToken || !connectionKey) return { url, error: "Google Search Console connection is not configured" };
 
   try {
     const res = await fetch(`${GATEWAY}/v1/urlInspection/index:inspect`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": gscKey,
+        Authorization: `Bearer ${connectorToken}`,
+        "X-Connection-Api-Key": connectionKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         inspectionUrl: url,
-        siteUrl: searchConsoleProperty(),
+        siteUrl: property,
       }),
     });
     if (!res.ok) {
-      const text = await res.text();
-      return { url, error: `HTTP ${res.status}: ${text.slice(0, 200)}` };
+      return { url, error: `Google Search Console returned HTTP ${res.status}` };
     }
     const data = await res.json();
-    const r = data.inspectionResult ?? {};
-    const idx = r.indexStatusResult ?? {};
+    const result = data.inspectionResult ?? {};
+    const index = result.indexStatusResult ?? {};
     return {
       url,
-      verdict: idx.verdict,
-      coverageState: idx.coverageState,
-      robotsTxtState: idx.robotsTxtState,
-      indexingState: idx.indexingState,
-      pageFetchState: idx.pageFetchState,
-      lastCrawlTime: idx.lastCrawlTime,
-      googleCanonical: idx.googleCanonical,
-      userCanonical: idx.userCanonical,
-      sitemap: idx.sitemap,
-      inspectionLink: r.inspectionResultLink,
+      verdict: index.verdict,
+      coverageState: index.coverageState,
+      robotsTxtState: index.robotsTxtState,
+      indexingState: index.indexingState,
+      pageFetchState: index.pageFetchState,
+      lastCrawlTime: index.lastCrawlTime,
+      googleCanonical: index.googleCanonical,
+      userCanonical: index.userCanonical,
+      sitemap: index.sitemap,
+      inspectionLink: result.inspectionResultLink,
     };
-  } catch (e) {
-    return { url, error: (e as Error).message };
+  } catch {
+    return { url, error: "Google Search Console inspection request failed" };
   }
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   if (req.method !== "POST") return jsonResp({ error: "Method not allowed" }, 405);
 
   const denied = await requireAdmin(req);
   if (denied) return denied;
 
   try {
+    const site = effectiveSearchConsoleProperty();
+    if (site.error || !site.property) {
+      return jsonResp({ error: site.error, code: "gsc_property_configuration_invalid" }, 503);
+    }
+
     const { urls } = await req.json();
     if (!Array.isArray(urls) || urls.length === 0) return jsonResp({ error: "urls[] required" }, 400);
-    const safe = urls
-      .filter((u: unknown): u is string => typeof u === "string" && u.startsWith("https://"))
-      .slice(0, 25);
-
-    // Sequential to respect GSC quota (approximately 600/minute; conservative here).
-    const results: InspectResult[] = [];
-    for (const u of safe) {
-      results.push(await inspect(u));
+    if (urls.length > MAX_INSPECTION_URLS) {
+      return jsonResp({ error: `A maximum of ${MAX_INSPECTION_URLS} URLs is allowed` }, 400);
     }
-    return new Response(JSON.stringify({ results }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (e) {
-    console.error("gsc-inspect error", e);
-    return new Response(JSON.stringify({ error: "Internal error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (!urls.every(allowedInspectionUrl)) {
+      return jsonResp({ error: "Only HTTPS URLs on irhaapparels.com or www.irhaapparels.com are allowed" }, 400);
+    }
+
+    // Sequential to respect the Search Console URL Inspection quota.
+    const results: InspectResult[] = [];
+    for (const url of urls) {
+      results.push(await inspect(url, site.property));
+    }
+    return jsonResp({ ok: true, property: site.property, results }, 200);
+  } catch (error) {
+    console.error("gsc-inspect error", error instanceof Error ? error.message : error);
+    return jsonResp({ error: "Internal error" }, 500);
   }
 });
