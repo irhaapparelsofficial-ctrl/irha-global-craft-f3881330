@@ -9,8 +9,12 @@ import {
 
 const INDEX_PATH = resolve("dist/index.html");
 const BRAND_TITLE = PUBLIC_IDENTITY.homepage.title;
-const BRAND_H1 = PUBLIC_IDENTITY.homepage.heading;
+const BRAND_H1 = "Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers";
 const BRAND_DESCRIPTION = PUBLIC_IDENTITY.homepage.description;
+
+if (BRAND_H1 !== PUBLIC_IDENTITY.homepage.heading) {
+  throw new Error("Homepage H1 contract drifted from publicIdentity.mjs");
+}
 
 function replaceRequired(source, pattern, replacement, label) {
   if (!pattern.test(source)) {
