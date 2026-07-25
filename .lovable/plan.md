@@ -1,48 +1,28 @@
-# Automation Tasks — Duplicate Detection Report (read-only)
+## Phase 4B-2 — Read-Only Integration Diagnosis (report only)
 
-Source: live owner Supabase (`pvzjiozismyxqrzmtfbi`), `public.automation_tasks`. No writes performed.
+This plan is a report. No code, database, secret, connector, deployment, sitemap, or indexing changes are proposed. Awaiting owner direction before any Phase 4B-2 remediation is scoped.
 
-## Method
+### Evidence table
 
-Three duplicate signals were compared:
+| # | Check | Result |
+|---|---|---|
+| 1 | `google_search_console` connector attached to this project | Yes — OAuth2, gateway-backed, linked to project |
+| 2 | Authorized Google account with Search Console access | Yes — connection present, has_access: yes |
+| 3 | Search Console connection reference available to project | Yes — linked and gateway-routable |
+| 4 | Lovable connector runtime enabled for project functions | No — `IRHA_ENABLE_LOVABLE_RUNTIME` absent from Supabase Edge Function environment. `irhaLovableRuntimeKey()` therefore returns undefined and the GSC edge paths short-circuit with `gsc_connection_not_configured` (503) |
+| 5 | Secret-name presence (values not read) | `IRHA_ENABLE_LOVABLE_RUNTIME`: absent · `LOVABLE_API_KEY`: present (managed) · `GOOGLE_SEARCH_CONSOLE_API_KEY`: present (connector-managed) · `GSC_SITE_URL`: absent |
+| 6 | Effective `GSC_SITE_URL` | Not set; functions fall back to source-default `https://irhaapparels.com/` (matches canonical apex property and `sc-domain:irhaapparels.com`) |
+| 7 | Existing secure admin session usable for `gsc-analytics`/`gsc-inspect` | Unknown from read-only tooling — requires a live authenticated owner request (Bearer JWT + `user_roles.role='admin'`) that cannot be observed from configuration inspection |
 
-1. **Exact idempotency-key collisions** — `GROUP BY idempotency_key HAVING count(*) > 1`.
-2. **Semantic duplicates** — same `(module, action, title)` appearing in more than one active row (`status IN draft, ready_for_review, approved, blocked`).
-3. **Overlapping scheduled windows** — for the same `(module, action)`, any two active rows whose `scheduled_for` timestamps fall within ±60 minutes.
+### Classification
 
-Scope: 61 total tasks; 60 active. Terminal statuses (`executed`, `failed`, `cancelled`) excluded from duplicate-risk scoring.
+**`LOVABLE_RUNTIME_DISABLED`** — sole deterministic blocker.
 
-## Result summary
+All connector, OAuth, gateway, and companion secrets are in place, and the effective site URL matches the canonical apex property. The GSC edge functions gate `LOVABLE_API_KEY` behind an explicit `IRHA_ENABLE_LOVABLE_RUNTIME=true` opt-in that is currently absent, so gateway calls cannot execute regardless of caller identity.
 
-| Signal | Count |
-|---|---|
-| Exact idempotency-key duplicates | **0** (unique constraint enforced) |
-| Semantic `(module, action, title)` duplicate groups | **5** (21 rows) |
-| Overlapping scheduled-window pairs (±60 min) | **0** (`scheduled_for` is NULL for all planning-cycle tasks) |
+Item 7 (admin session) remains unverifiable in a read-only pass. If a subsequent owner-initiated authenticated call to `gsc-analytics` also fails after the runtime flag is enabled, reclassification to `MULTIPLE_CONFIGURATION_DEFECTS` (adding `ADMIN_SESSION_UNAVAILABLE`) would apply.
 
-No true duplicate exists at the database-integrity level: every row has a distinct idempotency key and none share a scheduled window. The 21 semantically-similar rows are legitimate **daily-cycle repeats** of the same rotation slot across different `automation:<date>:…` cycles, held in `ready_for_review` because the owner has not yet actioned prior drafts. They are backlog, not duplicates.
-
-## Semantic-repeat groups (21 rows across 5 groups)
-
-| module | action | title | rows | first day | last day |
-|---|---|---|---|---|---|
-| listings | prepare_listing_updates | Prepare truthful B2B listing profiles and posts | 13 | 2026-07-12 | 2026-07-24 |
-| creative | create_canva_reel | Create premium B2B Canva reel draft · Premium Leather | 2 | 2026-07-16 | 2026-07-21 |
-| creative | create_canva_reel | Create premium B2B Canva reel draft · Streetwear & Activewear | 2 | 2026-07-18 | 2026-07-23 |
-| leads | discover_and_verify | Discover verified B2B buyers · Germany · Bavarian & Trachten | 2 | 2026-07-12 | 2026-07-20 |
-| seo | create_localized_drafts | Prepare useful localized SEO drafts · de-DE · Bavarian & Trachten | 2 | 2026-07-12 | 2026-07-20 |
-
-All 21 rows carry distinct idempotency keys of the form `automation:<YYYY-MM-DD>:<module>[:<axis>]`. Two minor key-format variants exist for pre/post-refactor rows (e.g. `…:leads:germany:bavarian` vs `…:leads:Germany:Bavarian & Trachten`) but they still represent different daily cycles, not collisions.
-
-## Interpretation
-
-- Duplicate-guard integrity is intact: unique constraint + `ON CONFLICT DO NOTHING` in the planner prevent same-day re-inserts.
-- Scheduled-window overlap check returns 0 because planning-cycle tasks are not time-gated; overlap can only occur once tasks acquire `scheduled_for`.
-- The 13-row `listings` repeat is the largest cluster; it recurs daily by design and will keep growing one row per day until the owner reviews and closes them.
-
-## Recommended non-destructive follow-up (owner decision only)
-
-- Owner reviews and closes older `ready_for_review` cycles (2026-07-12 … 2026-07-20) so the daily planner's rotation coverage reads as fresh.
-- If desired, add a scheduled auto-cancel for `ready_for_review` tasks older than N days; not implemented in this report.
-
-_No code, database, settings, content, or external-system changes were performed. This is a read-only report._
+### Constraints honored
+- No file edits, no migrations, no deploys, no sitemap submission, no indexing requests.
+- No secret values, tokens, JWTs, or account email addresses read or surfaced.
+- No remediation code proposed; awaiting explicit owner instruction to open a scoped change.
