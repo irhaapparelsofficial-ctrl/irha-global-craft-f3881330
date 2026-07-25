@@ -47,8 +47,8 @@ export function productNameFromImageUrl(value: string): string | null {
     const parsed = new URL(value, DEFAULT_SITE_URL);
     const segments = parsed.pathname.split("/").filter(Boolean);
     const productIndex = segments.lastIndexOf("products");
-    const directory = productIndex >= 0 ? segments[productIndex + 1] : segments.at(-2);
-    if (!directory) return null;
+    const directory = productIndex >= 0 ? segments[productIndex + 1] : null;
+    if (!directory || !/^p\d{3}-/i.test(directory)) return null;
     const normalized = directory.replace(/^p\d{3}-/i, "");
     return normalized ? titleCase(normalized) : null;
   } catch {

@@ -43,7 +43,7 @@ describe("stable image SEO helpers", () => {
   });
 
   it("preserves supplied alt text for non-catalogue assets", () => {
-    expect(semanticImageAlt("/og-image.jpg", "Irha Apparels manufacturing overview")).toBe(
+    expect(semanticImageAlt("/assets/products-flatlay.abc123.jpg", "Irha Apparels manufacturing overview")).toBe(
       "Irha Apparels manufacturing overview",
     );
   });
