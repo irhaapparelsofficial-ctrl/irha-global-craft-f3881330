@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import {
   PUBLIC_IDENTITY,
+  buildCanonicalHomepageWebPageSchema,
   buildCanonicalOrganizationSchema,
   buildCanonicalWebsiteSchema,
 } from "../src/lib/publicIdentity.mjs";
@@ -13,6 +14,7 @@ const graph = {
   "@graph": [
     buildCanonicalOrganizationSchema({ includeContext: false }),
     buildCanonicalWebsiteSchema({ includeContext: false }),
+    buildCanonicalHomepageWebPageSchema({ includeContext: false }),
   ],
 };
 const script = `<script data-irha-static-site-identity="true" type="application/ld+json">${JSON.stringify(graph).replace(/</g, "\\u003c")}</script>`;
@@ -27,16 +29,20 @@ if (!html.includes('data-irha-static-site-identity="true"')) {
 
 const scriptMatches = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)];
 let organizationCount = 0;
+let homepageCount = 0;
 for (const match of scriptMatches) {
   const value = JSON.parse(match[1]);
   const nodes = Array.isArray(value?.["@graph"]) ? value["@graph"] : [value];
   organizationCount += nodes.filter((node) => node?.["@type"] === "Organization").length;
+  homepageCount += nodes.filter((node) => node?.["@type"] === "WebPage" && node?.["@id"] === PUBLIC_IDENTITY.homepageId).length;
 }
 if (organizationCount !== 1) throw new Error(`Expected exactly one static Organization node, found ${organizationCount}`);
+if (homepageCount !== 1) throw new Error(`Expected exactly one canonical homepage WebPage node, found ${homepageCount}`);
 
 for (const required of [
   PUBLIC_IDENTITY.organizationId,
   PUBLIC_IDENTITY.websiteId,
+  PUBLIC_IDENTITY.homepageId,
   PUBLIC_IDENTITY.logoUrl,
   PUBLIC_IDENTITY.telephone,
   PUBLIC_IDENTITY.email,
@@ -49,4 +55,4 @@ for (const required of [
 
 await writeFile(indexUrl, html, "utf8");
 await import("./strengthen-brand-search-signals.mjs");
-console.log("PASS canonical Organization and WebSite identity injected from publicIdentity.mjs");
+console.log("PASS canonical Organization, WebSite and homepage WebPage identity injected from publicIdentity.mjs");

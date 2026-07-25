@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   PUBLIC_IDENTITY,
+  buildCanonicalHomepageWebPageSchema,
   buildCanonicalOrganizationSchema,
   buildCanonicalWebsiteSchema,
 } from "@/lib/publicIdentity.mjs";
@@ -15,9 +16,9 @@ describe("Google brand visibility controls", () => {
     const patch = read("scripts/strengthen-brand-search-signals.mjs");
     const organization = buildCanonicalOrganizationSchema();
     const website = buildCanonicalWebsiteSchema();
+    const homepage = buildCanonicalHomepageWebPageSchema();
 
     expect(ensureHome).toContain('from "../src/lib/publicIdentity.mjs"');
-    expect(ensureHome).toContain('data-irha-static-site-identity="true"');
     expect(ensureHome).toContain('await import("./strengthen-brand-search-signals.mjs")');
     expect(ensureHome).not.toContain("alternateName");
     expect(organization).toMatchObject({
@@ -32,8 +33,14 @@ describe("Google brand visibility controls", () => {
       "@id": PUBLIC_IDENTITY.websiteId,
       publisher: { "@id": PUBLIC_IDENTITY.organizationId },
     });
-    expect(patch).toContain("Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan");
-    expect(patch).toContain("Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers");
+    expect(homepage).toMatchObject({
+      "@type": "WebPage",
+      "@id": PUBLIC_IDENTITY.homepageId,
+      isPartOf: { "@id": PUBLIC_IDENTITY.websiteId },
+      publisher: { "@id": PUBLIC_IDENTITY.organizationId },
+    });
+    expect(patch).toContain("PUBLIC_IDENTITY.homepage.title");
+    expect(patch).toContain("PUBLIC_IDENTITY.homepage.heading");
     expect(patch).toContain("/products/bavarian-trachten-wear");
     expect(patch).toContain("/products/premium-leather-apparel");
     expect(patch).toContain("/products/streetwear-activewear");
@@ -75,7 +82,7 @@ describe("Google brand visibility controls", () => {
     expect(redirects).not.toContain("/studio /inquiry");
     expect(policy).toContain('const NON_INDEXABLE_PATHS = new Set(["/studio"])');
     expect(policy).toContain('"studio/index.html"');
-    expect(policy).toContain('"/blog/dirndl-manufacturer-moq-50"');
+    expect(policy).toContain('/blog/dirndl-manufacturer-moq-50');
     expect(policy).toContain('"blog/dirndl-manufacturer-moq-50/index.html"');
   });
 });

@@ -2,20 +2,26 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import {
   PUBLIC_IDENTITY,
+  buildCanonicalHomepageWebPageSchema,
   buildCanonicalOrganizationSchema,
   buildCanonicalWebsiteSchema,
 } from "../src/lib/publicIdentity.mjs";
 
 const DIST = resolve("dist");
 const JSON_LD_SCRIPT = /<script\b([^>]*)type=["']application\/ld\+json["']([^>]*)>([\s\S]*?)<\/script>/gi;
-const canonicalGraph = {
-  "@context": "https://schema.org",
-  "@graph": [
+
+function canonicalGraphFor(file) {
+  const nodes = [
     buildCanonicalOrganizationSchema({ includeContext: false }),
     buildCanonicalWebsiteSchema({ includeContext: false }),
-  ],
-};
-const canonicalScript = `<script data-irha-static-site-identity="true" type="application/ld+json">${JSON.stringify(canonicalGraph).replace(/</g, "\\u003c")}</script>`;
+  ];
+  if (file === "index.html") nodes.push(buildCanonicalHomepageWebPageSchema({ includeContext: false }));
+  return { "@context": "https://schema.org", "@graph": nodes };
+}
+
+function canonicalScriptFor(file) {
+  return `<script data-irha-static-site-identity="true" type="application/ld+json">${JSON.stringify(canonicalGraphFor(file)).replace(/</g, "\\u003c")}</script>`;
+}
 
 async function walk(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -42,17 +48,26 @@ function isCanonicalWebsite(node) {
   return hasType(node, "WebSite") && node?.["@id"] === PUBLIC_IDENTITY.websiteId;
 }
 
+function isCanonicalHomepage(node) {
+  return hasType(node, "WebPage") && node?.["@id"] === PUBLIC_IDENTITY.homepageId;
+}
+
+function isCanonicalIdentityNode(node) {
+  return isIrhaOrganization(node) || isCanonicalWebsite(node) || isCanonicalHomepage(node);
+}
+
 function normalizeNested(value) {
   if (Array.isArray(value)) return value.map(normalizeNested);
   if (!value || typeof value !== "object") return value;
   if (isIrhaOrganization(value)) return { "@id": PUBLIC_IDENTITY.organizationId };
   if (isCanonicalWebsite(value)) return { "@id": PUBLIC_IDENTITY.websiteId };
+  if (isCanonicalHomepage(value)) return { "@id": PUBLIC_IDENTITY.homepageId };
 
   const output = {};
   for (const [key, child] of Object.entries(value)) {
     if (key === "@graph" && Array.isArray(child)) {
       output[key] = child
-        .filter((node) => !isIrhaOrganization(node) && !isCanonicalWebsite(node))
+        .filter((node) => !isCanonicalIdentityNode(node))
         .map(normalizeNested);
     } else {
       output[key] = normalizeNested(child);
@@ -73,9 +88,9 @@ function normalizeJsonLdScripts(html, file) {
       throw new Error(`${file} contains invalid JSON-LD: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    if (isIrhaOrganization(value) || isCanonicalWebsite(value)) return "";
+    if (isCanonicalIdentityNode(value)) return "";
     if (Array.isArray(value)) {
-      value = value.filter((node) => !isIrhaOrganization(node) && !isCanonicalWebsite(node));
+      value = value.filter((node) => !isCanonicalIdentityNode(node));
       if (value.length === 0) return "";
     }
     value = normalizeNested(value);
@@ -105,14 +120,19 @@ function verifyIdentity(html, file) {
   const nodes = scripts.flatMap((schema) => collectNodes(schema));
   const organizations = nodes.filter(isIrhaOrganization);
   const websites = nodes.filter(isCanonicalWebsite);
-  if (organizations.length !== 1 || websites.length !== 1) {
-    throw new Error(`${file} must contain exactly one canonical Organization and WebSite; found ${organizations.length}/${websites.length}`);
+  const homepages = nodes.filter(isCanonicalHomepage);
+  const expectedHomepageCount = file === "index.html" ? 1 : 0;
+  if (organizations.length !== 1 || websites.length !== 1 || homepages.length !== expectedHomepageCount) {
+    throw new Error(`${file} must contain one canonical Organization, one WebSite and ${expectedHomepageCount} homepage WebPage; found ${organizations.length}/${websites.length}/${homepages.length}`);
   }
   if (JSON.stringify(organizations[0]) !== JSON.stringify(buildCanonicalOrganizationSchema({ includeContext: false }))) {
     throw new Error(`${file} canonical Organization differs from publicIdentity.mjs`);
   }
   if (JSON.stringify(websites[0]) !== JSON.stringify(buildCanonicalWebsiteSchema({ includeContext: false }))) {
     throw new Error(`${file} canonical WebSite differs from publicIdentity.mjs`);
+  }
+  if (expectedHomepageCount === 1 && JSON.stringify(homepages[0]) !== JSON.stringify(buildCanonicalHomepageWebPageSchema({ includeContext: false }))) {
+    throw new Error(`${file} canonical homepage WebPage differs from publicIdentity.mjs`);
   }
 }
 
@@ -123,11 +143,11 @@ for (const filePath of files) {
   let html = await readFile(filePath, "utf8");
   html = normalizeJsonLdScripts(html, file);
   if (!html.includes("</head>")) throw new Error(`${file} is missing </head>`);
-  html = html.replace("</head>", `    ${canonicalScript}\n  </head>`);
+  html = html.replace("</head>", `    ${canonicalScriptFor(file)}\n  </head>`);
   verifyIdentity(html, file);
   await writeFile(filePath, html, "utf8");
   updated += 1;
 }
 
-if (updated === 0) throw new Error("No static HTML files were found for canonical identity finalization");
-console.log(`Finalized one canonical Organization and WebSite across ${updated} static HTML files`);
+if (updated === 0) throw new Error("No static HTML iles were found for canonical identity finalization");
+console.log(`Finalized one canonical Organization and WebSite across ${updated} static HTML files, with one homepage WebPage`);

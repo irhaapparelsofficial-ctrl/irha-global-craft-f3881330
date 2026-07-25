@@ -2,14 +2,15 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
   PUBLIC_IDENTITY,
+  buildCanonicalHomepageWebPageSchema,
   buildCanonicalOrganizationSchema,
   buildCanonicalWebsiteSchema,
 } from "../src/lib/publicIdentity.mjs";
 
 const INDEX_PATH = resolve("dist/index.html");
-const BRAND_TITLE = "Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan";
-const BRAND_H1 = "Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers";
-const BRAND_DESCRIPTION = "Irha Apparels is a B2B apparel manufacturer in Sialkot, Pakistan, supplying custom Lederhosen, Dirndl, leather apparel, sportswear, streetwear and private-label clothing programs.";
+const BRAND_TITLE = PUBLIC_IDENTITY.homepage.title;
+const BRAND_H1 = PUBLIC_IDENTITY.homepage.heading;
+const BRAND_DESCRIPTION = PUBLIC_IDENTITY.homepage.description;
 
 function replaceRequired(source, pattern, replacement, label) {
   if (!pattern.test(source)) {
@@ -22,7 +23,7 @@ function assertCanonicalEntityGraph(source) {
   const scriptPattern = /<script[^>]*data-irha-static-site-identity=["']true["'][^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i;
   const match = source.match(scriptPattern);
   if (!match) {
-    throw new Error("Brand search signal patch could not find the canonical Organization/WebSite graph");
+    throw new Error("Brand search signal patch could not find the canonical Organization/WebSite/WebPage graph");
   }
 
   let graph;
@@ -35,20 +36,28 @@ function assertCanonicalEntityGraph(source) {
   const entities = Array.isArray(graph?.["@graph"]) ? graph["@graph"] : [];
   const organizations = entities.filter((item) => item?.["@type"] === "Organization");
   const websites = entities.filter((item) => item?.["@type"] === "WebSite");
-  if (organizations.length !== 1 || websites.length !== 1) {
-    throw new Error(`Canonical brand graph must contain one Organization and one WebSite; found ${organizations.length}/${websites.length}`);
+  const homepages = entities.filter((item) => item?.["@type"] === "WebPage" && item?.["@id"] === PUBLIC_IDENTITY.homepageId);
+  if (organizations.length !== 1 || websites.length !== 1 || homepages.length !== 1) {
+    throw new Error(`Canonical brand graph must contain one Organization, WebSite and homepage WebPage; found ${organizations.length}/${websites.length}/${homepages.length}`);
   }
 
   const expectedOrganization = buildCanonicalOrganizationSchema({ includeContext: false });
   const expectedWebsite = buildCanonicalWebsiteSchema({ includeContext: false });
+  const expectedHomepage = buildCanonicalHomepageWebPageSchema({ includeContext: false });
   if (JSON.stringify(organizations[0]) !== JSON.stringify(expectedOrganization)) {
     throw new Error("Canonical Organization graph does not match publicIdentity.mjs");
   }
   if (JSON.stringify(websites[0]) !== JSON.stringify(expectedWebsite)) {
     throw new Error("Canonical WebSite graph does not match publicIdentity.mjs");
   }
+  if (JSON.stringify(homepages[0]) !== JSON.stringify(expectedHomepage)) {
+    throw new Error("Canonical homepage WebPage graph does not match publicIdentity.mjs");
+  }
   if (websites[0].publisher?.["@id"] !== PUBLIC_IDENTITY.organizationId) {
     throw new Error("Canonical WebSite publisher does not reference the Organization @id");
+  }
+  if (homepages[0].isPartOf?.["@id"] !== PUBLIC_IDENTITY.websiteId || homepages[0].publisher?.["@id"] !== PUBLIC_IDENTITY.organizationId) {
+    throw new Error("Canonical homepage WebPage does not reference the WebSite and Organization IDs");
   }
 }
 
@@ -111,6 +120,7 @@ for (const required of [
   BRAND_DESCRIPTION,
   PUBLIC_IDENTITY.organizationId,
   PUBLIC_IDENTITY.websiteId,
+  PUBLIC_IDENTITY.homepageId,
   PUBLIC_IDENTITY.logoUrl,
   PUBLIC_IDENTITY.telephone,
   PUBLIC_IDENTITY.email,
@@ -126,4 +136,4 @@ if (html.includes('"alternateName"') || html.includes('"legalName"') || html.inc
 }
 
 await writeFile(INDEX_PATH, html, "utf8");
-console.log("Validated canonical Irha Apparels entity graph and strengthened homepage brand signals");
+console.log("Validated canonical Irha Apparels Organization, WebSite and homepage WebPage graph");

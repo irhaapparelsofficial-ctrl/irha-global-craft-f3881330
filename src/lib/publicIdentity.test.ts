@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PUBLIC_IDENTITY,
+  buildCanonicalHomepageWebPageSchema,
   buildCanonicalOrganizationSchema,
   buildCanonicalWebsiteSchema,
 } from "./publicIdentity.mjs";
@@ -82,6 +83,20 @@ describe("canonical public identity", () => {
       "@id": PUBLIC_IDENTITY.websiteId,
       publisher: { "@id": PUBLIC_IDENTITY.organizationId },
     });
+  });
+
+  it("keeps the homepage WebPage attached to the canonical WebSite and Organization", () => {
+    const expected = buildCanonicalHomepageWebPageSchema();
+    expect(expected).toMatchObject({
+      "@type": "WebPage",
+      "@id": PUBLIC_IDENTITY.homepageId,
+      url: PUBLIC_IDENTITY.url,
+      name: PUBLIC_IDENTITY.homepage.title,
+      isPartOf: { "@id": PUBLIC_IDENTITY.websiteId },
+      about: { "@id": PUBLIC_IDENTITY.organizationId },
+      publisher: { "@id": PUBLIC_IDENTITY.organizationId },
+    });
+    expect(JSON.stringify(expected)).not.toMatch(/legalName|LocalBusiness|streetAddress|postalCode|areaServed/);
   });
 
   it("fails closed against published site-setting identity drift", () => {
