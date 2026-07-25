@@ -76,4 +76,17 @@ describe("route-specific static content architecture", () => {
     expect(routeVerifier).toContain("Canonical route has no accepted content owner");
     expect(routeVerifier).toContain("loading-only primary product content");
   });
+
+  it("keeps the runtime SEO dependency aligned with the exact lockfile", () => {
+    const packageJson = JSON.parse(read("package.json")) as {
+      dependencies?: Record<string, string>;
+    };
+    const lockfile = JSON.parse(read("package-lock.json")) as {
+      packages?: Record<string, { dependencies?: Record<string, string> }>;
+    };
+    const packageRange = packageJson.dependencies?.["react-helmet-async"];
+    const lockRange = lockfile.packages?.[""]?.dependencies?.["react-helmet-async"];
+    expect(packageRange).toBe("^3.0.0");
+    expect(lockRange).toBe(packageRange);
+  });
 });
