@@ -240,6 +240,27 @@ function parseSchemaNodes(html, route) {
   return nodes;
 }
 
+function verifyCoreRouteSchema(html, route, content, canonical) {
+  const pages = parseSchemaNodes(html, route).filter((node) => node["@id"] === `${canonical}#webpage`);
+  if (pages.length !== 1) {
+    throw new Error(`${route}/index.html must contain exactly one canonical route page node; found ${pages.length}`);
+  }
+  const page = pages[0];
+  const requiredPage = {
+    "@type": content.pageType,
+    url: canonical,
+    name: content.title,
+    description: content.metaDescription,
+  };
+  for (const [field, expected] of Object.entries(requiredPage)) {
+    if (page[field] !== expected) throw new Error(`${route}/index.html route page ${field} drift`);
+  }
+  if (page.isPartOf?.["@id"] !== PUBLIC_IDENTITY.websiteId
+    || page.about?.["@id"] !== PUBLIC_IDENTITY.organizationId) {
+    throw new Error(`${route}/index.html route page identity reference drift`);
+  }
+}
+
 function verifyCanonicalOrganization(html, route) {
   const organizations = parseSchemaNodes(html, route).filter((node) =>
     node["@type"] === "Organization" && node["@id"] === PUBLIC_IDENTITY.organizationId,
@@ -352,6 +373,7 @@ async function verifyCoreRouteShells() {
       if (html.includes(fingerprint)) throw new Error(`${route}/index.html retained obsolete generic-shell fingerprint: ${fingerprint}`);
     }
     verifyCanonicalOrganization(html, route);
+    verifyCoreRouteSchema(html, route, content, canonical);
   }
 }
 
