@@ -81,7 +81,7 @@ export default function FAQ() {
               </div>
             ) : groups.map((group) => (
               <div key={group.group} id={sectionId(group.group)} className="scroll-mt-32">
-                <p className="eyebrow mb-5">{group.group}</p>
+                <h2 className="eyebrow mb-5">{group.group}</h2>
                 <Accordion type="single" collapsible className="space-y-3">
                   {group.items.map((item) => (
                     <AccordionItem
