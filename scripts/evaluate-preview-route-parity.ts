@@ -12,6 +12,9 @@ type Severity = "critical" | "high" | "medium" | "low";
 type Finding = { severity: Severity; code: string; path: string; message: string };
 type CanonicalResult = {
   path: string;
+  finalUrl: string;
+  canonical: string;
+  redirectHops: Array<{ status: number; from: string; to: string }>;
   robotsMeta: string;
   xRobotsTag: string;
   internalLinks: string[];
@@ -61,6 +64,20 @@ if (report.summary.redirectsFailed || report.summary.functionalFailed || report.
 }
 
 const canonicalByPath = new Map(report.canonicalResults.map((item) => [item.path, item]));
+const gateway = canonicalByPath.get("/de");
+const gatewayCanonicalUrl = `${report.inventory.canonicalOrigin}/de/`;
+const gatewayPreviewUrl = `${report.inventory.origin}/de/`;
+const verifiedGatewaySlashCanonical = gateway?.canonical === gatewayCanonicalUrl
+  && gateway.finalUrl === gatewayPreviewUrl
+  && gateway.redirectHops.length === 1
+  && gateway.redirectHops[0]?.status === 301
+  && gateway.redirectHops[0]?.from === `${report.inventory.origin}/de`
+  && gateway.redirectHops[0]?.to === gatewayPreviewUrl;
+const gatewayNormalizationCodes = new Set([
+  "sitemap_origin_mismatch",
+  "canonical_redirect",
+  "wrong_canonical",
+]);
 const ignored: Finding[] = [];
 const blocking: Finding[] = [];
 
@@ -73,6 +90,11 @@ for (const finding of report.findings) {
       ignored.push(finding);
       continue;
     }
+  }
+
+  if (finding.path === "/de" && verifiedGatewaySlashCanonical && gatewayNormalizationCodes.has(finding.code)) {
+    ignored.push(finding);
+    continue;
   }
 
   blocking.push(finding);
@@ -93,7 +115,7 @@ const evaluation = {
   previewOrigin: report.inventory.origin,
   canonicalOrigin: report.inventory.canonicalOrigin,
   inventory: report.inventory,
-  ignoredPreviewPlatformFindings: ignoredCounts,
+  ignoredPreviewContextFindings: ignoredCounts,
   blockingFindings: blockingCounts,
   blocking,
 };
@@ -108,7 +130,7 @@ await writeFile(summaryPath, [
   `- Products: ${report.inventory.dynamicProducts}`,
   `- Taxonomy routes: ${report.inventory.dynamicTaxonomy}`,
   `- Redirects verified: ${report.inventory.redirectsVerified}`,
-  `- Ignored preview-platform noindex findings: ${ignored.length}`,
+  `- Ignored preview-context findings: ${ignored.length}`,
   `- Blocking findings: critical ${blockingCounts.critical}, high ${blockingCounts.high}, medium ${blockingCounts.medium}, low ${blockingCounts.low}`,
   "",
   ...(blocking.length
@@ -117,5 +139,5 @@ await writeFile(summaryPath, [
   "",
 ].join("\n"), "utf8");
 
-console.log(`Preview evaluation ignored ${ignored.length} preview-platform findings and retained ${blocking.length} findings`);
+console.log(`Preview evaluation ignored ${ignored.length} preview-context findings and retained ${blocking.length} findings`);
 if (blockingCounts.critical || blockingCounts.high) process.exitCode = 1;
