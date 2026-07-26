@@ -65,11 +65,20 @@ export function installI18nWorkerGateway(distDir: string): void {
 
   const localeFetchGuard = `    const localeGatewayTarget = LOCALE_GATEWAY_PATHS.get(pathname);\n    if (localeGatewayTarget && url.pathname !== localeGatewayTarget) {\n      return localeGatewayRedirect(request, url, localeGatewayTarget);\n    }\n\n`;
   if (!worker.includes("const localeGatewayTarget = LOCALE_GATEWAY_PATHS.get(pathname);")) {
+    const aliasAnchors = [
+      "    const aliasTarget = generatedLegacyAliasTarget(pathname) || legacyAliasTarget(pathname);",
+      "    const aliasTarget = legacyAliasTarget(pathname);",
+    ];
+    const matchingAliasAnchors = aliasAnchors.filter((anchor) => worker.includes(anchor));
+    if (matchingAliasAnchors.length !== 1) {
+      throw new Error(`Expected exactly one legacy alias fetch guard anchor, found ${matchingAliasAnchors.length}`);
+    }
+    const aliasAnchor = matchingAliasAnchors[0];
     worker = replaceOnce(
       worker,
-      "    const aliasTarget = legacyAliasTarget(pathname);",
-      `${localeFetchGuard}    const aliasTarget = legacyAliasTarget(pathname);`,
-      "legacyAliasTarget fetch guard",
+      aliasAnchor,
+      `${localeFetchGuard}${aliasAnchor}`,
+      "legacy alias fetch guard",
     );
   }
 
