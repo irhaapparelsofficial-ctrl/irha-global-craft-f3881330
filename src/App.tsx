@@ -27,6 +27,7 @@ const MarketLandingPage = lazy(() => import("./pages/MarketLandingPage"));
 const Manufacturing = lazy(() => import("./pages/Manufacturing"));
 const Inquiry = lazy(() => import("./pages/Inquiry"));
 const InquiryCart = lazy(() => import("./pages/InquiryCart"));
+const GermanGateway = lazy(() => import("./pages/GermanGateway"));
 const GermanBavarianWear = lazy(() => import("./pages/GermanBavarianWear"));
 const RepeatOrder = lazy(() => import("./pages/RepeatOrder"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -144,8 +145,8 @@ const App = () => (
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Layout><Home /></Layout>} />
-              <Route path="/de" element={<Navigate to="/de/bavarian-wear" replace />} />
-              <Route path="/de/" element={<Navigate to="/de/bavarian-wear" replace />} />
+              <Route path="/de" element={<Layout><GermanGateway /></Layout>} />
+              <Route path="/de/" element={<Layout><GermanGateway /></Layout>} />
               <Route path="/legacy-home" element={<Navigate to="/" replace />} />
 
               <Route path="/auth" element={<Auth />} />
