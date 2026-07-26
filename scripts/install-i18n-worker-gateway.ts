@@ -16,10 +16,23 @@ function replaceOnce(source: string, search: string, replacement: string, label:
 function patchStaticBuyerResponse(worker: string): string {
   const functionStart = worker.indexOf("async function staticBuyerResponse(");
   if (functionStart < 0) throw new Error("Static buyer response function is missing");
-  const functionEnd = worker.indexOf("\n}\n\n", functionStart);
-  if (functionEnd < 0) throw new Error("Static buyer response function boundary is missing");
+  const bodyStart = worker.indexOf("{", functionStart);
+  if (bodyStart < 0) throw new Error("Static buyer response function body is missing");
 
-  const endOffset = functionEnd + 3;
+  let depth = 0;
+  let endOffset = -1;
+  for (let index = bodyStart; index < worker.length; index += 1) {
+    if (worker[index] === "{") depth += 1;
+    if (worker[index] === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        endOffset = index + 1;
+        break;
+      }
+    }
+  }
+  if (endOffset < 0) throw new Error("Static buyer response function boundary is missing");
+
   let block = worker.slice(functionStart, endOffset);
   if (!block.includes("const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;")) {
     block = replaceOnce(
