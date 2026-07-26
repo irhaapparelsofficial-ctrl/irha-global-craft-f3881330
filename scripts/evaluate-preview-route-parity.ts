@@ -50,7 +50,7 @@ if (report.inventory.sourceCommit !== report.inventory.expectedSourceCommit) {
 if (report.inventory.dynamicProducts !== 254 || manifest.productCount !== 254 || manifest.products.length !== 254) {
   throw new Error("Preview evaluation requires the complete 254-product release");
 }
-if (report.inventory.dynamicTaxonomy !== 105 || report.inventory.sitemapUrlCount !== 407) {
+if (report.inventory.dynamicTaxonomy !== 105 || report.inventory.sitemapUrlCount !== 408) {
   throw new Error("Preview route inventory is incomplete");
 }
 if (report.inventory.approvedRedirectRegistryRows < 1258 || report.inventory.redirectsVerified < 1258) {
