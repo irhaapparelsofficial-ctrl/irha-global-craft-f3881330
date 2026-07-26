@@ -84,7 +84,7 @@ export function installI18nWorkerGateway(distDir: string): void {
     );
   }
 
-  const localeRegistry = `const LOCALE_GATEWAY_PATHS = new Map([\n  ["/de", "/de/"],\n]);\n\n`;
+  const localeRegistry = `const LOCALE_GATEWAY_PATHS = new Map([\n  ["/de", "/de/"],\n  ["/fr", "/fr/"],\n  ["/nl", "/nl/"],\n]);\n\n`;
   if (!worker.includes("const LOCALE_GATEWAY_PATHS = new Map([")) {
     worker = replaceOnce(
       worker,
@@ -140,13 +140,15 @@ export function installI18nWorkerGateway(distDir: string): void {
   for (const required of [
     assetEntry,
     '["/de", "/de/"]',
+    '["/fr", "/fr/"]',
+    '["/nl", "/nl/"]',
     "function localeGatewayRedirect(request, url, targetPath)",
     "!LOCALE_GATEWAY_PATHS.has(pathname)",
     "const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;",
   ]) {
-    if (!worker.includes(required)) throw new Error(`German locale gateway worker patch is incomplete: ${required}`);
+    if (!worker.includes(required)) throw new Error(`Locale gateway worker patch is incomplete: ${required}`);
   }
 
   writeFileSync(workerPath, worker, "utf8");
-  console.log(`[i18n-worker] /de/ served from /_seo-static/de--gateway.irha; /de redirects to the canonical gateway`);
+  console.log(`[i18n-worker] /de/, /fr/ and /nl/ are canonical locale gateways; slashless requests redirect canonically`);
 }
