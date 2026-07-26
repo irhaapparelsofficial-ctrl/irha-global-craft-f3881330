@@ -15,13 +15,14 @@ describe("Cloudflare immutable preview propagation guard", () => {
     expect(isTransientCloudflareDeploymentNotFound(404, "generic 404")).toBe(false);
   });
 
-  it("derives a unique canonical route inventory from the generated sitemap", () => {
+  it("derives a unique canonical route inventory and preserves locale gateway slashes", () => {
     const xml = `<?xml version="1.0"?><urlset>
       <url><loc>https://irhaapparels.com/</loc></url>
       <url><loc>https://irhaapparels.com/products/sportswear</loc></url>
       <url><loc>https://irhaapparels.com/products/sportswear/</loc></url>
+      <url><loc>https://irhaapparels.com/de/</loc></url>
     </urlset>`;
-    expect(sitemapPaths(xml)).toEqual(["/", "/products/sportswear"]);
+    expect(sitemapPaths(xml)).toEqual(["/", "/de/", "/products/sportswear"]);
   });
 
   it("runs the full propagation gate before the strict preview route crawl", () => {

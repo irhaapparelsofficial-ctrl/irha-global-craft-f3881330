@@ -5,6 +5,7 @@ import {
   APPLICATION_FINGERPRINT_SCOPE,
   computeApplicationFingerprint,
 } from "./application-fingerprint";
+import { installI18nWorkerGateway } from "./install-i18n-worker-gateway";
 import {
   computeBuildFingerprint,
   computeRuntimeFingerprint,
@@ -19,6 +20,7 @@ const rootDir = process.cwd();
 const distDir = path.resolve(rootDir, "dist");
 const publicManifestPath = path.resolve(rootDir, "public/build.json");
 const distManifestPath = path.resolve(distDir, "build.json");
+const germanGatewayAssetPath = path.resolve(distDir, "_seo-static/de--gateway.irha");
 const fingerprintPlaceholder = "0".repeat(64);
 
 if (!existsSync(distDir)) {
@@ -27,6 +29,8 @@ if (!existsSync(distDir)) {
 if (!existsSync(publicManifestPath)) {
   throw new Error(`Base release manifest is missing: ${publicManifestPath}`);
 }
+
+installI18nWorkerGateway(distDir);
 
 // SOURCE_SHA is set only after the workflow verifies the checked-out current
 // main commit. Prefer it over GitHub's event SHA so a rerun of an older failed
@@ -41,11 +45,15 @@ const htmlFiles = listHtmlFiles(distDir);
 if (htmlFiles.length === 0) {
   throw new Error(`No built HTML files found in ${distDir}`);
 }
+if (!existsSync(germanGatewayAssetPath)) {
+  throw new Error(`German gateway flat asset is missing: ${germanGatewayAssetPath}`);
+}
+const identityDocuments = [...htmlFiles, germanGatewayAssetPath];
 
 // First create the final HTML structure with a fixed-width full-build
 // placeholder. Runtime and application fingerprints exclude host-generated
 // document shells and are already final before identity metadata is injected.
-for (const htmlPath of htmlFiles) {
+for (const htmlPath of identityDocuments) {
   const html = readFileSync(htmlPath, "utf8");
   writeFileSync(
     htmlPath,
@@ -63,7 +71,7 @@ const buildFingerprint = computeBuildFingerprint(distDir);
 const placeholderAttribute = `content="${fingerprintPlaceholder}"`;
 const fingerprintAttribute = `content="${buildFingerprint}"`;
 
-for (const htmlPath of htmlFiles) {
+for (const htmlPath of identityDocuments) {
   const html = readFileSync(htmlPath, "utf8");
   const occurrences = html.split(placeholderAttribute).length - 1;
   if (occurrences !== 1) {
@@ -94,5 +102,5 @@ const manifest = {
 writeFileSync(distManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
 console.log(
-  `[release-identity] ${identity.sourceIdentityState}: ${identity.sourceCommit}; build ${buildFingerprint}; runtime ${runtimeFingerprint}; application ${applicationFingerprint} (${htmlFiles.length} HTML files)`,
+  `[release-identity] ${identity.sourceIdentityState}: ${identity.sourceCommit}; build ${buildFingerprint}; runtime ${runtimeFingerprint}; application ${applicationFingerprint} (${identityDocuments.length} identity-bearing documents)`,
 );

@@ -15,12 +15,19 @@ export function isTransientCloudflareDeploymentNotFound(status: number, body: st
     && /Nothing is here yet/i.test(body);
 }
 
+function canonicalProbePath(pathname: string): string {
+  // Locale gateways intentionally use persistent directory-style canonical URLs
+  // such as /de/. Preserve those exact sitemap paths so the propagation guard
+  // does not manufacture a non-canonical /de request and reject its 308.
+  if (/^\/[a-z]{2}\/$/i.test(pathname)) return pathname;
+  return pathname.replace(/\/+$/, "") || "/";
+}
+
 export function sitemapPaths(xml: string): string[] {
   const paths = new Set<string>();
   for (const match of xml.matchAll(/<loc>([^<]+)<\/loc>/gi)) {
     const value = match[1].replace(/&amp;/g, "&");
-    const path = new URL(value).pathname.replace(/\/+$/, "") || "/";
-    paths.add(path);
+    paths.add(canonicalProbePath(new URL(value).pathname));
   }
   return [...paths].sort();
 }
