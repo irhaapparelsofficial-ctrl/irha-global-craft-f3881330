@@ -344,36 +344,72 @@ export function localizedTaxonomySeo(args: {
   collectionName?: string;
 }) {
   const { locale, topName, audienceName, collectionName } = args;
-  const subject = collectionName ?? (audienceName ? `${audienceName} ${topName}` : topName);
+  const audienceSubject = audienceName ? `${audienceName} ${topName}` : topName;
 
   if (locale === "de") {
+    if (collectionName) {
+      const buyerGroup = audienceName ?? "B2B-Käufer";
+      return {
+        title: `${collectionName} für ${buyerGroup} | ${topName} Hersteller | Irha Apparels`,
+        h1: `${collectionName} Hersteller für ${buyerGroup} — ${topName}`,
+        description: `${collectionName} Fertigung für ${buyerGroup} innerhalb ${topName}. Programme für Großhändler, Importeure und Private-Label-Käufer werden nach Anforderungsprüfung bestätigt.`,
+        intro: `${collectionName} Programme für ${buyerGroup} innerhalb ${topName}, mit kundenspezifischer Entwicklung, Branding und Verpackung nach freigegebenem Briefing.`,
+      };
+    }
     return {
-      title: `${subject} Hersteller | Großhandel & Private Label | Irha Apparels`,
-      h1: `${subject} Hersteller für Großhandel & Private Label`,
-      description: `${subject} für Großhändler, Importeure und Private-Label-Käufer. Produktdetails und Konditionen werden nach Prüfung der Anforderungen bestätigt.`,
-      intro: `${subject} Programme für B2B-Käufer mit kundenspezifischer Entwicklung, Branding und Verpackung nach freigegebenem Briefing.`,
+      title: `${audienceSubject} Hersteller | Großhandel & Private Label | Irha Apparels`,
+      h1: `${audienceSubject} Hersteller für Großhandel & Private Label`,
+      description: `${audienceSubject} für Großhändler, Importeure und Private-Label-Käufer. Produktdetails und Konditionen werden nach Prüfung der Anforderungen bestätigt.`,
+      intro: `${audienceSubject} Programme für B2B-Käufer mit kundenspezifischer Entwicklung, Branding und Verpackung nach freigegebenem Briefing.`,
     };
   }
   if (locale === "fr") {
+    if (collectionName) {
+      const buyerGroup = audienceName ?? "acheteurs B2B";
+      return {
+        title: `${collectionName} pour ${buyerGroup} | Fabricant ${topName} | Irha Apparels`,
+        h1: `Fabricant ${collectionName} pour ${buyerGroup} — ${topName}`,
+        description: `Fabrication ${collectionName} pour ${buyerGroup} dans ${topName}. Les programmes grossistes, importateurs et marques privées sont confirmés après examen des besoins.`,
+        intro: `Programmes ${collectionName} pour ${buyerGroup} dans ${topName}, avec développement, marquage et emballage selon le cahier des charges approuvé.`,
+      };
+    }
     return {
-      title: `Fabricant ${subject} | Grossiste & Marque Privée | Irha Apparels`,
-      h1: `Fabricant ${subject} pour Grossistes & Marques Privées`,
-      description: `${subject} pour grossistes, importateurs et marques privées. Les détails produit et conditions sont confirmés après examen des besoins.`,
-      intro: `Programmes ${subject} pour acheteurs B2B avec développement, marquage et emballage selon le cahier des charges approuvé.`,
+      title: `Fabricant ${audienceSubject} | Grossiste & Marque Privée | Irha Apparels`,
+      h1: `Fabricant ${audienceSubject} pour Grossistes & Marques Privées`,
+      description: `${audienceSubject} pour grossistes, importateurs et marques privées. Les détails produit et conditions sont confirmés après examen des besoins.`,
+      intro: `Programmes ${audienceSubject} pour acheteurs B2B avec développement, marquage et emballage selon le cahier des charges approuvé.`,
     };
   }
   if (locale === "es") {
+    if (collectionName) {
+      const buyerGroup = audienceName ?? "compradores B2B";
+      return {
+        title: `${collectionName} para ${buyerGroup} | Fabricante ${topName} | Irha Apparels`,
+        h1: `Fabricante de ${collectionName} para ${buyerGroup} — ${topName}`,
+        description: `Fabricación de ${collectionName} para ${buyerGroup} dentro de ${topName}. Los programas mayoristas, importadores y de marca privada se confirman tras revisar los requisitos.`,
+        intro: `Programas de ${collectionName} para ${buyerGroup} dentro de ${topName}, con desarrollo, branding y embalaje según el briefing aprobado.`,
+      };
+    }
     return {
-      title: `Fabricante de ${subject} | Mayorista & Marca Privada | Irha Apparels`,
-      h1: `Fabricante de ${subject} para Mayoristas & Marcas Privadas`,
-      description: `${subject} para mayoristas, importadores y compradores de marca privada. Los detalles y condiciones se confirman tras revisar los requisitos.`,
-      intro: `Programas de ${subject} para compradores B2B con desarrollo, branding y embalaje según el briefing aprobado.`,
+      title: `Fabricante de ${audienceSubject} | Mayorista & Marca Privada | Irha Apparels`,
+      h1: `Fabricante de ${audienceSubject} para Mayoristas & Marcas Privadas`,
+      description: `${audienceSubject} para mayoristas, importadores y compradores de marca privada. Los detalles y condiciones se confirman tras revisar los requisitos.`,
+      intro: `Programas de ${audienceSubject} para compradores B2B con desarrollo, branding y embalaje según el briefing aprobado.`,
+    };
+  }
+  if (collectionName) {
+    const buyerGroup = audienceName ?? "B2B Buyers";
+    return {
+      title: `${collectionName} for ${buyerGroup} | ${topName} Manufacturer | Irha Apparels`,
+      h1: `${buyerGroup} ${collectionName} Manufacturer for ${topName}`,
+      description: `Custom ${collectionName} manufacturing for ${buyerGroup} within ${topName}, supporting wholesalers, importers and private-label programs after requirement review.`,
+      intro: `Develop ${collectionName} for ${buyerGroup} within ${topName}, with custom materials, branding and packaging confirmed against an approved buyer brief.`,
     };
   }
   return {
-    title: `${subject} Manufacturer | Wholesale & Private Label | Irha Apparels`,
-    h1: `${subject} Manufacturer for Wholesale & Private Label`,
-    description: `${subject} programs for wholesalers, importers and private-label buyers. Product details and commercial terms are confirmed after requirement review.`,
-    intro: `${subject} programs for B2B buyers with custom development, branding and packaging against an approved buyer brief.`,
+    title: `${audienceSubject} Manufacturer | Wholesale & Private Label | Irha Apparels`,
+    h1: `${audienceSubject} Manufacturer for Wholesale & Private Label`,
+    description: `${audienceSubject} programs for wholesalers, importers and private-label buyers. Product details and commercial terms are confirmed after requirement review.`,
+    intro: `${audienceSubject} programs for B2B buyers with custom development, branding and packaging against an approved buyer brief.`,
   };
 }
