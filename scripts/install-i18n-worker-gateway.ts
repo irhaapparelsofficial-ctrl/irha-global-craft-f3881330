@@ -13,6 +13,34 @@ function replaceOnce(source: string, search: string, replacement: string, label:
   return source.replace(search, replacement);
 }
 
+function patchStaticBuyerResponse(worker: string): string {
+  const functionStart = worker.indexOf("async function staticBuyerResponse(");
+  if (functionStart < 0) throw new Error("Static buyer response function is missing");
+  const functionEnd = worker.indexOf("\n}\n\n", functionStart);
+  if (functionEnd < 0) throw new Error("Static buyer response function boundary is missing");
+
+  const endOffset = functionEnd + 3;
+  let block = worker.slice(functionStart, endOffset);
+  if (!block.includes("const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;")) {
+    block = replaceOnce(
+      block,
+      "  const headers = new Headers(assetResponse.headers);",
+      "  const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;\n  const headers = new Headers(assetResponse.headers);",
+      "static buyer response headers",
+    );
+  }
+
+  const contentLocationBefore = '  headers.set("Content-Location", `${APEX_ORIGIN}${pathname}`);';
+  const contentLocationAfter = '  headers.set("Content-Location", `${APEX_ORIGIN}${contentLocationPath}`);';
+  if (block.includes(contentLocationBefore)) {
+    block = replaceOnce(block, contentLocationBefore, contentLocationAfter, "static buyer Content-Location");
+  } else if (!block.includes(contentLocationAfter)) {
+    throw new Error("Static buyer Content-Location patch is missing");
+  }
+
+  return `${worker.slice(0, functionStart)}${block}${worker.slice(endOffset)}`;
+}
+
 export function installI18nWorkerGateway(distDir: string): void {
   const workerPath = path.join(distDir, "_worker.js");
   const gatewayHtmlPath = path.join(distDir, "de", "index.html");
@@ -94,13 +122,7 @@ export function installI18nWorkerGateway(distDir: string): void {
     throw new Error("Published route trailing-slash guard is missing");
   }
 
-  const staticBuyerHeadersBefore = `  const headers = new Headers(assetResponse.headers);\n  headers.delete("Location");\n  headers.set("Content-Type", "text/html; charset=utf-8");\n  headers.set("Content-Location", \`\${APEX_ORIGIN}\${pathname}\`);`;
-  const staticBuyerHeadersAfter = `  const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;\n  const headers = new Headers(assetResponse.headers);\n  headers.delete("Location");\n  headers.set("Content-Type", "text/html; charset=utf-8");\n  headers.set("Content-Location", \`\${APEX_ORIGIN}\${contentLocationPath}\`);`;
-  if (worker.includes(staticBuyerHeadersBefore)) {
-    worker = replaceOnce(worker, staticBuyerHeadersBefore, staticBuyerHeadersAfter, "static buyer HTML response headers");
-  } else if (!worker.includes(staticBuyerHeadersAfter)) {
-    throw new Error("Static buyer HTML response header block is missing");
-  }
+  worker = patchStaticBuyerResponse(worker);
 
   for (const required of [
     assetEntry,
