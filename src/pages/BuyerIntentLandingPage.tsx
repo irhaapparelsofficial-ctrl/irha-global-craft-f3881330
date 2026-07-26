@@ -7,7 +7,7 @@ import { ORGANIZATION_ID, SITE_URL, breadcrumbSchema } from "@/lib/seoSchema";
 function readableLinkLabel(path: string, german: boolean) {
   const landingPage = SEO_BUYER_INTENT_LANDING_PAGES.find((page) => page.path === path);
   const label = landingPage?.h1 ?? path.split("/").filter(Boolean).at(-1)?.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ") ?? "Products";
-  if (german && !path.startsWith("/de/")) return `Englisch: ${label}`;
+  if (german && !path.startsWith("/de/")) return `Englische Seite: ${label}`;
   return label;
 }
 
@@ -28,21 +28,21 @@ export default function BuyerIntentLandingPage() {
 
   const german = page.locale.toLowerCase().startsWith("de");
   const absolutePageUrl = `${SITE_URL}${page.path}`;
-  const xDefaultPath = page.alternates?.find((alternate) => alternate.locale === "en")?.href ?? (german ? "/" : page.path);
+  const xDefaultPath = page.alternates?.find((alternate) => alternate.locale === "en")?.href ?? (german ? "/products/bavarian-trachten-wear" : page.path);
   const copy = german ? {
-    home: "Startseite",
-    products: "Produkte (Englisch)",
+    home: "Deutsch",
+    products: "B2B-Beschaffungsseiten",
     audience: "Importeure, Großhändler, Fachhändler und Private-Label-Marken",
-    madeIn: "Gefertigt in Sialkot, Pakistan",
-    approval: "Muster- und Käuferfreigabe vor Serienproduktion",
+    madeIn: "Fertigung in Sialkot, Pakistan",
+    approval: "Muster- und Käuferfreigabe vor der Serienproduktion",
     direct: "Direkte internationale B2B-Kommunikation",
-    faqEyebrow: "Einkäufer-FAQ",
-    faqTitle: "Fragen vor einer Angebotsanfrage",
+    faqEyebrow: "FAQ für Einkäufer",
+    faqTitle: "Wichtige Fragen vor einer Angebotsanfrage",
     ctaTitle: "Senden Sie eine spezifikationsbasierte B2B-Anfrage",
-    ctaBody: "Nennen Sie Produktart, Menge, Materialien, Branding, Verpackung, Zielqualität und gewünschtes Lieferfenster. Die Machbarkeit wird vor Preis- oder Terminzusage geprüft.",
-    explore: "Verwandte Produkte (Englisch)",
-    related: "Verwandte Beschaffungsseiten",
-    relatedAria: "Verwandte Käufer- und Produktseiten",
+    ctaBody: "Nennen Sie Produktart, Mengenbereich, Materialien, Größen, Branding, Verpackung, Zielqualität, Lieferort und gewünschtes Lieferfenster. Machbarkeit, Mindestmenge, Preis und Zeitplan werden anschließend geprüft.",
+    explore: "Produktkatalog auf Englisch",
+    related: "Weitere Beschaffungsseiten",
+    relatedAria: "Weitere deutsche Beschaffungsseiten und klar gekennzeichnete englische Fachseiten",
   } : {
     home: "Home",
     products: "Products",
@@ -79,7 +79,7 @@ export default function BuyerIntentLandingPage() {
     },
     breadcrumbSchema([
       { name: copy.home, path: german ? "/de/" : "/" },
-      { name: copy.products, path: "/products" },
+      { name: copy.products, path: german ? "/de/" : "/products" },
       { name: page.h1, path: page.path },
     ]),
   ];

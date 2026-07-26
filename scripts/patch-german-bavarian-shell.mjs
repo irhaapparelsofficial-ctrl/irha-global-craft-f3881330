@@ -4,9 +4,9 @@ import { resolve } from "node:path";
 const outputPath = resolve("dist/de/bavarian-wear/index.html");
 const canonical = "https://irhaapparels.com/de/bavarian-wear";
 const english = "https://irhaapparels.com/products/bavarian-trachten-wear";
-const title = "Trachten & Lederhosen Hersteller für Großhandel | Irha Apparels";
-const description = "B2B Hersteller für Lederhosen, Dirndl und Trachtenbekleidung in Sialkot. OEM, Private Label, Musterentwicklung und Export für Deutschland, Österreich und die Schweiz.";
-const heading = "Trachtenfertigung für Marken und Großhändler";
+const title = "Trachtenhersteller für Großhandel & Private Label | Irha Apparels";
+const description = "B2B-Trachtenfertigung für Lederhosen, Dirndl und koordinierte Kollektionen aus Sialkot mit Musterfreigabe, Eigenmarken-Ausstattung und direkter Herstellerkommunikation.";
+const heading = "Trachtenfertigung für Großhandel und Eigenmarken";
 
 let html;
 try {
@@ -42,4 +42,4 @@ if (!html.includes(`<title>${title}</title>`) || !html.includes(`href="${canonic
   throw new Error("German Bavarian crawler shell metadata patch failed");
 }
 await writeFile(outputPath, html, "utf8");
-console.log("Localized German Bavarian crawler shell");
+console.log("Localized German Bavarian crawler shell metadata");

@@ -6,57 +6,57 @@ export type GermanGatewayLink = {
 
 export const GERMAN_GATEWAY_CONTENT = {
   path: "/de/",
-  title: "Irha Apparels auf Deutsch | B2B Bekleidungshersteller",
+  title: "Irha Apparels auf Deutsch | B2B-Bekleidungshersteller",
   description:
-    "Geprüfte deutsche B2B-Informationen zu Bekleidungsfertigung, Trachten, Lederbekleidung und Sportbekleidung von Irha Apparels in Sialkot, Pakistan.",
+    "Deutschsprachige B2B-Informationen zu Bekleidungsfertigung, Trachten, Lederhosen, Dirndl, Sportbekleidung und Lederbekleidung aus Sialkot, Pakistan.",
   h1: "B2B-Bekleidungsfertigung für deutschsprachige Einkäufer",
-  eyebrow: "Deutsch · geprüfte Veröffentlichungen",
+  eyebrow: "Deutsch · geprüfte B2B-Beschaffungsseiten",
   intro:
-    "Irha Apparels fertigt kundenspezifische Bekleidung in Sialkot, Pakistan, für Großhändler, Importeure, Marken, Vereine und gewerbliche Einkäufer. Diese Seite führt ausschließlich zu geprüften und veröffentlichten deutschen Inhalten.",
+    "Irha Apparels fertigt kundenspezifische Bekleidung in Sialkot, Pakistan, für Importeure, Großhändler, Fachhändler, Vereine und Private-Label-Marken. Die veröffentlichten deutschen Seiten erklären Produktschwerpunkte, Freigaben und die Angaben, die für eine belastbare Angebotsprüfung benötigt werden.",
   scopeNote:
-    "Der vollständige Produktkatalog ist weiterhin auf Englisch verfügbar. Nicht übersetzte Produkt- und Kategorieseiten werden nicht als vollständige deutsche Inhalte ausgegeben.",
+    "Der vollständige Produktkatalog bleibt auf Englisch verfügbar. Nicht übersetzte Produkt- und Kategorieseiten werden klar als englische Inhalte gekennzeichnet und nicht als vollständige deutsche Übersetzung dargestellt.",
   primaryCta: "B2B-Anfrage senden",
-  secondaryCta: "Vollständigen Katalog auf Englisch öffnen",
-  factoryCta: "Live-Fabrikbesichtigung buchen",
-  sectionTitle: "Veröffentlichte deutsche Seiten",
-  trustTitle: "Direkte Fertigung und klare Freigaben",
+  secondaryCta: "Englischen Produktkatalog öffnen",
+  factoryCta: "Fabrik per Video besichtigen",
+  sectionTitle: "Deutsche Seiten für Ihre Beschaffung",
+  trustTitle: "Direkte Fertigung, klare Spezifikationen und dokumentierte Freigaben",
   trustBody:
-    "Material, Konstruktion, Größen, Branding, Verpackung, Mindestmenge, Preis und Lieferverantwortung werden vor einer Produktionszusage geprüft. Irha Apparels behauptet keinen deutschen Produktionsstandort.",
+    "Material, Konstruktion, Größen, Branding, Verpackung, Mindestmenge, Preis, Produktionszeit und Lieferverantwortung werden erst nach Prüfung der konkreten Anfrage bestätigt. Irha Apparels behauptet keinen deutschen Standort und veröffentlicht keine pauschalen Festpreise oder Mindestmengen.",
   links: [
     {
       href: "/de/bekleidungshersteller-deutschland",
       title: "Bekleidungshersteller für Deutschland",
-      description: "OEM-, ODM- und Private-Label-Fertigung für deutsche B2B-Einkäufer.",
+      description: "OEM- und Private-Label-Fertigung für deutsche Importeure, Großhändler, Fachhändler und Marken.",
     },
     {
       href: "/de/bavarian-wear",
-      title: "Trachten- und Lederhosenfertigung",
-      description: "B2B-Programme für Lederhosen, Dirndl, Trachtenbekleidung und Accessoires.",
+      title: "Trachtenfertigung für den DACH-Markt",
+      description: "Übersicht zu Lederhosen, Dirndl, Trachtenbekleidung, Zielgruppen und ergänzenden Programmen.",
     },
     {
       href: "/de/lederhosen-hersteller",
-      title: "Lederhosen Hersteller",
-      description: "Kundenspezifische Lederhosen mit Leder-, Stickerei-, Größen- und Musterfreigabe.",
+      title: "Lederhosen-Hersteller",
+      description: "Kundenspezifische Lederhosen mit abgestimmtem Leder, Stickerei, Größenlauf und Musterfreigabe.",
     },
     {
       href: "/de/dirndl-grosshandel",
-      title: "Dirndl Hersteller und Großhandel",
-      description: "Abgestimmte Dirndl-Programme mit Kleid, Bluse, Schürze und Private Label.",
+      title: "Dirndl-Hersteller für Großhandel",
+      description: "Abgestimmte Dirndl-Programme mit Kleid, Bluse, Schürze, Kennzeichnung und Handelsverpackung.",
     },
     {
       href: "/de/trachten-private-label",
-      title: "Trachten Private Label",
-      description: "Koordinierte Trachtenkollektionen mit Etiketten, Hangtags und Verpackung.",
+      title: "Trachten für Private Label",
+      description: "Koordinierte Trachtenkollektionen mit Eigenmarken-Etiketten, Hangtags und Verpackung.",
     },
     {
       href: "/de/sportbekleidung-hersteller",
-      title: "Sportbekleidung Hersteller",
-      description: "Teamwear, Trainingsbekleidung und Private-Label-Sportprogramme für B2B-Käufer.",
+      title: "Sportbekleidungshersteller",
+      description: "Teamwear, Trainingsbekleidung und Private-Label-Sportprogramme für Vereine, Händler und Marken.",
     },
     {
       href: "/de/lederbekleidung-hersteller",
-      title: "Lederbekleidung Hersteller",
-      description: "Lederjacken, Westen, Hosen und ausgewählte Accessoires nach Kundenspezifikation.",
+      title: "Lederbekleidungshersteller",
+      description: "Lederjacken, Westen, Hosen und ausgewählte Accessoires nach geprüfter Kundenspezifikation.",
     },
   ] satisfies readonly GermanGatewayLink[],
 } as const;
