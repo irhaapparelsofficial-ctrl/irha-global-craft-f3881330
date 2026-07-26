@@ -71,26 +71,71 @@ describe("authenticated admin GSC proof console", () => {
     expect(center).not.toContain("sessionStorage");
   });
 
-  it("copies allowlisted aggregate evidence without raw rows, query keys or credential values", () => {
+  it("copies a strict field-by-field allowlist without internal payloads, rows, query keys or credentials", () => {
     const safeReport = functionBody(center, "buildSafeProofReport", "GoogleSearchCenter");
-    expect(safeReport).toContain("executionTimestamp");
-    expect(safeReport).toContain("productionBuildSha");
-    expect(safeReport).toContain("oauthClientIdConfigured");
-    expect(safeReport).toContain("oauthClientSecretConfigured");
-    expect(safeReport).toContain("oauthRefreshTokenConfigured");
-    expect(safeReport).toContain("tokenExchangeVerified");
-    expect(safeReport).toContain("propertyAccessVerified");
-    expect(safeReport).toContain("permissionLevel");
-    expect(safeReport).toContain("rowCount");
-    expect(safeReport).toContain("weightedCtr");
-    expect(safeReport).toContain("weightedAveragePosition");
-    expect(safeReport).toContain("homepageInspection");
-    expect(safeReport).not.toMatch(/\brows\b/);
-    expect(safeReport).not.toContain("keys");
-    expect(safeReport).not.toContain("GSC_OAUTH_");
-    expect(safeReport).not.toContain("access_token");
-    expect(safeReport).not.toContain("refresh_token");
+
+    for (const mapping of [
+      "executionTimestamp: proof.executionTimestamp",
+      "productionBuildSha: proof.productionBuildSha",
+      "functionSuccess: proof.health.functionSuccess",
+      "ok: proof.health.ok",
+      "ready: proof.health.ready",
+      "state: proof.health.state",
+      "authMode: proof.health.authMode",
+      "oauthClientIdConfigured: proof.health.oauthClientIdConfigured",
+      "oauthClientSecretConfigured: proof.health.oauthClientSecretConfigured",
+      "oauthRefreshTokenConfigured: proof.health.oauthRefreshTokenConfigured",
+      "siteUrlConfigured: proof.health.siteUrlConfigured",
+      "tokenExchangeVerified: proof.health.tokenExchangeVerified",
+      "propertyAccessVerified: proof.health.propertyAccessVerified",
+      "permissionLevel: proof.health.permissionLevel",
+      "effectiveProperty: proof.health.effectiveProperty",
+    ]) expect(safeReport).toContain(mapping);
+
+    for (const section of ["queryAnalytics", "pageAnalytics"]) {
+      for (const field of [
+        "dimension",
+        "days",
+        "property",
+        "rowCount",
+        "totalClicks",
+        "totalImpressions",
+        "weightedCtr",
+        "weightedAveragePosition",
+        "pass",
+      ]) {
+        expect(safeReport).toContain(`${field}: proof.${section}.${field}`);
+      }
+    }
+
+    for (const field of [
+      "url",
+      "property",
+      "verdict",
+      "coverageState",
+      "robotsTxtState",
+      "indexingState",
+      "pageFetchState",
+      "lastCrawlTime",
+      "userCanonical",
+      "googleCanonical",
+      "sitemapAssociation",
+      "pass",
+    ]) {
+      expect(safeReport).toContain(`${field}: proof.homepageInspection.${field}`);
+    }
+
+    expect(safeReport).not.toContain("...");
+    expect(safeReport).not.toMatch(/proof\.(?:health|queryAnalytics|pageAnalytics|homepageInspection)\.(?:rows|keys|error|inspectionLink)\b/);
+    expect(safeReport).not.toMatch(/\berror\s*:/);
+    expect(safeReport).not.toContain("inspectionLink");
+    expect(safeReport).not.toContain("accessToken");
+    expect(safeReport).not.toContain("refreshToken");
+    expect(safeReport).not.toContain("clientId");
+    expect(safeReport).not.toContain("clientSecret");
     expect(safeReport).not.toContain("Authorization");
+    expect(safeReport).not.toContain("session");
+    expect(safeReport).not.toContain("raw");
     expect(center).toContain("JSON.stringify(buildSafeProofReport(proof), null, 2)");
   });
 });

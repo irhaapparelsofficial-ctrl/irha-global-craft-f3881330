@@ -5,6 +5,14 @@ import { describe, expect, it } from "vitest";
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), "utf8");
 
+function sourceSection(source: string, startMarker: string, endMarker: string) {
+  const start = source.indexOf(startMarker);
+  const end = source.indexOf(endMarker, start + startMarker.length);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  return source.slice(start, end);
+}
+
 describe("admin connected-health contracts", () => {
   it("keeps Cloudflare deployment isolated to the preview branch", () => {
     const workflow = read(".github/workflows/cloudflare-pages-preview.yml");
@@ -24,15 +32,45 @@ describe("admin connected-health contracts", () => {
     expect(workflow).toContain("CLOUDFLARE_ACCOUNT_ID must be the 32-character Account ID only");
   });
 
-  it("keeps Google Search analytics private and health-aware", () => {
+  it("keeps Google Search analytics private and aligned to direct OAuth health", () => {
     const source = read("supabase/functions/gsc-analytics/index.ts");
     const config = read("supabase/config.toml");
+    const health = sourceSection(source, "async function healthResponse", "Deno.serve");
+
     expect(config).toContain("[functions.gsc-analytics]\nverify_jwt = true");
+    expect(source).toContain("auth.getUser()");
     expect(source).toContain('.eq("role", "admin")');
     expect(source).toContain('action === "health"');
-    expect(source).toContain("gsc_connection_not_configured");
+    expect(source).toContain('const AUTH_MODE = "google_oauth_refresh_token"');
+    expect(source).toContain('failureCode = "gsc_oauth_not_configured"');
+    expect(source).toContain('code: "gsc_oauth_not_configured"');
     expect(source).toContain("Days must be 28 or 90");
     expect(source).toContain(".irha-apparels.pages.dev");
+
+    expect(health).toContain("ok: true");
+    expect(health).toContain("ready,");
+    expect(health).toContain('state: ready ? "ready" : "blocked"');
+    expect(health).toContain("auth_mode: AUTH_MODE");
+    expect(health).toContain("configuration: state.configuration");
+    expect(health).toContain("failure_code: ready ? null : failureCode");
+    expect(health).toContain("}, 200, headers)");
+
+    const actionBranch = source.indexOf('if (action === "health")');
+    const queryState = source.indexOf("const state = configurationState();", actionBranch);
+    const oauthGuard = source.indexOf("if (!state.oauthConfigured)", queryState);
+    const endpoint = source.indexOf("const endpoint =", queryState);
+    expect(queryState).toBeGreaterThan(actionBranch);
+    expect(oauthGuard).toBeGreaterThan(queryState);
+    expect(endpoint).toBeGreaterThan(oauthGuard);
+    expect(source).not.toContain("connector_gateway_key");
+    expect(source).not.toContain("search_console_connection_key");
+    expect(source).not.toContain("X-Connection-Api-Key");
+    expect(source).not.toContain("GSC_OAUTH_CLIENT_ID");
+    expect(source).not.toContain("GSC_OAUTH_CLIENT_SECRET");
+    expect(source).not.toContain("GSC_OAUTH_REFRESH_TOKEN");
+    expect(source).not.toContain("clientSecret");
+    expect(source).not.toContain("refreshToken");
+    expect(source).not.toContain("accessToken");
   });
 
   it("records applied runtime evidence without claiming Google data success", () => {
