@@ -94,20 +94,12 @@ export function installI18nWorkerGateway(distDir: string): void {
     throw new Error("Published route trailing-slash guard is missing");
   }
 
-  if (!worker.includes("const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;")) {
-    worker = replaceOnce(
-      worker,
-      "  const headers = new Headers(assetResponse.headers);",
-      "  const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;\n  const headers = new Headers(assetResponse.headers);",
-      "static buyer response headers",
-    );
-  }
-  const contentLocationBefore = '  headers.set("Content-Location", `${APEX_ORIGIN}${pathname}`);';
-  const contentLocationAfter = '  headers.set("Content-Location", `${APEX_ORIGIN}${contentLocationPath}`);';
-  if (worker.includes(contentLocationBefore)) {
-    worker = replaceOnce(worker, contentLocationBefore, contentLocationAfter, "static buyer Content-Location");
-  } else if (!worker.includes(contentLocationAfter)) {
-    throw new Error("Static buyer Content-Location patch is missing");
+  const staticBuyerHeadersBefore = `  const headers = new Headers(assetResponse.headers);\n  headers.delete("Location");\n  headers.set("Content-Type", "text/html; charset=utf-8");\n  headers.set("Content-Location", \`\${APEX_ORIGIN}\${pathname}\`);`;
+  const staticBuyerHeadersAfter = `  const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;\n  const headers = new Headers(assetResponse.headers);\n  headers.delete("Location");\n  headers.set("Content-Type", "text/html; charset=utf-8");\n  headers.set("Content-Location", \`\${APEX_ORIGIN}\${contentLocationPath}\`);`;
+  if (worker.includes(staticBuyerHeadersBefore)) {
+    worker = replaceOnce(worker, staticBuyerHeadersBefore, staticBuyerHeadersAfter, "static buyer HTML response headers");
+  } else if (!worker.includes(staticBuyerHeadersAfter)) {
+    throw new Error("Static buyer HTML response header block is missing");
   }
 
   for (const required of [
