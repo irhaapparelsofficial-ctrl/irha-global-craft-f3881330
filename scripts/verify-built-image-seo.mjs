@@ -1,6 +1,10 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { createRequire } from "node:module";
 import { JSDOM } from "jsdom";
+
+const require = createRequire(import.meta.url);
+const sharp = require("sharp");
 
 const DIST_DIR = resolve(process.env.IRHA_DIST_DIR || "dist");
 const SITE_URL = "https://irhaapparels.com";
@@ -264,6 +268,59 @@ async function verifyEndpoints(urls) {
   await Promise.all(workers);
 }
 
+
+async function verifyGalleryEndpoint(url) {
+  let lastError;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const response = await fetch(url, {
+        redirect: "follow",
+        signal: controller.signal,
+        headers: { "User-Agent": "Irha-Gallery-Integrity-Release-Verification/1.0" },
+      });
+      const contentType = response.headers.get("content-type") || "";
+      if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
+      if (!contentType.toLowerCase().startsWith("image/webp")) {
+        throw new Error(`Content-Type ${contentType || "<missing>"}`);
+      }
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const metadata = await sharp(buffer, { failOn: "error" }).metadata();
+      if (metadata.format !== "webp") throw new Error(`Decoded format ${metadata.format || "<missing>"}`);
+      if (!metadata.width || !metadata.height) throw new Error("Decoded dimensions are missing");
+      return;
+    } catch (error) {
+      lastError = error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  throw new Error(`Gallery image endpoint failed: ${url} (${lastError instanceof Error ? lastError.message : String(lastError)})`);
+}
+
+async function verifyGalleryEndpoints(products) {
+  const galleryUrls = products.flatMap((product) => {
+    if (!Array.isArray(product.gallery) || product.gallery.length === 0) {
+      throw new Error(`${product.reference_code} gallery is missing`);
+    }
+    return product.gallery.map((url) => requireStableAbsoluteImage(url, `${product.reference_code} gallery image`));
+  });
+  if (process.env.IRHA_SKIP_IMAGE_HTTP === "1") {
+    console.log(`Skipped gallery decode verification for ${galleryUrls.length} URLs by explicit local-test flag`);
+    return galleryUrls.length;
+  }
+  const queue = [...galleryUrls];
+  const workers = Array.from({ length: Math.min(12, queue.length) }, async () => {
+    while (queue.length) {
+      const url = queue.shift();
+      if (url) await verifyGalleryEndpoint(url);
+    }
+  });
+  await Promise.all(workers);
+  return galleryUrls.length;
+}
+
 async function verifyRedirects() {
   const lines = (await readFile(join(DIST_DIR, "_redirects"), "utf8"))
     .split(/\r?\n/)
@@ -310,9 +367,10 @@ async function main() {
 
   await verifyRedirects();
   await verifyEndpoints([...new Set([...productByPath.values()].map((product) => product.image_url))]);
+  const galleryCount = await verifyGalleryEndpoints(manifest.products);
 
   console.log(
-    `Image SEO contract passed: products=${productByPath.size}, taxonomy=${taxonomyByPath.size}, sitemap=${pageCount}, html=${htmlCount}, images=${imageByPath.size}, broken=0`,
+    `Image SEO contract passed: products=${productByPath.size}, taxonomy=${taxonomyByPath.size}, sitemap=${pageCount}, html=${htmlCount}, images=${imageByPath.size}, gallery=${galleryCount}, broken=0`,
   );
 }
 
