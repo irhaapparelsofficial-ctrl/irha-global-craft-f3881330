@@ -84,10 +84,14 @@ export function installI18nWorkerGateway(distDir: string): void {
 
   const staticRedirectBefore = "    if (isStaticBuyerPath(pathname) && url.pathname !== pathname) {";
   const staticRedirectAfter = "    if (isStaticBuyerPath(pathname) && url.pathname !== pathname && !LOCALE_GATEWAY_PATHS.has(pathname)) {";
+  const publishedRedirectBefore = `      isPublishedHtmlRoute(pathname) &&\n      !looksLikeFile(pathname)`;
+  const publishedRedirectAfter = `      !LOCALE_GATEWAY_PATHS.has(pathname) &&\n      isPublishedHtmlRoute(pathname) &&\n      !looksLikeFile(pathname)`;
   if (worker.includes(staticRedirectBefore)) {
     worker = replaceOnce(worker, staticRedirectBefore, staticRedirectAfter, "static buyer trailing-slash guard");
-  } else if (!worker.includes(staticRedirectAfter)) {
-    throw new Error("Static buyer trailing-slash guard is missing");
+  } else if (worker.includes(publishedRedirectBefore)) {
+    worker = replaceOnce(worker, publishedRedirectBefore, publishedRedirectAfter, "published route trailing-slash guard");
+  } else if (!worker.includes(staticRedirectAfter) && !worker.includes(publishedRedirectAfter)) {
+    throw new Error("Published route trailing-slash guard is missing");
   }
 
   if (!worker.includes("const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;")) {
