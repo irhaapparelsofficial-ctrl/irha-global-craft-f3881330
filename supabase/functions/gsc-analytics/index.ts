@@ -1,15 +1,19 @@
 // Google Search Console analytics for the private owner admin.
-// Read-only: validates the caller, checks admin role and returns exact connector results.
+// Read-only: validates the caller, checks admin role and returns sanitized evidence.
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-function gscManagedConnectorKey(): string | undefined {
-  return Deno.env.get("LOVABLE_API_KEY") || undefined;
-}
+import {
+  GSC_SITES_LIST_ENDPOINT,
+  getGscOAuthConfigurationPresence,
+  googleSearchConsoleFetch,
+  type GscOAuthFailureCode,
+} from "../_shared/googleSearchConsoleOAuth.ts";
 
 const GSC_SITE_PROPERTY = "sc-domain:irhaapparels.com";
-const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
+const SEARCH_ANALYTICS_BASE = "https://www.googleapis.com/webmasters/v3/sites";
 const ALLOWED_DIMENSIONS = new Set(["query", "page", "country", "device"]);
 const ALLOWED_WINDOWS = new Set([28, 90]);
+const MAX_ROW_COUNT = 100;
+const AUTH_MODE = "google_oauth_refresh_token";
 
 function isAllowedOrigin(origin: string) {
   try {
@@ -70,25 +74,97 @@ async function requireAdmin(req: Request, headers: Record<string, string>) {
 function effectiveSearchConsoleProperty() {
   const configured = Deno.env.get("GSC_SITE_URL")?.trim();
   if (configured && configured !== GSC_SITE_PROPERTY) {
-    return { property: null, error: "Invalid Google Search Console property configuration" };
+    return { property: null, error: "gsc_property_configuration_invalid" as const };
   }
   return { property: GSC_SITE_PROPERTY, error: null };
 }
 
-function connectionState() {
-  const connectorGatewayKey = Boolean(gscManagedConnectorKey());
-  const searchConsoleConnectionKey = Boolean(Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY"));
+function configurationState() {
+  const oauth = getGscOAuthConfigurationPresence();
   const site = effectiveSearchConsoleProperty();
   return {
-    ready: connectorGatewayKey && searchConsoleConnectionKey && Boolean(site.property) && !site.error,
     configuration: {
-      connector_gateway_key: connectorGatewayKey,
-      search_console_connection_key: searchConsoleConnectionKey,
+      ...oauth,
       site_url: Boolean(site.property) && !site.error,
     },
-    site_url: site.property,
-    configuration_error: site.error,
+    property: site.property,
+    configurationError: site.error,
+    oauthConfigured: oauth.oauth_client_id && oauth.oauth_client_secret && oauth.oauth_refresh_token,
   };
+}
+
+function safeFailureMessage(code: GscOAuthFailureCode | "gsc_property_configuration_invalid") {
+  switch (code) {
+    case "gsc_oauth_not_configured":
+      return "Google Search Console OAuth is not configured";
+    case "gsc_oauth_invalid_client":
+      return "Google OAuth client authentication failed";
+    case "gsc_oauth_reauthorization_required":
+      return "Google OAuth reauthorization is required";
+    case "gsc_oauth_rate_limited":
+      return "Google OAuth is temporarily rate limited";
+    case "gsc_property_configuration_invalid":
+      return "Invalid Google Search Console property configuration";
+    default:
+      return "Google Search Console request failed";
+  }
+}
+
+type SitesListPayload = {
+  siteEntry?: Array<{ siteUrl?: unknown; permissionLevel?: unknown }>;
+};
+
+type SearchAnalyticsPayload = {
+  rows?: unknown[];
+};
+
+async function healthResponse(headers: Record<string, string>) {
+  const state = configurationState();
+  const google = {
+    token_exchange: false,
+    property_access: false,
+    permission_level: null as string | null,
+  };
+
+  let failureCode: GscOAuthFailureCode | "gsc_property_configuration_invalid" | null = null;
+  if (state.configurationError || !state.property) {
+    failureCode = "gsc_property_configuration_invalid";
+  } else if (!state.oauthConfigured) {
+    failureCode = "gsc_oauth_not_configured";
+  } else {
+    const result = await googleSearchConsoleFetch<SitesListPayload>(GSC_SITES_LIST_ENDPOINT, { method: "GET" });
+    google.token_exchange = result.token_exchange;
+    if (!result.ok) {
+      failureCode = result.code;
+    } else {
+      const exactSite = Array.isArray(result.data?.siteEntry)
+        ? result.data.siteEntry.find((entry) => entry?.siteUrl === GSC_SITE_PROPERTY)
+        : undefined;
+      google.property_access = Boolean(exactSite);
+      google.permission_level = typeof exactSite?.permissionLevel === "string"
+        ? exactSite.permissionLevel.slice(0, 64)
+        : null;
+      if (!exactSite) failureCode = "gsc_google_request_failed";
+    }
+  }
+
+  const ready = !failureCode
+    && state.oauthConfigured
+    && state.configuration.site_url
+    && google.token_exchange
+    && google.property_access;
+
+  return json({
+    ok: true,
+    ready,
+    state: ready ? "ready" : "blocked",
+    auth_mode: AUTH_MODE,
+    configuration: state.configuration,
+    google,
+    effective_property: state.property,
+    site_url: state.property,
+    failure_code: ready ? null : failureCode,
+  }, 200, headers);
 }
 
 Deno.serve(async (req) => {
@@ -104,31 +180,20 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = typeof body?.action === "string" ? body.action : "query";
-    const state = connectionState();
+    if (action === "health") return await healthResponse(headers);
 
-    if (state.configuration_error) {
+    const state = configurationState();
+    if (state.configurationError || !state.property) {
       return json({
-        error: state.configuration_error,
+        error: safeFailureMessage("gsc_property_configuration_invalid"),
         code: "gsc_property_configuration_invalid",
         configuration: state.configuration,
       }, 503, headers);
     }
-
-    if (action === "health") {
+    if (!state.oauthConfigured) {
       return json({
-        ok: true,
-        ready: state.ready,
-        state: state.ready ? "ready" : "blocked",
-        configuration: state.configuration,
-        site_url: state.site_url,
-        notes: ["Secret values are never returned.", "Health performs no Search Console query."],
-      }, 200, headers);
-    }
-
-    if (!state.ready || !state.site_url) {
-      return json({
-        error: "Google Search Console connection is not configured",
-        code: "gsc_connection_not_configured",
+        error: safeFailureMessage("gsc_oauth_not_configured"),
+        code: "gsc_oauth_not_configured",
         configuration: state.configuration,
       }, 503, headers);
     }
@@ -141,43 +206,32 @@ Deno.serve(async (req) => {
     const end = new Date();
     const start = new Date(end.getTime() - days * 86_400_000);
     const formatDate = (date: Date) => date.toISOString().slice(0, 10);
-    const connectorToken = gscManagedConnectorKey()!;
-    const connectionKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY")!;
-    const endpoint = `${GATEWAY}/webmasters/v3/sites/${encodeURIComponent(state.site_url)}/searchAnalytics/query`;
-
-    const upstream = await fetch(endpoint, {
+    const endpoint = `${SEARCH_ANALYTICS_BASE}/${encodeURIComponent(state.property)}/searchAnalytics/query`;
+    const upstream = await googleSearchConsoleFetch<SearchAnalyticsPayload>(endpoint, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${connectorToken}`,
-        "X-Connection-Api-Key": connectionKey,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         startDate: formatDate(start),
         endDate: formatDate(end),
         dimensions: [dimension],
-        rowLimit: 100,
+        rowLimit: MAX_ROW_COUNT,
       }),
     });
 
-    const payload = await upstream.json().catch(() => ({})) as Record<string, unknown>;
     if (!upstream.ok) {
-      return json({
-        error: `Google Search Console returned HTTP ${upstream.status}`,
-        code: "gsc_upstream_error",
-      }, 502, headers);
+      return json({ error: safeFailureMessage(upstream.code), code: upstream.code }, 502, headers);
     }
 
     return json({
       ok: true,
       dimension,
       days,
-      property: state.site_url,
-      site_url: state.site_url,
-      rows: Array.isArray(payload.rows) ? payload.rows : [],
+      property: state.property,
+      site_url: state.property,
+      rows: Array.isArray(upstream.data?.rows) ? upstream.data.rows : [],
     }, 200, headers);
-  } catch (error) {
-    console.error("gsc-analytics error", error instanceof Error ? error.message : error);
-    return json({ error: "Google Search Console analytics failed" }, 500, headers);
+  } catch {
+    console.error("gsc-analytics unhandled failure");
+    return json({ error: "Google Search Console analytics failed", code: "gsc_google_request_failed" }, 500, headers);
   }
 });

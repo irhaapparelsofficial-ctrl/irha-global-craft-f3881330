@@ -32,8 +32,25 @@ describe("authenticated admin GSC proof console", () => {
     expect(center).toContain('const HOME_URL = `${SITE}/`');
   });
 
-  it("keeps mutations absent and the exact Domain property enforced", () => {
+  it("requires the direct-OAuth health contract and exact Domain property", () => {
     expect(center).toContain(`const GSC_PROPERTY = "${exactProperty}"`);
+    expect(center).toContain('const GSC_AUTH_MODE = "google_oauth_refresh_token"');
+    for (const field of [
+      "oauthClientIdConfigured",
+      "oauthClientSecretConfigured",
+      "oauthRefreshTokenConfigured",
+      "tokenExchangeVerified",
+      "propertyAccessVerified",
+      "permissionLevel",
+      "authMode",
+    ]) expect(center).toContain(field);
+    expect(center).not.toContain("connectorGatewayConfigured");
+    expect(center).not.toContain("gscConnectionConfigured");
+    expect(center).not.toContain("Connector gateway");
+    expect(center).not.toContain("GSC connection");
+  });
+
+  it("keeps mutations absent and approved Inspection hosts enforced", () => {
     expect(center).toContain('new Set(["irhaapparels.com", "www.irhaapparels.com"])');
     expect(center).not.toContain("sitemap-ping");
     expect(center).not.toContain("Submit sitemap");
@@ -42,29 +59,38 @@ describe("authenticated admin GSC proof console", () => {
     expect(center).not.toContain("indexing.googleapis.com");
   });
 
-  it("does not manually read or expose the browser session", () => {
+  it("does not manually read or expose the browser session or Google credentials", () => {
     expect(center).not.toContain("getSession(");
     expect(center).not.toContain("getUser(");
     expect(center).not.toContain("Authorization");
     expect(center).not.toContain("access_token");
-    expect(center).not.toContain("refresh_token");
+    expect(center).not.toContain("GSC_OAUTH_CLIENT_ID");
+    expect(center).not.toContain("GSC_OAUTH_CLIENT_SECRET");
+    expect(center).not.toContain("GSC_OAUTH_REFRESH_TOKEN");
     expect(center).not.toContain("localStorage");
     expect(center).not.toContain("sessionStorage");
   });
 
-  it("copies aggregate-only evidence with no raw rows, query keys or secret fields", () => {
+  it("copies allowlisted aggregate evidence without raw rows, query keys or credential values", () => {
     const safeReport = functionBody(center, "buildSafeProofReport", "GoogleSearchCenter");
     expect(safeReport).toContain("executionTimestamp");
     expect(safeReport).toContain("productionBuildSha");
+    expect(safeReport).toContain("oauthClientIdConfigured");
+    expect(safeReport).toContain("oauthClientSecretConfigured");
+    expect(safeReport).toContain("oauthRefreshTokenConfigured");
+    expect(safeReport).toContain("tokenExchangeVerified");
+    expect(safeReport).toContain("propertyAccessVerified");
+    expect(safeReport).toContain("permissionLevel");
     expect(safeReport).toContain("rowCount");
     expect(safeReport).toContain("weightedCtr");
     expect(safeReport).toContain("weightedAveragePosition");
     expect(safeReport).toContain("homepageInspection");
     expect(safeReport).not.toMatch(/\brows\b/);
     expect(safeReport).not.toContain("keys");
-    expect(safeReport).not.toContain("token");
-    expect(safeReport).not.toContain("secret");
-    expect(safeReport).not.toContain("authorization");
+    expect(safeReport).not.toContain("GSC_OAUTH_");
+    expect(safeReport).not.toContain("access_token");
+    expect(safeReport).not.toContain("refresh_token");
+    expect(safeReport).not.toContain("Authorization");
     expect(center).toContain("JSON.stringify(buildSafeProofReport(proof), null, 2)");
   });
 });
