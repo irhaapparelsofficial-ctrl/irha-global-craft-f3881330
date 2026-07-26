@@ -2,13 +2,15 @@ import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Factory, Globe2, ShieldCheck } from "lucide-react";
 import SEO from "@/components/SEO";
 import { SEO_BUYER_INTENT_LANDING_PAGES, getSeoBuyerIntentLandingPage } from "@/lib/buyerIntentSeoPages";
+import { getBuyerJourneyCopy, getBuyerJourneyLocale } from "@/lib/buyerJourneyLocaleCopy";
+import { getXDefaultPath } from "@/lib/i18nFoundation";
 import { ORGANIZATION_ID, SITE_URL, breadcrumbSchema } from "@/lib/seoSchema";
 
-function readableLinkLabel(path: string, german: boolean) {
+function readableLinkLabel(path: string, locale: ReturnType<typeof getBuyerJourneyLocale>) {
   const landingPage = SEO_BUYER_INTENT_LANDING_PAGES.find((page) => page.path === path);
   const label = landingPage?.h1 ?? path.split("/").filter(Boolean).at(-1)?.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ") ?? "Products";
-  if (german && !path.startsWith("/de/")) return `Englische Seite: ${label}`;
-  return label;
+  const copy = getBuyerJourneyCopy(locale);
+  return locale !== "en" && !path.startsWith(`/${locale}/`) ? `${copy.englishPagePrefix}${label}` : label;
 }
 
 export default function BuyerIntentLandingPage() {
@@ -26,38 +28,12 @@ export default function BuyerIntentLandingPage() {
     );
   }
 
-  const german = page.locale.toLowerCase().startsWith("de");
+  const locale = getBuyerJourneyLocale(page.locale);
+  const copy = getBuyerJourneyCopy(locale);
   const absolutePageUrl = `${SITE_URL}${page.path}`;
-  const xDefaultPath = page.alternates?.find((alternate) => alternate.locale === "en")?.href ?? (german ? "/products/bavarian-trachten-wear" : page.path);
-  const copy = german ? {
-    home: "Deutsch",
-    products: "B2B-Beschaffungsseiten",
-    audience: "Importeure, Großhändler, Fachhändler und Private-Label-Marken",
-    madeIn: "Fertigung in Sialkot, Pakistan",
-    approval: "Muster- und Käuferfreigabe vor der Serienproduktion",
-    direct: "Direkte internationale B2B-Kommunikation",
-    faqEyebrow: "FAQ für Einkäufer",
-    faqTitle: "Wichtige Fragen vor einer Angebotsanfrage",
-    ctaTitle: "Senden Sie eine spezifikationsbasierte B2B-Anfrage",
-    ctaBody: "Nennen Sie Produktart, Mengenbereich, Materialien, Größen, Branding, Verpackung, Zielqualität, Lieferort und gewünschtes Lieferfenster. Machbarkeit, Mindestmenge, Preis und Zeitplan werden anschließend geprüft.",
-    explore: "Produktkatalog auf Englisch",
-    related: "Weitere Beschaffungsseiten",
-    relatedAria: "Weitere deutsche Beschaffungsseiten und klar gekennzeichnete englische Fachseiten",
-  } : {
-    home: "Home",
-    products: "Products",
-    audience: "Importers, wholesalers, retailers and private-label brands",
-    madeIn: "Manufactured in Sialkot, Pakistan",
-    approval: "Sample and buyer approval before bulk commitment",
-    direct: "Direct B2B export communication",
-    faqEyebrow: "Buyer FAQ",
-    faqTitle: "Questions before you request a quote",
-    ctaTitle: "Send a specification-led B2B inquiry",
-    ctaBody: "Include product type, quantity, materials, branding, packaging, target quality and required delivery window. The manufacturing team will review feasibility before confirming price or timing.",
-    explore: "Explore related products",
-    related: "Related sourcing pages",
-    relatedAria: "Related buyer and product pages",
-  };
+  const xDefaultPath = getXDefaultPath(page.path);
+  const homePath = locale === "en" ? "/" : `/${locale}/`;
+  const productsPath = locale === "en" ? "/products" : homePath;
 
   const schemas = [
     {
@@ -77,16 +53,30 @@ export default function BuyerIntentLandingPage() {
       "@type": "FAQPage",
       mainEntity: page.faqs.map((faq) => ({ "@type": "Question", name: faq.question, acceptedAnswer: { "@type": "Answer", text: faq.answer } })),
     },
-    breadcrumbSchema([
-      { name: copy.home, path: german ? "/de/" : "/" },
-      { name: copy.products, path: german ? "/de/" : "/products" },
-      { name: page.h1, path: page.path },
-    ]),
+    breadcrumbSchema(locale === "en"
+      ? [
+          { name: copy.home, path: homePath },
+          { name: copy.products, path: productsPath },
+          { name: page.h1, path: page.path },
+        ]
+      : [
+          { name: copy.home, path: homePath },
+          { name: page.h1, path: page.path },
+        ]),
   ];
 
   return (
-    <div lang={german ? "de" : "en"}>
-      <SEO title={page.title} description={page.description} path={page.path} locale={german ? "de" : "en"} direction={page.direction} alternates={page.alternates} xDefaultPath={xDefaultPath} jsonLd={schemas} />
+    <div lang={locale}>
+      <SEO
+        title={page.title}
+        description={page.description}
+        path={page.path}
+        locale={locale}
+        direction={page.direction}
+        alternates={page.alternates}
+        xDefaultPath={xDefaultPath}
+        jsonLd={schemas}
+      />
 
       <section className="border-b border-border/60 bg-gradient-to-br from-card/80 via-background to-gold/10">
         <div className="container mx-auto px-6 py-20 md:py-28 max-w-6xl">
@@ -124,13 +114,16 @@ export default function BuyerIntentLandingPage() {
           <p className="text-sm text-foreground/70 max-w-2xl mx-auto mt-4">{copy.ctaBody}</p>
           <div className="flex flex-wrap justify-center gap-3 mt-7">
             <Link to={`/inquiry?intent=rfq&source=${encodeURIComponent(page.path)}`} className="inline-flex items-center gap-2 bg-gradient-gold text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.18em]">{page.primaryLabel} <ArrowRight size={13} /></Link>
-            <Link to={page.categoryPath} className="inline-flex items-center gap-2 border border-border/70 px-6 py-3 text-xs uppercase tracking-[0.18em] hover:border-gold hover:text-gold">{copy.explore}</Link>
+            <Link to={page.categoryPath} hrefLang={locale === "en" ? undefined : "en"} lang={locale === "en" ? undefined : "en"} className="inline-flex items-center gap-2 border border-border/70 px-6 py-3 text-xs uppercase tracking-[0.18em] hover:border-gold hover:text-gold">{copy.explore}</Link>
           </div>
         </section>
 
         <nav aria-label={copy.relatedAria} className="border-t border-border/40 pt-8">
           <p className="text-[10px] uppercase tracking-[0.3em] text-gold mb-4 text-center">{copy.related}</p>
-          <div className="flex flex-wrap justify-center gap-3">{page.relatedPaths.map((path) => <Link key={path} to={path} className="border border-border/60 px-4 py-2 text-xs text-foreground/70 hover:border-gold hover:text-gold">{readableLinkLabel(path, german)}</Link>)}</div>
+          <div className="flex flex-wrap justify-center gap-3">{page.relatedPaths.map((path) => {
+            const linkLocale = path.startsWith(`/${locale}/`) ? locale : "en";
+            return <Link key={path} to={path} hrefLang={linkLocale} lang={linkLocale} className="border border-border/60 px-4 py-2 text-xs text-foreground/70 hover:border-gold hover:text-gold">{readableLinkLabel(path, locale)}</Link>;
+          })}</div>
         </nav>
       </div>
     </div>

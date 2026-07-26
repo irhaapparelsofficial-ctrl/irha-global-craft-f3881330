@@ -12,6 +12,16 @@ const CRITICAL_BUYER_INTENT_PATHS = new Set([
   "/de/sportbekleidung-hersteller",
   "/leather-apparel-manufacturer-germany",
   "/de/lederbekleidung-hersteller",
+  "/fr/",
+  "/fr/fabricant-vetements",
+  "/fr/fabricant-vetements-sport",
+  "/fr/fabricant-vetements-cuir",
+  "/fr/fabrication-marque-blanche",
+  "/nl/",
+  "/nl/kledingfabrikant",
+  "/nl/sportkleding-fabrikant",
+  "/nl/leren-kleding-fabrikant",
+  "/nl/private-label-kleding",
 ]);
 
 type IdleWindow = Window & {
@@ -60,7 +70,9 @@ function scheduleLegacyClientCacheHeal() {
 
 function normalizedPathname() {
   const pathname = window.location.pathname;
-  return pathname === "/" ? "/" : pathname.replace(/\/+$/, "") || "/";
+  if (pathname === "/") return "/";
+  const trimmed = pathname.replace(/\/+$/, "") || "/";
+  return trimmed === "/fr" || trimmed === "/nl" || trimmed === "/de" ? `${trimmed}/` : trimmed;
 }
 
 function preloadInitialRoute(pathname: string): Promise<unknown> | null {

@@ -5,6 +5,7 @@ import path from "node:path";
 const page = fs.readFileSync(path.resolve(process.cwd(), "src/pages/AdminOutreachApproval.tsx"), "utf8");
 const backend = fs.readFileSync(path.resolve(process.cwd(), "supabase/functions/outreach-channel-copilot/index.ts"), "utf8");
 const app = fs.readFileSync(path.resolve(process.cwd(), "src/App.tsx"), "utf8");
+const publicWildcardIndex = app.search(/<Route\s+path="\*"\s+element=\{/);
 
 describe("outreach approval copilot safety", () => {
   it("requires authenticated admin access in browser and backend", () => {
@@ -20,8 +21,9 @@ describe("outreach approval copilot safety", () => {
     expect(app).toContain('const AdminOutreachApproval = lazy(() => import("./pages/AdminOutreachApproval"))');
     expect(app).toContain(route);
     expect(app).toContain(intakeRoute);
-    expect(app.indexOf(route)).toBeLessThan(app.indexOf('<Route\n                path="*"'));
-    expect(app.indexOf(intakeRoute)).toBeLessThan(app.indexOf('<Route\n                path="*"'));
+    expect(publicWildcardIndex).toBeGreaterThan(-1);
+    expect(app.indexOf(route)).toBeLessThan(publicWildcardIndex);
+    expect(app.indexOf(intakeRoute)).toBeLessThan(publicWildcardIndex);
   });
 
   it("orchestrates existing lead and email engines instead of replacing them", () => {

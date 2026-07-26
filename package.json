@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run prepare:public-assets && vite build && node scripts/copy-buyer-ready-catalog-manifest.mjs && node scripts/ensure-home-structured-data.mjs && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/finalize-taxonomy-static-shells.ts && node scripts/patch-german-bavarian-shell.mjs && npx tsx scripts/generate-buyer-intent-route-shells.ts && node scripts/generate-flat-buyer-assets.mjs && npx tsx scripts/patch-market-static-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/remove-home-lcp-preload-from-route-shells.mjs && node scripts/enrich-generic-static-route-shells.mjs && npx tsx scripts/enhance-product-route-shells.ts && npx tsx scripts/align-taxonomy-route-shells.ts && node scripts/patch-cloudflare-route-shell-assets.mjs && node scripts/finalize-cloudflare-functional-routes.mjs && node scripts/finalize-image-seo.mjs && node scripts/verify-built-image-seo.mjs && node scripts/enforce-public-index-policy.mjs build && node scripts/ensure-static-identity.mjs && node scripts/verify-built-crawler-shell.mjs && node scripts/install-cloudflare-ai-guide.mjs && node scripts/patch-worker-route-parity.mjs && npx tsx scripts/verify-route-parity-build.ts && npx tsx scripts/finalize-i18n-foundation.ts && npx tsx scripts/generate-release-identity.ts",
-    "build:dev": "npm run prepare:public-assets && vite build --mode development && node scripts/copy-buyer-ready-catalog-manifest.mjs && node scripts/ensure-home-structured-data.mjs && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/finalize-taxonomy-static-shells.ts && node scripts/patch-german-bavarian-shell.mjs && npx tsx scripts/generate-buyer-intent-route-shells.ts && node scripts/generate-flat-buyer-assets.mjs && npx tsx scripts/patch-market-static-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/remove-home-lcp-preload-from-route-shells.mjs && node scripts/enrich-generic-static-route-shells.mjs && npx tsx scripts/enhance-product-route-shells.ts && npx tsx scripts/align-taxonomy-route-shells.ts && node scripts/patch-cloudflare-route-shell-assets.mjs && node scripts/finalize-cloudflare-functional-routes.mjs && node scripts/finalize-image-seo.mjs && node scripts/verify-built-image-seo.mjs && node scripts/enforce-public-index-policy.mjs build && node scripts/ensure-static-identity.mjs && node scripts/verify-built-crawler-shell.mjs && node scripts/install-cloudflare-ai-guide.mjs && node scripts/patch-worker-route-parity.mjs && npx tsx scripts/verify-route-parity-build.ts && npx tsx scripts/finalize-i18n-foundation.ts && npx tsx scripts/generate-release-identity.ts",
+    "build": "npm run prepare:public-assets && vite build && node scripts/copy-buyer-ready-catalog-manifest.mjs && node scripts/ensure-home-structured-data.mjs && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/finalize-taxonomy-static-shells.ts && node scripts/patch-german-bavarian-shell.mjs && npx tsx scripts/generate-buyer-intent-route-shells.ts && node scripts/generate-flat-buyer-assets.mjs && npx tsx scripts/patch-market-static-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/remove-home-lcp-preload-from-route-shells.mjs && node scripts/enrich-generic-static-route-shells.mjs && npx tsx scripts/enhance-product-route-shells.ts && npx tsx scripts/align-taxonomy-route-shells.ts && node scripts/patch-cloudflare-route-shell-assets.mjs && node scripts/finalize-cloudflare-functional-routes.mjs && node scripts/finalize-image-seo.mjs && node scripts/verify-wave2-image-seo.mjs && node scripts/enforce-public-index-policy.mjs build && node scripts/ensure-static-identity.mjs && node scripts/verify-built-crawler-shell.mjs && node scripts/install-cloudflare-ai-guide.mjs && node scripts/patch-worker-route-parity.mjs && npx tsx scripts/verify-route-parity-build.ts && node scripts/patch-wave2-worker-routes.mjs && npx tsx scripts/finalize-i18n-foundation.ts && npx tsx scripts/generate-release-identity.ts",
+    "build:dev": "npm run prepare:public-assets && vite build --mode development && node scripts/copy-buyer-ready-catalog-manifest.mjs && node scripts/ensure-home-structured-data.mjs && npx tsx scripts/generate-static-route-shells.ts && npx tsx scripts/finalize-taxonomy-static-shells.ts && node scripts/patch-german-bavarian-shell.mjs && npx tsx scripts/generate-buyer-intent-route-shells.ts && node scripts/generate-flat-buyer-assets.mjs && npx tsx scripts/patch-market-static-shells.ts && npx tsx scripts/generate-static-redirect-shells.ts && node scripts/remove-home-lcp-preload-from-route-shells.mjs && node scripts/enrich-generic-static-route-shells.mjs && npx tsx scripts/enhance-product-route-shells.ts && npx tsx scripts/align-taxonomy-route-shells.ts && node scripts/patch-cloudflare-route-shell-assets.mjs && node scripts/finalize-cloudflare-functional-routes.mjs && node scripts/finalize-image-seo.mjs && node scripts/verify-wave2-image-seo.mjs && node scripts/enforce-public-index-policy.mjs build && node scripts/ensure-static-identity.mjs && node scripts/verify-built-crawler-shell.mjs && node scripts/install-cloudflare-ai-guide.mjs && node scripts/patch-worker-route-parity.mjs && npx tsx scripts/verify-route-parity-build.ts && node scripts/patch-wave2-worker-routes.mjs && npx tsx scripts/finalize-i18n-foundation.ts && npx tsx scripts/generate-release-identity.ts",
     "build:frontend": "node scripts/clean-transient-public-builds.mjs && npm --ignore-scripts run build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -17,7 +17,7 @@
     "verify:migrations": "node scripts/verify-migration-order.mjs",
     "verify:release-identity": "npx tsx scripts/verify-built-release-identity.ts",
     "verify:route-content": "node scripts/verify-route-content-fidelity.mjs",
-    "verify:image-seo": "node scripts/verify-built-image-seo.mjs",
+    "verify:image-seo": "node scripts/verify-wave2-image-seo.mjs",
     "generate:thumbnails": "node scripts/generate-image-thumbnails.mjs",
     "generate:catalog-pdfs": "node scripts/generate-catalog-pdfs.mjs",
     "generate:market-sitemap": "npx tsx scripts/merge-market-sitemap.ts",
@@ -102,13 +102,13 @@
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
     "sharp": "^0.35.1",
-    "tailwindcss": "^3.4.17",
     "tsx": "^4.22.4",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "8.1.4",
     "vite-imagetools": "10.0.1",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "tailwindcss": "^3.4.17"
   },
   "overrides": {
     "esbuild": "0.28.1"

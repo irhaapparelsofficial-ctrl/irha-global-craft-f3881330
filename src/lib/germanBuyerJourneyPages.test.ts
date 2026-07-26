@@ -20,7 +20,7 @@ const forbiddenFallbackCopy = [
 ];
 
 describe("German pilot buyer journey", () => {
-  it("completes exactly the six buyer-intent pages inside the fixed eight-route inventory", () => {
+  it("completes exactly the six buyer-intent pages inside the fixed eight-route German inventory", () => {
     expect(GERMAN_BUYER_JOURNEY_PAGES).toHaveLength(6);
     expect(new Set(GERMAN_BUYER_JOURNEY_PATHS).size).toBe(6);
 
@@ -29,7 +29,11 @@ describe("German pilot buyer journey", () => {
       "/de/bavarian-wear",
       ...GERMAN_BUYER_JOURNEY_PATHS,
     ].sort();
-    expect(getPublishedLocalizedRoutes().map((route) => route.path).sort()).toEqual(expectedPublished);
+    const publishedGerman = getPublishedLocalizedRoutes()
+      .filter((route) => route.locale === "de")
+      .map((route) => route.path)
+      .sort();
+    expect(publishedGerman).toEqual(expectedPublished);
     expect(GERMAN_GATEWAY_CONTENT.links.map((link) => link.href).sort()).toEqual(expectedPublished.filter((path) => path !== "/de/"));
   });
 

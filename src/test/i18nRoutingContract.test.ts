@@ -2,12 +2,17 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("i18n routing and release contracts", () => {
-  it("serves the German gateway directly without a browser-language redirect", () => {
+  it("serves German, French and Dutch gateways directly without redirects", () => {
     const app = readFileSync("src/App.tsx", "utf8");
     expect(app).toContain('path="/de" element={<Layout><GermanGateway /></Layout>}');
     expect(app).toContain('path="/de/" element={<Layout><GermanGateway /></Layout>}');
-    expect(app).not.toContain('path="/de" element={<Navigate');
-    expect(app).not.toContain('to="/de/bavarian-wear" replace');
+    for (const locale of ["fr", "nl"]) {
+      expect(app).toContain(`path="/${locale}" element={<Layout><BuyerIntentLandingPage /></Layout>}`);
+      expect(app).toContain(`path="/${locale}/" element={<Layout><BuyerIntentLandingPage /></Layout>}`);
+      expect(app).toContain(`path="/${locale}/:buyerIntentSlug" element={<BuyerIntentLandingPage />}`);
+    }
+    expect(app).not.toContain('to="/fr/" replace');
+    expect(app).not.toContain('to="/nl/" replace');
   });
 
   it("runs the deterministic i18n finalizer in production and development builds", () => {
@@ -21,5 +26,12 @@ describe("i18n routing and release contracts", () => {
     expect(suggestion).not.toMatch(/navigate\s*\(/);
     expect(suggestion).not.toMatch(/window\.location\s*=/);
     expect(suggestion).toContain("continueEnglish");
+    expect(suggestion).toContain("getSuggestedLocale");
+  });
+
+  it("renders all four languages in desktop and mobile selectors", () => {
+    const selector = readFileSync("src/components/LanguageSelector.tsx", "utf8");
+    expect(selector).toContain('["en", "de", "fr", "nl"]');
+    expect(selector).toContain('mobile && "flex-1"');
   });
 });

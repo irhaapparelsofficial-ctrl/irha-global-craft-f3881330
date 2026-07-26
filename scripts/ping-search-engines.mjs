@@ -59,6 +59,16 @@ export const BUYER_INTENT_CHANGED_PATHS = [
   "/de/lederhosen-hersteller",
   "/de/dirndl-grosshandel",
   "/de/trachten-private-label",
+  "/fr/",
+  "/fr/fabricant-vetements",
+  "/fr/fabricant-vetements-sport",
+  "/fr/fabricant-vetements-cuir",
+  "/fr/fabrication-marque-blanche",
+  "/nl/",
+  "/nl/kledingfabrikant",
+  "/nl/sportkleding-fabrikant",
+  "/nl/leren-kleding-fabrikant",
+  "/nl/private-label-kleding",
 ];
 
 export const MARKET_GUIDE_CHANGED_PATHS = [

@@ -4,6 +4,7 @@ import {
   type BuyerIntentLandingPage,
 } from "./buyerIntentLandingPages";
 import { GERMAN_BUYER_JOURNEY_PAGES } from "./germanBuyerJourneyPages";
+import { WAVE2_BUYER_JOURNEY_PAGES } from "./wave2BuyerJourneyPages";
 
 const germanyBroadAlternates = [
   { locale: "en", href: "/germany-apparel-manufacturer" },
@@ -115,27 +116,23 @@ const ENGLISH_BUYER_INTENT_EXPANSION: BuyerIntentLandingPage[] = [
 
 const enhancedEnglishBasePages = BUYER_INTENT_LANDING_PAGES
   .filter((page) => !page.path.startsWith("/de/"))
-  .map((page) =>
-    page.path === "/germany-apparel-manufacturer"
-      ? { ...page, alternates: germanyBroadAlternates }
-      : page,
-  );
+  .map((page) => page.path === "/germany-apparel-manufacturer" ? { ...page, alternates: germanyBroadAlternates } : page);
 
 export const SEO_BUYER_INTENT_EXPANSION: BuyerIntentLandingPage[] = [
   ...ENGLISH_BUYER_INTENT_EXPANSION,
-  ...GERMAN_BUYER_JOURNEY_PAGES.filter((page) =>
-    [
-      "/de/bekleidungshersteller-deutschland",
-      "/de/sportbekleidung-hersteller",
-      "/de/lederbekleidung-hersteller",
-    ].includes(page.path),
-  ),
+  ...GERMAN_BUYER_JOURNEY_PAGES.filter((page) => [
+    "/de/bekleidungshersteller-deutschland",
+    "/de/sportbekleidung-hersteller",
+    "/de/lederbekleidung-hersteller",
+  ].includes(page.path)),
+  ...WAVE2_BUYER_JOURNEY_PAGES,
 ];
 
 export const SEO_BUYER_INTENT_LANDING_PAGES: BuyerIntentLandingPage[] = [
   ...enhancedEnglishBasePages,
   ...ENGLISH_BUYER_INTENT_EXPANSION,
   ...GERMAN_BUYER_JOURNEY_PAGES,
+  ...WAVE2_BUYER_JOURNEY_PAGES,
 ];
 
 export const SEO_BUYER_INTENT_PATHS = SEO_BUYER_INTENT_LANDING_PAGES.map((page) => page.path);
@@ -145,9 +142,14 @@ export const SEO_BUYER_INTENT_FOOTER_LINKS = [
   { label: "Deutsch · Bekleidungshersteller", href: "/de/bekleidungshersteller-deutschland" },
   { label: "Deutsch · Sportbekleidung", href: "/de/sportbekleidung-hersteller" },
   { label: "Deutsch · Lederbekleidung", href: "/de/lederbekleidung-hersteller" },
+  { label: "Français · Fabricant de vêtements", href: "/fr/fabricant-vetements" },
+  { label: "Français · Vêtements de sport", href: "/fr/fabricant-vetements-sport" },
+  { label: "Nederlands · Kledingfabrikant", href: "/nl/kledingfabrikant" },
+  { label: "Nederlands · Sportkleding", href: "/nl/sportkleding-fabrikant" },
 ] as const;
 
 export function getSeoBuyerIntentLandingPage(pathname: string) {
   const normalized = pathname !== "/" ? pathname.replace(/\/+$/, "") : pathname;
-  return SEO_BUYER_INTENT_LANDING_PAGES.find((page) => page.path === normalized);
+  const route = normalized === "/fr" || normalized === "/nl" ? `${normalized}/` : normalized;
+  return SEO_BUYER_INTENT_LANDING_PAGES.find((page) => page.path === route);
 }

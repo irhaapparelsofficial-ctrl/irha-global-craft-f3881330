@@ -9,6 +9,7 @@ const backend = fs.readFileSync(path.resolve(process.cwd(), "supabase/functions/
 const migration = fs.readFileSync(path.resolve(process.cwd(), "supabase/migrations/20260714143000_lead_activation_audit_and_rollback.sql"), "utf8");
 const auditMigration = fs.readFileSync(path.resolve(process.cwd(), "supabase/migrations/20260714143500_preserve_activation_event_lead_ids.sql"), "utf8");
 const config = fs.readFileSync(path.resolve(process.cwd(), "supabase/config.toml"), "utf8");
+const publicWildcardIndex = app.search(/<Route\s+path="\*"\s+element=\{/);
 
 describe("lead review and CRM activation safety", () => {
   it("keeps the workspace private and outside the public site layout", () => {
@@ -17,7 +18,8 @@ describe("lead review and CRM activation safety", () => {
     expect(page).toContain("if (!isAdmin)");
     expect(page).toContain("noindex");
     expect(app).toContain(route);
-    expect(app.indexOf(route)).toBeLessThan(app.indexOf('<Route\n                path="*"'));
+    expect(publicWildcardIndex).toBeGreaterThan(-1);
+    expect(app.indexOf(route)).toBeLessThan(publicWildcardIndex);
   });
 
   it("uses small restartable validation and activation chunks", () => {

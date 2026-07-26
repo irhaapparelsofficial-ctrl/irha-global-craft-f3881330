@@ -3,25 +3,20 @@ import { cn } from "@/lib/utils";
 import {
   getLanguageDestination,
   getRouteLocale,
+  LOCALE_REGISTRY,
   setExplicitLanguagePreference,
   SHARED_UI_COPY,
   type LocaleCode,
 } from "@/lib/i18nFoundation";
 
-type Props = {
-  className?: string;
-  mobile?: boolean;
-};
+type Props = { className?: string; mobile?: boolean };
+
+const languages: LocaleCode[] = ["en", "de", "fr", "nl"];
 
 export default function LanguageSelector({ className, mobile = false }: Props) {
   const { pathname } = useLocation();
   const activeLocale = getRouteLocale(pathname);
   const copy = SHARED_UI_COPY[activeLocale];
-
-  const languages: Array<{ locale: LocaleCode; label: string }> = [
-    { locale: "en", label: "English" },
-    { locale: "de", label: "Deutsch" },
-  ];
 
   return (
     <nav
@@ -33,13 +28,14 @@ export default function LanguageSelector({ className, mobile = false }: Props) {
         className,
       )}
     >
-      {languages.map(({ locale, label }) => {
+      {languages.map((locale) => {
         const active = locale === activeLocale;
+        const definition = LOCALE_REGISTRY[locale];
         return (
           <a
             key={locale}
             href={getLanguageDestination(pathname, locale)}
-            hrefLang={locale}
+            hrefLang={definition.hreflangCode}
             lang={locale}
             aria-current={active ? "page" : undefined}
             onClick={() => setExplicitLanguagePreference(locale)}
@@ -49,7 +45,7 @@ export default function LanguageSelector({ className, mobile = false }: Props) {
               mobile && "flex-1",
             )}
           >
-            {label}
+            {definition.nativeName}
           </a>
         );
       })}

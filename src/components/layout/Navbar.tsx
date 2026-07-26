@@ -6,7 +6,7 @@ import { useInquiryCart } from "@/lib/inquiryCart";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
 import LanguageSelector from "@/components/LanguageSelector";
-import { getRouteLocale, SHARED_UI_COPY } from "@/lib/i18nFoundation";
+import { getLocaleGateway, getRouteLocale, SHARED_UI_COPY } from "@/lib/i18nFoundation";
 
 const CORE_NAV: ReadonlyArray<{ label: string; href: string; anchor?: boolean }> = [
   { label: "Home", href: "/" },
@@ -20,6 +20,12 @@ const ENGLISH_FACTORY_CALL = "Factory call";
 const ENGLISH_REQUEST_QUOTE = "Request quote";
 const ENGLISH_REQUEST_A_QUOTE = "Request a quote";
 const ENGLISH_REVIEW_INQUIRY = "Review inquiry";
+const BRAND_TAGLINE = {
+  en: "Manufacturing Specialists",
+  de: "Fertigungsspezialisten",
+  fr: "Spécialistes de la fabrication",
+  nl: "Productiespecialisten",
+} as const;
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -56,31 +62,37 @@ export default function Navbar() {
     if (label === "Buyer trust") return copy.buyerTrust;
     return label;
   };
-  const localizedNavHref = (href: string) => href === "/" && locale === "de" ? "/de/" : href;
+  const homeHref = getLocaleGateway(locale);
+  const localizedNavHref = (href: string) => href === "/" ? homeHref : href;
+  const primaryNavigationLabelId = locale === "en" ? undefined : `${locale}-primary-navigation-label`;
+  const mobileNavigationLabelId = locale === "en" ? undefined : `${locale}-mobile-navigation-label`;
   const headerSolid = scrolled || open || pathname !== "/";
-  const homeHref = locale === "de" ? "/de/" : "/";
   const quoteHref = inquiryCount > 0 ? "/inquiry-cart" : (settings.ctas.quoteHref || "/inquiry?intent=rfq");
   const quoteLabel = inquiryCount > 0
-    ? `${locale === "de" ? copy.reviewInquiry : ENGLISH_REVIEW_INQUIRY} (${inquiryCount})`
-    : locale === "de" ? copy.requestQuote : ENGLISH_REQUEST_A_QUOTE;
-  const factoryCallLabel = locale === "de" ? copy.factoryCall : ENGLISH_FACTORY_CALL;
+    ? `${locale === "en" ? ENGLISH_REVIEW_INQUIRY : copy.reviewInquiry} (${inquiryCount})`
+    : locale === "en" ? ENGLISH_REQUEST_A_QUOTE : copy.requestQuote;
+  const factoryCallLabel = locale === "en" ? ENGLISH_FACTORY_CALL : copy.factoryCall;
   void ENGLISH_REQUEST_QUOTE;
 
   return (
     <header className={cn("fixed inset-x-0 top-0 z-50 border-b transition-all duration-300", headerSolid ? "border-border/70 bg-background/96 py-2 shadow-[0_12px_35px_rgba(0,0,0,.22)] backdrop-blur-xl" : "border-transparent bg-gradient-to-b from-black/75 to-transparent py-2.5")}>
-      <span id="german-primary-navigation-label" className="sr-only" lang="de">Hauptnavigation</span>
-      <span id="german-mobile-navigation-label" className="sr-only" lang="de">Mobile Navigation</span>
+      <span id="de-primary-navigation-label" className="sr-only" lang="de">Hauptnavigation</span>
+      <span id="de-mobile-navigation-label" className="sr-only" lang="de">Mobile Navigation</span>
+      <span id="fr-primary-navigation-label" className="sr-only" lang="fr">Navigation principale</span>
+      <span id="fr-mobile-navigation-label" className="sr-only" lang="fr">Navigation mobile</span>
+      <span id="nl-primary-navigation-label" className="sr-only" lang="nl">Hoofdnavigatie</span>
+      <span id="nl-mobile-navigation-label" className="sr-only" lang="nl">Mobiele navigatie</span>
       <div className="container-luxe flex min-h-16 items-center justify-between gap-3">
         <Link to={homeHref} className="group flex min-w-0 shrink-0 items-center gap-2.5" aria-label={`${PUBLIC_IDENTITY.name} — ${copy.home}`}>
           <img src="/favicon.svg" alt="Official Irha Apparels Manufacturing Specialists crest" className="h-14 w-14 shrink-0 object-contain transition-transform group-hover:scale-[1.02] sm:h-16 sm:w-16" loading="eager" decoding="async" />
-          <span className="min-w-0 leading-none"><span className="block whitespace-nowrap font-display text-[1.18rem] font-semibold tracking-[0.01em] text-foreground sm:text-[1.45rem]">{PUBLIC_IDENTITY.name}</span><span className="mt-1 block whitespace-nowrap text-[6.5px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[8px] sm:tracking-[0.22em]">{locale === "de" ? "Fertigungsspezialisten" : "Manufacturing Specialists"}</span></span>
+          <span className="min-w-0 leading-none"><span className="block whitespace-nowrap font-display text-[1.18rem] font-semibold tracking-[0.01em] text-foreground sm:text-[1.45rem]">{PUBLIC_IDENTITY.name}</span><span className="mt-1 block whitespace-nowrap text-[6.5px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[8px] sm:tracking-[0.22em]">{BRAND_TAGLINE[locale]}</span></span>
         </Link>
 
-        <nav className="hidden items-center gap-5 xl:flex" aria-label="Primary navigation" aria-labelledby={locale === "de" ? "german-primary-navigation-label" : undefined}>{CORE_NAV.map((item) => {
+        <nav className="hidden items-center gap-5 xl:flex" aria-label="Primary navigation" aria-labelledby={primaryNavigationLabelId}>{CORE_NAV.map((item) => {
           const href = localizedNavHref(item.href);
           const label = localizedNavLabel(item.label);
           return item.anchor
-            ? <a key={item.href} href={href} className="min-h-11 inline-flex items-center text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/72 transition-colors hover:text-primary">{label}</a>
+            ? <a key={item.href} href={href} hrefLang={locale === "en" ? undefined : "en"} className="min-h-11 inline-flex items-center text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/72 transition-colors hover:text-primary">{label}</a>
             : <NavLink key={item.href} to={href} end={href === homeHref} className={({ isActive }) => cn("min-h-11 inline-flex items-center text-[9px] font-semibold uppercase tracking-[0.18em] transition-colors", isActive ? "text-primary" : "text-foreground/72 hover:text-primary")}>{label}</NavLink>;
         })}</nav>
 
@@ -97,7 +109,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {open && <nav id="mobile-navigation" aria-label="Mobile navigation" aria-labelledby={locale === "de" ? "german-mobile-navigation-label" : undefined} className="container-luxe max-h-[calc(100dvh-76px)] overflow-y-auto pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:hidden">
+      {open && <nav id="mobile-navigation" aria-label="Mobile navigation" aria-labelledby={mobileNavigationLabelId} className="container-luxe max-h-[calc(100dvh-76px)] overflow-y-auto pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 lg:hidden">
         <LanguageSelector mobile className="mb-3" />
         <div className="overflow-hidden rounded-xl border border-border/70 bg-card/95 shadow-elegant">{CORE_NAV.map((item) => {
           const href = localizedNavHref(item.href);

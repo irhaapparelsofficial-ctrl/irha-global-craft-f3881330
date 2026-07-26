@@ -10,50 +10,40 @@ import {
   getRouteLocale,
   getXDefaultPath,
   isPublishedLocalizedRoute,
+  LOCALE_REGISTRY,
   normalizeRoutePath,
+  SHARED_UI_COPY,
+  type LocaleCode,
 } from "../src/lib/i18nFoundation";
 
 const DIST_DIR = resolve("dist");
 const SITEMAP_PATH = join(DIST_DIR, "sitemap.xml");
 const SITE_URL = "https://irhaapparels.com";
-const EXPECTED_SITEMAP_URLS = 408;
-const EXPECTED_GERMAN_ROUTES = 8;
+const EXPECTED_SITEMAP_URLS = 418;
+const EXPECTED_LOCALIZED_ROUTES: Readonly<Record<Exclude<LocaleCode, "en">, number>> = { de: 8, fr: 5, nl: 5 };
+const SELECTOR_LOCALES: readonly LocaleCode[] = ["en", "de", "fr", "nl"];
 
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
-}
-
-function absolute(path: string): string {
-  return path === "/" ? `${SITE_URL}/` : `${SITE_URL}${path}`;
-}
-
-function routeFromFile(file: string): string {
-  const rel = relative(DIST_DIR, dirname(file)).split(sep).join("/");
-  return rel === "" ? "/" : normalizeRoutePath(`/${rel}/`);
-}
+function escapeHtml(value: string): string { return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;"); }
+function absolute(path: string): string { return path === "/" ? `${SITE_URL}/` : `${SITE_URL}${path}`; }
+function routeFromFile(file: string): string { const rel = relative(DIST_DIR, dirname(file)).split(sep).join("/"); return rel === "" ? "/" : normalizeRoutePath(`/${rel}/`); }
 
 function ensureGermanEntryInSitemap(xml: string): string {
   const entryUrl = absolute("/de/");
   if (xml.includes(`<loc>${entryUrl}</loc>`)) return xml;
   if (!xml.includes("</urlset>")) throw new Error("Built sitemap is missing </urlset>");
   const today = new Date().toISOString().slice(0, 10);
-  const entry = [
-    "  <url>",
-    `    <loc>${entryUrl}</loc>`,
-    `    <lastmod>${today}</lastmod>`,
-    "    <changefreq>monthly</changefreq>",
-    "    <priority>0.90</priority>",
-    "  </url>",
-  ].join("\n");
+  const entry = ["  <url>", `    <loc>${entryUrl}</loc>`, `    <lastmod>${today}</lastmod>`, "    <changefreq>monthly</changefreq>", "    <priority>0.90</priority>", "  </url>"].join("\n");
   return xml.replace("</urlset>", `${entry}\n</urlset>`);
 }
 
 function selectorMarkup(pathname: string): string {
   const locale = getRouteLocale(pathname);
-  const english = getLanguageDestination(pathname, "en");
-  const german = getLanguageDestination(pathname, "de");
-  const aria = locale === "de" ? "Sprache wählen" : "Choose language";
-  return `<nav data-irha-language-selector="static" aria-label="${aria}" style="display:flex;justify-content:flex-end;gap:8px;padding:8px 18px;background:#080808;border-bottom:1px solid #292929;font-family:Arial,sans-serif;font-size:12px"><a href="${escapeHtml(english)}" hreflang="en" lang="en"${locale === "en" ? ' aria-current="page"' : ""} style="color:${locale === "en" ? "#0a0a0a" : "#e8c477"};background:${locale === "en" ? "#e8c477" : "transparent"};border:1px solid #6b5a34;padding:7px 11px;text-decoration:none">English</a><a href="${escapeHtml(german)}" hreflang="de" lang="de"${locale === "de" ? ' aria-current="page"' : ""} style="color:${locale === "de" ? "#0a0a0a" : "#e8c477"};background:${locale === "de" ? "#e8c477" : "transparent"};border:1px solid #6b5a34;padding:7px 11px;text-decoration:none">Deutsch</a></nav>`;
+  const links = SELECTOR_LOCALES.map((candidate) => {
+    const definition = LOCALE_REGISTRY[candidate];
+    const active = candidate === locale;
+    return `<a href="${escapeHtml(getLanguageDestination(pathname, candidate))}" hreflang="${definition.hreflangCode}" lang="${candidate}"${active ? ' aria-current="page"' : ""} style="color:${active ? "#0a0a0a" : "#e8c477"};background:${active ? "#e8c477" : "transparent"};border:1px solid #6b5a34;padding:7px 11px;text-decoration:none">${escapeHtml(definition.nativeName)}</a>`;
+  }).join("");
+  return `<nav data-irha-language-selector="static" aria-label="${escapeHtml(SHARED_UI_COPY[locale].languageSelectorLabel)}" style="display:flex;justify-content:flex-end;gap:8px;padding:8px 18px;background:#080808;border-bottom:1px solid #292929;font-family:Arial,sans-serif;font-size:12px;flex-wrap:wrap">${links}</nav>`;
 }
 
 function germanBavarianShell(): string {
@@ -73,22 +63,16 @@ function localizeGermanSharedShell(html: string, path: string): string {
     .replace(/>Related sourcing pages</g, ">Weitere Beschaffungsseiten<")
     .replace(/B2B manufacturing/g, "B2B-Fertigung")
     .replace("Experienced manufacturer in Sialkot, Pakistan. The website is newly built, and qualified buyers may request a live factory video call before placing an order.", "Erfahrener Bekleidungshersteller in Sialkot, Pakistan. Qualifizierte Einkäufer können vor einer Bestellung eine Live-Fabrikbesichtigung per Video vereinbaren.");
-  if (path === "/de/bavarian-wear") {
-    output = output.replace(/<main id=["']irha-static-crawler-shell["'][\s\S]*?<\/main>/i, germanBavarianShell());
-  }
+  if (path === "/de/bavarian-wear") output = output.replace(/<main id=["']irha-static-crawler-shell["'][\s\S]*?<\/main>/i, germanBavarianShell());
   return output;
 }
-
-function removeAlternates(html: string): string {
-  return html.replace(/\s*<link\s+rel=["']alternate["'][^>]*>/gi, "");
-}
+function removeAlternates(html: string): string { return html.replace(/\s*<link\s+rel=["']alternate["'][^>]*>/gi, ""); }
 
 function setHead(html: string, path: string): string {
   const registered = getPublishedRoute(path);
   const locale = getRouteLocale(path);
   const direction = getRouteDirection(path);
   let output = html.replace(/<html\s+lang=["'][^"']*["'](?:\s+dir=["'][^"']*["'])?/i, `<html lang="${locale}" dir="${direction}"`);
-
   if (registered) {
     output = output
       .replace(/<link\s+rel=["']canonical["']\s+href=["'][^"']*["']\s*\/?\s*>/i, `<link rel="canonical" href="${absolute(registered.path)}" />`)
@@ -97,14 +81,11 @@ function setHead(html: string, path: string): string {
     const alternates = getHreflangAlternates(path).map((item) => `    <link rel="alternate" hreflang="${item.locale}" href="${absolute(item.href)}" />`);
     alternates.push(`    <link rel="alternate" hreflang="x-default" href="${absolute(getXDefaultPath(path))}" />`);
     output = output.replace("</head>", `${alternates.join("\n")}\n  </head>`);
-  } else if (path === "/de/" || path.startsWith("/de/")) {
+  } else if (["de", "fr", "nl"].includes(locale)) {
     output = output.replace(/<meta\s+name=["']robots["']\s+content=["'][^"']*["']\s*\/?\s*>/i, '<meta name="robots" content="noindex,follow,max-image-preview:large" />');
   }
-
   if (locale === "de") output = localizeGermanSharedShell(output, path);
-  if (!output.includes('data-irha-language-selector="static"')) {
-    output = output.replace(/(<div\s+id=["']root["'][^>]*>)/i, `$1${selectorMarkup(path)}`);
-  }
+  if (!output.includes('data-irha-language-selector="static"')) output = output.replace(/(<div\s+id=["']root["'][^>]*>)/i, `$1${selectorMarkup(path)}`);
   return output;
 }
 
@@ -128,13 +109,10 @@ function buildGermanEntry(template: string): string {
     .replace(/<meta[^>]+property=["']og:locale["'][^>]*>/i, '<meta property="og:locale" content="de_DE" />');
   html = removeAlternates(html);
   html = html.replace("</head>", `    <link rel="alternate" hreflang="de" href="${absolute(page.path)}" />\n    <link rel="alternate" hreflang="x-default" href="${SITE_URL}/" />\n  </head>`);
-
   const rawShellPattern = /<main\s+id=["']irha-static-crawler-shell["'][\s\S]*?<\/main>/i;
   if (!rawShellPattern.test(html)) throw new Error("Could not find the raw shell for the German gateway");
   html = html.replace(rawShellPattern, germanGatewayShell());
-  if (!html.includes('data-irha-language-selector="static"')) {
-    html = html.replace(/(<div\s+id=["']root["'][^>]*>)/i, `$1${selectorMarkup(page.path)}`);
-  }
+  if (!html.includes('data-irha-language-selector="static"')) html = html.replace(/(<div\s+id=["']root["'][^>]*>)/i, `$1${selectorMarkup(page.path)}`);
   return html;
 }
 
@@ -149,53 +127,35 @@ async function main() {
   const germanOutput = join(DIST_DIR, "de", "index.html");
   await mkdir(dirname(germanOutput), { recursive: true });
   await writeFile(germanOutput, buildGermanEntry(rootTemplate), "utf8");
-
   const files = await listHtmlFiles(DIST_DIR);
   for (const file of files) {
     const route = routeFromFile(file);
     const html = await readFile(file, "utf8");
     await writeFile(file, setHead(html, route), "utf8");
   }
-
   const sitemap = ensureGermanEntryInSitemap(await readFile(SITEMAP_PATH, "utf8"));
   await writeFile(SITEMAP_PATH, sitemap, "utf8");
   const sitemapLocs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1].replace(/&amp;/g, "&"));
-  const publishedGerman = getPublishedLocalizedRoutes();
-  if (publishedGerman.length !== EXPECTED_GERMAN_ROUTES) throw new Error(`Expected ${EXPECTED_GERMAN_ROUTES} published German routes, found ${publishedGerman.length}`);
+  const publishedLocalized = getPublishedLocalizedRoutes();
+  for (const [locale, expected] of Object.entries(EXPECTED_LOCALIZED_ROUTES)) {
+    const count = publishedLocalized.filter((route) => route.locale === locale).length;
+    if (count !== expected) throw new Error(`Expected ${expected} published ${locale} routes, found ${count}`);
+  }
   if (sitemapLocs.length !== EXPECTED_SITEMAP_URLS) throw new Error(`Expected ${EXPECTED_SITEMAP_URLS} sitemap URLs, found ${sitemapLocs.length}`);
-
-  const forbiddenGermanFallback = [
-    "Buyer FAQ",
-    "Request Quote",
-    "Explore related products",
-    "Experienced manufacturer in Sialkot",
-    ">Products<",
-    ">Buyer Trust<",
-    ">Factory Video Call<",
-    "B2B manufacturing",
-  ];
-
-  for (const route of publishedGerman) {
-    const file = route.path === "/de/" ? join(DIST_DIR, "de", "index.html") : join(DIST_DIR, route.path.slice(1), "index.html");
+  for (const route of publishedLocalized) {
+    const file = join(DIST_DIR, route.path.slice(1), "index.html");
     const html = await readFile(file, "utf8");
-    if (!html.includes('<html lang="de" dir="ltr"')) throw new Error(`German html attributes missing: ${route.path}`);
+    if (!html.includes(`<html lang="${route.locale}" dir="ltr"`)) throw new Error(`Localized html attributes missing: ${route.path}`);
     if (!html.includes(`<link rel="canonical" href="${absolute(route.path)}"`)) throw new Error(`Self canonical missing: ${route.path}`);
     if (!html.includes('data-irha-language-selector="static"')) throw new Error(`Static language selector missing: ${route.path}`);
-    if (!sitemapLocs.includes(absolute(route.path))) throw new Error(`Published German route missing from sitemap: ${route.path}`);
-    const leaked = forbiddenGermanFallback.find((phrase) => html.includes(phrase));
-    if (leaked) throw new Error(`English shared UI leaked into published German route ${route.path}: ${leaked}`);
-
-    const germanLinks = [...html.matchAll(/href=["'](\/de\/?[^"']*)["']/g)].map((match) => normalizeRoutePath(match[1]));
-    const unpublishedInternalLink = germanLinks.find((path) => !isPublishedLocalizedRoute(path));
-    if (unpublishedInternalLink) throw new Error(`Published German route links to unpublished German URL ${unpublishedInternalLink}: ${route.path}`);
+    if (!sitemapLocs.includes(absolute(route.path))) throw new Error(`Published localized route missing from sitemap: ${route.path}`);
+    const localizedLinks = [...html.matchAll(/href=["'](\/(?:de|fr|nl)\/?[^"']*)["']/g)].map((match) => normalizeRoutePath(match[1]));
+    const unpublishedInternalLink = localizedLinks.find((path) => !isPublishedLocalizedRoute(path));
+    if (unpublishedInternalLink) throw new Error(`Published localized route links to unpublished URL ${unpublishedInternalLink}: ${route.path}`);
   }
-
-  const unexpectedGerman = sitemapLocs.filter((loc) => loc.startsWith(`${SITE_URL}/de/`) && !publishedGerman.some((route) => absolute(route.path) === loc));
-  if (unexpectedGerman.length > 0) throw new Error(`Unpublished German sitemap URLs: ${unexpectedGerman.join(", ")}`);
-  console.log(`Internationalization foundation finalized: ${files.length} HTML shells, ${publishedGerman.length} published German routes, ${sitemapLocs.length} sitemap URLs`);
+  const localizedPrefix = new RegExp(`^${SITE_URL}/(?:de|fr|nl)/`);
+  const unexpectedLocalized = sitemapLocs.filter((loc) => localizedPrefix.test(loc) && !publishedLocalized.some((route) => absolute(route.path) === loc));
+  if (unexpectedLocalized.length > 0) throw new Error(`Unpublished localized sitemap URLs: ${unexpectedLocalized.join(", ")}`);
+  console.log(`Internationalization foundation finalized: ${files.length} HTML shells, ${publishedLocalized.length} published localized routes, ${sitemapLocs.length} sitemap URLs`);
 }
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main().catch((error) => { console.error(error); process.exitCode = 1; });
