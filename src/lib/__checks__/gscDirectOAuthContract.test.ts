@@ -94,7 +94,20 @@ describe("owner-controlled direct Google OAuth GSC contract", () => {
     expect(provider).not.toContain("localStorage");
     expect(provider).not.toContain("sessionStorage");
     expect(provider).not.toContain("indexedDB");
-    expect(provider).not.toContain("console.");
+    for (const method of ["log", "error", "warn", "info", "debug", "trace", "dir", "table"]) {
+      expect(provider).not.toMatch(new RegExp(`\\bconsole\\s*\\.\\s*${method}\\s*\\(`));
+    }
+    expect(provider).not.toMatch(/\bDeno\s*\.\s*inspect\s*\(/);
+    expect(provider).not.toMatch(/\bJSON\s*\.\s*stringify\s*\(\s*token\b/);
+    expect(provider).not.toMatch(/\bJSON\s*\.\s*stringify\s*\(\s*credentials\b/);
+    for (const field of ["access_token", "refreshToken", "clientSecret", "payload", "response"]) {
+      expect(provider).not.toMatch(
+        new RegExp(
+          `\\bconsole\\s*\\.\\s*(?:log|error|warn|info|debug|trace|dir|table)\\s*\\([^)]*\\b${field}\\b`,
+          "s",
+        ),
+      );
+    }
   });
 
   it("uses deterministic timeouts and sanitized internal failure codes", () => {

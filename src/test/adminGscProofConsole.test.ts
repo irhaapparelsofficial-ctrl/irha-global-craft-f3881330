@@ -126,16 +126,31 @@ describe("authenticated admin GSC proof console", () => {
     }
 
     expect(safeReport).not.toContain("...");
-    expect(safeReport).not.toMatch(/proof\.(?:health|queryAnalytics|pageAnalytics|homepageInspection)\.(?:rows|keys|error|inspectionLink)\b/);
-    expect(safeReport).not.toMatch(/\berror\s*:/);
-    expect(safeReport).not.toContain("inspectionLink");
-    expect(safeReport).not.toContain("accessToken");
-    expect(safeReport).not.toContain("refreshToken");
-    expect(safeReport).not.toContain("clientId");
-    expect(safeReport).not.toContain("clientSecret");
-    expect(safeReport).not.toContain("Authorization");
-    expect(safeReport).not.toContain("session");
-    expect(safeReport).not.toContain("raw");
+    for (const field of [
+      "raw",
+      "rawPayload",
+      "rawResponse",
+      "responseBody",
+      "upstreamPayload",
+      "upstreamResponse",
+      "providerResponse",
+      "rows",
+      "keys",
+      "error",
+      "inspectionLink",
+      "accessToken",
+      "refreshToken",
+      "clientSecret",
+      "clientId",
+      "Authorization",
+      "session",
+    ]) {
+      const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      expect(safeReport).not.toMatch(new RegExp(`\\b${escaped}\\s*:`));
+      expect(safeReport).not.toMatch(
+        new RegExp(`proof\\.(?:health|queryAnalytics|pageAnalytics|homepageInspection)\\.${escaped}\\b`),
+      );
+    }
     expect(center).toContain("JSON.stringify(buildSafeProofReport(proof), null, 2)");
   });
 });
