@@ -23,6 +23,7 @@ on:
       - "scripts/enhance-product-route-shells.ts"
       - "scripts/align-taxonomy-route-shells.ts"
       - "scripts/patch-worker-route-parity.mjs"
+      - "scripts/install-i18n-worker-gateway.ts"
       - "scripts/verify-route-parity-build.ts"
       - "scripts/strengthen-brand-search-signals.mjs"
       - "public/_redirects"

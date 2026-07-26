@@ -53,7 +53,7 @@ if (report.inventory.sourceCommit !== report.inventory.expectedSourceCommit) {
 if (report.inventory.dynamicProducts !== 254 || manifest.productCount !== 254 || manifest.products.length !== 254) {
   throw new Error("Preview evaluation requires the complete 254-product release");
 }
-if (report.inventory.dynamicTaxonomy !== 105 || report.inventory.sitemapUrlCount !== 408) {
+if (report.inventory.dynamicTaxonomy !== 105 || report.inventory.sitemapUrlCount !== 418) {
   throw new Error("Preview route inventory is incomplete");
 }
 if (report.inventory.approvedRedirectRegistryRows < 1258 || report.inventory.redirectsVerified < 1258) {
@@ -64,20 +64,25 @@ if (report.summary.redirectsFailed || report.summary.functionalFailed || report.
 }
 
 const canonicalByPath = new Map(report.canonicalResults.map((item) => [item.path, item]));
-const gateway = canonicalByPath.get("/de");
-const gatewayCanonicalUrl = `${report.inventory.canonicalOrigin}/de/`;
-const gatewayPreviewUrl = `${report.inventory.origin}/de/`;
-const verifiedGatewaySlashCanonical = gateway?.canonical === gatewayCanonicalUrl
-  && gateway.finalUrl === gatewayPreviewUrl
-  && gateway.redirectHops.length === 1
-  && gateway.redirectHops[0]?.status === 301
-  && gateway.redirectHops[0]?.from === `${report.inventory.origin}/de`
-  && gateway.redirectHops[0]?.to === gatewayPreviewUrl;
 const gatewayNormalizationCodes = new Set([
   "sitemap_origin_mismatch",
   "canonical_redirect",
   "wrong_canonical",
 ]);
+const publishedLocaleGateways = ["/de", "/fr", "/nl"] as const;
+const verifiedGatewayPaths = new Set<string>();
+for (const path of publishedLocaleGateways) {
+  const gateway = canonicalByPath.get(path);
+  const gatewayCanonicalUrl = `${report.inventory.canonicalOrigin}${path}/`;
+  const gatewayPreviewUrl = `${report.inventory.origin}${path}/`;
+  const verifiedGatewaySlashCanonical = gateway?.canonical === gatewayCanonicalUrl
+    && gateway.finalUrl === gatewayPreviewUrl
+    && gateway.redirectHops.length === 1
+    && gateway.redirectHops[0]?.status === 301
+    && gateway.redirectHops[0]?.from === `${report.inventory.origin}${path}`
+    && gateway.redirectHops[0]?.to === gatewayPreviewUrl;
+  if (verifiedGatewaySlashCanonical) verifiedGatewayPaths.add(path);
+}
 const ignored: Finding[] = [];
 const blocking: Finding[] = [];
 
@@ -92,7 +97,7 @@ for (const finding of report.findings) {
     }
   }
 
-  if (finding.path === "/de" && verifiedGatewaySlashCanonical && gatewayNormalizationCodes.has(finding.code)) {
+  if (verifiedGatewayPaths.has(finding.path) && gatewayNormalizationCodes.has(finding.code)) {
     ignored.push(finding);
     continue;
   }
