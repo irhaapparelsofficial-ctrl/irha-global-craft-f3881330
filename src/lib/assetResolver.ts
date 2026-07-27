@@ -24,7 +24,7 @@ const importedResponsiveSrcSets = import.meta.glob("/src/assets/**/*.{avif,jpg,j
   eager: true,
   import: "default",
   query: {
-    w: "360;720;1200;1600;2400",
+    w: "360;720;1200;1600",
     format: "webp",
     quality: "82",
     as: "srcset",
