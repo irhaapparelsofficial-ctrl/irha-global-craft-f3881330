@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import webpush from "npm:web-push@3.6.7";
+import { authorizeSchedulerRequest } from "./auth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -9,6 +10,7 @@ const MAX_BATCH = 50;
 const MAX_ATTEMPTS = 5;
 
 type Json = Record<string, unknown>;
+type ServiceClient = ReturnType<typeof createClient>;
 type OutboxRow = {
   id: string;
   notification_id: string | null;
@@ -25,9 +27,18 @@ type BuyerItem = {
   sizes: string;
 };
 
-const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+function createServiceClient() {
+  return createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+function createAnonClient(authorization?: string) {
+  return createClient(SUPABASE_URL, ANON_KEY, {
+    global: authorization ? { headers: { Authorization: authorization } } : undefined,
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 function allowedOrigin(origin: string | null) {
   if (!origin) return SITE_URL;
@@ -47,7 +58,7 @@ function headers(origin: string | null) {
     "cache-control": "no-store",
     "x-content-type-options": "nosniff",
     "access-control-allow-origin": allowedOrigin(origin),
-    "access-control-allow-headers": "authorization,apikey,content-type,x-client-info",
+    "access-control-allow-headers": "authorization,apikey,content-type,x-client-info,x-irha-notification-token",
     "access-control-allow-methods": "POST,OPTIONS",
     "vary": "Origin",
   };
@@ -68,16 +79,19 @@ function isRecord(value: unknown): value is Json {
 async function requireAdmin(req: Request) {
   const authorization = req.headers.get("authorization") || "";
   if (!authorization.startsWith("Bearer ")) return null;
-  const auth = createClient(SUPABASE_URL, ANON_KEY, {
-    global: { headers: { Authorization: authorization } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const auth = createAnonClient(authorization);
   const { data: userData } = await auth.auth.getUser();
   const user = userData.user;
   if (!user) return null;
   const { data: role } = await auth.from("user_roles").select("role")
     .eq("user_id", user.id).eq("role", "admin").maybeSingle();
   return role?.role === "admin" ? user : null;
+}
+
+async function consumeSchedulerToken(token: string) {
+  const verifier = createAnonClient();
+  const { data, error } = await verifier.rpc("notification_consume_dispatch_token", { _token: token });
+  return !error && data === true;
 }
 
 function validSubscription(value: unknown) {
@@ -157,7 +171,7 @@ function renderEmail(payload: Json) {
   };
 }
 
-async function recordAttempt(row: OutboxRow, status: "sent" | "blocked" | "retry" | "failed", provider: string, error: string | null, metadata: Json = {}) {
+async function recordAttempt(service: ServiceClient, row: OutboxRow, status: "sent" | "blocked" | "retry" | "failed", provider: string, error: string | null, metadata: Json = {}) {
   await service.from("notification_delivery_attempts").insert({
     outbox_id: row.id,
     notification_id: row.notification_id,
@@ -170,7 +184,7 @@ async function recordAttempt(row: OutboxRow, status: "sent" | "blocked" | "retry
   });
 }
 
-async function finish(row: OutboxRow, status: "sent" | "blocked" | "retry" | "failed", provider: string, error: string | null, metadata: Json = {}) {
+async function finish(service: ServiceClient, row: OutboxRow, status: "sent" | "blocked" | "retry" | "failed", provider: string, error: string | null, metadata: Json = {}) {
   const update: Json = {
     status,
     provider,
@@ -185,21 +199,21 @@ async function finish(row: OutboxRow, status: "sent" | "blocked" | "retry" | "fa
     update.next_attempt_at = new Date(Date.now() + delayMinutes * 60_000).toISOString();
   }
   await service.from("notification_outbox").update(update).eq("id", row.id);
-  await recordAttempt(row, status, provider, error, metadata);
+  await recordAttempt(service, row, status, provider, error, metadata);
 }
 
-async function processPush(row: OutboxRow) {
+async function processPush(service: ServiceClient, row: OutboxRow) {
   const publicKey = text(Deno.env.get("VAPID_PUBLIC_KEY"), 500);
   const privateKey = text(Deno.env.get("VAPID_PRIVATE_KEY"), 500);
   if (!publicKey || !privateKey) {
-    await finish(row, "blocked", "web-push", "VAPID keys are not configured");
+    await finish(service, row, "blocked", "web-push", "VAPID keys are not configured");
     return;
   }
   const { data: subscriptions, error } = await service.from("owner_push_subscriptions")
     .select("id,endpoint,p256dh,auth").eq("enabled", true);
   if (error) throw error;
   if (!subscriptions?.length) {
-    await finish(row, "blocked", "web-push", "No active owner push subscription");
+    await finish(service, row, "blocked", "web-push", "No active owner push subscription");
     return;
   }
   webpush.setVapidDetails("mailto:irhaapparelsofficial@gmail.com", publicKey, privateKey);
@@ -233,17 +247,17 @@ async function processPush(row: OutboxRow) {
       }
     }
   }
-  if (sent > 0) await finish(row, "sent", "web-push", null, { sent, disabled, attempted: subscriptions.length });
-  else if (disabled === subscriptions.length) await finish(row, "blocked", "web-push", "All push subscriptions expired", { disabled });
-  else if (row.attempt_count >= MAX_ATTEMPTS) await finish(row, "failed", "web-push", failures.join(" | ") || "Push delivery failed");
-  else await finish(row, "retry", "web-push", failures.join(" | ") || "Push delivery failed");
+  if (sent > 0) await finish(service, row, "sent", "web-push", null, { sent, disabled, attempted: subscriptions.length });
+  else if (disabled === subscriptions.length) await finish(service, row, "blocked", "web-push", "All push subscriptions expired", { disabled });
+  else if (row.attempt_count >= MAX_ATTEMPTS) await finish(service, row, "failed", "web-push", failures.join(" | ") || "Push delivery failed");
+  else await finish(service, row, "retry", "web-push", failures.join(" | ") || "Push delivery failed");
 }
 
-async function processEmail(row: OutboxRow) {
+async function processEmail(service: ServiceClient, row: OutboxRow) {
   const apiKey = text(Deno.env.get("RESEND_API_KEY"), 1000);
   const from = text(Deno.env.get("IRHA_EMAIL_FROM"), 300);
   if (!apiKey || !from) {
-    await finish(row, "blocked", "resend", "Email provider is not configured");
+    await finish(service, row, "blocked", "resend", "Email provider is not configured");
     return;
   }
   const rendered = renderEmail(row.payload);
@@ -255,16 +269,16 @@ async function processEmail(row: OutboxRow) {
   const raw = await response.text();
   let result: Json = {};
   try { result = JSON.parse(raw) as Json; } catch { result = { raw: raw.slice(0, 1000) }; }
-  if (response.ok) await finish(row, "sent", "resend", null, { provider_id: result.id || null });
+  if (response.ok) await finish(service, row, "sent", "resend", null, { provider_id: result.id || null });
   else {
     const message = `Resend returned ${response.status}: ${raw.slice(0, 1500)}`;
-    if ([401, 403, 422].includes(response.status)) await finish(row, "blocked", "resend", message, { status: response.status });
-    else if (row.attempt_count >= MAX_ATTEMPTS) await finish(row, "failed", "resend", message, { status: response.status });
-    else await finish(row, "retry", "resend", message, { status: response.status });
+    if ([401, 403, 422].includes(response.status)) await finish(service, row, "blocked", "resend", message, { status: response.status });
+    else if (row.attempt_count >= MAX_ATTEMPTS) await finish(service, row, "failed", "resend", message, { status: response.status });
+    else await finish(service, row, "retry", "resend", message, { status: response.status });
   }
 }
 
-async function processOutbox(limit = 25) {
+async function processOutbox(service: ServiceClient, limit = 25) {
   const { data: allowed, error: guardError } = await service.rpc("notification_begin_dispatch", { _minimum_seconds: 20 });
   if (guardError) throw guardError;
   if (allowed !== true) return { accepted: true, throttled: true };
@@ -273,19 +287,17 @@ async function processOutbox(limit = 25) {
   const rows = (data || []) as OutboxRow[];
   for (const row of rows) {
     try {
-      if (row.channel === "web_push") await processPush(row);
-      else await processEmail(row);
+      if (row.channel === "web_push") await processPush(service, row);
+      else await processEmail(service, row);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await finish(row, row.attempt_count >= MAX_ATTEMPTS ? "failed" : "retry", row.channel, message);
+      await finish(service, row, row.attempt_count >= MAX_ATTEMPTS ? "failed" : "retry", row.channel, message);
     }
   }
   return { accepted: true, claimed: rows.length };
 }
 
-async function adminAction(req: Request, body: Json, origin: string | null) {
-  const user = await requireAdmin(req);
-  if (!user) return json({ error: "Admin authentication required" }, 401, origin);
+async function adminAction(service: ServiceClient, user: { id: string }, req: Request, body: Json, origin: string | null) {
   const action = text(body.action, 80);
   if (action === "config" || action === "health") {
     const publicKey = text(Deno.env.get("VAPID_PUBLIC_KEY"), 500);
@@ -336,12 +348,19 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({})) as Json;
     if (text(body.action, 80) === "process") {
-      const result = await processOutbox(Number(body.limit) || 25);
+      const scheduler = await authorizeSchedulerRequest(req, consumeSchedulerToken);
+      if (!scheduler.ok) return json({ error: "Trusted scheduler authentication required" }, 401, origin);
+      const service = createServiceClient();
+      const result = await processOutbox(service, Number(body.limit) || 25);
       return json({ ok: true, ...result }, 200, origin);
     }
-    return await adminAction(req, body, origin);
+
+    const user = await requireAdmin(req);
+    if (!user) return json({ error: "Admin authentication required" }, 401, origin);
+    const service = createServiceClient();
+    return await adminAction(service, user, req, body, origin);
   } catch (error) {
-    console.error("notification-dispatcher error", error);
-    return json({ error: error instanceof Error ? error.message : "Notification dispatcher failed" }, 500, origin);
+    console.error("notification-dispatcher error", error instanceof Error ? error.name : "unknown_error");
+    return json({ error: "Notification dispatcher failed" }, 500, origin);
   }
 });
