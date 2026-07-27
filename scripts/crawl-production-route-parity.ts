@@ -28,6 +28,7 @@ const CANONICAL_CONCURRENCY = 12;
 const REDIRECT_CONCURRENCY = 16;
 const BROWSER_CONCURRENCY = 2;
 const PAGE_SIZE = 1000;
+const CANONICAL_TRAILING_SLASH_PATHS = new Set(["/de/", "/fr/", "/nl/"]);
 
 const FUNCTIONAL_PATHS = [
   "/login",
@@ -182,7 +183,9 @@ function add(findings: Finding[], severity: Severity, code: string, path: string
 }
 function cleanPath(value: string): string {
   const url = value.startsWith("http") ? new URL(value) : new URL(value, ORIGIN);
-  return decodeURIComponent(url.pathname).replace(/\/{2,}/g, "/").replace(/\/$/, "") || "/";
+  const pathname = decodeURIComponent(url.pathname).replace(/\/{2,}/g, "/");
+  if (CANONICAL_TRAILING_SLASH_PATHS.has(pathname)) return pathname;
+  return pathname.replace(/\/$/, "") || "/";
 }
 function requestUrl(path: string) { return `${ORIGIN}${path === "/" ? "/" : path}`; }
 function canonicalUrl(path: string) { return `${CANONICAL_ORIGIN}${path === "/" ? "/" : path}`; }
