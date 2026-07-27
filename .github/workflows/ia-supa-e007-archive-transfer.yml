@@ -1,6 +1,7 @@
 name: IA-SUPA-E007 Archive Transfer
 
 on:
+  workflow_call:
   push:
     branches:
       - ia-supa-e007-archive-transfer
