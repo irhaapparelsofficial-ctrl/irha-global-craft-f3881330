@@ -4,13 +4,16 @@ import {
 } from "@/lib/assetResolver";
 
 const STATIC_ALREADY_THUMBNAIL = /^\/(?:thumbnails|catalogs\/thumbs)\//i;
+// Legacy 2400 paths remain recognizable so old URLs can resolve to their
+// canonical originals and controlled cleanup can identify them safely.
 const STATIC_ALREADY_RESPONSIVE = /^\/responsive\/(?:360|720|1200|1600|2400)\//i;
 const RESPONSIVE_PREFIX = /^responsive\/(?:360|720|1200|1600|2400)\/(.+)\.webp$/i;
+const LEGACY_2400_PREFIX = /^responsive\/2400\/.+\.webp$/i;
 const RASTER_EXTENSION = /\.(?:avif|gif|jpe?g|png|webp)(?:$|[?#])/i;
 const SUPABASE_PUBLIC_MARKER = "/storage/v1/object/public/";
 const SITE_HOSTS = new Set(["irhaapparels.com", "www.irhaapparels.com"]);
 
-export const RESPONSIVE_IMAGE_WIDTHS = [360, 720, 1200, 1600, 2400] as const;
+export const RESPONSIVE_IMAGE_WIDTHS = [360, 720, 1200, 1600] as const;
 export type ResponsiveImageWidth = typeof RESPONSIVE_IMAGE_WIDTHS[number];
 
 function splitUrlSuffix(value: string) {
@@ -41,6 +44,21 @@ export function responsiveVariantObjectPath(
   const original = originalObjectPath(objectPath);
   if (width === 720) return thumbnailObjectPath(original);
   return `responsive/${width}/${original}.webp`;
+}
+
+export function legacyResponsive2400ObjectPath(objectPath: string): string {
+  return `responsive/2400/${originalObjectPath(objectPath)}.webp`;
+}
+
+export function isLegacyResponsive2400ObjectPath(objectPath: string): boolean {
+  return LEGACY_2400_PREFIX.test(objectPath.replace(/^\/+/, ""));
+}
+
+export function responsiveVariantObjectPathsForCleanup(objectPath: string): string[] {
+  return Array.from(new Set([
+    ...RESPONSIVE_IMAGE_WIDTHS.map((width) => responsiveVariantObjectPath(objectPath, width)),
+    legacyResponsive2400ObjectPath(objectPath),
+  ]));
 }
 
 export function thumbnailUrl(source?: string | null): string {
@@ -231,7 +249,7 @@ async function encodeCanvas(canvas: HTMLCanvasElement, quality: number): Promise
 }
 
 function qualityForBrowserWidth(width: ResponsiveImageWidth, requested: number) {
-  const floor = width >= 2400 ? 0.9 : width >= 1600 ? 0.88 : width >= 1200 ? 0.85 : width >= 720 ? 0.82 : 0.78;
+  const floor = width >= 1600 ? 0.88 : width >= 1200 ? 0.85 : width >= 720 ? 0.82 : 0.78;
   return Math.max(floor, requested);
 }
 
@@ -281,7 +299,7 @@ export async function createBrowserThumbnail(
   options: { maxEdge?: number; quality?: number } = {},
 ): Promise<BrowserThumbnail | null> {
   if (!source.type.startsWith("image/") || typeof document === "undefined") return null;
-  const maxEdge = Math.max(160, Math.min(2400, options.maxEdge ?? 720));
+  const maxEdge = Math.max(160, Math.min(1600, options.maxEdge ?? 720));
   const quality = Math.max(0.65, Math.min(0.92, options.quality ?? 0.82));
   let bitmap: ImageBitmap | null = null;
   let image: HTMLImageElement | null = null;
