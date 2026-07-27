@@ -1,0 +1,35 @@
+name: IA-SUPA-E007 O3 Known Answer Export
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/ia-supa-e007-o3-known-answer.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download exact O3 known-answer rows
+        env:
+          SOURCE_URL: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/o3-checksum-known-answer.json?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvbzMtY2hlY2tzdW0ta25vd24tYW5zd2VyLmpzb24iLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg1MTczMDc1LCJleHAiOjE3ODUxNzQ4NzV9.RzvIlHPNqt1aHPWJy8H11QJSUjyr8O9gl2VHHLN2L6w'
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 --retry-all-errors "$SOURCE_URL" --output o3-checksum-known-answer.json
+          test "$(jq length o3-checksum-known-answer.json)" = "396"
+          sha256sum o3-checksum-known-answer.json > o3-export.sha256
+
+      - name: Upload known-answer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IA-SUPA-E007-O3-known-answer
+          path: |
+            o3-checksum-known-answer.json
+            o3-export.sha256
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
