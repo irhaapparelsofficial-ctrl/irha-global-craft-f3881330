@@ -9,7 +9,7 @@ const OIDC_ISSUER = "https://token.actions.githubusercontent.com";
 const OIDC_AUDIENCE = "irha-image-pipeline";
 const MAX_FILE_BYTES = 16 * 1024 * 1024;
 const CACHE_SECONDS = "31536000";
-const WIDTHS = [360, 720, 1200, 1600, 2400] as const;
+const WIDTHS = [360, 720, 1200, 1600] as const;
 const JWKS = createRemoteJWKSet(new URL(`${OIDC_ISSUER}/.well-known/jwks`));
 
 type ServiceError = { message: string };

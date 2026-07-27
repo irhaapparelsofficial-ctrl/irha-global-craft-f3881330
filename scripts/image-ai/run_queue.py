@@ -213,7 +213,6 @@ def process_job(job: dict) -> dict:
                 "variant_720": "720.webp",
                 "variant_1200": "1200.webp",
                 "variant_1600": "1600.webp",
-                "variant_2400": "2400.webp",
             }.items():
                 handle = (output / filename).open("rb")
                 file_handles.append(handle)
