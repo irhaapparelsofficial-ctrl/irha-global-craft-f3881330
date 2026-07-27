@@ -14,15 +14,14 @@ const STAGE_THUMBNAIL_DIR = path.join(STAGE_ROOT, "thumbnails");
 const STAGE_RESPONSIVE_DIR = path.join(STAGE_ROOT, "responsive");
 const BACKUP_ROOT = path.join(PUBLIC_DIR, `.image-backup-${process.pid}`);
 const SUPPORTED = new Set([".avif", ".gif", ".jpeg", ".jpg", ".png", ".webp"]);
-const WIDTHS = [360, 720, 1200, 1600, 2400];
+const WIDTHS = [360, 720, 1200, 1600];
 const CONCURRENCY = Math.max(1, Math.min(4, Number(process.env.THUMBNAIL_CONCURRENCY || 4)));
 
 function qualityFor(width) {
   if (width <= 360) return 68;
   if (width <= 720) return 74;
   if (width <= 1200) return 80;
-  if (width <= 1600) return 84;
-  return 88;
+  return 84;
 }
 
 function shouldSkip(relativePath) {
