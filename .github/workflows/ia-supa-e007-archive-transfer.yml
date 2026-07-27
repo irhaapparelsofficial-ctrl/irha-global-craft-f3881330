@@ -17,44 +17,80 @@ permissions:
 jobs:
   transfer:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - part: "01"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-01.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDEudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.HY1PiP9gfIs3zGOguuxhgNtyRm6UDtFhTptR4NNuIEg'
+            sha256: 'bef692741c605b38bcb9ac8917ab400f4f0700e6d23de62b7adcf55acca3a271'
+          - part: "02"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-02.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDIudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.mTu2zsC3wwWfLpmZ6eMlyIWs9wM6d_x-RdxJd20iSVE'
+            sha256: '33ddb9c4ff84f496b075c0413eb6f5f1b1f04f21ce2fbeb3b88cc96d25d20280'
+          - part: "03"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-03.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDMudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.f7qi2ExM9FVyejiOeVhCGkbFzf0Or-IXHy6qcgLOMk8'
+            sha256: '8f9ef6babb08ce11a40b655d3028c6e202799cedc2af750d698982c44292f432'
+          - part: "04"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-04.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDQudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.hFtLObu0BzHh0-bPjnFVouyxZXtBJnegAx0LvpzVQ2o'
+            sha256: 'ab42447232fa29fc17f487bb6a8a0757481e82cac9d77fa86662add02a5c16a9'
+          - part: "05"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-05.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDUudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.rwhWUjeveI8rdADqKrxtuNOLrNS2fbj626bIIq8xEl4'
+            sha256: '761b93f2d123d24a452073fa753531b92b7cf0a926cf2652c95e786bd8564a7b'
+          - part: "06"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-06.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDYudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.CYinxqR1gtQ6xISSuN5nPlxapEvnFAyq1eOvQKYPn_U'
+            sha256: '9f708f26dbe223db1aa721dea147c544b5c28df75fcfc63be2446f3a288a9444'
+          - part: "07"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-07.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDcudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.plrEiOqpzoZ1F1rpvLODTzmJCJsSClsTKgjr9XfEGOQ'
+            sha256: 'a6a321961bec69cded0d00a860cb8e3e7ed2479c01dcc752e4d4daf680f14f8c'
+          - part: "08"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-08.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDgudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.SkcIU3hwFh91ivi1ackOtYKE4yKolZBTw-D_A6bm6Qw'
+            sha256: '9e56ba857356652f1922996fa0200ae63da19ced71cf24cd2ac1545366cd30d8'
+          - part: "09"
+            url: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-09.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDkudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.tpeJ-E82XyZMDsT8viL9J0S5jkjMQwtqWy6GYze-eJ4'
+            sha256: 'cf643114cf078613e9c795a0817996a2e94c09f89340218c1821c7c2132e8dd8'
     steps:
-      - name: Download and verify encrypted packages
+      - name: Download encrypted package
         env:
-          URL_01: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-01.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDEudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.HY1PiP9gfIs3zGOguuxhgNtyRm6UDtFhTptR4NNuIEg'
-          URL_02: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-02.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDIudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.mTu2zsC3wwWfLpmZ6eMlyIWs9wM6d_x-RdxJd20iSVE'
-          URL_03: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-03.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDMudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.f7qi2ExM9FVyejiOeVhCGkbFzf0Or-IXHy6qcgLOMk8'
-          URL_04: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-04.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDQudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.hFtLObu0BzHh0-bPjnFVouyxZXtBJnegAx0LvpzVQ2o'
-          URL_05: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-05.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDUudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.rwhWUjeveI8rdADqKrxtuNOLrNS2fbj626bIIq8xEl4'
-          URL_06: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-06.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDYudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.CYinxqR1gtQ6xISSuN5nPlxapEvnFAyq1eOvQKYPn_U'
-          URL_07: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-07.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDcudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.plrEiOqpzoZ1F1rpvLODTzmJCJsSClsTKgjr9XfEGOQ'
-          URL_08: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-08.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDgudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.SkcIU3hwFh91ivi1ackOtYKE4yKolZBTw-D_A6bm6Qw'
-          URL_09: 'https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/sign/e007-archive-staging/IA-SUPA-E007/IA-SUPA-E007-O4-part-09.tar.aes256gcm?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85YzFkODc1NC1jMzk3LTQ3ODktYTcyZi04NGRkYTM4NDhiMmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJlMDA3LWFyY2hpdmUtc3RhZ2luZy9JQS1TVVBBLUUwMDcvSUEtU1VQQS1FMDA3LU80LXBhcnQtMDkudGFyLmFlczI1NmdjbSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODUxNzE2NjMsImV4cCI6MTc4NTE3NTI2M30.tpeJ-E82XyZMDsT8viL9J0S5jkjMQwtqWy6GYze-eJ4'
+          PACKAGE_URL: ${{ matrix.url }}
+          PACKAGE_SHA256: ${{ matrix.sha256 }}
+          PART: ${{ matrix.part }}
         run: |
           set -euo pipefail
-          mkdir -p archive/encrypted-packages
-          for n in 01 02 03 04 05 06 07 08 09; do
-            var="URL_${n}"
-            url="${!var}"
-            curl --fail --location --retry 5 --retry-all-errors --connect-timeout 20 \
-              "$url" --output "archive/encrypted-packages/IA-SUPA-E007-O4-part-${n}.tar.aes256gcm"
-          done
+          file="IA-SUPA-E007-O4-part-${PART}.tar.aes256gcm"
+          curl --fail --location --retry 5 --retry-all-errors --connect-timeout 20 "$PACKAGE_URL" --output "$file"
+          echo "$PACKAGE_SHA256  $file" | sha256sum --check -
 
-          cat > archive/CHECKSUMS.sha256 <<'EOF'
-          bef692741c605b38bcb9ac8917ab400f4f0700e6d23de62b7adcf55acca3a271  encrypted-packages/IA-SUPA-E007-O4-part-01.tar.aes256gcm
-          33ddb9c4ff84f496b075c0413eb6f5f1b1f04f21ce2fbeb3b88cc96d25d20280  encrypted-packages/IA-SUPA-E007-O4-part-02.tar.aes256gcm
-          8f9ef6babb08ce11a40b655d3028c6e202799cedc2af750d698982c44292f432  encrypted-packages/IA-SUPA-E007-O4-part-03.tar.aes256gcm
-          ab42447232fa29fc17f487bb6a8a0757481e82cac9d77fa86662add02a5c16a9  encrypted-packages/IA-SUPA-E007-O4-part-04.tar.aes256gcm
-          761b93f2d123d24a452073fa753531b92b7cf0a926cf2652c95e786bd8564a7b  encrypted-packages/IA-SUPA-E007-O4-part-05.tar.aes256gcm
-          9f708f26dbe223db1aa721dea147c544b5c28df75fcfc63be2446f3a288a9444  encrypted-packages/IA-SUPA-E007-O4-part-06.tar.aes256gcm
-          a6a321961bec69cded0d00a860cb8e3e7ed2479c01dcc752e4d4daf680f14f8c  encrypted-packages/IA-SUPA-E007-O4-part-07.tar.aes256gcm
-          9e56ba857356652f1922996fa0200ae63da19ced71cf24cd2ac1545366cd30d8  encrypted-packages/IA-SUPA-E007-O4-part-08.tar.aes256gcm
-          cf643114cf078613e9c795a0817996a2e94c09f89340218c1821c7c2132e8dd8  encrypted-packages/IA-SUPA-E007-O4-part-09.tar.aes256gcm
+      - name: Upload encrypted package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IA-SUPA-E007-O4-part-${{ matrix.part }}
+          path: IA-SUPA-E007-O4-part-${{ matrix.part }}.tar.aes256gcm
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+
+  metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Build non-secret archive index
+        run: |
+          set -euo pipefail
+          mkdir metadata
+          cat > metadata/CHECKSUMS.sha256 <<'EOF'
+          bef692741c605b38bcb9ac8917ab400f4f0700e6d23de62b7adcf55acca3a271  IA-SUPA-E007-O4-part-01.tar.aes256gcm
+          33ddb9c4ff84f496b075c0413eb6f5f1b1f04f21ce2fbeb3b88cc96d25d20280  IA-SUPA-E007-O4-part-02.tar.aes256gcm
+          8f9ef6babb08ce11a40b655d3028c6e202799cedc2af750d698982c44292f432  IA-SUPA-E007-O4-part-03.tar.aes256gcm
+          ab42447232fa29fc17f487bb6a8a0757481e82cac9d77fa86662add02a5c16a9  IA-SUPA-E007-O4-part-04.tar.aes256gcm
+          761b93f2d123d24a452073fa753531b92b7cf0a926cf2652c95e786bd8564a7b  IA-SUPA-E007-O4-part-05.tar.aes256gcm
+          9f708f26dbe223db1aa721dea147c544b5c28df75fcfc63be2446f3a288a9444  IA-SUPA-E007-O4-part-06.tar.aes256gcm
+          a6a321961bec69cded0d00a860cb8e3e7ed2479c01dcc752e4d4daf680f14f8c  IA-SUPA-E007-O4-part-07.tar.aes256gcm
+          9e56ba857356652f1922996fa0200ae63da19ced71cf24cd2ac1545366cd30d8  IA-SUPA-E007-O4-part-08.tar.aes256gcm
+          cf643114cf078613e9c795a0817996a2e94c09f89340218c1821c7c2132e8dd8  IA-SUPA-E007-O4-part-09.tar.aes256gcm
           EOF
-          sed -i 's/^          //' archive/CHECKSUMS.sha256
-          (cd archive && sha256sum --check CHECKSUMS.sha256)
-
-          cat > archive/ARCHIVE-INDEX.json <<'EOF'
+          sed -i 's/^          //' metadata/CHECKSUMS.sha256
+          cat > metadata/ARCHIVE-INDEX.json <<'EOF'
           {
             "format": "IA-SUPA-E007-O4-external-archive-v1",
             "execution_id": "IA-SUPA-E007",
@@ -68,18 +104,17 @@ jobs:
             "key_storage": "Supabase Vault private reference only"
           }
           EOF
-          sed -i 's/^          //' archive/ARCHIVE-INDEX.json
-
-          cat > archive/RESTORE-NOTICE.txt <<'EOF'
-          Encrypted IA-SUPA-E007 O4 archive. Each package contains its own encrypted manifest and restore instructions. Verify CHECKSUMS.sha256 before any restore. Retrieve the AES-256-GCM secret only through the private secure-key reference in the archive registry. No encryption key is included in this archive.
+          sed -i 's/^          //' metadata/ARCHIVE-INDEX.json
+          cat > metadata/RESTORE-NOTICE.txt <<'EOF'
+          Encrypted IA-SUPA-E007 O4 archive. Each package contains its own encrypted manifest and restore instructions. Verify CHECKSUMS.sha256 before any restore. Retrieve the AES-256-GCM secret only through the private secure-key reference in the archive registry. No encryption key is included in these artifacts.
           EOF
-          sed -i 's/^          //' archive/RESTORE-NOTICE.txt
+          sed -i 's/^          //' metadata/RESTORE-NOTICE.txt
 
-      - name: Upload private encrypted archive artifact
+      - name: Upload archive metadata artifact
         uses: actions/upload-artifact@v4
         with:
-          name: IA-SUPA-E007-O4-Encrypted-Archive
-          path: archive
+          name: IA-SUPA-E007-O4-metadata
+          path: metadata
           compression-level: 0
           retention-days: 1
           if-no-files-found: error
