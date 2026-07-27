@@ -68,3 +68,8 @@ jobs:
             echo "- Full typecheck, full test suite and immutable release build: owned by Quality Gate"
             echo "- Duplicate full-build notification risk: removed"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  ia-supa-e007-archive-transfer:
+    uses: ./.github/workflows/ia-supa-e007-archive-transfer.yml
+    permissions:
+      contents: read
