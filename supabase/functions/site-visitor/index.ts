@@ -1,17 +1,18 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import {
+  authorizeDurableRateLimit,
+  DurableRateLimitUnavailableError,
+  policyForSiteVisitorAction,
+} from "../_shared/durable-rate-limit.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = "https://irhaapparels.com";
 const MAX_BODY_BYTES = 12_000;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 80;
 
 const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-
-const ipHits = new Map<string, { count: number; resetAt: number }>();
 
 function cleanText(value: unknown, max = 500) {
   return typeof value === "string" ? value.replace(/\u0000/g, "").trim().slice(0, max) : "";
@@ -49,19 +50,16 @@ function corsHeaders(origin: string | null) {
   };
 }
 
-function json(payload: unknown, status: number, origin: string | null) {
-  return new Response(JSON.stringify(payload), { status, headers: corsHeaders(origin) });
-}
-
-function rateLimited(ip: string) {
-  const now = Date.now();
-  const current = ipHits.get(ip);
-  if (!current || current.resetAt <= now) {
-    ipHits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-  current.count += 1;
-  return current.count > RATE_LIMIT_MAX;
+function json(
+  payload: unknown,
+  status: number,
+  origin: string | null,
+  extraHeaders: Record<string, string> = {},
+) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders(origin), ...extraHeaders },
+  });
 }
 
 function validSessionId(value: unknown): value is string {
@@ -138,12 +136,6 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405, origin);
   if (origin && allowedOrigin(origin) !== origin) return json({ error: "origin_not_allowed" }, 403, origin);
 
-  const ip = req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown";
-  if (rateLimited(ip)) return json({ error: "too_many_requests" }, 429, origin);
-
   const declaredLength = Number(req.headers.get("content-length") || 0);
   if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
     return json({ error: "request_too_large" }, 413, origin);
@@ -156,10 +148,46 @@ Deno.serve(async (req: Request) => {
     const action = cleanText(body.action, 20);
     const visitorSessionId = body.visitorSessionId;
     if (!validSessionId(visitorSessionId)) return json({ error: "invalid_visitor_session" }, 400, origin);
-    if (!["arrive", "heartbeat", "chat_open"].includes(action)) return json({ error: "invalid_action" }, 400, origin);
+    const policyKey = policyForSiteVisitorAction(action);
+    if (!policyKey) return json({ error: "invalid_action" }, 400, origin);
+
+    const currentPath = cleanPath(body.currentPath);
+    let limiter;
+    try {
+      limiter = await authorizeDurableRateLimit({
+        client: service,
+        request: req,
+        secret: SERVICE_ROLE_KEY,
+        endpoint: "site-visitor",
+        policyKey,
+        clientSessionId: visitorSessionId,
+        rateLimitToken: cleanText(body.rateLimitToken, 2_000) || null,
+        resourceValue: { action, currentPath },
+        duplicateValue: { visitorSessionId, action, currentPath },
+      });
+    } catch (error) {
+      if (error instanceof DurableRateLimitUnavailableError) {
+        return json({ ok: true, dropped: "limiter_unavailable" }, 200, origin);
+      }
+      throw error;
+    }
+
+    if (!limiter.allowed) {
+      return json(
+        { error: "too_many_requests" },
+        429,
+        origin,
+        { "Retry-After": String(limiter.retryAfterSeconds) },
+      );
+    }
+    if (limiter.duplicateSuppressed) {
+      return json({ ok: true, dropped: "duplicate", rateLimitToken: limiter.rateLimitToken }, 200, origin);
+    }
 
     const userAgent = cleanText(req.headers.get("user-agent"), 1000);
-    if (isLikelyBot(userAgent)) return json({ ok: true, ignored: "automated_client" }, 200, origin);
+    if (isLikelyBot(userAgent)) {
+      return json({ ok: true, ignored: "automated_client", rateLimitToken: limiter.rateLimitToken }, 200, origin);
+    }
 
     const headerCountry = header(req, ["cf-ipcountry", "x-country-code", "x-vercel-ip-country", "cloudfront-viewer-country"]);
     const countryCode = cleanCountryCode(headerCountry) || cleanCountryCode(body.countryCode);
@@ -169,7 +197,6 @@ Deno.serve(async (req: Request) => {
     const timezone = cleanText(header(req, ["cf-timezone", "x-vercel-ip-timezone"]) || body.timezone, 100) || null;
     const language = cleanText(body.language, 40) || null;
     const entryPath = cleanPath(body.entryPath);
-    const currentPath = cleanPath(body.currentPath);
     const referrerHost = cleanHost(body.referrerHost);
     const deviceType = device(body.deviceType);
     const viewportWidth = Math.max(0, Math.min(20_000, Number(body.viewportWidth) || 0)) || null;
@@ -270,9 +297,10 @@ Deno.serve(async (req: Request) => {
       country,
       region,
       city,
+      rateLimitToken: limiter.rateLimitToken,
     }, 200, origin);
   } catch (error) {
-    console.error("site-visitor error", error);
+    console.error("site-visitor error", error instanceof Error ? error.message : "unknown_error");
     return json({ error: "visitor_presence_unavailable" }, 503, origin);
   }
 });
