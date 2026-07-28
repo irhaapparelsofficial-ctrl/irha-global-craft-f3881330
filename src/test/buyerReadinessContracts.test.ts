@@ -97,6 +97,9 @@ describe("B2B buyer-readiness contracts", () => {
       expect(migration).toContain(table);
     }
     expect(migration).toContain("refresh_admin_ai_snapshot_cache");
+    expect(migration).toContain("rules #>> '{company,websiteState}' as website_state");
+    expect(migration).toContain("pg_get_functiondef('public.admin_ai_live_snapshot()'::regprocedure)");
+    expect(migration).not.toContain("'website_state', 'Experienced manufacturer; website newly built'");
     expect(migration).not.toMatch(/\bdelete\s+from\b/i);
   });
 
