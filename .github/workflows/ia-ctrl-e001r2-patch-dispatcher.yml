@@ -1,0 +1,38 @@
+name: IA-CTRL-E001R2 Patch Dispatcher
+
+on:
+  push:
+    branches:
+      - codex/ia-ctrl-e001r2-parity-seal
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/ia-ctrl-e001r2-parity-seal
+      - name: Seal approved notification-dispatcher v8 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/ci/generate-supabase-manifest.mjs')
+          text = path.read_text()
+          old = 'dispatcher.version !== 7 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7"'
+          new = 'dispatcher.version !== 8 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48"'
+          if text.count(old) != 1:
+              raise SystemExit('Expected notification-dispatcher v7 contract not found exactly once')
+          path.write_text(text.replace(old, new))
+          PY
+          rm .github/workflows/ia-ctrl-e001r2-patch-dispatcher.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/ci/generate-supabase-manifest.mjs .github/workflows/ia-ctrl-e001r2-patch-dispatcher.yml
+          git commit -m "test(parity): lock notification-dispatcher v8"
+          git push origin HEAD:codex/ia-ctrl-e001r2-parity-seal
