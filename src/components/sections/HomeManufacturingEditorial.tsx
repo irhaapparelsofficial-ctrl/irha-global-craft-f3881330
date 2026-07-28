@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Eye, FileCheck2, PackageCheck, Scissors, Tags, Video } from "lucide-react";
 
 const VERIFY = [
-  { Icon: Eye, title: "Live factory-call request", text: "A buyer can request an appointment-based live call. Availability and viewing scope are confirmed after the requirement is reviewed." },
+  { Icon: Eye, title: "Live factory view by request", text: "A buyer can request an appointment-based live call. Availability and viewing scope are confirmed after the requirement is reviewed." },
   { Icon: Scissors, title: "Sample and construction review", text: "Materials, measurements, construction details and requested revisions are discussed before a bulk commitment." },
   { Icon: Tags, title: "Branding scope", text: "Artwork placement, labels, trims and packaging are confirmed against the buyer-approved specification." },
   { Icon: PackageCheck, title: "Packing and dispatch review", text: "Packing, documentation, destination and shipping responsibilities are confirmed for the approved order." },
@@ -17,7 +17,7 @@ export default function HomeManufacturingEditorial() {
           <FileCheck2 size={26} className="text-primary" />
           <p className="mt-5 text-[9px] font-semibold uppercase tracking-[0.22em] text-primary sm:text-[10px]">Buyer verification</p>
           <h2 id="buyer-verification-title" className="mt-3 font-display text-3xl leading-[1.08] sm:text-4xl lg:text-5xl">
-            Verify the scope before a commercial commitment.
+            See what can be verified before bulk production.
           </h2>
           <p className="mt-4 text-sm leading-7 text-white/66">
             A professional B2B order should move forward on a reviewed brief, written specification and documented approvals—not broad website claims.

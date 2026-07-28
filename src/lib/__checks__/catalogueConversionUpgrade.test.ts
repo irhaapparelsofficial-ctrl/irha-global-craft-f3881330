@@ -11,7 +11,8 @@ describe("canonical catalogue conversion journey", () => {
     expect(collections).toContain("usePublicCategories");
     expect(collections).toContain("usePublishedCategoryTaxonomy");
     expect(collections).toContain("<CategoryAudienceNavigator");
-    expect(collections).toContain("Main category to");
+    expect(collections).toContain("Browse by category");
+    expect(collections).toContain("buyer group and product type");
     expect(collections).not.toContain("CATALOGUE_GROUPS");
   });
 
@@ -37,6 +38,6 @@ describe("canonical catalogue conversion journey", () => {
     const collections = read("src/pages/GlobalCollectionsPage.tsx");
     expect(collections).toContain("Search all");
     expect(collections).toContain("Discuss a buyer program");
-    expect(collections).toContain("Open category hierarchy");
+    expect(collections).toContain("Browse products");
   });
 });

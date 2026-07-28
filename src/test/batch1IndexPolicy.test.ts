@@ -39,7 +39,7 @@ describe("Batch 1 public index cleanup", () => {
     const patcher = read("scripts/patch-cloudflare-route-shell-assets.mjs");
 
     expect(patcher).toContain("FUNCTIONAL_SPA_PATHS");
-    expect(patcher).toContain('const FUNCTIONAL_NOINDEX_PATHS = new Set(["/studio", "/shortlist", "/compare"])');
+    expect(patcher).toContain('const FUNCTIONAL_NOINDEX_PATHS = new Set(["/studio", "/shortlist", "/compare", "/products/all"])');
     expect(patcher).toContain("if (!explicitResponse.ok) return notFoundResponse(request, pathname)");
     expect(patcher).toContain('withNoIndexHeaders(assetResponse, "functional-public-tool")');
     expect(patcher).not.toContain("if (!explicitResponse.ok) return env.ASSETS.fetch(request)");
