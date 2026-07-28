@@ -29,7 +29,7 @@ jobs:
     timeout-minutes: 70
 
     steps:
-      - name: Checkout exact source
+      - name: Checkout current source
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -122,11 +122,22 @@ jobs:
           jq -e '.schemaVersion == 1 and .productCount == 254 and (.products | length) == 254' \
             dist/catalog-route-manifest.json >/dev/null
 
+      - name: Collect failing test names
+        id: failure-label
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          failed_tests="$(sed -nE 's/^[[:space:]]*FAIL[[:space:]]+(src\/[^ >]+\.(test|spec)\.[tj]sx?).*/\1/p' quality-test.log 2>/dev/null | sort -u || true)"
+          label="$(printf '%s\n' "$failed_tests" | sed '/^$/d; s#/#-#g' | paste -sd '_' - | cut -c1-180 || true)"
+          if [ -z "$label" ]; then label="build-or-unknown"; fi
+          echo "label=$label" >> "$GITHUB_OUTPUT"
+
       - name: Upload failed quality diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: quality-failure-${{ github.sha }}
+          name: quality-${{ steps.failure-label.outputs.label }}-${{ github.sha }}
           path: |
             quality-test.log
             quality-build.log
@@ -156,7 +167,9 @@ jobs:
           {
             echo "## Buyer-ready Quality Gate"
             echo "- Source: \`$GITHUB_SHA\`"
-            echo "- Dependency, source-lock, secret and migration gates: required"
+            echo "- Dependency install: exact npm lockfile via \`npm ci\`"
+            echo "- Dependency manifests: immutable"
+            echo "- Deployment source lock, secret safety and migration registry: required"
             echo "- Static Supabase parity: required"
             echo "- TypeScript and changed-file strict ESLint: required"
             echo "- Repository lint baseline: must not exceed 445 errors / 30 warnings"
