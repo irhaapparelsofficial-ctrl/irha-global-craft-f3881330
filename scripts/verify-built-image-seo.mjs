@@ -136,7 +136,7 @@ async function verifyProduct(pathname, product, sitemapImage) {
   const image = [...document.querySelectorAll("img")].find((node) => node.getAttribute("src") === product.image_url);
   if (!image) throw new Error(`${product.reference_code} primary <img> missing from initial HTML`);
 
-  const expectedAlt = `Front view of ${product.product_name}`;
+  const expectedAlt = `Digital catalogue reference for ${product.product_name}, view 1`;
   if (image.getAttribute("alt") !== expectedAlt) throw new Error(`${product.reference_code} primary alt mismatch`);
   if (image.getAttribute("loading") !== "eager") throw new Error(`${product.reference_code} primary image is not eager`);
   if (image.getAttribute("fetchpriority") !== "high") throw new Error(`${product.reference_code} primary image lacks high fetch priority`);
@@ -173,7 +173,7 @@ async function verifyTaxonomy(pathname, entry, sitemapImage) {
   const document = parseHtml(pathname, await readFile(join(DIST_DIR, pathname.slice(1), "index.html"), "utf8"));
   const image = document.querySelector('figure[data-irha-taxonomy-primary-image="true"] img');
   if (!image || image.getAttribute("src") !== entry.image_url) throw new Error(`Taxonomy primary <img> missing: ${pathname}`);
-  const expectedAlt = `Front view of ${entry.product.product_name} representing ${entry.label}`;
+  const expectedAlt = `Digital catalogue reference for ${entry.product.product_name} representing ${entry.label}`;
   if (image.getAttribute("alt") !== expectedAlt) throw new Error(`Taxonomy alt mismatch: ${pathname}`);
   if (image.getAttribute("loading") !== "eager" || image.getAttribute("fetchpriority") !== "high") {
     throw new Error(`Taxonomy image priority mismatch: ${pathname}`);

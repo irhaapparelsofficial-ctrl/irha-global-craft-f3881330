@@ -48,9 +48,12 @@ describe("B2B buyer-readiness contracts", () => {
     const product = read("src/pages/CanonicalProductDetail.tsx");
     const allProducts = read("src/pages/AllProductsPage.tsx");
     const shells = read("scripts/generate-static-route-shells.ts");
+    const imageFinalizer = read("scripts/finalize-image-seo.mjs");
     expect(product).toMatch(/Digital catalogue references show design direction/);
     expect(allProducts).toContain("publishedRoute?.canonicalPath");
     expect(shells).toContain("digital reference gallery");
     expect(shells).toContain("code: product.reference_code");
+    expect(imageFinalizer).toContain("Digital catalogue reference for");
+    expect(imageFinalizer).not.toContain("Front view of");
   });
 });

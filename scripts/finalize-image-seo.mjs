@@ -210,12 +210,12 @@ function alignPrimaryProductImage(html, product, imageUrl) {
   const pattern = new RegExp(`<img\\b[^>]*\\bsrc=["']${escapedUrl}["'][^>]*>`, "i");
   const match = html.match(pattern);
   if (!match) throw new Error(`${product.reference_code} primary image element is missing`);
-  const replacement = `<img data-irha-primary-image="true" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(`Front view of ${product.product_name}`)}" width="1200" height="1200" loading="eager" fetchpriority="high" decoding="async" style="width:100%;height:auto;display:block;background:#151515;object-fit:contain" />`;
+  const replacement = `<img data-irha-primary-image="true" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(`Digital catalogue reference for ${product.product_name}, view 1`)}" width="1200" height="1200" loading="eager" fetchpriority="high" decoding="async" style="width:100%;height:auto;display:block;background:#151515;object-fit:contain" />`;
   return html.replace(pattern, replacement);
 }
 
 function taxonomyFigure(entry) {
-  const alt = `Front view of ${entry.product.product_name} representing ${entry.label}`;
+  const alt = `Digital catalogue reference for ${entry.product.product_name} representing ${entry.label}`;
   return `<figure data-irha-taxonomy-primary-image="true" style="max-width:760px;margin:34px 0 0">
         <img src="${escapeHtml(entry.image_url)}" alt="${escapeHtml(alt)}" width="1200" height="1200" loading="eager" fetchpriority="high" decoding="async" style="width:100%;height:auto;display:block;background:#151515;object-fit:contain;border:1px solid #2e2a25" />
         <figcaption style="margin-top:10px;color:#aaa29a;font-size:13px">Representative published product: ${escapeHtml(entry.product.product_name)}</figcaption>
@@ -239,7 +239,7 @@ async function finalizeProductHtml(product) {
   const path = join(DIST_DIR, product.canonical_path.slice(1), "index.html");
   let html = await readFile(path, "utf8");
   const imageUrl = product.image_url;
-  const alt = `Front view of ${product.product_name}`;
+  const alt = `Digital catalogue reference for ${product.product_name}, view 1`;
 
   html = alignPrimaryProductImage(html, product, imageUrl);
   html = replaceRouteSchemas(html, productSchemas(parseRouteSchemas(html, product.canonical_path), product, imageUrl));
@@ -250,7 +250,7 @@ async function finalizeProductHtml(product) {
 async function finalizeTaxonomyHtml(pathname, entry) {
   const path = join(DIST_DIR, pathname.slice(1), "index.html");
   let html = await readFile(path, "utf8");
-  const alt = `Front view of ${entry.product.product_name} representing ${entry.label}`;
+  const alt = `Digital catalogue reference for ${entry.product.product_name} representing ${entry.label}`;
 
   html = alignTaxonomyImage(html, pathname, entry);
   html = replaceRouteSchemas(html, taxonomySchemas(parseRouteSchemas(html, pathname), pathname, entry.image_url));
