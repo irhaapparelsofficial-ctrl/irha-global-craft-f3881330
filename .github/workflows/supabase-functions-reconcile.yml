@@ -149,13 +149,14 @@ jobs:
             .functions |= map(
               . as $row |
               ($plan[0].functions | map(.name) | index($row[0])) as $planned |
-              if $planned == null then .
+              ($row[0] == "notification-dispatcher") as $dispatcher |
+              if $planned == null and ($dispatcher | not) then .
               else
                 ($live[0] | map(select((.name // .slug) == $row[0])) | first) as $fn |
-                if $fn == null then error("planned function missing from live inventory: " + $row[0])
+                if $fn == null then error("required function missing from live inventory: " + $row[0])
                 else
                   .[1] = ($fn.version | tonumber) |
-                  .[2] = ($plan[0].functions[] | select(.name == $row[0]) | .verify_jwt) |
+                  .[2] = (if $dispatcher then $fn.verify_jwt else ($plan[0].functions[] | select(.name == $row[0]) | .verify_jwt) end) |
                   .[3] = ($fn.ezbr_sha256 // $fn.sha256 // error("live function hash missing: " + $row[0]))
                 end
               end
@@ -164,8 +165,7 @@ jobs:
           mv /tmp/functions-f1.json supabase/deployment-parity/functions-f1.json
 
           cp /tmp/supabase-types.ts src/integrations/supabase/types.ts
-          MIGRATION_PROVENANCE_MODE=write node scripts/ci/generate-migration-provenance.mjs
-          SUPABASE_MANIFEST_MODE=write node scripts/ci/generate-supabase-manifest.mjs
+          node scripts/ci/run-sec-m03-parity-generation.mjs
 
           jq -n \
             --arg source_sha "$SOURCE_SHA" \
@@ -204,5 +204,6 @@ jobs:
             echo "- Deployment count: \`${{ steps.plan.outputs.deploy_count || 'not-reached' }}\`"
             echo "- Scope: generate-mockup, live-chat, site-visitor only"
             echo "- Shared helper: bundled dependency, never deployed as a function"
+            echo "- Notification dispatcher: parity-refresh only; never deployed by this workflow"
             echo "- Post-deploy canonical parity export: required"
           } >> "$GITHUB_STEP_SUMMARY"
