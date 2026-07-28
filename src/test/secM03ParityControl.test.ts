@@ -6,6 +6,9 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 
 const workflow = read(".github/workflows/supabase-functions-reconcile.yml");
 const generator = read("scripts/ci/run-sec-m03-parity-generation.mjs");
+const sourceVerifier = read("scripts/ci/verify-sec-m03-deployed-sources.mjs");
+const registryRefresh = read("scripts/ci/refresh-sec-m03-live-parity.mjs");
+const parityPlan = JSON.parse(read("supabase/reconciliation/sec-m03-parity-refresh.json"));
 
 describe("SEC-M03 canonical parity control", () => {
   it("runs from main and requires the successful exact-SHA Quality Gate before mutation", () => {
@@ -19,10 +22,12 @@ describe("SEC-M03 canonical parity control", () => {
     );
   });
 
-  it("uses authenticated Management API JSON for deterministic inventories", () => {
+  it("uses authenticated Management API JSON for deterministic inventories and source retrieval", () => {
     expect(workflow).toContain('https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions');
+    expect(workflow).toContain('functions/$function_name');
     expect(workflow).toContain("/tmp/functions-before.raw.json");
     expect(workflow).toContain("/tmp/functions-after.raw.json");
+    expect(workflow).toContain("/tmp/sec-m03-live-functions");
     expect(workflow).toContain('type == "array" and all(.[];');
     expect(workflow).toContain("inventory_ready=false");
     expect(workflow).not.toContain("supabase functions list");
@@ -35,13 +40,36 @@ describe("SEC-M03 canonical parity control", () => {
     expect(workflow).toContain("/tmp/blocked-f3.txt");
     expect(workflow).toContain("/tmp/blocked-f6.txt");
     expect(workflow).not.toContain("supabase functions deploy _shared");
+    expect(parityPlan.functions.filter((entry: { minimum_version?: number }) => entry.minimum_version)).toHaveLength(3);
   });
 
-  it("refreshes but never deploys the protected notification dispatcher", () => {
-    expect(workflow).toContain('$row[0] == "notification-dispatcher"');
-    expect(workflow).toContain("Notification dispatcher: parity-refresh only; never deployed by this workflow");
+  it("accepts only five explicitly proven parity refresh rows", () => {
+    expect(parityPlan.functions.map((entry: { name: string }) => entry.name).sort()).toEqual([
+      "generate-mockup",
+      "live-chat",
+      "notification-dispatcher",
+      "public-lead-gateway",
+      "site-visitor",
+    ]);
+    expect(sourceVerifier).toContain("Exact deployed source mismatch");
+    expect(sourceVerifier).toContain("Durable limiter helper mismatch");
+    expect(registryRefresh).toContain("Registry row missing");
+    expect(registryRefresh).toContain("Exact hash mismatch");
+  });
+
+  it("source-verifies but never deploys protected pre-existing v8 functions", () => {
+    expect(workflow).toContain("Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8");
+    expect(parityPlan.functions.find((entry: { name: string }) => entry.name === "notification-dispatcher")).toMatchObject({
+      registry: "supabase/deployment-parity/functions-f2.json",
+      exact_version: 8,
+      exact_hash: "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48",
+    });
+    expect(parityPlan.functions.find((entry: { name: string }) => entry.name === "public-lead-gateway")).toMatchObject({
+      registry: "supabase/deployment-parity/functions-f1.json",
+      exact_version: 8,
+      exact_hash: "717a53d6c63bcd92485fc2a18e460aab98ec6f5cf6eae0f3b0ef68da1e011471",
+    });
     expect(generator).toContain("const dispatcherVersion = 8");
-    expect(generator).toContain("2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48");
   });
 
   it("requires the exact reviewed migration and project baseline", () => {

@@ -17,6 +17,7 @@ concurrency:
 env:
   SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
   PLAN_FILE: supabase/reconciliation/sec-m03-function-reconciliation.json
+  PARITY_REFRESH_FILE: supabase/reconciliation/sec-m03-parity-refresh.json
 
 jobs:
   reconcile:
@@ -77,13 +78,21 @@ jobs:
           latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
           test "$latest_main" = "$SOURCE_SHA"
           test -s "$PLAN_FILE"
+          test -s "$PARITY_REFRESH_FILE"
           test "$(jq -r '.schema_version' "$PLAN_FILE")" = "1"
           test "$(jq -r '.project_id' "$PLAN_FILE")" = "$SUPABASE_PROJECT_ID"
           test "$(jq -r '.execution_id' "$PLAN_FILE")" = "IA-CTRL-E001"
           test "$(jq '.functions | length' "$PLAN_FILE")" = "3"
+          test "$(jq -r '.schema_version' "$PARITY_REFRESH_FILE")" = "1"
+          test "$(jq -r '.project_id' "$PARITY_REFRESH_FILE")" = "$SUPABASE_PROJECT_ID"
+          test "$(jq -r '.execution_id' "$PARITY_REFRESH_FILE")" = "IA-CTRL-E001R"
+          test "$(jq '.functions | length' "$PARITY_REFRESH_FILE")" = "5"
 
           jq -r '.functions[].name' "$PLAN_FILE" | sort -u > /tmp/planned-functions.txt
           test "$(wc -l < /tmp/planned-functions.txt | tr -d ' ')" = "3"
+          printf '%s\n' generate-mockup live-chat notification-dispatcher public-lead-gateway site-visitor | sort > /tmp/approved-parity-refresh.txt
+          jq -r '.functions[].name' "$PARITY_REFRESH_FILE" | sort -u > /tmp/planned-parity-refresh.txt
+          cmp -s /tmp/approved-parity-refresh.txt /tmp/planned-parity-refresh.txt
 
           jq -r '.functions[][0]' supabase/deployment-parity/functions-f3.json | sort -u > /tmp/blocked-f3.txt
           jq -r '.functions[][0]' supabase/deployment-parity/functions-f6.json | sort -u > /tmp/blocked-f6.txt
@@ -96,6 +105,13 @@ jobs:
             ! grep -Fqx "$function_name" /tmp/blocked-functions.txt
             test -f "supabase/functions/$function_name/index.ts"
           done < /tmp/planned-functions.txt
+
+          while IFS=$'\t' read -r function_name registry source_path; do
+            test -n "$function_name"
+            test -f "$registry"
+            test -f "$source_path"
+            ! grep -Fqx "$function_name" /tmp/blocked-functions.txt
+          done < <(jq -r '.functions[] | [.name, .registry, .repository_source] | @tsv' "$PARITY_REFRESH_FILE")
 
       - name: Verify project identity and compute bounded deployment set
         id: plan
@@ -191,6 +207,38 @@ jobs:
             exit 1
           fi
 
+      - name: Verify exact deployed sources and refresh approved registries
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          echo "::add-mask::$token"
+          mkdir -p /tmp/sec-m03-live-functions
+
+          while IFS= read -r function_name; do
+            curl --retry 3 --retry-all-errors -fsS \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/$function_name" \
+              -o "/tmp/sec-m03-live-functions/$function_name.json"
+            jq -e --arg name "$function_name" \
+              '(.slug == $name or .name == $name) and (.version | type == "number") and (.verify_jwt | type == "boolean") and (.ezbr_sha256 | type == "string") and (.files | type == "array")' \
+              "/tmp/sec-m03-live-functions/$function_name.json" > /dev/null
+          done < /tmp/planned-parity-refresh.txt
+
+          SEC_M03_PARITY_REFRESH_PLAN="$PARITY_REFRESH_FILE" \
+          SEC_M03_LIVE_FUNCTION_DIRECTORY=/tmp/sec-m03-live-functions \
+          SEC_M03_SOURCE_EVIDENCE=/tmp/sec-m03-deployed-source-evidence.json \
+          SOURCE_SHA="$SOURCE_SHA" \
+            node scripts/ci/verify-sec-m03-deployed-sources.mjs
+
+          SEC_M03_PARITY_REFRESH_PLAN="$PARITY_REFRESH_FILE" \
+          SEC_M03_LIVE_INVENTORY=/tmp/functions-after.json \
+          SEC_M03_REGISTRY_EVIDENCE=/tmp/sec-m03-registry-refresh-evidence.json \
+          SOURCE_SHA="$SOURCE_SHA" \
+            node scripts/ci/refresh-sec-m03-live-parity.mjs
+
       - name: Generate exact post-deploy type and parity evidence
         shell: bash
         run: |
@@ -202,25 +250,6 @@ jobs:
           ! grep -E '(sb_secret_|service_role[^A-Za-z0-9]|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,})' /tmp/supabase-types.ts
           node scripts/ci/verify-supabase-type-supplement.mjs /tmp/supabase-types.ts
 
-          jq --slurpfile live /tmp/functions-after.json --slurpfile plan "$PLAN_FILE" '
-            .functions |= map(
-              . as $row |
-              ($plan[0].functions | map(.name) | index($row[0])) as $planned |
-              ($row[0] == "notification-dispatcher") as $dispatcher |
-              if $planned == null and ($dispatcher | not) then .
-              else
-                ($live[0] | map(select((.name // .slug) == $row[0])) | first) as $fn |
-                if $fn == null then error("required function missing from live inventory: " + $row[0])
-                else
-                  .[1] = ($fn.version | tonumber) |
-                  .[2] = (if $dispatcher then $fn.verify_jwt else ($plan[0].functions[] | select(.name == $row[0]) | .verify_jwt) end) |
-                  .[3] = ($fn.ezbr_sha256 // $fn.sha256 // error("live function hash missing: " + $row[0]))
-                end
-              end
-            )
-          ' supabase/deployment-parity/functions-f1.json > /tmp/functions-f1.json
-          mv /tmp/functions-f1.json supabase/deployment-parity/functions-f1.json
-
           cp /tmp/supabase-types.ts src/integrations/supabase/types.ts
           node scripts/ci/run-sec-m03-parity-generation.mjs
 
@@ -228,10 +257,13 @@ jobs:
             --arg source_sha "$SOURCE_SHA" \
             --arg project_id "$SUPABASE_PROJECT_ID" \
             --slurpfile plan "$PLAN_FILE" \
+            --slurpfile parity_refresh "$PARITY_REFRESH_FILE" \
             --slurpfile before /tmp/functions-before.json \
             --slurpfile deployed /tmp/functions-to-deploy.json \
             --slurpfile after /tmp/functions-after.json \
-            '{source_sha: $source_sha, project_id: $project_id, plan: $plan[0], before: $before[0], deployed: $deployed[0], after: $after[0]}' \
+            --slurpfile source_evidence /tmp/sec-m03-deployed-source-evidence.json \
+            --slurpfile registry_evidence /tmp/sec-m03-registry-refresh-evidence.json \
+            '{source_sha: $source_sha, project_id: $project_id, plan: $plan[0], parity_refresh: $parity_refresh[0], before: $before[0], deployed: $deployed[0], after: $after[0], source_evidence: $source_evidence[0], registry_evidence: $registry_evidence[0]}' \
             > /tmp/sec-m03-function-reconciliation-evidence.json
 
       - name: Upload exact reconciliation and parity closure evidence
@@ -240,10 +272,14 @@ jobs:
           name: sec-m03-parity-closure-${{ env.SOURCE_SHA }}
           path: |
             /tmp/sec-m03-function-reconciliation-evidence.json
+            /tmp/sec-m03-deployed-source-evidence.json
+            /tmp/sec-m03-registry-refresh-evidence.json
             /tmp/functions-before.json
             /tmp/functions-after.json
             /tmp/supabase-types.ts
+            supabase/reconciliation/sec-m03-parity-refresh.json
             supabase/deployment-parity/functions-f1.json
+            supabase/deployment-parity/functions-f2.json
             supabase/deployment-parity/migration-provenance.json
             supabase/deployment-parity/manifest.json
           if-no-files-found: error
@@ -261,8 +297,8 @@ jobs:
             echo "- Deployment count: \`${{ steps.plan.outputs.deploy_count || 'not-reached' }}\`"
             echo "- Scope: generate-mockup, live-chat, site-visitor only"
             echo "- Shared helper: bundled dependency, never deployed as a function"
-            echo "- Notification dispatcher: parity-refresh only; never deployed by this workflow"
+            echo "- Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8"
             echo "- Exact-SHA Quality Gate: required before mutation"
-            echo "- Inventory source: authenticated Supabase Management API JSON"
+            echo "- Inventory and source: authenticated Supabase Management API JSON"
             echo "- Post-deploy canonical parity export: required"
           } >> "$GITHUB_STEP_SUMMARY"
