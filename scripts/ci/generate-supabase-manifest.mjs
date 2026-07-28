@@ -326,7 +326,7 @@ async function buildManifest(root, accessToken) {
   }));
 
   const dispatcher = liveFunctions.find((fn) => fn.name === "notification-dispatcher");
-  if (!dispatcher || dispatcher.version !== 7 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7") throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");
+  if (!dispatcher || dispatcher.version !== 8 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48") throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");
 
   const privateExposure = Object.entries(browserExposure)
     .filter(([name]) => name !== "public_schema_usage")
@@ -392,7 +392,7 @@ async function buildManifest(root, accessToken) {
 
   if (privateExposure) throw new ManifestError("PRIVATE_SCHEMA_EXPOSURE", "A private schema is exposed to a browser role");
   if (cron.count !== 8 || cron.active_count !== 8) throw new ManifestError("CRON_DRIFT", "Expected all eight cron jobs to remain active");
-  if (database.live_migrations.count !== 374) throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 374 live migrations");
+  if (database.live_migrations.count !== 375) throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 375 live migrations");
   return canonicalize({ ...payload, manifest_sha256: sha256(canonicalJson(payload)) });
 }
 

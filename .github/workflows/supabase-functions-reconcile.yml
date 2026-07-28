@@ -214,18 +214,10 @@ jobs:
           token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
           test -n "$token"
           echo "::add-mask::$token"
-          mkdir -p /tmp/sec-m03-live-functions
-
-          while IFS= read -r function_name; do
-            curl --retry 3 --retry-all-errors -fsS \
-              -H "Authorization: Bearer $token" \
-              -H 'Content-Type: application/json' \
-              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/$function_name" \
-              -o "/tmp/sec-m03-live-functions/$function_name.json"
-            jq -e --arg name "$function_name" \
-              '(.slug == $name or .name == $name) and (.version | type == "number") and (.verify_jwt | type == "boolean") and (.ezbr_sha256 | type == "string") and (.files | type == "array")' \
-              "/tmp/sec-m03-live-functions/$function_name.json" > /dev/null
-          done < /tmp/planned-parity-refresh.txt
+          SUPABASE_ACCESS_TOKEN="$token" \
+          SEC_M03_PARITY_REFRESH_PLAN="$PARITY_REFRESH_FILE" \
+          SEC_M03_LIVE_FUNCTION_DIRECTORY=/tmp/sec-m03-live-functions \
+            node scripts/ci/fetch-supabase-edge-sources.mjs
 
           SEC_M03_PARITY_REFRESH_PLAN="$PARITY_REFRESH_FILE" \
           SEC_M03_LIVE_FUNCTION_DIRECTORY=/tmp/sec-m03-live-functions \
@@ -299,6 +291,6 @@ jobs:
             echo "- Shared helper: bundled dependency, never deployed as a function"
             echo "- Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8"
             echo "- Exact-SHA Quality Gate: required before mutation"
-            echo "- Inventory and source: authenticated Supabase Management API JSON"
+            echo "- Inventory and source: authenticated Supabase Management API metadata plus multipart body"
             echo "- Post-deploy canonical parity export: required"
           } >> "$GITHUB_STEP_SUMMARY"

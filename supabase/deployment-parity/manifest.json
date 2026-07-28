@@ -81,22 +81,22 @@
     "canonical_digests_sha256": {
       "columns": "e885b2a26113a0d0e7a13ffb1a04e7397b08a921dc901e33034a1cb53ed5dc14",
       "constraints": "05af8906cd94f5f087f5f2eb90e522a826a7ccaf16181adc3d520f1082d0aa12",
-      "functions": "9659aa58955d63a0c5850f77f27dec487c51aac5195cf2792fa08e6ee8283eba",
+      "functions": "4ecb1d14fe8e63c89c26a41ec2070a69e9c5d76fd331cec4ad39b70e28b7a1d7",
       "indexes": "3641f5881006df448cbf1b0b298de3bad6293c9fbf0354bcb4b11a54346774c3",
-      "migrations": "a2a824f36d5a6c12d7a53c2c7af97c09f6ff7829d63d8b6ce5f08fe288135944",
+      "migrations": "1f0a66c4e4b36b46f2e4796452008545483c404f43adc7a2cb4be00cece9e8c0",
       "policies": "e80cb14c36cd41042f7598b7004a1c102781e95d3f484474bfbd9870ca13fee5",
       "triggers": "a973ab9cfdb51d215c0c6533c1e973cca60712877b61d6ac37dc687fbcc7c05b"
     },
     "live_migrations": {
-      "count": 374,
-      "max_version": "20260727232321",
+      "count": 375,
+      "max_version": "20260728173945",
       "min_version": "20260712185505"
     },
     "public": {
       "constraints": 945,
-      "distinct_function_names": 201,
+      "distinct_function_names": 203,
       "enums": 4,
-      "function_signatures": 202,
+      "function_signatures": 204,
       "indexes": 666,
       "policies": 223,
       "rls_enabled_tables": 158,
@@ -106,20 +106,20 @@
     }
   },
   "edge_functions": {
-    "classification_sha256": "37fcd68be31f04ce8a1d0e6cc0b06574e78f145488dc98d1754e2a98359b1230",
+    "classification_sha256": "270bf7e02268185b1620491c5359d0b7490293475ffff33c6343c6bbc78ea46d",
     "config_parity": true,
     "config_toml_sha256": "97dde99e8a5a4409986ef5c1adbf9c7777baa37186e47f51f4942a239274c77f",
     "deployed_count": 87,
-    "live_inventory_sha256": "a0d6c902433b7b368f1f456fb12423209e1cd2cf68a94e09c0b64a001d7d6dbd",
+    "live_inventory_sha256": "17c0dbbd301cfda6b1440fc5bb72d6489cdef68379b84eb4e36f1b6f341e3d65",
     "registries": {
       "F1": {
         "count": 33,
-        "file_sha256": "6719d4485abee7c6a90813ee313878e2a6b8a61087ae7c34fff05be10dd04677",
+        "file_sha256": "0a1e4ff4755bd2f4263b63e99d30f4df963cd20db40d3788f17261993087c3e0",
         "path": "supabase/deployment-parity/functions-f1.json"
       },
       "F2": {
         "count": 14,
-        "file_sha256": "8361d3d3b492c9ac853f24d44a955f496e98a25cdb6b2ae6182faae3cebe1f00",
+        "file_sha256": "e2a1e673509242846c4f69a7bcae4eb1f25f971669b9bfebf005b29acf9a4842",
         "path": "supabase/deployment-parity/functions-f2.json"
       },
       "F3": {
@@ -150,10 +150,10 @@
     "committed_file": "src/integrations/supabase/types.ts",
     "freshness_gate": "official Supabase CLI public-schema generation and byte-for-byte comparison",
     "private_schemas_excluded": true,
-    "sha256": "9043d6f38cb28eccb5809aa5290a879d4bebb30e3f99feaf30835648c2b2aba8",
+    "sha256": "931aaed39a81e52f46369b4ad8768476ea5270cdd754e8836ac6b2591354464c",
     "totals": {
       "enums": 4,
-      "function_signatures": 202,
+      "function_signatures": 204,
       "tables": 158,
       "views": 13
     }
@@ -167,20 +167,20 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "bf8c102f823c3deb65ee3eaea923daa922d74a442efb3221f1ec257df0650197",
+  "manifest_sha256": "c3e0e67bdafff639bb5402231494146708597f1c62489973fc3245a749cedb2c",
   "migration_provenance": {
-    "canonical_payload_sha256": "a2faf992844347e0a053c6cb573ffc63efee5f59958f62e9bf89eb3895099083",
-    "file_sha256": "5f673ea323529ca82ab178a0813b60a47214c4de6d690190d239115ee7cfaafd",
+    "canonical_payload_sha256": "b913642c2e82b87a0f027d5deb8dd8ea103844ef98e9e08b3f6cd19f5f0ea937",
+    "file_sha256": "cb040c031239127063e2225d65c72a25f2ba04aad2407dd34ec0827211ba8820",
     "path": "supabase/deployment-parity/migration-provenance.json",
     "totals": {
       "P1": 4,
-      "P2": 370,
+      "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 374
+      "live": 375
     }
   },
   "schema_version": 2,
@@ -188,9 +188,9 @@
     "notification_dispatcher": {
       "custom_auth_required": true,
       "single_use_scheduler_authorization": true,
-      "source_sha256": "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7",
+      "source_sha256": "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48",
       "verify_jwt": false,
-      "version": 7
+      "version": 8
     },
     "sealed_stub_count": 9,
     "secret_values_in_manifest": false,

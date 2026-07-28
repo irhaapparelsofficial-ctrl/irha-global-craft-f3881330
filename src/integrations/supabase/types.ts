@@ -10568,6 +10568,13 @@ export type Database = {
       }
       claim_owner_admin: { Args: never; Returns: boolean }
       claim_sitemap_submission: { Args: { _token: string }; Returns: boolean }
+      cleanup_edge_rate_limit_state: {
+        Args: { p_max_rows?: number }
+        Returns: {
+          metric_rows_deleted: number
+          state_rows_deleted: number
+        }[]
+      }
       cleanup_stale_site_visitors: { Args: never; Returns: number }
       cms_get_admin_document: { Args: { _key: string }; Returns: Json }
       cms_get_published_document: { Args: { _key: string }; Returns: Json }
@@ -10633,6 +10640,23 @@ export type Database = {
           _verification: Json
         }
         Returns: undefined
+      }
+      consume_edge_rate_limit: {
+        Args: {
+          p_cost?: number
+          p_duplicate_hash?: string
+          p_now?: string
+          p_policy_key: string
+          p_resource_hash?: string
+          p_subject_hash: string
+        }
+        Returns: {
+          blocked_until: string
+          decision: string
+          duplicate_suppressed: boolean
+          remaining: number
+          retry_after_seconds: number
+        }[]
       }
       consume_public_submission_limit: {
         Args: {
