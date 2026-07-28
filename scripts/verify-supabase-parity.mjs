@@ -84,7 +84,9 @@ assert.ok(types.includes("export type Database"), "generated Database type missi
 assert.ok(!types.includes("private:"), "private schema unexpectedly present in browser types");
 assert.ok(!types.includes("vault:"), "Vault schema unexpectedly present in browser types");
 
-const forbidden = /(service[_-]?role|supabase[_-]?access[_-]?token|private[_-]?key|client[_-]?secret|authorization"\s*:\s*"bearer\s+[a-z0-9._-]+)/i;
+// Match concrete credential formats or assignments, not descriptive metadata such as
+// "service-role operational tooling" or "private key excluded".
+const forbidden = /(eyJ[a-zA-Z0-9_-]{20,}\.[a-zA-Z0-9_-]{20,}\.[a-zA-Z0-9_-]{20,}|sbp_[a-zA-Z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|authorization"\s*:\s*"bearer\s+[a-z0-9._-]{20,}|(?:service_role_key|supabase_access_token|client_secret|private_key)"?\s*[:=]\s*"[^"]{12,}")/i;
 for (const path of [
   "supabase/deployment-parity/manifest.json",
   "supabase/deployment-parity/migration-reconciliation.json",
