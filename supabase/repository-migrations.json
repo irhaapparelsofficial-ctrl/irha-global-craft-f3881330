@@ -373,6 +373,14 @@
       "verification_query": "select (to_regclass('public.notification_dispatch_tokens') is not null and to_regprocedure('public.notification_consume_dispatch_token(uuid)') is not null and to_regprocedure('public.notification_dispatch_tick()') is not null and (select relrowsecurity from pg_class where oid = 'public.notification_dispatch_tokens'::regclass) and has_function_privilege('anon','public.notification_consume_dispatch_token(uuid)','execute') and has_function_privilege('authenticated','public.notification_consume_dispatch_token(uuid)','execute') and has_function_privilege('service_role','public.notification_consume_dispatch_token(uuid)','execute') and not has_table_privilege('anon','public.notification_dispatch_tokens','select') and not has_table_privilege('authenticated','public.notification_dispatch_tokens','select') and not has_function_privilege('anon','public.notification_dispatch_tick()','execute') and not has_function_privilege('authenticated','public.notification_dispatch_tick()','execute') and has_function_privilege('service_role','public.notification_dispatch_tick()','execute') and pg_get_functiondef('public.notification_dispatch_tick()'::regprocedure) ilike '%x-irha-notification-token%' and pg_get_functiondef('public.notification_dispatch_tick()'::regprocedure) ilike '%notification_dispatch_tokens%' and pg_get_functiondef('public.notification_consume_dispatch_token(uuid)'::regprocedure) ilike '%consumed_at is null%' and exists (select 1 from cron.job where jobname = 'irha-notification-dispatcher' and schedule = '* * * * *' and command = 'select public.notification_dispatch_tick();' and active)) as verified"
     },
     {
+      "version": "20260728110000",
+      "name": "durable_distributed_rate_limiting",
+      "path": "supabase/migrations/20260728110000_durable_distributed_rate_limiting.sql",
+      "git_blob_sha": "55bf5ee40bd638330436fe160e6c29c561dbf58e",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
       "version": "20260728123000",
       "name": "admin_read_private_b2b_tech_packs",
       "path": "supabase/migrations/20260728123000_admin_read_private_b2b_tech_packs.sql",

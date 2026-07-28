@@ -49,6 +49,7 @@ jobs:
           mapfile -t changed < <(
             git diff-tree --root --no-commit-id --name-only -r "$source_sha" \
               | sed -nE 's#^supabase/functions/([^/]+)/.*#\1#p' \
+              | grep -v '^_shared$' \
               | sort -u
           )
 
