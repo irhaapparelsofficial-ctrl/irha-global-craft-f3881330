@@ -18,31 +18,31 @@ public_counts as (
 ),
 digests as (
   select
-    encode(digest(coalesce((
+    encode(extensions.digest(coalesce((
       select string_agg(concat_ws('|',table_name,ordinal_position,column_name,data_type,udt_name,is_nullable,coalesce(column_default,'')), E'\n' order by table_name,ordinal_position)
       from information_schema.columns where table_schema='public'
     ),''),'sha256'),'hex') as columns,
-    encode(digest(coalesce((
+    encode(extensions.digest(coalesce((
       select string_agg(concat_ws('|',c.relname,con.conname,con.contype,pg_get_constraintdef(con.oid,true)), E'\n' order by c.relname,con.conname)
       from pg_constraint con join pg_class c on c.oid=con.conrelid join pg_namespace n on n.oid=con.connamespace where n.nspname='public'
     ),''),'sha256'),'hex') as constraints,
-    encode(digest(coalesce((
-      select string_agg(concat_ws('|',p.proname,pg_get_function_identity_arguments(p.oid),pg_get_function_result(p.oid),l.lanname,p.prosecdef,p.provolatile,encode(digest(pg_get_functiondef(p.oid),'sha256'),'hex')), E'\n' order by p.proname,pg_get_function_identity_arguments(p.oid))
+    encode(extensions.digest(coalesce((
+      select string_agg(concat_ws('|',p.proname,pg_get_function_identity_arguments(p.oid),pg_get_function_result(p.oid),l.lanname,p.prosecdef,p.provolatile,encode(extensions.digest(pg_get_functiondef(p.oid),'sha256'),'hex')), E'\n' order by p.proname,pg_get_function_identity_arguments(p.oid))
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace join pg_language l on l.oid=p.prolang where n.nspname='public'
     ),''),'sha256'),'hex') as functions,
-    encode(digest(coalesce((
+    encode(extensions.digest(coalesce((
       select string_agg(pg_get_indexdef(i.indexrelid), E'\n' order by ic.relname)
       from pg_index i join pg_class c on c.oid=i.indrelid join pg_class ic on ic.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
     ),''),'sha256'),'hex') as indexes,
-    encode(digest(coalesce((
-      select string_agg(concat_ws('|',version,name,encode(digest(convert_to(array_to_string(statements,E'\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\n'),'UTF8'),'sha256'),'hex')), E'\n' order by version)
+    encode(extensions.digest(coalesce((
+      select string_agg(concat_ws('|',version,name,encode(extensions.digest(convert_to(array_to_string(statements,E'\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\n'),'UTF8'),'sha256'),'hex')), E'\n' order by version)
       from supabase_migrations.schema_migrations
     ),''),'sha256'),'hex') as migrations,
-    encode(digest(coalesce((
+    encode(extensions.digest(coalesce((
       select string_agg(concat_ws('|',c.relname,p.polname,p.polcmd,array_to_string(p.polroles,','),coalesce(pg_get_expr(p.polqual,p.polrelid),''),coalesce(pg_get_expr(p.polwithcheck,p.polrelid),'')), E'\n' order by c.relname,p.polname)
       from pg_policy p join pg_class c on c.oid=p.polrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
     ),''),'sha256'),'hex') as policies,
-    encode(digest(coalesce((
+    encode(extensions.digest(coalesce((
       select string_agg(pg_get_triggerdef(t.oid,true), E'\n' order by c.relname,t.tgname)
       from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and not t.tgisinternal
     ),''),'sha256'),'hex') as triggers
@@ -55,14 +55,14 @@ cron_payload as (
   select
     count(*)::int as count,
     count(*) filter(where active)::int as active_count,
-    encode(digest(coalesce(string_agg(concat_ws('|',jobid,jobname,schedule,active),E'\n' order by jobid),''),'sha256'),'hex') as canonical_sha256,
+    encode(extensions.digest(coalesce(string_agg(concat_ws('|',jobid,jobname,schedule,active),E'\n' order by jobid),''),'sha256'),'hex') as canonical_sha256,
     coalesce(jsonb_agg(jsonb_build_object('jobid',jobid,'jobname',jobname,'schedule',schedule,'active',active) order by jobid),'[]'::jsonb) as jobs
   from cron.job
 ),
 storage_payload as (
   select
     count(*)::int as bucket_count,
-    encode(digest(coalesce(string_agg(concat_ws('|',id,public,coalesce(file_size_limit::text,''),coalesce(array_to_string(allowed_mime_types,','),'')),E'\n' order by id),''),'sha256'),'hex') as canonical_sha256,
+    encode(extensions.digest(coalesce(string_agg(concat_ws('|',id,public,coalesce(file_size_limit::text,''),coalesce(array_to_string(allowed_mime_types,','),'')),E'\n' order by id),''),'sha256'),'hex') as canonical_sha256,
     coalesce(jsonb_agg(jsonb_build_object('name',id,'public',public,'file_size_limit',file_size_limit,'allowed_mime_types',allowed_mime_types) order by id),'[]'::jsonb) as buckets
   from storage.buckets
 )
