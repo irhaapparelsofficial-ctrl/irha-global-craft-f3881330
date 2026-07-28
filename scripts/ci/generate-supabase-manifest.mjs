@@ -30,9 +30,7 @@ function sha256(value) {
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]),
-    );
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]));
   }
   return value;
 }
@@ -58,6 +56,14 @@ function normalizeFunctions(payload) {
   return [];
 }
 
+function safeApiDetail(payload, accessToken) {
+  const value = payload?.message ?? payload?.error ?? payload?.msg ?? payload;
+  return String(typeof value === "string" ? value : JSON.stringify(value))
+    .replaceAll(accessToken, "[REDACTED]")
+    .replace(/(?:sb_secret_|sbp_)[A-Za-z0-9_-]+/g, "[REDACTED]")
+    .slice(0, 500);
+}
+
 async function managementRequest(path, accessToken, options = {}) {
   const response = await fetch(`${MANAGEMENT_API}${path}`, {
     ...options,
@@ -75,17 +81,135 @@ async function managementRequest(path, accessToken, options = {}) {
     throw new ManifestError("MALFORMED_RESPONSE", `Supabase Management API returned malformed JSON for ${path}`);
   }
   if (!response.ok) {
-    throw new ManifestError("MANAGEMENT_API_FAILURE", `Supabase Management API ${path} failed (${response.status})`);
+    throw new ManifestError(
+      "MANAGEMENT_API_FAILURE",
+      `Supabase Management API ${path} failed (${response.status}): ${safeApiDetail(payload, accessToken)}`,
+    );
   }
   return payload;
 }
 
-async function databaseQuery(projectId, accessToken, query) {
+async function databaseQuery(projectId, accessToken, query, label) {
   const payload = await managementRequest(`/v1/projects/${projectId}/database/query`, accessToken, {
     method: "POST",
     body: JSON.stringify({ query, read_only: true }),
   });
-  return normalizeRows(payload);
+  const rows = normalizeRows(payload);
+  if (rows.length !== 1) {
+    throw new ManifestError("INVENTORY_FAILURE", `${label} returned ${rows.length} rows instead of one`);
+  }
+  return rows[0];
+}
+
+async function loadDatabaseInventory(projectId, accessToken) {
+  const counts = await databaseQuery(projectId, accessToken, `
+select jsonb_build_object(
+  'public', jsonb_build_object(
+    'tables', (select count(*)::int from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind in ('r','p')),
+    'views', (select count(*)::int from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind in ('v','m')),
+    'function_signatures', (select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'),
+    'distinct_function_names', (select count(distinct p.proname)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'),
+    'enums', (select count(*)::int from pg_type t join pg_namespace n on n.oid=t.typnamespace where n.nspname='public' and t.typtype='e'),
+    'triggers', (select count(*)::int from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and not t.tgisinternal),
+    'indexes', (select count(*)::int from pg_index i join pg_class c on c.oid=i.indrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'),
+    'constraints', (select count(*)::int from pg_constraint con join pg_namespace n on n.oid=con.connamespace where n.nspname='public'),
+    'rls_enabled_tables', (select count(*)::int from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind in ('r','p') and c.relrowsecurity),
+    'policies', (select count(*)::int from pg_policy p join pg_class c on c.oid=p.polrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public')
+  ),
+  'live_migrations', (
+    select jsonb_build_object('count',count(*)::int,'min_version',min(version),'max_version',max(version))
+    from supabase_migrations.schema_migrations
+  )
+) as value;
+`, "database counts");
+
+  const digestA = await databaseQuery(projectId, accessToken, `
+select jsonb_build_object(
+  'columns', encode(digest(coalesce((
+    select string_agg(concat_ws('|',table_name,ordinal_position,column_name,data_type,udt_name,is_nullable,coalesce(column_default,'')), E'\\n' order by table_name,ordinal_position)
+    from information_schema.columns where table_schema='public'
+  ),''),'sha256'),'hex'),
+  'constraints', encode(digest(coalesce((
+    select string_agg(concat_ws('|',c.relname,con.conname,con.contype,pg_get_constraintdef(con.oid,true)), E'\\n' order by c.relname,con.conname)
+    from pg_constraint con join pg_class c on c.oid=con.conrelid join pg_namespace n on n.oid=con.connamespace where n.nspname='public'
+  ),''),'sha256'),'hex')
+) as value;
+`, "column and constraint digests");
+
+  const digestB = await databaseQuery(projectId, accessToken, `
+select jsonb_build_object(
+  'functions', encode(digest(coalesce((
+    select string_agg(concat_ws('|',p.proname,pg_get_function_identity_arguments(p.oid),pg_get_function_result(p.oid),l.lanname,p.prosecdef,p.provolatile,encode(digest(pg_get_functiondef(p.oid),'sha256'),'hex')), E'\\n' order by p.proname,pg_get_function_identity_arguments(p.oid))
+    from pg_proc p join pg_namespace n on n.oid=p.pronamespace join pg_language l on l.oid=p.prolang where n.nspname='public'
+  ),''),'sha256'),'hex'),
+  'indexes', encode(digest(coalesce((
+    select string_agg(pg_get_indexdef(i.indexrelid), E'\\n' order by ic.relname)
+    from pg_index i join pg_class c on c.oid=i.indrelid join pg_class ic on ic.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
+  ),''),'sha256'),'hex')
+) as value;
+`, "function and index digests");
+
+  const digestC = await databaseQuery(projectId, accessToken, `
+select jsonb_build_object(
+  'migrations', encode(digest(coalesce((
+    select string_agg(concat_ws('|',version,name,encode(digest(convert_to(array_to_string(statements,E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'),'UTF8'),'sha256'),'hex')), E'\\n' order by version)
+    from supabase_migrations.schema_migrations
+  ),''),'sha256'),'hex'),
+  'policies', encode(digest(coalesce((
+    select string_agg(concat_ws('|',c.relname,p.polname,p.polcmd,array_to_string(p.polroles,','),coalesce(pg_get_expr(p.polqual,p.polrelid),''),coalesce(pg_get_expr(p.polwithcheck,p.polrelid),'')), E'\\n' order by c.relname,p.polname)
+    from pg_policy p join pg_class c on c.oid=p.polrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
+  ),''),'sha256'),'hex'),
+  'triggers', encode(digest(coalesce((
+    select string_agg(pg_get_triggerdef(t.oid,true), E'\\n' order by c.relname,t.tgname)
+    from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and not t.tgisinternal
+  ),''),'sha256'),'hex')
+) as value;
+`, "migration, policy and trigger digests");
+
+  return {
+    ...counts.value,
+    canonical_digests_sha256: {
+      ...digestA.value,
+      ...digestB.value,
+      ...digestC.value,
+    },
+  };
+}
+
+async function loadCronInventory(projectId, accessToken) {
+  const row = await databaseQuery(projectId, accessToken, `
+select jsonb_build_object(
+  'count',count(*)::int,
+  'active_count',count(*) filter(where active)::int,
+  'canonical_sha256',encode(digest(coalesce(string_agg(concat_ws('|',jobid,jobname,schedule,active),E'\\n' order by jobid),''),'sha256'),'hex'),
+  'jobs',coalesce(jsonb_agg(jsonb_build_object('jobid',jobid,'jobname',jobname,'schedule',schedule,'active',active) order by jobid),'[]'::jsonb)
+) as value from cron.job;
+`, "cron inventory");
+  return row.value;
+}
+
+async function loadStorageInventory(projectId, accessToken) {
+  const row = await databaseQuery(projectId, accessToken, `
+select jsonb_build_object(
+  'bucket_count',count(*)::int,
+  'canonical_sha256',encode(digest(coalesce(string_agg(concat_ws('|',id,public,coalesce(file_size_limit::text,''),coalesce(array_to_string(allowed_mime_types,','),'')),E'\\n' order by id),''),'sha256'),'hex'),
+  'buckets',coalesce(jsonb_agg(jsonb_build_object('name',id,'public',public,'file_size_limit',file_size_limit,'allowed_mime_types',allowed_mime_types) order by id),'[]'::jsonb)
+) as value from storage.buckets;
+`, "Storage inventory");
+  return row.value;
+}
+
+async function loadBrowserExposure(projectId, accessToken) {
+  const row = await databaseQuery(projectId, accessToken, `
+select jsonb_build_object(
+  'public_schema_usage',jsonb_build_object('anon',has_schema_privilege('anon','public','USAGE'),'authenticated',has_schema_privilege('authenticated','public','USAGE')),
+  'private_schema_usage',jsonb_build_object('anon',case when to_regnamespace('private') is null then false else has_schema_privilege('anon','private','USAGE') end,'authenticated',case when to_regnamespace('private') is null then false else has_schema_privilege('authenticated','private','USAGE') end),
+  'vault_schema_usage',jsonb_build_object('anon',case when to_regnamespace('vault') is null then false else has_schema_privilege('anon','vault','USAGE') end,'authenticated',case when to_regnamespace('vault') is null then false else has_schema_privilege('authenticated','vault','USAGE') end),
+  'legacy_schema_usage',jsonb_build_object('anon',case when to_regnamespace('legacy') is null then false else has_schema_privilege('anon','legacy','USAGE') end,'authenticated',case when to_regnamespace('legacy') is null then false else has_schema_privilege('authenticated','legacy','USAGE') end),
+  'migration_archive_schema_usage',jsonb_build_object('anon',case when to_regnamespace('migration_archive') is null then false else has_schema_privilege('anon','migration_archive','USAGE') end,'authenticated',case when to_regnamespace('migration_archive') is null then false else has_schema_privilege('authenticated','migration_archive','USAGE') end)
+) as value;
+`, "browser schema exposure");
+  return row.value;
 }
 
 function loadRegistries(root) {
@@ -98,12 +222,7 @@ function loadRegistries(root) {
     if (parsed.classification !== classification || !Array.isArray(parsed.functions)) {
       throw new ManifestError("INVALID_REGISTRY", `Invalid ${classification} registry`);
     }
-    registries[classification] = {
-      path,
-      raw,
-      parsed,
-      file_sha256: sha256(raw),
-    };
+    registries[classification] = { path, raw, parsed, file_sha256: sha256(raw) };
     combinedRaw += raw;
   }
   return { registries, classification_sha256: sha256(combinedRaw) };
@@ -113,15 +232,9 @@ function expectedDeployedFunctions(registries) {
   const expected = new Map();
   for (const classification of REGISTRY_ORDER) {
     if (!DEPLOYED_CLASSES.has(classification)) continue;
-    for (const row of registries[classification].parsed.functions) {
-      const [name, version, verifyJwt, sourceHash] = row;
+    for (const [name, version, verifyJwt, sourceHash] of registries[classification].parsed.functions) {
       if (expected.has(name)) throw new ManifestError("DUPLICATE_FUNCTION", `Duplicate function ${name}`);
-      expected.set(name, {
-        classification,
-        version,
-        verify_jwt: verifyJwt,
-        source_sha256: sourceHash,
-      });
+      expected.set(name, { classification, version, verify_jwt: verifyJwt, source_sha256: sourceHash });
     }
   }
   return expected;
@@ -138,12 +251,8 @@ function verifyLiveFunctions(functionPayload, expected) {
       status: String(fn.status),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-
   if (live.length !== 87 || expected.size !== 87) {
-    throw new ManifestError(
-      "EDGE_COUNT_DRIFT",
-      `Expected 87 live and represented functions; found live=${live.length}, represented=${expected.size}`,
-    );
+    throw new ManifestError("EDGE_COUNT_DRIFT", `Expected 87 live and represented functions; found live=${live.length}, represented=${expected.size}`);
   }
   const liveByName = new Map(live.map((fn) => [fn.name, fn]));
   for (const [name, representation] of expected) {
@@ -153,9 +262,7 @@ function verifyLiveFunctions(functionPayload, expected) {
     if (deployed.verify_jwt !== representation.verify_jwt) throw new ManifestError("EDGE_AUTH_DRIFT", `verify_jwt mismatch: ${name}`);
     if (deployed.source_sha256 !== representation.source_sha256) throw new ManifestError("EDGE_SOURCE_DRIFT", `Source hash mismatch: ${name}`);
   }
-  for (const fn of live) {
-    if (!expected.has(fn.name)) throw new ManifestError("EDGE_UNEXPLAINED", `Unexplained live function: ${fn.name}`);
-  }
+  for (const fn of live) if (!expected.has(fn.name)) throw new ManifestError("EDGE_UNEXPLAINED", `Unexplained live function: ${fn.name}`);
   return live;
 }
 
@@ -179,33 +286,23 @@ function rejectSecretBearingOutput(serialized) {
     /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
     /authorization\s*[:=]\s*["']?bearer\s+[A-Za-z0-9._-]{20,}/i,
   ];
-  if (forbidden.some((pattern) => pattern.test(serialized))) {
-    throw new ManifestError("SECRET_OUTPUT", "Secret-bearing manifest output was rejected");
-  }
+  if (forbidden.some((pattern) => pattern.test(serialized))) throw new ManifestError("SECRET_OUTPUT", "Secret-bearing manifest output was rejected");
 }
 
 async function buildManifest(root, accessToken) {
   const projectId = required(process.env.SUPABASE_PROJECT_ID ?? EXPECTED_PROJECT_ID, "SUPABASE_PROJECT_ID");
   if (projectId !== EXPECTED_PROJECT_ID) throw new ManifestError("PROJECT_MISMATCH", "Unexpected Supabase project identity");
-
   const project = await managementRequest(`/v1/projects/${projectId}`, accessToken);
-  if (project.id !== projectId || project.status !== "ACTIVE_HEALTHY") {
-    throw new ManifestError("PROJECT_IDENTITY_FAILURE", "Supabase project identity or health verification failed");
-  }
+  if (project.id !== projectId || project.status !== "ACTIVE_HEALTHY") throw new ManifestError("PROJECT_IDENTITY_FAILURE", "Supabase project identity or health verification failed");
 
-  const inventorySql = readFileSync(resolve(root, "scripts/supabase/export-deployment-manifest.sql"), "utf8");
-  const inventoryRows = await databaseQuery(projectId, accessToken, inventorySql);
-  if (inventoryRows.length !== 1) {
-    throw new ManifestError("INVENTORY_FAILURE", `Canonical inventory returned ${inventoryRows.length} rows`);
-  }
-  const inventory = inventoryRows[0].jsonb_build_object
-    ?? inventoryRows[0].result
-    ?? Object.values(inventoryRows[0])[0];
-  if (!inventory?.database || !inventory?.cron || !inventory?.storage || !inventory?.browser_exposure) {
-    throw new ManifestError("INVENTORY_SHAPE", "Canonical database inventory shape is invalid");
-  }
+  const [database, cron, storage, browserExposure, functionPayload] = await Promise.all([
+    loadDatabaseInventory(projectId, accessToken),
+    loadCronInventory(projectId, accessToken),
+    loadStorageInventory(projectId, accessToken),
+    loadBrowserExposure(projectId, accessToken),
+    managementRequest(`/v1/projects/${projectId}/functions`, accessToken),
+  ]);
 
-  const functionPayload = await managementRequest(`/v1/projects/${projectId}/functions`, accessToken);
   const { registries, classification_sha256 } = loadRegistries(root);
   const expectedFunctions = expectedDeployedFunctions(registries);
   const liveFunctions = verifyLiveFunctions(functionPayload, expectedFunctions);
@@ -213,40 +310,25 @@ async function buildManifest(root, accessToken) {
 
   const typesPath = "src/integrations/supabase/types.ts";
   const types = readFileSync(resolve(root, typesPath), "utf8");
-  if (!types.includes("export type Database") || types.includes("private:") || types.includes("vault:")) {
-    throw new ManifestError("TYPE_SCOPE_FAILURE", "Generated types do not match the approved public-only scope");
-  }
+  if (!types.includes("export type Database") || types.includes("private:") || types.includes("vault:")) throw new ManifestError("TYPE_SCOPE_FAILURE", "Generated types do not match the approved public-only scope");
 
   const provenancePath = "supabase/deployment-parity/migration-provenance.json";
   const provenanceRaw = readFileSync(resolve(root, provenancePath), "utf8");
   const provenance = JSON.parse(provenanceRaw);
-  if (provenance.payload?.totals?.live !== inventory.database.live_migrations.count || provenance.payload?.totals?.P5 !== 0) {
-    throw new ManifestError("PROVENANCE_DRIFT", "Migration provenance ledger does not match live migration history");
-  }
+  if (provenance.payload?.totals?.live !== database.live_migrations.count || provenance.payload?.totals?.P5 !== 0) throw new ManifestError("PROVENANCE_DRIFT", "Migration provenance ledger does not match live migration history");
 
   const serializationPath = "supabase/deployment-parity/SERIALIZATION.md";
   const serializationRaw = readFileSync(resolve(root, serializationPath), "utf8");
-  const registrySummary = Object.fromEntries(
-    [...REGISTRY_ORDER, "F5"].map((classification) => {
-      if (classification === "F5") return [classification, { count: 0, file_sha256: null, path: null }];
-      const registry = registries[classification];
-      return [classification, {
-        count: registry.parsed.functions.length,
-        file_sha256: registry.file_sha256,
-        path: registry.path,
-      }];
-    }),
-  );
+  const registrySummary = Object.fromEntries([...REGISTRY_ORDER, "F5"].map((classification) => {
+    if (classification === "F5") return [classification, { count: 0, file_sha256: null, path: null }];
+    const registry = registries[classification];
+    return [classification, { count: registry.parsed.functions.length, file_sha256: registry.file_sha256, path: registry.path }];
+  }));
 
-  const notificationDispatcher = liveFunctions.find((fn) => fn.name === "notification-dispatcher");
-  if (!notificationDispatcher
-      || notificationDispatcher.version !== 7
-      || notificationDispatcher.verify_jwt !== false
-      || notificationDispatcher.source_sha256 !== "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7") {
-    throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");
-  }
+  const dispatcher = liveFunctions.find((fn) => fn.name === "notification-dispatcher");
+  if (!dispatcher || dispatcher.version !== 7 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7") throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");
 
-  const privateExposure = Object.entries(inventory.browser_exposure)
+  const privateExposure = Object.entries(browserExposure)
     .filter(([name]) => name !== "public_schema_usage")
     .some(([, grants]) => grants.anon || grants.authenticated);
 
@@ -262,16 +344,10 @@ async function buildManifest(root, accessToken) {
       supabase_region: String(project.region ?? ""),
       supabase_status: String(project.status),
     },
-    database: inventory.database,
-    browser_exposure: {
-      ...inventory.browser_exposure,
-      private_schema_client_exposure: privateExposure,
-    },
-    cron: inventory.cron,
-    storage: {
-      ...inventory.storage,
-      object_level_inventory_performed: false,
-    },
+    database,
+    browser_exposure: { ...browserExposure, private_schema_client_exposure: privateExposure },
+    cron,
+    storage: { ...storage, object_level_inventory_performed: false },
     edge_functions: {
       deployed_count: liveFunctions.length,
       live_inventory_sha256: sha256(canonicalJson(liveFunctions)),
@@ -285,10 +361,10 @@ async function buildManifest(root, accessToken) {
       committed_file: typesPath,
       sha256: sha256(types),
       totals: {
-        tables: inventory.database.public.tables,
-        views: inventory.database.public.views,
-        function_signatures: inventory.database.public.function_signatures,
-        enums: inventory.database.public.enums,
+        tables: database.public.tables,
+        views: database.public.views,
+        function_signatures: database.public.function_signatures,
+        enums: database.public.enums,
       },
       private_schemas_excluded: true,
       freshness_gate: "official Supabase CLI public-schema generation and byte-for-byte comparison",
@@ -301,9 +377,9 @@ async function buildManifest(root, accessToken) {
     },
     security_invariants: {
       notification_dispatcher: {
-        version: notificationDispatcher.version,
-        verify_jwt: notificationDispatcher.verify_jwt,
-        source_sha256: notificationDispatcher.source_sha256,
+        version: dispatcher.version,
+        verify_jwt: dispatcher.verify_jwt,
+        source_sha256: dispatcher.source_sha256,
         custom_auth_required: true,
         single_use_scheduler_authorization: true,
       },
@@ -311,26 +387,13 @@ async function buildManifest(root, accessToken) {
       unexplained_f5_count: 0,
       secret_values_in_manifest: false,
     },
-    serialization_contract: {
-      path: serializationPath,
-      sha256: sha256(serializationRaw),
-    },
+    serialization_contract: { path: serializationPath, sha256: sha256(serializationRaw) },
   };
 
-  if (payload.browser_exposure.private_schema_client_exposure) {
-    throw new ManifestError("PRIVATE_SCHEMA_EXPOSURE", "A private schema is exposed to a browser role");
-  }
-  if (payload.cron.count !== 8 || payload.cron.active_count !== 8) {
-    throw new ManifestError("CRON_DRIFT", "Expected all eight cron jobs to remain active");
-  }
-  if (payload.database.live_migrations.count !== 374) {
-    throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 374 live migrations");
-  }
-
-  return canonicalize({
-    ...payload,
-    manifest_sha256: sha256(canonicalJson(payload)),
-  });
+  if (privateExposure) throw new ManifestError("PRIVATE_SCHEMA_EXPOSURE", "A private schema is exposed to a browser role");
+  if (cron.count !== 8 || cron.active_count !== 8) throw new ManifestError("CRON_DRIFT", "Expected all eight cron jobs to remain active");
+  if (database.live_migrations.count !== 374) throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 374 live migrations");
+  return canonicalize({ ...payload, manifest_sha256: sha256(canonicalJson(payload)) });
 }
 
 async function main() {
@@ -341,18 +404,11 @@ async function main() {
   const manifest = await buildManifest(root, accessToken);
   const serialized = canonicalJson(manifest);
   rejectSecretBearingOutput(serialized);
-
-  if (mode === "write") {
-    writeFileSync(outputPath, serialized, "utf8");
-  } else if (mode === "verify") {
+  if (mode === "write") writeFileSync(outputPath, serialized, "utf8");
+  else if (mode === "verify") {
     if (!existsSync(outputPath)) throw new ManifestError("MISSING_MANIFEST", "Committed deployment manifest is missing");
-    if (readFileSync(outputPath, "utf8") !== serialized) {
-      throw new ManifestError("MANIFEST_DRIFT", "Committed deployment manifest does not match live state");
-    }
-  } else {
-    throw new ManifestError("INVALID_MODE", `Unsupported SUPABASE_MANIFEST_MODE ${mode}`);
-  }
-
+    if (readFileSync(outputPath, "utf8") !== serialized) throw new ManifestError("MANIFEST_DRIFT", "Committed deployment manifest does not match live state");
+  } else throw new ManifestError("INVALID_MODE", `Unsupported SUPABASE_MANIFEST_MODE ${mode}`);
   console.log(JSON.stringify({
     project_id: manifest.identity.supabase_project_id,
     tables: manifest.database.public.tables,
