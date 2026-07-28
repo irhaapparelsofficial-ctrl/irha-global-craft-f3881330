@@ -56,6 +56,53 @@ type PublicRpcClient = {
   }>;
 };
 
+const MOCKUP_SESSION_KEY = "irha:mockup-rate-session";
+const MOCKUP_RATE_TOKEN_KEY = "irha:mockup-rate-token";
+const MOCKUP_RESULT_CACHE_KEY = "irha:mockup-last-result";
+
+function readMockupSessionId() {
+  try {
+    const stored = sessionStorage.getItem(MOCKUP_SESSION_KEY);
+    if (stored) return stored;
+    const created = `mockup-${crypto.randomUUID()}`;
+    sessionStorage.setItem(MOCKUP_SESSION_KEY, created);
+    return created;
+  } catch {
+    return `mockup-${crypto.randomUUID()}`;
+  }
+}
+
+async function mockupFingerprint(value: unknown) {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function readCachedMockup(fingerprint: string) {
+  try {
+    const raw = sessionStorage.getItem(MOCKUP_RESULT_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as {
+      fingerprint?: string;
+      result?: { frontUrl: string; backUrl: string; fallback?: boolean; message?: string };
+    };
+    return cached.fingerprint === fingerprint && cached.result?.frontUrl && cached.result?.backUrl
+      ? cached.result
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedMockup(fingerprint: string, result: { frontUrl: string; backUrl: string; fallback?: boolean; message?: string }) {
+  try {
+    const serialized = JSON.stringify({ fingerprint, result });
+    if (serialized.length <= 2_000_000) sessionStorage.setItem(MOCKUP_RESULT_CACHE_KEY, serialized);
+  } catch {
+    // Cache is optional; server-side controls remain authoritative.
+  }
+}
+
 function classifyHub(mainCategorySlug: string): HubId | null {
   if (HUBS.bavarian.categorySlugPrefixes.includes(mainCategorySlug)) return "bavarian";
   if (HUBS.textile.categorySlugPrefixes.includes(mainCategorySlug)) return "textile";
@@ -74,6 +121,7 @@ export default function Studio() {
   const [result, setResult] = useState<{ frontUrl: string; backUrl: string; fallback?: boolean; message?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const mockupSessionIdRef = useRef(readMockupSessionId());
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["studio-products", "canonical-route-manifest"],
@@ -148,20 +196,38 @@ export default function Studio() {
     setError(null);
     setResult(null);
     try {
+      const designInput = {
+        productId: product.id,
+        productName: product.name,
+        color: { label: color.label, hex: color.hex },
+        placement: placement.id,
+        presetId: preset.id,
+        presetLabel: preset.label,
+        logoBase64: logo?.dataUrl ?? null,
+      };
+      const fingerprint = await mockupFingerprint(designInput);
+      const cached = readCachedMockup(fingerprint);
+      if (cached) {
+        setResult(cached);
+        return;
+      }
+      let rateLimitToken: string | null = null;
+      try { rateLimitToken = sessionStorage.getItem(MOCKUP_RATE_TOKEN_KEY); } catch { /* bootstrap */ }
       const { data, error } = await supabase.functions.invoke("generate-mockup", {
         body: {
-          productId: product.id,
-          productName: product.name,
-          color: { label: color.label, hex: color.hex },
-          placement: placement.id,
-          presetId: preset.id,
-          presetLabel: preset.label,
-          logoBase64: logo?.dataUrl ?? null,
+          ...designInput,
+          clientSessionId: mockupSessionIdRef.current,
+          rateLimitToken,
         },
       });
       if (error) throw error;
       if (!data?.frontUrl || !data?.backUrl) throw new Error("Mockup generation failed");
-      setResult({ frontUrl: data.frontUrl, backUrl: data.backUrl, fallback: !!data.fallback, message: data.message });
+      if (typeof data.rateLimitToken === "string" && data.rateLimitToken.length <= 2_000) {
+        try { sessionStorage.setItem(MOCKUP_RATE_TOKEN_KEY, data.rateLimitToken); } catch { /* optional */ }
+      }
+      const generated = { frontUrl: data.frontUrl, backUrl: data.backUrl, fallback: !!data.fallback, message: data.message };
+      writeCachedMockup(fingerprint, generated);
+      setResult(generated);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Generation failed — please retry");
     } finally {

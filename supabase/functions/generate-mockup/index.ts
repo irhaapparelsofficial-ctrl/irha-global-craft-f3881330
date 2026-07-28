@@ -1,7 +1,19 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import {
+  authorizeDurableRateLimit,
+  DurableRateLimitUnavailableError,
+  isValidClientSessionId,
+  type RateLimitRpcClient,
+} from "../_shared/durable-rate-limit.ts";
 
 const WIDTH = 480;
 const HEIGHT = 640;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
 type RGBA = [number, number, number, number];
 
@@ -388,25 +400,11 @@ function corsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 12;
-const ipHits = new Map<string, { count: number; reset: number }>();
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = ipHits.get(ip);
-  if (!entry || entry.reset < now) {
-    ipHits.set(ip, { count: 1, reset: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > RATE_LIMIT_MAX;
-}
-
 function jsonResponse(
   body: Record<string, unknown>,
   status: number,
   headers: Record<string, string>,
+  extraHeaders: Record<string, string> = {},
 ): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -415,6 +413,7 @@ function jsonResponse(
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Irha-Renderer": "deterministic-png-v1",
+      ...extraHeaders,
     },
   });
 }
@@ -427,6 +426,8 @@ type PreviewPayload = {
   presetId?: unknown;
   presetLabel?: unknown;
   logoBase64?: unknown;
+  clientSessionId?: unknown;
+  rateLimitToken?: unknown;
 };
 
 Deno.serve(async (req: Request) => {
@@ -437,9 +438,6 @@ Deno.serve(async (req: Request) => {
   if (origin && !isAllowedOrigin(origin)) return respond({ error: "origin_not_allowed" }, 403);
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
   if (req.method !== "POST") return respond({ error: "method_not_allowed" }, 405);
-
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("cf-connecting-ip") || "unknown";
-  if (rateLimited(ip)) return respond({ error: "preview_rate_limited" }, 429);
 
   const declaredLength = Number(req.headers.get("content-length") || 0);
   if (Number.isFinite(declaredLength) && declaredLength > 2_500_000) {
@@ -456,9 +454,55 @@ Deno.serve(async (req: Request) => {
     const placement = typeof payload.placement === "string" ? payload.placement.trim().slice(0, 60) : "center";
     const presetId = typeof payload.presetId === "string" ? payload.presetId.trim().slice(0, 80) : "minimal";
     const hasLogo = typeof payload.logoBase64 === "string" && payload.logoBase64.startsWith("data:image/") && payload.logoBase64.length <= 2_300_000;
+    const clientSessionId = typeof payload.clientSessionId === "string" ? payload.clientSessionId : "";
+    const rateLimitToken = typeof payload.rateLimitToken === "string" ? payload.rateLimitToken.slice(0, 2_000) : null;
 
-    if (!productName || !/^#[0-9a-fA-F]{6}$/.test(colorHex)) {
+    if (!productName || !/^#[0-9a-fA-F]{6}$/.test(colorHex) || !isValidClientSessionId(clientSessionId)) {
       return respond({ error: "invalid_preview_request" }, 400);
+    }
+
+    const designIdentity = {
+      productId: typeof payload.productId === "string" ? payload.productId.slice(0, 120) : null,
+      productName,
+      colorHex: colorHex.toLowerCase(),
+      placement,
+      presetId,
+      logo: hasLogo && typeof payload.logoBase64 === "string"
+        ? {
+          length: payload.logoBase64.length,
+          prefix: payload.logoBase64.slice(0, 256),
+          suffix: payload.logoBase64.slice(-256),
+        }
+        : null,
+    };
+
+    let limiter;
+    try {
+      limiter = await authorizeDurableRateLimit({
+        client: service as unknown as RateLimitRpcClient,
+        request: req,
+        secret: SERVICE_ROLE_KEY,
+        endpoint: "generate-mockup",
+        policyKey: "generate-mockup.generate",
+        clientSessionId,
+        rateLimitToken,
+        resourceValue: designIdentity,
+        duplicateValue: designIdentity,
+      });
+    } catch (error) {
+      if (error instanceof DurableRateLimitUnavailableError) {
+        return respond({ error: "rate_limit_unavailable" }, 503);
+      }
+      throw error;
+    }
+
+    if (!limiter.allowed || limiter.duplicateSuppressed) {
+      return jsonResponse(
+        { error: "preview_rate_limited" },
+        429,
+        headers,
+        { "Retry-After": String(Math.max(1, limiter.retryAfterSeconds || 1)) },
+      );
     }
 
     const [frontPng, backPng] = await Promise.all([
@@ -476,6 +520,7 @@ Deno.serve(async (req: Request) => {
       fallback: false,
       message: `Instant non-binding concept preview. ${logoMessage}`,
       renderer: "irha-deterministic-png-v1",
+      rateLimitToken: limiter.rateLimitToken,
     });
   } catch (error) {
     console.error("generate-mockup failed", error);

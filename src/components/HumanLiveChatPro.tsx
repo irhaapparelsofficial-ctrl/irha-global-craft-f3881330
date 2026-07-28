@@ -19,6 +19,7 @@ type ChatResponse = {
   messages?: LiveMessage[];
   presenceRecorded?: boolean;
   error?: string;
+  rateLimitToken?: string;
 };
 
 type TypingResponse = {
@@ -39,6 +40,7 @@ type VisitorContext = {
 
 const SESSION_KEY = "irha:human-chat-session";
 const TOKEN_KEY = "irha:human-chat-token";
+const RATE_TOKEN_KEY = "irha:human-chat-rate-token";
 const STARTED_KEY = "irha:human-chat-started";
 const NAME_KEY = "irha:human-chat-name";
 const COMPANY_KEY = "irha:human-chat-company";
@@ -198,10 +200,20 @@ export default function HumanLiveChatPro() {
         Authorization: `Bearer ${supabasePublishableKey}`,
         apikey: supabasePublishableKey,
       },
-      body: JSON.stringify({ ...credentialsRef.current, ...payload }),
+      body: JSON.stringify({
+        ...credentialsRef.current,
+        ...(functionName === "live-chat" ? { rateLimitToken: readStored(RATE_TOKEN_KEY) || null } : {}),
+        ...payload,
+      }),
       keepalive: functionName === "live-chat-typing",
     });
-    const body = await response.json().catch(() => ({ error: "invalid_response" })) as T & { error?: string };
+    const body = await response.json().catch(() => ({ error: "invalid_response" })) as T & {
+      error?: string;
+      rateLimitToken?: string;
+    };
+    if (functionName === "live-chat" && typeof body.rateLimitToken === "string" && body.rateLimitToken.length <= 2_000) {
+      writeStored(RATE_TOKEN_KEY, body.rateLimitToken);
+    }
     if (!response.ok) {
       const apiError = new Error(body.error || "live_chat_unavailable");
       (apiError as Error & { status?: number }).status = response.status;
