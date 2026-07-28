@@ -36,6 +36,8 @@ describe("B2B buyer-readiness contracts", () => {
     const admin = read("src/components/admin/WebsiteInquiriesPanel.tsx");
     const migration = read("supabase/migrations/20260728123000_admin_read_private_b2b_tech_packs.sql");
     expect(gateway).toContain("uploadedFilesExist");
+    expect(gateway).not.toContain("delete relationalPayload.inquiry_ref");
+    expect(gateway).toContain('error.code === "23505"');
     expect(gateway).toContain("Consent is required before submission");
     expect(admin).toContain("inquiry_ref, intent, lead_context, tech_pack_paths");
     expect(admin).toContain("createSignedUrl(file.path, 120)");

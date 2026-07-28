@@ -164,13 +164,16 @@ async function submitInquiry(
       items,
       lead_context: leadContext,
     };
-    delete relationalPayload.inquiry_ref;
-
     const { data, error } = await service.rpc("submit_b2b_inquiry", {
       _payload: relationalPayload,
     }).single();
 
-    if (error) throw new Error(`Relational inquiry insert failed: ${error.message}`);
+    if (error) {
+      if (error.code === "23505" && error.message.toLowerCase().includes("inquiry_ref")) {
+        return json({ ok: true, reference: inquiryRef, duplicate: true }, 200, headers);
+      }
+      throw new Error(`Relational inquiry insert failed: ${error.message}`);
+    }
     const reference = isRecord(data) ? text(data.inquiry_ref, 80) : "";
     return json({ ok: true, reference: reference || inquiryRef }, 200, headers);
   }
