@@ -1,0 +1,89 @@
+{
+  "browser_exposure": {
+    "legacy_schema_usage": {"anon": false, "authenticated": false},
+    "migration_archive_schema_usage": {"anon": false, "authenticated": false},
+    "private_schema_client_exposure": false,
+    "private_schema_usage": {"anon": false, "authenticated": false},
+    "private_table_grant_note": "owner_claim_email_cache has object SELECT grants to anon/authenticated but schema USAGE is absent, so it is not browser/PostgREST accessible.",
+    "public_schema_usage": {"anon": true, "authenticated": true},
+    "vault_schema_usage": {"anon": false, "authenticated": false}
+  },
+  "captured_at_utc": "2026-07-28T00:00:00Z",
+  "cron": {
+    "active_count": 8,
+    "canonical_sha256": "437af3ddbfc9688f78d3d62c1971b68086ceac1de98319f905648a706a5578df",
+    "count": 8,
+    "jobs": [
+      {"active": true, "jobid": 1, "jobname": "catalog-media-cron-v1", "schedule": "* * * * *"},
+      {"active": true, "jobid": 2, "jobname": "notification-dispatcher-cron-v1", "schedule": "*/2 * * * *"},
+      {"active": true, "jobid": 3, "jobname": "outreach-schedule-dispatcher-v1", "schedule": "* * * * *"},
+      {"active": true, "jobid": 4, "jobname": "social-publish-scheduler-v1", "schedule": "* * * * *"},
+      {"active": true, "jobid": 5, "jobname": "site-visitors-cleanup-v1", "schedule": "*/30 * * * *"},
+      {"active": true, "jobid": 6, "jobname": "sitemap-submit-scheduled-v1", "schedule": "0 3 * * *"},
+      {"active": true, "jobid": 7, "jobname": "irha-operations-heartbeat", "schedule": "*/5 * * * *"},
+      {"active": true, "jobid": 8, "jobname": "irha-lead-verification-processor", "schedule": "*/5 * * * *"}
+    ]
+  },
+  "database": {
+    "canonical_digests_sha256": {
+      "columns": "0808d1198f26bc174c6444cd70bf8bbb4ae9711a519229fc24fe2f796658c191",
+      "constraints": "2341a1e7553db29d21f0e44aa2d5761a029f3324909f3cd8eda1356a2e63aa54",
+      "functions": "c68a6b53a21ce7db314d5e025d5f5125b5a0fc91ed73e1b3a85a588e1125a023",
+      "indexes": "3da5390ea85be806e7258255489dfe0bd15851fc14a69aff3d025ff0eaedcd8e",
+      "migrations": "8d5bb201e1e4a99e669950be2fd45b789144929a4da2f7bbdf6f6cacf4cbe15a",
+      "policies": "5646d4e3ab90a3a03ca3219f33836962d653666145e27b6efa4dee49bcdd0af0",
+      "triggers": "d210ddd3b7b826614349c7e22091abf79c386b782f9fe340296128d5d74fb094"
+    },
+    "live_migrations": {"count": 374, "max_version": "20260727232321", "min_version": "20250614164925"},
+    "public": {"constraints": 519, "distinct_function_names": 158, "enums": 4, "function_signatures": 202, "indexes": 699, "policies": 495, "rls_enabled_tables": 157, "tables": 158, "triggers": 410, "views": 13}
+  },
+  "edge_functions": {
+    "classification_sha256": "37fcd68be31f04ce8a1d0e6cc0b06574e78f145488dc98d1754e2a98359b1230",
+    "deployed_count": 87,
+    "registries": {
+      "F1": {"count": 33, "file_sha256": "6719d4485abee7c6a90813ee313878e2a6b8a61087ae7c34fff05be10dd04677", "path": "supabase/deployment-parity/functions-f1.json"},
+      "F2": {"count": 14, "file_sha256": "8361d3d3b492c9ac853f24d44a955f496e98a25cdb6b2ae6182faae3cebe1f00", "path": "supabase/deployment-parity/functions-f2.json"},
+      "F3": {"count": 9, "file_sha256": "56d1661b0253c6f74c51876abc4f2e60f8608e626006453d069b6d93eb9951d3", "path": "supabase/deployment-parity/functions-f3.json"},
+      "F4": {"count": 1, "file_sha256": "97eb38c0d3c8dd799e89028b345360e13fad4fe8b03cd07d8970f2e007d61027", "path": "supabase/deployment-parity/functions-f4.json"},
+      "F5": {"count": 0, "file_sha256": null, "path": null},
+      "F6": {"count": 31, "file_sha256": "ed0010b651d1039a85a63a215ffd238ce9a34c311252fbfa5d99d35e14eb57ed", "path": "supabase/deployment-parity/functions-f6.json"}
+    }
+  },
+  "execution_id": "IA-SEC-E002",
+  "generated_types": {
+    "approved_schema": "public",
+    "committed_file": "src/integrations/supabase/types.ts",
+    "committed_git_blob_sha1_before": "0182eb3a97ceb3457430d61303b9c318e8da7e57",
+    "freshness_state": "requires official Supabase CLI regeneration; gate included",
+    "live_source_sha256": "17dddc1f1166d830584a9f021a5fe2fec42ed1176ba64741a6fd4ee975b16c25",
+    "live_source_totals": {"distinct_function_names": 158, "enums": 4, "function_signatures": 202, "tables": 158, "views": 13},
+    "private_schemas_excluded": true
+  },
+  "goal_lock": "IRHA-PRODUCTION-SECURITY-01",
+  "identity": {
+    "production_origin": "https://irhaapparels.com",
+    "repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330",
+    "source_main_sha": "3ea63680d42226409e4e51581e6b447b4c0363d8",
+    "supabase_organization_id": "qfhklzkykyfwuqexxeqh",
+    "supabase_project_id": "pvzjiozismyxqrzmtfbi",
+    "supabase_region": "ap-southeast-1"
+  },
+  "manifest_sha256": "a82f3162687939415ae5931818c954206747ce3d7ac000361fd4fc742b1b4522",
+  "migration_ledger": {"exact_live_version_matches": 4, "live_history_sha256": "8d5bb201e1e4a99e669950be2fd45b789144929a4da2f7bbdf6f6cacf4cbe15a", "live_post_cutover": 119, "live_pre_cutover_squashed": 255, "live_total": 374, "post_cutover_missing_exact_version": 115, "reconciliation_file": "supabase/deployment-parity/migration-reconciliation.json", "repository_ledger_before": 46},
+  "schema_version": 1,
+  "security_invariants": {
+    "notification_dispatcher": {"custom_auth_required": true, "single_use_scheduler_authorization": true, "source_sha256": "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7", "verify_jwt": false, "version": 7},
+    "sealed_stub_count": 9,
+    "secret_values_in_manifest": false,
+    "unexplained_f5_count": 0
+  },
+  "serialization_contract": "supabase/deployment-parity/SERIALIZATION.md",
+  "storage": {
+    "bucket_count": 11,
+    "buckets": [
+      {"name": "catalog-media", "public": false}, {"name": "crm-files", "public": false}, {"name": "lead-imports", "public": false}, {"name": "product-artifacts", "public": false}, {"name": "product-documents", "public": false}, {"name": "product-images", "public": false}, {"name": "production-evidence", "public": false}, {"name": "production-shipping", "public": false}, {"name": "site-media", "public": false}, {"name": "site-thumbnails", "public": false}, {"name": "social-media", "public": false}
+    ],
+    "canonical_sha256": "883355277b08d38c3fb02489462a435ac02f1da12ae49a178a1334ee8dc210e6",
+    "object_level_inventory_performed": false
+  }
+}
