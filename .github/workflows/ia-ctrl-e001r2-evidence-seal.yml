@@ -182,6 +182,6 @@ jobs:
           rm .github/workflows/ia-ctrl-e001r2-evidence-seal.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/integrations/supabase/types.ts src/integrations/supabase/client.ts scripts/ci/verify-supabase-type-supplement.mjs src/integrations/supabase/secM03Database.ts supabase/deployment-parity/functions-f1.json supabase/deployment-parity/functions-f2.json supabase/deployment-parity/manifest.json supabase/deployment-parity/migration-provenance.json .github/workflows/ia-ctrl-e001r2-evidence-seal.yml
+          git add -A
           git commit -m "chore(parity): seal SEC-M03 post-deployment evidence"
           git push origin HEAD:codex/ia-ctrl-e001r2-parity-seal
