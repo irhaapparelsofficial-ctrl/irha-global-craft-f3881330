@@ -7,6 +7,13 @@ on:
     paths:
       - scripts/ci/ia-sec-e003-integrate.py
       - .github/workflows/ia-sec-e003-integrate.yml
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+    paths:
+      - scripts/ci/ia-sec-e003-integrate.py
+      - .github/workflows/ia-sec-e003-integrate.yml
 
 permissions:
   contents: write
