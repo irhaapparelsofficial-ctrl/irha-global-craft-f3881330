@@ -117,8 +117,8 @@ export default function MarketLandingPage() {
         <section className="mt-16 border border-gold/35 bg-gold/5 p-7 md:p-10 grid md:grid-cols-[auto_1fr] gap-5 items-start">
           <ShieldCheck size={28} className="text-gold" />
           <div>
-            <h2 className="font-display text-2xl md:text-3xl">Experienced manufacturer. Newly built website.</h2>
-            <p className="text-sm text-foreground/70 leading-relaxed mt-3">Irha Apparels is not presented as a new factory simply because the current website is new. Buyers in {market.country} can request a live factory video call, review the buyer-trust information and confirm product requirements before making an order decision.</p>
+            <h2 className="font-display text-2xl md:text-3xl">Manufacturing verification before commitment.</h2>
+            <p className="text-sm text-foreground/70 leading-relaxed mt-3">Buyers in {market.country} can request a live factory video call, review the buyer-trust information and confirm product requirements before making an order decision.</p>
             <div className="flex flex-wrap gap-4 mt-5 text-xs uppercase tracking-[0.18em]">
               <Link to="/buyer-trust" className="text-gold">Buyer trust</Link>
               <Link to="/factory-video-call" className="text-gold">Factory video call</Link>
