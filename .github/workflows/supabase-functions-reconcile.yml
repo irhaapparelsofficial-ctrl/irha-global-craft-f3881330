@@ -16,7 +16,7 @@ concurrency:
 
 env:
   SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
-  PLAN_FILE: supabase/deployment-parity/sec-m03-function-reconciliation.json
+  PLAN_FILE: supabase/reconciliation/sec-m03-function-reconciliation.json
 
 jobs:
   reconcile:
@@ -26,7 +26,7 @@ jobs:
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     environment: production
     env:
       SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -39,6 +39,11 @@ jobs:
         with:
           ref: ${{ env.SOURCE_SHA }}
           persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -116,7 +121,7 @@ jobs:
             supabase "${args[@]}"
           done < /tmp/functions-to-deploy.txt
 
-      - name: Verify minimum live versions and preserve evidence
+      - name: Verify minimum live versions
         shell: bash
         run: |
           set -euo pipefail
@@ -129,6 +134,39 @@ jobs:
             fi
           done < <(jq -r '.functions[] | [.name, (.minimum_version|tostring)] | @tsv' "$PLAN_FILE")
 
+      - name: Generate exact post-deploy type and parity evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes supabase@2.39.2 gen types typescript \
+            --project-id "$SUPABASE_PROJECT_ID" \
+            --schema public > /tmp/supabase-types.ts
+          test -s /tmp/supabase-types.ts
+          ! grep -E '(sb_secret_|service_role[^A-Za-z0-9]|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,})' /tmp/supabase-types.ts
+          node scripts/ci/verify-supabase-type-supplement.mjs /tmp/supabase-types.ts
+
+          jq --slurpfile live /tmp/functions-after.json --slurpfile plan "$PLAN_FILE" '
+            .functions |= map(
+              . as $row |
+              ($plan[0].functions | map(.name) | index($row[0])) as $planned |
+              if $planned == null then .
+              else
+                ($live[0] | map(select((.name // .slug) == $row[0])) | first) as $fn |
+                if $fn == null then error("planned function missing from live inventory: " + $row[0])
+                else
+                  .[1] = ($fn.version | tonumber) |
+                  .[2] = ($plan[0].functions[] | select(.name == $row[0]) | .verify_jwt) |
+                  .[3] = ($fn.ezbr_sha256 // $fn.sha256 // error("live function hash missing: " + $row[0]))
+                end
+              end
+            )
+          ' supabase/deployment-parity/functions-f1.json > /tmp/functions-f1.json
+          mv /tmp/functions-f1.json supabase/deployment-parity/functions-f1.json
+
+          cp /tmp/supabase-types.ts src/integrations/supabase/types.ts
+          MIGRATION_PROVENANCE_MODE=write node scripts/ci/generate-migration-provenance.mjs
+          SUPABASE_MANIFEST_MODE=write node scripts/ci/generate-supabase-manifest.mjs
+
           jq -n \
             --arg source_sha "$SOURCE_SHA" \
             --arg project_id "$SUPABASE_PROJECT_ID" \
@@ -139,11 +177,18 @@ jobs:
             '{source_sha: $source_sha, project_id: $project_id, plan: $plan[0], before: $before[0], deployed: $deployed[0], after: $after[0]}' \
             > /tmp/sec-m03-function-reconciliation-evidence.json
 
-      - name: Upload reconciliation evidence
+      - name: Upload exact reconciliation and parity closure evidence
         uses: actions/upload-artifact@v4
         with:
-          name: sec-m03-function-reconciliation-${{ env.SOURCE_SHA }}
-          path: /tmp/sec-m03-function-reconciliation-evidence.json
+          name: sec-m03-parity-closure-${{ env.SOURCE_SHA }}
+          path: |
+            /tmp/sec-m03-function-reconciliation-evidence.json
+            /tmp/functions-before.json
+            /tmp/functions-after.json
+            /tmp/supabase-types.ts
+            supabase/deployment-parity/functions-f1.json
+            supabase/deployment-parity/migration-provenance.json
+            supabase/deployment-parity/manifest.json
           if-no-files-found: error
           retention-days: 7
 
@@ -159,4 +204,5 @@ jobs:
             echo "- Deployment count: \`${{ steps.plan.outputs.deploy_count || 'not-reached' }}\`"
             echo "- Scope: generate-mockup, live-chat, site-visitor only"
             echo "- Shared helper: bundled dependency, never deployed as a function"
+            echo "- Post-deploy canonical parity export: required"
           } >> "$GITHUB_STEP_SUMMARY"
