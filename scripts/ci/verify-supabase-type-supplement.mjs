@@ -1,10 +1,11 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const repositoryRoot = resolve(process.cwd());
 const liveTypesPath = resolve(process.argv[2] || "/tmp/supabase-types.ts");
-const baseTypesPath = resolve(repositoryRoot, "src/integrations/supabase/types.ts");
-const supplementPath = resolve(repositoryRoot, "src/integrations/supabase/secM03Database.ts");
+const committedTypesPath = resolve(repositoryRoot, "src/integrations/supabase/types.ts");
+const retiredSupplementPath = resolve(repositoryRoot, "src/integrations/supabase/secM03Database.ts");
+const clientPath = resolve(repositoryRoot, "src/integrations/supabase/client.ts");
 
 const requiredBlocks = new Map([
   [
@@ -51,54 +52,48 @@ function readRequired(path, label) {
 
 function locateFunctionBlock(lines, functionName) {
   const start = lines.findIndex((line) => line === `      ${functionName}: {`);
-  if (start < 0) throw new Error(`Live generated types are missing ${functionName}`);
+  if (start < 0) throw new Error(`Official public types are missing ${functionName}`);
   let end = start + 1;
   while (end < lines.length && !/^      [A-Za-z0-9_]+:/.test(lines[end])) end += 1;
-  return { start, end, text: `${lines.slice(start, end).join("\n")}\n` };
+  return `${lines.slice(start, end).join("\n")}\n`;
 }
 
 const liveTypes = readRequired(liveTypesPath, "live generated public-schema types");
-const baseTypes = readRequired(baseTypesPath, "committed base public-schema types");
-const supplement = readRequired(supplementPath, "SEC-M03 RPC type supplement");
+const committedTypes = readRequired(committedTypesPath, "committed public-schema types");
+const client = readRequired(clientPath, "Supabase client");
+
+if (liveTypes !== committedTypes) {
+  throw new Error("Committed Supabase types are not byte-for-byte current with official public-schema generation");
+}
+
 const liveLines = liveTypes.split("\n");
-const ranges = [];
-
 for (const [functionName, expectedBlock] of requiredBlocks) {
-  const located = locateFunctionBlock(liveLines, functionName);
-  if (located.text !== expectedBlock) {
-    throw new Error(`${functionName} live signature differs from the reviewed SEC-M03 contract`);
+  if (locateFunctionBlock(liveLines, functionName) !== expectedBlock) {
+    throw new Error(`${functionName} official signature differs from the reviewed SEC-M03 contract`);
   }
-  ranges.push(located);
 }
 
-for (const range of ranges.sort((left, right) => right.start - left.start)) {
-  liveLines.splice(range.start, range.end - range.start);
-}
-
-const liveWithoutSupplement = liveLines.join("\n");
-if (liveWithoutSupplement !== baseTypes) {
-  throw new Error("Live public-schema types contain changes beyond the two reviewed SEC-M03 RPCs");
-}
-
-const compact = supplement.replace(/\s+/g, "");
-const requiredFragments = [
-  "cleanup_edge_rate_limit_state:{Args:{p_max_rows?:number};Returns:{metric_rows_deleted:number;state_rows_deleted:number;}[];};",
-  "consume_edge_rate_limit:{Args:{p_cost?:number;p_duplicate_hash?:string;p_now?:string;p_policy_key:string;p_resource_hash?:string;p_subject_hash:string;};Returns:{blocked_until:string;decision:string;duplicate_suppressed:boolean;remaining:number;retry_after_seconds:number;}[];};",
-];
-for (const fragment of requiredFragments) {
-  if (!compact.includes(fragment)) throw new Error("Committed SEC-M03 type supplement does not match the live reviewed signature");
-}
-
-for (const forbiddenTable of [
+for (const forbidden of [
   /^\s+edge_rate_limit_policies:\s*\{/m,
   /^\s+edge_rate_limit_state:\s*\{/m,
   /^\s+edge_rate_limit_metrics_hourly:\s*\{/m,
+  /\bVault\b/,
+  /\bprivate:\s*\{/,
+  /\bmigration_archive\b/,
 ]) {
-  if (forbiddenTable.test(supplement)) throw new Error(`Browser type supplement exposes a private limiter table declaration: ${forbiddenTable}`);
+  if (forbidden.test(liveTypes)) {
+    throw new Error(`Official browser types expose a forbidden private declaration: ${forbidden}`);
+  }
 }
 
-for (const forbiddenField of ["burst_count:", "sustained_count:", "privacy_sample:"]) {
-  if (supplement.includes(forbiddenField)) throw new Error(`Browser type supplement exposes non-public limiter detail: ${forbiddenField}`);
+if (existsSync(retiredSupplementPath)) {
+  throw new Error("Temporary SEC-M03 type supplement still exists after official type generation");
+}
+if (!client.includes('import type { Database } from "./types";')) {
+  throw new Error("Supabase client does not consume the official generated Database type directly");
+}
+if (client.includes("secM03Database")) {
+  throw new Error("Supabase client still references the retired SEC-M03 type supplement");
 }
 
-console.log("Supabase type parity passed: base schema is exact and the only live delta is the reviewed SEC-M03 RPC supplement.");
+console.log("Supabase type parity passed: official public types are current, limiter RPCs are present, and private schemas remain excluded.");
