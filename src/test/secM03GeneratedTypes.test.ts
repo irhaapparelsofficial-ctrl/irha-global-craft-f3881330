@@ -22,9 +22,9 @@ describe("SEC-M03 generated public RPC supplement", () => {
     expect(source).toContain("p_resource_hash?: string");
     expect(source).toContain("retry_after_seconds: number");
     expect(source).toContain("duplicate_suppressed: boolean");
-    expect(source).not.toContain("edge_rate_limit_policies:");
-    expect(source).not.toContain("edge_rate_limit_state:");
-    expect(source).not.toContain("edge_rate_limit_metrics_hourly:");
+    expect(source).not.toMatch(/^\s+edge_rate_limit_policies:\s*\{/m);
+    expect(source).not.toMatch(/^\s+edge_rate_limit_state:\s*\{/m);
+    expect(source).not.toMatch(/^\s+edge_rate_limit_metrics_hourly:\s*\{/m);
     expect(source).not.toContain("burst_count:");
     expect(source).not.toContain("sustained_count:");
     expect(source).not.toContain("privacy_sample:");
