@@ -1,0 +1,59 @@
+name: Supabase Deployment Parity
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "supabase/config.toml"
+      - "supabase/deployment-parity/**"
+      - "scripts/verify-supabase-parity.mjs"
+      - "scripts/supabase/export-deployment-manifest.sql"
+      - "src/integrations/supabase/types.ts"
+      - ".github/workflows/supabase-parity.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/config.toml"
+      - "supabase/deployment-parity/**"
+      - "scripts/verify-supabase-parity.mjs"
+      - "scripts/supabase/export-deployment-manifest.sql"
+      - "src/integrations/supabase/types.ts"
+      - ".github/workflows/supabase-parity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify committed canonical parity evidence
+        run: node scripts/verify-supabase-parity.mjs
+
+      - name: Verify generated public-schema types are fresh
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes supabase@2.39.2 gen types typescript --project-id pvzjiozismyxqrzmtfbi --schema public > /tmp/supabase-types.ts
+          diff -u src/integrations/supabase/types.ts /tmp/supabase-types.ts
+
+      - name: Verify runtime project identity and live ledger
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/ci/reconcile-repository-migrations.mjs
