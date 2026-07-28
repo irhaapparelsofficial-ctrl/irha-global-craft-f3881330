@@ -129,8 +129,14 @@ jobs:
             fi
           done < <(jq -r '.functions[] | [.name, (.minimum_version|tostring)] | @tsv' "$PLAN_FILE")
 
-          jq '{source_sha: env.SOURCE_SHA, project_id: env.SUPABASE_PROJECT_ID, plan: input, before: input, deployed: input, after: input}' \
-            "$PLAN_FILE" /tmp/functions-before.json /tmp/functions-to-deploy.json /tmp/functions-after.json \
+          jq -n \
+            --arg source_sha "$SOURCE_SHA" \
+            --arg project_id "$SUPABASE_PROJECT_ID" \
+            --slurpfile plan "$PLAN_FILE" \
+            --slurpfile before /tmp/functions-before.json \
+            --slurpfile deployed /tmp/functions-to-deploy.json \
+            --slurpfile after /tmp/functions-after.json \
+            '{source_sha: $source_sha, project_id: $project_id, plan: $plan[0], before: $before[0], deployed: $deployed[0], after: $after[0]}' \
             > /tmp/sec-m03-function-reconciliation-evidence.json
 
       - name: Upload reconciliation evidence
