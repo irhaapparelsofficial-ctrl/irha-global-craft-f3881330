@@ -211,8 +211,7 @@ select jsonb_build_object(
   ),
   'recorded_blockers', coalesce((select blockers from latest_health), '[]'::jsonb)
 );
-$function$
-
+$function$;
 
 select public.refresh_admin_ai_snapshot_cache();
 
