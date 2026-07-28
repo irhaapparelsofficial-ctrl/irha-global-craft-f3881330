@@ -53,7 +53,7 @@ describe("IA-SEC-E003 source contracts", () => {
     expect(limiter).toBeGreaterThanOrEqual(0);
     expect(limiter).toBeLessThan(body.indexOf("authenticateSession("));
     expect(limiter).toBeLessThan(body.indexOf('.from("chat_sessions")'));
-    expect(limiter).toBeLessThan(body.indexOf('.from("chat_messages")'));
+    expect(limiter).toBeLessThan(body.indexOf("insertVisitorMessage("));
     expect(limiter).toBeLessThan(body.indexOf("alertOwnerOfPresence("));
     expect(body).toContain('error: "live_chat_unavailable"');
     expect(body).toContain('error: "too_many_requests"');
