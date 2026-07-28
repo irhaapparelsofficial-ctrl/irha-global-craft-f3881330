@@ -179,9 +179,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf supabase/.temp
           rm .github/workflows/ia-ctrl-e001r2-evidence-seal.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add src/integrations/supabase/types.ts supabase/deployment-parity/functions-f1.json supabase/deployment-parity/functions-f2.json supabase/deployment-parity/manifest.json supabase/deployment-parity/migration-provenance.json .github/workflows/ia-ctrl-e001r2-evidence-seal.yml
           git commit -m "chore(parity): seal SEC-M03 post-deployment evidence"
           git push origin HEAD:codex/ia-ctrl-e001r2-parity-seal
