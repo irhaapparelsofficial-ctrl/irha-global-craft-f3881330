@@ -395,6 +395,14 @@
       "git_blob_sha": "0319112df9e1d006c7bec7cc549931a8a05eb48b",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260728171500",
+      "name": "fix_durable_rate_limit_metric_conflict",
+      "path": "supabase/migrations/20260728171500_fix_durable_rate_limit_metric_conflict.sql",
+      "git_blob_sha": "82b99c356d9647f823c8dcf693726123b23bbe08",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
