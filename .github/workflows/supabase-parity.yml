@@ -10,8 +10,10 @@ on:
       - "scripts/verify-supabase-parity.mjs"
       - "scripts/ci/generate-migration-provenance.mjs"
       - "scripts/ci/generate-supabase-manifest.mjs"
+      - "scripts/ci/verify-supabase-type-supplement.mjs"
       - "scripts/supabase/export-deployment-manifest.sql"
       - "src/integrations/supabase/types.ts"
+      - "src/integrations/supabase/secM03Database.ts"
       - ".github/workflows/supabase-parity.yml"
   push:
     branches: [main]
@@ -21,8 +23,10 @@ on:
       - "scripts/verify-supabase-parity.mjs"
       - "scripts/ci/generate-migration-provenance.mjs"
       - "scripts/ci/generate-supabase-manifest.mjs"
+      - "scripts/ci/verify-supabase-type-supplement.mjs"
       - "scripts/supabase/export-deployment-manifest.sql"
       - "src/integrations/supabase/types.ts"
+      - "src/integrations/supabase/secM03Database.ts"
       - ".github/workflows/supabase-parity.yml"
   workflow_dispatch:
 
@@ -71,7 +75,7 @@ jobs:
             --schema public > /tmp/supabase-types.ts
           test -s /tmp/supabase-types.ts
           ! grep -E '(sb_secret_|service_role[^A-Za-z0-9]|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,})' /tmp/supabase-types.ts
-          diff -u src/integrations/supabase/types.ts /tmp/supabase-types.ts
+          node scripts/ci/verify-supabase-type-supplement.mjs /tmp/supabase-types.ts
           sha256sum /tmp/supabase-types.ts
 
       - name: Verify migration provenance against live history
