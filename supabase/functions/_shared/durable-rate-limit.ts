@@ -291,7 +291,9 @@ export async function authorizeDurableRateLimit(input: AuthorizeRateLimitInput):
     subjectMaterial = `session:${input.clientSessionId}`;
   } else {
     subjectKind = "bootstrap";
-    subjectMaterial = `bootstrap:${input.clientSessionId}`;
+    // The first request and the subsequently signed anonymous session consume
+    // the same subject bucket, so token issuance cannot reset allowance.
+    subjectMaterial = `session:${input.clientSessionId}`;
   }
   if (input.secondarySubjectValue) subjectMaterial += `:${input.secondarySubjectValue}`;
 

@@ -212,7 +212,7 @@ $test$;
 -- Expired windows reset rather than carrying stale request counts.
 do $test$
 declare
-  v_now timestamptz := clock_timestamp();
+  v_now timestamptz := clock_timestamp() - interval '301 seconds';
   v_decision text;
 begin
   select decision into v_decision
@@ -223,7 +223,7 @@ begin
 
   select decision into v_decision
   from public.consume_edge_rate_limit(
-    'test.ia-sec-e003', repeat('f', 64), repeat('4', 64), null, 1, v_now + interval '301 seconds'
+    'test.ia-sec-e003', repeat('f', 64), repeat('4', 64), null, 1, clock_timestamp()
   );
   if v_decision <> 'ALLOW' then
     raise exception 'expired windows did not reset: %', v_decision;
