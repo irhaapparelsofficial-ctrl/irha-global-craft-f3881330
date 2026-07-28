@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "./types";
+import type { Database } from "./secM03Database";
 import { createIrhaFetch } from "../../lib/inquiryTransportFetch";
 import {
   OWNER_SUPABASE_PROJECT_ID,

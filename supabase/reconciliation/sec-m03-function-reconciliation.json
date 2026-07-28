@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "execution_id": "IA-CTRL-E001",
+  "goal_lock": "IRHA-PRODUCTION-SECURITY-01",
+  "project_id": "pvzjiozismyxqrzmtfbi",
+  "functions": [
+    {
+      "name": "generate-mockup",
+      "minimum_version": 10,
+      "verify_jwt": false,
+      "reason": "Deploy durable distributed rate limiting before expensive mockup rendering."
+    },
+    {
+      "name": "live-chat",
+      "minimum_version": 11,
+      "verify_jwt": false,
+      "reason": "Deploy durable distributed rate limiting before protected chat writes."
+    },
+    {
+      "name": "site-visitor",
+      "minimum_version": 5,
+      "verify_jwt": false,
+      "reason": "Deploy durable duplicate suppression and safe analytics drop behavior."
+    }
+  ]
+}
