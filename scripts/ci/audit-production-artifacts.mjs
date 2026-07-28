@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { extname, join, relative, resolve } from "node:path";
 
@@ -111,6 +112,41 @@ function predictableMapUrls(assetUrl) {
   return [...candidates];
 }
 
+export function isSourceMapDocument(content) {
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return false;
+  }
+  if (!parsed || typeof parsed !== "object" || parsed.version !== 3) return false;
+  const flatMap = typeof parsed.mappings === "string" && Array.isArray(parsed.sources);
+  const indexedMap = Array.isArray(parsed.sections)
+    && parsed.sections.every((section) => section && typeof section === "object" && section.map && typeof section.map === "object");
+  return flatMap || indexedMap;
+}
+
+async function inspectPredictableMapPath(mapUrl) {
+  const response = await fetchWithTimeout(mapUrl, { redirect: "manual" });
+  if (response.status < 200 || response.status >= 300) {
+    return { map_url: mapUrl, status: response.status, outcome: "not-public" };
+  }
+
+  const contentType = String(response.headers.get("content-type") ?? "").toLowerCase();
+  const content = await response.text();
+  scanText(mapUrl, content);
+  if (isSourceMapDocument(content)) {
+    fail("PUBLIC_SOURCE_MAP", `${mapUrl} exposes a valid source-map document (${response.status}; ${contentType || "unknown content type"})`);
+  }
+
+  return {
+    map_url: mapUrl,
+    status: response.status,
+    content_type: contentType || null,
+    outcome: "non-map-fallback",
+  };
+}
+
 async function auditOrigin(origin, expectedSha) {
   const normalized = new URL(origin).origin;
   const cacheBust = `${expectedSha.slice(0, 12)}-${Date.now()}`;
@@ -136,18 +172,14 @@ async function auditOrigin(origin, expectedSha) {
   const assets = assetUrls(html, normalized);
   if (assets.length === 0) fail("ASSET_INVENTORY_EMPTY", `${normalized} HTML exposed no JavaScript or CSS assets`);
 
-  let checkedMapPaths = 0;
+  const mapChecks = [];
   for (const asset of assets) {
     const response = await fetchWithTimeout(asset);
     if (!response.ok) fail("ASSET_UNAVAILABLE", `${asset} returned ${response.status}`);
     const content = await response.text();
     scanText(asset, content);
     for (const mapUrl of predictableMapUrls(asset)) {
-      const mapResponse = await fetchWithTimeout(mapUrl, { redirect: "manual" });
-      checkedMapPaths += 1;
-      if (mapResponse.status >= 200 && mapResponse.status < 300) {
-        fail("PUBLIC_SOURCE_MAP", `${mapUrl} is publicly accessible (${mapResponse.status})`);
-      }
+      mapChecks.push(await inspectPredictableMapPath(mapUrl));
     }
   }
 
@@ -155,8 +187,10 @@ async function auditOrigin(origin, expectedSha) {
     origin: normalized,
     exact_sha: expectedSha,
     assets_scanned: assets.length,
-    predictable_map_paths_checked: checkedMapPaths,
+    predictable_map_paths_checked: mapChecks.length,
+    non_map_fallbacks: mapChecks.filter((check) => check.outcome === "non-map-fallback").length,
     public_source_maps: 0,
+    map_checks: mapChecks,
   };
 }
 
@@ -167,7 +201,20 @@ async function auditRemote(origins, expectedSha) {
   return { mode: "remote", results };
 }
 
+function runSelfTest() {
+  assert.equal(isSourceMapDocument("<!doctype html><title>SPA fallback</title>"), false);
+  assert.equal(isSourceMapDocument(JSON.stringify({ source_commit: "not-a-map", version: 3 })), false);
+  assert.equal(isSourceMapDocument(JSON.stringify({ version: 3, sources: ["src/app.ts"], mappings: "AAAA" })), true);
+  assert.equal(isSourceMapDocument(JSON.stringify({ version: 3, sections: [{ offset: { line: 0, column: 0 }, map: {} }] })), true);
+  return { mode: "self-test", cases: 4, ok: true };
+}
+
 async function main() {
+  if (process.env.ARTIFACT_AUDIT_SELF_TEST === "1") {
+    console.log(JSON.stringify(runSelfTest(), null, 2));
+    return;
+  }
+
   const mode = process.env.ARTIFACT_AUDIT_MODE ?? "directory";
   let result;
   if (mode === "directory") {
