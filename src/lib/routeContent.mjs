@@ -282,14 +282,14 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
     breadcrumbLabel: "Products",
     pageType: "CollectionPage",
     title: "Custom Apparel Manufacturing Categories | Wholesale & Private Label | Irha Apparels",
-    metaDescription: "Browse Irha Apparels by main category, buyer group, product type and current published products. Each route leads directly to the canonical catalogue hierarchy.",
-    eyebrow: "B2B Product Architecture",
-    h1: "Main category to buyer-ready product.",
+    metaDescription: "Browse Irha Apparels by main category, buyer group, product type and current products. Each route leads directly to the relevant catalogue styles.",
+    eyebrow: "Product Catalogue",
+    h1: "Browse by category, buyer group and product type.",
     intro: "Choose a manufacturing category, then browse Men, Women, Kids or the relevant buyer group. Each audience opens focused product categories and individual styles for quotation.",
     sections: [
       {
         heading: "Five main product categories",
-        body: "Open the current canonical category routes below. Each category is organised by its actual published buyer groups and product types.",
+        body: "Open the current product categories below. Each category is organised by buyer group and product type.",
         links: categoryLinks,
       },
       {
@@ -300,7 +300,7 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
     primaryCta: { href: "/inquiry?intent=rfq", label: "Request a quotation" },
     secondaryCta: { href: "/products/all", label: "Search all products" },
     sourceFile: "src/pages/GlobalCollectionsPage.tsx",
-    parityTokens: ["Main category to", "buyer-ready product", "Men, Women, Kids", "Open category hierarchy"],
+    parityTokens: ["Browse by category", "buyer group and product type", "Men, Women, Kids", "Browse products"],
   }),
   "/faq": route({
     route: "/faq",
