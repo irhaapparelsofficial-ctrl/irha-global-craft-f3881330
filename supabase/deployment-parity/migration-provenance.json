@@ -1,5 +1,5 @@
 {
-  "canonical_payload_sha256": "a2faf992844347e0a053c6cb573ffc63efee5f59958f62e9bf89eb3895099083",
+  "canonical_payload_sha256": "b913642c2e82b87a0f027d5deb8dd8ea103844ef98e9e08b3f6cd19f5f0ea937",
   "payload": {
     "classification_policy": {
       "P1": "Exact repository source recovered and linked to the exact live version and name.",
@@ -8649,18 +8649,41 @@
         ],
         "superseding_baseline": "current approved public-schema baseline and canonical deployment manifest",
         "version": "20260727232321"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P2",
+        "current_repository_representation": "retained exact execution artifact plus current approved schema baseline",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260728173945"
+        ],
+        "exact_repository_source": null,
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "d857d482891cbcdbc4c6be34a92ffae20be4c0691ca076863a4997b24ad87b55",
+        "name": "20260728171500_fix_durable_rate_limit_metric_conflict",
+        "reason": "Exact deployed SQL is retained in live migration history; no fabricated timestamp mirror is required.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "OTHER"
+        ],
+        "superseding_baseline": "current approved public-schema baseline and canonical deployment manifest",
+        "version": "20260728173945"
       }
     ],
     "schema_version": 2,
     "totals": {
       "P1": 4,
-      "P2": 370,
+      "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 374
+      "live": 375
     }
   }
 }
