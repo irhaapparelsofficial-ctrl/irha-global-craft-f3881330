@@ -280,8 +280,8 @@ async function main() {
   if (result.payload.totals.P5 !== 0) {
     throw new ProvenanceError("UNRESOLVED_P5", `${result.payload.totals.P5} migration provenance record(s) remain P5`);
   }
-  if (result.payload.totals.live !== 374) {
-    throw new ProvenanceError("LIVE_COUNT_DRIFT", `Expected 374 live migrations, found ${result.payload.totals.live}`);
+  if (result.payload.totals.live !== 375) {
+    throw new ProvenanceError("LIVE_COUNT_DRIFT", `Expected 375 live migrations, found ${result.payload.totals.live}`);
   }
 
   if (mode === "write") {
