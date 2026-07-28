@@ -41,6 +41,22 @@ const replacements = [
     pattern: /The company is experienced; the public website is newly built\./gi,
     replacement: "The company provides a direct manufacturing review process for B2B buyers.",
   },
+  {
+    pattern: /Although the website is newly built,?\s*/gi,
+    replacement: "",
+  },
+  {
+    pattern: /The website is newly built,?\s*/g,
+    replacement: "Manufacturing capability is available for direct verification. ",
+  },
+  {
+    pattern: /the website is newly built,?\s*/g,
+    replacement: "manufacturing capability is available for direct verification. ",
+  },
+  {
+    pattern: /website is newly built/gi,
+    replacement: "manufacturing capability is available for direct verification",
+  },
 ];
 
 const forbiddenPatterns = [
