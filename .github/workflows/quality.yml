@@ -26,7 +26,7 @@ jobs:
   sec_m02_read_only_capture:
     if: github.event_name == 'pull_request' && github.event.pull_request.number == 783
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout current PR head
         uses: actions/checkout@v4
@@ -63,6 +63,7 @@ jobs:
           test -s /tmp/supabase-types.ts
           sha256sum /tmp/supabase-types.ts | tee /tmp/supabase-types.sha256
           ! grep -E '(sb_secret_|service_role[^A-Za-z0-9]|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,})' /tmp/supabase-types.ts
+          install -m 0644 /tmp/supabase-types.ts src/integrations/supabase/types.ts
 
       - name: Generate canonical migration provenance ledger
         env:
@@ -77,6 +78,22 @@ jobs:
           test -s /tmp/migration-provenance.json
           jq -e '.payload.totals.live == 374 and .payload.totals.P5 == 0' /tmp/migration-provenance.json >/dev/null
           sha256sum /tmp/migration-provenance.json | tee /tmp/migration-provenance-file.sha256
+          install -m 0644 /tmp/migration-provenance.json supabase/deployment-parity/migration-provenance.json
+
+      - name: Generate canonical deployment manifest
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+          SUPABASE_MANIFEST_MODE: write
+          SUPABASE_MANIFEST_OUTPUT: /tmp/supabase-manifest.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci/generate-supabase-manifest.mjs | tee /tmp/supabase-manifest-summary.json
+          test -s /tmp/supabase-manifest.json
+          jq -e '.database.public.tables == 158 and .database.live_migrations.count == 374 and .edge_functions.deployed_count == 87 and .migration_provenance.totals.P5 == 0' /tmp/supabase-manifest.json >/dev/null
+          sha256sum /tmp/supabase-manifest.json | tee /tmp/supabase-manifest-file.sha256
+          install -m 0644 /tmp/supabase-manifest.json supabase/deployment-parity/manifest.json
 
       - name: Upload SEC-M02 authoritative evidence
         uses: actions/upload-artifact@v4
@@ -88,6 +105,9 @@ jobs:
             /tmp/migration-provenance.json
             /tmp/migration-provenance-summary.json
             /tmp/migration-provenance-file.sha256
+            /tmp/supabase-manifest.json
+            /tmp/supabase-manifest-summary.json
+            /tmp/supabase-manifest-file.sha256
           if-no-files-found: error
           retention-days: 1
           compression-level: 6
@@ -101,15 +121,18 @@ jobs:
           set -euo pipefail
           remote_head="$(git ls-remote origin "refs/heads/$HEAD_BRANCH" | awk '{print $1}')"
           test "$remote_head" = "$EXPECTED_HEAD"
-          install -m 0644 /tmp/supabase-types.ts src/integrations/supabase/types.ts
-          install -m 0644 /tmp/migration-provenance.json supabase/deployment-parity/migration-provenance.json
-          if git diff --quiet -- src/integrations/supabase/types.ts supabase/deployment-parity/migration-provenance.json; then
+          paths=(
+            src/integrations/supabase/types.ts
+            supabase/deployment-parity/migration-provenance.json
+            supabase/deployment-parity/manifest.json
+          )
+          if [ -z "$(git status --porcelain -- "${paths[@]}")" ]; then
             echo "Authoritative generated evidence already matches the PR branch."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/integrations/supabase/types.ts supabase/deployment-parity/migration-provenance.json
+          git add "${paths[@]}"
           git commit -m "chore(security): seal authoritative Supabase evidence"
           git push origin "HEAD:$HEAD_BRANCH"
 
@@ -152,8 +175,8 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
 
-      - name: ESLint IA-SEC-E002 executable source
-        run: npx eslint scripts/verify-supabase-parity.mjs scripts/ci/generate-migration-provenance.mjs
+      - name: ESLint SEC-M02 executable source
+        run: npx eslint scripts/verify-supabase-parity.mjs scripts/ci/generate-migration-provenance.mjs scripts/ci/generate-supabase-manifest.mjs
 
       - name: Unit and integration tests
         shell: bash
@@ -232,7 +255,7 @@ jobs:
             echo "- Migration registry: required"
             echo "- Supabase deployment parity evidence: required"
             echo "- TypeScript: required"
-            echo "- Focused ESLint for IA-SEC-E002 executable source: required"
+            echo "- Focused ESLint for SEC-M02 executable source: required"
             echo "- Tests: required"
             echo "- Production build and release identity: required"
             echo "- One merge signal: \`Irha Quality Gate\`"
