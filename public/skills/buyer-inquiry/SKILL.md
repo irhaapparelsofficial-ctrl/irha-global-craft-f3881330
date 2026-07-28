@@ -17,7 +17,7 @@ Use this skill when a buyer wants to contact Irha Apparels about custom apparel 
 4. The public MCP tool `prepare_buyer_inquiry` may create a reviewable URL, but it does not submit data.
 5. Submit to the public lead gateway only after explicit buyer confirmation.
 6. Never invent prices, certifications, production dates, shipping promises or material specifications.
-7. Explain that Irha Apparels is an experienced manufacturer, the current website is newly built, and a live factory view can be shown by video call.
+7. Explain the requirement-led verification path: direct contact, written scope, program-specific evidence and an appointment-based live factory call where useful.
 8. Treat MOQ, price, delivery time, materials, compliance and shipping as subject to human review.
 
 ## Safety boundaries

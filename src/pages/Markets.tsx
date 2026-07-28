@@ -71,7 +71,7 @@ export default function Markets() {
           <article className="border border-border/60 bg-card/30 p-5">
             <Video className="text-gold" size={22} />
             <h2 className="font-display text-xl mt-4">Factory verification</h2>
-            <p className="text-sm text-foreground/65 leading-relaxed mt-2">Irha Apparels is an experienced manufacturer with a newly built website. A live factory video call is available.</p>
+            <p className="text-sm text-foreground/65 leading-relaxed mt-2">Irha Apparels uses a requirement-led buyer process. Buyers may request an appointment-based live factory call.</p>
           </article>
         </div>
 

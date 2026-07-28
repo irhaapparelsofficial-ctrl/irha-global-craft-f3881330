@@ -20,6 +20,32 @@ describe("B2B buyer-readiness contracts", () => {
     }
   });
 
+  it("keeps website-age wording out of public, buyer and outreach copy", () => {
+    const paths = [
+      "public/llms.txt",
+      "public/llms-full.txt",
+      "functions/mcp.js",
+      "functions/_middleware.js",
+      "public/agent-webmcp.js",
+      "public/skills/buyer-inquiry/SKILL.md",
+      "src/lib/defaultFaqs.ts",
+      "src/components/admin/ListingLaunchKit.tsx",
+      "src/lib/buyerReplyDrafts.ts",
+      "src/pages/Markets.tsx",
+      "src/lib/outreachAutomation.ts",
+      "src/lib/buyerJourneyLocaleCopy.ts",
+      "docs/AI_OUTREACH_ENGINE.md",
+      "docs/BUSINESS_RULES_MASTER.md",
+      "docs/SOCIAL_CONTENT_CALENDAR.md",
+      "docs/MULTILINGUAL_SEO_ENGINE.md",
+      "docs/SOCIAL_AUTOPILOT_APPROVAL_QUEUE_V2.md",
+      "docs/AI_COMMAND_CENTER.md",
+    ];
+    for (const path of paths) {
+      expect(read(path)).not.toMatch(/newly built|website (?:itself )?is new|new(?:ly)? (?:website|site)/i);
+    }
+  });
+
   it("prefills a product RFQ with a code and requires consent", () => {
     const product = read("src/pages/CanonicalProductDetail.tsx");
     const inquiry = read("src/pages/InquiryBase.tsx");

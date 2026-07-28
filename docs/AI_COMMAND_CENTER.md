@@ -21,7 +21,7 @@ The planner reads a limited current snapshot of:
 
 It knows the Irha Apparels rules:
 
-- experienced B2B manufacturer; website newly built
+- requirement-led B2B manufacturing; buyer verification through exact program scope
 - factory view can be shown on a live video call
 - no public pricing
 - no invented MOQ, delivery, certification, review, buyer-count or platform-performance claims

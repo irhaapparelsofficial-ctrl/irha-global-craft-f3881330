@@ -63,7 +63,7 @@ export const BUYER_JOURNEY_COPY: Readonly<Record<BuyerJourneyLocale, BuyerJourne
     buyerTrust: "Buyer Trust",
     factoryCall: "Factory Video Call",
     requestQuote: "Request Quote",
-    trustStatement: "Experienced manufacturer in Sialkot, Pakistan. The website is newly built, and qualified buyers may request a live factory video call before placing an order.",
+    trustStatement: "Requirement-led manufacturing in Sialkot, Pakistan. Buyers may request an appointment-based live factory call before making a commercial commitment.",
     buyerActions: "Primary buyer actions",
     manufacturing: "B2B manufacturing",
     contact: "Contact",

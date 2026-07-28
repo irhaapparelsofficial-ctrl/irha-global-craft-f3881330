@@ -9,11 +9,11 @@ export type PublicFaq = {
 
 export const DEFAULT_FAQS: PublicFaq[] = [
   {
-    id: "fallback-company-new-manufacturer",
+    id: "fallback-company-verification-scope",
     locale: "en",
     category: "Company & Verification",
-    question: "Is Irha Apparels a new manufacturer?",
-    answer: "No. Irha Apparels is an experienced apparel manufacturer in Sialkot. The website is newly built, so buyers are encouraged to verify the team and program directly instead of relying on website age alone.",
+    question: "What should a buyer verify before making a commitment?",
+    answer: "Verify the relevant team, exact product and customization scope, program-specific evidence, written quotation and approval path before making a commercial commitment.",
     sort_order: 10,
   },
   {

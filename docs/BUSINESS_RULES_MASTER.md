@@ -7,7 +7,7 @@ This document defines the business facts and approval boundaries every Irha Appa
 ## Current operating model
 
 - Experienced B2B apparel manufacturer in Sialkot, Pakistan.
-- Website is newly built.
+- Website age is not used as a buyer-trust claim.
 - No public pricing.
 - Primary buyer actions: Request a Quote, Inquiry, Catalogue, WhatsApp and scheduled factory video call.
 - Factory view can be shown through a scheduled live video call.
