@@ -125,11 +125,11 @@ select jsonb_build_object(
 
   const digestA = await databaseQuery(projectId, accessToken, `
 select jsonb_build_object(
-  'columns', encode(digest(coalesce((
+  'columns', encode(extensions.digest(coalesce((
     select string_agg(concat_ws('|',table_name,ordinal_position,column_name,data_type,udt_name,is_nullable,coalesce(column_default,'')), E'\\n' order by table_name,ordinal_position)
     from information_schema.columns where table_schema='public'
   ),''),'sha256'),'hex'),
-  'constraints', encode(digest(coalesce((
+  'constraints', encode(extensions.digest(coalesce((
     select string_agg(concat_ws('|',c.relname,con.conname,con.contype,pg_get_constraintdef(con.oid,true)), E'\\n' order by c.relname,con.conname)
     from pg_constraint con join pg_class c on c.oid=con.conrelid join pg_namespace n on n.oid=con.connamespace where n.nspname='public'
   ),''),'sha256'),'hex')
@@ -138,11 +138,11 @@ select jsonb_build_object(
 
   const digestB = await databaseQuery(projectId, accessToken, `
 select jsonb_build_object(
-  'functions', encode(digest(coalesce((
-    select string_agg(concat_ws('|',p.proname,pg_get_function_identity_arguments(p.oid),pg_get_function_result(p.oid),l.lanname,p.prosecdef,p.provolatile,encode(digest(pg_get_functiondef(p.oid),'sha256'),'hex')), E'\\n' order by p.proname,pg_get_function_identity_arguments(p.oid))
+  'functions', encode(extensions.digest(coalesce((
+    select string_agg(concat_ws('|',p.proname,pg_get_function_identity_arguments(p.oid),pg_get_function_result(p.oid),l.lanname,p.prosecdef,p.provolatile,encode(extensions.digest(pg_get_functiondef(p.oid),'sha256'),'hex')), E'\\n' order by p.proname,pg_get_function_identity_arguments(p.oid))
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace join pg_language l on l.oid=p.prolang where n.nspname='public'
   ),''),'sha256'),'hex'),
-  'indexes', encode(digest(coalesce((
+  'indexes', encode(extensions.digest(coalesce((
     select string_agg(pg_get_indexdef(i.indexrelid), E'\\n' order by ic.relname)
     from pg_index i join pg_class c on c.oid=i.indrelid join pg_class ic on ic.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
   ),''),'sha256'),'hex')
@@ -151,15 +151,15 @@ select jsonb_build_object(
 
   const digestC = await databaseQuery(projectId, accessToken, `
 select jsonb_build_object(
-  'migrations', encode(digest(coalesce((
-    select string_agg(concat_ws('|',version,name,encode(digest(convert_to(array_to_string(statements,E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'),'UTF8'),'sha256'),'hex')), E'\\n' order by version)
+  'migrations', encode(extensions.digest(coalesce((
+    select string_agg(concat_ws('|',version,name,encode(extensions.digest(convert_to(array_to_string(statements,E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'),'UTF8'),'sha256'),'hex')), E'\\n' order by version)
     from supabase_migrations.schema_migrations
   ),''),'sha256'),'hex'),
-  'policies', encode(digest(coalesce((
+  'policies', encode(extensions.digest(coalesce((
     select string_agg(concat_ws('|',c.relname,p.polname,p.polcmd,array_to_string(p.polroles,','),coalesce(pg_get_expr(p.polqual,p.polrelid),''),coalesce(pg_get_expr(p.polwithcheck,p.polrelid),'')), E'\\n' order by c.relname,p.polname)
     from pg_policy p join pg_class c on c.oid=p.polrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
   ),''),'sha256'),'hex'),
-  'triggers', encode(digest(coalesce((
+  'triggers', encode(extensions.digest(coalesce((
     select string_agg(pg_get_triggerdef(t.oid,true), E'\\n' order by c.relname,t.tgname)
     from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and not t.tgisinternal
   ),''),'sha256'),'hex')
@@ -181,7 +181,7 @@ async function loadCronInventory(projectId, accessToken) {
 select jsonb_build_object(
   'count',count(*)::int,
   'active_count',count(*) filter(where active)::int,
-  'canonical_sha256',encode(digest(coalesce(string_agg(concat_ws('|',jobid,jobname,schedule,active),E'\\n' order by jobid),''),'sha256'),'hex'),
+  'canonical_sha256',encode(extensions.digest(coalesce(string_agg(concat_ws('|',jobid,jobname,schedule,active),E'\\n' order by jobid),''),'sha256'),'hex'),
   'jobs',coalesce(jsonb_agg(jsonb_build_object('jobid',jobid,'jobname',jobname,'schedule',schedule,'active',active) order by jobid),'[]'::jsonb)
 ) as value from cron.job;
 `, "cron inventory");
@@ -192,7 +192,7 @@ async function loadStorageInventory(projectId, accessToken) {
   const row = await databaseQuery(projectId, accessToken, `
 select jsonb_build_object(
   'bucket_count',count(*)::int,
-  'canonical_sha256',encode(digest(coalesce(string_agg(concat_ws('|',id,public,coalesce(file_size_limit::text,''),coalesce(array_to_string(allowed_mime_types,','),'')),E'\\n' order by id),''),'sha256'),'hex'),
+  'canonical_sha256',encode(extensions.digest(coalesce(string_agg(concat_ws('|',id,public,coalesce(file_size_limit::text,''),coalesce(array_to_string(allowed_mime_types,','),'')),E'\\n' order by id),''),'sha256'),'hex'),
   'buckets',coalesce(jsonb_agg(jsonb_build_object('name',id,'public',public,'file_size_limit',file_size_limit,'allowed_mime_types',allowed_mime_types) order by id),'[]'::jsonb)
 ) as value from storage.buckets;
 `, "Storage inventory");
