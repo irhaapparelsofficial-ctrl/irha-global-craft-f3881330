@@ -59,12 +59,68 @@ jobs:
         run: |
           set -euo pipefail
           token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
-          mkdir -p /tmp/sec-m03-live-functions
+          mkdir -p /tmp/sec-m03-live-functions /tmp/sec-m03-live-body
           curl --retry 3 --retry-all-errors -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" -o /tmp/functions-after.raw.json
           jq -S . /tmp/functions-after.raw.json > /tmp/functions-after.json
           jq -r '.functions[].name' "$PARITY_REFRESH_FILE" | sort -u > /tmp/planned-parity-refresh.txt
           while IFS= read -r function_name; do
-            curl --retry 3 --retry-all-errors -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/$function_name" -o "/tmp/sec-m03-live-functions/$function_name.json"
+            metadata="/tmp/sec-m03-live-body/$function_name.metadata.json"
+            headers="/tmp/sec-m03-live-body/$function_name.headers"
+            body="/tmp/sec-m03-live-body/$function_name.body"
+            output="/tmp/sec-m03-live-functions/$function_name.json"
+            curl --retry 3 --retry-all-errors -fsS \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/$function_name" \
+              -o "$metadata"
+            curl --retry 3 --retry-all-errors -fsS \
+              -D "$headers" \
+              -H "Authorization: Bearer $token" \
+              -H 'Accept: multipart/form-data' \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/$function_name/body" \
+              -o "$body"
+            FUNCTION_METADATA="$metadata" FUNCTION_HEADERS="$headers" FUNCTION_BODY="$body" FUNCTION_OUTPUT="$output" python3 - <<'PY'
+          import json
+          import os
+          from email import policy
+          from email.parser import BytesParser
+
+          metadata_path = os.environ["FUNCTION_METADATA"]
+          headers_path = os.environ["FUNCTION_HEADERS"]
+          body_path = os.environ["FUNCTION_BODY"]
+          output_path = os.environ["FUNCTION_OUTPUT"]
+
+          with open(metadata_path, "r", encoding="utf-8") as handle:
+              metadata = json.load(handle)
+          with open(headers_path, "rb") as handle:
+              header_lines = handle.read().decode("iso-8859-1").splitlines()
+          content_types = [
+              line.split(":", 1)[1].strip()
+              for line in header_lines
+              if line.lower().startswith("content-type:")
+          ]
+          if not content_types or not content_types[-1].lower().startswith("multipart/form-data"):
+              raise SystemExit(f"Unexpected function body content type: {content_types[-1] if content_types else 'missing'}")
+          with open(body_path, "rb") as handle:
+              raw_body = handle.read()
+          message = BytesParser(policy=policy.default).parsebytes(
+              f"Content-Type: {content_types[-1]}\r\nMIME-Version: 1.0\r\n\r\n".encode("ascii") + raw_body
+          )
+          files = []
+          for part in message.iter_parts():
+              filename = part.get_filename()
+              if not filename:
+                  continue
+              payload = part.get_payload(decode=True)
+              files.append({"name": filename, "content": payload.decode("utf-8")})
+          if not files:
+              raise SystemExit("No source files found in function body")
+          metadata["files"] = files
+          with open(output_path, "w", encoding="utf-8") as handle:
+              json.dump(metadata, handle, sort_keys=True)
+              handle.write("\n")
+          PY
+            jq -e --arg name "$function_name" '(.slug == $name or .name == $name) and (.version | type == "number") and (.verify_jwt | type == "boolean") and (.ezbr_sha256 | type == "string") and (.files | type == "array") and (.files | length > 0)' "$output" > /dev/null
           done < /tmp/planned-parity-refresh.txt
 
       - name: Verify exact deployed sources and refresh approved registries
