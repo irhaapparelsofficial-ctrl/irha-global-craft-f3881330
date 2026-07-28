@@ -27,7 +27,7 @@ jobs:
   prove-live-release:
     if: github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       GH_TOKEN: ${{ github.token }}
 
@@ -48,9 +48,7 @@ jobs:
           current=false
           if [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]] && [ "$executed_jobs" -gt 0 ]; then
             relevant=true
-            if [ "$source_sha" = "$latest_main" ]; then
-              current=true
-            fi
+            if [ "$source_sha" = "$latest_main" ]; then current=true; fi
           fi
 
           echo "SOURCE_SHA=$source_sha" >> "$GITHUB_ENV"
@@ -109,7 +107,7 @@ jobs:
             "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state=pending \
             -f context="Irha Cloudflare Production" \
-            -f description="Verifying exact merged release on production" \
+            -f description="Verifying exact merged release and public artifacts" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
 
@@ -138,7 +136,6 @@ jobs:
             origin="$1"
             label="$2"
             output="/tmp/${label}-build.json"
-
             for attempt in $(seq 1 30); do
               current_main_or_supersede
               cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
@@ -146,7 +143,6 @@ jobs:
                 -H 'Cache-Control: no-cache' \
                 -o "$output" -w '%{http_code}' \
                 "$origin/build.json?release_check=$cache_bust" || true)"
-
               if [ "$status" = "200" ] \
                 && jq -e --arg sha "$SOURCE_SHA" \
                   '.source_commit == $sha and .source_identity_state == "verified" and (.build_fingerprint | type == "string" and test("^[0-9a-f]{64}$"))' \
@@ -154,11 +150,9 @@ jobs:
                 echo "$label serves exact merged SHA $SOURCE_SHA"
                 return 0
               fi
-
               echo "$label not exact yet: status=$status attempt=$attempt/30"
               sleep 8
             done
-
             echo "::error title=Exact production release not proven::$label did not serve merged SHA $SOURCE_SHA"
             head -c 600 "$output" 2>/dev/null || true
             echo
@@ -175,18 +169,53 @@ jobs:
             -D "$headers" -o "$body" -w '%{http_code}' \
             "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}-$RANDOM" || true)"
           location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$headers")"
-
-          case "$status" in
-            301|302|307|308) ;;
-            *) echo "::error title=Canonical redirect failed::Unexpected www status $status"; exit 1 ;;
-          esac
-          case "$location" in
-            https://irhaapparels.com/*) ;;
-            *) echo "::error title=Canonical redirect failed::Unexpected www location $location"; exit 1 ;;
-          esac
+          case "$status" in 301|302|307|308) ;; *) echo "::error title=Canonical redirect failed::Unexpected www status $status"; exit 1 ;; esac
+          case "$location" in https://irhaapparels.com/*) ;; *) echo "::error title=Canonical redirect failed::Unexpected www location $location"; exit 1 ;; esac
 
           echo "verified=true" >> "$GITHUB_OUTPUT"
           echo "Exact production SHA and canonical www redirect verified."
+
+      - name: Checkout exact release source for artifact audit
+        if: >-
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION == 'success' &&
+          steps.live.outputs.verified == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.relevance.outputs.source_sha }}
+          persist-credentials: false
+
+      - name: Audit live JavaScript, CSS and source-map exposure
+        id: artifacts
+        if: >-
+          steps.relevance.outputs.relevant == 'true' &&
+          steps.relevance.outputs.current == 'true' &&
+          env.UPSTREAM_CONCLUSION == 'success' &&
+          steps.live.outputs.verified == 'true'
+        env:
+          ARTIFACT_AUDIT_MODE: remote
+          ARTIFACT_ORIGINS: https://irha-apparels.pages.dev,https://irhaapparels.com
+          EXPECTED_SHA: ${{ steps.relevance.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "verified=false" >> "$GITHUB_OUTPUT"
+          node scripts/ci/audit-production-artifacts.mjs | tee /tmp/live-artifact-audit.json
+          echo "verified=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload live release proof
+        if: always() && steps.live.outputs.verified == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-live-proof-${{ steps.relevance.outputs.source_sha }}
+          path: |
+            /tmp/pages-build.json
+            /tmp/apex-build.json
+            /tmp/www-headers.txt
+            /tmp/live-artifact-audit.json
+          if-no-files-found: warn
+          retention-days: 3
 
       - name: Publish exact live production status
         if: >-
@@ -194,10 +223,11 @@ jobs:
           steps.relevance.outputs.relevant == 'true' &&
           steps.relevance.outputs.current == 'true' &&
           env.UPSTREAM_CONCLUSION == 'success'
-        shell: bash
         env:
           VERIFIED: ${{ steps.live.outputs.verified }}
           SUPERSEDED: ${{ steps.live.outputs.superseded }}
+          ARTIFACT_VERIFIED: ${{ steps.artifacts.outputs.verified }}
+        shell: bash
         run: |
           set -euo pipefail
           if [ "$SUPERSEDED" = "true" ]; then
@@ -206,10 +236,10 @@ jobs:
           fi
 
           state=failure
-          description="Exact merged release is not proven live"
-          if [ "$VERIFIED" = "true" ]; then
+          description="Exact release or public-artifact audit is not proven"
+          if [ "$VERIFIED" = "true" ] && [ "$ARTIFACT_VERIFIED" = "true" ]; then
             state=success
-            description="Exact merged release is live on Cloudflare"
+            description="Exact merged release is live; source-map and public-artifact audit passed"
           fi
 
           gh api --method POST \
@@ -227,7 +257,9 @@ jobs:
             echo "- pages.dev exact SHA: \`$VERIFIED\`"
             echo "- apex exact SHA: \`$VERIFIED\`"
             echo "- www canonical redirect: \`$VERIFIED\`"
+            echo "- live source-map/public-artifact audit: \`$ARTIFACT_VERIFIED\`"
             echo "- Commit status: \`$state\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
           test "$VERIFIED" = "true"
+          test "$ARTIFACT_VERIFIED" = "true"
