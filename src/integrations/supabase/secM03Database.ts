@@ -17,21 +17,15 @@ type SecM03Functions = {
       p_duplicate_hash?: string;
       p_now?: string;
       p_policy_key: string;
-      p_resource_hash: string;
+      p_resource_hash?: string;
       p_subject_hash: string;
     };
     Returns: {
       blocked_until: string;
-      burst_count: number;
-      burst_limit: number;
       decision: string;
       duplicate_suppressed: boolean;
-      policy_key: string;
-      privacy_sample: boolean;
       remaining: number;
       retry_after_seconds: number;
-      sustained_count: number;
-      sustained_limit: number;
     }[];
   };
 };
