@@ -1,0 +1,156 @@
+name: Supabase Function Reconciliation
+
+run-name: Function reconciliation · ${{ github.event.workflow_run.head_sha }}
+
+on:
+  workflow_run:
+    workflows: ["Quality Gate"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irha-production-mutation
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  PLAN_FILE: supabase/deployment-parity/sec-m03-function-reconciliation.json
+
+jobs:
+  reconcile:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact green main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.39.2
+
+      - name: Validate reconciliation scope and freshness
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$SOURCE_SHA"
+          test -s "$PLAN_FILE"
+          test "$(jq -r '.schema_version' "$PLAN_FILE")" = "1"
+          test "$(jq -r '.project_id' "$PLAN_FILE")" = "$SUPABASE_PROJECT_ID"
+          test "$(jq -r '.execution_id' "$PLAN_FILE")" = "IA-CTRL-E001"
+          test "$(jq '.functions | length' "$PLAN_FILE")" = "3"
+
+          jq -r '.functions[].name' "$PLAN_FILE" | sort -u > /tmp/planned-functions.txt
+          test "$(wc -l < /tmp/planned-functions.txt | tr -d ' ')" = "3"
+
+          jq -r '.functions[][0]' supabase/deployment-parity/functions-f3.json | sort -u > /tmp/blocked-f3.txt
+          jq -r '.functions[][0]' supabase/deployment-parity/functions-f6.json | sort -u > /tmp/blocked-f6.txt
+          jq -r '.functions[][0]' supabase/deployment-parity/functions-f4.json | sort -u > /tmp/repository-only.txt
+          cat /tmp/blocked-f3.txt /tmp/blocked-f6.txt /tmp/repository-only.txt | sort -u > /tmp/blocked-functions.txt
+
+          while IFS= read -r function_name; do
+            test -n "$function_name"
+            grep -Fqx "[functions.$function_name]" supabase/config.toml
+            ! grep -Fqx "$function_name" /tmp/blocked-functions.txt
+            test -f "supabase/functions/$function_name/index.ts"
+          done < /tmp/planned-functions.txt
+
+      - name: Verify project identity and compute bounded deployment set
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          echo "::add-mask::$token"
+
+          project_json="$(curl -fsS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID")"
+          test "$(printf '%s' "$project_json" | jq -r '.id // empty')" = "$SUPABASE_PROJECT_ID"
+
+          supabase functions list --project-ref "$SUPABASE_PROJECT_ID" --output json > /tmp/functions-before.json
+          : > /tmp/functions-to-deploy.txt
+
+          while IFS=$'\t' read -r function_name minimum_version; do
+            live_version="$(jq -r --arg name "$function_name" '[.[] | select((.name // .slug) == $name) | (.version // 0)] | max // 0' /tmp/functions-before.json)"
+            if [ "$live_version" -lt "$minimum_version" ]; then
+              printf '%s\n' "$function_name" >> /tmp/functions-to-deploy.txt
+            fi
+          done < <(jq -r '.functions[] | [.name, (.minimum_version|tostring)] | @tsv' "$PLAN_FILE")
+
+          deploy_count="$(wc -l < /tmp/functions-to-deploy.txt | tr -d ' ')"
+          echo "deploy_count=$deploy_count" >> "$GITHUB_OUTPUT"
+          jq -Rsc 'split("\n") | map(select(length > 0))' /tmp/functions-to-deploy.txt > /tmp/functions-to-deploy.json
+
+      - name: Deploy only under-version approved functions
+        if: steps.plan.outputs.deploy_count != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r function_name; do
+            test -n "$function_name"
+            verify_jwt="$(jq -r --arg name "$function_name" '.functions[] | select(.name == $name) | .verify_jwt' "$PLAN_FILE")"
+            args=(functions deploy "$function_name" --project-ref "$SUPABASE_PROJECT_ID")
+            if [ "$verify_jwt" = "false" ]; then
+              args+=(--no-verify-jwt)
+            fi
+            supabase "${args[@]}"
+          done < /tmp/functions-to-deploy.txt
+
+      - name: Verify minimum live versions and preserve evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions list --project-ref "$SUPABASE_PROJECT_ID" --output json > /tmp/functions-after.json
+          while IFS=$'\t' read -r function_name minimum_version; do
+            live_version="$(jq -r --arg name "$function_name" '[.[] | select((.name // .slug) == $name) | (.version // 0)] | max // 0' /tmp/functions-after.json)"
+            if [ "$live_version" -lt "$minimum_version" ]; then
+              echo "::error title=Function reconciliation incomplete::$function_name version $live_version is below required $minimum_version"
+              exit 1
+            fi
+          done < <(jq -r '.functions[] | [.name, (.minimum_version|tostring)] | @tsv' "$PLAN_FILE")
+
+          jq '{source_sha: env.SOURCE_SHA, project_id: env.SUPABASE_PROJECT_ID, plan: input, before: input, deployed: input, after: input}' \
+            "$PLAN_FILE" /tmp/functions-before.json /tmp/functions-to-deploy.json /tmp/functions-after.json \
+            > /tmp/sec-m03-function-reconciliation-evidence.json
+
+      - name: Upload reconciliation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sec-m03-function-reconciliation-${{ env.SOURCE_SHA }}
+          path: /tmp/sec-m03-function-reconciliation-evidence.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Record result
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## SEC-M03 function reconciliation"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Project: \`$SUPABASE_PROJECT_ID\`"
+            echo "- Plan: \`$PLAN_FILE\`"
+            echo "- Deployment count: \`${{ steps.plan.outputs.deploy_count || 'not-reached' }}\`"
+            echo "- Scope: generate-mockup, live-chat, site-visitor only"
+            echo "- Shared helper: bundled dependency, never deployed as a function"
+          } >> "$GITHUB_STEP_SUMMARY"
