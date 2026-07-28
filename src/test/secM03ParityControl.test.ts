@@ -8,6 +8,17 @@ const workflow = read(".github/workflows/supabase-functions-reconcile.yml");
 const generator = read("scripts/ci/run-sec-m03-parity-generation.mjs");
 
 describe("SEC-M03 canonical parity control", () => {
+  it("runs from main and requires the successful exact-SHA Quality Gate before mutation", () => {
+    expect(workflow).toContain("branches: [main]");
+    expect(workflow).toContain("SOURCE_SHA: ${{ github.sha }}");
+    expect(workflow).toContain("Require successful exact-SHA Quality Gate");
+    expect(workflow).toContain('.context == "Irha Quality Gate"');
+    expect(workflow).toContain('test "$gate_state" = "success"');
+    expect(workflow.indexOf("Require successful exact-SHA Quality Gate")).toBeLessThan(
+      workflow.indexOf("Deploy only under-version approved functions"),
+    );
+  });
+
   it("keeps deployment bounded to the three approved functions", () => {
     expect(workflow).toContain("Deploy only under-version approved functions");
     expect(workflow).toContain("supabase/reconciliation/sec-m03-function-reconciliation.json");
