@@ -37,7 +37,7 @@ if script.count(old_chat) != 1:
     raise SystemExit("sealed chat indentation contract was not found")
 script = script.replace(old_chat, new_chat)
 
-old_response = '''replace(
+old_response = """replace(
     path,
     '''  error?: string;
 };
@@ -48,8 +48,8 @@ old_response = '''replace(
 ''',
     1,
 )
-'''
-new_response = '''replace(
+"""
+new_response = """replace(
     path,
     '''  presenceRecorded?: boolean;
   error?: string;
@@ -61,7 +61,7 @@ new_response = '''replace(
 };
 ''',
 )
-'''
+"""
 if script.count(old_response) != 1:
     raise SystemExit("sealed ChatResponse contract was not found")
 script = script.replace(old_response, new_response)
