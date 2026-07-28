@@ -40,7 +40,7 @@
         buyerTrustUrl: `${SITE_ORIGIN}/buyer-trust`,
         factoryVideoCallUrl: `${SITE_ORIGIN}/factory-video-call`,
         inquiryUrl: `${SITE_ORIGIN}/inquiry`,
-        note: "Irha Apparels is an experienced manufacturer and the current website is newly built. A live factory view can be shown by video call during buyer verification.",
+        note: "Buyer verification should focus on the exact program, team and written scope. An appointment-based live factory call may be requested, subject to availability and viewing scope.",
       }),
     },
     {

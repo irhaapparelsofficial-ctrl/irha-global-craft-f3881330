@@ -83,7 +83,7 @@ It must not invent:
 Allowed Irha Apparels trust facts:
 
 - experienced apparel manufacturer in Sialkot, Pakistan
-- website is newly built; the company is not new
+- verification should focus on the exact program, team and written scope
 - live factory video call is available
 - OEM, ODM, private-label and custom manufacturing
 - custom quote after requirement review; no public price

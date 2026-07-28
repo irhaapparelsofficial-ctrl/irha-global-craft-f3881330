@@ -154,28 +154,28 @@ function hierarchySummary(pathname: string, node: RouteNode) {
     const audiences = [...node.audienceNames.values()].sort((a, b) => a.localeCompare(b));
     const collections = [...node.collectionNames.values()].sort((a, b) => a.localeCompare(b));
     return {
-      eyebrow: "Published category hierarchy",
-      heading: `${node.productCount} current published products`,
-      body: `${names.topName} is organised into ${audiences.length} published buyer group${audiences.length === 1 ? "" : "s"} and ${collections.length} product type${collections.length === 1 ? "" : "s"}. Current buyer groups are ${audiences.join(", ")}.`,
-      detailHeading: "Current product types",
+      eyebrow: "Category overview",
+      heading: `${node.productCount} products in this catalogue`,
+      body: `${names.topName} is organised into ${audiences.length} buyer group${audiences.length === 1 ? "" : "s"} and ${collections.length} product type${collections.length === 1 ? "" : "s"}. Buyer groups include ${audiences.join(", ")}.`,
+      detailHeading: "Product types",
       details: collections,
     };
   }
   if (node.kind === "audience") {
     const collections = [...node.collectionNames.values()].sort((a, b) => a.localeCompare(b));
     return {
-      eyebrow: "Published buyer group",
-      heading: `${node.productCount} current published products`,
-      body: `${names.audienceName} within ${names.topName} currently contains ${collections.length} published product type${collections.length === 1 ? "" : "s"}.`,
-      detailHeading: "Current product types",
+      eyebrow: "Buyer group",
+      heading: `${node.productCount} products in this catalogue`,
+      body: `${names.audienceName} within ${names.topName} contains ${collections.length} product type${collections.length === 1 ? "" : "s"}.`,
+      detailHeading: "Product types",
       details: collections,
     };
   }
   return {
-    eyebrow: "Published product type",
-    heading: `${node.productCount} current published product${node.productCount === 1 ? "" : "s"}`,
-    body: `${names.collectionName} is part of ${names.audienceName} within ${names.topName}. The products linked below are the current published assignments for this route.`,
-    detailHeading: "Current products",
+    eyebrow: "Product type",
+    heading: `${node.productCount} catalogue product${node.productCount === 1 ? "" : "s"}`,
+    body: `${names.collectionName} is part of ${names.audienceName} within ${names.topName}. The products linked below are available within this product type.`,
+    detailHeading: "Products",
     details: node.products.map((product) => product.product_name).sort((a, b) => a.localeCompare(b)),
   };
 }
@@ -184,9 +184,9 @@ function childCards(node: RouteNode) {
   const links = [...node.children.values()].sort((a, b) => a.name.localeCompare(b.name));
   const label = node.kind === "root" ? "buyer group" : node.kind === "audience" ? "product type" : "product";
   return `<section data-irha-taxonomy-children="true" data-irha-product-count="${node.productCount}" aria-labelledby="taxonomy-children" style="margin-top:40px;border-top:1px solid #2e2a25;padding-top:30px">
-    <p style="margin:0 0 8px;color:#c9a45c;text-transform:uppercase;letter-spacing:.14em;font-size:12px">Canonical ${label} links</p>
-    <h2 id="taxonomy-children" style="margin:0 0 10px;font-size:clamp(26px,4vw,36px)">Browse the current ${label}${links.length === 1 ? "" : "s"}</h2>
-    <p style="max-width:840px;margin:0 0 18px;color:#bdb5aa">Every link below points directly to a current canonical route in the published catalogue hierarchy.</p>
+    <p style="margin:0 0 8px;color:#c9a45c;text-transform:uppercase;letter-spacing:.14em;font-size:12px">Browse ${label}s</p>
+    <h2 id="taxonomy-children" style="margin:0 0 10px;font-size:clamp(26px,4vw,36px)">Open the available ${label}${links.length === 1 ? "" : "s"}</h2>
+    <p style="max-width:840px;margin:0 0 18px;color:#bdb5aa">Each link opens the next level of the product catalogue.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
       ${links.map((item) => `<a href="${escapeHtml(item.path)}" style="display:block;border:1px solid #2e2a25;background:#111;color:#f5f1e8;padding:16px;text-decoration:none"><strong>${escapeHtml(item.name)}</strong><br><span style="color:#e8c477;font-size:13px">Open ${item.kind} →</span></a>`).join("\n      ")}
     </div>
@@ -199,8 +199,8 @@ function representativeProducts(node: RouteNode) {
     .sort((a, b) => a.reference_code.localeCompare(b.reference_code))
     .slice(0, 6);
   return `<section aria-labelledby="representative-products" style="margin-top:40px;border-top:1px solid #2e2a25;padding-top:30px">
-    <p style="margin:0 0 8px;color:#c9a45c;text-transform:uppercase;letter-spacing:.14em;font-size:12px">Representative current products</p>
-    <h2 id="representative-products" style="margin:0 0 10px;font-size:clamp(26px,4vw,36px)">Products assigned to this hierarchy</h2>
+    <p style="margin:0 0 8px;color:#c9a45c;text-transform:uppercase;letter-spacing:.14em;font-size:12px">Selected product references</p>
+    <h2 id="representative-products" style="margin:0 0 10px;font-size:clamp(26px,4vw,36px)">Products in this category</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px">
       ${products.map((product) => `<a href="${escapeHtml(product.canonical_path)}" style="display:block;border:1px solid #2e2a25;background:#111;color:#f5f1e8;padding:16px;text-decoration:none"><span style="color:#aaa29a;font-size:12px">${escapeHtml(product.reference_code)}</span><br><strong>${escapeHtml(product.product_name)}</strong></a>`).join("\n      ")}
     </div>
@@ -222,7 +222,7 @@ function taxonomyShell(pathname: string, node: RouteNode, h1: string, intro: str
     <div style="max-width:1120px;margin:0 auto;padding:34px 24px 64px">
       <nav aria-label="Breadcrumb" style="display:flex;flex-wrap:wrap;gap:9px;font-size:12px;margin-bottom:28px">${breadcrumbHtml(pathname, node)}</nav>
       <section aria-labelledby="taxonomy-heading" style="max-width:920px">
-        <p style="margin:0 0 12px;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#c9a45c">Irha Apparels · Published catalogue hierarchy</p>
+        <p style="margin:0 0 12px;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#c9a45c">Irha Apparels · B2B product catalogue</p>
         <h1 id="taxonomy-heading" style="margin:0 0 20px;font-family:Georgia,serif;font-size:clamp(36px,7vw,68px);line-height:1.08;font-weight:500">${escapeHtml(h1)}</h1>
         <p data-irha-primary-introduction="true" style="max-width:840px;font-size:18px;color:#d7d0c4">${escapeHtml(intro)}</p>
         <p style="max-width:840px;color:#aaa29a">${escapeHtml(taxonomyUi("en").programNote)}</p>
@@ -239,7 +239,7 @@ function taxonomyShell(pathname: string, node: RouteNode, h1: string, intro: str
       ${representativeProducts(node)}
       <section style="margin-top:40px;border:1px solid rgba(232,196,119,.35);background:#111;padding:26px"><h2 style="font-size:clamp(25px,4vw,34px);margin:0 0 10px">Submit the actual requirement for review.</h2><p style="max-width:840px;margin:0;color:#bdb5aa">Share the product reference, quantity, specification, branding, packaging and destination context. Feasibility and commercial details are confirmed after review.</p><p style="margin:18px 0 0"><a href="/inquiry?intent=rfq&amp;source=${encodedSource}" style="color:#e8c477">Open the quotation inquiry →</a></p></section>
     </div>
-    <footer style="border-top:1px solid #2e2a25;background:#080808"><div style="max-width:1120px;margin:0 auto;padding:26px 24px;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;color:#aaa29a;font-size:13px"><span>Irha Apparels · Sialkot, Punjab, Pakistan</span><span>${escapeHtml(names.collectionName ?? names.audienceName ?? names.topName)} · ${node.productCount} published product${node.productCount === 1 ? "" : "s"}</span></div></footer>
+    <footer style="border-top:1px solid #2e2a25;background:#080808"><div style="max-width:1120px;margin:0 auto;padding:26px 24px;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;color:#aaa29a;font-size:13px"><span>Irha Apparels · Sialkot, Punjab, Pakistan</span><span>${escapeHtml(names.collectionName ?? names.audienceName ?? names.topName)} · ${node.productCount} product${node.productCount === 1 ? "" : "s"}</span></div></footer>
   </main>`;
 }
 

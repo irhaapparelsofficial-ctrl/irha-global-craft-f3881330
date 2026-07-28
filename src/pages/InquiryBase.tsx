@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check, MessageCircle, FileText, Package, BookOpe
 import SEO from "@/components/SEO";
 import SecureFileUpload from "@/components/SecureFileUpload";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
+import { createPublicInquiryReference } from "@/lib/publicLeadGateway";
 
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,7 @@ export default function Inquiry() {
     return {
       productSlug: params.get("product") ?? undefined,
       productName: params.get("name") ?? undefined,
+      productCode: params.get("code") ?? undefined,
       categorySlug: params.get("category") ?? undefined,
       shortlistSlugs: shortlist.length ? shortlist : undefined,
       shortlistNames: shortlistNames.length ? shortlistNames : undefined,
@@ -88,6 +90,7 @@ export default function Inquiry() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<null | { ref: string }>(null);
   const submitLockRef = useRef(false);
+  const formStartedAtRef = useRef(Date.now());
   const sessionId = useMemo(getSessionId, []);
   const [dbCategories, setDbCategories] = useState<{ slug: string; name: string }[]>([]);
 
@@ -110,8 +113,7 @@ export default function Inquiry() {
   // ---- Ensure inquiryRef exists once per draft (idempotency for retries) ----
   useEffect(() => {
     if (!draft.inquiryRef) {
-      const ref = "IRQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
-      setDraft((d) => ({ ...d, inquiryRef: ref }));
+      setDraft((d) => ({ ...d, inquiryRef: createPublicInquiryReference() }));
     }
   }, [draft.inquiryRef]);
 
@@ -164,6 +166,9 @@ export default function Inquiry() {
         parsed.error.issues.forEach((i) => (errs[i.path[0] as string] = i.message));
       }
     }
+    if (step === 5 && draft.consent !== true) {
+      errs.consent = "Consent is required before submission";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -188,7 +193,7 @@ export default function Inquiry() {
     // Reuse the ref persisted in the draft — never generate a new one per attempt.
     let ref = draft.inquiryRef;
     if (!ref) {
-      ref = "IRQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+      ref = createPublicInquiryReference();
       setDraft((d) => ({ ...d, inquiryRef: ref }));
     }
 
@@ -226,6 +231,7 @@ export default function Inquiry() {
       device_type: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
       product_slug: ctx.productSlug ?? null,
       product_name: ctx.productName ?? null,
+      product_code: ctx.productCode ?? null,
       product_slugs: hasCompare ? ctx.compareSlugs : hasShortlist ? ctx.shortlistSlugs : null,
       product_names: hasCompare ? ctx.compareNames : hasShortlist ? ctx.shortlistNames : null,
       category: ctx.categorySlug ?? null,
@@ -257,6 +263,12 @@ export default function Inquiry() {
         time_window: draft.meetingTime,
         timezone: draft.meetingTz,
       } : null,
+      form_started_at: formStartedAtRef.current,
+      consent: {
+        given: draft.consent === true,
+        accepted_at: new Date().toISOString(),
+        privacy_policy: "/privacy-policy",
+      },
       submitted_at: new Date().toISOString(),
     };
 
@@ -383,7 +395,14 @@ export default function Inquiry() {
                 />
               )}
               {step === 4 && <StepContact draft={draft} setField={setField} errors={errors} />}
-              {step === 5 && <StepReview draft={draft} onEditStep={(s) => setStep(s as Step)} />}
+              {step === 5 && (
+                <StepReview
+                  draft={draft}
+                  onEditStep={(s) => setStep(s as Step)}
+                  setField={setField}
+                  errors={errors}
+                />
+              )}
 
               <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/60">
                 <button
@@ -426,7 +445,7 @@ export default function Inquiry() {
 function describeContext(d: Pick<InquiryDraft, "intent" | "productContext">): string | null {
   const c = d.productContext;
   if (!c) return null;
-  if (c.productName) return `For: ${c.productName}`;
+  if (c.productName) return `For: ${c.productName}${c.productCode ? ` · ${c.productCode}` : ""}`;
   if (c.compareNames?.length) return `Compare · ${c.compareNames.length} product${c.compareNames.length > 1 ? "s" : ""}`;
   if (c.shortlistNames?.length) return `Shortlist · ${c.shortlistNames.length} product${c.shortlistNames.length > 1 ? "s" : ""}`;
   if (c.categorySlug) return `Category: ${c.categorySlug}`;
@@ -436,7 +455,10 @@ function describeContext(d: Pick<InquiryDraft, "intent" | "productContext">): st
 function buildMessage(d: InquiryDraft | Omit<InquiryDraft, "v" | "updatedAt">): string {
   const parts: string[] = [];
   parts.push(`Intent: ${d.intent.toUpperCase()}`);
-  if (d.productContext?.productName) parts.push(`Product: ${d.productContext.productName}`);
+  if (d.productContext?.productName) {
+    const code = d.productContext.productCode;
+    parts.push(`Product: ${d.productContext.productName}${code ? ` (${code})` : ""}`);
+  }
   if (d.productContext?.shortlistNames?.length) parts.push(`Shortlist: ${d.productContext.shortlistNames.join(", ")}`);
   if (d.productContext?.compareNames?.length) parts.push(`Compare: ${d.productContext.compareNames.join(", ")}`);
   if (d.buyerType) parts.push(`Buyer type: ${d.buyerType}`);
@@ -517,7 +539,7 @@ function StepRequirements({
         </div>
         <div>
           <label className={label}>Company / Brand *</label>
-          <input className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
+          <input required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
           {errors.company && <p className="text-xs text-destructive mt-1">{errors.company}</p>}
         </div>
         <div>
@@ -686,32 +708,32 @@ function StepContact({
     <div className="space-y-5">
       <div>
         <h2 className="font-display text-2xl md:text-3xl mb-2">Your contact details</h2>
-        <p className="text-sm text-foreground/60">We reply on email + WhatsApp. Nothing is shared.</p>
+        <p className="text-sm text-foreground/60">We use these details to review and respond to this request by email or WhatsApp.</p>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className={label}>Full name *</label>
-          <input className={input} value={draft.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
+          <input required autoComplete="name" className={input} value={draft.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
           {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
         </div>
         <div>
           <label className={label}>Company *</label>
-          <input className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
+          <input required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
           {errors.company && <p className="text-xs text-destructive mt-1">{errors.company}</p>}
         </div>
         <div>
           <label className={label}>Email *</label>
-          <input type="email" className={input} value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} />
+          <input required type="email" autoComplete="email" className={input} value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} />
           {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
         </div>
         <div>
           <label className={label}>WhatsApp / phone *</label>
-          <input className={input} placeholder="+1 555 000 0000" value={draft.whatsapp ?? ""} onChange={(e) => setField("whatsapp", e.target.value)} />
+          <input required type="tel" autoComplete="tel" className={input} placeholder="+1 555 000 0000" value={draft.whatsapp ?? ""} onChange={(e) => setField("whatsapp", e.target.value)} />
           {errors.whatsapp && <p className="text-xs text-destructive mt-1">{errors.whatsapp}</p>}
         </div>
         <div className="md:col-span-2">
           <label className={label}>Country *</label>
-          <input className={input} value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
+          <input required autoComplete="country-name" className={input} value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
           {errors.country && <p className="text-xs text-destructive mt-1">{errors.country}</p>}
         </div>
       </div>
@@ -720,8 +742,13 @@ function StepContact({
 }
 
 function StepReview({
-  draft, onEditStep,
-}: { draft: Omit<InquiryDraft, "v" | "updatedAt">; onEditStep: (s: number) => void }) {
+  draft, onEditStep, setField, errors,
+}: {
+  draft: Omit<InquiryDraft, "v" | "updatedAt">;
+  onEditStep: (s: number) => void;
+  setField: <K extends keyof Omit<InquiryDraft, "v" | "updatedAt">>(k: K, v: InquiryDraft[K]) => void;
+  errors: Record<string, string>;
+}) {
   const row = "flex items-start justify-between gap-4 py-3 border-b border-border/40 last:border-0";
   const key = "text-[11px] uppercase tracking-[0.25em] text-foreground/55 min-w-[140px]";
   return (
@@ -736,7 +763,15 @@ function StepReview({
           <button type="button" onClick={() => onEditStep(1)} className="text-[11px] uppercase tracking-[0.2em] text-primary hover:underline">Edit</button>
         </div>
         <div className={row}><span className={key}>Type</span><span className="text-sm">{INTENTS.find((i) => i.id === draft.intent)?.label ?? draft.intent}</span></div>
-        {draft.productContext?.productName && <div className={row}><span className={key}>Product</span><span className="text-sm">{draft.productContext.productName}</span></div>}
+        {draft.productContext?.productName && (
+          <div className={row}>
+            <span className={key}>Product</span>
+            <span className="text-sm text-right">
+              {draft.productContext.productName}
+              {draft.productContext.productCode ? ` · ${draft.productContext.productCode}` : ""}
+            </span>
+          </div>
+        )}
         {draft.productContext?.shortlistNames?.length ? <div className={row}><span className={key}>Shortlist</span><span className="text-sm">{draft.productContext.shortlistNames.join(", ")}</span></div> : null}
         {draft.productContext?.compareNames?.length ? <div className={row}><span className={key}>Compare</span><span className="text-sm">{draft.productContext.compareNames.join(", ")}</span></div> : null}
       </section>
@@ -779,8 +814,21 @@ function StepReview({
         <div className={row}><span className={key}>Email</span><span className="text-sm">{draft.email}</span></div>
         <div className={row}><span className={key}>WhatsApp</span><span className="text-sm">{draft.whatsapp}</span></div>
       </section>
-      <p className="text-[11px] text-foreground/55">
-        Prices, sample cost, production time, shipping and meeting slots are confirmed after our team reviews your requirements.
+      <label className="flex cursor-pointer items-start gap-3 border border-border/60 bg-background/45 p-4 text-sm leading-6">
+        <input
+          type="checkbox"
+          checked={draft.consent === true}
+          onChange={(event) => setField("consent", event.target.checked)}
+          className="mt-1 h-4 w-4 shrink-0 accent-primary"
+        />
+        <span>
+          I consent to Irha Apparels using these contact details and private files to review and respond to this request. I understand this submission is not a quotation, booking or production commitment.{" "}
+          <Link to="/privacy-policy" className="text-primary underline underline-offset-2">Privacy policy</Link>
+        </span>
+      </label>
+      {errors.consent && <p className="text-xs text-destructive" role="alert">{errors.consent}</p>}
+      <p className="text-[11px] leading-5 text-foreground/55">
+        Submission is acknowledged on screen and reviewed manually. Follow-up timing depends on the requirement and is not guaranteed until a team member responds.
       </p>
     </div>
   );
@@ -808,7 +856,7 @@ function SuccessScreen({
         Reference <span className="font-mono text-foreground">{inquiryRef}</span>. Our team reviews your requirements and follows up using the contact details provided.
       </p>
       <p className="text-[11px] text-foreground/55 mt-3">
-        We'll confirm availability, cost and timeline after reviewing your requirements.
+        This request is now queued for manual review. Follow-up timing depends on the requirement; no price, sample, meeting or production commitment is created by this submission.
       </p>
       <div className="mt-8 flex flex-wrap gap-3 justify-center">
         <a

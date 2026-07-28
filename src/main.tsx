@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import "./index.css";
+import { allowStaticShellPaint } from "@/lib/staticShellPaint";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
 const CACHE_HEAL_VERSION = "2026-07-13-v2";
@@ -85,14 +86,6 @@ function preloadInitialRoute(pathname: string): Promise<unknown> | null {
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-}
-
-function allowStaticShellPaint() {
-  return new Promise<void>((resolve) => {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => resolve());
-    });
-  });
 }
 
 async function bootstrap() {

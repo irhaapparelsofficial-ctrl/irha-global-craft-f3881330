@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const mainSource = readFileSync("src/main.tsx", "utf8");
 const appSource = readFileSync("src/App.tsx", "utf8");
+const paintSource = readFileSync("src/lib/staticShellPaint.ts", "utf8");
 const adminRuntimeSource = readFileSync("src/components/admin/AdminRuntime.tsx", "utf8");
 
 describe("public runtime and initial paint performance contract", () => {
@@ -32,7 +33,9 @@ describe("public runtime and initial paint performance contract", () => {
     const clearIndex = mainSource.indexOf("rootElement.replaceChildren()");
     expect(paintIndex).toBeGreaterThan(-1);
     expect(clearIndex).toBeGreaterThan(paintIndex);
-    expect(mainSource.match(/requestAnimationFrame/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(mainSource).toContain('import { allowStaticShellPaint } from "@/lib/staticShellPaint"');
+    expect(paintSource).toContain('typeof target.requestAnimationFrame === "function"');
+    expect(paintSource).toContain("target.setTimeout(resolve, 0)");
   });
 
   it("retains a bounded fallback when critical chunk preloading fails or stalls", () => {

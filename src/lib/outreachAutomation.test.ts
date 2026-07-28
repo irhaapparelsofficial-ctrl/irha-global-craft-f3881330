@@ -43,8 +43,9 @@ describe("outreach automation", () => {
     expect(draft.emailSubject).toContain("Traditional Dirndl Dresses");
     expect(draft.emailBody).toContain("Hello Anna,");
     expect(draft.emailBody).toContain("Alpine Retail GmbH");
-    expect(draft.emailBody).toContain("website is newly built");
-    expect(draft.emailBody).toContain("live factory-view video call");
+    expect(draft.emailBody).toContain("Buyer verification can include direct contact");
+    expect(draft.emailBody).toContain("appointment-based live factory call");
+    expect(draft.emailBody).not.toMatch(/newly built|website is new/i);
     expect(draft.emailBody).not.toMatch(/MOQ 50|45-day|fixed price|guaranteed delivery/i);
   });
 

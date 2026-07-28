@@ -25,7 +25,7 @@ function PublishedCategorySection({ category }: { category: NormalizedCategory }
     <article className="border-b border-border/60 pb-20 last:border-b-0">
       <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-8">
         <Link to={`/products/${category.slug}`} className="lg:col-span-4 block group">
-          <div className="aspect-[4/3] overflow-hidden bg-card">
+          <div className="relative aspect-[4/3] overflow-hidden bg-card">
             {category.image && (
               <ThumbnailImage
                 src={category.image}
@@ -39,6 +39,9 @@ function PublishedCategorySection({ category }: { category: NormalizedCategory }
                 className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-700"
               />
             )}
+            <span className="absolute bottom-3 left-3 border border-white/20 bg-black/75 px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/80">
+              Digital catalogue reference
+            </span>
           </div>
         </Link>
         <div className="lg:col-span-8">
@@ -53,7 +56,7 @@ function PublishedCategorySection({ category }: { category: NormalizedCategory }
             to={`/products/${category.slug}`}
             className="mt-5 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-primary"
           >
-            Open category hierarchy <ArrowRight size={13} aria-hidden="true" />
+            Browse products <ArrowRight size={13} aria-hidden="true" />
           </Link>
         </div>
       </div>
@@ -110,9 +113,9 @@ export default function GlobalCollectionsPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--gold)/0.12),transparent_38%)]" />
         <div className="container-luxe relative grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-7">
-            <p className="eyebrow mb-5">Global B2B Product Architecture</p>
+            <p className="eyebrow mb-5">Product Catalogue</p>
             <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-6xl">
-              Main category to <span className="text-gold italic">buyer-ready product</span>.
+              Browse by category, <span className="text-gold italic">buyer group and product type</span>.
             </h1>
             <p className="mt-8 text-lg text-foreground/70 max-w-3xl leading-relaxed">
               Choose a manufacturing category, then browse Men, Women, Kids or the relevant buyer group. Each audience opens focused product categories and individual styles for quotation.
@@ -143,8 +146,8 @@ export default function GlobalCollectionsPage() {
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
             <div className="pointer-events-none absolute left-5 right-5 bottom-5 border border-white/20 bg-black/50 p-4 backdrop-blur-sm">
-              <p className="text-[9px] uppercase tracking-[0.32em] text-gold">Live product architecture</p>
-              <p className="mt-1 font-display text-xl text-white">Relevant category media</p>
+              <p className="text-[9px] uppercase tracking-[0.32em] text-gold">Digital catalogue references</p>
+              <p className="mt-1 font-display text-xl text-white">Design direction · not production proof</p>
             </div>
           </div>
         </div>

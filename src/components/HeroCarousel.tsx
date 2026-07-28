@@ -80,6 +80,9 @@ export default function HeroCarousel() {
             <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground/68 sm:mt-3.5 sm:text-base sm:leading-7">
               Made-to-order Bavarian wear, sportswear, leatherwear, streetwear and leisure apparel with private-label branding and packaging.
             </p>
+            <p className="mt-2 max-w-2xl text-xs leading-5 text-foreground/52">
+              Catalogue visuals are digital references for design direction, not photographs of completed buyer orders.
+            </p>
 
             <div className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-5 sm:flex sm:flex-wrap sm:gap-3">
               <Link
@@ -125,7 +128,7 @@ export default function HeroCarousel() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/5 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-6">
-                <p className="text-[7px] font-semibold uppercase tracking-[0.14em] text-primary sm:text-[8px]">Flagship manufacturing program</p>
+                <p className="text-[7px] font-semibold uppercase tracking-[0.14em] text-primary sm:text-[8px]">Digital catalogue reference</p>
                 <p className="mt-1 font-display text-2xl leading-tight sm:text-3xl">Bavarian &amp; Trachten</p>
                 <p className="mt-1 text-[10px] text-white/72 sm:text-[11px]">Lederhosen · Dirndl · Shirts · Vests</p>
               </div>
@@ -151,7 +154,7 @@ export default function HeroCarousel() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/96 via-black/5 to-transparent" />
                 <div className="absolute inset-x-3 bottom-3 text-white">
-                  <p className="text-[7px] uppercase tracking-[0.14em] text-primary">{program.eyebrow}</p>
+                  <p className="text-[7px] uppercase tracking-[0.14em] text-primary">Digital reference · {program.eyebrow}</p>
                   <p className="mt-1 font-display text-base sm:text-lg">{program.title}</p>
                 </div>
               </Link>

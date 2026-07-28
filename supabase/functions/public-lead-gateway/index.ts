@@ -112,6 +112,9 @@ async function submitInquiry(
   const message = multiline(payload.message, 12000);
   const source = text(payload.source, 240) || `public-${kind}`;
   const intent = text(payload.intent, 50) || (kind === "mockup" ? "reference" : kind === "quote" ? "rfq" : null);
+  const incomingContext = safeObject(payload.lead_context, 50_000);
+  const contextConsent = isRecord(incomingContext.consent) && incomingContext.consent.given === true;
+  const hasConsent = payload.consent === true || contextConsent;
 
   if (name.length < 2) return json({ error: "Name is required" }, 400, headers);
   if (!email && !phone) return json({ error: "Email or WhatsApp is required" }, 400, headers);
@@ -121,15 +124,20 @@ async function submitInquiry(
   if (kind === "inquiry" && (!company || !country)) {
     return json({ error: "Company and country are required" }, 400, headers);
   }
+  if (source === "inquiry-wizard" && !hasConsent) {
+    return json({ error: "Consent is required before submission" }, 400, headers);
+  }
 
-  const requestedRef = text(payload.inquiry_ref, 80);
-  const inquiryRef = /^IRHA-[0-9]{4}-[0-9]{6}$/.test(requestedRef)
+  const requestedRef = text(payload.inquiry_ref, 80).toUpperCase();
+  const inquiryRef = /^(?:IRHA-[0-9]{4}-[0-9]{6}|IRQ-[A-Z0-9]+-[A-Z0-9]+)$/.test(requestedRef)
     ? requestedRef
     : createInquiryReference();
 
   const files = normalizeFiles(payload.files);
+  if (files.length > 0 && !(await uploadedFilesExist(service, files))) {
+    return json({ error: "One or more private uploads could not be verified. Re-upload the file and retry." }, 400, headers);
+  }
   const items = normalizeItems(payload.items);
-  const incomingContext = safeObject(payload.lead_context, 50_000);
   const leadContext = {
     ...incomingContext,
     gateway: {
@@ -156,13 +164,16 @@ async function submitInquiry(
       items,
       lead_context: leadContext,
     };
-    delete relationalPayload.inquiry_ref;
-
     const { data, error } = await service.rpc("submit_b2b_inquiry", {
       _payload: relationalPayload,
     }).single();
 
-    if (error) throw new Error(`Relational inquiry insert failed: ${error.message}`);
+    if (error) {
+      if (error.code === "23505" && error.message.toLowerCase().includes("inquiry_ref")) {
+        return json({ ok: true, reference: inquiryRef, duplicate: true }, 200, headers);
+      }
+      throw new Error(`Relational inquiry insert failed: ${error.message}`);
+    }
     const reference = isRecord(data) ? text(data.inquiry_ref, 80) : "";
     return json({ ok: true, reference: reference || inquiryRef }, 200, headers);
   }
@@ -301,6 +312,39 @@ function normalizeFiles(value: unknown) {
     if (!validPath || !name || !Number.isFinite(size) || size < 1 || size > MAX_TECH_PACK_BYTES) return [];
     return [{ path, name, mime, size }];
   });
+}
+
+function uploadBucketForPath(path: string) {
+  if (path.startsWith("requests/tech-pack/")) return TECH_PACK_BUCKET;
+  if (path.startsWith("requests/mockup/")) return MOCKUP_BUCKET;
+  if (path.startsWith("requests/inquiry/")) return "inquiry-uploads";
+  return null;
+}
+
+async function uploadedFilesExist(
+  service: ReturnType<typeof createClient>,
+  files: Array<{ path: string; name: string; mime: string; size: number }>,
+) {
+  for (const file of files) {
+    const bucket = uploadBucketForPath(file.path);
+    const slash = file.path.lastIndexOf("/");
+    if (!bucket || slash < 1) return false;
+    const folder = file.path.slice(0, slash);
+    const objectName = file.path.slice(slash + 1);
+    const { data, error } = await service.storage.from(bucket).list(folder, {
+      limit: 20,
+      search: objectName,
+    });
+    if (error) {
+      console.error("public-lead-gateway upload verification failed", error.message);
+      return false;
+    }
+    const stored = data?.find((object) => object.name === objectName);
+    if (!stored) return false;
+    const storedSize = Number(stored.metadata?.size);
+    if (Number.isFinite(storedSize) && storedSize > 0 && storedSize !== file.size) return false;
+  }
+  return true;
 }
 
 function createInquiryReference() {

@@ -35,12 +35,12 @@ export default function BavarianWomensCollection() {
   const heroSlides = [
     {
       src: collection.hero,
-      alt: `${collection.name} wholesale manufacturing collection`,
+      alt: `Digital catalogue reference for ${collection.name}; not production proof`,
       fit: "cover" as const,
     },
     ...products.slice(0, 5).map((product) => ({
       src: product.originalImage ?? product.gallery?.[0] ?? product.image,
-      alt: `${product.name} wholesale manufacturing style`,
+      alt: `Digital catalogue reference for ${product.name}; not production proof`,
       fit: "contain" as const,
       backgroundClassName: "bg-[#f4f0e7]",
     })),
@@ -120,6 +120,7 @@ export default function BavarianWomensCollection() {
             <ChevronRight size={11} />
             <span className="text-white">{collection.name}</span>
           </nav>
+          <p className="mb-4 inline-flex border border-gold/60 bg-black/70 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-gold">Digital catalogue reference · not production proof</p>
           <p className="eyebrow text-gold mb-4">{collection.eyebrow}</p>
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl leading-[0.98] max-w-5xl">
             {collection.title}
@@ -169,8 +170,9 @@ export default function BavarianWomensCollection() {
         <div className="container-luxe">
           <div className="mb-9 flex flex-wrap items-end justify-between gap-4 border-b border-border/60 pb-6">
             <div>
-              <p className="eyebrow mb-2">Verified Product Media</p>
+              <p className="eyebrow mb-2">Digital Catalogue References</p>
               <h2 className="font-display text-3xl md:text-4xl">{collection.name} product styles</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/65">These visuals communicate design direction only. They are not photographs of completed production or factory proof.</p>
             </div>
             <p className="text-xs uppercase tracking-[0.25em] text-foreground/50">
               {products.length} distinct style{products.length === 1 ? "" : "s"}
@@ -187,13 +189,13 @@ export default function BavarianWomensCollection() {
                 <div className="relative aspect-[3/4] overflow-hidden border border-border/50 bg-card">
                   <img
                     src={product.image}
-                    alt={`${product.name} for wholesale and private-label manufacturing`}
+                    alt={`Digital catalogue reference for ${product.name}; not production proof`}
                     loading="lazy"
                     decoding="async"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                   />
                 </div>
-                <p className="mt-4 text-[10px] uppercase tracking-[0.22em] text-foreground/45">B2B · OEM · Private Label</p>
+                <p className="mt-4 text-[10px] uppercase tracking-[0.22em] text-foreground/45">Digital reference · not production proof</p>
                 <h3 className="mt-1 font-display text-base leading-tight transition-colors group-hover:text-primary md:text-lg">
                   {product.name}
                 </h3>
@@ -207,9 +209,9 @@ export default function BavarianWomensCollection() {
         <div className="container-luxe grid gap-8 md:grid-cols-3 md:items-center">
           <div className="md:col-span-2">
             <p className="eyebrow mb-3">Buyer Verification</p>
-            <h2 className="font-display text-3xl md:text-4xl">Experienced manufacturer. Newly built website.</h2>
+            <h2 className="font-display text-3xl md:text-4xl">Verify the exact manufacturing program before commitment.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/70">
-              Irha Apparels is an experienced B2B garment manufacturer in Sialkot. Buyers can review the factory and discuss production requirements through a live video call before moving forward.
+              Share the product scope, construction, quantity and verification questions first. An appointment-based live factory call may then be requested, subject to availability and viewing scope.
             </p>
           </div>
           <Link

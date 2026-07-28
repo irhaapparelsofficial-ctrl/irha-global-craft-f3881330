@@ -62,8 +62,9 @@ describe("buyer reply drafts", () => {
     });
 
     expect(draft.subject).toContain("Kataloganfrage");
-    expect(draft.body).toContain("erfahrener B2B-Bekleidungshersteller");
-    expect(draft.body).toContain("Website wurde neu aufgebaut");
+    expect(draft.body).toContain("B2B-Bekleidungshersteller aus Sialkot, Pakistan");
+    expect(draft.body).toContain("terminierten Live-Videoanruf aus dem Betrieb");
+    expect(draft.body).not.toContain("Website wurde neu aufgebaut");
   });
 
   it("keeps factory call commercial details separate", () => {

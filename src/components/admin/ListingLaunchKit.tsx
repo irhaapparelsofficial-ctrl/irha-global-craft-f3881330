@@ -64,9 +64,9 @@ const PRIORITY_PLATFORMS = [
 ] as const;
 
 const PROFILE_COPY = {
-  short: "Irha Apparels is an experienced B2B apparel manufacturer in Sialkot, Pakistan, offering OEM, ODM and private-label development for brands, wholesalers and importers. The website is newly built, and a live factory video call can be requested for direct verification.",
-  standard: "Irha Apparels is an experienced B2B apparel manufacturer based in Sialkot, Pakistan. We work with brands, wholesalers, importers, distributors, clubs and sourcing teams on requirement-led OEM, ODM and private-label programs. Product areas include Bavarian and Trachten wear, premium leather apparel, sportswear, streetwear, activewear, leisurewear and nightwear. Customization may include cut-and-sew development, embroidery, printing, labels, tags, trims and packaging, depending on the exact program. Our website is newly built; buyers can request a scheduled live factory video call to discuss the requirement and view relevant working areas. MOQ, pricing, sample cost, production timing, materials, documentation and shipping scope are confirmed only after the product, quantity, destination and customization are reviewed.",
-  trust: "Experienced manufacturer in Sialkot · Website newly built · Live factory video call available by request · Requirement-led quotation · OEM, ODM and private label · No unsupported universal MOQ, certification or delivery claims.",
+  short: "Irha Apparels is an experienced B2B apparel manufacturer in Sialkot, Pakistan, offering OEM, ODM and private-label development for brands, wholesalers and importers. Buyers can request an appointment-based live factory video call for direct verification.",
+  standard: "Irha Apparels is an experienced B2B apparel manufacturer based in Sialkot, Pakistan. We work with brands, wholesalers, importers, distributors, clubs and sourcing teams on requirement-led OEM, ODM and private-label programs. Product areas include Bavarian and Trachten wear, premium leather apparel, sportswear, streetwear, activewear, leisurewear and nightwear. Customization may include cut-and-sew development, embroidery, printing, labels, tags, trims and packaging, depending on the exact program. Buyers can request an appointment-based live factory video call to discuss the requirement and relevant viewing scope. MOQ, pricing, sample cost, production timing, materials, documentation and shipping scope are confirmed only after the product, quantity, destination and customization are reviewed.",
+  trust: "Requirement-led manufacturing in Sialkot · Live factory video call available by request · Written-scope buyer verification · Requirement-led quotation · OEM, ODM and private label · No unsupported universal MOQ, certification or delivery claims.",
 };
 
 const PROFILE_CHECKLIST = [
@@ -74,7 +74,7 @@ const PROFILE_CHECKLIST = [
   "Website uses https://irhaapparels.com",
   "Email and WhatsApp are current and monitored",
   "Manufacturer location is Sialkot, Pakistan",
-  "Profile says experienced manufacturer; website is newly built",
+  "Profile explains requirement-led manufacturing and buyer verification",
   "Live factory video-call verification is offered",
   "Product categories match current website categories",
   "No public fixed price or universal MOQ is claimed",

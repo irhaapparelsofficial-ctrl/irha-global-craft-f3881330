@@ -47,8 +47,8 @@ async function invokeGateway(action: GatewayAction, payload: JsonRecord) {
   return data;
 }
 
-function inquiryReference(payload: JsonRecord) {
-  const provided = text(payload.inquiry_ref, 80).toUpperCase();
+export function createPublicInquiryReference(providedValue?: unknown) {
+  const provided = text(providedValue, 80).toUpperCase();
   if (/^IRHA-[0-9]{4}-[0-9]{6}$/.test(provided)) return provided;
   const values = new Uint32Array(1);
   crypto.getRandomValues(values);
@@ -67,7 +67,7 @@ function gatewayUnavailable(surface: "inquiry" | "catalogue" | "upload") {
 }
 
 export async function submitPublicInquiry(payload: JsonRecord) {
-  const reference = inquiryReference(payload);
+  const reference = createPublicInquiryReference(payload.inquiry_ref);
   const normalized = { ...payload, inquiry_ref: reference };
   try {
     const data = await invokeGateway("submit_inquiry", normalized);

@@ -47,7 +47,7 @@ The preset is stored in code and in `social_autopilot_settings.visual_preset`. S
 Copy may state only the approved company facts:
 
 - experienced apparel manufacturer in Sialkot, Pakistan;
-- website is newly built; the company is not new;
+- buyer verification should focus on the exact program, team and written scope;
 - OEM, ODM, private-label and custom manufacturing;
 - scheduled live factory video call is available;
 - quotation follows buyer requirement review;

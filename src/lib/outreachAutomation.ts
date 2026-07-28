@@ -84,7 +84,7 @@ export function buildOutreachDraft(card: SalesCard): OutreachDraft {
     "",
     "We support requirement-led OEM, ODM and private-label programs, including custom cut and sew, branding, labels and buyer-specified packaging. Materials, quantities, sampling, pricing and production timing are confirmed only after reviewing the exact brief.",
     "",
-    "Our website is newly built, while our manufacturing operation is experienced. We can also arrange a live factory-view video call as a verification step.",
+    "Buyer verification can include direct contact, a written program scope and an appointment-based live factory call.",
     "",
     `Could you share whether ${company} is currently reviewing suppliers or new product programs in this category?`,
     "",
@@ -98,7 +98,7 @@ export function buildOutreachDraft(card: SalesCard): OutreachDraft {
     "",
     `This is Irha Apparels, an experienced B2B apparel manufacturer in Sialkot, Pakistan. We would like to discuss possible ${product} manufacturing support for ${company}.`,
     "",
-    "Our website is newly built, and a live factory-view video call can be arranged. Commercial details are confirmed after reviewing the exact requirement.",
+    "An appointment-based live factory call may be requested. Commercial details are confirmed after reviewing the exact requirement.",
     "",
     "May I share our relevant manufacturing information and discuss your current sourcing needs?",
   ].join("\n");

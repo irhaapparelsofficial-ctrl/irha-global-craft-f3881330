@@ -83,10 +83,24 @@ for (const path of publishedLocaleGateways) {
     && gateway.redirectHops[0]?.to === gatewayPreviewUrl;
   if (verifiedGatewaySlashCanonical) verifiedGatewayPaths.add(path);
 }
+const previewIsolationNoindexVerified =
+  report.canonicalResults.length === report.inventory.sitemapUrlCount
+  && report.canonicalResults.every((page) =>
+    page.xRobotsTag.toLowerCase().includes("noindex")
+    && !page.robotsMeta.toLowerCase().includes("noindex"));
 const ignored: Finding[] = [];
 const blocking: Finding[] = [];
 
 for (const finding of report.findings) {
+  if (
+    finding.code === "robots_sitemap_missing"
+    && finding.path === "/robots.txt"
+    && previewIsolationNoindexVerified
+  ) {
+    ignored.push(finding);
+    continue;
+  }
+
   if (finding.code === "sitemap_noindex") {
     const page = canonicalByPath.get(finding.path);
     const previewHeaderNoindex = page?.xRobotsTag.toLowerCase().includes("noindex") === true;

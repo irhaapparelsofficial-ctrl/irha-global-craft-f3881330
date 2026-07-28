@@ -77,7 +77,7 @@ export default function HomeCategoryUniverse() {
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(213,173,77,.12),transparent_58%)]" />
                   <ResilientImage sources={[image, program.image]} alt={program.alt} loading="lazy" decoding="async" width={1200} height={800} className="relative h-full w-full object-contain p-4 transition-transform duration-700 group-hover:scale-[1.025] sm:p-6" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/84 via-black/5 to-transparent" />
-                  <span className="absolute bottom-3 left-3 text-[7px] font-semibold uppercase tracking-[0.14em] text-white/80 sm:left-4 sm:text-[8px]">Made-to-order program</span>
+                  <span className="absolute bottom-3 left-3 text-[7px] font-semibold uppercase tracking-[0.14em] text-white/80 sm:left-4 sm:text-[8px]">Digital catalogue reference · Made-to-order program</span>
                 </div>
                 <div className="p-4 sm:p-5 md:p-6">
                   <div className="flex items-start justify-between gap-3">

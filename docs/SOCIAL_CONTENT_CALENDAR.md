@@ -91,7 +91,7 @@ All tables use admin-only RLS.
 Content may state:
 
 - Irha Apparels is an experienced apparel manufacturer in Sialkot, Pakistan.
-- The website is newly built; the company is not new.
+- Buyer verification should focus on the exact program, team and written scope.
 - A live factory video call is available.
 - OEM, ODM, private-label and custom manufacturing are available.
 - Buyers can request a tailored quote after requirement review.
