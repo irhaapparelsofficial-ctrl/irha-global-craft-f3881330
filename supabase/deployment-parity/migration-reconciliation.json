@@ -1,0 +1,43 @@
+{
+  "cutover_version": "20260717000000",
+  "execution_id": "IA-SEC-E002",
+  "historical_squashed": {
+    "classification": "historical squashed migration",
+    "count": 255,
+    "individual_source_sql_required": false,
+    "superseding_repository_baseline": "20260717000000"
+  },
+  "ledger_sha256": "3d717a9d2e857966fa09aafb649695b555d0387afb6ba3cc05463b3a77222c1f",
+  "live_history": {
+    "count": 374,
+    "max_version": "20260727232321",
+    "min_version": "20250614164925",
+    "sha256": "8d5bb201e1e4a99e669950be2fd45b789144929a4da2f7bbdf6f6cacf4cbe15a"
+  },
+  "policy": {
+    "blocking_state": "partial: 115 post-cutover live versions lack exact repository-ledger parity",
+    "do_not_fabricate_historical_files": true,
+    "future_rule": "Every new live migration must match a repository ledger version or an explicit approved squashed-history record before release."
+  },
+  "post_cutover": {
+    "classification": "unverifiable exact-version provenance",
+    "evidence": "Live names and history digest are sealed; exact source SQL/checksums are not available for all dashboard/operational migrations.",
+    "exact_version_matches": [
+      {"name": "restore_atomic_drive_claim_20260721", "version": "20260721165904"},
+      {"name": "public_catalog_media_and_sitemap_rpc_20260721", "version": "20260721171524"},
+      {"name": "restore_strict_media_dimensions_20260721", "version": "20260721171737"},
+      {"name": "catalog_drive_canonical_media_metadata_20260721", "version": "20260721172519"}
+    ],
+    "live_count": 119,
+    "missing_exact_version_count": 115,
+    "repository_ledger_count": 46,
+    "sec_m01_alias": {
+      "checksum_state": "live statement evidence verified; version alias not reconciled in repository ledger",
+      "live_version": "20260727232321",
+      "name": "authenticate_notification_dispatcher_processing",
+      "repository_version": "20260727223000",
+      "semantic_source": "SEC-M01"
+    }
+  },
+  "schema_version": 1
+}

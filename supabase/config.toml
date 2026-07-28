@@ -1,118 +1,354 @@
 project_id = "pvzjiozismyxqrzmtfbi"
 
-[functions.chat]
-verify_jwt = false
-
-# Public only because the function performs custom high-entropy visitor-token
-# authentication and never grants browser clients direct table access.
-[functions.live-chat]
-verify_jwt = false
-
-# Ephemeral live-chat typing gateway. It uses the same session token as
-# live-chat and accepts only the message composer preview, never other inputs.
-[functions.live-chat-typing]
-verify_jwt = false
-
-# Public browser presence gateway. It validates canonical origins and a
-# session-scoped UUID, rate-limits requests, suppresses bots and stores no IP.
-[functions.site-visitor]
-verify_jwt = false
-
-[functions.public-lead-gateway]
-verify_jwt = false
-
-[functions.generate-mockup]
-verify_jwt = false
-
-[functions.report-app-incident]
-verify_jwt = false
-
-[functions.gsc-inspect]
-verify_jwt = true
-
-[functions.gsc-analytics]
-verify_jwt = true
-
-# The function itself authorizes either an authenticated admin/service JWT or
-# the separate high-entropy Vault scheduler token before contacting Google.
-[functions.sitemap-ping]
-verify_jwt = false
-
-# Retained as an inactive compatibility function; production cron targets
-# sitemap-ping so the existing Search Console connection binding is reused.
-[functions.scheduled-sitemap-submit]
-verify_jwt = false
-
-[functions.admin-chat]
-verify_jwt = true
-
+# F1 — retain
 [functions.admin-agent]
 verify_jwt = true
 
+# F1 — retain
 [functions.admin-agent-execute]
 verify_jwt = true
 
+# F2 — retain
 [functions.admin-agent-health]
 verify_jwt = true
 
-[functions.release-health]
+# F1 — retain
+[functions.admin-chat]
 verify_jwt = true
 
-[functions.lead-research]
+# F6 — retain pending separate cleanup execution
+[functions.asset-migration-batch-20260714]
 verify_jwt = true
 
-[functions.lead-bulk-stage]
+# F6 — retain pending separate cleanup execution
+[functions.asset-migration-www-20260714]
 verify_jwt = true
 
+# F6 — retain pending separate cleanup execution
+[functions.asset-verify-owned-20260714]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-drive-credential-probe]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-drive-folder-probe]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-drive-import-20260721]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-drive-import-runner-20260721]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-drive-job-runner]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-drive-media-import]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-drive-public-fetch-probe]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-homepage-import-20260721]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-image-dimensions-20260721]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-image-dimensions-run-20260721]
+verify_jwt = true
+
+# F2 — retain
+[functions.catalog-media-bootstrap]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-media-repair-ia-gseo-master-01]
+verify_jwt = false
+
+# F6 — retain pending separate cleanup execution
+[functions.catalog-webp-render-probe]
+verify_jwt = true
+
+# F1 — retain
+[functions.chat]
+verify_jwt = false
+
+# F6 — retain pending separate cleanup execution
+[functions.connector-probe-20260713]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.firecrawl-connection-test]
+verify_jwt = true
+
+# F1 — retain
+[functions.generate-mockup]
+verify_jwt = false
+
+# F2 — retain
+[functions.gsc-analytics]
+verify_jwt = true
+
+# F2 — retain
+[functions.gsc-inspect]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e001-control]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e001-storage-worker]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e007-archive-helper]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e007-archive-worker]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e007-o3-export]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e007-url-broker]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e007b-control]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e007b-keywrap]
+verify_jwt = true
+
+# F3 — retain sealed; activation requires explicit approval
+[functions.ia-supa-e007b-storage-worker]
+verify_jwt = true
+
+# F1 — retain
+[functions.image-processing-gateway]
+verify_jwt = false
+
+# F1 — retain
+[functions.instagram-own-draft]
+verify_jwt = false
+
+# F1 — retain
+[functions.instagram-own-inbox]
+verify_jwt = false
+
+# F1 — retain
+[functions.instagram-own-sync]
+verify_jwt = false
+
+# F1 — retain
+[functions.instagram-own-webhook]
+verify_jwt = false
+
+# F6 — retain pending separate cleanup execution
+[functions.irha-catalog-media-worker-v1]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.irha-catalog-media-worker-v2]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.irha-homepage-media-worker-v1]
+verify_jwt = true
+
+# F1 — retain
 [functions.lead-activation]
 verify_jwt = true
 
+# F1 — retain
+[functions.lead-activation-channel-v2]
+verify_jwt = true
+
+# F1 — retain
+[functions.lead-bulk-stage]
+verify_jwt = true
+
+# F1 — retain
+[functions.lead-file-registry]
+verify_jwt = true
+
+# F1 — retain
+[functions.lead-research]
+verify_jwt = true
+
+# F1 — retain
+[functions.live-chat]
+verify_jwt = false
+
+# F1 — retain
+[functions.live-chat-typing]
+verify_jwt = false
+
+# F6 — retain pending separate cleanup execution
+[functions.migrate-lovable-media-once]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.migration-data-copy-20260713]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.migration-storage-copy-20260713]
+verify_jwt = true
+
+# F1 — retain
 [functions.multilingual-seo]
 verify_jwt = true
 
-[functions.outreach-engine]
-verify_jwt = true
-
-[functions.outreach-unsubscribe]
-verify_jwt = false
-
-# The gateway stays JWT-optional because it serves two independently verified
-# paths: admin Auth plus database role checks, and a short-lived single-use
-# database scheduler capability consumed before any service-role queue access.
+# F2 — retain
 [functions.notification-dispatcher]
 verify_jwt = false
 
+# F6 — retain pending separate cleanup execution
+[functions.notification-dispatcher-diagnostic-20260717]
+verify_jwt = false
+
+# F2 — retain
+[functions.notification-runtime-health]
+verify_jwt = true
+
+# F2 — retain
+[functions.operations-orchestrator]
+verify_jwt = false
+
+# F1 — retain
+[functions.outreach-channel-copilot]
+verify_jwt = true
+
+# F1 — retain
+[functions.outreach-engine]
+verify_jwt = true
+
+# F1 — retain
+[functions.outreach-unsubscribe]
+verify_jwt = false
+
+# F1 — retain
+[functions.outreach-workflow-v2]
+verify_jwt = true
+
+# F2 — retain
 [functions.process-email-queue]
 verify_jwt = true
 
-[functions.social-calendar]
-verify_jwt = true
-
-[functions.social-autopilot]
-verify_jwt = true
-
-[functions.social-multi-sync]
-verify_jwt = true
-
-[functions.social-render-worker]
-verify_jwt = true
-
-[functions.social-render-callback]
+# F1 — retain
+[functions.public-lead-gateway]
 verify_jwt = false
 
-[functions.social-publish-scheduler]
+# F2 — retain
+[functions.release-health]
+verify_jwt = true
+
+# F1 — retain
+[functions.report-app-incident]
 verify_jwt = false
 
+# F6 — retain pending separate cleanup execution
+[functions.responsive-image-backfill-20260716]
+verify_jwt = true
+
+# F2 — retain
+[functions.scheduled-lead-discovery]
+verify_jwt = false
+
+# F2 — retain
+[functions.scheduled-lead-verification]
+verify_jwt = false
+
+# F6 — retain pending separate cleanup execution
+[functions.scheduled-sitemap-submit]
+verify_jwt = false
+
+# F2 — retain
+[functions.scheduled-social-drafts]
+verify_jwt = false
+
+# F1 — retain
+[functions.site-visitor]
+verify_jwt = false
+
+# F2 — retain
+[functions.sitemap-ping]
+verify_jwt = false
+
+# F1 — retain
 [functions.social-analytics]
 verify_jwt = true
 
-[functions.whatsapp-webhook]
+# F1 — retain
+[functions.social-autopilot]
+verify_jwt = true
+
+# F1 — retain
+[functions.social-calendar]
+verify_jwt = true
+
+# F1 — retain
+[functions.social-multi-sync]
+verify_jwt = true
+
+# F2 — retain
+[functions.social-publish-scheduler]
 verify_jwt = false
 
+# F1 — retain
+[functions.social-render-callback]
+verify_jwt = false
+
+# F1 — retain
+[functions.social-render-worker]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.storage-duplicate-cleanup-20260714]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.temporary-catalog-media-import]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.temporary-media-import]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.validate-repo-media-once]
+verify_jwt = true
+
+# F6 — retain pending separate cleanup execution
+[functions.web-research-test]
+verify_jwt = true
+
+# F1 — retain
 [functions.whatsapp-admin]
 verify_jwt = true
 
-# GET verification uses META_WEBHOOK_VERIFY_TOKEN. POST requests require the
-# Meta x-hub-signature-256 HMAC before any payload is persisted.
+# F1 — retain
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+# F4 — repository-declared compatibility webhook; absent from production.
+# Do not deploy without explicit owner approval and verified Meta HMAC contract.
 [functions.meta-webhook]
 verify_jwt = false

@@ -25,20 +25,18 @@ jobs:
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
     outputs:
       should_sync: ${{ steps.ready.outputs.should_sync }}
       source_sha: ${{ steps.ready.outputs.source_sha }}
       secrets_ready: ${{ steps.ready.outputs.secrets_ready }}
-      functions_changed: ${{ steps.changes.outputs.functions_changed }}
+      changed_functions_json: ${{ steps.changes.outputs.changed_functions_json }}
+      changed_count: ${{ steps.changes.outputs.changed_count }}
 
     steps:
-      - name: Checkout exact green main source for change detection
+      - name: Checkout exact green main source
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.SOURCE_SHA }}
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 2
           persist-credentials: false
 
@@ -47,19 +45,47 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          changed=false
-          if git diff-tree --root --no-commit-id --name-only -r "$SOURCE_SHA" \
-            | grep -q '^supabase/functions/'; then
-            changed=true
-          fi
-          echo "functions_changed=$changed" >> "$GITHUB_OUTPUT"
-          echo "Repository Edge Functions changed: $changed"
+          source_sha='${{ github.event.workflow_run.head_sha }}'
+          mapfile -t changed < <(
+            git diff-tree --root --no-commit-id --name-only -r "$source_sha" \
+              | sed -nE 's#^supabase/functions/([^/]+)/.*#\1#p' \
+              | sort -u
+          )
 
-      - name: Confirm exact current main and Supabase secret readiness
+          printf '%s\n' "${changed[@]:-}" | sed '/^$/d' > /tmp/changed-functions.txt
+          changed_count="$(wc -l < /tmp/changed-functions.txt | tr -d ' ')"
+          changed_json="$(jq -Rsc 'split("\n") | map(select(length > 0))' /tmp/changed-functions.txt)"
+          echo "changed_count=$changed_count" >> "$GITHUB_OUTPUT"
+          echo "changed_functions_json=$changed_json" >> "$GITHUB_OUTPUT"
+
+          if [ "$changed_count" -eq 0 ]; then
+            echo "No Edge Function source changed; unrelated commit skipped without failure"
+            exit 0
+          fi
+
+          jq -r '.functions[][0]' supabase/deployment-parity/functions-f3.json | sort -u > /tmp/blocked-f3.txt
+          jq -r '.functions[][0]' supabase/deployment-parity/functions-f6.json | sort -u > /tmp/blocked-f6.txt
+          jq -r '.functions[][0]' supabase/deployment-parity/functions-f4.json | sort -u > /tmp/repository-only.txt
+          cat /tmp/blocked-f3.txt /tmp/blocked-f6.txt /tmp/repository-only.txt | sort -u > /tmp/blocked-functions.txt
+
+          while IFS= read -r function_name; do
+            test -n "$function_name"
+            grep -Fqx "[functions.$function_name]" supabase/config.toml
+            if grep -Fqx "$function_name" /tmp/blocked-functions.txt; then
+              echo "::error title=Blocked Edge Function deployment::$function_name is F3, F6, or repository-only and cannot be deployed by the broad control plane"
+              exit 1
+            fi
+          done < /tmp/changed-functions.txt
+
+          echo "Approved changed Edge Functions: $changed_json"
+
+      - name: Confirm current main and secret readiness
         id: ready
         env:
           GH_TOKEN: ${{ github.token }}
-          FUNCTIONS_CHANGED: ${{ steps.changes.outputs.functions_changed }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          CHANGED_COUNT: ${{ steps.changes.outputs.changed_count }}
         shell: bash
         run: |
           set -euo pipefail
@@ -73,16 +99,15 @@ jobs:
 
           if [ "$latest_main" != "$SOURCE_SHA" ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "Superseded green run skipped safely: $SOURCE_SHA; current main is $latest_main"
-          elif [ "$FUNCTIONS_CHANGED" != "true" ]; then
+            echo "Superseded green run skipped safely."
+          elif [ "$CHANGED_COUNT" -eq 0 ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "No Edge Function source changed; unrelated commit skipped without failure."
-          elif [ "$secrets_ready" != "true" ]; then
+            echo "No Edge Function source changed; unrelated commit skipped without failure"
+          elif [ "$secrets_ready" != true ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "Exact current main changed Edge Functions, but SUPABASE_ACCESS_TOKEN is not ready. Waiting without failure."
+            echo "Supabase token unavailable; function sync skipped without failure"
           else
             echo "should_sync=true" >> "$GITHUB_OUTPUT"
-            echo "Exact current main changed Edge Functions and Supabase token is available: $SOURCE_SHA"
           fi
 
       - name: Record clean non-sync state
@@ -93,9 +118,9 @@ jobs:
             echo "## Supabase functions control plane"
             echo "- Quality Gate: green"
             echo "- Source: \`${{ steps.ready.outputs.source_sha }}\`"
-            echo "- Edge Functions changed: \`${{ steps.changes.outputs.functions_changed }}\`"
+            echo "- Changed functions: \`${{ steps.changes.outputs.changed_functions_json }}\`"
             echo "- Secrets ready: \`${{ steps.ready.outputs.secrets_ready }}\`"
-            echo "- Result: no backend mutation attempted and no failure raised"
+            echo "- Result: function sync skipped without failure; no backend mutation attempted"
           } >> "$GITHUB_STEP_SUMMARY"
 
   sync-functions:
@@ -106,6 +131,7 @@ jobs:
     environment: production
     env:
       SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+      CHANGED_FUNCTIONS_JSON: ${{ needs.preflight.outputs.changed_functions_json }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
     steps:
@@ -124,9 +150,9 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.39.2
 
-      - name: Validate source and owner project
+      - name: Validate source, project, and parity evidence
         shell: bash
         run: |
           set -euo pipefail
@@ -138,14 +164,14 @@ jobs:
           npm run verify:deployment-source
           npm run verify:secrets
           npm run verify:migrations
-
+          node scripts/verify-supabase-parity.mjs
           project_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS \
             -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID")"
           test "$(printf '%s' "$project_json" | jq -r '.id // empty')" = "$SUPABASE_PROJECT_ID"
 
-      - name: Reconfirm current main after acquiring production lock
+      - name: Reconfirm exact current main after production lock
         id: freshness
         env:
           GH_TOKEN: ${{ github.token }}
@@ -157,24 +183,32 @@ jobs:
             echo "fresh=true" >> "$GITHUB_OUTPUT"
           else
             echo "fresh=false" >> "$GITHUB_OUTPUT"
-            echo "Source $SOURCE_SHA was superseded by $latest_main while waiting for the production lock; function sync skipped without failure"
+            echo "Source superseded while waiting for production lock; function sync skipped without failure"
           fi
 
-      - name: Deploy repository Edge Functions with bounded retry
+      - name: Deploy only explicitly changed approved Edge Functions
         if: steps.freshness.outputs.fresh == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          bash scripts/ci/retry.sh 3 8 -- supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
-          bash scripts/ci/retry.sh 3 5 -- supabase functions list --project-ref "$SUPABASE_PROJECT_ID" | tee /tmp/functions.txt
-          test -s /tmp/functions.txt
+          mapfile -t functions < <(jq -r '.[]' <<<"$CHANGED_FUNCTIONS_JSON")
+          test "${#functions[@]}" -gt 0
+          : > /tmp/functions-deployed.txt
+          for function_name in "${functions[@]}"; do
+            bash scripts/ci/retry.sh 3 8 -- supabase functions deploy "$function_name" --project-ref "$SUPABASE_PROJECT_ID"
+            printf '%s\n' "$function_name" >> /tmp/functions-deployed.txt
+          done
+          bash scripts/ci/retry.sh 3 5 -- supabase functions list --project-ref "$SUPABASE_PROJECT_ID" | tee /tmp/functions-live.txt
+          test -s /tmp/functions-live.txt
 
-      - name: Preserve functions sync evidence
+      - name: Preserve scoped sync evidence
         if: steps.freshness.outputs.fresh == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: supabase-functions-evidence-${{ env.SOURCE_SHA }}
-          path: /tmp/functions.txt
+          path: |
+            /tmp/functions-deployed.txt
+            /tmp/functions-live.txt
           if-no-files-found: error
           retention-days: 3
 
@@ -187,6 +221,9 @@ jobs:
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Project: \`$SUPABASE_PROJECT_ID\`"
             echo "- Shared production lock: \`irha-production-mutation\`"
+            echo "- Changed function allowlist: \`$CHANGED_FUNCTIONS_JSON\`"
             echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
+            echo "- Broad function deployment: disabled"
+            echo "- F3/F6/repository-only deployment: blocked"
             echo "- Database migrations: not auto-applied by this workflow"
           } >> "$GITHUB_STEP_SUMMARY"

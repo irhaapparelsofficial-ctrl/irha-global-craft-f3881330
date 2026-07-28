@@ -1,0 +1,85 @@
+name: Supabase Deployment Parity
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "supabase/config.toml"
+      - "supabase/deployment-parity/**"
+      - "scripts/verify-supabase-parity.mjs"
+      - "scripts/ci/generate-migration-provenance.mjs"
+      - "scripts/ci/generate-supabase-manifest.mjs"
+      - "scripts/supabase/export-deployment-manifest.sql"
+      - "src/integrations/supabase/types.ts"
+      - ".github/workflows/supabase-parity.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/config.toml"
+      - "supabase/deployment-parity/**"
+      - "scripts/verify-supabase-parity.mjs"
+      - "scripts/ci/generate-migration-provenance.mjs"
+      - "scripts/ci/generate-supabase-manifest.mjs"
+      - "scripts/supabase/export-deployment-manifest.sql"
+      - "src/integrations/supabase/types.ts"
+      - ".github/workflows/supabase-parity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify committed canonical parity evidence
+        run: node scripts/verify-supabase-parity.mjs
+
+      - name: Require authenticated project identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          project_json="$(curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID")"
+          jq -e --arg project "$SUPABASE_PROJECT_ID" '.id == $project and .status == "ACTIVE_HEALTHY"' <<<"$project_json" >/dev/null
+
+      - name: Verify authoritative public-schema types are fresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes supabase@2.39.2 gen types typescript \
+            --project-id "$SUPABASE_PROJECT_ID" \
+            --schema public > /tmp/supabase-types.ts
+          test -s /tmp/supabase-types.ts
+          ! grep -E '(sb_secret_|service_role[^A-Za-z0-9]|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,})' /tmp/supabase-types.ts
+          diff -u src/integrations/supabase/types.ts /tmp/supabase-types.ts
+          sha256sum /tmp/supabase-types.ts
+
+      - name: Verify migration provenance against live history
+        env:
+          MIGRATION_PROVENANCE_MODE: verify
+        run: node scripts/ci/generate-migration-provenance.mjs
+
+      - name: Verify canonical deployment manifest against live state
+        env:
+          SUPABASE_MANIFEST_MODE: verify
+        run: node scripts/ci/generate-supabase-manifest.mjs

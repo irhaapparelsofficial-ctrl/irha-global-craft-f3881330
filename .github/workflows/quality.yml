@@ -26,7 +26,7 @@ jobs:
   quality:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 70
 
     steps:
       - name: Checkout current source
@@ -56,8 +56,37 @@ jobs:
       - name: Verify migration registry
         run: node scripts/verify-migration-order.mjs
 
+      - name: Verify committed Supabase deployment parity
+        run: node scripts/verify-supabase-parity.mjs
+
       - name: TypeScript check
         run: npx tsc --noEmit
+
+      - name: ESLint SEC-M02 changed executable source
+        run: npx eslint scripts/verify-supabase-parity.mjs scripts/ci/generate-migration-provenance.mjs scripts/ci/generate-supabase-manifest.mjs scripts/ci/audit-production-artifacts.mjs
+
+      - name: Verify repository lint debt did not worsen
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          npx eslint . --format json > /tmp/eslint-full.json
+          lint_status=$?
+          set -e
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('/tmp/eslint-full.json', 'utf8'));
+          const totals = report.reduce((sum, file) => ({
+            errors: sum.errors + file.errorCount,
+            warnings: sum.warnings + file.warningCount,
+          }), { errors: 0, warnings: 0 });
+          fs.writeFileSync('/tmp/eslint-totals.json', `${JSON.stringify(totals, null, 2)}\n`);
+          if (totals.errors > 445 || totals.warnings > 30) {
+            throw new Error(`repository lint debt worsened: ${totals.errors} errors, ${totals.warnings} warnings`);
+          }
+          console.log(JSON.stringify(totals));
+          NODE
+          test "$lint_status" -ne 0 || true
 
       - name: Unit and integration tests
         shell: bash
@@ -70,6 +99,28 @@ jobs:
         run: |
           set -euo pipefail
           npm --ignore-scripts run build 2>&1 | tee quality-build.log
+
+      - name: Audit immutable production artifact
+        env:
+          ARTIFACT_AUDIT_MODE: directory
+          ARTIFACT_DIRECTORY: dist
+        run: node scripts/ci/audit-production-artifacts.mjs | tee /tmp/artifact-audit.json
+
+      - name: Verify minimum deployment artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/build.json
+          test -s dist/release.txt
+          test -s dist/_redirects
+          test -s dist/_headers
+          test -s dist/catalog-route-manifest.json
+          jq -e --arg sha "$GITHUB_SHA" \
+            '.source_commit == $sha and .source_identity_state == "verified"' \
+            dist/build.json >/dev/null
+          jq -e '.schemaVersion == 1 and .productCount == 254 and (.products | length) == 254' \
+            dist/catalog-route-manifest.json >/dev/null
 
       - name: Collect failing test names
         id: failure-label
@@ -90,25 +141,12 @@ jobs:
           path: |
             quality-test.log
             quality-build.log
+            /tmp/eslint-full.json
+            /tmp/eslint-totals.json
+            /tmp/artifact-audit.json
           if-no-files-found: warn
           retention-days: 2
           compression-level: 0
-
-      - name: Verify minimum deployment artifact
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s dist/index.html
-          test -s dist/build.json
-          test -s dist/release.txt
-          test -s dist/_redirects
-          test -s dist/_headers
-          test -s dist/catalog-route-manifest.json
-          jq -e --arg sha "$GITHUB_SHA" \
-            '.source_commit == $sha and .source_identity_state == "verified"' \
-            dist/build.json >/dev/null
-          jq -e '.schemaVersion == 1 and .productCount == 254 and (.products | length) == 254' \
-            dist/catalog-route-manifest.json >/dev/null
 
       - name: Publish main build artifact
         if: >-
@@ -131,13 +169,12 @@ jobs:
             echo "- Source: \`$GITHUB_SHA\`"
             echo "- Dependency install: exact npm lockfile via \`npm ci\`"
             echo "- Dependency manifests: immutable"
-            echo "- Deployment source lock: required"
-            echo "- Secret safety: required"
-            echo "- Migration registry: required"
-            echo "- TypeScript: required"
-            echo "- Tests: required"
-            echo "- Production build and release identity: required"
-            echo "- One merge signal: \`Irha Quality Gate\`"
+            echo "- Deployment source lock, secret safety and migration registry: required"
+            echo "- Static Supabase parity: required"
+            echo "- TypeScript and changed-file strict ESLint: required"
+            echo "- Repository lint baseline: must not exceed 445 errors / 30 warnings"
+            echo "- Unit and integration tests: required"
+            echo "- Production build, immutable identity and source-map/public-artifact audit: required"
             echo "- Production writes: none"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -154,7 +191,7 @@ jobs:
           case "$QUALITY_JOB_STATUS" in
             success)
               state=success
-              description="Buyer-ready source, tests and build passed"
+              description="Source, parity, lint baseline, tests, build and artifact audit passed"
               ;;
             failure)
               state=failure
@@ -169,7 +206,6 @@ jobs:
               description="Superseded by a newer commit"
               ;;
           esac
-
           bash scripts/ci/retry.sh 2 2 -- gh api \
             --method POST \
             "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
