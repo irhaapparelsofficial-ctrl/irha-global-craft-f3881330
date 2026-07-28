@@ -1,8 +1,7 @@
--- IA-SEC-E002R read-only canonical Supabase inventory generator.
+-- IA-SEC-E002R canonical Supabase inventory generator.
+-- The caller must execute this through the Management API with read_only=true.
 -- Emits metadata and SHA-256 digests only. It excludes table rows, Auth users,
 -- Storage objects, Vault values, environment variables, cron commands and secrets.
-begin read only;
-
 with
 public_counts as (
   select
@@ -99,5 +98,3 @@ select jsonb_build_object(
   )
 )
 from public_counts,digests,migration_stats,cron_payload,storage_payload;
-
-rollback;
