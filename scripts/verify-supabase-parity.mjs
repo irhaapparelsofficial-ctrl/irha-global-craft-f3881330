@@ -121,7 +121,7 @@ for (const row of registries.get("F3").functions) {
 }
 assert.equal(manifest.security_invariants.sealed_stub_count, 9);
 for (const row of registries.get("F6").functions) {
-  assert.equal(row[9], "retain removal candidate", `F6 lifecycle changed: ${row[0]}`);
+  assert.equal(row[9], "retain pending separate cleanup execution", `F6 lifecycle changed: ${row[0]}`);
 }
 
 const typesPath = manifest.generated_types.committed_file;
