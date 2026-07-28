@@ -33,7 +33,7 @@ describe("public runtime and initial paint performance contract", () => {
     const clearIndex = mainSource.indexOf("rootElement.replaceChildren()");
     expect(paintIndex).toBeGreaterThan(-1);
     expect(clearIndex).toBeGreaterThan(paintIndex);
-    expect(mainSource).toContain('import { allowStaticShellPaint } from "./lib/staticShellPaint"');
+    expect(mainSource).toContain('import { allowStaticShellPaint } from "@/lib/staticShellPaint"');
     expect(paintSource).toContain('typeof target.requestAnimationFrame === "function"');
     expect(paintSource).toContain("target.setTimeout(resolve, 0)");
   });
