@@ -43,19 +43,18 @@ describe("IA-SEC-E003 source contracts", () => {
     expect(limiter).toBeGreaterThanOrEqual(0);
     expect(limiter).toBeLessThan(body.indexOf('.from("site_visitors")'));
     expect(limiter).toBeLessThan(body.indexOf('.from("crm_notifications")'));
-    expect(body).toContain('dropped: "limiter_unavailable"');
-    expect(body).toContain('dropped: "duplicate"');
-    expect(body).toContain("status: 200");
+    expect(body).toContain('return json({ ok: true, dropped: "limiter_unavailable" }, 200, origin);');
+    expect(body).toContain('return json({ ok: true, dropped: "duplicate", rateLimitToken: limiter.rateLimitToken }, 200, origin);');
   });
 
-  it("authorizes every live-chat action before session, message, or notification access", () => {
+  it("authorizes every live-chat action before session, message, or owner-notification work", () => {
     const body = handler(sources.chat);
     const limiter = body.indexOf("authorizeDurableRateLimit");
     expect(limiter).toBeGreaterThanOrEqual(0);
     expect(limiter).toBeLessThan(body.indexOf("authenticateSession("));
     expect(limiter).toBeLessThan(body.indexOf('.from("chat_sessions")'));
     expect(limiter).toBeLessThan(body.indexOf('.from("chat_messages")'));
-    expect(limiter).toBeLessThan(body.indexOf('.from("crm_notifications")'));
+    expect(limiter).toBeLessThan(body.indexOf("alertOwnerOfPresence("));
     expect(body).toContain('error: "live_chat_unavailable"');
     expect(body).toContain('error: "too_many_requests"');
     expect(body).toContain('"Retry-After"');
