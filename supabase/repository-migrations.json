@@ -4,52 +4,389 @@
   "cutover_version": "20260717000000",
   "ledger_table": "private.irha_repository_migration_ledger",
   "migrations": [
-    {"version":"20260717002000","name":"link_classic_bavarian_shirt_four_view_media","path":"supabase/migrations/20260717002000_link_classic_bavarian_shirt_four_view_media.sql","git_blob_sha":"7d131e0d0c55e4671aa7445620077f41e458a281","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717023000","name":"owner_notification_delivery","path":"supabase/migrations/20260717023000_owner_notification_delivery.sql","git_blob_sha":"3d211ad1226ec9bf2159632364c699afa6b570ad","execution_mode":"verified_present","transactional_dry_run":false,"verification_query":"select (to_regclass('public.owner_push_subscriptions') is not null and to_regclass('public.notification_outbox') is not null and to_regclass('public.notification_delivery_attempts') is not null and to_regprocedure('public.notification_get_secret(text)') is not null and to_regprocedure('public.notification_owner_email()') is not null and to_regprocedure('public.notification_enqueue_from_crm()') is not null and to_regprocedure('public.notification_claim_outbox(integer)') is not null and to_regprocedure('public.notification_requeue_blocked(text)') is not null and to_regprocedure('public.notification_delivery_health()') is not null and exists (select 1 from pg_trigger where tgname = 'crm_notifications_delivery_outbox' and tgrelid = 'public.crm_notifications'::regclass and not tgisinternal) and (select relrowsecurity from pg_class where oid = 'public.owner_push_subscriptions'::regclass) and (select relrowsecurity from pg_class where oid = 'public.notification_outbox'::regclass) and (select relrowsecurity from pg_class where oid = 'public.notification_delivery_attempts'::regclass)) as verified"},
-    {"version":"20260717023100","name":"notification_health_service_role","path":"supabase/migrations/20260717023100_notification_health_service_role.sql","git_blob_sha":"edc0d7fb78c575e05676dea5af7ccff86e73be5b","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717023200","name":"notification_dispatch_runtime","path":"supabase/migrations/20260717023200_notification_dispatch_runtime.sql","git_blob_sha":"1f27cafbc568af25f8f1f28a5287d2a8cca96a9c","execution_mode":"verified_present","transactional_dry_run":false,"verification_query":"select (to_regclass('public.notification_dispatch_runtime') is not null and to_regprocedure('public.notification_begin_dispatch(integer)') is not null and to_regprocedure('public.notification_dispatch_tick()') is not null) as verified"},
-    {"version":"20260717023300","name":"owner_notifications_only","path":"supabase/migrations/20260717023300_owner_notifications_only.sql","git_blob_sha":"8f113a8ba1dc237f0901cc00f62fef3e0f934f5b","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717023400","name":"notification_claim_outbox_qualification","path":"supabase/migrations/20260717023400_notification_claim_outbox_qualification.sql","git_blob_sha":"f549f9fa3ada6f5e87fa44acfd44a3f1b0c37ef9","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717023500","name":"notification_dispatch_lock","path":"supabase/migrations/20260717023500_notification_dispatch_lock.sql","git_blob_sha":"cd79084fb32563edf60ad59b6441712c5913625d","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717124500","name":"live_chat_visitor_presence_geo","path":"supabase/migrations/20260717124500_live_chat_visitor_presence_geo.sql","git_blob_sha":"a1d4f9447a5d4c59242acf76c9b7ef61a846416c","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717130000","name":"notification_security_hardening","path":"supabase/migrations/20260717130000_notification_security_hardening.sql","git_blob_sha":"a1f30871813c0c5092ccd603990abe3c525203fb","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717133000","name":"notification_delivery_attempts_notification_fk_index","path":"supabase/migrations/20260717133000_notification_delivery_attempts_notification_fk_index.sql","git_blob_sha":"3547bc7635dcaed33951a59851dc0804949b2f94","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717140000","name":"b2b_inquiry_cart_relational","path":"supabase/migrations/20260717140000_b2b_inquiry_cart_relational.sql","git_blob_sha":"36598df739cf18d91294455a692300a6c935d40b","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717141000","name":"b2b_notification_details","path":"supabase/migrations/20260717141000_b2b_notification_details.sql","git_blob_sha":"3e3479ba84fb62cd723ba3d69447d9b00733eab1","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717142000","name":"enforce_owner_only_rfq_notifications","path":"supabase/migrations/20260717142000_enforce_owner_only_rfq_notifications.sql","git_blob_sha":"ff626d6e70b008fc1277b7ab9faf77bc098e4d0e","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717161000","name":"realtime_site_visitor_alerts","path":"supabase/migrations/20260717161000_realtime_site_visitor_alerts.sql","git_blob_sha":"8e7931e3f37649c7b07242e9ea9cd4c5bff5845e","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717162000","name":"immediate_live_chat_presence_dispatch","path":"supabase/migrations/20260717162000_immediate_live_chat_presence_dispatch.sql","git_blob_sha":"5042e41b22a612ab9355495e463de0cf8c4950ed","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717212335","name":"legacy_route_redirects_registry","path":"supabase/migrations/20260717212335_0e3504ac-aa0b-42f6-8eaf-ade8acb5c30e.sql","git_blob_sha":"a2912e20c2ac17f63931d16a973fc41290a5aae9","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717212407","name":"admin_legacy_redirect_queue_security_invoker","path":"supabase/migrations/20260717212407_ec76cc82-081d-407d-b253-bd56d67eeef2.sql","git_blob_sha":"f1abb39124d0eea262902590d64b7949a5f2b715","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717212829","name":"pr4_catalogue_completion_workflow","path":"supabase/migrations/20260717212829_05890176-6378-4d4b-8f42-8fe50f2813c4.sql","git_blob_sha":"c98805c02b305f8742b8b73d90d590d00a60baa5","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717214344","name":"pr5_media_placement_backbone","path":"supabase/migrations/20260717214344_1618bc25-ea6d-4f8c-a581-3c6fa3f25357.sql","git_blob_sha":"a6846620c06f200756dc670c29f340ec581e3987","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717222000","name":"media_duplicate_lineage_foundation","path":"supabase/migrations/20260717222000_media_duplicate_lineage_foundation.sql","git_blob_sha":"f32dad5752ce5adfb6147392657fce0d799e07eb","transactional_dry_run":true},
-    {"version":"20260717223000","name":"gate_public_product_claims_by_quality_review","path":"supabase/migrations/20260717223000_gate_public_product_claims_by_quality_review.sql","git_blob_sha":"7ffe5e7a494b66c8cd66383ed15d2fd52539d7d7","transactional_dry_run":true},
-    {"version":"20260717230000","name":"explicit_catalog_taxonomy_foundation","path":"supabase/migrations/20260717230000_explicit_catalog_taxonomy_foundation.sql","git_blob_sha":"4ffd8acb69cb5569d5d6666099d61c9496c8a574","transactional_dry_run":true},
-    {"version":"20260717230500","name":"harden_taxonomy_assignment_leaf_guard","path":"supabase/migrations/20260717230500_harden_taxonomy_assignment_leaf_guard.sql","git_blob_sha":"4ea55a0483a73a6c7a3c72a7bf9cfc49c5ec3af1","transactional_dry_run":true},
-    {"version":"20260717232000","name":"seed_draft_b2b_seo_foundation","path":"supabase/migrations/20260717232000_seed_draft_b2b_seo_foundation.sql","git_blob_sha":"a65e05870dd8aada32537121e9510b3332894413","transactional_dry_run":true},
-    {"version":"20260717232100","name":"align_localized_draft_paths","path":"supabase/migrations/20260717232100_align_localized_draft_paths.sql","git_blob_sha":"bd12ca8e06c71558e4f8919007e5067f13bc8dfe","transactional_dry_run":true},
-    {"version":"20260717232200","name":"fix_content_touch_updated_at_polymorphic_trigger","path":"supabase/migrations/20260717232200_fix_content_touch_updated_at_polymorphic_trigger.sql","git_blob_sha":"57a752d7945a7b3ed300f3bf31bd24856d2ee68c","transactional_dry_run":true},
-    {"version":"20260717233000","name":"fix_public_lead_notification_record_fields","path":"supabase/migrations/20260717233000_fix_public_lead_notification_record_fields.sql","git_blob_sha":"61aaaf8dd16c4e2e8c924c021eebbd2827c8ec3c","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717234000","name":"optimize_taxonomy_rls_and_inquiry_index","path":"supabase/migrations/20260717234000_optimize_taxonomy_rls_and_inquiry_index.sql","git_blob_sha":"a35ca4071b2cd90a85b2a0ead54c03f4f99358b8","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717235000","name":"catalog_taxonomy_owner_release_controls","path":"supabase/migrations/20260717235000_catalog_taxonomy_owner_release_controls.sql","git_blob_sha":"beadb515c6888cd77b8aba5b4bf4aed437e99d3b","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717235100","name":"catalog_taxonomy_verified_review_approval","path":"supabase/migrations/20260717235100_catalog_taxonomy_verified_review_approval.sql","git_blob_sha":"9b331ea6da3dc60ec783098301b5691c3c295654","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260717235200","name":"catalog_taxonomy_verified_publication","path":"supabase/migrations/20260717235200_catalog_taxonomy_verified_publication.sql","git_blob_sha":"c5fd888d49afd4895187fa44a79dfa27a8328106","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260718103000","name":"live_chat_typing_intelligence","path":"supabase/migrations/20260718103000_live_chat_typing_intelligence.sql","git_blob_sha":"a8c232256844e36be6ffe6e0c5ad7814981264c9","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260719120000","name":"live_chat_visitor_contact_and_admin_seen","path":"supabase/migrations/20260719120000_live_chat_visitor_contact_and_admin_seen.sql","git_blob_sha":"ac6440366d34636529644763b0c7929149dc964c","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260721165904","name":"restore_atomic_drive_claim_20260721","path":"supabase/migrations/20260721165904_restore_atomic_drive_claim_20260721.sql","git_blob_sha":"e488c15cec72b86679c7c496da76ff29c8417eb4","execution_mode":"verified_present","transactional_dry_run":false,"verification_query":"select (to_regprocedure('public.claim_catalog_drive_files(integer)') is not null and has_function_privilege('service_role','public.claim_catalog_drive_files(integer)','execute')) as verified"},
-    {"version":"20260721171524","name":"public_catalog_media_and_sitemap_rpc_20260721","path":"supabase/migrations/20260721171524_public_catalog_media_and_sitemap_rpc_20260721.sql","git_blob_sha":"dbabe48ad62d685fef4438647822710ddf64f610","execution_mode":"verified_present","transactional_dry_run":false,"verification_query":"select (to_regprocedure('public.get_public_homepage_media()') is not null and to_regprocedure('public.get_public_sitemap_entries()') is not null and has_function_privilege('anon','public.get_public_homepage_media()','execute') and has_function_privilege('anon','public.get_public_sitemap_entries()','execute')) as verified"},
-    {"version":"20260721171737","name":"restore_strict_media_dimensions_20260721","path":"supabase/migrations/20260721171737_restore_strict_media_dimensions_20260721.sql","git_blob_sha":"1b8e73e0be01c6441f1344fbbd651b3227433a38","execution_mode":"verified_present","transactional_dry_run":false,"verification_query":"select (to_regprocedure('public.media_assets_before_write()') is not null and pg_get_functiondef('public.media_assets_before_write()'::regprocedure) ilike '%verified media requires valid dimensions%') as verified"},
-    {"version":"20260721172500","name":"catalog_drive_worker_claim_filter","path":"supabase/migrations/20260721172500_catalog_drive_worker_claim_filter.sql","git_blob_sha":"ac910f3013606becc0e106c5f2fa78a17a1e26ac","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260721172519","name":"catalog_drive_canonical_media_metadata_20260721","path":"supabase/migrations/20260721172519_catalog_drive_canonical_media_metadata_20260721.sql","git_blob_sha":"0432f28bd5f5d028f2b442b1b20ab045324b8217","execution_mode":"verified_present","transactional_dry_run":false,"verification_query":"select ((select count(*) = 4 from information_schema.columns where table_schema = 'public' and table_name = 'catalog_drive_files' and column_name in ('mime_type','size_bytes','width_px','height_px')) and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_mime_type_check') and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_size_check') and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_dimensions_check')) as verified"},
-    {"version":"20260722103000","name":"public_buyer_ready_route_manifest","path":"supabase/migrations/20260722103000_public_buyer_ready_route_manifest.sql","git_blob_sha":"95672a12cb589f30b6c152bc94bdbeedc8b2def2","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260722104500","name":"buyer_ready_taxonomy_media_security","path":"supabase/migrations/20260722104500_buyer_ready_taxonomy_media_security.sql","git_blob_sha":"b5c684e66c2e85c11b28bdeb6ae3f743e2c9e6ac","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260722111000","name":"buyer_ready_legacy_redirects","path":"supabase/migrations/20260722111000_buyer_ready_legacy_redirects.sql","git_blob_sha":"846c75893f239ad193b3efbd95f1f04835ebf09a","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260722111500","name":"drive_import_table_service_role_lock","path":"supabase/migrations/20260722111500_drive_import_table_service_role_lock.sql","git_blob_sha":"c288ae7f500e0931a45862c2587784abe37f1efe","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260722134500","name":"localized_seo_native_review_index_gate","path":"supabase/migrations/20260722134500_localized_seo_native_review_index_gate.sql","git_blob_sha":"b1d064e80ce5b01bdfb6c8efaaf8f1305630582a","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260722184000","name":"reduce_operations_heartbeat_cadence","path":"supabase/migrations/20260722184000_reduce_operations_heartbeat_cadence.sql","git_blob_sha":"f4ad1e2904acea30c684c4b2f65905d365d7fa05","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260724203000","name":"reconcile_legacy_redirect_contract","path":"supabase/migrations/20260724203000_reconcile_legacy_redirect_contract.sql","git_blob_sha":"b6192346003556dc5a76b4ea84e3c952bdbb9415","execution_mode":"transactional","transactional_dry_run":true},
-    {"version":"20260727223000","name":"authenticate_notification_dispatcher_processing","path":"supabase/migrations/20260727223000_authenticate_notification_dispatcher_processing.sql","git_blob_sha":"93753265bb449427da3c45b6b1ae6cd85eb3de98","execution_mode":"verified_present","transactional_dry_run":false,"verification_query":"select (to_regclass('public.notification_dispatch_tokens') is not null and to_regprocedure('public.notification_consume_dispatch_token(uuid)') is not null and to_regprocedure('public.notification_dispatch_tick()') is not null and (select relrowsecurity from pg_class where oid = 'public.notification_dispatch_tokens'::regclass) and has_function_privilege('anon','public.notification_consume_dispatch_token(uuid)','execute') and has_function_privilege('authenticated','public.notification_consume_dispatch_token(uuid)','execute') and has_function_privilege('service_role','public.notification_consume_dispatch_token(uuid)','execute') and not has_table_privilege('anon','public.notification_dispatch_tokens','select') and not has_table_privilege('authenticated','public.notification_dispatch_tokens','select') and not has_function_privilege('anon','public.notification_dispatch_tick()','execute') and not has_function_privilege('authenticated','public.notification_dispatch_tick()','execute') and has_function_privilege('service_role','public.notification_dispatch_tick()','execute') and pg_get_functiondef('public.notification_dispatch_tick()'::regprocedure) ilike '%x-irha-notification-token%' and pg_get_functiondef('public.notification_dispatch_tick()'::regprocedure) ilike '%notification_dispatch_tokens%' and pg_get_functiondef('public.notification_consume_dispatch_token(uuid)'::regprocedure) ilike '%consumed_at is null%' and exists (select 1 from cron.job where jobname = 'irha-notification-dispatcher' and schedule = '* * * * *' and command = 'select public.notification_dispatch_tick();' and active)) as verified"},
-    {"version":"20260728123000","name":"admin_read_private_b2b_tech_packs","path":"supabase/migrations/20260728123000_admin_read_private_b2b_tech_packs.sql","git_blob_sha":"bf9d45ef43a226038596c8eb730d3dd1fc207c49","execution_mode":"transactional","transactional_dry_run":true}
+    {
+      "version": "20260717002000",
+      "name": "link_classic_bavarian_shirt_four_view_media",
+      "path": "supabase/migrations/20260717002000_link_classic_bavarian_shirt_four_view_media.sql",
+      "git_blob_sha": "7d131e0d0c55e4671aa7445620077f41e458a281",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717023000",
+      "name": "owner_notification_delivery",
+      "path": "supabase/migrations/20260717023000_owner_notification_delivery.sql",
+      "git_blob_sha": "3d211ad1226ec9bf2159632364c699afa6b570ad",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regclass('public.owner_push_subscriptions') is not null and to_regclass('public.notification_outbox') is not null and to_regclass('public.notification_delivery_attempts') is not null and to_regprocedure('public.notification_get_secret(text)') is not null and to_regprocedure('public.notification_owner_email()') is not null and to_regprocedure('public.notification_enqueue_from_crm()') is not null and to_regprocedure('public.notification_claim_outbox(integer)') is not null and to_regprocedure('public.notification_requeue_blocked(text)') is not null and to_regprocedure('public.notification_delivery_health()') is not null and exists (select 1 from pg_trigger where tgname = 'crm_notifications_delivery_outbox' and tgrelid = 'public.crm_notifications'::regclass and not tgisinternal) and (select relrowsecurity from pg_class where oid = 'public.owner_push_subscriptions'::regclass) and (select relrowsecurity from pg_class where oid = 'public.notification_outbox'::regclass) and (select relrowsecurity from pg_class where oid = 'public.notification_delivery_attempts'::regclass)) as verified"
+    },
+    {
+      "version": "20260717023100",
+      "name": "notification_health_service_role",
+      "path": "supabase/migrations/20260717023100_notification_health_service_role.sql",
+      "git_blob_sha": "edc0d7fb78c575e05676dea5af7ccff86e73be5b",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717023200",
+      "name": "notification_dispatch_runtime",
+      "path": "supabase/migrations/20260717023200_notification_dispatch_runtime.sql",
+      "git_blob_sha": "1f27cafbc568af25f8f1f28a5287d2a8cca96a9c",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regclass('public.notification_dispatch_runtime') is not null and to_regprocedure('public.notification_begin_dispatch(integer)') is not null and to_regprocedure('public.notification_dispatch_tick()') is not null) as verified"
+    },
+    {
+      "version": "20260717023300",
+      "name": "owner_notifications_only",
+      "path": "supabase/migrations/20260717023300_owner_notifications_only.sql",
+      "git_blob_sha": "8f113a8ba1dc237f0901cc00f62fef3e0f934f5b",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717023400",
+      "name": "notification_claim_outbox_qualification",
+      "path": "supabase/migrations/20260717023400_notification_claim_outbox_qualification.sql",
+      "git_blob_sha": "f549f9fa3ada6f5e87fa44acfd44a3f1b0c37ef9",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717023500",
+      "name": "notification_dispatch_lock",
+      "path": "supabase/migrations/20260717023500_notification_dispatch_lock.sql",
+      "git_blob_sha": "cd79084fb32563edf60ad59b6441712c5913625d",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717124500",
+      "name": "live_chat_visitor_presence_geo",
+      "path": "supabase/migrations/20260717124500_live_chat_visitor_presence_geo.sql",
+      "git_blob_sha": "a1d4f9447a5d4c59242acf76c9b7ef61a846416c",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717130000",
+      "name": "notification_security_hardening",
+      "path": "supabase/migrations/20260717130000_notification_security_hardening.sql",
+      "git_blob_sha": "a1f30871813c0c5092ccd603990abe3c525203fb",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717133000",
+      "name": "notification_delivery_attempts_notification_fk_index",
+      "path": "supabase/migrations/20260717133000_notification_delivery_attempts_notification_fk_index.sql",
+      "git_blob_sha": "3547bc7635dcaed33951a59851dc0804949b2f94",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717140000",
+      "name": "b2b_inquiry_cart_relational",
+      "path": "supabase/migrations/20260717140000_b2b_inquiry_cart_relational.sql",
+      "git_blob_sha": "36598df739cf18d91294455a692300a6c935d40b",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717141000",
+      "name": "b2b_notification_details",
+      "path": "supabase/migrations/20260717141000_b2b_notification_details.sql",
+      "git_blob_sha": "3e3479ba84fb62cd723ba3d69447d9b00733eab1",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717142000",
+      "name": "enforce_owner_only_rfq_notifications",
+      "path": "supabase/migrations/20260717142000_enforce_owner_only_rfq_notifications.sql",
+      "git_blob_sha": "ff626d6e70b008fc1277b7ab9faf77bc098e4d0e",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717161000",
+      "name": "realtime_site_visitor_alerts",
+      "path": "supabase/migrations/20260717161000_realtime_site_visitor_alerts.sql",
+      "git_blob_sha": "8e7931e3f37649c7b07242e9ea9cd4c5bff5845e",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717162000",
+      "name": "immediate_live_chat_presence_dispatch",
+      "path": "supabase/migrations/20260717162000_immediate_live_chat_presence_dispatch.sql",
+      "git_blob_sha": "5042e41b22a612ab9355495e463de0cf8c4950ed",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717212335",
+      "name": "legacy_route_redirects_registry",
+      "path": "supabase/migrations/20260717212335_0e3504ac-aa0b-42f6-8eaf-ade8acb5c30e.sql",
+      "git_blob_sha": "a2912e20c2ac17f63931d16a973fc41290a5aae9",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717212407",
+      "name": "admin_legacy_redirect_queue_security_invoker",
+      "path": "supabase/migrations/20260717212407_ec76cc82-081d-407d-b253-bd56d67eeef2.sql",
+      "git_blob_sha": "f1abb39124d0eea262902590d64b7949a5f2b715",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717212829",
+      "name": "pr4_catalogue_completion_workflow",
+      "path": "supabase/migrations/20260717212829_05890176-6378-4d4b-8f42-8fe50f2813c4.sql",
+      "git_blob_sha": "c98805c02b305f8742b8b73d90d590d00a60baa5",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717214344",
+      "name": "pr5_media_placement_backbone",
+      "path": "supabase/migrations/20260717214344_1618bc25-ea6d-4f8c-a581-3c6fa3f25357.sql",
+      "git_blob_sha": "a6846620c06f200756dc670c29f340ec581e3987",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717222000",
+      "name": "media_duplicate_lineage_foundation",
+      "path": "supabase/migrations/20260717222000_media_duplicate_lineage_foundation.sql",
+      "git_blob_sha": "f32dad5752ce5adfb6147392657fce0d799e07eb",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717223000",
+      "name": "gate_public_product_claims_by_quality_review",
+      "path": "supabase/migrations/20260717223000_gate_public_product_claims_by_quality_review.sql",
+      "git_blob_sha": "7ffe5e7a494b66c8cd66383ed15d2fd52539d7d7",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717230000",
+      "name": "explicit_catalog_taxonomy_foundation",
+      "path": "supabase/migrations/20260717230000_explicit_catalog_taxonomy_foundation.sql",
+      "git_blob_sha": "4ffd8acb69cb5569d5d6666099d61c9496c8a574",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717230500",
+      "name": "harden_taxonomy_assignment_leaf_guard",
+      "path": "supabase/migrations/20260717230500_harden_taxonomy_assignment_leaf_guard.sql",
+      "git_blob_sha": "4ea55a0483a73a6c7a3c72a7bf9cfc49c5ec3af1",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717232000",
+      "name": "seed_draft_b2b_seo_foundation",
+      "path": "supabase/migrations/20260717232000_seed_draft_b2b_seo_foundation.sql",
+      "git_blob_sha": "a65e05870dd8aada32537121e9510b3332894413",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717232100",
+      "name": "align_localized_draft_paths",
+      "path": "supabase/migrations/20260717232100_align_localized_draft_paths.sql",
+      "git_blob_sha": "bd12ca8e06c71558e4f8919007e5067f13bc8dfe",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717232200",
+      "name": "fix_content_touch_updated_at_polymorphic_trigger",
+      "path": "supabase/migrations/20260717232200_fix_content_touch_updated_at_polymorphic_trigger.sql",
+      "git_blob_sha": "57a752d7945a7b3ed300f3bf31bd24856d2ee68c",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717233000",
+      "name": "fix_public_lead_notification_record_fields",
+      "path": "supabase/migrations/20260717233000_fix_public_lead_notification_record_fields.sql",
+      "git_blob_sha": "61aaaf8dd16c4e2e8c924c021eebbd2827c8ec3c",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717234000",
+      "name": "optimize_taxonomy_rls_and_inquiry_index",
+      "path": "supabase/migrations/20260717234000_optimize_taxonomy_rls_and_inquiry_index.sql",
+      "git_blob_sha": "a35ca4071b2cd90a85b2a0ead54c03f4f99358b8",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717235000",
+      "name": "catalog_taxonomy_owner_release_controls",
+      "path": "supabase/migrations/20260717235000_catalog_taxonomy_owner_release_controls.sql",
+      "git_blob_sha": "beadb515c6888cd77b8aba5b4bf4aed437e99d3b",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717235100",
+      "name": "catalog_taxonomy_verified_review_approval",
+      "path": "supabase/migrations/20260717235100_catalog_taxonomy_verified_review_approval.sql",
+      "git_blob_sha": "9b331ea6da3dc60ec783098301b5691c3c295654",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260717235200",
+      "name": "catalog_taxonomy_verified_publication",
+      "path": "supabase/migrations/20260717235200_catalog_taxonomy_verified_publication.sql",
+      "git_blob_sha": "c5fd888d49afd4895187fa44a79dfa27a8328106",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260718103000",
+      "name": "live_chat_typing_intelligence",
+      "path": "supabase/migrations/20260718103000_live_chat_typing_intelligence.sql",
+      "git_blob_sha": "a8c232256844e36be6ffe6e0c5ad7814981264c9",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260719120000",
+      "name": "live_chat_visitor_contact_and_admin_seen",
+      "path": "supabase/migrations/20260719120000_live_chat_visitor_contact_and_admin_seen.sql",
+      "git_blob_sha": "ac6440366d34636529644763b0c7929149dc964c",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260721165904",
+      "name": "restore_atomic_drive_claim_20260721",
+      "path": "supabase/migrations/20260721165904_restore_atomic_drive_claim_20260721.sql",
+      "git_blob_sha": "e488c15cec72b86679c7c496da76ff29c8417eb4",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regprocedure('public.claim_catalog_drive_files(integer)') is not null and has_function_privilege('service_role','public.claim_catalog_drive_files(integer)','execute')) as verified"
+    },
+    {
+      "version": "20260721171524",
+      "name": "public_catalog_media_and_sitemap_rpc_20260721",
+      "path": "supabase/migrations/20260721171524_public_catalog_media_and_sitemap_rpc_20260721.sql",
+      "git_blob_sha": "dbabe48ad62d685fef4438647822710ddf64f610",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regprocedure('public.get_public_homepage_media()') is not null and to_regprocedure('public.get_public_sitemap_entries()') is not null and has_function_privilege('anon','public.get_public_homepage_media()','execute') and has_function_privilege('anon','public.get_public_sitemap_entries()','execute')) as verified"
+    },
+    {
+      "version": "20260721171737",
+      "name": "restore_strict_media_dimensions_20260721",
+      "path": "supabase/migrations/20260721171737_restore_strict_media_dimensions_20260721.sql",
+      "git_blob_sha": "1b8e73e0be01c6441f1344fbbd651b3227433a38",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regprocedure('public.media_assets_before_write()') is not null and pg_get_functiondef('public.media_assets_before_write()'::regprocedure) ilike '%verified media requires valid dimensions%') as verified"
+    },
+    {
+      "version": "20260721172500",
+      "name": "catalog_drive_worker_claim_filter",
+      "path": "supabase/migrations/20260721172500_catalog_drive_worker_claim_filter.sql",
+      "git_blob_sha": "ac910f3013606becc0e106c5f2fa78a17a1e26ac",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260721172519",
+      "name": "catalog_drive_canonical_media_metadata_20260721",
+      "path": "supabase/migrations/20260721172519_catalog_drive_canonical_media_metadata_20260721.sql",
+      "git_blob_sha": "0432f28bd5f5d028f2b442b1b20ab045324b8217",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select ((select count(*) = 4 from information_schema.columns where table_schema = 'public' and table_name = 'catalog_drive_files' and column_name in ('mime_type','size_bytes','width_px','height_px')) and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_mime_type_check') and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_size_check') and exists (select 1 from pg_constraint where conrelid = 'public.catalog_drive_files'::regclass and conname = 'catalog_drive_files_canonical_dimensions_check')) as verified"
+    },
+    {
+      "version": "20260722103000",
+      "name": "public_buyer_ready_route_manifest",
+      "path": "supabase/migrations/20260722103000_public_buyer_ready_route_manifest.sql",
+      "git_blob_sha": "95672a12cb589f30b6c152bc94bdbeedc8b2def2",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260722104500",
+      "name": "buyer_ready_taxonomy_media_security",
+      "path": "supabase/migrations/20260722104500_buyer_ready_taxonomy_media_security.sql",
+      "git_blob_sha": "b5c684e66c2e85c11b28bdeb6ae3f743e2c9e6ac",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260722111000",
+      "name": "buyer_ready_legacy_redirects",
+      "path": "supabase/migrations/20260722111000_buyer_ready_legacy_redirects.sql",
+      "git_blob_sha": "846c75893f239ad193b3efbd95f1f04835ebf09a",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260722111500",
+      "name": "drive_import_table_service_role_lock",
+      "path": "supabase/migrations/20260722111500_drive_import_table_service_role_lock.sql",
+      "git_blob_sha": "c288ae7f500e0931a45862c2587784abe37f1efe",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260722134500",
+      "name": "localized_seo_native_review_index_gate",
+      "path": "supabase/migrations/20260722134500_localized_seo_native_review_index_gate.sql",
+      "git_blob_sha": "b1d064e80ce5b01bdfb6c8efaaf8f1305630582a",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260722184000",
+      "name": "reduce_operations_heartbeat_cadence",
+      "path": "supabase/migrations/20260722184000_reduce_operations_heartbeat_cadence.sql",
+      "git_blob_sha": "f4ad1e2904acea30c684c4b2f65905d365d7fa05",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260724203000",
+      "name": "reconcile_legacy_redirect_contract",
+      "path": "supabase/migrations/20260724203000_reconcile_legacy_redirect_contract.sql",
+      "git_blob_sha": "b6192346003556dc5a76b4ea84e3c952bdbb9415",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260727223000",
+      "name": "authenticate_notification_dispatcher_processing",
+      "path": "supabase/migrations/20260727223000_authenticate_notification_dispatcher_processing.sql",
+      "git_blob_sha": "93753265bb449427da3c45b6b1ae6cd85eb3de98",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select (to_regclass('public.notification_dispatch_tokens') is not null and to_regprocedure('public.notification_consume_dispatch_token(uuid)') is not null and to_regprocedure('public.notification_dispatch_tick()') is not null and (select relrowsecurity from pg_class where oid = 'public.notification_dispatch_tokens'::regclass) and has_function_privilege('anon','public.notification_consume_dispatch_token(uuid)','execute') and has_function_privilege('authenticated','public.notification_consume_dispatch_token(uuid)','execute') and has_function_privilege('service_role','public.notification_consume_dispatch_token(uuid)','execute') and not has_table_privilege('anon','public.notification_dispatch_tokens','select') and not has_table_privilege('authenticated','public.notification_dispatch_tokens','select') and not has_function_privilege('anon','public.notification_dispatch_tick()','execute') and not has_function_privilege('authenticated','public.notification_dispatch_tick()','execute') and has_function_privilege('service_role','public.notification_dispatch_tick()','execute') and pg_get_functiondef('public.notification_dispatch_tick()'::regprocedure) ilike '%x-irha-notification-token%' and pg_get_functiondef('public.notification_dispatch_tick()'::regprocedure) ilike '%notification_dispatch_tokens%' and pg_get_functiondef('public.notification_consume_dispatch_token(uuid)'::regprocedure) ilike '%consumed_at is null%' and exists (select 1 from cron.job where jobname = 'irha-notification-dispatcher' and schedule = '* * * * *' and command = 'select public.notification_dispatch_tick();' and active)) as verified"
+    },
+    {
+      "version": "20260728123000",
+      "name": "admin_read_private_b2b_tech_packs",
+      "path": "supabase/migrations/20260728123000_admin_read_private_b2b_tech_packs.sql",
+      "git_blob_sha": "bf9d45ef43a226038596c8eb730d3dd1fc207c49",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260728134500",
+      "name": "remove_website_age_trust_copy",
+      "path": "supabase/migrations/20260728134500_remove_website_age_trust_copy.sql",
+      "git_blob_sha": "5f1c9b18e1685e903f42580f65e92795d98d2a2b",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    }
   ]
 }

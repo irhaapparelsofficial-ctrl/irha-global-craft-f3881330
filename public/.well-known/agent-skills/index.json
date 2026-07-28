@@ -11,7 +11,7 @@
       "type": "instructions",
       "description": "Prepare a buyer-reviewed B2B inquiry for Irha Apparels without sending it automatically.",
       "url": "https://irhaapparels.com/skills/buyer-inquiry/SKILL.md",
-      "sha256": "967f0aabf7a8ecaf17d2bcb618e7cd30fabd06aad0be3aa3d4c4afefd7b277a4"
+      "sha256": "b39e7485be4a876b6dc7fa8f70f6302c2b8b44e1d7edd2775f7e920d9bdefab4"
     },
     {
       "name": "catalogue-discovery",

@@ -32,6 +32,8 @@ describe("B2B buyer-readiness contracts", () => {
       "src/components/admin/ListingLaunchKit.tsx",
       "src/lib/buyerReplyDrafts.ts",
       "src/pages/Markets.tsx",
+      "src/pages/BavarianMensCollection.tsx",
+      "src/pages/BavarianWomensCollection.tsx",
       "src/lib/outreachAutomation.ts",
       "src/lib/buyerJourneyLocaleCopy.ts",
       "docs/AI_OUTREACH_ENGINE.md",
@@ -42,7 +44,7 @@ describe("B2B buyer-readiness contracts", () => {
       "docs/AI_COMMAND_CENTER.md",
     ];
     for (const path of paths) {
-      expect(read(path)).not.toMatch(/newly built|website (?:itself )?is new|new(?:ly)? (?:website|site)/i);
+      expect(read(path)).not.toMatch(/newly built|website (?:itself )?is new|new(?:ly)? (?:website|site)|website (?:ist|wurde) neu aufgebaut/i);
     }
   });
 
@@ -68,6 +70,34 @@ describe("B2B buyer-readiness contracts", () => {
     expect(admin).toContain("inquiry_ref, intent, lead_context, tech_pack_paths");
     expect(admin).toContain("createSignedUrl(file.path, 120)");
     expect(migration).toContain("public.has_role((select auth.uid()), 'admin'::public.app_role)");
+  });
+
+  it("labels legacy Bavarian catalogue visuals as references rather than production proof", () => {
+    const paths = [
+      "src/pages/BavarianMensCollection.tsx",
+      "src/pages/BavarianWomensCollection.tsx",
+    ];
+    for (const path of paths) {
+      const source = read(path);
+      expect(source).toMatch(/Digital Catalogue References/);
+      expect(source).toMatch(/not production proof/);
+      expect(source).not.toMatch(/Verified Product Media|verified factory media|newly built/i);
+    }
+  });
+
+  it("migrates live website-age copy without deleting business records", () => {
+    const migration = read("supabase/migrations/20260728134500_remove_website_age_trust_copy.sql");
+    for (const table of [
+      "public.faqs",
+      "public.admin_ai_knowledge",
+      "public.ai_business_rules",
+      "public.social_calendar_items",
+      "public.seo_localized_pages",
+    ]) {
+      expect(migration).toContain(table);
+    }
+    expect(migration).toContain("refresh_admin_ai_snapshot_cache");
+    expect(migration).not.toMatch(/\bdelete\s+from\b/i);
   });
 
   it("labels catalogue media and routes all-product cards to canonical products", () => {

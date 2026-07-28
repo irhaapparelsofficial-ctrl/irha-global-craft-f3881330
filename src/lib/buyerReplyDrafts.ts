@@ -79,7 +79,7 @@ function missingQuestions(qualification: LeadQualificationResult, language: Buye
 function companyPositioning(rules: BusinessRulesMaster, language: BuyerReplyLanguage) {
   const factoryCall = rules.company.trustPoints.some((point) => /factory|video/i.test(point));
   if (language === "de") {
-    return `Irha Apparels ist ein erfahrener B2B-Bekleidungshersteller aus ${rules.company.location}. Unsere Website wurde neu aufgebaut.${factoryCall ? " Auf Wunsch kann ein geplanter Live-Videoanruf aus dem Betrieb arrangiert werden." : ""}`;
+    return `Irha Apparels ist ein B2B-Bekleidungshersteller aus ${rules.company.location}.${factoryCall ? " Käufer können zur direkten Verifizierung einen terminierten Live-Videoanruf aus dem Betrieb anfragen." : ""}`;
   }
   return `Irha Apparels is a B2B apparel manufacturer based in ${rules.company.location}.${factoryCall ? " Buyers may request an appointment-based live factory video call for direct verification." : ""}`;
 }
