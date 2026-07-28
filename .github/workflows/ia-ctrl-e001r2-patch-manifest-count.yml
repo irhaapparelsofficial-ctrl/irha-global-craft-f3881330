@@ -1,0 +1,39 @@
+name: IA-CTRL-E001R2 Patch Manifest Count
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/ia-ctrl-e001r2-parity-seal
+      - name: Seal 375-migration manifest baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/ci/generate-supabase-manifest.mjs')
+          text = path.read_text()
+          old = 'if (database.live_migrations.count !== 374) throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 374 live migrations");'
+          new = 'if (database.live_migrations.count !== 375) throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 375 live migrations");'
+          if text.count(old) != 1:
+              raise SystemExit('Expected 374-migration manifest guard not found exactly once')
+          path.write_text(text.replace(old, new))
+          PY
+          rm .github/workflows/ia-ctrl-e001r2-patch-manifest-count.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/ci/generate-supabase-manifest.mjs .github/workflows/ia-ctrl-e001r2-patch-manifest-count.yml
+          git commit -m "test(parity): require 375 migrations in manifest"
+          git push origin HEAD:codex/ia-ctrl-e001r2-parity-seal
