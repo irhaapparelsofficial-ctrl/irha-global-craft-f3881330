@@ -1,89 +1,334 @@
 {
   "browser_exposure": {
-    "legacy_schema_usage": {"anon": false, "authenticated": false},
-    "migration_archive_schema_usage": {"anon": false, "authenticated": false},
+    "legacy_schema_usage": {
+      "anon": false,
+      "authenticated": false
+    },
+    "migration_archive_schema_usage": {
+      "anon": false,
+      "authenticated": false
+    },
     "private_schema_client_exposure": false,
-    "private_schema_usage": {"anon": false, "authenticated": false},
-    "private_table_grant_note": "owner_claim_email_cache has object SELECT grants to anon/authenticated but schema USAGE is absent, so it is not browser/PostgREST accessible.",
-    "public_schema_usage": {"anon": true, "authenticated": true},
-    "vault_schema_usage": {"anon": false, "authenticated": false}
+    "private_schema_usage": {
+      "anon": false,
+      "authenticated": false
+    },
+    "public_schema_usage": {
+      "anon": true,
+      "authenticated": true
+    },
+    "vault_schema_usage": {
+      "anon": false,
+      "authenticated": false
+    }
   },
-  "captured_at_utc": "2026-07-28T00:00:00Z",
   "cron": {
     "active_count": 8,
-    "canonical_sha256": "437af3ddbfc9688f78d3d62c1971b68086ceac1de98319f905648a706a5578df",
+    "canonical_sha256": "e9e55ea5ebc3a9740df1d6858d20a82ad6321850caa2c799e35c5937f743f804",
     "count": 8,
     "jobs": [
-      {"active": true, "jobid": 1, "jobname": "catalog-media-cron-v1", "schedule": "* * * * *"},
-      {"active": true, "jobid": 2, "jobname": "notification-dispatcher-cron-v1", "schedule": "*/2 * * * *"},
-      {"active": true, "jobid": 3, "jobname": "outreach-schedule-dispatcher-v1", "schedule": "* * * * *"},
-      {"active": true, "jobid": 4, "jobname": "social-publish-scheduler-v1", "schedule": "* * * * *"},
-      {"active": true, "jobid": 5, "jobname": "site-visitors-cleanup-v1", "schedule": "*/30 * * * *"},
-      {"active": true, "jobid": 6, "jobname": "sitemap-submit-scheduled-v1", "schedule": "0 3 * * *"},
-      {"active": true, "jobid": 7, "jobname": "irha-operations-heartbeat", "schedule": "*/5 * * * *"},
-      {"active": true, "jobid": 8, "jobname": "irha-lead-verification-processor", "schedule": "*/5 * * * *"}
+      {
+        "active": true,
+        "jobid": 1,
+        "jobname": "irha-daily-automation-plan",
+        "schedule": "30 3 * * *"
+      },
+      {
+        "active": true,
+        "jobid": 2,
+        "jobname": "irha-operations-heartbeat",
+        "schedule": "*/15 * * * *"
+      },
+      {
+        "active": true,
+        "jobid": 3,
+        "jobname": "irha-operations-daily",
+        "schedule": "40 3 * * *"
+      },
+      {
+        "active": true,
+        "jobid": 4,
+        "jobname": "irha-daily-lead-discovery",
+        "schedule": "50 3 * * *"
+      },
+      {
+        "active": true,
+        "jobid": 5,
+        "jobname": "irha-daily-social-drafts",
+        "schedule": "10 4 * * *"
+      },
+      {
+        "active": true,
+        "jobid": 6,
+        "jobname": "irha-operations-cleanup",
+        "schedule": "20 2 * * 0"
+      },
+      {
+        "active": true,
+        "jobid": 8,
+        "jobname": "irha-daily-lead-verification",
+        "schedule": "0 4 * * *"
+      },
+      {
+        "active": true,
+        "jobid": 12,
+        "jobname": "irha-notification-dispatcher",
+        "schedule": "* * * * *"
+      }
     ]
   },
   "database": {
     "canonical_digests_sha256": {
-      "columns": "0808d1198f26bc174c6444cd70bf8bbb4ae9711a519229fc24fe2f796658c191",
-      "constraints": "2341a1e7553db29d21f0e44aa2d5761a029f3324909f3cd8eda1356a2e63aa54",
-      "functions": "c68a6b53a21ce7db314d5e025d5f5125b5a0fc91ed73e1b3a85a588e1125a023",
-      "indexes": "3da5390ea85be806e7258255489dfe0bd15851fc14a69aff3d025ff0eaedcd8e",
-      "migrations": "8d5bb201e1e4a99e669950be2fd45b789144929a4da2f7bbdf6f6cacf4cbe15a",
-      "policies": "5646d4e3ab90a3a03ca3219f33836962d653666145e27b6efa4dee49bcdd0af0",
-      "triggers": "d210ddd3b7b826614349c7e22091abf79c386b782f9fe340296128d5d74fb094"
+      "columns": "e885b2a26113a0d0e7a13ffb1a04e7397b08a921dc901e33034a1cb53ed5dc14",
+      "constraints": "05af8906cd94f5f087f5f2eb90e522a826a7ccaf16181adc3d520f1082d0aa12",
+      "functions": "9659aa58955d63a0c5850f77f27dec487c51aac5195cf2792fa08e6ee8283eba",
+      "indexes": "3641f5881006df448cbf1b0b298de3bad6293c9fbf0354bcb4b11a54346774c3",
+      "migrations": "a2a824f36d5a6c12d7a53c2c7af97c09f6ff7829d63d8b6ce5f08fe288135944",
+      "policies": "e80cb14c36cd41042f7598b7004a1c102781e95d3f484474bfbd9870ca13fee5",
+      "triggers": "a973ab9cfdb51d215c0c6533c1e973cca60712877b61d6ac37dc687fbcc7c05b"
     },
-    "live_migrations": {"count": 374, "max_version": "20260727232321", "min_version": "20250614164925"},
-    "public": {"constraints": 519, "distinct_function_names": 158, "enums": 4, "function_signatures": 202, "indexes": 699, "policies": 495, "rls_enabled_tables": 157, "tables": 158, "triggers": 410, "views": 13}
+    "live_migrations": {
+      "count": 374,
+      "max_version": "20260727232321",
+      "min_version": "20260712185505"
+    },
+    "public": {
+      "constraints": 945,
+      "distinct_function_names": 201,
+      "enums": 4,
+      "function_signatures": 202,
+      "indexes": 666,
+      "policies": 223,
+      "rls_enabled_tables": 158,
+      "tables": 158,
+      "triggers": 140,
+      "views": 13
+    }
   },
   "edge_functions": {
     "classification_sha256": "37fcd68be31f04ce8a1d0e6cc0b06574e78f145488dc98d1754e2a98359b1230",
+    "config_parity": true,
+    "config_toml_sha256": "97dde99e8a5a4409986ef5c1adbf9c7777baa37186e47f51f4942a239274c77f",
     "deployed_count": 87,
+    "live_inventory_sha256": "a0d6c902433b7b368f1f456fb12423209e1cd2cf68a94e09c0b64a001d7d6dbd",
     "registries": {
-      "F1": {"count": 33, "file_sha256": "6719d4485abee7c6a90813ee313878e2a6b8a61087ae7c34fff05be10dd04677", "path": "supabase/deployment-parity/functions-f1.json"},
-      "F2": {"count": 14, "file_sha256": "8361d3d3b492c9ac853f24d44a955f496e98a25cdb6b2ae6182faae3cebe1f00", "path": "supabase/deployment-parity/functions-f2.json"},
-      "F3": {"count": 9, "file_sha256": "56d1661b0253c6f74c51876abc4f2e60f8608e626006453d069b6d93eb9951d3", "path": "supabase/deployment-parity/functions-f3.json"},
-      "F4": {"count": 1, "file_sha256": "97eb38c0d3c8dd799e89028b345360e13fad4fe8b03cd07d8970f2e007d61027", "path": "supabase/deployment-parity/functions-f4.json"},
-      "F5": {"count": 0, "file_sha256": null, "path": null},
-      "F6": {"count": 31, "file_sha256": "ed0010b651d1039a85a63a215ffd238ce9a34c311252fbfa5d99d35e14eb57ed", "path": "supabase/deployment-parity/functions-f6.json"}
+      "F1": {
+        "count": 33,
+        "file_sha256": "6719d4485abee7c6a90813ee313878e2a6b8a61087ae7c34fff05be10dd04677",
+        "path": "supabase/deployment-parity/functions-f1.json"
+      },
+      "F2": {
+        "count": 14,
+        "file_sha256": "8361d3d3b492c9ac853f24d44a955f496e98a25cdb6b2ae6182faae3cebe1f00",
+        "path": "supabase/deployment-parity/functions-f2.json"
+      },
+      "F3": {
+        "count": 9,
+        "file_sha256": "56d1661b0253c6f74c51876abc4f2e60f8608e626006453d069b6d93eb9951d3",
+        "path": "supabase/deployment-parity/functions-f3.json"
+      },
+      "F4": {
+        "count": 1,
+        "file_sha256": "97eb38c0d3c8dd799e89028b345360e13fad4fe8b03cd07d8970f2e007d61027",
+        "path": "supabase/deployment-parity/functions-f4.json"
+      },
+      "F5": {
+        "count": 0,
+        "file_sha256": null,
+        "path": null
+      },
+      "F6": {
+        "count": 31,
+        "file_sha256": "ed0010b651d1039a85a63a215ffd238ce9a34c311252fbfa5d99d35e14eb57ed",
+        "path": "supabase/deployment-parity/functions-f6.json"
+      }
     }
   },
-  "execution_id": "IA-SEC-E002",
+  "execution_id": "IA-SEC-E002R",
   "generated_types": {
     "approved_schema": "public",
     "committed_file": "src/integrations/supabase/types.ts",
-    "committed_git_blob_sha1_before": "0182eb3a97ceb3457430d61303b9c318e8da7e57",
-    "freshness_state": "requires official Supabase CLI regeneration; gate included",
-    "live_source_sha256": "17dddc1f1166d830584a9f021a5fe2fec42ed1176ba64741a6fd4ee975b16c25",
-    "live_source_totals": {"distinct_function_names": 158, "enums": 4, "function_signatures": 202, "tables": 158, "views": 13},
-    "private_schemas_excluded": true
+    "freshness_gate": "official Supabase CLI public-schema generation and byte-for-byte comparison",
+    "private_schemas_excluded": true,
+    "sha256": "9043d6f38cb28eccb5809aa5290a879d4bebb30e3f99feaf30835648c2b2aba8",
+    "totals": {
+      "enums": 4,
+      "function_signatures": 202,
+      "tables": 158,
+      "views": 13
+    }
   },
   "goal_lock": "IRHA-PRODUCTION-SECURITY-01",
   "identity": {
     "production_origin": "https://irhaapparels.com",
     "repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330",
-    "source_main_sha": "3ea63680d42226409e4e51581e6b447b4c0363d8",
     "supabase_organization_id": "qfhklzkykyfwuqexxeqh",
     "supabase_project_id": "pvzjiozismyxqrzmtfbi",
-    "supabase_region": "ap-southeast-1"
+    "supabase_region": "ap-southeast-1",
+    "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "a82f3162687939415ae5931818c954206747ce3d7ac000361fd4fc742b1b4522",
-  "migration_ledger": {"exact_live_version_matches": 4, "live_history_sha256": "8d5bb201e1e4a99e669950be2fd45b789144929a4da2f7bbdf6f6cacf4cbe15a", "live_post_cutover": 119, "live_pre_cutover_squashed": 255, "live_total": 374, "post_cutover_missing_exact_version": 115, "reconciliation_file": "supabase/deployment-parity/migration-reconciliation.json", "repository_ledger_before": 46},
-  "schema_version": 1,
+  "manifest_sha256": "bf8c102f823c3deb65ee3eaea923daa922d74a442efb3221f1ec257df0650197",
+  "migration_provenance": {
+    "canonical_payload_sha256": "a2faf992844347e0a053c6cb573ffc63efee5f59958f62e9bf89eb3895099083",
+    "file_sha256": "5f673ea323529ca82ab178a0813b60a47214c4de6d690190d239115ee7cfaafd",
+    "path": "supabase/deployment-parity/migration-provenance.json",
+    "totals": {
+      "P1": 4,
+      "P2": 370,
+      "P3": 0,
+      "P4": 0,
+      "P5": 0,
+      "all_creators_present": true,
+      "all_statements_recovered": true,
+      "live": 374
+    }
+  },
+  "schema_version": 2,
   "security_invariants": {
-    "notification_dispatcher": {"custom_auth_required": true, "single_use_scheduler_authorization": true, "source_sha256": "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7", "verify_jwt": false, "version": 7},
+    "notification_dispatcher": {
+      "custom_auth_required": true,
+      "single_use_scheduler_authorization": true,
+      "source_sha256": "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7",
+      "verify_jwt": false,
+      "version": 7
+    },
     "sealed_stub_count": 9,
     "secret_values_in_manifest": false,
     "unexplained_f5_count": 0
   },
-  "serialization_contract": "supabase/deployment-parity/SERIALIZATION.md",
+  "serialization_contract": {
+    "path": "supabase/deployment-parity/SERIALIZATION.md",
+    "sha256": "4271ed5ec365956921ab7f1d4471d1a8db99614565e93bd766f524d3a8c8ee9f"
+  },
   "storage": {
     "bucket_count": 11,
     "buckets": [
-      {"name": "catalog-media", "public": false}, {"name": "crm-files", "public": false}, {"name": "lead-imports", "public": false}, {"name": "product-artifacts", "public": false}, {"name": "product-documents", "public": false}, {"name": "product-images", "public": false}, {"name": "production-evidence", "public": false}, {"name": "production-shipping", "public": false}, {"name": "site-media", "public": false}, {"name": "site-thumbnails", "public": false}, {"name": "social-media", "public": false}
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 26214400,
+        "name": "catalog-originals",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "text/csv",
+          "text/plain"
+        ],
+        "file_size_limit": 26214400,
+        "name": "crm-private-files",
+        "public": false
+      },
+      {
+        "allowed_mime_types": null,
+        "file_size_limit": null,
+        "name": "database_export_12_07_26",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "name": "inquiry-uploads",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 5242880,
+        "name": "mockup-cache",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "name": "mockup-uploads",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "application/pdf",
+          "text/csv",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ],
+        "file_size_limit": 20971520,
+        "name": "production-evidence",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/gif",
+          "image/svg+xml",
+          "application/pdf",
+          "video/mp4",
+          "video/webm"
+        ],
+        "file_size_limit": 26214400,
+        "name": "site-media",
+        "public": true
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "video/mp4",
+          "video/webm"
+        ],
+        "file_size_limit": 104857600,
+        "name": "social-renders",
+        "public": true
+      },
+      {
+        "allowed_mime_types": null,
+        "file_size_limit": null,
+        "name": "social-uploads",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "application/pdf",
+          "application/postscript",
+          "application/illustrator",
+          "application/vnd.adobe.illustrator",
+          "application/zip",
+          "application/x-zip-compressed",
+          "image/png",
+          "image/jpeg"
+        ],
+        "file_size_limit": 26214400,
+        "name": "tech_packs",
+        "public": false
+      }
     ],
-    "canonical_sha256": "883355277b08d38c3fb02489462a435ac02f1da12ae49a178a1334ee8dc210e6",
+    "canonical_sha256": "58accf188bdf9b633811b0bb67f44cc4e5a378b21a5f5e37ce977a825df12742",
     "object_level_inventory_performed": false
   }
 }
