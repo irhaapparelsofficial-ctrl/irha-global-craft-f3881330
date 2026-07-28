@@ -1,9 +1,15 @@
 // Secure public gateway for human website live chat.
 // Public callers authenticate with a random per-session visitor token; only its
 // SHA-256 hash is stored. Admin replies are written directly under admin RLS.
-// Coarse edge location is retained for owner context; raw visitor IP addresses
-// are used only for in-memory rate limiting and are never persisted.
+// Coarse edge location is retained for owner context. Raw visitor IP addresses
+// and forwarding headers are not used as rate-limit identity and are never persisted.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  authorizeDurableRateLimit,
+  DurableRateLimitUnavailableError,
+  policyForLiveChatAction,
+  type RateLimitRpcClient,
+} from "../_shared/durable-rate-limit.ts";
 
 const SITE_URL = "https://irhaapparels.com";
 const MAX_BODY_BYTES = 16_000;
@@ -47,13 +53,19 @@ function corsHeaders(origin: string | null) {
   };
 }
 
-function json(body: Record<string, unknown>, status: number, headers: Record<string, string>) {
+function json(
+  body: Record<string, unknown>,
+  status: number,
+  headers: Record<string, string>,
+  extraHeaders: Record<string, string> = {},
+) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       ...headers,
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
+      ...extraHeaders,
     },
   });
 }
@@ -68,21 +80,6 @@ function service() {
     );
   }
   return serviceClient;
-}
-
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 90;
-const ipHits = new Map<string, { count: number; reset: number }>();
-
-function rateLimited(ip: string) {
-  const now = Date.now();
-  const entry = ipHits.get(ip);
-  if (!entry || entry.reset <= now) {
-    ipHits.set(ip, { count: 1, reset: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > RATE_LIMIT_MAX;
 }
 
 function validSessionId(value: unknown): value is string {
@@ -324,12 +321,6 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405, headers);
   if (origin && !isAllowedOrigin(origin)) return json({ error: "origin_not_allowed" }, 403, headers);
 
-  const ip = req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown";
-  if (rateLimited(ip)) return json({ error: "too_many_requests" }, 429, headers);
-
   const declaredLength = Number(req.headers.get("content-length") || 0);
   if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
     return json({ error: "request_too_large" }, 413, headers);
@@ -346,6 +337,71 @@ Deno.serve(async (req: Request) => {
 
     if (!validSessionId(sessionId) || !validToken(visitorToken)) {
       return json({ error: "invalid_session_credentials" }, 400, headers);
+    }
+
+    const policyKey = policyForLiveChatAction(action);
+    if (!policyKey) return json({ error: "invalid_action" }, 400, headers);
+    const clientMessageId = cleanText(body.clientMessageId, 100) || null;
+    const normalizedMessage = cleanText(body.message, MAX_MESSAGE_CHARS);
+    const duplicateValue = action === "poll"
+      ? null
+      : action === "presence"
+      ? { action, sessionId }
+      : clientMessageId || {
+        action,
+        sessionId,
+        message: normalizedMessage,
+        visitorName: cleanText(body.visitorName),
+        visitorCompany: cleanText(body.visitorCompany),
+        visitorEmail: cleanText(body.visitorEmail, 254).toLowerCase(),
+      };
+
+    let limiter;
+    try {
+      limiter = await authorizeDurableRateLimit({
+        client: service() as unknown as RateLimitRpcClient,
+        request: req,
+        secret: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        endpoint: "live-chat",
+        policyKey,
+        clientSessionId: sessionId,
+        rateLimitToken: cleanText(body.rateLimitToken, 2_000) || null,
+        secondarySubjectValue: visitorToken,
+        resourceValue: { action, sessionId },
+        duplicateValue,
+      });
+    } catch (error) {
+      if (error instanceof DurableRateLimitUnavailableError) {
+        return json({ error: "live_chat_unavailable" }, 503, headers);
+      }
+      throw error;
+    }
+
+    if (!limiter.allowed) {
+      return json(
+        { error: "too_many_requests" },
+        429,
+        headers,
+        { "Retry-After": String(limiter.retryAfterSeconds) },
+      );
+    }
+
+    if (limiter.duplicateSuppressed) {
+      if (action === "presence") {
+        return json({ ok: true, presenceRecorded: true, duplicateSuppressed: true, rateLimitToken: limiter.rateLimitToken }, 200, headers);
+      }
+      const duplicateSession = await authenticateSession(sessionId, visitorToken);
+      if (!duplicateSession.ok) {
+        return json({ error: duplicateSession.reason === "not_found" ? "session_not_found" : "invalid_session_token" }, duplicateSession.reason === "not_found" ? 404 : 403, headers);
+      }
+      const messages = await readConversation(sessionId);
+      return json({
+        ok: true,
+        status: duplicateSession.session.status,
+        messages,
+        duplicateSuppressed: true,
+        rateLimitToken: limiter.rateLimitToken,
+      }, 200, headers);
     }
 
     const geo = readGeoContext(req, body);
@@ -405,7 +461,7 @@ Deno.serve(async (req: Request) => {
         if (error) throw error;
       }
 
-      return json({ ok: true, status: sessionStatus, presenceRecorded: true }, 200, headers);
+      return json({ ok: true, status: sessionStatus, presenceRecorded: true, rateLimitToken: limiter.rateLimitToken }, 200, headers);
     }
 
     if (action === "connect") {
@@ -466,7 +522,6 @@ Deno.serve(async (req: Request) => {
 
       const message = cleanText(body.message, MAX_MESSAGE_CHARS);
       if (message) {
-        const clientMessageId = cleanText(body.clientMessageId, 100) || null;
         await insertVisitorMessage(sessionId, message, clientMessageId);
         const { error } = await service().from("chat_sessions").update({
           status: "waiting",
@@ -480,7 +535,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const messages = await readConversation(sessionId);
-      return json({ ok: true, status: "waiting", messages }, 200, headers);
+      return json({ ok: true, status: "waiting", messages, rateLimitToken: limiter.rateLimitToken }, 200, headers);
     }
 
     const authenticated = await authenticateSession(sessionId, visitorToken);
@@ -490,7 +545,7 @@ Deno.serve(async (req: Request) => {
 
     if (action === "poll") {
       const messages = await readConversation(sessionId);
-      return json({ ok: true, status: authenticated.session.status, messages }, 200, headers);
+      return json({ ok: true, status: authenticated.session.status, messages, rateLimitToken: limiter.rateLimitToken }, 200, headers);
     }
 
     if (action === "send") {
@@ -499,7 +554,6 @@ Deno.serve(async (req: Request) => {
       }
       const message = cleanText(body.message, MAX_MESSAGE_CHARS);
       if (!message) return json({ error: "message_required" }, 400, headers);
-      const clientMessageId = cleanText(body.clientMessageId, 100) || null;
       await insertVisitorMessage(sessionId, message, clientMessageId);
       const now = new Date().toISOString();
       const { error } = await service().from("chat_sessions").update({
@@ -511,12 +565,12 @@ Deno.serve(async (req: Request) => {
       }).eq("session_id", sessionId);
       if (error) throw error;
       const messages = await readConversation(sessionId);
-      return json({ ok: true, status: "waiting", messages }, 200, headers);
+      return json({ ok: true, status: "waiting", messages, rateLimitToken: limiter.rateLimitToken }, 200, headers);
     }
 
     return json({ error: "invalid_action" }, 400, headers);
   } catch (error) {
-    console.error("live-chat error", error);
+    console.error("live-chat error", error instanceof Error ? error.message : "unknown_error");
     return json({ error: "live_chat_unavailable" }, 503, headers);
   }
 });

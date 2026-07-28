@@ -11,6 +11,7 @@ type VisitorContext = {
 };
 
 const SESSION_KEY = "irha:site-visitor-session";
+const RATE_TOKEN_KEY = "irha:site-visitor-rate-token";
 const ARRIVAL_KEY_PREFIX = "irha:site-visitor-arrived:";
 const CHAT_OPEN_EVENT = "irha:human-chat-opened";
 const PROGRAMMATIC_CHAT_OPEN_EVENT = "irha:open-human-chat";
@@ -25,6 +26,23 @@ function readSessionId() {
     return created;
   } catch {
     return `site-${crypto.randomUUID()}`;
+  }
+}
+
+function readRateToken() {
+  try {
+    return sessionStorage.getItem(RATE_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeRateToken(value: unknown) {
+  if (typeof value !== "string" || value.length > 2_000) return;
+  try {
+    sessionStorage.setItem(RATE_TOKEN_KEY, value);
+  } catch {
+    // A bootstrap identity remains available when storage is blocked.
   }
 }
 
@@ -122,6 +140,7 @@ export default function SiteVisitorTracker() {
       const payload = {
         action,
         visitorSessionId: sessionIdRef.current,
+        rateLimitToken: readRateToken(),
         countryCode: context.countryCode,
         country: context.country,
         region: context.region,
@@ -147,7 +166,14 @@ export default function SiteVisitorTracker() {
       });
 
       if (!response.ok) return;
-      if (action === "arrive") markArrivalSent(sessionIdRef.current);
+      const responseBody = await response.json().catch(() => ({})) as {
+        rateLimitToken?: unknown;
+        dropped?: unknown;
+      };
+      writeRateToken(responseBody.rateLimitToken);
+      if (action === "arrive" && responseBody.dropped !== "limiter_unavailable") {
+        markArrivalSent(sessionIdRef.current);
+      }
       lastHeartbeatRef.current = Date.now();
     })().catch(() => {
       // Visitor tracking must never interrupt the buyer experience.
