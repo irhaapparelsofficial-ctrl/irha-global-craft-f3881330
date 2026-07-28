@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - codex/ia-ctrl-e001r2-parity-seal
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
