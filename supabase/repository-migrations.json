@@ -384,7 +384,7 @@
       "version": "20260728134500",
       "name": "remove_website_age_trust_copy",
       "path": "supabase/migrations/20260728134500_remove_website_age_trust_copy.sql",
-      "git_blob_sha": "5f1c9b18e1685e903f42580f65e92795d98d2a2b",
+      "git_blob_sha": "db5710a64449fc099d48d487489a1c171393c041",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     }
