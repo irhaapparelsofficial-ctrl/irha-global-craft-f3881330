@@ -42,7 +42,7 @@ jobs:
       - name: Verify committed canonical parity evidence
         run: node scripts/verify-supabase-parity.mjs
 
-      - name: Verify generated public-schema types are fresh
+      - name: Generate authoritative public-schema types
         if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -50,7 +50,21 @@ jobs:
         run: |
           set -euo pipefail
           npx --yes supabase@2.39.2 gen types typescript --project-id pvzjiozismyxqrzmtfbi --schema public > /tmp/supabase-types.ts
-          diff -u src/integrations/supabase/types.ts /tmp/supabase-types.ts
+          test -s /tmp/supabase-types.ts
+
+      - name: Upload authoritative generated types
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-public-types-${{ github.sha }}
+          path: /tmp/supabase-types.ts
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Verify generated public-schema types are fresh
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+        shell: bash
+        run: diff -u src/integrations/supabase/types.ts /tmp/supabase-types.ts
 
       - name: Verify runtime project identity and live ledger
         if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
