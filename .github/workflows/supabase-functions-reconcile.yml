@@ -1,14 +1,14 @@
 name: Supabase Function Reconciliation
 
-run-name: Function reconciliation · ${{ github.event.workflow_run.head_sha }}
+run-name: Function reconciliation · ${{ github.sha }}
 
 on:
-  workflow_run:
-    workflows: ["Quality Gate"]
-    types: [completed]
+  push:
+    branches: [main]
 
 permissions:
   contents: read
+  statuses: read
 
 concurrency:
   group: irha-production-mutation
@@ -20,21 +20,16 @@ env:
 
 jobs:
   reconcile:
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main' &&
-      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     environment: production
     env:
-      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_SHA: ${{ github.sha }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - name: Checkout exact green main source
+      - name: Checkout exact main source
         uses: actions/checkout@v4
         with:
           ref: ${{ env.SOURCE_SHA }}
@@ -49,6 +44,31 @@ jobs:
         uses: supabase/setup-cli@v1
         with:
           version: 2.39.2
+
+      - name: Require successful exact-SHA Quality Gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          gate_state="pending"
+          for attempt in $(seq 1 80); do
+            status_json="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/status")"
+            gate_state="$(printf '%s' "$status_json" | jq -r '[.statuses[] | select(.context == "Irha Quality Gate")][0].state // "pending"')"
+            case "$gate_state" in
+              success)
+                break
+                ;;
+              failure|error)
+                echo "::error title=Quality Gate failed::Exact SHA $SOURCE_SHA has Irha Quality Gate state $gate_state"
+                exit 1
+                ;;
+            esac
+            if [ "$attempt" -eq 80 ]; then
+              echo "::error title=Quality Gate unresolved::Exact SHA $SOURCE_SHA did not receive a successful Irha Quality Gate status"
+              exit 1
+            fi
+            sleep 15
+          done
+          test "$gate_state" = "success"
 
       - name: Validate reconciliation scope and freshness
         shell: bash
@@ -205,5 +225,6 @@ jobs:
             echo "- Scope: generate-mockup, live-chat, site-visitor only"
             echo "- Shared helper: bundled dependency, never deployed as a function"
             echo "- Notification dispatcher: parity-refresh only; never deployed by this workflow"
+            echo "- Exact-SHA Quality Gate: required before mutation"
             echo "- Post-deploy canonical parity export: required"
           } >> "$GITHUB_STEP_SUMMARY"
