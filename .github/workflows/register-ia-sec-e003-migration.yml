@@ -1,0 +1,32 @@
+name: Register IA SEC E003 Migration
+
+on:
+  push:
+    branches:
+      - sec/ia-sec-e003-durable-rate-limits
+    paths:
+      - scripts/ci/register-ia-sec-e003-migration.py
+      - .github/workflows/register-ia-sec-e003-migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  register:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sec/ia-sec-e003-durable-rate-limits
+      - run: python3 scripts/ci/register-ia-sec-e003-migration.py
+      - run: |
+          rm scripts/ci/register-ia-sec-e003-migration.py
+          rm .github/workflows/register-ia-sec-e003-migration.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "security: register durable limiter migration"
+          git push origin HEAD:sec/ia-sec-e003-durable-rate-limits
