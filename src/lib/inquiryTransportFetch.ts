@@ -110,6 +110,8 @@ export function createIrhaFetch(supabaseUrl: string): typeof fetch {
             ...row,
             kind: "inquiry",
             files,
+            form_started_at: leadContext.form_started_at,
+            consent: isRecord(leadContext.consent) && leadContext.consent.given === true,
             website: "",
           },
         }),

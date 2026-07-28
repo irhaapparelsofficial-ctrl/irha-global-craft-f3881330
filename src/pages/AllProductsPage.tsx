@@ -20,6 +20,7 @@ import {
   type ProductFinderSort,
 } from "@/lib/productFinder";
 import { useCompare, useShortlist } from "@/lib/shortlist";
+import { findPublishedProductRoute, usePublishedCatalogTaxonomyRelease } from "@/hooks/usePublishedCatalogTaxonomy";
 
 const SITE = "https://irhaapparels.com";
 const PAGE_SIZE = 24;
@@ -35,6 +36,7 @@ export default function AllProductsPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const shortlist = useShortlist();
   const compare = useCompare();
+  const taxonomyRelease = usePublishedCatalogTaxonomyRelease();
 
   const deferredQuery = useDeferredValue(query.trim());
   const requestedCategory = searchParams.get("category") ?? "all";
@@ -274,20 +276,22 @@ export default function AllProductsPage() {
                         categoryName: item.categoryName,
                         addedAt: Date.now(),
                       };
-                      const productPath = `/products/${item.categorySlug}/${product.slug}`;
+                      const publishedRoute = findPublishedProductRoute(taxonomyRelease.data, product.id, product.slug);
+                      const productPath = publishedRoute?.canonicalPath ?? `/products/${item.categorySlug}/${product.slug}`;
 
                       return (
                         <article key={`${item.categorySlug}:${product.slug}`} className="group flex min-w-0 flex-col rounded-2xl border border-border/60 bg-card/20 p-3 transition-colors hover:border-primary/50 sm:p-4">
                           <Link to={productPath} className="relative mb-4 block aspect-[4/5] overflow-hidden rounded-xl bg-[#0d0d0d]">
                             <ThumbnailImage
                               src={product.image}
-                              alt={`Custom ${product.name} wholesale manufacturer product style`}
+                              alt={`Digital catalogue reference for ${product.name}`}
                               className="absolute inset-0 h-full w-full object-contain p-2 transition-transform duration-[700ms] group-hover:scale-[1.03]"
                             />
                             <span className="absolute left-2.5 top-2.5 rounded-full border border-primary/40 bg-black/75 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.16em] text-primary backdrop-blur">
-                              B2B program
+                              Digital reference
                             </span>
                           </Link>
+                          <p className="mb-1 text-[8px] leading-4 text-foreground/48">Catalogue reference · not production proof</p>
                           <p className="truncate text-[8px] uppercase tracking-[0.15em] text-foreground/42">
                             {product.sku ? `${product.sku} · ` : ""}{item.categoryName} · {item.subName}
                           </p>

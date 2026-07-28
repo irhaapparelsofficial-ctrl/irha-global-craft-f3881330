@@ -242,6 +242,16 @@ function productShell(product: BuyerReadyCatalogRoute, meta: RouteMeta): string 
   const categoryPath = `/products/${product.main_category_slug}`;
   const audiencePath = `${categoryPath}/${product.audience_slug}`;
   const typePath = `${audiencePath}/${product.product_type_slug}`;
+  const gallery = product.gallery.filter(Boolean);
+  const galleryHtml = gallery.map((image, index) => `<img src="${escapeHtml(image)}" alt="Digital catalogue reference for ${escapeHtml(product.product_name)}, view ${index + 1}" width="1200" height="1200" loading="${index === 0 ? "eager" : "lazy"}" decoding="async" style="${index === 0 ? "grid-column:1/-1;" : ""}width:100%;height:auto;aspect-ratio:1/1;display:block;background:#151515;object-fit:contain" />`).join("");
+  const quoteParams = new URLSearchParams({
+    intent: "rfq",
+    product: product.product_slug,
+    name: product.product_name,
+    code: product.reference_code,
+    category: product.main_category_slug,
+  });
+  const quotePath = `/inquiry?${quoteParams.toString()}`;
   return `<main id="irha-static-crawler-shell" data-irha-route-shell="${escapeHtml(product.canonical_path)}" data-irha-product-shell="true" style="min-height:100vh;background:#0a0a0a;color:#f5f1e8;padding:40px 24px;font-family:Arial,sans-serif;line-height:1.6">
         <div style="max-width:1120px;margin:0 auto">
           <nav aria-label="Breadcrumb" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;font-size:14px">
@@ -250,15 +260,19 @@ function productShell(product: BuyerReadyCatalogRoute, meta: RouteMeta): string 
             <a href="${escapeHtml(audiencePath)}" style="color:#e8c477">${escapeHtml(product.audience_name)}</a><span>/</span>
             <a href="${escapeHtml(typePath)}" style="color:#e8c477">${escapeHtml(product.product_type_name)}</a>
           </nav>
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start">
-            <img src="${escapeHtml(product.image_url)}" alt="Front view of ${escapeHtml(product.product_name)} custom manufactured by Irha Apparels" width="1200" height="1200" style="width:100%;height:auto;display:block;background:#151515;object-fit:contain" />
-            <section>
+          <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+            <figure style="flex:1 1 520px;min-width:0;margin:0">
+              <div role="group" aria-label="${escapeHtml(product.product_name)} digital reference gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px">${galleryHtml}</div>
+              <figcaption style="margin-top:12px;color:#aaa29a;font-size:13px">Digital catalogue references show design direction only; they are not photographs of completed buyer orders. Materials and construction follow the approved specification.</figcaption>
+            </figure>
+            <section style="flex:1 1 420px;min-width:0">
               <p style="margin:0 0 12px;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#c9a45c">${escapeHtml(product.reference_code)} · Custom B2B Manufacturing</p>
               <h1 style="margin:0 0 20px;font-size:clamp(34px,6vw,64px);line-height:1.08">${escapeHtml(meta.heading)}</h1>
               <p style="font-size:18px;color:#d7d0c4">${escapeHtml(meta.description)}</p>
+              <p style="color:#d7d0c4"><strong>Style code:</strong> ${escapeHtml(product.reference_code)}</p>
               <p style="color:#aaa29a">Material, construction, sizing, branding, packaging, sampling, quantity and production timing are confirmed against the buyer-approved specification.</p>
               <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:30px">
-                <a href="/inquiry?product=${encodeURIComponent(product.product_slug)}" style="color:#0a0a0a;background:#e8c477;padding:12px 18px;text-decoration:none">Request a Manufacturing Quote</a>
+                <a href="${escapeHtml(quotePath)}" style="color:#0a0a0a;background:#e8c477;padding:12px 18px;text-decoration:none">Request a Manufacturing Quote</a>
                 <a href="/contact" style="color:#e8c477;padding:11px 18px;border:1px solid #e8c477;text-decoration:none">Contact Irha Apparels</a>
               </div>
             </section>

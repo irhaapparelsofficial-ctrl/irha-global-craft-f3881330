@@ -2,8 +2,8 @@
  * Versioned localStorage autosave for the inquiry wizard.
  * Version bump invalidates old drafts silently — never throws.
  */
-export const DRAFT_KEY = "irha_inquiry_draft_v3";
-export const DRAFT_VERSION = 3;
+export const DRAFT_KEY = "irha_inquiry_draft_v4";
+export const DRAFT_VERSION = 4;
 
 export type InquiryIntent = "rfq" | "sample" | "catalogue" | "reference" | "meeting";
 
@@ -26,6 +26,7 @@ export type InquiryDraft = {
   country?: string;
   quantity?: string;
   notes?: string;
+  consent?: boolean;
   // Sample-specific
   sampleQty?: string;
   sampleSize?: string;
@@ -51,6 +52,7 @@ export type InquiryDraft = {
   productContext?: {
     productSlug?: string;
     productName?: string;
+    productCode?: string;
     categorySlug?: string;
     shortlistSlugs?: string[];
     shortlistNames?: string[];

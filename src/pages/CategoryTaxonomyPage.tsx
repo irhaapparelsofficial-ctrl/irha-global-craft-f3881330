@@ -275,8 +275,9 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
               />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
               <div className="pointer-events-none absolute left-5 right-5 bottom-5 border border-white/20 bg-black/45 backdrop-blur-sm p-4">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-gold">Featured program</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gold">Digital catalogue reference</p>
                 <p className="font-display text-xl text-white mt-2">{heroLabel}</p>
+                <p className="mt-1 text-[10px] text-white/65">Design direction · not production proof</p>
               </div>
             </div>
           )}
@@ -305,8 +306,9 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                     to={taxonomyCollectionPath(category.slug, audience.slug, item.slug, locale)}
                     className="group border border-border/60 hover:border-primary transition-colors bg-card/20"
                   >
-                    <div className="aspect-[16/10] overflow-hidden bg-card">
-                      {image && <img src={image} alt={name} loading="lazy" className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-700" />}
+                    <div className="relative aspect-[16/10] overflow-hidden bg-card">
+                      {image && <img src={image} alt={`Digital catalogue reference for ${name}`} loading="lazy" className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-700" />}
+                      <span className="absolute bottom-2 left-2 bg-black/75 px-2 py-1 text-[8px] uppercase tracking-[0.12em] text-white/75">Digital reference</span>
                     </div>
                     <div className="p-5">
                       <div className="flex items-start justify-between gap-4">
@@ -376,7 +378,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                           {product.image && (
                             <img
                               src={product.image}
-                              alt={product.name}
+                              alt={`Digital catalogue reference for ${product.name}`}
                               loading="lazy"
                               width={720}
                               height={720}
@@ -384,7 +386,8 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                             />
                           )}
                         </div>
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/45">{audienceName}</p>
+                        <p className="text-[9px] text-foreground/48">Digital reference · not production proof</p>
+                        <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-foreground/45">{audienceName}</p>
                         <h3 className="font-display text-base md:text-lg mt-1 group-hover:text-primary">{product.name}</h3>
                       </Link>
                       <div className="mt-3 flex flex-wrap items-center gap-2">

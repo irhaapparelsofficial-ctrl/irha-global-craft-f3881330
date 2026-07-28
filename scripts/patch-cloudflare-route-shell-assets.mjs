@@ -54,6 +54,7 @@ const FUNCTIONAL_SPA_PATHS = new Set([
   "/studio",
   "/shortlist",
   "/compare",
+  "/products/all",
   "/auth",
   "/admin",
   "/login",
@@ -71,7 +72,7 @@ const FUNCTIONAL_SPA_PATHS = new Set([
 ]);
 
 const FUNCTIONAL_SPA_PREFIXES = ["/admin/", "/auth/", "/journal/"];
-const FUNCTIONAL_NOINDEX_PATHS = new Set(["/studio", "/shortlist", "/compare"]);
+const FUNCTIONAL_NOINDEX_PATHS = new Set(["/studio", "/shortlist", "/compare", "/products/all"]);
 const FUNCTIONAL_NOINDEX_PREFIXES = ["/intl/"];
 
 function generatedLegacyAliasTarget(pathname) {
@@ -80,6 +81,8 @@ function generatedLegacyAliasTarget(pathname) {
 
 function isPublishedHtmlRoute(pathname) {
   const normalized = normalizePath(pathname);
+  if (FUNCTIONAL_SPA_PATHS.has(normalized)) return true;
+  if (FUNCTIONAL_SPA_PREFIXES.some((prefix) => normalized.startsWith(prefix))) return true;
   if (normalized.startsWith("/products/") || normalized.startsWith("/catalogue/")) {
     return PUBLISHED_CATALOG_PATHS.has(normalized) || GENERATED_LEGACY_ALIASES.has(normalized);
   }

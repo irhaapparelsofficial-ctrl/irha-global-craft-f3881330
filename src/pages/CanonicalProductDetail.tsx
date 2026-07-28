@@ -174,10 +174,18 @@ export default function CanonicalProductDetail() {
         "Private-label packaging",
       ];
   const whatsappMsg = `Hello Irha Apparels — I'm interested in ${product.name} (${collectionName}, ${category.name}). Product page: ${url}`;
+  const quoteParams = new URLSearchParams({
+    intent: "rfq",
+    product: product.slug,
+    name: product.name,
+    category: category.slug,
+  });
+  if (product.sku) quoteParams.set("code", product.sku);
+  const quotePath = `/inquiry?${quoteParams.toString()}`;
   const fallbackDescription = `${product.name} custom B2B manufacturing by Irha Apparels in Sialkot. OEM, ODM and private-label requirements are reviewed before quotation and production commitments.`;
   const metaDescription = product.seo_description ?? product.description?.slice(0, 158) ?? fallbackDescription;
   const serviceId = `${url}#service`;
-  const productImageAlt = `Custom ${product.primary_material ? `${product.primary_material} ` : ""}${product.name} wholesale manufacturer in Sialkot Pakistan`;
+  const productImageAlt = `Digital catalogue reference for ${product.name} made-to-order manufacturing`;
   const breadcrumbItems = [
     { name: "Home", path: "/" },
     { name: "Collections", path: "/products" },
@@ -295,7 +303,7 @@ export default function CanonicalProductDetail() {
               </div>
 
               {gallery.length > 1 && (
-                <div className="mt-3 flex snap-x gap-3 overflow-x-auto pb-2 sm:mt-4">
+                <div className="mt-3 flex snap-x gap-3 overflow-x-auto pb-2 sm:mt-4" aria-label="Product reference gallery">
                   {gallery.map((image, index) => (
                     <button
                       key={`${image}-${index}`}
@@ -317,6 +325,9 @@ export default function CanonicalProductDetail() {
                   ))}
                 </div>
               )}
+              <p className="mt-3 text-xs leading-5 text-foreground/55">
+                Digital catalogue references show design direction only; they are not photographs of completed buyer orders. Materials, construction and finishes are confirmed from the approved specification.
+              </p>
             </div>
 
             <div className="min-w-0 self-start xl:sticky xl:top-28 xl:col-span-5">
@@ -360,6 +371,12 @@ export default function CanonicalProductDetail() {
               </div>
 
               <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
+                <Link
+                  to={quotePath}
+                  className="inline-flex min-h-13 items-center justify-center gap-3 rounded-md bg-gradient-gold px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground hover:shadow-gold sm:col-span-2"
+                >
+                  <ClipboardList size={16} /> Request quote for {product.sku ?? product.name}
+                </Link>
                 <button
                   type="button"
                   onClick={() => shortlist.toggle(savedProduct)}
@@ -367,7 +384,7 @@ export default function CanonicalProductDetail() {
                   className={`inline-flex min-h-13 items-center justify-center gap-3 rounded-md px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.2em] transition-colors sm:col-span-2 ${
                     inInquiry
                       ? "border border-primary text-primary"
-                      : "bg-gradient-gold text-primary-foreground hover:shadow-gold"
+                      : "border border-border/70 text-foreground/80 hover:border-primary hover:text-primary"
                   }`}
                 >
                   {inInquiry ? <Check size={16} /> : <PackagePlus size={16} />}
@@ -485,7 +502,7 @@ export default function CanonicalProductDetail() {
                         <ThumbnailImage
                           src={relatedImage}
                           fallbackSrc={fallbackImage}
-                          alt={`Custom ${related.name} wholesale manufacturing style`}
+                          alt={`Digital catalogue reference for ${related.name}`}
                           className="h-full w-full object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]"
                         />
                       </div>
