@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "execution_id": "IA-CTRL-E001R",
+  "project_id": "pvzjiozismyxqrzmtfbi",
+  "functions": [
+    {
+      "name": "generate-mockup",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/generate-mockup/index.ts",
+      "minimum_version": 10,
+      "verify_jwt": false,
+      "require_shared_limiter": true,
+      "provenance": "SEC-M03 reviewed source on exact main"
+    },
+    {
+      "name": "live-chat",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/live-chat/index.ts",
+      "minimum_version": 11,
+      "verify_jwt": false,
+      "require_shared_limiter": true,
+      "provenance": "SEC-M03 reviewed source on exact main"
+    },
+    {
+      "name": "notification-dispatcher",
+      "registry": "supabase/deployment-parity/functions-f2.json",
+      "repository_source": "supabase/functions/notification-dispatcher/index.ts",
+      "exact_version": 8,
+      "exact_hash": "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48",
+      "verify_jwt": false,
+      "require_shared_limiter": false,
+      "provenance": "Merged buyer-readiness PR #786; parity-only, never deployed by this execution"
+    },
+    {
+      "name": "public-lead-gateway",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/public-lead-gateway/index.ts",
+      "exact_version": 8,
+      "exact_hash": "717a53d6c63bcd92485fc2a18e460aab98ec6f5cf6eae0f3b0ef68da1e011471",
+      "verify_jwt": false,
+      "require_shared_limiter": false,
+      "provenance": "Repository RFQ runtime release commit 939fa017afc73215573b1ffc9b2400ed9cd166d7; parity-only, never deployed by this execution"
+    },
+    {
+      "name": "site-visitor",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/site-visitor/index.ts",
+      "minimum_version": 5,
+      "verify_jwt": false,
+      "require_shared_limiter": true,
+      "provenance": "SEC-M03 reviewed source on exact main"
+    }
+  ]
+}
