@@ -56,6 +56,9 @@ jobs:
       - name: Verify migration registry
         run: node scripts/verify-migration-order.mjs
 
+      - name: Verify committed Supabase deployment parity
+        run: node scripts/verify-supabase-parity.mjs
+
       - name: TypeScript check
         run: npx tsc --noEmit
 
@@ -134,6 +137,7 @@ jobs:
             echo "- Deployment source lock: required"
             echo "- Secret safety: required"
             echo "- Migration registry: required"
+            echo "- Supabase deployment parity evidence: required"
             echo "- TypeScript: required"
             echo "- Tests: required"
             echo "- Production build and release identity: required"
