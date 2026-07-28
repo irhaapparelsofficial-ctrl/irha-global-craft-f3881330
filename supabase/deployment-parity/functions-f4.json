@@ -1,0 +1,1 @@
+{"classification":"F4","columns":["name","verify_jwt","repository_source","action"],"functions":[["meta-webhook",false,"supabase/functions/meta-webhook/index.ts","do-not-deploy-without-approval"]],"schema_version":1}
