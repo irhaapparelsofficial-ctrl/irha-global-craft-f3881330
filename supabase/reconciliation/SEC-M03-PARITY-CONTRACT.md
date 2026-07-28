@@ -18,6 +18,11 @@ The source verifier preserves each multipart filename, decodes file content as U
 - Active cron jobs: 8.
 - Storage buckets: 11.
 - Official public browser types include `consume_edge_rate_limit` and `cleanup_edge_rate_limit_state` and exclude private limiter relations.
+- `notification-dispatcher` is sealed at live version 8 with `verify_jwt=false`, exact source SHA-256 `2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48`, custom runtime authorization, and single-use scheduler authorization.
+
+## Deterministic drift guards
+
+The migration provenance generator, deployment manifest generator, and committed parity verifier independently require exactly 375 live migrations. The manifest generator also requires the exact notification-dispatcher v8 version, authentication mode, and source hash. These guards fail closed and may not be refreshed unless authenticated live evidence and exact source provenance both pass.
 
 ## Scope boundary
 
