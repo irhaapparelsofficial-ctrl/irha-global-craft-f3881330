@@ -19,6 +19,15 @@ describe("SEC-M03 canonical parity control", () => {
     );
   });
 
+  it("uses authenticated Management API JSON for deterministic inventories", () => {
+    expect(workflow).toContain('https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions');
+    expect(workflow).toContain("/tmp/functions-before.raw.json");
+    expect(workflow).toContain("/tmp/functions-after.raw.json");
+    expect(workflow).toContain('type == "array" and all(.[];');
+    expect(workflow).toContain("inventory_ready=false");
+    expect(workflow).not.toContain("supabase functions list");
+  });
+
   it("keeps deployment bounded to the three approved functions", () => {
     expect(workflow).toContain("Deploy only under-version approved functions");
     expect(workflow).toContain("supabase/reconciliation/sec-m03-function-reconciliation.json");
