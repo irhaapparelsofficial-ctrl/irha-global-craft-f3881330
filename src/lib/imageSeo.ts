@@ -96,7 +96,9 @@ export function semanticImageAlt(
   providedAlt?: string,
   fallbackIndex?: number,
 ): string {
+  const explicitAlt = providedAlt?.trim() || "";
+  if (/^Digital catalogue reference\b/i.test(explicitAlt)) return explicitAlt;
   const productName = productNameFromImageUrl(imageUrl);
   if (productName) return productImageAlt(imageUrl, productName, fallbackIndex);
-  return providedAlt?.trim() || "";
+  return explicitAlt;
 }
