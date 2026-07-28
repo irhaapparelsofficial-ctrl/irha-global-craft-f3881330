@@ -106,13 +106,20 @@ jobs:
           test -n "$token"
           echo "::add-mask::$token"
 
-          project_json="$(curl -fsS \
+          project_json="$(curl --retry 3 --retry-all-errors -fsS \
             -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID")"
           test "$(printf '%s' "$project_json" | jq -r '.id // empty')" = "$SUPABASE_PROJECT_ID"
 
-          supabase functions list --project-ref "$SUPABASE_PROJECT_ID" --output json > /tmp/functions-before.json
+          curl --retry 3 --retry-all-errors -fsS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" \
+            -o /tmp/functions-before.raw.json
+          jq -e 'type == "array" and all(.[]; ((.name // .slug) | type == "string") and (.version | type == "number"))' \
+            /tmp/functions-before.raw.json > /dev/null
+          jq -S . /tmp/functions-before.raw.json > /tmp/functions-before.json
           : > /tmp/functions-to-deploy.txt
 
           while IFS=$'\t' read -r function_name minimum_version; do
@@ -145,14 +152,44 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          supabase functions list --project-ref "$SUPABASE_PROJECT_ID" --output json > /tmp/functions-after.json
-          while IFS=$'\t' read -r function_name minimum_version; do
-            live_version="$(jq -r --arg name "$function_name" '[.[] | select((.name // .slug) == $name) | (.version // 0)] | max // 0' /tmp/functions-after.json)"
-            if [ "$live_version" -lt "$minimum_version" ]; then
-              echo "::error title=Function reconciliation incomplete::$function_name version $live_version is below required $minimum_version"
-              exit 1
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          echo "::add-mask::$token"
+
+          inventory_ready=false
+          for attempt in $(seq 1 20); do
+            curl --retry 3 --retry-all-errors -fsS \
+              -H "Authorization: Bearer $token" \
+              -H 'Content-Type: application/json' \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" \
+              -o /tmp/functions-after.raw.json
+            jq -e 'type == "array" and all(.[]; ((.name // .slug) | type == "string") and (.version | type == "number"))' \
+              /tmp/functions-after.raw.json > /dev/null
+            jq -S . /tmp/functions-after.raw.json > /tmp/functions-after.json
+
+            inventory_ready=true
+            while IFS=$'\t' read -r function_name minimum_version; do
+              live_version="$(jq -r --arg name "$function_name" '[.[] | select((.name // .slug) == $name) | (.version // 0)] | max // 0' /tmp/functions-after.json)"
+              if [ "$live_version" -lt "$minimum_version" ]; then
+                inventory_ready=false
+              fi
+            done < <(jq -r '.functions[] | [.name, (.minimum_version|tostring)] | @tsv' "$PLAN_FILE")
+
+            if [ "$inventory_ready" = true ]; then
+              break
             fi
-          done < <(jq -r '.functions[] | [.name, (.minimum_version|tostring)] | @tsv' "$PLAN_FILE")
+            sleep 3
+          done
+
+          if [ "$inventory_ready" != true ]; then
+            while IFS=$'\t' read -r function_name minimum_version; do
+              live_version="$(jq -r --arg name "$function_name" '[.[] | select((.name // .slug) == $name) | (.version // 0)] | max // 0' /tmp/functions-after.json)"
+              if [ "$live_version" -lt "$minimum_version" ]; then
+                echo "::error title=Function reconciliation incomplete::$function_name version $live_version is below required $minimum_version"
+              fi
+            done < <(jq -r '.functions[] | [.name, (.minimum_version|tostring)] | @tsv' "$PLAN_FILE")
+            exit 1
+          fi
 
       - name: Generate exact post-deploy type and parity evidence
         shell: bash
@@ -226,5 +263,6 @@ jobs:
             echo "- Shared helper: bundled dependency, never deployed as a function"
             echo "- Notification dispatcher: parity-refresh only; never deployed by this workflow"
             echo "- Exact-SHA Quality Gate: required before mutation"
+            echo "- Inventory source: authenticated Supabase Management API JSON"
             echo "- Post-deploy canonical parity export: required"
           } >> "$GITHUB_STEP_SUMMARY"
