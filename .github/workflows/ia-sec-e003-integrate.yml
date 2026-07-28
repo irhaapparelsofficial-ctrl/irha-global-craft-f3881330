@@ -6,6 +6,7 @@ on:
       - sec/ia-sec-e003-durable-rate-limits
     paths:
       - scripts/ci/ia-sec-e003-integrate.py
+      - scripts/ci/ia-sec-e003-run.py
       - .github/workflows/ia-sec-e003-integrate.yml
   pull_request:
     branches:
@@ -13,6 +14,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - scripts/ci/ia-sec-e003-integrate.py
+      - scripts/ci/ia-sec-e003-run.py
       - .github/workflows/ia-sec-e003-integrate.yml
 
 permissions:
@@ -34,11 +36,12 @@ jobs:
           fetch-depth: 0
 
       - name: Apply deterministic integrations
-        run: python3 scripts/ci/ia-sec-e003-integrate.py
+        run: python3 scripts/ci/ia-sec-e003-run.py
 
       - name: Remove temporary transform controls
         run: |
           rm scripts/ci/ia-sec-e003-integrate.py
+          rm scripts/ci/ia-sec-e003-run.py
           rm .github/workflows/ia-sec-e003-integrate.yml
 
       - name: Commit focused integration
