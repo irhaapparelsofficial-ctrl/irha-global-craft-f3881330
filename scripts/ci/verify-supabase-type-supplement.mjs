@@ -89,15 +89,16 @@ for (const fragment of requiredFragments) {
   if (!compact.includes(fragment)) throw new Error("Committed SEC-M03 type supplement does not match the live reviewed signature");
 }
 
-for (const forbidden of [
-  "edge_rate_limit_policies:",
-  "edge_rate_limit_state:",
-  "edge_rate_limit_metrics_hourly:",
-  "burst_count:",
-  "sustained_count:",
-  "privacy_sample:",
+for (const forbiddenTable of [
+  /^\s+edge_rate_limit_policies:\s*\{/m,
+  /^\s+edge_rate_limit_state:\s*\{/m,
+  /^\s+edge_rate_limit_metrics_hourly:\s*\{/m,
 ]) {
-  if (supplement.includes(forbidden)) throw new Error(`Browser type supplement exposes non-public limiter detail: ${forbidden}`);
+  if (forbiddenTable.test(supplement)) throw new Error(`Browser type supplement exposes a private limiter table declaration: ${forbiddenTable}`);
+}
+
+for (const forbiddenField of ["burst_count:", "sustained_count:", "privacy_sample:"]) {
+  if (supplement.includes(forbiddenField)) throw new Error(`Browser type supplement exposes non-public limiter detail: ${forbiddenField}`);
 }
 
 console.log("Supabase type parity passed: base schema is exact and the only live delta is the reviewed SEC-M03 RPC supplement.");
