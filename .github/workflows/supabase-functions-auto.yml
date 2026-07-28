@@ -40,7 +40,7 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
-      - name: Resolve and validate changed Edge Functions
+      - name: Detect whether Edge Functions changed
         id: changes
         shell: bash
         run: |
@@ -59,7 +59,7 @@ jobs:
           echo "changed_functions_json=$changed_json" >> "$GITHUB_OUTPUT"
 
           if [ "$changed_count" -eq 0 ]; then
-            echo "No Edge Function source changed."
+            echo "No Edge Function source changed; unrelated commit skipped without failure"
             exit 0
           fi
 
@@ -102,10 +102,10 @@ jobs:
             echo "Superseded green run skipped safely."
           elif [ "$CHANGED_COUNT" -eq 0 ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "No Edge Function source changed."
+            echo "No Edge Function source changed; unrelated commit skipped without failure"
           elif [ "$secrets_ready" != true ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "Supabase token unavailable; no mutation attempted."
+            echo "Supabase token unavailable; function sync skipped without failure"
           else
             echo "should_sync=true" >> "$GITHUB_OUTPUT"
           fi
@@ -120,7 +120,7 @@ jobs:
             echo "- Source: \`${{ steps.ready.outputs.source_sha }}\`"
             echo "- Changed functions: \`${{ steps.changes.outputs.changed_functions_json }}\`"
             echo "- Secrets ready: \`${{ steps.ready.outputs.secrets_ready }}\`"
-            echo "- Result: no backend mutation attempted"
+            echo "- Result: function sync skipped without failure; no backend mutation attempted"
           } >> "$GITHUB_STEP_SUMMARY"
 
   sync-functions:
@@ -183,7 +183,7 @@ jobs:
             echo "fresh=true" >> "$GITHUB_OUTPUT"
           else
             echo "fresh=false" >> "$GITHUB_OUTPUT"
-            echo "Source superseded while waiting for production lock; sync skipped."
+            echo "Source superseded while waiting for production lock; function sync skipped without failure"
           fi
 
       - name: Deploy only explicitly changed approved Edge Functions
