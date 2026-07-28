@@ -127,7 +127,7 @@ export default function AllProductsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2 text-[9px] uppercase tracking-[0.16em] sm:gap-3 sm:text-[10px] sm:tracking-[0.2em]">
               <span className="rounded-md border border-border/60 px-3 py-2.5 text-foreground/60 sm:px-4">
-                {totalProducts} published products
+                {totalProducts} products in this catalogue
               </span>
               <Link to="/inquiry-cart" className="rounded-md border border-border/60 px-3 py-2.5 hover:border-primary hover:text-primary sm:px-4">
                 Inquiry cart {shortlist.items.length > 0 ? `(${shortlist.items.length})` : ""}
@@ -213,7 +213,7 @@ export default function AllProductsPage() {
         <div className="container-luxe">
           {isLoading ? (
             <div className="rounded-xl border border-dashed border-border/60 p-12 text-center text-sm text-foreground/60" role="status" aria-live="polite">
-              Loading published catalogue…
+              Loading catalogue…
             </div>
           ) : (
             <>
@@ -238,7 +238,7 @@ export default function AllProductsPage() {
               {results.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border/60 px-6 py-14 text-center">
                   <Search size={28} className="mx-auto mb-4 text-foreground/35" />
-                  <h3 className="font-display text-2xl">No matching published product</h3>
+                  <h3 className="font-display text-2xl">No matching product</h3>
                   <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-foreground/60">
                     Try a broader product name, remove the category filter, or share your reference with our team for a custom manufacturing review.
                   </p>
