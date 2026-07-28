@@ -31,9 +31,7 @@ function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === "object") {
     return Object.fromEntries(
-      Object.keys(value)
-        .sort()
-        .map((key) => [key, canonicalize(value[key])]),
+      Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]),
     );
   }
   return value;
@@ -43,16 +41,20 @@ function canonicalJson(value) {
   return `${JSON.stringify(canonicalize(value), null, 2)}\n`;
 }
 
-function readJson(path) {
-  return JSON.parse(readFileSync(path, "utf8"));
-}
-
-function extractRows(payload) {
+function normalizeRows(payload) {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.result)) return payload.result;
   if (Array.isArray(payload?.data)) return payload.data;
   if (Array.isArray(payload?.rows)) return payload.rows;
   if (Array.isArray(payload?.result?.rows)) return payload.result.rows;
+  return [];
+}
+
+function normalizeFunctions(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.functions)) return payload.functions;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.result)) return payload.result;
   return [];
 }
 
@@ -70,10 +72,10 @@ async function managementRequest(path, accessToken, options = {}) {
   try {
     payload = text ? JSON.parse(text) : {};
   } catch {
-    throw new ManifestError("MALFORMED_RESPONSE", "Supabase Management API returned malformed JSON");
+    throw new ManifestError("MALFORMED_RESPONSE", `Supabase Management API returned malformed JSON for ${path}`);
   }
   if (!response.ok) {
-    throw new ManifestError("MANAGEMENT_API_FAILURE", `Supabase Management API request failed (${response.status})`);
+    throw new ManifestError("MANAGEMENT_API_FAILURE", `Supabase Management API ${path} failed (${response.status})`);
   }
   return payload;
 }
@@ -83,7 +85,7 @@ async function databaseQuery(projectId, accessToken, query) {
     method: "POST",
     body: JSON.stringify({ query, read_only: true }),
   });
-  return extractRows(payload);
+  return normalizeRows(payload);
 }
 
 function loadRegistries(root) {
@@ -126,19 +128,22 @@ function expectedDeployedFunctions(registries) {
 }
 
 function verifyLiveFunctions(functionPayload, expected) {
-  const live = (functionPayload.functions ?? [])
+  const live = normalizeFunctions(functionPayload)
     .filter((fn) => fn.status === "ACTIVE")
     .map((fn) => ({
       name: String(fn.slug ?? fn.name),
       version: Number(fn.version),
       verify_jwt: Boolean(fn.verify_jwt),
-      source_sha256: String(fn.ezbr_sha256 ?? ""),
+      source_sha256: String(fn.ezbr_sha256 ?? fn.source_sha256 ?? ""),
       status: String(fn.status),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   if (live.length !== 87 || expected.size !== 87) {
-    throw new ManifestError("EDGE_COUNT_DRIFT", `Expected 87 live and represented functions; found live=${live.length}, represented=${expected.size}`);
+    throw new ManifestError(
+      "EDGE_COUNT_DRIFT",
+      `Expected 87 live and represented functions; found live=${live.length}, represented=${expected.size}`,
+    );
   }
   const liveByName = new Map(live.map((fn) => [fn.name, fn]));
   for (const [name, representation] of expected) {
@@ -190,8 +195,12 @@ async function buildManifest(root, accessToken) {
 
   const inventorySql = readFileSync(resolve(root, "scripts/supabase/export-deployment-manifest.sql"), "utf8");
   const inventoryRows = await databaseQuery(projectId, accessToken, inventorySql);
-  if (inventoryRows.length !== 1) throw new ManifestError("INVENTORY_FAILURE", "Canonical database inventory did not return exactly one row");
-  const inventory = inventoryRows[0].jsonb_build_object ?? inventoryRows[0].result ?? Object.values(inventoryRows[0])[0];
+  if (inventoryRows.length !== 1) {
+    throw new ManifestError("INVENTORY_FAILURE", `Canonical inventory returned ${inventoryRows.length} rows`);
+  }
+  const inventory = inventoryRows[0].jsonb_build_object
+    ?? inventoryRows[0].result
+    ?? Object.values(inventoryRows[0])[0];
   if (!inventory?.database || !inventory?.cron || !inventory?.storage || !inventory?.browser_exposure) {
     throw new ManifestError("INVENTORY_SHAPE", "Canonical database inventory shape is invalid");
   }
@@ -230,7 +239,10 @@ async function buildManifest(root, accessToken) {
   );
 
   const notificationDispatcher = liveFunctions.find((fn) => fn.name === "notification-dispatcher");
-  if (!notificationDispatcher || notificationDispatcher.version !== 7 || notificationDispatcher.verify_jwt !== false || notificationDispatcher.source_sha256 !== "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7") {
+  if (!notificationDispatcher
+      || notificationDispatcher.version !== 7
+      || notificationDispatcher.verify_jwt !== false
+      || notificationDispatcher.source_sha256 !== "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7") {
     throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");
   }
 
@@ -246,7 +258,7 @@ async function buildManifest(root, accessToken) {
       repository: EXPECTED_REPOSITORY,
       production_origin: PRODUCTION_ORIGIN,
       supabase_project_id: projectId,
-      supabase_organization_id: String(project.organization_id ?? ""),
+      supabase_organization_id: String(project.organization_id ?? project.organization?.id ?? ""),
       supabase_region: String(project.region ?? ""),
       supabase_status: String(project.status),
     },
@@ -315,10 +327,9 @@ async function buildManifest(root, accessToken) {
     throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 374 live migrations");
   }
 
-  const canonicalPayload = canonicalJson(payload);
   return canonicalize({
     ...payload,
-    manifest_sha256: sha256(canonicalPayload),
+    manifest_sha256: sha256(canonicalJson(payload)),
   });
 }
 
