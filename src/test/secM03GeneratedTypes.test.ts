@@ -15,15 +15,19 @@ function readRequiredSource(path: string, label: string) {
 }
 
 describe("SEC-M03 generated public RPC supplement", () => {
-  it("types both durable limiter RPCs without exposing private limiter tables", () => {
+  it("matches the reviewed live public RPC surface without private limiter detail", () => {
     const source = readRequiredSource(supplementPath, "SEC-M03 type supplement");
     expect(source).toContain("cleanup_edge_rate_limit_state");
     expect(source).toContain("consume_edge_rate_limit");
+    expect(source).toContain("p_resource_hash?: string");
     expect(source).toContain("retry_after_seconds: number");
     expect(source).toContain("duplicate_suppressed: boolean");
     expect(source).not.toContain("edge_rate_limit_policies:");
     expect(source).not.toContain("edge_rate_limit_state:");
     expect(source).not.toContain("edge_rate_limit_metrics_hourly:");
+    expect(source).not.toContain("burst_count:");
+    expect(source).not.toContain("sustained_count:");
+    expect(source).not.toContain("privacy_sample:");
   });
 
   it("is the database type used by the browser Supabase client", () => {
