@@ -10,8 +10,8 @@ const DIST_DIR = resolve(process.env.IRHA_DIST_DIR || "dist");
 const SITE_URL = "https://irhaapparels.com";
 const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
-const EXPECTED_SITEMAP_URLS = 407;
-const EXPECTED_HTML = 413;
+const EXPECTED_SITEMAP_URLS = 411;
+const EXPECTED_HTML = 417;
 const EXPECTED_REDIRECTS = 1583;
 const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
 const TEMPORARY_QUERY_PATTERN =
@@ -267,7 +267,6 @@ async function verifyEndpoints(urls) {
   });
   await Promise.all(workers);
 }
-
 
 async function verifyGalleryEndpoint(url) {
   let lastError;
