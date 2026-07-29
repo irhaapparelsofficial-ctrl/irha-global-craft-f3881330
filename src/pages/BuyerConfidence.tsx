@@ -24,6 +24,7 @@ import {
   materialDetail,
   type MaterialFamilyId,
 } from "@/data/buyerCapabilities";
+import { localizedMaterialSpecification } from "@/data/materialSpecificationCopy";
 import { getRouteLocale, type LocaleCode } from "@/lib/i18nFoundation";
 import { ORGANIZATION_ID, SITE_URL, WEBSITE_ID, breadcrumbSchema } from "@/lib/seoSchema";
 
@@ -127,6 +128,7 @@ function MaterialsPage({ locale, path }: { locale: LocaleCode; path: string }) {
           <div className="grid gap-5 lg:grid-cols-2">
             {visible.map((material) => {
               const detail = materialDetail(material, locale);
+              const specification = localizedMaterialSpecification(material, locale);
               const familyData = MATERIAL_FAMILIES.find((item) => item.id === material.family)!;
               const materialReference = encodeURIComponent(`Material reference: ${material.name[locale]}`);
               const rfqHref = `/inquiry?intent=rfq&category=materials&name=${materialReference}`;
@@ -136,8 +138,8 @@ function MaterialsPage({ locale, path }: { locale: LocaleCode; path: string }) {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">{familyData.title[locale]}</p>
                   <h2 className="mt-3 font-display text-3xl leading-tight">{material.name[locale]}</h2>
                   <dl className="mt-7 grid gap-5 text-sm sm:grid-cols-2">
-                    <Detail term={copy.composition} value={material.composition} />
-                    <Detail term={copy.weight} value={material.weight} />
+                    <Detail term={copy.composition} value={specification.composition} />
+                    <Detail term={copy.weight} value={specification.weight} />
                     <Detail term={copy.structure} value={detail.structure} />
                     <Detail term={copy.sourcing} value={detail.sourcing} />
                     <Detail term={copy.finishes} value={detail.finishes.join(" · ")} wide />
