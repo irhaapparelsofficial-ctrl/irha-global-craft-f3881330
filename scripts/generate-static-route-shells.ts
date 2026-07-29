@@ -120,7 +120,10 @@ function titleCase(slug: string): string {
 
 function cleanPath(pathname: string): string {
   if (pathname === "/") return "/";
-  return pathname.replace(/\/+$/, "") || "/";
+  const trimmed = pathname.replace(/\/+$/, "") || "/";
+  return (["/de", "/fr", "/nl"] as const).includes(trimmed as "/de" | "/fr" | "/nl")
+    ? `${trimmed}/`
+    : trimmed;
 }
 
 function localeAndRoute(pathname: string) {
