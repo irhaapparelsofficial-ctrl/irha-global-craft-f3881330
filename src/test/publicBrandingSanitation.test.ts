@@ -36,11 +36,12 @@ describe("IA-CONTENT-E001 public branding sanitation", () => {
       <p>Digital catalogue reference</p>
       <p>AI-generated mockups</p>
       <p>Genuine factory photography and video is pending. This page uses process information—not concept visuals—as its evidence.</p>
+      <p>not production proof</p>
       <img src="/placeholder.svg" alt="Image unavailable" />
     </body></html>`);
 
     expect(result.status).toBe(0);
-    expect(result.output).not.toMatch(/newly built website|digital catalogue reference|AI-generated|pending|concept visuals|placeholder\.svg|image unavailable/i);
+    expect(result.output).not.toMatch(/newly built website|digital catalogue reference|AI-generated|pending|concept visuals|not production proof|placeholder\.svg|image unavailable/i);
     expect(result.output).toContain("Product style");
     expect(result.output).toContain("Visual previews");
     expect(result.output).toContain("/favicon.svg");
@@ -51,6 +52,12 @@ describe("IA-CONTENT-E001 public branding sanitation", () => {
     const result = runSanitizer("<html><body><p>ISO 9001 certified apparel manufacturer</p></body></html>");
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("Buyer-facing content or branding guard failed");
+  });
+
+  it("allows truthful certification guidance without treating a FAQ question as a displayed logo", () => {
+    const result = runSanitizer('<html><body><p>Do you publish certification logos?</p><p>Only verified certificates approved for public display should appear on the website.</p></body></html>');
+    expect(result.status).toBe(0);
+    expect(result.output).toContain("Do you publish certification logos?");
   });
 
   it("uses the official Irha crest for fallbacks and restrained card chrome", () => {
