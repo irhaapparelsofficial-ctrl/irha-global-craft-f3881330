@@ -72,17 +72,18 @@ describe("B2B buyer-readiness contracts", () => {
     expect(migration).toContain("public.has_role((select auth.uid()), 'admin'::public.app_role)");
   });
 
-  it("labels legacy Bavarian catalogue visuals as references rather than production proof", () => {
-    const paths = [
-      "src/pages/BavarianMensCollection.tsx",
-      "src/pages/BavarianWomensCollection.tsx",
-    ];
-    for (const path of paths) {
-      const source = read(path);
-      expect(source).toMatch(/Digital Catalogue References/);
-      expect(source).toMatch(/not production proof/);
-      expect(source).not.toMatch(/Verified Product Media|verified factory media|newly built/i);
-    }
+  it("removes internal media labels from shared public cards and guards legacy output", () => {
+    const card = read("src/components/catalog/CatalogListingCard.tsx");
+    const hero = read("src/components/HeroCarousel.tsx");
+    const sanitizer = read("scripts/sanitize-unsupported-trust-copy.mjs");
+
+    expect(card).not.toMatch(/Digital catalogue reference|Digital reference|not production proof/);
+    expect(hero).not.toMatch(/Digital catalogue reference|Digital reference|not photographs of completed buyer orders/);
+    expect(card).toContain('data-card-brand="irha-official-crest"');
+    expect(hero).toContain('data-card-brand="irha-official-crest"');
+    expect(sanitizer).toContain("prohibitedPresentationPatterns");
+    expect(sanitizer).toContain("Digital catalogue reference");
+    expect(sanitizer).toContain("prohibitedPresentationAfter: 0");
   });
 
   it("migrates live website-age copy without deleting business records", () => {
@@ -100,16 +101,16 @@ describe("B2B buyer-readiness contracts", () => {
     expect(migration).not.toMatch(/\bdelete\s+from\b/i);
   });
 
-  it("labels catalogue media and routes all-product cards to canonical products", () => {
+  it("keeps catalogue routes canonical while the final artifact is sanitized", () => {
     const product = read("src/pages/CanonicalProductDetail.tsx");
     const allProducts = read("src/pages/AllProductsPage.tsx");
     const shells = read("scripts/generate-static-route-shells.ts");
-    const imageFinalizer = read("scripts/finalize-image-seo.mjs");
-    expect(product).toMatch(/Digital catalogue references show design direction/);
+    const sanitizer = read("scripts/sanitize-unsupported-trust-copy.mjs");
+
+    expect(product).toContain('quoteParams.set("code", product.sku)');
     expect(allProducts).toContain("publishedRoute?.canonicalPath");
-    expect(shells).toContain("digital reference gallery");
     expect(shells).toContain("code: product.reference_code");
-    expect(imageFinalizer).toContain("Digital catalogue reference for");
-    expect(imageFinalizer).not.toContain("Front view of");
+    expect(sanitizer).toContain("Product specifications, materials and construction are confirmed against the approved buyer brief.");
+    expect(sanitizer).toContain("Buyer-facing content or branding guard failed");
   });
 });
