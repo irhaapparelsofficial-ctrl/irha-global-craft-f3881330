@@ -10,6 +10,8 @@ describe("IA-B2B-E003 final buyer-readiness polish", () => {
     expect(source).toContain("Your draft is still saved on this device");
     expect(source).not.toContain("err instanceof Error ? err.message");
     expect(source).not.toContain("description: msg");
+    expect(source).not.toContain("error as any");
+    expect(source).toContain("} as never);");
   });
 
   it("moves validation focus and associates errors with inquiry fields", () => {
