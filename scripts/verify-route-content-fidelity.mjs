@@ -7,13 +7,23 @@ import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
 const DIST = resolve(process.env.IRHA_DIST_DIR || "dist");
 const SOURCE_ROOT = resolve(process.env.IRHA_SOURCE_ROOT || ".");
 const SITE = "https://irhaapparels.com";
-const EXPECTED_SITEMAP = 411;
 const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
 const PRODUCT_SHELL = 'data-irha-product-shell="true"';
 const CORE_SHELL = 'data-irha-route-content="core"';
 const TAXONOMY_SHELL = 'data-irha-route-content="taxonomy"';
 const GENERIC_MARKER = 'data-irha-rich-route-shell="true"';
+const SPECIALIZED_ROUTE_TYPES = new Set([
+  "localized-market",
+  "resource-index",
+  "resource-article",
+  "materials",
+  "buyer-information",
+  "about",
+  "manufacturing",
+  "inquiry-rfq",
+  "legal",
+]);
 const UNIVERSAL_FINGERPRINTS = [
   "Experienced manufacturer. Newly built website.",
   "Five specialist apparel categories.",
@@ -86,9 +96,35 @@ function sitemapPaths(xml) {
     const match = block[0].match(/<loc>([^<]+)<\/loc>/);
     if (!match) continue;
     const url = new URL(match[1].replace(/&amp;/g, "&"));
-    if (url.origin === SITE) paths.push(cleanPath(url.pathname));
+    assert(url.origin === SITE, `Sitemap contains non-canonical host: ${url.href}`);
+    paths.push(cleanPath(url.pathname));
   }
   return paths;
+}
+
+function authoritativeSitemapPaths(manifest) {
+  assert(manifest?.schemaVersion === 1 && Array.isArray(manifest.routes), "Authoritative SEO route manifest is missing or invalid");
+  const eligible = manifest.routes.filter((route) => route.indexable && route.sitemap);
+  assert(eligible.length === manifest.sitemapCount, `SEO manifest sitemap count drift: ${manifest.sitemapCount} vs ${eligible.length}`);
+  const urls = eligible.map((route) => route.canonicalUrl);
+  assert(new Set(urls).size === urls.length, "Authoritative SEO manifest contains duplicate sitemap URLs");
+  const paths = urls.map((value) => {
+    const url = new URL(value);
+    assert(url.origin === SITE, `Authoritative route uses a non-canonical host: ${value}`);
+    assert(!url.search && !url.hash, `Authoritative sitemap route contains query or fragment: ${value}`);
+    return cleanPath(url.pathname);
+  });
+  assert(new Set(paths).size === paths.length, "Authoritative SEO manifest contains duplicate canonical paths");
+  return { paths, routeByPath: new Map(eligible.map((route) => [cleanPath(new URL(route.canonicalUrl).pathname), route])) };
+}
+
+function assertExactSitemapSet(actualPaths, expectedPaths) {
+  assert(new Set(actualPaths).size === actualPaths.length, "Sitemap contains duplicate canonical paths");
+  const actual = new Set(actualPaths);
+  const expected = new Set(expectedPaths);
+  assert(actual.size === expected.size, `Expected ${expected.size} authoritative sitemap URLs, found ${actual.size}`);
+  for (const path of expected) assert(actual.has(path), `Sitemap is missing authoritative route: ${path}`);
+  for (const path of actual) assert(expected.has(path), `Sitemap contains non-authoritative route: ${path}`);
 }
 
 function routeMap(products) {
@@ -197,9 +233,7 @@ function verifyTaxonomy(pathname, html, node, productByPath) {
   }
   const segments = pathname.split("/").filter(Boolean);
   assert(main.includes(`href="/products/${segments[1]}"`) || node.kind === "root", `${pathname} is missing its main-category breadcrumb link`);
-  if (node.kind === "collection") {
-    assert(main.includes(`href="/products/${segments[1]}/${segments[2]}"`), `${pathname} is missing its audience hierarchy link`);
-  }
+  if (node.kind === "collection") assert(main.includes(`href="/products/${segments[1]}/${segments[2]}"`), `${pathname} is missing its audience hierarchy link`);
   const nodes = schemas(html).flatMap((schema) => schemaNodes(schema));
   assert(nodes.some((item) => item["@type"] === "CollectionPage" && item.url === `${SITE}${pathname}`), `${pathname} is missing matching CollectionPage schema`);
   assert(nodes.some((item) => item["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
@@ -224,12 +258,7 @@ function verifyProduct(pathname, html, product) {
 }
 
 function normalizeJsxText(value) {
-  return value
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .replace(/\s+([.,!?;:])/g, "$1")
-    .trim();
+  return value.replace(/\{\/\*[\s\S]*?\*\/\}/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").replace(/\s+([.,!?;:])/g, "$1").trim();
 }
 
 function reactH1Of(source) {
@@ -237,26 +266,13 @@ function reactH1Of(source) {
 }
 
 function verifyAboutReactParity(source, content) {
-  assert(
-    /import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']@\/lib\/publicIdentity\.mjs["'];?/.test(source),
-    "/about React source must import PUBLIC_IDENTITY from the canonical identity source",
-  );
-
+  assert(/import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']@\/lib\/publicIdentity\.mjs["'];?/.test(source), "/about React source must import PUBLIC_IDENTITY from the canonical identity source");
   const accountabilityItems = [...source.matchAll(/<AccountabilityItem\b[\s\S]*?\/>/g)].map((match) => match[0]);
   const responsiblePersonBlock = accountabilityItems.find((item) => item.includes('label="Responsible person"')) ?? "";
   assert(responsiblePersonBlock, "/about React source is missing the visible responsible-person block");
-  assert(
-    responsiblePersonBlock.includes("value={PUBLIC_IDENTITY.responsiblePerson.name}"),
-    "/about responsible-person block must visibly render PUBLIC_IDENTITY.responsiblePerson.name",
-  );
-  assert(
-    responsiblePersonBlock.includes("PUBLIC_IDENTITY.responsiblePerson.title"),
-    "/about responsible-person block must visibly render PUBLIC_IDENTITY.responsiblePerson.title",
-  );
-  assert(
-    responsiblePersonBlock.includes("PUBLIC_IDENTITY.name"),
-    "/about responsible-person block must retain the canonical organization context",
-  );
+  assert(responsiblePersonBlock.includes("value={PUBLIC_IDENTITY.responsiblePerson.name}"), "/about responsible-person block must visibly render PUBLIC_IDENTITY.responsiblePerson.name");
+  assert(responsiblePersonBlock.includes("PUBLIC_IDENTITY.responsiblePerson.title"), "/about responsible-person block must visibly render PUBLIC_IDENTITY.responsiblePerson.title");
+  assert(responsiblePersonBlock.includes("PUBLIC_IDENTITY.name"), "/about responsible-person block must retain the canonical organization context");
   assert(reactH1Of(source) === content.h1, `/about React H1 differs from the approved static H1: ${reactH1Of(source)}`);
   assert(!source.includes(PUBLIC_IDENTITY.responsiblePerson.name), "/about must not duplicate the responsible-person name outside publicIdentity.mjs");
   assert(!source.includes(PUBLIC_IDENTITY.responsiblePerson.title), "/about must not duplicate the responsible-person title outside publicIdentity.mjs");
@@ -265,16 +281,10 @@ function verifyAboutReactParity(source, content) {
 async function verifyStaticIdentitySource() {
   const sourcePath = join(SOURCE_ROOT, "src/lib/routeContent.mjs");
   const source = await readFile(sourcePath, "utf8");
-  assert(
-    /import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']\.\/publicIdentity\.mjs["'];?/.test(source),
-    "routeContent.mjs must import PUBLIC_IDENTITY from publicIdentity.mjs",
-  );
+  assert(/import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']\.\/publicIdentity\.mjs["'];?/.test(source), "routeContent.mjs must import PUBLIC_IDENTITY from publicIdentity.mjs");
   const aboutDefinition = source.match(/"\/about":\s*route\(\{([\s\S]*?)\n\s*\}\),\n\s*"\/contact":/)?.[1] ?? "";
   assert(aboutDefinition, "routeContent.mjs is missing the controlled /about definition");
-  assert(
-    aboutDefinition.includes("PUBLIC_IDENTITY.responsiblePerson.display"),
-    "Static /about content must derive the responsible-person identity from PUBLIC_IDENTITY",
-  );
+  assert(aboutDefinition.includes("PUBLIC_IDENTITY.responsiblePerson.display"), "Static /about content must derive the responsible-person identity from PUBLIC_IDENTITY");
 }
 
 function verifyAboutStaticParity(html) {
@@ -291,9 +301,7 @@ function verifyAboutStaticParity(html) {
     PUBLIC_IDENTITY.address.display,
     PUBLIC_IDENTITY.email,
     PUBLIC_IDENTITY.telephone,
-  ]) {
-    assert(main.includes(escapeHtml(token)), `/about is missing approved identity value: ${token}`);
-  }
+  ]) assert(main.includes(escapeHtml(token)), `/about is missing approved identity value: ${token}`);
 }
 
 async function verifyReactParity() {
@@ -305,13 +313,8 @@ async function verifyReactParity() {
     if (!await exists(sourcePath)) continue;
     const source = await readFile(sourcePath, "utf8");
     if (pathname === "/about") {
-      const importedIdentityValues = new Set([
-        PUBLIC_IDENTITY.responsiblePerson.name,
-        PUBLIC_IDENTITY.responsiblePerson.title,
-      ]);
-      for (const token of content.parityTokens) {
-        if (!importedIdentityValues.has(token)) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
-      }
+      const importedIdentityValues = new Set([PUBLIC_IDENTITY.responsiblePerson.name, PUBLIC_IDENTITY.responsiblePerson.title]);
+      for (const token of content.parityTokens) if (!importedIdentityValues.has(token)) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
       verifyAboutReactParity(source, content);
     } else {
       for (const token of content.parityTokens) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
@@ -327,17 +330,25 @@ async function verifyReactParity() {
 }
 
 export async function verifyRouteContentFidelity() {
-  const sitemap = await readFile(join(DIST, "sitemap.xml"), "utf8");
+  const [sitemap, seoManifestText, catalogManifestText] = await Promise.all([
+    readFile(join(DIST, "sitemap.xml"), "utf8"),
+    readFile(join(DIST, "seo-route-manifest.json"), "utf8"),
+    readFile(join(DIST, "catalog-route-manifest.json"), "utf8"),
+  ]);
   const paths = sitemapPaths(sitemap);
-  assert(paths.length === EXPECTED_SITEMAP, `Expected ${EXPECTED_SITEMAP} sitemap URLs, found ${paths.length}`);
-  assert(new Set(paths).size === paths.length, "Sitemap contains duplicate canonical paths");
+  const seoManifest = JSON.parse(seoManifestText);
+  const { paths: expectedPaths, routeByPath } = authoritativeSitemapPaths(seoManifest);
+  assertExactSitemapSet(paths, expectedPaths);
 
-  const manifest = JSON.parse(await readFile(join(DIST, "catalog-route-manifest.json"), "utf8"));
+  const manifest = JSON.parse(catalogManifestText);
   assert(manifest.schemaVersion === 1 && manifest.productCount === EXPECTED_PRODUCTS && manifest.products.length === EXPECTED_PRODUCTS, "Expected the complete 254-product manifest");
   const productByPath = new Map(manifest.products.map((product) => [product.canonical_path, product]));
   const taxonomy = routeMap(manifest.products);
   assert(taxonomy.size === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} taxonomy routes, found ${taxonomy.size}`);
   assert(CORE_ROUTE_PATHS.length === 14, `Expected 14 controlled core routes, found ${CORE_ROUTE_PATHS.length}`);
+
+  const localizedArticles = seoManifest.routes.filter((route) => route.routeType === "resource-article" && route.locale !== "en" && route.indexable);
+  assert(localizedArticles.length === 0, `Untranslated localized resource articles are indexable: ${localizedArticles.map((route) => route.path).join(", ")}`);
 
   const owned = { homepage: 0, core: 0, taxonomy: 0, product: 0, specialized: 0 };
   const coreBodies = new Map();
@@ -366,11 +377,9 @@ export async function verifyRouteContentFidelity() {
     }
     verifyBase(pathname, html);
     const main = primaryMain(html);
-    const isSpecialized = pathname === "/de/bavarian-wear"
-      || pathname === "/markets"
-      || pathname.startsWith("/markets/")
-      || html.includes('data-irha-static-buyer-shell="true"');
-    assert(isSpecialized, `Canonical route has no accepted content owner: ${pathname}`);
+    const route = routeByPath.get(pathname);
+    assert(route, `Canonical route is missing from authoritative ownership manifest: ${pathname}`);
+    assert(SPECIALIZED_ROUTE_TYPES.has(route.routeType), `Canonical route has no accepted content owner: ${pathname} (${route.routeType})`);
     assert(!main.includes(CORE_SHELL) && !main.includes(TAXONOMY_SHELL) && !main.includes(PRODUCT_SHELL), `${pathname} has conflicting route ownership markers`);
     owned.specialized += 1;
   }
@@ -379,7 +388,7 @@ export async function verifyRouteContentFidelity() {
   assert(owned.core === 14, `Expected 14 core routes, found ${owned.core}`);
   assert(owned.taxonomy === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} taxonomy routes, found ${owned.taxonomy}`);
   assert(owned.product === EXPECTED_PRODUCTS, `Expected ${EXPECTED_PRODUCTS} product routes, found ${owned.product}`);
-  assert(Object.values(owned).reduce((sum, value) => sum + value, 0) === EXPECTED_SITEMAP, "Not every sitemap URL has an explicit content owner");
+  assert(Object.values(owned).reduce((sum, value) => sum + value, 0) === paths.length, "Not every authoritative sitemap URL has an explicit content owner");
 
   const bodyValues = [...coreBodies.values()];
   assert(new Set(bodyValues).size === bodyValues.length, "Two core routes expose identical primary static content");
@@ -407,7 +416,7 @@ export async function verifyRouteContentFidelity() {
   assert(privacy.includes("analytics") && privacy.includes("uploaded") && privacy.includes("inquiry drafts"), "Privacy Policy is missing privacy-specific primary content");
 
   const paritySourcesChecked = await verifyReactParity();
-  console.log(`PASS route-content fidelity: ${paths.length} sitemap URLs; ${owned.core} core, ${owned.taxonomy} taxonomy, ${owned.product} product and ${owned.specialized} specialized routes; ${paritySourcesChecked} React parity sources checked`);
+  console.log(`PASS route-content fidelity: ${paths.length} authoritative sitemap URLs; ${owned.core} core, ${owned.taxonomy} taxonomy, ${owned.product} product and ${owned.specialized} specialized routes; ${paritySourcesChecked} React parity sources checked`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
