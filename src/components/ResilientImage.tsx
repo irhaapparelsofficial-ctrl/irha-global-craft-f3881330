@@ -12,6 +12,11 @@ type ResilientImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
 };
 
 const DEFAULT_RESPONSIVE_SIZES = "(max-width: 640px) 92vw, (max-width: 1024px) 50vw, 40vw";
+const LEGACY_PLACEHOLDER = /(?:^|\/)placeholder\.svg(?:[?#]|$)/i;
+
+function usableSource(value: string | null | undefined): value is string {
+  return Boolean(value?.trim()) && !LEGACY_PLACEHOLDER.test(value!);
+}
 
 export default function ResilientImage({
   sources,
@@ -28,7 +33,7 @@ export default function ResilientImage({
   ...props
 }: ResilientImageProps) {
   const candidates = useMemo(
-    () => Array.from(new Set(sources.filter((source): source is string => Boolean(source?.trim())))),
+    () => Array.from(new Set(sources.filter(usableSource))),
     [sources],
   );
   const sourceKey = candidates.join("|");
