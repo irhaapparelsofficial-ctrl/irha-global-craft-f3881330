@@ -149,7 +149,7 @@ export default function WebsiteInquiriesPanel() {
       return;
     }
 
-    const rfqs: UnifiedInquiry[] = ((inq.data as Array<Record<string, unknown>>) ?? []).map((row) => {
+    const rfqs: UnifiedInquiry[] = ((inq.data as unknown as Array<Record<string, unknown>>) ?? []).map((row) => {
       const context = asRecord(row.lead_context);
       const productName = textValue(context.product_name);
       const productCode = textValue(context.product_code);
