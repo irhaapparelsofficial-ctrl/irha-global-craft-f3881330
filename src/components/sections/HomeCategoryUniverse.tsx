@@ -10,54 +10,11 @@ import {
   CatalogCardMedia,
   CatalogCardTitle,
 } from "@/components/catalog/CatalogCard";
-import { useHomepageMedia } from "@/hooks/useHomepageMedia";
-import { CATEGORY_HERO_MEDIA } from "@/lib/heroMedia";
-
-const PROGRAMS = [
-  {
-    slug: "bavarian-trachten-wear",
-    role: "category_bavarian_trachten",
-    name: "Bavarian & Trachten Wear",
-    description: "Lederhosen, dirndl, shirts, vests and accessories",
-    image: CATEGORY_HERO_MEDIA["bavarian-trachten-wear"],
-    alt: "Bavarian and Trachten clothing manufacturing collection",
-  },
-  {
-    slug: "sportswear",
-    role: "category_sportswear",
-    name: "Sportswear",
-    description: "Team uniforms, tracksuits, training and club programs",
-    image: CATEGORY_HERO_MEDIA.sportswear,
-    alt: "Custom sportswear and teamwear manufacturing collection",
-  },
-  {
-    slug: "premium-leather-apparel",
-    role: "category_leather",
-    name: "Premium Leather Apparel",
-    description: "Biker jackets, bombers, vests and leather bottoms",
-    image: CATEGORY_HERO_MEDIA["premium-leather-apparel"],
-    alt: "Premium leather apparel manufacturing collection",
-  },
-  {
-    slug: "streetwear-activewear",
-    role: "category_streetwear_activewear",
-    name: "Streetwear & Activewear",
-    description: "Hoodies, tees, joggers and private-label sets",
-    image: CATEGORY_HERO_MEDIA["streetwear-activewear"],
-    alt: "Private label streetwear and activewear manufacturing collection",
-  },
-  {
-    slug: "leisure-nightwear",
-    role: "category_leisure_nightwear",
-    name: "Leisure & Nightwear",
-    description: "Sleepwear, loungewear and custom leisure programs",
-    image: CATEGORY_HERO_MEDIA["leisure-nightwear"],
-    alt: "Private label leisurewear and nightwear manufacturing collection",
-  },
-] as const;
+import { useCanonicalCategoryMedia } from "@/hooks/useCanonicalCategoryMedia";
+import { MAIN_CATEGORY_SLUGS } from "@/lib/categoryMediaRegistry";
 
 export default function HomeCategoryUniverse() {
-  const { data: approvedMedia = {} } = useHomepageMedia();
+  const { mediaBySlug } = useCanonicalCategoryMedia();
 
   return (
     <section id="programs" className="relative overflow-hidden bg-background py-11 text-foreground md:py-18">
@@ -75,18 +32,19 @@ export default function HomeCategoryUniverse() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-          {PROGRAMS.map((program) => {
-            const image = approvedMedia[program.role] || program.image;
+          {MAIN_CATEGORY_SLUGS.map((slug) => {
+            const program = mediaBySlug[slug];
             return (
               <Link
-                key={program.slug}
+                key={program.id}
                 to={`/products/${program.slug}`}
                 className="min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                data-category-media-id={program.id}
               >
                 <CatalogCard>
                   <CatalogCardMedia ratio="landscape">
                     <ResilientImage
-                      sources={[image, program.image]}
+                      sources={[program.src, program.fallbackSrc]}
                       alt={program.alt}
                       loading="lazy"
                       decoding="async"
@@ -94,6 +52,7 @@ export default function HomeCategoryUniverse() {
                       height={900}
                       sizes="(max-width: 519px) 92vw, (max-width: 1023px) 46vw, (max-width: 1535px) 30vw, 18vw"
                       className="relative h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-[1.025] sm:p-5 motion-reduce:transition-none"
+                      style={{ objectPosition: program.position }}
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/84 via-black/5 to-transparent" />
                     <span className="absolute bottom-3 left-3 right-3 text-[7px] font-semibold uppercase tracking-[0.14em] text-white/80 sm:text-[8px]">
