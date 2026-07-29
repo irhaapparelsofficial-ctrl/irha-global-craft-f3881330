@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ImgHTMLAttributes, type SyntheticEvent } from "react";
 import { responsiveImageAttributes, thumbnailUrl } from "@/lib/imageThumbnails";
 import { semanticImageAlt } from "@/lib/imageSeo";
-import bavarianHero from "@/assets/og/og-bavarian-hero.jpg";
-import leatherHero from "@/assets/og/og-leather.jpg";
-import sportswearHero from "@/assets/og/og-sportswear.jpg";
-import streetwearHero from "@/assets/og/og-streetwear.jpg";
-import nightwearHero from "@/assets/og/og-nightwear.jpg";
+import {
+  CONTROLLED_IMAGE_FALLBACK,
+  reportImageFailure,
+  type ImageLoadState,
+} from "@/lib/imageLoading";
 
 type ThumbnailImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src?: string | null;
@@ -16,31 +16,23 @@ type ThumbnailImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
 
 const DEFAULT_RESPONSIVE_SIZES = "(max-width: 640px) 92vw, (max-width: 1024px) 48vw, 33vw";
 
-function semanticFallback(alt?: string): string | undefined {
-  const value = alt?.toLowerCase() ?? "";
-  if (/bavarian|lederhosen|dirndl|trachten/.test(value)) return bavarianHero;
-  if (/leather/.test(value)) return leatherHero;
-  if (/sportswear|activewear|uniform|teamwear/.test(value)) return sportswearHero;
-  if (/streetwear|leisurewear/.test(value)) return streetwearHero;
-  if (/nightwear|sleepwear/.test(value)) return nightwearHero;
-  return undefined;
-}
-
 export default function ThumbnailImage({
   src,
   originalSrc,
   fallbackSrc,
   onError,
+  onLoad,
   loading = "lazy",
   decoding = "async",
   fetchPriority,
   sizes,
   srcSet,
   responsive = true,
+  className,
+  style,
   ...props
 }: ThumbnailImageProps) {
-  const fallback = fallbackSrc || semanticFallback(props.alt) || "/placeholder.svg";
-  const original = originalSrc || src || fallback;
+  const original = originalSrc || src || "";
   const requested = src || original;
   const candidate = useMemo(() => thumbnailUrl(requested) || requested, [requested]);
   const responsiveAttributes = useMemo(
@@ -48,33 +40,65 @@ export default function ThumbnailImage({
     [original],
   );
   const sources = useMemo(
-    () => Array.from(new Set([candidate, original, fallback].filter((value): value is string => Boolean(value)))),
-    [candidate, fallback, original],
+    () => Array.from(new Set([candidate, original, fallbackSrc].filter((value): value is string => Boolean(value?.trim())))),
+    [candidate, fallbackSrc, original],
   );
+  const sourceKey = sources.join("|");
   const [sourceIndex, setSourceIndex] = useState(0);
   const [responsiveFailed, setResponsiveFailed] = useState(false);
+  const [imageState, setImageState] = useState<ImageLoadState>("idle");
 
   useEffect(() => {
+    let cancelled = false;
     setSourceIndex(0);
     setResponsiveFailed(false);
-  }, [sources]);
+    if (sources.length === 0) {
+      setImageState("failed");
+      return () => { cancelled = true; };
+    }
+    setImageState("requested");
+    queueMicrotask(() => {
+      if (!cancelled) setImageState("loading");
+    });
+    return () => { cancelled = true; };
+  }, [sourceKey, sources.length]);
 
-  const currentSrc = sources[Math.min(sourceIndex, Math.max(0, sources.length - 1))] || fallback;
+  const controlledFallbackActive = sourceIndex >= sources.length;
+  const currentSrc = controlledFallbackActive
+    ? CONTROLLED_IMAGE_FALLBACK
+    : sources[sourceIndex];
   const useResponsiveSet = responsive
     && !responsiveFailed
     && sourceIndex === 0
+    && !controlledFallbackActive
     && Boolean(responsiveAttributes.srcSet || srcSet);
   const resolvedAlt = semanticImageAlt(original, props.alt);
+  const visible = imageState === "loaded" || imageState === "failed";
+
+  const requestNextSource = () => {
+    setImageState("requested");
+    queueMicrotask(() => setImageState("loading"));
+  };
 
   const handleError = (event: SyntheticEvent<HTMLImageElement>) => {
+    if (controlledFallbackActive) {
+      setImageState("failed");
+      onError?.(event);
+      return;
+    }
     if (useResponsiveSet) {
       setResponsiveFailed(true);
+      requestNextSource();
       return;
     }
     if (sourceIndex < sources.length - 1) {
       setSourceIndex((index) => Math.min(index + 1, sources.length - 1));
+      requestNextSource();
       return;
     }
+    reportImageFailure(original || currentSrc);
+    setSourceIndex(sources.length);
+    setImageState("failed");
     onError?.(event);
   };
 
@@ -87,12 +111,21 @@ export default function ThumbnailImage({
       sizes={useResponsiveSet ? sizes || DEFAULT_RESPONSIVE_SIZES : sizes}
       loading={loading}
       decoding={decoding}
-      fetchPriority={fetchPriority ?? (loading === "eager" ? "high" : "low")}
+      fetchPriority={fetchPriority ?? (loading === "lazy" ? "low" : undefined)}
+      onLoad={(event) => {
+        setImageState(controlledFallbackActive ? "failed" : "loaded");
+        onLoad?.(event);
+      }}
       onError={handleError}
+      aria-busy={imageState === "requested" || imageState === "loading" ? "true" : undefined}
+      className={className}
+      style={{ ...style, visibility: visible ? "visible" : "hidden" }}
+      data-managed-image="true"
+      data-image-state={imageState}
       data-thumbnail-source={candidate !== original ? original : undefined}
       data-responsive-image={useResponsiveSet ? "true" : undefined}
       data-responsive-fallback={responsiveFailed ? "true" : undefined}
-      data-fallback-active={currentSrc === fallback && fallback !== original ? "true" : undefined}
+      data-fallback-active={controlledFallbackActive ? "true" : undefined}
     />
   );
 }
