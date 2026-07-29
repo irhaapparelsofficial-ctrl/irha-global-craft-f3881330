@@ -170,7 +170,7 @@ export default function HeroMediaSlideshow({
               onClick={() => setIndex(slideIndex)}
               aria-label={`Show image ${slideIndex + 1} of ${count}`}
               aria-current={slideIndex === index ? "true" : undefined}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+              className="group inline-flex min-h-11 min-w-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
             >
               <span
                 aria-hidden="true"
