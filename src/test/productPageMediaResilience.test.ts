@@ -5,8 +5,9 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("Product-page media resilience and mobile presentation", () => {
-  it("renders the canonical product hero through a semantic image fallback", () => {
+  it("renders the canonical product hero through a controlled image fallback", () => {
     const detail = read("src/pages/CanonicalProductDetail.tsx");
+    const thumbnail = read("src/components/ThumbnailImage.tsx");
 
     expect(detail).toContain("<ThumbnailImage");
     expect(detail).toContain("fallbackSrc={fallbackImage}");
@@ -14,16 +15,21 @@ describe("Product-page media resilience and mobile presentation", () => {
     expect(detail).toContain("B2B only · made to order");
     expect(detail).toContain("pb-32 pt-36");
     expect(detail).not.toContain('<img\n                  src={gallery[activeImg]');
+    expect(thumbnail).toContain("CONTROLLED_IMAGE_FALLBACK");
+    expect(thumbnail).toContain("LEGACY_PLACEHOLDER");
   });
 
   it("keeps the mobile product finder readable and action-safe", () => {
     const finder = read("src/pages/AllProductsPage.tsx");
+    const listing = read("src/components/catalog/CatalogListingCard.tsx");
 
-    expect(finder).toContain("grid grid-cols-1 gap-6 min-[520px]:grid-cols-2");
+    expect(finder).toContain("grid grid-cols-1 gap-4 min-[380px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4");
     expect(finder).toContain("md:sticky md:top-20");
-    expect(finder).toContain("object-contain");
+    expect(finder).toContain("ProductCatalogCard");
     expect(finder).toContain("pb-32 pt-8");
     expect(finder).toContain("View product");
+    expect(listing).toContain("object-contain");
+    expect(listing).toContain("min-h-11");
   });
 
   it("keeps the floating contact dock compact on product detail pages", () => {

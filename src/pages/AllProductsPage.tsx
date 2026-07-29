@@ -11,7 +11,7 @@ import {
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import SEO from "@/components/SEO";
-import ThumbnailImage from "@/components/ThumbnailImage";
+import { ProductCatalogCard } from "@/components/catalog/CatalogListingCard";
 import { usePublicCategories } from "@/hooks/usePublicCategoryData";
 import { whatsappLink } from "@/lib/constants";
 import {
@@ -160,7 +160,7 @@ export default function AllProductsPage() {
                   type="button"
                   onClick={() => updateQuery("")}
                   aria-label="Clear product search"
-                  className="absolute right-3 top-1/2 inline-flex min-h-9 min-w-9 -translate-y-1/2 items-center justify-center text-foreground/45 hover:text-primary"
+                  className="absolute right-3 top-1/2 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center text-foreground/45 hover:text-primary"
                 >
                   <X size={15} />
                 </button>
@@ -262,7 +262,7 @@ export default function AllProductsPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 gap-6 min-[520px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xl:gap-7">
+                  <div className="grid grid-cols-1 gap-4 min-[380px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xl:gap-6">
                     {visibleResults.map((item) => {
                       const { product } = item;
                       const saved = shortlist.has(product.slug);
@@ -278,63 +278,55 @@ export default function AllProductsPage() {
                       };
                       const publishedRoute = findPublishedProductRoute(taxonomyRelease.data, product.id, product.slug);
                       const productPath = publishedRoute?.canonicalPath ?? `/products/${item.categorySlug}/${product.slug}`;
+                      const eyebrow = `${product.sku ? `${product.sku} · ` : ""}${item.categoryName} · ${item.subName}`;
 
                       return (
-                        <article key={`${item.categorySlug}:${product.slug}`} className="group flex min-w-0 flex-col rounded-2xl border border-border/60 bg-card/20 p-3 transition-colors hover:border-primary/50 sm:p-4">
-                          <Link to={productPath} className="relative mb-4 block aspect-[4/5] overflow-hidden rounded-xl bg-[#0d0d0d]">
-                            <ThumbnailImage
-                              src={product.image}
-                              alt={`Digital catalogue reference for ${product.name}`}
-                              className="absolute inset-0 h-full w-full object-contain p-2 transition-transform duration-[700ms] group-hover:scale-[1.03]"
-                            />
-                            <span className="absolute left-2.5 top-2.5 rounded-full border border-primary/40 bg-black/75 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.16em] text-primary backdrop-blur">
-                              Digital reference
-                            </span>
-                          </Link>
-                          <p className="mb-1 text-[8px] leading-4 text-foreground/48">Catalogue reference · not production proof</p>
-                          <p className="truncate text-[8px] uppercase tracking-[0.15em] text-foreground/42">
-                            {product.sku ? `${product.sku} · ` : ""}{item.categoryName} · {item.subName}
-                          </p>
-                          <Link to={productPath} className="mt-1.5 min-h-[2.7rem] font-display text-xl leading-[1.08] transition-colors hover:text-primary">
-                            {product.name}
-                          </Link>
-                          <div className="mt-4 grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => shortlist.toggle(storedProduct)}
-                              aria-pressed={saved}
-                              aria-label={saved ? `Remove ${product.name} from inquiry cart` : `Add ${product.name} to inquiry cart`}
-                              className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[8px] font-semibold uppercase tracking-[0.12em] ${
-                                saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
-                              }`}
-                            >
-                              {saved ? <Check size={12} /> : <PackagePlus size={12} />}
-                              {saved ? "Added" : "Add to inquiry"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => compare.toggle(storedProduct)}
-                              disabled={compareFull}
-                              aria-pressed={inCompare}
-                              title={compareFull ? "Comparison is limited to four products" : undefined}
-                              className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[8px] font-semibold uppercase tracking-[0.12em] ${
-                                inCompare
-                                  ? "border-primary text-primary"
-                                  : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"
-                              }`}
-                            >
-                              <GitCompareArrows size={12} />
-                              {inCompare ? "Added" : "Compare"}
-                            </button>
-                            <Link
-                              to={productPath}
-                              aria-label={`Open ${product.name}`}
-                              className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-gradient-gold text-[8px] font-semibold uppercase tracking-[0.14em] text-primary-foreground"
-                            >
-                              View product <ArrowUpRight size={13} />
-                            </Link>
-                          </div>
-                        </article>
+                        <ProductCatalogCard
+                          key={`${item.categorySlug}:${product.slug}`}
+                          href={productPath}
+                          name={product.name}
+                          image={product.image}
+                          originalImage={product.originalImage}
+                          eyebrow={eyebrow}
+                          actions={(
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => shortlist.toggle(storedProduct)}
+                                aria-pressed={saved}
+                                aria-label={saved ? `Remove ${product.name} from inquiry cart` : `Add ${product.name} to inquiry cart`}
+                                className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[8px] font-semibold uppercase tracking-[0.12em] ${
+                                  saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"
+                                }`}
+                              >
+                                {saved ? <Check size={12} /> : <PackagePlus size={12} />}
+                                {saved ? "Added" : "Add to inquiry"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => compare.toggle(storedProduct)}
+                                disabled={compareFull}
+                                aria-pressed={inCompare}
+                                title={compareFull ? "Comparison is limited to four products" : undefined}
+                                className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[8px] font-semibold uppercase tracking-[0.12em] ${
+                                  inCompare
+                                    ? "border-primary text-primary"
+                                    : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"
+                                }`}
+                              >
+                                <GitCompareArrows size={12} />
+                                {inCompare ? "Added" : "Compare"}
+                              </button>
+                              <Link
+                                to={productPath}
+                                aria-label={`Open ${product.name}`}
+                                className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-gradient-gold text-[8px] font-semibold uppercase tracking-[0.14em] text-primary-foreground"
+                              >
+                                View product <ArrowUpRight size={13} />
+                              </Link>
+                            </div>
+                          )}
+                        />
                       );
                     })}
                   </div>

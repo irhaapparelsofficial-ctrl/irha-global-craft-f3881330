@@ -11,6 +11,10 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import SEO from "@/components/SEO";
 import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
 import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
+import {
+  CollectionCatalogCard,
+  ProductCatalogCard,
+} from "@/components/catalog/CatalogListingCard";
 import { useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 import { usePublishedCategoryTaxonomy } from "@/hooks/usePublishedCatalogTaxonomy";
 import {
@@ -199,14 +203,12 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
         jsonLd={jsonLd}
       />
 
-      <section className="relative pt-32 pb-14 md:pt-40 md:pb-20 border-b border-border/60 overflow-hidden">
-        {heroImage && (
-          <img src={heroImage} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-[0.08] blur-sm scale-105" />
-        )}
+      <section className="relative overflow-hidden border-b border-border/60 pb-14 pt-32 md:pb-20 md:pt-40">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.1),transparent_42%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/75" />
-        <div className="container-luxe relative grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+        <div className="container-luxe relative grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
           <div className="lg:col-span-7">
-            <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-foreground/55 mb-7">
+            <nav aria-label="Breadcrumb" className="mb-7 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-foreground/55">
               {breadcrumbItems.map((item, index) => (
                 <span key={`${item.path}-${index}`} className="inline-flex items-center gap-2">
                   {index > 0 && <ChevronRight size={11} aria-hidden="true" />}
@@ -220,15 +222,15 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
             </nav>
 
             <p className="eyebrow mb-4">Irha Apparels · B2B Manufacturing</p>
-            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl leading-[0.98] max-w-5xl">{seo.h1}</h1>
-            <p className="mt-7 text-base md:text-lg text-foreground/70 leading-relaxed max-w-3xl">{seo.intro}</p>
-            <p className="mt-4 text-sm text-foreground/55 max-w-3xl">{ui.programNote}</p>
+            <h1 className="max-w-5xl font-display text-4xl leading-[0.98] md:text-6xl lg:text-7xl">{seo.h1}</h1>
+            <p className="mt-7 max-w-3xl text-base leading-relaxed text-foreground/70 md:text-lg">{seo.intro}</p>
+            <p className="mt-4 max-w-3xl text-sm text-foreground/55">{ui.programNote}</p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to={structuredQuoteLink}
                 data-track="taxonomy-structured-rfq"
-                className="inline-flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-4 text-xs uppercase tracking-[0.25em]"
+                className="inline-flex min-h-11 items-center gap-3 bg-primary px-7 py-4 text-xs uppercase tracking-[0.25em] text-primary-foreground hover:bg-primary/90"
               >
                 {ui.requestQuote} <ArrowRight size={15} aria-hidden="true" />
               </Link>
@@ -236,11 +238,11 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                 href={whatsappLink(quoteWhatsappMessage)}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="inline-flex items-center gap-3 border border-gold/70 px-7 py-4 text-xs uppercase tracking-[0.25em] text-gold hover:bg-gold hover:text-background"
+                className="inline-flex min-h-11 items-center gap-3 border border-gold/70 px-7 py-4 text-xs uppercase tracking-[0.25em] text-gold hover:bg-gold hover:text-background"
               >
                 <MessageCircle size={15} aria-hidden="true" /> WhatsApp
               </a>
-              <div className="inline-flex items-center gap-2 border border-border/60 px-4 py-2 bg-background/70 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 border border-border/60 bg-background/70 px-4 py-2 backdrop-blur-sm">
                 <Globe2 size={14} className="text-primary" aria-hidden="true" />
                 <span className="sr-only">{ui.otherLanguages}</span>
                 {TAXONOMY_LOCALES.map((candidate) => {
@@ -255,7 +257,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                       to={href}
                       lang={candidate.htmlLang}
                       hrefLang={candidate.hreflang}
-                      className={`min-w-9 min-h-9 inline-flex items-center justify-center text-[10px] uppercase tracking-[0.15em] ${candidate.code === locale ? "text-primary" : "text-foreground/55 hover:text-primary"}`}
+                      className={`inline-flex min-h-11 min-w-11 items-center justify-center text-[10px] uppercase tracking-[0.15em] ${candidate.code === locale ? "text-primary" : "text-foreground/55 hover:text-primary"}`}
                     >
                       {candidate.code}
                     </Link>
@@ -266,17 +268,18 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
           </div>
 
           {heroSlides.length > 0 && (
-            <div className="lg:col-span-5 relative aspect-[4/5] max-h-[640px] overflow-hidden border border-border/60 bg-card shadow-2xl">
+            <div className="relative aspect-[4/5] max-h-[640px] overflow-hidden border border-border/60 bg-card shadow-2xl lg:col-span-5">
               <HeroMediaSlideshow
                 slides={heroSlides}
                 label={`${heroLabel} product slideshow`}
                 imageClassName="p-3 md:p-5"
                 controlsClassName="bottom-4 right-4"
+                priority
               />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
-              <div className="pointer-events-none absolute left-5 right-5 bottom-5 border border-white/20 bg-black/45 backdrop-blur-sm p-4">
+              <div className="pointer-events-none absolute bottom-5 left-5 right-5 border border-white/20 bg-black/45 p-4 backdrop-blur-sm">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-gold">Digital catalogue reference</p>
-                <p className="font-display text-xl text-white mt-2">{heroLabel}</p>
+                <p className="mt-2 font-display text-xl text-white">{heroLabel}</p>
                 <p className="mt-1 text-[10px] text-white/65">Design direction · not production proof</p>
               </div>
             </div>
@@ -289,38 +292,28 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
       {audience && !collection && (
         <section className="py-16">
           <div className="container-luxe">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="eyebrow mb-3">{ui.productCategories}</p>
                 <h2 className="font-display text-3xl md:text-5xl">{audienceName}</h2>
               </div>
               <p className="text-xs uppercase tracking-[0.22em] text-foreground/45">{audience.productCount} {ui.styles}</p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 lg:grid-cols-3 lg:gap-5">
               {audience.collections.map((item) => {
                 const name = localizedCollectionName(locale, item.slug, item.name);
-                const image = item.products[0]?.image ?? category.image;
+                const firstProduct = item.products[0];
                 return (
-                  <Link
+                  <CollectionCatalogCard
                     key={item.slug}
-                    to={taxonomyCollectionPath(category.slug, audience.slug, item.slug, locale)}
-                    className="group border border-border/60 hover:border-primary transition-colors bg-card/20"
-                  >
-                    <div className="relative aspect-[16/10] overflow-hidden bg-card">
-                      {image && <img src={image} alt={`Digital catalogue reference for ${name}`} loading="lazy" className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-700" />}
-                      <span className="absolute bottom-2 left-2 bg-black/75 px-2 py-1 text-[8px] uppercase tracking-[0.12em] text-white/75">Digital reference</span>
-                    </div>
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-display text-xl group-hover:text-primary">{name}</h3>
-                        <span className="text-[10px] uppercase tracking-[0.18em] text-foreground/40">{item.products.length}</span>
-                      </div>
-                      <p className="mt-3 text-sm text-foreground/60 leading-relaxed">{item.description}</p>
-                      <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-primary">
-                        {ui.viewCollection} <ArrowRight size={13} aria-hidden="true" />
-                      </span>
-                    </div>
-                  </Link>
+                    href={taxonomyCollectionPath(category.slug, audience.slug, item.slug, locale)}
+                    name={name}
+                    description={item.description}
+                    image={firstProduct?.image ?? category.image}
+                    originalImage={firstProduct?.originalImage ?? category.originalImage}
+                    count={item.products.length}
+                    actionLabel={ui.viewCollection}
+                  />
                 );
               })}
             </div>
@@ -331,7 +324,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
       {collection && (
         <section className="py-16">
           <div className="container-luxe">
-            <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="eyebrow mb-3">{ui.products}</p>
                 <h2 className="font-display text-3xl md:text-5xl">{collectionName}</h2>
@@ -355,7 +348,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              <div className="grid grid-cols-1 gap-4 min-[380px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 md:gap-5">
                 {products.map((product) => {
                   const saved = shortlist.has(product.slug);
                   const inCompare = compare.has(product.slug);
@@ -372,51 +365,42 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                   };
 
                   return (
-                    <article key={product.slug} className="group flex min-w-0 flex-col">
-                      <Link to={canonicalPath} className="block">
-                        <div className="aspect-square overflow-hidden bg-card mb-3">
-                          {product.image && (
-                            <img
-                              src={product.image}
-                              alt={`Digital catalogue reference for ${product.name}`}
-                              loading="lazy"
-                              width={720}
-                              height={720}
-                              className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700"
-                            />
-                          )}
+                    <ProductCatalogCard
+                      key={product.slug}
+                      href={canonicalPath}
+                      name={product.name}
+                      image={product.image}
+                      originalImage={product.originalImage}
+                      eyebrow={`${audienceName ?? topName}${product.sku ? ` · ${product.sku}` : ""}`}
+                      actions={(
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => shortlist.toggle(storedProduct)}
+                            aria-pressed={saved}
+                            aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
+                            className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[8px] uppercase tracking-[0.12em] ${saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"}`}
+                          >
+                            {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
+                            {saved ? "Saved" : "Save"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => compare.toggle(storedProduct)}
+                            disabled={compareFull}
+                            aria-pressed={inCompare}
+                            title={compareFull ? "Comparison is limited to four products" : undefined}
+                            className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[8px] uppercase tracking-[0.12em] ${inCompare ? "border-primary text-primary" : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"}`}
+                          >
+                            <GitCompareArrows size={12} />
+                            {inCompare ? "Added" : compareFull ? "Full" : "Compare"}
+                          </button>
+                          <Link to={canonicalPath} aria-label={`Open ${product.name}`} className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-gradient-gold text-[8px] font-semibold uppercase tracking-[0.14em] text-primary-foreground">
+                            {ui.viewCollection} <ArrowRight size={13} aria-hidden="true" />
+                          </Link>
                         </div>
-                        <p className="text-[9px] text-foreground/48">Digital reference · not production proof</p>
-                        <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-foreground/45">{audienceName}</p>
-                        <h3 className="font-display text-base md:text-lg mt-1 group-hover:text-primary">{product.name}</h3>
-                      </Link>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => shortlist.toggle(storedProduct)}
-                          aria-pressed={saved}
-                          aria-label={saved ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}
-                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${saved ? "border-primary text-primary" : "border-border/60 hover:border-primary"}`}
-                        >
-                          {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-                          {saved ? "Saved" : "Save"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => compare.toggle(storedProduct)}
-                          disabled={compareFull}
-                          aria-pressed={inCompare}
-                          title={compareFull ? "Comparison is limited to four products" : undefined}
-                          className={`inline-flex min-h-10 items-center gap-1.5 border px-2.5 text-[9px] uppercase tracking-[0.14em] ${inCompare ? "border-primary text-primary" : "border-border/60 hover:border-primary disabled:cursor-not-allowed disabled:opacity-35"}`}
-                        >
-                          <GitCompareArrows size={12} />
-                          {inCompare ? "Added" : compareFull ? "Full" : "Compare"}
-                        </button>
-                        <Link to={canonicalPath} aria-label={`Open ${product.name}`} className="ml-auto inline-flex min-h-10 min-w-10 items-center justify-center text-primary hover:text-primary/70">
-                          <ArrowRight size={14} aria-hidden="true" />
-                        </Link>
-                      </div>
-                    </article>
+                      )}
+                    />
                   );
                 })}
               </div>

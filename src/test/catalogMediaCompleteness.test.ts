@@ -76,16 +76,21 @@ describe("Catalogue media completeness", () => {
     expect(empty, `Empty or invalid catalogue media:\n${empty.join("\n")}`).toEqual([]);
   });
 
-  it("keeps the published product surfaces on semantic multi-source image fallbacks", () => {
+  it("keeps published product surfaces on controlled multi-source image delivery", () => {
     const detail = readFileSync(resolve(ROOT, "src/pages/CanonicalProductDetail.tsx"), "utf8");
     const finder = readFileSync(resolve(ROOT, "src/pages/AllProductsPage.tsx"), "utf8");
+    const listing = readFileSync(resolve(ROOT, "src/components/catalog/CatalogListingCard.tsx"), "utf8");
     const thumbnail = readFileSync(resolve(ROOT, "src/components/ThumbnailImage.tsx"), "utf8");
 
     expect(detail).toContain("fallbackSrc={fallbackImage}");
-    expect(finder).toContain("<ThumbnailImage");
-    expect(thumbnail).toContain("semanticFallback");
+    expect(finder).toContain("ProductCatalogCard");
+    expect(listing).toContain("<ThumbnailImage");
+    expect(thumbnail).toContain("CONTROLLED_IMAGE_FALLBACK");
+    expect(thumbnail).toContain("reportImageFailure");
+    expect(thumbnail).toContain("LEGACY_PLACEHOLDER");
     expect(thumbnail).toContain("setSourceIndex");
     expect(thumbnail).toContain("setResponsiveFailed(true)");
     expect(thumbnail).toContain("sources.length - 1");
+    expect(thumbnail).not.toContain("semanticFallback");
   });
 });

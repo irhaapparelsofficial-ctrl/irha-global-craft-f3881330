@@ -57,13 +57,18 @@ describe("polished B2B homepage", () => {
     expect(home).not.toContain("BuyerTrustSection");
   });
 
-  it("uses compact swipeable mobile buyer sections without autoplay", () => {
-    for (const source of [capabilities, categories, processSource]) {
+  it("keeps compact mobile sections while rendering product categories as a stable grid", () => {
+    for (const source of [capabilities, processSource]) {
       expect(source).toContain("snap-x");
       expect(source).toContain("overflow-x-auto");
       expect(source).not.toContain("setInterval");
     }
-    expect(categories).toContain("Swipe to compare programs");
+    expect(categories).toContain("grid grid-cols-1 gap-4");
+    expect(categories).toContain("min-[520px]:grid-cols-2");
+    expect(categories).toContain("lg:grid-cols-3");
+    expect(categories).not.toContain("snap-x");
+    expect(categories).not.toContain("overflow-x-auto");
+    expect(categories).not.toContain("setInterval");
     expect(processSource).toContain("Swipe through the order process");
   });
 
