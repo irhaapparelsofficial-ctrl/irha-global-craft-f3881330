@@ -105,20 +105,36 @@ function main() {
     "isKnownHtmlRoute",
   );
 
-  const previewGuard = `
-    if (url.hostname.endsWith(".pages.dev")) {
-      return withNoIndexHeaders(assetResponse, "preview-host");
-    }
-`;
   worker = replaceRequired(
     worker,
-    /(const assetResponse = await env\.ASSETS\.fetch\(request\);\n)/,
-    `$1${previewGuard}`,
-    "preview-host guard",
+    /(const pathname = normalizePath\(url\.pathname\);\n)/,
+    `$1    const isPreviewHost = url.hostname.endsWith(".pages.dev");\n`,
+    "preview host flag",
+  );
+  worker = replaceRequired(
+    worker,
+    /(if \(\(request\.method === "GET" \|\| request\.method === "HEAD"\) && pathname === "\/robots\.txt"\) \{\n)(\s*)return robotsResponse\(request\);/,
+    `$1$2if (isPreviewHost) {\n$2  return new Response(request.method === "HEAD" ? null : "User-agent: *\\nDisallow: /\\n", {\n$2    status: 200,\n$2    headers: {\n$2      "Content-Type": "text/plain; charset=utf-8",\n$2      "Cache-Control": "no-store",\n$2      "X-Robots-Tag": "noindex, nofollow, noarchive",\n$2    },\n$2  });\n$2}\n$2return robotsResponse(request);`,
+    "preview robots policy",
+  );
+  worker = replaceRequired(
+    worker,
+    /if \(\(request\.method === "GET" \|\| request\.method === "HEAD"\) && isStaticBuyerPath\(pathname\)\) \{\n\s*return staticBuyerResponse\(request, env, pathname\);\n\s*\}/,
+    `if ((request.method === "GET" || request.method === "HEAD") && isStaticBuyerPath(pathname)) {
+      const staticResponse = await staticBuyerResponse(request, env, pathname);
+      return isPreviewHost ? withNoIndexHeaders(staticResponse, "preview-host") : staticResponse;
+    }`,
+    "preview static buyer policy",
+  );
+  worker = replaceRequired(
+    worker,
+    /(const assetResponse = explicitAssetPath\n\s*\? await routeShellAssetResponse\(request, env, pathname, explicitAssetPath\)\n\s*: await env\.ASSETS\.fetch\(request\);\n)/,
+    `$1    if (isPreviewHost) {\n      return withNoIndexHeaders(assetResponse, "preview-host");\n    }\n`,
+    "preview asset response policy",
   );
 
   writeFileSync(WORKER_PATH, worker);
-  console.log(`Sealed worker with ${knownPaths.length} exact HTML routes; pages.dev responses are noindex`);
+  console.log(`Sealed worker with ${knownPaths.length} exact HTML routes; pages.dev HTML and robots are noindex`);
 }
 
 main();
