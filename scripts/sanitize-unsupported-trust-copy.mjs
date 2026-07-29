@@ -36,6 +36,7 @@ const replacementRules = [
   [/Design direction\s*[·•|-]\s*not production proof/gi, "Product style"],
   [/Digital catalogue reference/gi, "Product style"],
   [/Digital reference/gi, "Product style"],
+  [/[;·•|-]?\s*not production proof/gi, ""],
   [/Reference image/gi, "Product photo"],
   [/Image unavailable/gi, "Irha Apparels"],
   [/Media status/gi, "Direct verification"],
@@ -105,7 +106,7 @@ const prohibitedPresentationPatterns = [
 
 const unsupportedCertificationPatterns = [
   /\b(?:ISO(?:\s*9001)?|OEKO[- ]?TEX|SEDEX|WRAP|BSCI|GOTS|GRS)\s+(?:certified|approved|compliant)\b/i,
-  /(?:certificate|certification)[-_ ]logo[^"'\s]*/i,
+  /(?:src|href)=["'][^"']*(?:certificate|certification)[-_ ]logo[^"']*["']/i,
 ];
 
 const faviconLinks = [
