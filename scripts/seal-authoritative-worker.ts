@@ -60,6 +60,11 @@ function arrayLiteral(values: string[]): string {
   return values.slice().sort().map((value) => `  ${JSON.stringify(value)},`).join("\n");
 }
 
+function workerLookupPath(path: string): string {
+  if (path === "/") return "/";
+  return path.replace(/\/+$/, "") || "/";
+}
+
 function replaceRequired(input: string, pattern: RegExp, replacement: string, label: string): string {
   if (!pattern.test(input)) throw new Error(`Worker patch point missing: ${label}`);
   return input.replace(pattern, replacement);
@@ -69,7 +74,7 @@ function main() {
   const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as Manifest;
   const canonicalPaths = manifest.routes
     .filter((route) => route.indexable && route.sitemap)
-    .map((route) => route.path);
+    .map((route) => workerLookupPath(route.path));
   const knownPaths = [...new Set([...canonicalPaths, ...UTILITY_ROUTES])];
 
   let worker = readFileSync(WORKER_PATH, "utf8");
