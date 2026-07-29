@@ -19,14 +19,25 @@ const repositoryFile = (path: string) => readFileSync(resolve(process.cwd(), pat
 describe("IA-UX-E001 first-render architecture", () => {
   it("hides the crawler shell before buyer-visible paint and provides a current boot frame", () => {
     const html = repositoryFile("index.html");
+    const policyIndex = html.indexOf('http-equiv="Content-Security-Policy"');
     const detectionIndex = html.indexOf("document.documentElement.classList.add('irha-js')");
     const rootIndex = html.indexOf('<div id="root">');
 
-    expect(detectionIndex).toBeGreaterThan(0);
+    expect(policyIndex).toBeGreaterThan(0);
+    expect(policyIndex).toBeLessThan(detectionIndex);
     expect(detectionIndex).toBeLessThan(rootIndex);
     expect(html).toContain(".irha-js #irha-static-crawler-shell{display:none!important}");
     expect(html).toContain('id="irha-app-boot-shell"');
     expect(html).toContain('aria-hidden="true"');
+  });
+
+  it("keeps the boot frame within narrow mobile width and respects reduced motion", () => {
+    const html = repositoryFile("index.html");
+
+    expect(html).toContain("@media(max-width:639px)");
+    expect(html).toContain(".irha-boot-logo{width:132px!important}");
+    expect(html).toContain(".irha-boot-nav span:nth-child(-n+2){display:none}");
+    expect(html).toContain("@media(prefers-reduced-motion:reduce)");
   });
 
   it("does not delay React for a deliberate static-shell paint or force a reload", () => {
@@ -90,14 +101,30 @@ describe("IA-UX-E001 managed image states", () => {
     window.removeEventListener("irha:image-load-failed", diagnostic);
   });
 
-  it("does not promote every eager image to high priority", async () => {
+  it("rejects a legacy placeholder even when an older caller supplies it directly", async () => {
+    render(
+      <ResilientImage
+        sources={["/placeholder.svg"]}
+        alt="Unavailable product"
+        width={960}
+        height={1200}
+      />,
+    );
+    const image = screen.getByRole("img", { name: "Unavailable product" });
+
+    await waitFor(() => expect(image).toHaveAttribute("data-fallback-active", "true"));
+    expect(image.getAttribute("src")).toMatch(/^data:image\/svg\+xml,/);
+    expect(image.getAttribute("src")).not.toContain("placeholder.svg");
+  });
+
+  it("does not promote every eager image to high priority", () => {
     render(<ResilientImage sources={["/hero.webp"]} alt="Hero" loading="eager" width={1200} height={900} />);
     const image = screen.getByRole("img", { name: "Hero" });
     expect(image).not.toHaveAttribute("fetchpriority", "high");
     expect(image).toHaveAttribute("decoding", "async");
   });
 
-  it("preserves responsive srcset and below-fold lazy loading", async () => {
+  it("preserves responsive srcset and below-fold lazy loading", () => {
     render(<ThumbnailImage src="/product-media/example/front.webp" alt="Responsive product" width={960} height={1200} />);
     const image = screen.getByRole("img", { name: "Responsive product" });
     expect(image).toHaveAttribute("loading", "lazy");
@@ -164,5 +191,13 @@ describe("IA-UX-E001 canonical card contract", () => {
     expect(home).toContain("2xl:grid-cols-5");
     expect(home).not.toContain("overflow-x-auto");
     expect(finder).toContain("min-[380px]:grid-cols-2");
+  });
+
+  it("keeps slideshow controls touch-sized and defers unvisited frames", () => {
+    const slideshow = repositoryFile("src/components/HeroMediaSlideshow.tsx");
+
+    expect(slideshow).toContain("loadedIndexes.has(slideIndex)");
+    expect(slideshow).toContain("min-h-11 min-w-11");
+    expect(slideshow).toContain("motion-reduce:transition-none");
   });
 });
