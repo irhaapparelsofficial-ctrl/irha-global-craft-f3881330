@@ -90,9 +90,9 @@ describe("IA-CONTENT-E001 public branding sanitation", () => {
       start_url: string;
       icons: Array<{ src: string; sizes: string; type: string }>;
     };
-    expect(manifest.id).toBe("/");
-    expect(manifest.name).toBe("Irha Apparels");
-    expect(manifest.start_url).toBe("/");
+    expect(manifest.id).toBe("/admin");
+    expect(manifest.name).toBe("Irha Apparels Admin");
+    expect(manifest.start_url).toBe("/admin");
     expect(manifest.icons).toEqual(expect.arrayContaining([
       expect.objectContaining({ src: "/favicon.svg", sizes: "any", type: "image/svg+xml" }),
       expect.objectContaining({ src: "/icon-192x192.png", sizes: "192x192", type: "image/png" }),
