@@ -1,0 +1,87 @@
+name: IA SEO taxonomy metadata correction
+
+on:
+  push:
+    branches: [ia-seo-master-final]
+
+permissions:
+  contents: write
+
+jobs:
+  correct:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ia-seo-master-final
+          fetch-depth: 0
+      - name: Apply route-type-aware taxonomy metadata
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/finalize-seo-route-manifest.ts')
+          text = path.read_text()
+
+          replacements = [
+            (
+              'const taxonomy = new Map<string, { routeType: SeoRouteType; name: string; parentPath: string; categoryName: string; updatedAt: string }>();',
+              'const taxonomy = new Map<string, { routeType: SeoRouteType; name: string; parentPath: string; categoryName: string; audienceName: string; updatedAt: string }>();'
+            ),
+            (
+              '      categoryName: product.main_category_name,\n      updatedAt: product.updated_at,\n    });\n    taxonomy.set(audiencePath, {',
+              '      categoryName: product.main_category_name,\n      audienceName: "",\n      updatedAt: product.updated_at,\n    });\n    taxonomy.set(audiencePath, {'
+            ),
+            (
+              '      categoryName: product.main_category_name,\n      updatedAt: product.updated_at,\n    });\n    taxonomy.set(typePath, {',
+              '      categoryName: product.main_category_name,\n      audienceName: product.audience_name,\n      updatedAt: product.updated_at,\n    });\n    taxonomy.set(typePath, {'
+            ),
+            (
+              '      categoryName: product.main_category_name,\n      updatedAt: product.updated_at,\n    });\n  }\n\n  for (const [path, node]',
+              '      categoryName: product.main_category_name,\n      audienceName: product.audience_name,\n      updatedAt: product.updated_at,\n    });\n  }\n\n  for (const [path, node]'
+            ),
+            (
+              '''    const title = node.routeType === "main-division"
+      ? `${node.name} Manufacturer | Wholesale & Private Label | Irha Apparels`
+      : `${node.name} | ${node.categoryName} Manufacturing | Irha Apparels`;
+    const h1 = node.routeType === "main-division"
+      ? `${node.name} Manufacturer for Wholesale & Private Label`
+      : `${node.name} for Custom B2B Manufacturing`;
+    const description = node.routeType === "main-division"
+      ? `${node.name} programs for B2B buyers with custom development, branding and packaging against an approved buyer brief.`
+      : `Explore ${node.name} within ${node.categoryName} for wholesale, OEM, ODM and private-label manufacturing programs.`;''',
+              '''    const title = node.routeType === "main-division"
+      ? `${node.name} Manufacturer | Wholesale & Private Label | Irha Apparels`
+      : node.routeType === "audience-group"
+        ? `${node.name} ${node.categoryName} | Custom B2B Manufacturing | Irha Apparels`
+        : `${node.audienceName} ${node.name} | ${node.categoryName} Manufacturing | Irha Apparels`;
+    const h1 = node.routeType === "main-division"
+      ? `${node.name} Manufacturer for Wholesale & Private Label`
+      : node.routeType === "audience-group"
+        ? `${node.name} ${node.categoryName} for Custom B2B Manufacturing`
+        : `${node.audienceName} ${node.name} for Custom B2B Manufacturing`;
+    const description = node.routeType === "main-division"
+      ? `${node.name} programs for B2B buyers with custom development, branding and packaging against an approved buyer brief.`
+      : node.routeType === "audience-group"
+        ? `Explore ${node.name} products within ${node.categoryName} for wholesale, OEM, ODM and private-label manufacturing programs.`
+        : `Explore ${node.audienceName} ${node.name} within ${node.categoryName} for wholesale, OEM, ODM and private-label manufacturing programs.`;'''
+            ),
+          ]
+
+          for old, new in replacements:
+            count = text.count(old)
+            if count != 1:
+              raise SystemExit(f'Expected one patch point, found {count}: {old[:100]}')
+            text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          Path('.github/workflows/ia-seo-taxonomy-metadata-fix.yml').unlink()
+          PY
+      - name: Commit correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/finalize-seo-route-manifest.ts .github/workflows/ia-seo-taxonomy-metadata-fix.yml
+          git commit -m "fix(seo): derive taxonomy metadata from route context"
+          git push origin HEAD:ia-seo-master-final
