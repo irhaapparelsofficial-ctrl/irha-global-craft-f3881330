@@ -59,8 +59,8 @@ for (const term of forbiddenClaims) assert(!html.toLowerCase().includes(term.toL
 
 const htmlFiles = await walk(DIST);
 const sitemapCount = [...sitemap.matchAll(/<loc>/g)].length;
-assert(sitemapCount === 407, `Expected 407 sitemap URLs, found ${sitemapCount}`);
-assert(htmlFiles.length >= 407, `Expected at least 407 rendered HTML files, found ${htmlFiles.length}`);
+assert(sitemapCount === 411, `Expected 411 sitemap URLs, found ${sitemapCount}`);
+assert(htmlFiles.length >= 411, `Expected at least 411 rendered HTML files, found ${htmlFiles.length}`);
 
 await verifyRouteContentFidelity();
 
