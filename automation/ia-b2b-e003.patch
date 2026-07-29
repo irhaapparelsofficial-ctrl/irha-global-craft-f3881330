@@ -1,0 +1,332 @@
+diff --git a/src/pages/InquiryBase.tsx b/src/pages/InquiryBase.tsx
+index b37155c..0000000 100644
+--- a/src/pages/InquiryBase.tsx
++++ b/src/pages/InquiryBase.tsx
+@@ -38,6 +38,24 @@ const contactSchema = z.object({
+ type Step = 1 | 2 | 3 | 4 | 5;
+ const STEP_LABELS = ["Intent", "Requirements", "Files", "Contact", "Review"] as const;
++const SAFE_SUBMISSION_ERROR =
++  "We could not send your inquiry. Your draft is still saved on this device. Please try again or continue on WhatsApp.";
++
++function fieldId(name: string): string {
++  return `inquiry-${name}`;
++}
++
++function fieldA11y(name: string, errors: Record<string, string>) {
++  const invalid = Boolean(errors[name]);
++  return {
++    id: fieldId(name),
++    "data-inquiry-field": name,
++    "aria-invalid": invalid || undefined,
++    "aria-describedby": invalid ? `${fieldId(name)}-error` : undefined,
++  };
++}
++
++function FieldError({ name, errors }: { name: string; errors: Record<string, string> }) {
++  return errors[name] ? <p id={`${fieldId(name)}-error`} className="mt-1 text-xs text-destructive" role="alert">{errors[name]}</p> : null;
++}
+ 
+ function isValidIntent(x: string | null): x is InquiryIntent {
+   return !!x && ["rfq", "sample", "catalogue", "reference", "meeting"].includes(x);
+@@ -143,6 +161,12 @@ export default function Inquiry() {
+ 
+   const setField = useCallback(<K extends keyof typeof draft>(k: K, v: (typeof draft)[K]) => {
+     setDraft((d) => ({ ...d, [k]: v }));
++    setErrors((current) => {
++      const key = String(k);
++      if (!(key in current)) return current;
++      const nextErrors = { ...current };
++      delete nextErrors[key];
++      return nextErrors;
++    });
+   }, []);
+ 
+   // ---- Step validation ----
+@@ -171,8 +195,14 @@ export default function Inquiry() {
+       errs.consent = "Consent is required before submission";
+     }
+     setErrors(errs);
+-    return Object.keys(errs).length === 0;
++    const firstInvalidField = Object.keys(errs)[0];
++    if (!firstInvalidField) return true;
++    window.requestAnimationFrame(() => {
++      document.querySelector<HTMLElement>(`[data-inquiry-field="${firstInvalidField}"]`)?.focus();
++    });
++    return false;
+   };
+ 
+   const next = () => {
+@@ -305,9 +335,11 @@ export default function Inquiry() {
+       setStep(5);
+       window.scrollTo({ top: 0, behavior: "smooth" });
+-    } catch (err) {
+-      const msg = err instanceof Error ? err.message : "Please try again";
+-      toast({ title: "Submission failed", description: msg, variant: "destructive" });
++    } catch {
++      toast({
++        title: "Inquiry not sent",
++        description: SAFE_SUBMISSION_ERROR,
++        variant: "destructive",
++      });
+       submitLockRef.current = false;
+     } finally {
+       setSubmitting(false);
+@@ -360,6 +392,7 @@ export default function Inquiry() {
+                     <span
++                      aria-current={active ? "step" : undefined}
+                       className={`w-7 h-7 md:w-8 md:h-8 inline-flex items-center justify-center border text-[11px] ${
+                         active ? "border-primary bg-primary text-primary-foreground"
+                         : past ? "border-primary text-primary"
+@@ -413,7 +446,7 @@ export default function Inquiry() {
+                   onClick={back}
+                   disabled={step === 1 || submitting}
+-                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-foreground/70 hover:text-foreground disabled:opacity-30"
++                  className="inline-flex min-h-11 items-center gap-2 text-xs uppercase tracking-[0.25em] text-foreground/70 hover:text-foreground disabled:opacity-30"
+                 >
+                   <ArrowLeft size={14} /> Back
+                 </button>
+@@ -422,7 +455,7 @@ export default function Inquiry() {
+                     type="button"
+                     onClick={next}
+-                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90"
++                    className="inline-flex min-h-11 items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90"
+                   >
+                     Continue <ArrowRight size={14} />
+                   </button>
+@@ -432,7 +465,7 @@ export default function Inquiry() {
+                     onClick={submit}
+                     disabled={submitting}
+-                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90 disabled:opacity-60"
++                    className="inline-flex min-h-11 items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90 disabled:opacity-60"
+                   >
+                     {submitting ? "Sending…" : "Submit inquiry"} <ArrowRight size={14} />
+                   </button>
+@@ -502,6 +535,7 @@ function StepIntent({
+               key={id}
+               type="button"
++              aria-pressed={active}
+               onClick={() => setField("intent", id)}
+               className={`text-left p-5 border transition-all ${
+                 active ? "border-primary bg-primary/5 text-primary" : "border-border/60 hover:border-foreground/40"
+@@ -542,8 +576,9 @@ function StepRequirements({
+         </div>
+         <div>
+-          <label className={label}>Company / Brand *</label>
+-          <input required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
+-          {errors.company && <p className="text-xs text-destructive mt-1">{errors.company}</p>}
++          <label htmlFor={fieldId("company")} className={label}>Company / Brand *</label>
++          <input {...fieldA11y("company", errors)} required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
++          <FieldError name="company" errors={errors} />
+         </div>
+         <div>
+-          <label className={label}>Destination country *</label>
+-          <input className={input} placeholder="e.g. Germany" value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
+-          {errors.country && <p className="text-xs text-destructive mt-1">{errors.country}</p>}
++          <label htmlFor={fieldId("country")} className={label}>Destination country *</label>
++          <input {...fieldA11y("country", errors)} required className={input} placeholder="e.g. Germany" value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
++          <FieldError name="country" errors={errors} />
+         </div>
+         {(draft.intent === "rfq") && (
+           <div>
+-            <label className={label}>Estimated quantity *</label>
+-            <input className={input} placeholder="e.g. 500 pcs / style" value={draft.quantity ?? ""} onChange={(e) => setField("quantity", e.target.value)} />
+-            {errors.quantity && <p className="text-xs text-destructive mt-1">{errors.quantity}</p>}
++            <label htmlFor={fieldId("quantity")} className={label}>Estimated quantity *</label>
++            <input {...fieldA11y("quantity", errors)} required className={input} placeholder="e.g. 500 pcs / style" value={draft.quantity ?? ""} onChange={(e) => setField("quantity", e.target.value)} />
++            <FieldError name="quantity" errors={errors} />
+           </div>
+         )}
+@@ -560,9 +595,9 @@ function StepRequirements({
+         <div className="grid md:grid-cols-2 gap-4 border-t border-border/40 pt-4">
+           <div>
+-            <label className={label}>Sample quantity *</label>
+-            <input className={input} placeholder="e.g. 2 pcs / style" value={draft.sampleQty ?? ""} onChange={(e) => setField("sampleQty", e.target.value)} />
+-            {errors.sampleQty && <p className="text-xs text-destructive mt-1">{errors.sampleQty}</p>}
++            <label htmlFor={fieldId("sampleQty")} className={label}>Sample quantity *</label>
++            <input {...fieldA11y("sampleQty", errors)} required className={input} placeholder="e.g. 2 pcs / style" value={draft.sampleQty ?? ""} onChange={(e) => setField("sampleQty", e.target.value)} />
++            <FieldError name="sampleQty" errors={errors} />
+           </div>
+@@ -643,9 +678,9 @@ function StepRequirements({
+         <div className="grid md:grid-cols-2 gap-4 border-t border-border/40 pt-4">
+           <div className="md:col-span-2">
+-            <label className={label}>Topic *</label>
+-            <input className={input} placeholder="e.g. AW26 uniform program" value={draft.meetingTopic ?? ""} onChange={(e) => setField("meetingTopic", e.target.value)} />
+-            {errors.meetingTopic && <p className="text-xs text-destructive mt-1">{errors.meetingTopic}</p>}
++            <label htmlFor={fieldId("meetingTopic")} className={label}>Topic *</label>
++            <input {...fieldA11y("meetingTopic", errors)} required className={input} placeholder="e.g. AW26 uniform program" value={draft.meetingTopic ?? ""} onChange={(e) => setField("meetingTopic", e.target.value)} />
++            <FieldError name="meetingTopic" errors={errors} />
+           </div>
+@@ -715,29 +750,29 @@ function StepContact({
+       </div>
+       <div className="grid md:grid-cols-2 gap-4">
+         <div>
+-          <label className={label}>Full name *</label>
+-          <input required autoComplete="name" className={input} value={draft.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
+-          {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
++          <label htmlFor={fieldId("name")} className={label}>Full name *</label>
++          <input {...fieldA11y("name", errors)} required autoComplete="name" className={input} value={draft.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
++          <FieldError name="name" errors={errors} />
+         </div>
+         <div>
+-          <label className={label}>Company *</label>
+-          <input required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
+-          {errors.company && <p className="text-xs text-destructive mt-1">{errors.company}</p>}
++          <label htmlFor={fieldId("company")} className={label}>Company *</label>
++          <input {...fieldA11y("company", errors)} required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
++          <FieldError name="company" errors={errors} />
+         </div>
+         <div>
+-          <label className={label}>Email *</label>
+-          <input required type="email" autoComplete="email" className={input} value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} />
+-          {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
++          <label htmlFor={fieldId("email")} className={label}>Email *</label>
++          <input {...fieldA11y("email", errors)} required type="email" autoComplete="email" className={input} value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} />
++          <FieldError name="email" errors={errors} />
+         </div>
+         <div>
+-          <label className={label}>WhatsApp / phone *</label>
+-          <input required type="tel" autoComplete="tel" className={input} placeholder="+1 555 000 0000" value={draft.whatsapp ?? ""} onChange={(e) => setField("whatsapp", e.target.value)} />
+-          {errors.whatsapp && <p className="text-xs text-destructive mt-1">{errors.whatsapp}</p>}
++          <label htmlFor={fieldId("whatsapp")} className={label}>WhatsApp / phone *</label>
++          <input {...fieldA11y("whatsapp", errors)} required type="tel" autoComplete="tel" className={input} placeholder="+1 555 000 0000" value={draft.whatsapp ?? ""} onChange={(e) => setField("whatsapp", e.target.value)} />
++          <FieldError name="whatsapp" errors={errors} />
+         </div>
+         <div className="md:col-span-2">
+-          <label className={label}>Country *</label>
+-          <input required autoComplete="country-name" className={input} value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
+-          {errors.country && <p className="text-xs text-destructive mt-1">{errors.country}</p>}
++          <label htmlFor={fieldId("country")} className={label}>Country *</label>
++          <input {...fieldA11y("country", errors)} required autoComplete="country-name" className={input} value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
++          <FieldError name="country" errors={errors} />
+         </div>
+       </div>
+@@ -818,12 +853,16 @@ function StepReview({
+       <label className="flex cursor-pointer items-start gap-3 border border-border/60 bg-background/45 p-4 text-sm leading-6">
+         <input
++          id={fieldId("consent")}
++          data-inquiry-field="consent"
+           type="checkbox"
+           checked={draft.consent === true}
+           onChange={(event) => setField("consent", event.target.checked)}
++          aria-invalid={Boolean(errors.consent) || undefined}
++          aria-describedby={errors.consent ? `${fieldId("consent")}-error` : undefined}
+           className="mt-1 h-4 w-4 shrink-0 accent-primary"
+         />
+@@ -832,7 +871,7 @@ function StepReview({
+           </span>
+       </label>
+-      {errors.consent && <p className="text-xs text-destructive" role="alert">{errors.consent}</p>}
++      <FieldError name="consent" errors={errors} />
+       <p className="text-[11px] leading-5 text-foreground/55">
+         Submission is acknowledged on screen and reviewed manually. Follow-up timing depends on the requirement and is not guaranteed until a team member responds.
+       </p>
+diff --git a/src/components/layout/Navbar.tsx b/src/components/layout/Navbar.tsx
+index 4ab02b1..0000000 100644
+--- a/src/components/layout/Navbar.tsx
++++ b/src/components/layout/Navbar.tsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useState } from "react";
++import { useEffect, useRef, useState } from "react";
+@@ -41,6 +41,7 @@ export default function Navbar() {
+   const [scrolled, setScrolled] = useState(false);
+   const [open, setOpen] = useState(false);
++  const menuButtonRef = useRef<HTMLButtonElement>(null);
+@@ -59,7 +60,13 @@ export default function Navbar() {
+     if (!open) return;
+     const previousOverflow = document.body.style.overflow;
+     document.body.style.overflow = "hidden";
+-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
++    const closeOnEscape = (event: KeyboardEvent) => {
++      if (event.key !== "Escape") return;
++      setOpen(false);
++      window.requestAnimationFrame(() => menuButtonRef.current?.focus());
++    };
+@@ -79,6 +86,7 @@ export default function Navbar() {
+   const localizedNavHref = (href: string) => {
+     if (href === "/") return homeHref;
++    if (href === "/#process") return `${homeHref.replace(/\/$/, "")}/#process`;
+     if (href === "/materials") return ROUTES.materials[locale];
+@@ -110,7 +118,7 @@ export default function Navbar() {
+           const label = localizedNavLabel(item.label);
+           return item.anchor
+-            ? <a key={item.href} href={href} hrefLang={locale === "en" ? undefined : "en"} className="min-h-11 inline-flex items-center text-[8px] font-semibold uppercase tracking-[0.15em] text-foreground/72 transition-colors hover:text-primary">{label}</a>
++            ? <a key={item.href} href={href} className="min-h-11 inline-flex items-center text-[8px] font-semibold uppercase tracking-[0.15em] text-foreground/72 transition-colors hover:text-primary">{label}</a>
+@@ -123,7 +131,7 @@ export default function Navbar() {
+         <div className="flex items-center gap-2 lg:hidden">
+           {pathname !== homeHref && <Link to={homeHref} aria-label={copy.home} title={copy.home} className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-primary/35 bg-black/35 text-primary"><Home size={20} /></Link>}
+-          <button type="button" onClick={() => setOpen((value) => !value)} className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-white/15 bg-black/25 text-foreground" aria-label={open ? copy.closeMenu : copy.openMenu} aria-expanded={open} aria-controls="mobile-navigation">{open ? <X size={22} /> : <Menu size={23} />}</button>
++          <button ref={menuButtonRef} type="button" onClick={() => setOpen((value) => !value)} className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-white/15 bg-black/25 text-foreground" aria-label={open ? copy.closeMenu : copy.openMenu} aria-expanded={open} aria-controls="mobile-navigation">{open ? <X size={22} /> : <Menu size={23} />}</button>
+diff --git a/src/components/LanguageSelector.tsx b/src/components/LanguageSelector.tsx
+index 74944bd..0000000 100644
+--- a/src/components/LanguageSelector.tsx
++++ b/src/components/LanguageSelector.tsx
+@@ -42,7 +42,7 @@ export default function LanguageSelector({ className, mobile = false }: Props) {
+             aria-current={active ? "page" : undefined}
+             onClick={() => setExplicitLanguagePreference(locale)}
+             className={cn(
+-              "inline-flex min-h-9 items-center justify-center rounded px-3 text-[9px] font-semibold uppercase tracking-[0.16em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
++              "inline-flex min-h-11 min-w-11 items-center justify-center rounded px-3 text-[9px] font-semibold uppercase tracking-[0.16em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+               active ? "bg-primary text-primary-foreground" : "text-foreground/65 hover:text-primary",
+               mobile && "flex-1",
+diff --git a/src/test/finalBuyerReadinessPolish.test.ts b/src/test/finalBuyerReadinessPolish.test.ts
+new file mode 100644
+index 0000000..0000000
+--- /dev/null
++++ b/src/test/finalBuyerReadinessPolish.test.ts
+@@ -0,0 +1,57 @@
++import { readFileSync } from "node:fs";
++import { describe, expect, it } from "vitest";
++
++const read = (path: string) => readFileSync(path, "utf8");
++
++describe("IA-B2B-E003 final buyer-readiness polish", () => {
++  it("never exposes raw backend errors in the public inquiry flow", () => {
++    const source = read("src/pages/InquiryBase.tsx");
++    expect(source).toContain("SAFE_SUBMISSION_ERROR");
++    expect(source).toContain("Your draft is still saved on this device");
++    expect(source).not.toContain("err instanceof Error ? err.message");
++    expect(source).not.toContain('description: msg');
++  });
++
++  it("moves validation focus and associates errors with inquiry fields", () => {
++    const source = read("src/pages/InquiryBase.tsx");
++    expect(source).toContain('data-inquiry-field');
++    expect(source).toContain('aria-invalid');
++    expect(source).toContain('aria-describedby');
++    expect(source).toContain('role="alert"');
++    expect(source).toContain('document.querySelector<HTMLElement>');
++    for (const field of ["company", "country", "quantity", "sampleQty", "meetingTopic", "name", "email", "whatsapp", "consent"]) {
++      expect(source).toContain(`fieldId("${field}")`);
++    }
++  });
++
++  it("announces wizard state and selection without reducing touch targets", () => {
++    const inquiry = read("src/pages/InquiryBase.tsx");
++    const language = read("src/components/LanguageSelector.tsx");
++    expect(inquiry).toContain('aria-current={active ? "step" : undefined}');
++    expect(inquiry).toContain('aria-pressed={active}');
++    expect(inquiry).toContain('inline-flex min-h-11 items-center');
++    expect(language).toContain('min-h-11 min-w-11');
++  });
++
++  it("keeps localized process navigation in the selected language", () => {
++    const source = read("src/components/layout/Navbar.tsx");
++    expect(source).toContain('if (href === "/#process")');
++    expect(source).toContain('`${homeHref.replace(/\\/$/, "")}/#process`');
++    expect(source).not.toContain('hrefLang={locale === "en" ? undefined : "en"}');
++  });
++
++  it("returns keyboard focus to the mobile menu trigger after Escape", () => {
++    const source = read("src/components/layout/Navbar.tsx");
++    expect(source).toContain('const menuButtonRef = useRef<HTMLButtonElement>(null)');
++    expect(source).toContain('menuButtonRef.current?.focus()');
++    expect(source).toContain('ref={menuButtonRef}');
++  });
++
++  it("preserves the exact five-division product architecture", () => {
++    const source = read("src/data/buyerCapabilities.ts");
++    for (const slug of ["bavarian-trachten-wear", "premium-leather-apparel", "sportswear", "streetwear-activewear", "leisure-nightwear"]) {
++      expect(source).toContain(slug);
++    }
++  });
++});
