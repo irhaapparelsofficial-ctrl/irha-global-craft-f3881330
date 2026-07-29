@@ -3,6 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>document.documentElement.classList.add('irha-js');</script>
+    <style>
+      #irha-app-boot-shell{display:none}
+      .irha-js #irha-static-crawler-shell{display:none!important}
+      .irha-js #irha-app-boot-shell{display:block;min-height:100vh;background:#0a0a0a;color:#f5f1e8;font-family:Arial,sans-serif}
+      .irha-boot-bar{background:linear-gradient(90deg,#121212 20%,#1c1a16 50%,#121212 80%);background-size:220% 100%;animation:irha-boot 1.4s ease-in-out infinite;border-radius:6px}
+      @keyframes irha-boot{0%{background-position:200% 0}100%{background-position:-20% 0}}
+      @media(prefers-reduced-motion:reduce){.irha-boot-bar{animation:none}}
+    </style>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com; script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https:; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests" />
 
     <title>Irha Apparels — Custom B2B Apparel Manufacturer</title>
@@ -57,6 +66,27 @@
   </head>
   <body>
     <div id="root">
+      <div id="irha-app-boot-shell" aria-hidden="true">
+        <div style="height:30px;border-bottom:1px solid #24211b;background:#0d0d0d"></div>
+        <header style="height:74px;border-bottom:1px solid #28241c;display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc((100vw - 1280px)/2))">
+          <div class="irha-boot-bar" style="width:174px;height:22px"></div>
+          <div style="display:flex;gap:12px"><span class="irha-boot-bar" style="width:76px;height:14px"></span><span class="irha-boot-bar" style="width:76px;height:14px"></span><span class="irha-boot-bar" style="width:108px;height:38px"></span></div>
+        </header>
+        <main style="max-width:1280px;margin:0 auto;padding:56px 20px 72px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:44px;align-items:center">
+          <section>
+            <div class="irha-boot-bar" style="width:210px;height:12px;margin-bottom:18px"></div>
+            <div class="irha-boot-bar" style="width:min(580px,94%);height:54px;margin-bottom:12px"></div>
+            <div class="irha-boot-bar" style="width:min(510px,84%);height:54px;margin-bottom:26px"></div>
+            <div class="irha-boot-bar" style="width:min(620px,96%);height:16px;margin-bottom:10px"></div>
+            <div class="irha-boot-bar" style="width:min(520px,82%);height:16px;margin-bottom:28px"></div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap"><span class="irha-boot-bar" style="width:164px;height:48px"></span><span class="irha-boot-bar" style="width:164px;height:48px"></span></div>
+          </section>
+          <section style="min-height:460px;display:grid;grid-template-columns:2fr 1fr;gap:12px">
+            <div class="irha-boot-bar" style="min-height:460px"></div>
+            <div style="display:grid;gap:12px"><div class="irha-boot-bar"></div><div class="irha-boot-bar"></div><div class="irha-boot-bar"></div><div class="irha-boot-bar"></div></div>
+          </section>
+        </main>
+      </div>
       <main id="irha-static-crawler-shell" style="min-height:100vh;background:#0a0a0a;color:#f5f1e8;padding:28px 22px 56px;font-family:Arial,sans-serif;line-height:1.6">
         <div style="max-width:1120px;margin:0 auto">
           <header style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px;padding-bottom:22px;border-bottom:1px solid rgba(232,196,119,.25)">
