@@ -19,6 +19,8 @@ const frenchRoutes = [
   "/fr/fabricant-vetements-sport",
   "/fr/fabricant-vetements-cuir",
   "/fr/fabrication-marque-blanche",
+  "/fr/informations-acheteurs",
+  "/fr/matieres",
 ];
 
 const dutchRoutes = [
@@ -27,6 +29,13 @@ const dutchRoutes = [
   "/nl/sportkleding-fabrikant",
   "/nl/leren-kleding-fabrikant",
   "/nl/private-label-kleding",
+  "/nl/kopersinformatie",
+  "/nl/materialen",
+];
+
+const germanBuyerConfidenceRoutes = [
+  "/de/einkaeufer-informationen",
+  "/de/materialien",
 ];
 
 describe("internationalization foundation", () => {
@@ -36,9 +45,9 @@ describe("internationalization foundation", () => {
     expect(LOCALE_REGISTRY.nl).toMatchObject({ publicationStatus: "published", sitemapEligible: true, hreflangCode: "nl" });
   });
 
-  it("publishes exactly eight German, five French and five Dutch routes", () => {
+  it("publishes the established localized routes plus two buyer-confidence routes per language", () => {
     const routes = getPublishedLocalizedRoutes();
-    expect(routes.filter((route) => route.locale === "de")).toHaveLength(8);
+    expect(routes.filter((route) => route.locale === "de")).toHaveLength(10);
     expect(routes.filter((route) => route.locale === "fr").map((route) => route.path).sort()).toEqual([...frenchRoutes].sort());
     expect(routes.filter((route) => route.locale === "nl").map((route) => route.path).sort()).toEqual([...dutchRoutes].sort());
   });
@@ -59,6 +68,21 @@ describe("internationalization foundation", () => {
     expect(getXDefaultPath("/fr/")).toBe("/");
   });
 
+  it("publishes reciprocal hreflang for genuine buyer-information equivalents", () => {
+    expect(getHreflangAlternates("/fr/matieres")).toEqual([
+      { locale: "en", href: "/materials" },
+      { locale: "de", href: "/de/materialien" },
+      { locale: "fr", href: "/fr/matieres" },
+      { locale: "nl", href: "/nl/materialen" },
+    ]);
+    expect(getEquivalentRoutes("/nl/kopersinformatie").map((route) => route.path)).toEqual([
+      "/buyer-information",
+      "/de/einkaeufer-informationen",
+      "/fr/informations-acheteurs",
+      "/nl/kopersinformatie",
+    ]);
+  });
+
   it("publishes reciprocal hreflang only for genuine sportswear and leather equivalents", () => {
     expect(getHreflangAlternates("/fr/fabricant-vetements-sport")).toEqual([
       { locale: "en", href: "/products/sportswear" },
@@ -77,6 +101,8 @@ describe("internationalization foundation", () => {
     expect(getLanguageDestination("/fr/fabricant-vetements", "en")).toBe("/products");
     expect(getLanguageDestination("/fr/fabricant-vetements", "nl")).toBe("/nl/");
     expect(getLanguageDestination("/products", "fr")).toBe("/fr/");
+    expect(getLanguageDestination("/materials", "de")).toBe("/de/materialien");
+    expect(getLanguageDestination("/nl/kopersinformatie", "fr")).toBe("/fr/informations-acheteurs");
   });
 
   it("suggests reviewed languages without changing the current route", () => {
@@ -86,7 +112,7 @@ describe("internationalization foundation", () => {
     expect(browserPrefersGerman(["de-DE"])).toBe(true);
   });
 
-  it("recognizes every Wave 2 path as a published localized route", () => {
-    for (const path of [...frenchRoutes, ...dutchRoutes]) expect(isPublishedLocalizedRoute(path)).toBe(true);
+  it("recognizes every localized buyer-information path as published", () => {
+    for (const path of [...germanBuyerConfidenceRoutes, ...frenchRoutes, ...dutchRoutes]) expect(isPublishedLocalizedRoute(path)).toBe(true);
   });
 });
