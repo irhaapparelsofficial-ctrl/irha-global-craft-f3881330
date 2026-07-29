@@ -1,16 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { CATEGORY_HERO_MEDIA, HERO_PROGRAMS, categoryHeroImage, topCategorySlugFromPath } from "./heroMedia";
+import { MAIN_CATEGORY_SLUGS } from "./categoryMediaRegistry";
 import { selectEditorialHeroSlides } from "@/components/HeroMediaSlideshow";
 
 describe("sitewide hero media", () => {
   it("defines a curated hero for every live core category", () => {
-    expect(Object.keys(CATEGORY_HERO_MEDIA)).toEqual([
-      "bavarian-trachten-wear",
-      "sportswear",
-      "premium-leather-apparel",
-      "streetwear-activewear",
-      "leisure-nightwear",
-    ]);
+    expect(Object.keys(CATEGORY_HERO_MEDIA)).toEqual([...MAIN_CATEGORY_SLUGS]);
     expect(HERO_PROGRAMS).toHaveLength(5);
     expect(HERO_PROGRAMS.every((program) => Boolean(program.image))).toBe(true);
   });
