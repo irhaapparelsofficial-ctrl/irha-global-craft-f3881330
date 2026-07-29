@@ -40,7 +40,7 @@ describe("polished B2B homepage", () => {
     expect(hero).toContain("object-contain");
     expect(hero).toContain("bg-[#101722]");
     expect(hero.match(/loading="eager"/g)).toHaveLength(1);
-    expect(hero.match(/loading="lazy"/g)).toHaveLength(2);
+    expect(hero.match(/loading="lazy"/g)).toHaveLength(1);
     expect(hero).toContain('data-card-brand="irha-official-crest"');
     expect(categoryMediaRegistry).toContain("SITE_MEDIA_ROOT");
     expect(categoryMediaRegistry).toContain("site-media");
