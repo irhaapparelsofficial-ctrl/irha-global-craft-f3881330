@@ -6,12 +6,15 @@ import { useInquiryCart } from "@/lib/inquiryCart";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
 import LanguageSelector from "@/components/LanguageSelector";
-import { getLocaleGateway, getRouteLocale, SHARED_UI_COPY } from "@/lib/i18nFoundation";
+import { getLocaleGateway, getRouteLocale, SHARED_UI_COPY, type LocaleCode } from "@/lib/i18nFoundation";
+import { ROUTES } from "@/data/buyerCapabilities";
 
 const CORE_NAV: ReadonlyArray<{ label: string; href: string; anchor?: boolean }> = [
   { label: "Home", href: "/" },
   { label: "Products", href: "/products" },
+  { label: "Materials", href: "/materials" },
   { label: "Manufacturing", href: "/manufacturing" },
+  { label: "Buyer information", href: "/buyer-information" },
   { label: "How it works", href: "/#process", anchor: true },
   { label: "Buyer trust", href: "/buyer-trust" },
 ];
@@ -26,6 +29,12 @@ const BRAND_TAGLINE = {
   fr: "Spécialistes de la fabrication",
   nl: "Productiespecialisten",
 } as const;
+const BUYER_NAV_COPY: Record<LocaleCode, { materials: string; information: string }> = {
+  en: { materials: "Materials", information: "Buyer information" },
+  de: { materials: "Materialien", information: "Einkäuferinformationen" },
+  fr: { materials: "Matières", information: "Informations acheteurs" },
+  nl: { materials: "Materialen", information: "Inkopersinformatie" },
+};
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -54,6 +63,8 @@ export default function Navbar() {
   }, [open]);
 
   const localizedNavLabel = (label: string) => {
+    if (label === "Materials") return BUYER_NAV_COPY[locale].materials;
+    if (label === "Buyer information") return BUYER_NAV_COPY[locale].information;
     if (locale === "en") return label;
     if (label === "Home") return copy.home;
     if (label === "Products") return copy.products;
@@ -63,7 +74,12 @@ export default function Navbar() {
     return label;
   };
   const homeHref = getLocaleGateway(locale);
-  const localizedNavHref = (href: string) => href === "/" ? homeHref : href;
+  const localizedNavHref = (href: string) => {
+    if (href === "/") return homeHref;
+    if (href === "/materials") return ROUTES.materials[locale];
+    if (href === "/buyer-information") return ROUTES.buyerInformation[locale];
+    return href;
+  };
   const primaryNavigationLabelId = locale === "en" ? undefined : `${locale}-primary-navigation-label`;
   const mobileNavigationLabelId = locale === "en" ? undefined : `${locale}-mobile-navigation-label`;
   const headerSolid = scrolled || open || pathname !== "/";
@@ -88,12 +104,12 @@ export default function Navbar() {
           <span className="min-w-0 leading-none"><span className="block whitespace-nowrap font-display text-[1.18rem] font-semibold tracking-[0.01em] text-foreground sm:text-[1.45rem]">{PUBLIC_IDENTITY.name}</span><span className="mt-1 block whitespace-nowrap text-[6.5px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[8px] sm:tracking-[0.22em]">{BRAND_TAGLINE[locale]}</span></span>
         </Link>
 
-        <nav className="hidden items-center gap-5 xl:flex" aria-label="Primary navigation" aria-labelledby={primaryNavigationLabelId}>{CORE_NAV.map((item) => {
+        <nav className="hidden items-center gap-4 xl:flex" aria-label="Primary navigation" aria-labelledby={primaryNavigationLabelId}>{CORE_NAV.map((item) => {
           const href = localizedNavHref(item.href);
           const label = localizedNavLabel(item.label);
           return item.anchor
-            ? <a key={item.href} href={href} hrefLang={locale === "en" ? undefined : "en"} className="min-h-11 inline-flex items-center text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/72 transition-colors hover:text-primary">{label}</a>
-            : <NavLink key={item.href} to={href} end={href === homeHref} className={({ isActive }) => cn("min-h-11 inline-flex items-center text-[9px] font-semibold uppercase tracking-[0.18em] transition-colors", isActive ? "text-primary" : "text-foreground/72 hover:text-primary")}>{label}</NavLink>;
+            ? <a key={item.href} href={href} hrefLang={locale === "en" ? undefined : "en"} className="min-h-11 inline-flex items-center text-[8px] font-semibold uppercase tracking-[0.15em] text-foreground/72 transition-colors hover:text-primary">{label}</a>
+            : <NavLink key={item.href} to={href} end={href === homeHref} className={({ isActive }) => cn("min-h-11 inline-flex items-center text-[8px] font-semibold uppercase tracking-[0.15em] transition-colors", isActive ? "text-primary" : "text-foreground/72 hover:text-primary")}>{label}</NavLink>;
         })}</nav>
 
         <div className="hidden items-center gap-2 lg:flex">
