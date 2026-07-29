@@ -7,6 +7,21 @@ const paired = (english: string, german: string) => [
 
 export const GERMAN_BUYER_JOURNEY_PAGES = [
   createGermanBuyerJourneyPage({
+    path: "/de/bavarian-wear",
+    title: "Trachtenhersteller für Großhandel und Eigenmarken | Irha Apparels",
+    description: "Kundenspezifische Trachtenfertigung für Großhändler, Fachhändler und Eigenmarken mit Lederhosen, Dirndl, Hemden, Westen, Accessoires, Größenläufen und Musterfreigabe.",
+    h1: "Trachtenfertigung für Großhandel und Eigenmarken",
+    eyebrow: "DACH · B2B-Trachtenbeschaffung",
+    market: "Deutschland, Österreich und der Schweiz",
+    productFocus: "Lederhosen-, Dirndl- und abgestimmte Trachtenprogramme",
+    categoryPath: "/products/bavarian-trachten-wear",
+    primaryLabel: "Trachtenprojekt anfragen",
+    products: ["Lederhosen mit abgestimmten Hosenträgern", "Dirndl, Blusen und Schürzen", "Trachtenhemden, Westen und Janker", "Hüte, Socken, Gürtel und ausgewählte Accessoires"],
+    specifications: ["Leder- und Stoffrichtung", "Stickerei, Besatz und Komponenten", "Größenlauf und Mengenverteilung", "Eigenmarken-Etiketten und Verpackung"],
+    relatedPaths: ["/de/lederhosen-hersteller", "/de/dirndl-grosshandel", "/de/trachten-private-label", "/products/bavarian-trachten-wear", "/factory-video-call"],
+    alternates: paired("/products/bavarian-trachten-wear", "/de/bavarian-wear"),
+  }),
+  createGermanBuyerJourneyPage({
     path: "/de/lederhosen-hersteller",
     title: "Lederhosen-Hersteller für Deutschland | Großhandel & Private Label",
     description: "Kundenspezifische Lederhosen-Fertigung für deutsche Großhändler, Trachtenhändler und Private-Label-Marken mit abgestimmtem Leder, Stickerei, Größenlauf und Musterfreigabe.",
