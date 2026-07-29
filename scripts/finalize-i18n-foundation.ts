@@ -174,6 +174,10 @@ async function main() {
   await mkdir(dirname(germanOutput), { recursive: true });
   await writeFile(germanOutput, buildGermanEntry(rootTemplate), "utf8");
 
+  const germanBavarianOutput = join(DIST_DIR, "de", "bavarian-wear", "index.html");
+  await mkdir(dirname(germanBavarianOutput), { recursive: true });
+  await writeFile(germanBavarianOutput, rootTemplate, "utf8");
+
   const files = await listHtmlFiles(DIST_DIR);
   for (const file of files) {
     const route = routeFromFile(file);
