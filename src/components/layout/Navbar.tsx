@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { ChevronRight, ClipboardList, Home, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,7 @@ const BUYER_NAV_COPY: Record<LocaleCode, { materials: string; information: strin
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { pathname } = useLocation();
   const locale = getRouteLocale(pathname);
   const copy = SHARED_UI_COPY[locale];
@@ -57,7 +58,11 @@ export default function Navbar() {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+    };
     window.addEventListener("keydown", closeOnEscape);
     return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", closeOnEscape); };
   }, [open]);
@@ -76,6 +81,7 @@ export default function Navbar() {
   const homeHref = getLocaleGateway(locale);
   const localizedNavHref = (href: string) => {
     if (href === "/") return homeHref;
+    if (href === "/#process") return `${homeHref.replace(/\/$/, "")}/#process`;
     if (href === "/materials") return ROUTES.materials[locale];
     if (href === "/buyer-information") return ROUTES.buyerInformation[locale];
     return href;
@@ -108,7 +114,7 @@ export default function Navbar() {
           const href = localizedNavHref(item.href);
           const label = localizedNavLabel(item.label);
           return item.anchor
-            ? <a key={item.href} href={href} hrefLang={locale === "en" ? undefined : "en"} className="min-h-11 inline-flex items-center text-[8px] font-semibold uppercase tracking-[0.15em] text-foreground/72 transition-colors hover:text-primary">{label}</a>
+            ? <a key={item.href} href={href} className="min-h-11 inline-flex items-center text-[8px] font-semibold uppercase tracking-[0.15em] text-foreground/72 transition-colors hover:text-primary">{label}</a>
             : <NavLink key={item.href} to={href} end={href === homeHref} className={({ isActive }) => cn("min-h-11 inline-flex items-center text-[8px] font-semibold uppercase tracking-[0.15em] transition-colors", isActive ? "text-primary" : "text-foreground/72 hover:text-primary")}>{label}</NavLink>;
         })}</nav>
 
@@ -121,7 +127,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2 lg:hidden">
           {pathname !== homeHref && <Link to={homeHref} aria-label={copy.home} title={copy.home} className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-primary/35 bg-black/35 text-primary"><Home size={20} /></Link>}
-          <button type="button" onClick={() => setOpen((value) => !value)} className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-white/15 bg-black/25 text-foreground" aria-label={open ? copy.closeMenu : copy.openMenu} aria-expanded={open} aria-controls="mobile-navigation">{open ? <X size={22} /> : <Menu size={23} />}</button>
+          <button ref={menuButtonRef} type="button" onClick={() => setOpen((value) => !value)} className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-white/15 bg-black/25 text-foreground" aria-label={open ? copy.closeMenu : copy.openMenu} aria-expanded={open} aria-controls="mobile-navigation">{open ? <X size={22} /> : <Menu size={23} />}</button>
         </div>
       </div>
 
