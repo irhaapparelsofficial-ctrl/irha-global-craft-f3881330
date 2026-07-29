@@ -187,7 +187,8 @@ async function readRoute(pathname) {
 }
 
 function verifyBase(pathname, html) {
-  const expectedCanonical = pathname === "/" ? `${SITE}/` : `${SITE}${pathname}`;
+  const isLocaleGateway = /^\/(?:de|fr|nl)$/.test(pathname);
+  const expectedCanonical = pathname === "/" ? `${SITE}/` : isLocaleGateway ? `${SITE}${pathname}/` : `${SITE}${pathname}`;
   assert(titleOf(html), `${pathname} is missing a title`);
   assert(h1Of(html), `${pathname} is missing an H1`);
   assert(canonicalOf(html) === expectedCanonical, `${pathname} canonical mismatch: ${canonicalOf(html)}`);
