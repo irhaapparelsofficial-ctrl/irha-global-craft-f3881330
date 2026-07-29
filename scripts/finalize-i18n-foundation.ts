@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { GERMAN_GATEWAY_CONTENT } from "../src/lib/germanGatewayContent";
 import {
@@ -175,8 +175,11 @@ async function main() {
   await writeFile(germanOutput, buildGermanEntry(rootTemplate), "utf8");
 
   const germanBavarianOutput = join(DIST_DIR, "de", "bavarian-wear", "index.html");
-  await mkdir(dirname(germanBavarianOutput), { recursive: true });
-  await writeFile(germanBavarianOutput, rootTemplate, "utf8");
+  const germanBavarianExists = await access(germanBavarianOutput).then(() => true).catch(() => false);
+  if (!germanBavarianExists) {
+    await mkdir(dirname(germanBavarianOutput), { recursive: true });
+    await writeFile(germanBavarianOutput, rootTemplate, "utf8");
+  }
 
   const files = await listHtmlFiles(DIST_DIR);
   for (const file of files) {
