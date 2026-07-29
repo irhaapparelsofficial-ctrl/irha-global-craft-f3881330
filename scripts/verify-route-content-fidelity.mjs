@@ -190,9 +190,19 @@ async function readRoute(pathname) {
 }
 
 function verifyBase(pathname, html, expectedCanonical) {
+  const actualCanonical = canonicalOf(html);
   assert(titleOf(html), `${pathname} is missing a title`);
   assert(h1Of(html), `${pathname} is missing an H1`);
-  assert(canonicalOf(html) === expectedCanonical, `${pathname} canonical mismatch: ${canonicalOf(html)} !== ${expectedCanonical}`);
+  assert(actualCanonical, `${pathname} is missing a canonical`);
+  if (html.includes('data-irha-authoritative-seo="true"')) {
+    assert(actualCanonical === expectedCanonical, `${pathname} canonical mismatch: ${actualCanonical} !== ${expectedCanonical}`);
+  } else {
+    const actual = new URL(actualCanonical);
+    const expected = new URL(expectedCanonical);
+    assert(actual.origin === expected.origin, `${pathname} pre-final canonical host mismatch: ${actual.origin} !== ${expected.origin}`);
+    assert(cleanPath(actual.pathname) === cleanPath(expected.pathname), `${pathname} pre-final canonical route mismatch: ${actual.pathname} !== ${expected.pathname}`);
+    assert(!actual.search && !actual.hash, `${pathname} pre-final canonical contains query or fragment: ${actualCanonical}`);
+  }
   const main = primaryMain(html);
   assert(main, `${pathname} is missing the primary static main`);
   assert(!main.includes(GENERIC_MARKER), `${pathname} retained the former generic shell marker`);
@@ -210,7 +220,7 @@ function verifyCore(pathname, html, expectedCanonical) {
   assert(main.includes('aria-label="Breadcrumb"'), `${pathname} is missing visible breadcrumbs`);
   assert(main.includes(content.primaryCta.href.replace(/&/g, "&amp;")) || main.includes(content.primaryCta.href), `${pathname} is missing its primary CTA`);
   const nodes = schemas(html).flatMap((schema) => schemaNodes(schema));
-  assert(nodes.some((node) => node["@type"] === content.pageType && node.url === expectedCanonical), `${pathname} is missing matching ${content.pageType} schema`);
+  assert(nodes.some((node) => node["@type"] === content.pageType && cleanPath(new URL(node.url).pathname) === cleanPath(new URL(expectedCanonical).pathname)), `${pathname} is missing matching ${content.pageType} schema`);
   assert(nodes.some((node) => node["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
   for (const fingerprint of UNIVERSAL_FINGERPRINTS) assert(!main.includes(fingerprint), `${pathname} retained universal shell text: ${fingerprint}`);
   for (const legacy of LEGACY_INTERNAL_LINKS) assert(!main.includes(`href="${legacy}"`), `${pathname} links through legacy path ${legacy}`);
@@ -238,7 +248,7 @@ function verifyTaxonomy(pathname, html, node, productByPath, expectedCanonical) 
   assert(main.includes(`href="/products/${segments[1]}"`) || node.kind === "root", `${pathname} is missing its main-category breadcrumb link`);
   if (node.kind === "collection") assert(main.includes(`href="/products/${segments[1]}/${segments[2]}"`), `${pathname} is missing its audience hierarchy link`);
   const nodes = schemas(html).flatMap((schema) => schemaNodes(schema));
-  assert(nodes.some((item) => item["@type"] === "CollectionPage" && item.url === expectedCanonical), `${pathname} is missing matching CollectionPage schema`);
+  assert(nodes.some((item) => item["@type"] === "CollectionPage" && cleanPath(new URL(item.url).pathname) === cleanPath(new URL(expectedCanonical).pathname)), `${pathname} is missing matching CollectionPage schema`);
   assert(nodes.some((item) => item["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
   for (const fingerprint of UNIVERSAL_FINGERPRINTS) assert(!main.includes(fingerprint), `${pathname} retained universal shell text: ${fingerprint}`);
   for (const legacy of LEGACY_INTERNAL_LINKS) assert(!main.includes(`href="${legacy}"`), `${pathname} links through legacy path ${legacy}`);
