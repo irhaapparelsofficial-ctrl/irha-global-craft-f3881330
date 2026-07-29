@@ -54,6 +54,14 @@ export type LocalizedRouteRecord = {
 const PUBLISHED: TranslationPublicationStatus = "published";
 
 export const LOCALIZED_ROUTE_REGISTRY: readonly LocalizedRouteRecord[] = [
+  { path: "/materials", locale: "en", equivalentGroup: "buyer-material-library", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/materials" },
+  { path: "/de/materialien", locale: "de", equivalentGroup: "buyer-material-library", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/materials" },
+  { path: "/fr/matieres", locale: "fr", equivalentGroup: "buyer-material-library", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/materials" },
+  { path: "/nl/materialen", locale: "nl", equivalentGroup: "buyer-material-library", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/materials" },
+  { path: "/buyer-information", locale: "en", equivalentGroup: "buyer-business-information", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/buyer-information" },
+  { path: "/de/einkaeufer-informationen", locale: "de", equivalentGroup: "buyer-business-information", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/buyer-information" },
+  { path: "/fr/informations-acheteurs", locale: "fr", equivalentGroup: "buyer-business-information", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/buyer-information" },
+  { path: "/nl/kopersinformatie", locale: "nl", equivalentGroup: "buyer-business-information", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/buyer-information" },
   { path: "/de/", locale: "de", equivalentGroup: "german-gateway", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/" },
   { path: "/products/bavarian-trachten-wear", locale: "en", equivalentGroup: "bavarian-trachten", publicationStatus: PUBLISHED, sitemapEligible: false, indexable: true, preferredEnglishPath: "/products/bavarian-trachten-wear" },
   { path: "/de/bavarian-wear", locale: "de", equivalentGroup: "bavarian-trachten", publicationStatus: PUBLISHED, sitemapEligible: true, indexable: true, preferredEnglishPath: "/products/bavarian-trachten-wear" },
