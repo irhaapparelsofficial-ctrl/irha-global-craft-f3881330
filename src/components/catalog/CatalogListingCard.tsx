@@ -15,6 +15,18 @@ import {
 const PRODUCT_SIZES = "(max-width: 519px) 92vw, (max-width: 767px) 46vw, (max-width: 1279px) 31vw, 23vw";
 const COLLECTION_SIZES = "(max-width: 639px) 92vw, (max-width: 1023px) 46vw, 31vw";
 
+function CardBrandMark() {
+  return (
+    <span
+      className="pointer-events-none absolute bottom-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-black/60 p-1 shadow-sm backdrop-blur-sm sm:h-8 sm:w-8"
+      aria-hidden="true"
+      data-card-brand="irha-official-crest"
+    >
+      <img src="/favicon.svg" alt="" className="h-full w-full object-contain" loading="lazy" decoding="async" />
+    </span>
+  );
+}
+
 type ProductCatalogCardProps = {
   href: string;
   name: string;
@@ -32,8 +44,8 @@ export function ProductCatalogCard({
   image,
   originalImage,
   eyebrow,
-  note = "Catalogue reference · not production proof",
-  badge = "Digital reference",
+  note,
+  badge,
   actions,
 }: ProductCatalogCardProps) {
   return (
@@ -46,7 +58,7 @@ export function ProductCatalogCard({
           <ThumbnailImage
             src={image}
             originalSrc={originalImage}
-            alt={`Digital catalogue reference for ${name}`}
+            alt={`${name} product style`}
             loading="lazy"
             decoding="async"
             width={960}
@@ -54,9 +66,12 @@ export function ProductCatalogCard({
             sizes={PRODUCT_SIZES}
             className="relative h-full w-full object-contain p-3 transition-transform duration-500 group-hover:scale-[1.025] motion-reduce:transition-none"
           />
-          <span className="absolute left-3 top-3 rounded-full border border-primary/35 bg-black/75 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.15em] text-primary backdrop-blur">
-            {badge}
-          </span>
+          {badge && (
+            <span className="absolute left-3 top-3 rounded-full border border-primary/35 bg-black/75 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.15em] text-primary backdrop-blur">
+              {badge}
+            </span>
+          )}
+          <CardBrandMark />
         </CatalogCardMedia>
       </Link>
       <CatalogCardBody>
@@ -64,9 +79,11 @@ export function ProductCatalogCard({
         <Link to={href} className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <CatalogCardTitle>{name}</CatalogCardTitle>
         </Link>
-        <CatalogCardDescription className="line-clamp-2 text-[9px] leading-4 text-foreground/48">
-          {note}
-        </CatalogCardDescription>
+        {note && (
+          <CatalogCardDescription className="line-clamp-2 text-[9px] leading-4 text-foreground/48">
+            {note}
+          </CatalogCardDescription>
+        )}
         {actions && <CatalogCardActions>{actions}</CatalogCardActions>}
       </CatalogCardBody>
     </CatalogCard>
@@ -102,7 +119,7 @@ export function CollectionCatalogCard({
           <ThumbnailImage
             src={image}
             originalSrc={originalImage}
-            alt={`Digital catalogue reference for ${name}`}
+            alt={`${name} collection`}
             loading="lazy"
             decoding="async"
             width={960}
@@ -110,9 +127,7 @@ export function CollectionCatalogCard({
             sizes={COLLECTION_SIZES}
             className="relative h-full w-full object-contain p-3 transition-transform duration-500 group-hover:scale-[1.025] motion-reduce:transition-none"
           />
-          <span className="absolute bottom-3 left-3 rounded-full border border-white/15 bg-black/75 px-2.5 py-1 text-[7px] uppercase tracking-[0.14em] text-white/80">
-            Digital reference
-          </span>
+          <CardBrandMark />
         </CatalogCardMedia>
         <CatalogCardBody>
           <CatalogCardEyebrow>{typeof count === "number" ? `${count} styles` : "Product category"}</CatalogCardEyebrow>

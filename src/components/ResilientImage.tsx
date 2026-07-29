@@ -30,6 +30,7 @@ export default function ResilientImage({
   responsive = true,
   className,
   style,
+  alt,
   ...props
 }: ResilientImageProps) {
   const candidates = useMemo(
@@ -105,6 +106,7 @@ export default function ResilientImage({
     <img
       {...props}
       src={currentSource}
+      alt={controlledFallbackActive ? "Irha Apparels" : alt}
       srcSet={useResponsiveSet ? srcSet || responsiveAttributes.srcSet : undefined}
       sizes={useResponsiveSet ? sizes || DEFAULT_RESPONSIVE_SIZES : sizes}
       loading={loading}
@@ -117,12 +119,22 @@ export default function ResilientImage({
       onError={handleError}
       aria-busy={imageState === "requested" || imageState === "loading" ? "true" : undefined}
       className={className}
-      style={{ ...style, visibility: visible ? "visible" : "hidden" }}
+      style={{
+        ...style,
+        visibility: visible ? "visible" : "hidden",
+        ...(controlledFallbackActive ? {
+          objectFit: "contain",
+          objectPosition: "center",
+          background: "linear-gradient(145deg, #111820, #090b0e)",
+          padding: "18%",
+        } : {}),
+      }}
       data-managed-image="true"
       data-image-state={imageState}
       data-responsive-image={useResponsiveSet ? "true" : undefined}
       data-responsive-fallback={responsiveFailed ? "true" : undefined}
       data-fallback-active={controlledFallbackActive ? "true" : undefined}
+      data-brand-fallback={controlledFallbackActive ? "irha-official-crest" : undefined}
     />
   );
 }
