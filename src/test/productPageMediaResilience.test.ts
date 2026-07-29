@@ -27,9 +27,9 @@ describe("Product-page media resilience and mobile presentation", () => {
     expect(finder).toContain("md:sticky md:top-20");
     expect(finder).toContain("ProductCatalogCard");
     expect(finder).toContain("pb-32 pt-8");
+    expect(finder).toContain("View product");
     expect(listing).toContain("object-contain");
     expect(listing).toContain("min-h-11");
-    expect(listing).toContain("View product");
   });
 
   it("keeps the floating contact dock compact on product detail pages", () => {
