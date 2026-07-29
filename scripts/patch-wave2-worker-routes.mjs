@@ -10,11 +10,15 @@ const wave2Routes = [
   "/fr/fabricant-vetements-sport",
   "/fr/fabricant-vetements-cuir",
   "/fr/fabrication-marque-blanche",
+  "/fr/informations-acheteurs",
+  "/fr/matieres",
   "/nl/",
   "/nl/kledingfabrikant",
   "/nl/sportkleding-fabrikant",
   "/nl/leren-kleding-fabrikant",
   "/nl/private-label-kleding",
+  "/nl/kopersinformatie",
+  "/nl/materialen",
 ];
 
 let worker = await readFile(workerPath, "utf8");
@@ -51,7 +55,7 @@ for (const route of wave2Routes) {
     throw new Error(`Wave 2 sitemap route must appear exactly once: ${route}`);
   }
 }
-if (finalLocations.length !== 421) throw new Error(`Expected 421 pre-finalizer sitemap URLs after Wave 2 append; found ${finalLocations.length}`);
+if (finalLocations.length !== 425) throw new Error(`Expected 425 pre-finalizer sitemap URLs after localized append; found ${finalLocations.length}`);
 await writeFile(sitemapPath, sitemap, "utf8");
 
-console.log("Patched Cloudflare worker and appended 10 French/Dutch sitemap routes");
+console.log("Patched Cloudflare worker and appended 14 French/Dutch sitemap routes");
