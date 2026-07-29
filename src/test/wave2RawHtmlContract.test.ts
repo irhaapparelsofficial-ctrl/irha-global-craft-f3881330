@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const routes = [
-  "/fr/", "/fr/fabricant-vetements", "/fr/fabricant-vetements-sport", "/fr/fabricant-vetements-cuir", "/fr/fabrication-marque-blanche",
-  "/nl/", "/nl/kledingfabrikant", "/nl/sportkleding-fabrikant", "/nl/leren-kleding-fabrikant", "/nl/private-label-kleding",
+  "/fr/", "/fr/fabricant-vetements", "/fr/fabricant-vetements-sport", "/fr/fabricant-vetements-cuir", "/fr/fabrication-marque-blanche", "/fr/informations-acheteurs", "/fr/matieres",
+  "/nl/", "/nl/kledingfabrikant", "/nl/sportkleding-fabrikant", "/nl/leren-kleding-fabrikant", "/nl/private-label-kleding", "/nl/kopersinformatie", "/nl/materialen",
 ];
 
 describe("Wave 2 raw HTML and edge contracts", () => {
@@ -16,10 +16,10 @@ describe("Wave 2 raw HTML and edge contracts", () => {
     expect(generator).toContain("Application JavaScript leaked into static buyer page");
   });
 
-  it("locks sitemap output to 418 URLs and exact locale counts", () => {
+  it("locks sitemap output to 426 URLs and exact locale counts", () => {
     const finalizer = readFileSync("scripts/finalize-i18n-foundation.ts", "utf8");
-    expect(finalizer).toContain("EXPECTED_SITEMAP_URLS = 418");
-    expect(finalizer).toContain("{ de: 8, fr: 5, nl: 5 }");
+    expect(finalizer).toContain("EXPECTED_SITEMAP_URLS = 426");
+    expect(finalizer).toContain("{ de: 10, fr: 7, nl: 7 }");
     for (const route of routes) expect(readFileSync("src/lib/i18nFoundation.ts", "utf8")).toContain(`path: "${route}"`);
   });
 
