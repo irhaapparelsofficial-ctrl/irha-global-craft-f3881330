@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const homeSource = readFileSync("src/pages/Home.tsx", "utf8");
 const categorySource = readFileSync("src/components/sections/HomeCategoryUniverse.tsx", "utf8");
+const resolverSource = readFileSync("src/hooks/useCanonicalCategoryMedia.ts", "utf8");
 const layoutSource = readFileSync("src/components/layout/Layout.tsx", "utf8");
 const deferredSource = readFileSync("src/components/performance/ViewportDeferred.tsx", "utf8");
 const settingsSource = readFileSync("src/hooks/useSiteSettings.ts", "utf8");
@@ -28,14 +29,16 @@ describe("homepage critical-path performance contract", () => {
     expect(categorySource).not.toContain("usePublicCatalogTree");
     expect(categorySource).not.toContain("usePublicCatalog");
     expect(categorySource).toContain("Made-to-order program");
-    expect(categorySource).toContain("PROGRAMS.map");
+    expect(categorySource).toContain("MAIN_CATEGORY_SLUGS.map");
+    expect(categorySource).toContain("useCanonicalCategoryMedia");
+    expect(resolverSource).toContain("useHomepageMedia");
   });
 
   it("gates footer and both support channels by interaction or a bounded fallback", () => {
     expect(layoutSource).toContain('const Footer = lazy(() => import("./Footer"))');
     expect(layoutSource).toContain('const loadGuide = () => import("@/components/LiveChat")');
     expect(layoutSource).toContain('const loadHumanLiveChat = () => import("@/components/HumanLiveChat")');
-    expect(layoutSource).toContain('const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock"))');
+    expect(layoutSource).toContain('const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock")');
     expect(layoutSource).toContain('<ViewportDeferred minHeight={520} rootMargin="600px 0px" fallbackDelayMs={30_000}>');
     expect(layoutSource).toContain('window.addEventListener("pointerdown", activate');
     expect(layoutSource).toContain("window.setTimeout(activate, 8_000)");
