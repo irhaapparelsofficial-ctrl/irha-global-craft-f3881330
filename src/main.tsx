@@ -2,10 +2,9 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import "./index.css";
-import { allowStaticShellPaint } from "@/lib/staticShellPaint";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
-const CACHE_HEAL_VERSION = "2026-07-13-v2";
+const CACHE_HEAL_VERSION = "2026-07-29-v3";
 const INITIAL_ROUTE_PRELOAD_TIMEOUT_MS = 1_800;
 const CRITICAL_BUYER_INTENT_PATHS = new Set([
   "/de/bekleidungshersteller-deutschland",
@@ -34,8 +33,8 @@ async function healLegacyClientCacheOnce() {
   try {
     alreadyHealed = localStorage.getItem(CACHE_HEAL_KEY) === CACHE_HEAL_VERSION;
   } catch {
-    // Storage can be unavailable in hardened/privacy contexts. In that rare case,
-    // run the cleanup for this page load rather than risking a permanently stale client.
+    // Storage can be unavailable in hardened/privacy contexts. Run the cleanup
+    // for this navigation rather than leaving an obsolete worker in control.
   }
 
   if (alreadyHealed) return;
@@ -54,7 +53,7 @@ async function healLegacyClientCacheOnce() {
     try {
       localStorage.setItem(CACHE_HEAL_KEY, CACHE_HEAL_VERSION);
     } catch {
-      // Ignore storage failures; the application must still render.
+      // Buyer rendering must not depend on storage availability.
     }
   }
 }
@@ -92,9 +91,10 @@ async function bootstrap() {
   const rootElement = document.getElementById("root");
   if (!rootElement) throw new Error("Irha application root is missing");
 
-  // Keep the route-specific static HTML visible while the critical page chunk
-  // downloads. This avoids replacing useful content with a loading spinner and
-  // lets the browser paint the crawler-ready H1 before React takes over.
+  // The static route shell remains available to no-script clients and crawlers,
+  // but critical CSS hides it as soon as JavaScript is detected. While the first
+  // route chunk downloads, buyers see the current branded boot frame rather than
+  // an obsolete page that React later replaces.
   const initialRoute = preloadInitialRoute(normalizedPathname());
   if (initialRoute) {
     await Promise.race([
@@ -102,9 +102,7 @@ async function bootstrap() {
       delay(INITIAL_ROUTE_PRELOAD_TIMEOUT_MS),
     ]);
   }
-  await allowStaticShellPaint();
 
-  rootElement.replaceChildren();
   createRoot(rootElement).render(
     <AppErrorBoundary>
       <App />
