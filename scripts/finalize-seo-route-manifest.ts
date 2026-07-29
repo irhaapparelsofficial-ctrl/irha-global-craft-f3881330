@@ -60,6 +60,9 @@ export type SeoRouteEntry = {
   bodyText?: string;
   image?: string | null;
   productReference?: string;
+  primaryQuery?: string;
+  supportingQueries?: string[];
+  searchIntent?: string;
 };
 
 type CatalogManifest = {
@@ -482,9 +485,12 @@ function addCatalogRoutes(routes: Map<string, SeoRouteEntry>, products: BuyerRea
       parentPath,
       redirectPredecessors: REDIRECT_PREDECESSORS[product.canonical_path] ?? [],
       lastmod: product.updated_at || null,
-      bodyText: product.product_description || product.short_description || undefined,
+      bodyText: product.body_text || product.product_description || product.short_description || undefined,
       image: product.image_url,
       productReference: product.reference_code,
+      primaryQuery: product.primary_query,
+      supportingQueries: product.supporting_queries,
+      searchIntent: product.query_intent,
     });
     routes.set(route.path, route);
   }
