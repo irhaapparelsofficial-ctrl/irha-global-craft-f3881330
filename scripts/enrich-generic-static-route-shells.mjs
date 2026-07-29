@@ -13,7 +13,13 @@ const PRODUCT_SHELL = 'data-irha-product-shell="true"';
 const EXPECTED_PRODUCT_SHELLS = 254;
 const EXPECTED_TAXONOMY_SHELLS = 105;
 const EXPECTED_CORE_SHELLS = CORE_ROUTE_PATHS.length;
-const SPECIALIZED_PATHS = new Set(["/de/bavarian-wear", "/blog"]);
+const SPECIALIZED_PATHS = new Set([
+  "/de",
+  "/fr",
+  "/nl",
+  "/de/bavarian-wear",
+  "/blog",
+]);
 const SPECIALIZED_PREFIXES = ["/markets/", "/blog/"];
 const UNIVERSAL_FINGERPRINTS = [
   "Five specialist apparel categories.",
