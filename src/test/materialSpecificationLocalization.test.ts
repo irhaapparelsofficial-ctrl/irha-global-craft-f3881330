@@ -6,6 +6,7 @@ import { MATERIAL_TECHNICAL_SOURCE_COUNT, localizedMaterialSpecification } from 
 
 const localized = ["de", "fr", "nl"] as const;
 const generatorSource = readFileSync(resolve("scripts/generate-buyer-confidence-route-shells.ts"), "utf8");
+const runtimeSource = readFileSync(resolve("src/pages/BuyerConfidence.tsx"), "utf8");
 
 describe("localized material technical specifications", () => {
   it("covers every unique composition and weight source string", () => {
@@ -30,5 +31,13 @@ describe("localized material technical specifications", () => {
   it("uses localized technical values in all eight static route shells", () => {
     expect(generatorSource).toContain("localizedMaterialSpecification(material, locale)");
     expect(generatorSource).toContain("Generated 8 source-backed buyer-confidence static route shells");
+  });
+
+  it("uses the same localized technical values after React hydration", () => {
+    expect(runtimeSource).toContain("const specification = localizedMaterialSpecification(material, locale)");
+    expect(runtimeSource).toContain("value={specification.composition}");
+    expect(runtimeSource).toContain("value={specification.weight}");
+    expect(runtimeSource).not.toContain("value={material.composition}");
+    expect(runtimeSource).not.toContain("value={material.weight}");
   });
 });
