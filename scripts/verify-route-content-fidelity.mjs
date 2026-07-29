@@ -145,8 +145,8 @@ function routeMap(products) {
     const audiencePath = `${rootPath}/${product.audience_slug}`;
     const collectionPath = `${audiencePath}/${product.product_type_slug}`;
     const root = upsert(rootPath, { kind: "root", rootName: product.main_category_name });
-    const audience = upsert(routes, audiencePath, { kind: "audience", rootName: product.main_category_name, audienceName: product.audience_name });
-    const collection = upsert(routes, collectionPath, { kind: "collection", rootName: product.main_category_name, audienceName: product.audience_name, collectionName: product.product_type_name });
+    const audience = upsert(audiencePath, { kind: "audience", rootName: product.main_category_name, audienceName: product.audience_name });
+    const collection = upsert(collectionPath, { kind: "collection", rootName: product.main_category_name, audienceName: product.audience_name, collectionName: product.product_type_name });
     for (const node of [root, audience, collection]) {
       node.productCount += 1;
       node.products.add(product.canonical_path);
