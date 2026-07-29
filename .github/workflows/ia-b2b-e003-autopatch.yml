@@ -1,0 +1,63 @@
+name: IA-B2B-E003 Focused Autopatch
+
+on:
+  push:
+    branches:
+      - ia-b2b-e003-final-buyer-readiness
+    paths:
+      - automation/ia-b2b-e003.patch
+      - .github/workflows/ia-b2b-e003-autopatch.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ia-b2b-e003-autopatch
+  cancel-in-progress: false
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout focused branch
+        uses: actions/checkout@v4
+        with:
+          ref: ia-b2b-e003-final-buyer-readiness
+          fetch-depth: 0
+
+      - name: Apply exact focused patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check automation/ia-b2b-e003.patch
+          git apply automation/ia-b2b-e003.patch
+          rm automation/ia-b2b-e003.patch
+          rm .github/workflows/ia-b2b-e003-autopatch.yml
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify focused implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx vitest run src/test/finalBuyerReadinessPolish.test.ts src/test/buyerReadinessContracts.test.ts --reporter=verbose
+          npx eslint src/pages/InquiryBase.tsx src/components/layout/Navbar.tsx src/components/LanguageSelector.tsx src/test/finalBuyerReadinessPolish.test.ts
+
+      - name: Commit verified implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Irha Release Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(b2b): close final inquiry and navigation polish"
+          git push origin HEAD:ia-b2b-e003-final-buyer-readiness
