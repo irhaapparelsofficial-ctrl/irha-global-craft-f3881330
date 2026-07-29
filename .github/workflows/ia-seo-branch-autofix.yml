@@ -1,0 +1,56 @@
+name: IA SEO branch source correction
+
+on:
+  push:
+    branches: [ia-seo-master-final]
+
+permissions:
+  contents: write
+
+jobs:
+  correct:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ia-seo-master-final
+          fetch-depth: 0
+      - name: Apply exact corrections
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          finalizer = Path('scripts/finalize-seo-route-manifest.ts')
+          text = finalizer.read_text()
+          replacements = {
+              '.replace(/[\\*_~]/g, "")': '.replace(/[*_~]/g, "")',
+              '.replace(/\\"/g, "&quot;")': '.replace(/"/g, "&quot;")',
+              'if (!record.indexable || !record.sitemapEligible) continue;\n    const path = cleanPath(record.path);': 'if (!record.indexable) continue;\n    const path = cleanPath(record.path);',
+              '      continue;\n    }\n    const seed = localizedSeed(path);': '      continue;\n    }\n    if (!record.sitemapEligible) continue;\n    const seed = localizedSeed(path);',
+              '  if (path.includes("einkaeufer") || path.includes("informations-acheteurs") || path.includes("kopersinformatie")) return { title: "Buyer Information | Irha Apparels", description: "Localized buyer information for quotation, logistics, confidentiality and compliance-readiness review.", h1: "Buyer Information", component: "BuyerConfidence", type: "buyer-information" as SeoRouteType };': '''  if (path.endsWith("/einkaeufer-informationen")) return { title: "Informationen für Einkäufer | Logistik, NDA und Auftragsplanung | Irha Apparels", description: "Informationen zu Angebotsangaben, Incoterms, Vertraulichkeit, Nachhaltigkeitsoptionen und Compliance-Prüfung für B2B-Einkäufer.", h1: "Informationen für Einkäufer", component: "BuyerConfidence", type: "buyer-information" as SeoRouteType };
+  if (path.endsWith("/informations-acheteurs")) return { title: "Informations acheteurs | Logistique, NDA et préparation des commandes | Irha Apparels", description: "Informations sur les devis, Incoterms, la confidentialité, les options de durabilité et la préparation à la conformité pour les acheteurs B2B.", h1: "Informations pour les acheteurs", component: "BuyerConfidence", type: "buyer-information" as SeoRouteType };
+  if (path.endsWith("/kopersinformatie")) return { title: "Kopersinformatie | Logistiek, NDA en orderplanning | Irha Apparels", description: "Informatie over offertegegevens, Incoterms, vertrouwelijkheid, duurzaamheidsopties en compliancevoorbereiding voor B2B-inkopers.", h1: "Informatie voor inkopers", component: "BuyerConfidence", type: "buyer-information" as SeoRouteType };''',
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'missing finalizer patch point: {old[:80]}')
+              text = text.replace(old, new, 1)
+          finalizer.write_text(text)
+
+          acceptance = Path('scripts/apply-authoritative-seo-manifest.ts')
+          text = acceptance.read_text()
+          old = 'const RESTRICTED_CLAIM_PATTERN = /\\b(certified|certification|award-winning|largest|leading manufacturer|guaranteed lead time|fixed MOQ|in stock|sale price)\\b/i;'
+          new = 'const RESTRICTED_CLAIM_PATTERN = /\\b(award-winning|largest|leading manufacturer|guaranteed lead time|fixed MOQ|in stock|sale price)\\b/i;'
+          if old not in text:
+              raise SystemExit('missing acceptance claim-pattern patch point')
+          acceptance.write_text(text.replace(old, new, 1))
+
+          Path('.github/workflows/ia-seo-branch-autofix.yml').unlink()
+          PY
+      - name: Commit corrected sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/finalize-seo-route-manifest.ts scripts/apply-authoritative-seo-manifest.ts .github/workflows/ia-seo-branch-autofix.yml
+          git commit -m "fix(seo): correct manifest lint and localized equivalence"
+          git push origin HEAD:ia-seo-master-final
