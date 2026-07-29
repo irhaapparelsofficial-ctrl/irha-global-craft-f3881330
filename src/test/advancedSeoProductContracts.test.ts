@@ -23,6 +23,10 @@ describe("advanced product SEO and AEO contracts", () => {
     expect(manifest).toContain("primaryQueries.has");
     expect(manifest).toContain("seo-query-to-url-map.json");
     expect(manifest).toContain("External demand metrics are maintained separately and must never be fabricated.");
+    expect(manifest).toContain("MEASURED_SEED_RESEARCH");
+    expect(manifest).toContain("estimatedDemand: null");
+    expect(manifest).toContain("currentRankingUrl: null");
+    expect(manifest).toContain("measurementStatus");
   });
 
   it("fails release generation on materially duplicated or thin product content", () => {
