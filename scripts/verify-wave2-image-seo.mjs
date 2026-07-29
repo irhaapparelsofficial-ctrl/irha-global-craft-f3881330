@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 const DIST_DIR = resolve(process.env.IRHA_DIST_DIR || "dist");
 const HOLD_DIR = resolve(".wave2-image-seo-hold");
 const SITEMAP_PATH = join(DIST_DIR, "sitemap.xml");
+const XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml";
 const TEMPORARY_PATHS = new Set([
   "/de/",
   "/fr/",
@@ -26,6 +27,24 @@ async function exists(path) {
   } catch {
     return false;
   }
+}
+
+function ensureSitemapNamespaces(xml) {
+  const rootPattern = /<urlset\b([^>]*)>/i;
+  const root = xml.match(rootPattern)?.[0];
+  if (!root) throw new Error("Sitemap has no urlset root before image verification");
+  let nextRoot = root;
+  if (!/\bxmlns:image="http:\/\/www\.google\.com\/schemas\/sitemap-image\/1\.1"/i.test(nextRoot)) {
+    throw new Error("Sitemap image namespace is missing before image verification");
+  }
+  if (/\bxhtml:/i.test(xml) && !/\bxmlns:xhtml="http:\/\/www\.w3\.org\/1999\/xhtml"/i.test(nextRoot)) {
+    nextRoot = nextRoot.replace(/>$/, ` xmlns:xhtml="${XHTML_NAMESPACE}">`);
+  }
+  const output = xml.replace(rootPattern, nextRoot);
+  if (/\bxhtml:/i.test(output) && !output.includes(`xmlns:xhtml="${XHTML_NAMESPACE}"`)) {
+    throw new Error("Sitemap hreflang namespace could not be restored");
+  }
+  return output;
 }
 
 function stripTemporarySitemapRoutes(xml) {
@@ -56,10 +75,11 @@ function runVerifier() {
 
 await rm(HOLD_DIR, { recursive: true, force: true });
 await mkdir(HOLD_DIR, { recursive: true });
-const originalSitemap = await readFile(SITEMAP_PATH, "utf8");
+const originalSitemap = ensureSitemapNamespaces(await readFile(SITEMAP_PATH, "utf8"));
 const moved = [];
 
 try {
+  await writeFile(SITEMAP_PATH, originalSitemap, "utf8");
   for (const locale of ["fr", "nl"]) {
     const source = join(DIST_DIR, locale);
     if (await exists(join(source, "index.html"))) {
@@ -87,4 +107,4 @@ try {
   await rm(HOLD_DIR, { recursive: true, force: true });
 }
 
-console.log(`Verified image SEO against the authoritative manifest with ${TEMPORARY_PATHS.size} localized routes held for final i18n processing`);
+console.log(`Verified image SEO against the authoritative manifest with ${TEMPORARY_PATHS.size} localized routes held for final i18n processing and hreflang namespace preserved`);
