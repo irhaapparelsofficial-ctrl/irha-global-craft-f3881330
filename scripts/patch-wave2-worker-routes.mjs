@@ -33,29 +33,18 @@ for (const required of ['  "/fr",', '  "/nl",', '  "/fr/",', '  "/nl/",']) {
 }
 await writeFile(workerPath, worker, "utf8");
 
-let sitemap = await readFile(sitemapPath, "utf8");
+const sitemap = await readFile(sitemapPath, "utf8");
 if (!sitemap.includes("</urlset>")) throw new Error("Built sitemap is missing </urlset>");
-const existing = new Set([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1].replace(/&amp;/g, "&")));
-const today = new Date().toISOString().slice(0, 10);
-const additions = wave2Routes
-  .filter((route) => !existing.has(`${SITE_URL}${route}`))
-  .map((route) => [
-    "  <url>",
-    `    <loc>${SITE_URL}${route}</loc>`,
-    `    <lastmod>${today}</lastmod>`,
-    "    <changefreq>monthly</changefreq>",
-    "    <priority>0.82</priority>",
-    "  </url>",
-  ].join("\n"));
-sitemap = sitemap.replace("</urlset>", `${additions.length ? `${additions.join("\n")}\n` : ""}</urlset>`);
-const finalLocations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1].replace(/&amp;/g, "&"));
+const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1].replace(/&amp;/g, "&"));
+const uniqueLocations = new Set(locations);
+if (uniqueLocations.size !== locations.length) {
+  throw new Error(`Localized sitemap verification found ${locations.length - uniqueLocations.size} duplicate URLs`);
+}
 for (const route of wave2Routes) {
   const absolute = `${SITE_URL}${route}`;
-  if (finalLocations.filter((location) => location === absolute).length !== 1) {
-    throw new Error(`Wave 2 sitemap route must appear exactly once: ${route}`);
+  if (locations.filter((location) => location === absolute).length !== 1) {
+    throw new Error(`Wave 2 sitemap route must already appear exactly once from the authoritative manifest: ${route}`);
   }
 }
-if (finalLocations.length !== 425) throw new Error(`Expected 425 pre-finalizer sitemap URLs after localized append; found ${finalLocations.length}`);
-await writeFile(sitemapPath, sitemap, "utf8");
 
-console.log("Patched Cloudflare worker and appended 14 French/Dutch sitemap routes");
+console.log("Patched Cloudflare worker and verified 14 authoritative French/Dutch sitemap routes without mutating the sitemap");
