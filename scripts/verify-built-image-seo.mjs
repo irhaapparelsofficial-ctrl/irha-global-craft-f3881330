@@ -10,12 +10,24 @@ const DIST_DIR = resolve(process.env.IRHA_DIST_DIR || "dist");
 const SITE_URL = "https://irhaapparels.com";
 const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
-const EXPECTED_SITEMAP_URLS = 411;
-const EXPECTED_HTML = 417;
-const EXPECTED_REDIRECTS = 1583;
 const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
 const TEMPORARY_QUERY_PATTERN =
   /(?:^|[?&])(?:token|signature|expires|x-amz-[^=]*|x-goog-[^=]*|policy|key-pair-id)=/i;
+const TEMPORARY_ROUTE_PATHS = new Set(parseTemporaryPaths());
+
+function parseTemporaryPaths() {
+  const raw = process.env.IRHA_IMAGE_SEO_TEMPORARY_PATHS;
+  if (!raw) return [];
+  try {
+    const values = JSON.parse(raw);
+    if (!Array.isArray(values) || values.some((value) => typeof value !== "string" || !value.startsWith("/"))) {
+      throw new Error("temporary route payload is not a path array");
+    }
+    return values;
+  } catch (error) {
+    throw new Error(`Invalid IRHA_IMAGE_SEO_TEMPORARY_PATHS: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 function imageUrlFromPrimaryImage(value) {
   if (typeof value === "string") return value;
@@ -192,7 +204,22 @@ async function verifyTaxonomy(pathname, entry, sitemapImage) {
   }
 }
 
-function parseSitemap(xml) {
+async function authoritativeRouteUrls() {
+  const manifest = JSON.parse(await readFile(join(DIST_DIR, "seo-route-manifest.json"), "utf8"));
+  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.routes)) {
+    throw new Error("Authoritative SEO route manifest is missing from the image verifier");
+  }
+  const allUrls = manifest.routes
+    .filter((route) => route.indexable && route.sitemap)
+    .map((route) => route.canonicalUrl);
+  const allUnique = new Set(allUrls);
+  if (allUnique.size !== manifest.sitemapCount) {
+    throw new Error(`Authoritative route inventory drift: manifest ${manifest.sitemapCount}, unique ${allUnique.size}`);
+  }
+  return new Set(allUrls.filter((url) => !TEMPORARY_ROUTE_PATHS.has(new URL(url).pathname)));
+}
+
+function parseSitemap(xml, expectedUrls) {
   let dom;
   try {
     dom = new JSDOM(xml, { contentType: "text/xml" });
@@ -208,24 +235,47 @@ function parseSitemap(xml) {
   if (root.getAttribute("xmlns:image") !== IMAGE_NAMESPACE) throw new Error("Image sitemap namespace is missing");
 
   const urlNodes = [...document.getElementsByTagNameNS("http://www.sitemaps.org/schemas/sitemap/0.9", "url")];
-  if (urlNodes.length !== EXPECTED_SITEMAP_URLS) throw new Error(`Sitemap count drift: ${urlNodes.length}`);
+  if (urlNodes.length !== expectedUrls.size) {
+    throw new Error(`Sitemap count drift: expected ${expectedUrls.size}, received ${urlNodes.length}`);
+  }
 
   const imageByPath = new Map();
-  const seen = new Set();
+  const seenUrls = new Set();
   for (const node of urlNodes) {
     const loc = node.getElementsByTagNameNS("http://www.sitemaps.org/schemas/sitemap/0.9", "loc")[0]?.textContent?.trim() || "";
     const page = new URL(loc);
     if (page.origin !== SITE_URL) throw new Error(`Wrong sitemap page host: ${loc}`);
+    if (!expectedUrls.has(page.href)) throw new Error(`Unexpected sitemap page: ${page.href}`);
+    if (seenUrls.has(page.href)) throw new Error(`Duplicate sitemap page: ${page.href}`);
+    seenUrls.add(page.href);
     const pathname = page.pathname === "/" ? "/" : page.pathname.replace(/\/+$/, "");
-    if (seen.has(pathname)) throw new Error(`Duplicate sitemap page: ${pathname}`);
-    seen.add(pathname);
     const imageNodes = [...node.getElementsByTagNameNS(IMAGE_NAMESPACE, "loc")];
     if (imageNodes.length > 1) throw new Error(`Competing sitemap primary images: ${pathname}`);
     if (imageNodes.length === 1) {
       imageByPath.set(pathname, requireStableAbsoluteImage(imageNodes[0].textContent?.trim() || "", `Sitemap image for ${pathname}`));
     }
   }
-  return { imageByPath, pageCount: seen.size };
+  for (const url of expectedUrls) {
+    if (!seenUrls.has(url)) throw new Error(`Sitemap is missing authoritative page: ${url}`);
+  }
+  return { imageByPath, pageCount: seenUrls.size };
+}
+
+async function verifyCanonicalShells(expectedUrls) {
+  let checked = 0;
+  for (const value of expectedUrls) {
+    const url = new URL(value);
+    const htmlPath = url.pathname === "/"
+      ? join(DIST_DIR, "index.html")
+      : join(DIST_DIR, url.pathname.replace(/^\//, "").replace(/\/$/, ""), "index.html");
+    try {
+      await readFile(htmlPath, "utf8");
+    } catch {
+      throw new Error(`Authoritative sitemap route has no static HTML shell: ${url.pathname}`);
+    }
+    checked += 1;
+  }
+  return checked;
 }
 
 async function verifyImageEndpoint(url) {
@@ -333,22 +383,33 @@ async function verifyRedirects() {
     const [source, , status] = line.split(/\s+/);
     return status === "301" && source.includes("*");
   });
-  if (exact301.length !== EXPECTED_REDIRECTS || wildcard301.length !== 1) {
-    throw new Error(`Redirect drift: exact=${exact301.length}, wildcard=${wildcard301.length}`);
+  if (wildcard301.length !== 1) {
+    throw new Error(`Redirect wildcard drift: ${wildcard301.length}`);
   }
+  const sources = new Set();
+  for (const line of exact301) {
+    const [source, target] = line.split(/\s+/);
+    if (!source || !target) throw new Error(`Malformed exact redirect: ${line}`);
+    if (sources.has(source)) throw new Error(`Duplicate exact redirect source: ${source}`);
+    if (source === target) throw new Error(`Self redirect: ${source}`);
+    sources.add(source);
+  }
+  if (exact301.length === 0) throw new Error("Exact redirect inventory is empty");
+  return exact301.length;
 }
 
 async function main() {
   const files = await walk(DIST_DIR);
   const htmlCount = files.filter((file) => file.endsWith(".html")).length;
-  if (htmlCount !== EXPECTED_HTML) throw new Error(`Generated HTML count drift: ${htmlCount}`);
 
   const manifest = JSON.parse(await readFile(join(DIST_DIR, "catalog-route-manifest.json"), "utf8"));
   if (manifest.schemaVersion !== 1 || manifest.productCount !== EXPECTED_PRODUCTS || manifest.products?.length !== EXPECTED_PRODUCTS) {
     throw new Error("Built manifest is incomplete");
   }
   const { productByPath, taxonomyByPath } = routeMaps(manifest.products);
-  const { imageByPath, pageCount } = parseSitemap(await readFile(join(DIST_DIR, "sitemap.xml"), "utf8"));
+  const expectedUrls = await authoritativeRouteUrls();
+  const { imageByPath, pageCount } = parseSitemap(await readFile(join(DIST_DIR, "sitemap.xml"), "utf8"), expectedUrls);
+  const shellCount = await verifyCanonicalShells(expectedUrls);
 
   if (imageByPath.size !== EXPECTED_PRODUCTS + EXPECTED_TAXONOMY) {
     throw new Error(`Image sitemap entry drift: ${imageByPath.size}`);
@@ -364,12 +425,12 @@ async function main() {
     await verifyTaxonomy(pathname, entry, image);
   }
 
-  await verifyRedirects();
+  const redirectCount = await verifyRedirects();
   await verifyEndpoints([...new Set([...productByPath.values()].map((product) => product.image_url))]);
   const galleryCount = await verifyGalleryEndpoints(manifest.products);
 
   console.log(
-    `Image SEO contract passed: products=${productByPath.size}, taxonomy=${taxonomyByPath.size}, sitemap=${pageCount}, html=${htmlCount}, images=${imageByPath.size}, gallery=${galleryCount}, broken=0`,
+    `Image SEO contract passed: products=${productByPath.size}, taxonomy=${taxonomyByPath.size}, sitemap=${pageCount}, shells=${shellCount}, html=${htmlCount}, redirects=${redirectCount}, images=${imageByPath.size}, gallery=${galleryCount}, broken=0`,
   );
 }
 

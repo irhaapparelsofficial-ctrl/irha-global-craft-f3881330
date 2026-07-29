@@ -6,7 +6,8 @@ const outputDir = resolve(process.env.CRAWL_OUTPUT_DIR || "artifacts/preview-rou
 const rawPath = join(outputDir, "production-route-parity.json");
 const evaluationPath = join(outputDir, "preview-evaluation.json");
 const summaryPath = join(outputDir, "preview-summary.md");
-const manifestPath = resolve("dist/catalog-route-manifest.json");
+const catalogManifestPath = resolve("dist/catalog-route-manifest.json");
+const seoManifestPath = resolve("dist/seo-route-manifest.json");
 
 type Severity = "critical" | "high" | "medium" | "low";
 type Finding = { severity: Severity; code: string; path: string; message: string };
@@ -39,10 +40,22 @@ type CrawlReport = {
   canonicalResults: CanonicalResult[];
   findings: Finding[];
 };
-type Manifest = { productCount: number; products: BuyerReadyCatalogRoute[] };
+type CatalogManifest = { productCount: number; products: BuyerReadyCatalogRoute[] };
+type SeoManifest = {
+  schemaVersion: number;
+  sitemapCount: number;
+  productCount: number;
+  routes: Array<{ canonicalUrl: string; indexable: boolean; sitemap: boolean }>;
+};
 
-const report = JSON.parse(await readFile(rawPath, "utf8")) as CrawlReport;
-const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as Manifest;
+const [reportText, catalogManifestText, seoManifestText] = await Promise.all([
+  readFile(rawPath, "utf8"),
+  readFile(catalogManifestPath, "utf8"),
+  readFile(seoManifestPath, "utf8"),
+]);
+const report = JSON.parse(reportText) as CrawlReport;
+const catalogManifest = JSON.parse(catalogManifestText) as CatalogManifest;
+const seoManifest = JSON.parse(seoManifestText) as SeoManifest;
 
 if (report.inventory.origin === report.inventory.canonicalOrigin) {
   throw new Error("Preview evaluator refuses to run against the production canonical origin");
@@ -50,11 +63,28 @@ if (report.inventory.origin === report.inventory.canonicalOrigin) {
 if (report.inventory.sourceCommit !== report.inventory.expectedSourceCommit) {
   throw new Error("Preview crawl source identity is not exact");
 }
-if (report.inventory.dynamicProducts !== 254 || manifest.productCount !== 254 || manifest.products.length !== 254) {
+if (
+  report.inventory.dynamicProducts !== 254
+  || catalogManifest.productCount !== 254
+  || catalogManifest.products.length !== 254
+  || seoManifest.productCount !== 254
+) {
   throw new Error("Preview evaluation requires the complete 254-product release");
 }
-if (report.inventory.dynamicTaxonomy !== 105 || report.inventory.sitemapUrlCount !== 418) {
-  throw new Error("Preview route inventory is incomplete");
+if (seoManifest.schemaVersion !== 1 || !Array.isArray(seoManifest.routes)) {
+  throw new Error("Preview evaluation requires the authoritative SEO route manifest");
+}
+const authoritativeSitemapUrls = seoManifest.routes
+  .filter((route) => route.indexable && route.sitemap)
+  .map((route) => route.canonicalUrl);
+if (
+  authoritativeSitemapUrls.length !== seoManifest.sitemapCount
+  || new Set(authoritativeSitemapUrls).size !== authoritativeSitemapUrls.length
+) {
+  throw new Error("Authoritative preview sitemap inventory is internally inconsistent");
+}
+if (report.inventory.dynamicTaxonomy !== 105 || report.inventory.sitemapUrlCount !== seoManifest.sitemapCount) {
+  throw new Error(`Preview route inventory is incomplete: sitemap ${report.inventory.sitemapUrlCount}/${seoManifest.sitemapCount}, taxonomy ${report.inventory.dynamicTaxonomy}/105`);
 }
 if (report.inventory.approvedRedirectRegistryRows < 1258 || report.inventory.redirectsVerified < 1258) {
   throw new Error("Preview redirect inventory is incomplete");
@@ -134,6 +164,7 @@ const evaluation = {
   previewOrigin: report.inventory.origin,
   canonicalOrigin: report.inventory.canonicalOrigin,
   inventory: report.inventory,
+  authoritativeSitemapCount: seoManifest.sitemapCount,
   ignoredPreviewContextFindings: ignoredCounts,
   blockingFindings: blockingCounts,
   blocking,

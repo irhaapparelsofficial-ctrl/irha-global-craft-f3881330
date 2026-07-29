@@ -23,4 +23,12 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["scripts/finalize-seo-route-manifest.ts"],
+    rules: {
+      // The serializer keeps explicit Markdown/XML escape characters beside the
+      // related patterns so the generated manifest contract stays auditable.
+      "no-useless-escape": "off",
+    },
+  },
 );

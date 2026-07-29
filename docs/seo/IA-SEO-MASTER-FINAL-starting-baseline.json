@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "executionId": "IA-SEO-MASTER-FINAL",
+  "rollbackSha": "f187c5d795bef7ca174dafa6cd2f2a9ba7c439bf",
+  "startingMainSha": "f187c5d795bef7ca174dafa6cd2f2a9ba7c439bf",
+  "startingProductionSha": "f187c5d795bef7ca174dafa6cd2f2a9ba7c439bf",
+  "startingQualityGateRun": 30467861402,
+  "startingCloudflareProductionRun": 30468762124,
+  "startingSitemapCount": 426,
+  "startingSitemapUniqueCount": 426,
+  "startingProductCount": 254,
+  "startingImmutableArtifact": {
+    "artifactId": 8730632441,
+    "sha256": "961537c32a417017b34c60c7dd0df5f64588bdb9a6cb70a56ba41be98f9faf3b"
+  },
+  "historicalReportedParityFindings": {
+    "critical": 417,
+    "high": 1090,
+    "classification": "Historical production audit evidence; re-audited rather than assumed current."
+  },
+  "startingImmutableArtifactAudit": {
+    "sitemapShellsPresent": 426,
+    "critical": 0,
+    "high": 1,
+    "highFinding": "Homepage Open Graph description differed from its authoritative meta description in the immutable artifact."
+  }
+}

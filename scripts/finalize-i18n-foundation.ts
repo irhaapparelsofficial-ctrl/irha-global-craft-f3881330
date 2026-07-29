@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { GERMAN_GATEWAY_CONTENT } from "../src/lib/germanGatewayContent";
 import {
@@ -18,13 +18,29 @@ import {
 
 const DIST_DIR = resolve("dist");
 const SITEMAP_PATH = join(DIST_DIR, "sitemap.xml");
+const SEO_MANIFEST_PATH = join(DIST_DIR, "seo-route-manifest.json");
 const SITE_URL = "https://irhaapparels.com";
-const EXPECTED_SITEMAP_URLS = 426;
 const EXPECTED_LOCALIZED_ROUTES: Readonly<Record<Exclude<LocaleCode, "en">, number>> = { de: 10, fr: 7, nl: 7 };
 const SELECTOR_LOCALES: readonly LocaleCode[] = ["en", "de", "fr", "nl"];
 
+type SeoManifestRoute = {
+  canonicalUrl: string;
+  indexable: boolean;
+  sitemap: boolean;
+};
+
+type SeoManifest = {
+  schemaVersion: number;
+  sitemapCount: number;
+  routes: SeoManifestRoute[];
+};
+
 function escapeHtml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function decodeXml(value: string): string {
+  return value.replace(/&amp;/g, "&").replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 }
 
 function absolute(path: string): string {
@@ -34,22 +50,6 @@ function absolute(path: string): string {
 function routeFromFile(file: string): string {
   const rel = relative(DIST_DIR, dirname(file)).split(sep).join("/");
   return rel === "" ? "/" : normalizeRoutePath(`/${rel}/`);
-}
-
-function ensureGermanEntryInSitemap(xml: string): string {
-  const entryUrl = absolute("/de/");
-  if (xml.includes(`<loc>${entryUrl}</loc>`)) return xml;
-  if (!xml.includes("</urlset>")) throw new Error("Built sitemap is missing </urlset>");
-  const today = new Date().toISOString().slice(0, 10);
-  const entry = [
-    "  <url>",
-    `    <loc>${entryUrl}</loc>`,
-    `    <lastmod>${today}</lastmod>`,
-    "    <changefreq>monthly</changefreq>",
-    "    <priority>0.90</priority>",
-    "  </url>",
-  ].join("\n");
-  return xml.replace("</urlset>", `${entry}\n</urlset>`);
 }
 
 function selectorMarkup(pathname: string): string {
@@ -152,11 +152,34 @@ async function listHtmlFiles(directory: string): Promise<string[]> {
   return files.flat().filter((file) => file.endsWith("index.html"));
 }
 
+function verifySitemapExactSet(sitemapLocs: string[], manifest: SeoManifest): Set<string> {
+  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.routes)) throw new Error("Authoritative SEO manifest is missing during i18n finalization");
+  const expected = new Set(manifest.routes.filter((route) => route.indexable && route.sitemap).map((route) => route.canonicalUrl));
+  if (expected.size !== manifest.sitemapCount) throw new Error(`Manifest sitemap count drift: ${manifest.sitemapCount} vs ${expected.size}`);
+  const actual = new Set(sitemapLocs);
+  if (actual.size !== sitemapLocs.length) throw new Error(`Duplicate sitemap URLs found during i18n finalization: ${sitemapLocs.length - actual.size}`);
+  if (actual.size !== expected.size) throw new Error(`Expected ${expected.size} authoritative sitemap URLs, found ${actual.size}`);
+  for (const url of expected) if (!actual.has(url)) throw new Error(`Sitemap is missing authoritative URL: ${url}`);
+  for (const url of actual) if (!expected.has(url)) throw new Error(`Sitemap contains non-authoritative URL: ${url}`);
+  return expected;
+}
+
 async function main() {
-  const rootTemplate = await readFile(join(DIST_DIR, "index.html"), "utf8");
+  const [rootTemplate, sitemap, manifestText] = await Promise.all([
+    readFile(join(DIST_DIR, "index.html"), "utf8"),
+    readFile(SITEMAP_PATH, "utf8"),
+    readFile(SEO_MANIFEST_PATH, "utf8"),
+  ]);
   const germanOutput = join(DIST_DIR, "de", "index.html");
   await mkdir(dirname(germanOutput), { recursive: true });
   await writeFile(germanOutput, buildGermanEntry(rootTemplate), "utf8");
+
+  const germanBavarianOutput = join(DIST_DIR, "de", "bavarian-wear", "index.html");
+  const germanBavarianExists = await access(germanBavarianOutput).then(() => true).catch(() => false);
+  if (!germanBavarianExists) {
+    await mkdir(dirname(germanBavarianOutput), { recursive: true });
+    await writeFile(germanBavarianOutput, rootTemplate, "utf8");
+  }
 
   const files = await listHtmlFiles(DIST_DIR);
   for (const file of files) {
@@ -165,17 +188,13 @@ async function main() {
     await writeFile(file, setHead(html, route), "utf8");
   }
 
-  const sitemap = ensureGermanEntryInSitemap(await readFile(SITEMAP_PATH, "utf8"));
-  await writeFile(SITEMAP_PATH, sitemap, "utf8");
-  const sitemapLocs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1].replace(/&amp;/g, "&"));
+  const sitemapLocs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => decodeXml(match[1]));
+  const authoritativeUrls = verifySitemapExactSet(sitemapLocs, JSON.parse(manifestText) as SeoManifest);
   const publishedLocalized = getPublishedLocalizedRoutes();
 
   for (const [locale, expected] of Object.entries(EXPECTED_LOCALIZED_ROUTES)) {
     const count = publishedLocalized.filter((route) => route.locale === locale).length;
     if (count !== expected) throw new Error(`Expected ${expected} published ${locale} routes, found ${count}`);
-  }
-  if (sitemapLocs.length !== EXPECTED_SITEMAP_URLS) {
-    throw new Error(`Expected ${EXPECTED_SITEMAP_URLS} sitemap URLs, found ${sitemapLocs.length}`);
   }
 
   for (const route of publishedLocalized) {
@@ -184,17 +203,17 @@ async function main() {
     if (!html.includes(`<html lang="${route.locale}" dir="ltr"`)) throw new Error(`Localized html attributes missing: ${route.path}`);
     if (!html.includes(`<link rel="canonical" href="${absolute(route.path)}"`)) throw new Error(`Self canonical missing: ${route.path}`);
     if (!html.includes('data-irha-language-selector="static"')) throw new Error(`Static language selector missing: ${route.path}`);
-    if (!sitemapLocs.includes(absolute(route.path))) throw new Error(`Published localized route missing from sitemap: ${route.path}`);
+    if (!authoritativeUrls.has(absolute(route.path))) throw new Error(`Published localized route missing from authoritative sitemap: ${route.path}`);
     const localizedLinks = [...html.matchAll(/href=["'](\/(?:de|fr|nl)\/?[^"']*)["']/g)].map((match) => normalizeRoutePath(match[1]));
     const unpublishedInternalLink = localizedLinks.find((path) => !isPublishedLocalizedRoute(path));
     if (unpublishedInternalLink) throw new Error(`Published localized route links to unpublished URL ${unpublishedInternalLink}: ${route.path}`);
   }
 
   const localizedPrefix = new RegExp(`^${SITE_URL}/(?:de|fr|nl)/`);
-  const unexpectedLocalized = sitemapLocs.filter((loc) => localizedPrefix.test(loc) && !publishedLocalized.some((route) => absolute(route.path) === loc));
+  const unexpectedLocalized = [...authoritativeUrls].filter((loc) => localizedPrefix.test(loc) && !publishedLocalized.some((route) => absolute(route.path) === loc));
   if (unexpectedLocalized.length > 0) throw new Error(`Unpublished localized sitemap URLs: ${unexpectedLocalized.join(", ")}`);
 
-  console.log(`Internationalization foundation finalized: ${files.length} HTML shells, ${publishedLocalized.length} published localized routes, ${sitemapLocs.length} sitemap URLs`);
+  console.log(`Internationalization foundation finalized: ${files.length} HTML shells, ${publishedLocalized.length} published localized routes, ${authoritativeUrls.size} authoritative sitemap URLs`);
 }
 
 main().catch((error) => {

@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "executionId": "IA-SEO-MASTER-FINAL",
+  "goalLock": "IRHA-GLOBAL-SEO-01",
+  "method": {
+    "principle": "Map real B2B sourcing intent to existing supported routes; do not create reordered keyword, city or country doorway pages.",
+    "volumePolicy": "No unverified search-volume numbers are recorded.",
+    "claimPolicy": "Keywords do not authorize fixed MOQ, price, lead-time, capacity, customer, certificate, delivery or ranking claims.",
+    "localizationPolicy": "A localized keyword is mapped only to a route with a meaningful localized body and matching commercial meaning."
+  },
+  "intentClasses": [
+    "informational",
+    "commercial-investigation",
+    "manufacturer-sourcing",
+    "wholesale-sourcing",
+    "private-label",
+    "OEM",
+    "ODM",
+    "exact-product",
+    "geographic",
+    "audience",
+    "material",
+    "decoration-customization"
+  ],
+  "clusters": [
+    {
+      "id": "manufacturer-core",
+      "primaryRoute": "/",
+      "supportingRoutes": ["/about", "/manufacturing", "/buyer-information", "/inquiry"],
+      "keywords": [
+        "custom apparel manufacturer Pakistan",
+        "clothing manufacturer Sialkot",
+        "custom clothing manufacturer Sialkot",
+        "private label clothing manufacturer",
+        "OEM apparel manufacturer",
+        "ODM clothing manufacturer",
+        "wholesale apparel supplier",
+        "cut and sew manufacturer"
+      ],
+      "intents": ["manufacturer-sourcing", "commercial-investigation", "private-label", "OEM", "ODM", "geographic"]
+    },
+    {
+      "id": "bavarian-trachten",
+      "primaryRoute": "/products/bavarian-trachten-wear",
+      "supportingRoutes": ["/de/bavarian-wear", "/blog/how-to-source-private-label-lederhosen", "/inquiry"],
+      "keywords": [
+        "Lederhosen manufacturer",
+        "custom Lederhosen manufacturer",
+        "Lederhosen manufacturer Pakistan",
+        "Trachten clothing manufacturer",
+        "Dirndl manufacturer",
+        "private label Dirndl supplier",
+        "Bavarian clothing manufacturer",
+        "wholesale Oktoberfest clothing supplier"
+      ],
+      "intents": ["manufacturer-sourcing", "wholesale-sourcing", "private-label", "exact-product", "geographic"]
+    },
+    {
+      "id": "leather-apparel",
+      "primaryRoute": "/products/premium-leather-apparel",
+      "supportingRoutes": ["/de/lederbekleidung-hersteller", "/fr/fabricant-vetements-cuir", "/nl/leren-kleding-fabrikant", "/blog/private-label-leather-jacket-development-guide", "/inquiry"],
+      "keywords": [
+        "custom leather jacket manufacturer Sialkot",
+        "private label leather jacket manufacturer",
+        "leather biker jacket manufacturer",
+        "custom leather apparel manufacturer",
+        "wholesale leather clothing supplier",
+        "suede jacket manufacturer"
+      ],
+      "intents": ["manufacturer-sourcing", "wholesale-sourcing", "private-label", "exact-product", "material", "geographic"]
+    },
+    {
+      "id": "sportswear-teamwear",
+      "primaryRoute": "/products/sportswear",
+      "supportingRoutes": ["/de/sportbekleidung-hersteller", "/fr/fabricant-vetements-sport", "/nl/sportkleding-fabrikant", "/blog/custom-football-kit-manufacturer-checklist", "/inquiry"],
+      "keywords": [
+        "custom sportswear manufacturer Pakistan",
+        "private label sportswear manufacturer",
+        "custom football kit manufacturer",
+        "teamwear manufacturer",
+        "custom cricket uniform manufacturer",
+        "custom tracksuit manufacturer",
+        "club and academy apparel supplier"
+      ],
+      "intents": ["manufacturer-sourcing", "private-label", "exact-product", "audience", "decoration-customization", "geographic"]
+    },
+    {
+      "id": "streetwear-activewear",
+      "primaryRoute": "/products/streetwear-activewear",
+      "supportingRoutes": ["/blog/heavyweight-hoodie-manufacturer-rfq-guide", "/blog/choose-gsm-custom-tshirts-hoodies-sweatshirts", "/inquiry"],
+      "keywords": [
+        "private label streetwear supplier",
+        "custom streetwear manufacturer",
+        "heavyweight oversized T-shirt manufacturer",
+        "private label hoodie manufacturer",
+        "custom jogger manufacturer",
+        "activewear manufacturer Pakistan",
+        "custom gym wear manufacturer"
+      ],
+      "intents": ["manufacturer-sourcing", "private-label", "exact-product", "material", "audience", "geographic"]
+    },
+    {
+      "id": "leisure-nightwear",
+      "primaryRoute": "/products/leisure-nightwear",
+      "supportingRoutes": ["/blog/private-label-nightwear-specification-checklist", "/materials", "/inquiry"],
+      "keywords": [
+        "private label nightwear manufacturer",
+        "custom pajama manufacturer",
+        "wholesale sleepwear manufacturer",
+        "custom lounge set manufacturer",
+        "family pajama manufacturer",
+        "private label leisurewear supplier"
+      ],
+      "intents": ["manufacturer-sourcing", "wholesale-sourcing", "private-label", "exact-product", "audience", "material"]
+    },
+    {
+      "id": "buyer-education",
+      "primaryRoute": "/resources",
+      "supportingRoutes": ["/blog", "/materials", "/buyer-information", "/manufacturing", "/inquiry"],
+      "keywords": [
+        "how to choose GSM for custom clothing",
+        "OEM vs ODM apparel manufacturing",
+        "private label clothing sampling process",
+        "clothing tech pack checklist",
+        "embroidery vs screen printing vs sublimation",
+        "apparel manufacturing RFQ checklist",
+        "how to verify a clothing manufacturer"
+      ],
+      "intents": ["informational", "commercial-investigation"]
+    }
+  ],
+  "geographicModifiers": {
+    "supported": ["Pakistan", "Sialkot", "Germany", "Austria", "Switzerland", "Netherlands", "United States", "United Kingdom", "Canada", "Australia", "New Zealand"],
+    "rule": "Use geographic modifiers only on genuine market, localized or manufacturer-identity routes with distinct buyer information."
+  },
+  "rejectedDoorwayPatterns": [
+    "Separate pages that only swap manufacturer, supplier, factory or exporter",
+    "Mass city pages without distinct supported operations or buyer value",
+    "Country pages with duplicated generic copy",
+    "Localized URLs containing an English body",
+    "Near-duplicate pages for reordered exact-match phrases"
+  ]
+}

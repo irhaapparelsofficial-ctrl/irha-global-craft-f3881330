@@ -38,6 +38,7 @@ export const CORE_CHANGED_PATHS = [
 
 export const BUYER_INTENT_CHANGED_PATHS = [
   "/germany-apparel-manufacturer",
+  "/de/bavarian-wear",
   "/de/bekleidungshersteller-deutschland",
   "/custom-sportswear-manufacturer-germany",
   "/de/sportbekleidung-hersteller",
