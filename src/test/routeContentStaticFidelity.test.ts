@@ -72,7 +72,14 @@ describe("route-specific static content architecture", () => {
     const finalVerifier = read("scripts/verify-route-parity-build.ts");
     const routeVerifier = read("scripts/verify-route-content-fidelity.mjs");
     expect(finalVerifier).toContain("verifyRouteContentFidelity");
-    expect(routeVerifier).toContain("EXPECTED_SITEMAP = 411");
+    expect(routeVerifier).toContain('readFile(join(DIST, "seo-route-manifest.json")');
+    expect(routeVerifier).toContain("authoritativeSitemapPaths");
+    expect(routeVerifier).toContain("assertExactSitemapSet");
+    expect(routeVerifier).toContain("route.indexable && route.sitemap");
+    expect(routeVerifier).toContain("Sitemap is missing authoritative route");
+    expect(routeVerifier).toContain("Sitemap contains non-authoritative route");
+    expect(routeVerifier).toContain("Untranslated localized resource articles are indexable");
+    expect(routeVerifier).not.toMatch(/EXPECTED_SITEMAP\s*=/);
     expect(routeVerifier).toContain("lists a child outside its authoritative assignment");
     expect(routeVerifier).toContain("Canonical route has no accepted content owner");
     expect(routeVerifier).toContain("loading-only primary product content");
