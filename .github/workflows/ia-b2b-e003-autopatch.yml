@@ -37,6 +37,7 @@ jobs:
           set -euo pipefail
           sed -i '/Source fragment is not unique/d' automation/ia-b2b-e003.mjs
           node automation/ia-b2b-e003.mjs
+          sed -i 's#src/data/buyerCapabilities.ts#src/lib/categoryMediaRegistry.ts#' src/test/finalBuyerReadinessPolish.test.ts
           rm automation/ia-b2b-e003.patch
           rm automation/ia-b2b-e003.mjs
           rm .github/workflows/ia-b2b-e003-autopatch.yml
