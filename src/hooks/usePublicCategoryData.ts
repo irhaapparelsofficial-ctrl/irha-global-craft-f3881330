@@ -6,6 +6,7 @@ import { usePublicCatalogTree, type PublicTopCategory } from "@/hooks/usePublicC
 import type { DbProduct } from "@/hooks/useCatalog";
 import { CATEGORIES, type Category as LegacyCategory, type Product as LegacyProduct } from "@/lib/categories";
 import { CATALOG, type CategoryGroup as LegacyGroup, type SubCategory as LegacySub } from "@/lib/catalog";
+import { canonicalCategoryMedia } from "@/lib/categoryMediaRegistry";
 import { selectAuthoritativeProductGallery } from "@/lib/productGalleryAuthority";
 import { thumbnailUrl } from "@/lib/imageThumbnails";
 import { keywordLedProductName } from "@/lib/catalogSearchNames";
@@ -93,13 +94,14 @@ function adaptTop(top: PublicTopCategory): NormalizedCategory {
     short: s.short ?? "",
     products: s.products.map(adaptProduct),
   }));
-  const originalImage = top.image_url ?? "";
+  const registeredMedia = canonicalCategoryMedia(top.slug);
+  const originalImage = registeredMedia?.src ?? top.image_url ?? "";
   return {
     slug: top.slug,
     name: top.name,
     short: top.short ?? "",
     description: top.description ?? "",
-    image: thumbnailUrl(originalImage),
+    image: registeredMedia?.src ?? thumbnailUrl(originalImage),
     originalImage,
     details: [],
     subs,
@@ -140,13 +142,15 @@ function legacyAdaptGroup(cat: LegacyCategory, group: LegacyGroup | undefined): 
     short: s.short,
     products: s.products.map(legacyAdaptProduct),
   }));
+  const registeredMedia = canonicalCategoryMedia(cat.slug);
+  const originalImage = registeredMedia?.src ?? cat.image;
   return {
     slug: cat.slug,
     name: cat.name,
     short: cat.short,
     description: cat.short,
-    image: thumbnailUrl(cat.image),
-    originalImage: cat.image,
+    image: registeredMedia?.src ?? thumbnailUrl(originalImage),
+    originalImage,
     details: [],
     subs,
     productCount: subs.reduce((n, s) => n + s.products.length, 0),
