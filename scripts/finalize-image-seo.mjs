@@ -5,7 +5,6 @@ const DIST_DIR = resolve(process.env.IRHA_DIST_DIR || "dist");
 const SITE_URL = "https://irhaapparels.com";
 const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
-const EXPECTED_SITEMAP_URLS = 411;
 const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
 const TEMPORARY_QUERY_PATTERN =
   /(?:^|[?&])(?:token|signature|expires|x-amz-[^=]*|x-goog-[^=]*|policy|key-pair-id)=/i;
@@ -258,25 +257,43 @@ async function finalizeTaxonomyHtml(pathname, entry) {
   await writeFile(path, html, "utf8");
 }
 
+async function authoritativeSitemapUrls() {
+  const manifest = JSON.parse(await readFile(join(DIST_DIR, "seo-route-manifest.json"), "utf8"));
+  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.routes)) {
+    throw new Error("Authoritative SEO route manifest is missing before image sitemap finalization");
+  }
+  const urls = new Set(
+    manifest.routes
+      .filter((route) => route.indexable && route.sitemap)
+      .map((route) => route.canonicalUrl),
+  );
+  if (urls.size !== manifest.sitemapCount) {
+    throw new Error(`Authoritative SEO sitemap count mismatch: manifest ${manifest.sitemapCount}, derived ${urls.size}`);
+  }
+  return urls;
+}
+
 async function finalizeSitemap(productByPath, taxonomyByPath) {
   const sitemapPath = join(DIST_DIR, "sitemap.xml");
   const source = await readFile(sitemapPath, "utf8");
   const blocks = source.match(/\s*<url>[\s\S]*?<\/url>/gi) ?? [];
-  if (blocks.length !== EXPECTED_SITEMAP_URLS) {
-    throw new Error(`Expected ${EXPECTED_SITEMAP_URLS} sitemap URLs; received ${blocks.length}`);
+  const expectedUrls = await authoritativeSitemapUrls();
+  if (blocks.length !== expectedUrls.size) {
+    throw new Error(`Expected ${expectedUrls.size} authoritative sitemap URLs; received ${blocks.length}`);
   }
 
-  const seen = new Set();
+  const seenUrls = new Set();
   const outputBlocks = blocks.map((rawBlock) => {
     let block = rawBlock.trim().replace(/\s*<image:image>[\s\S]*?<\/image:image>/gi, "");
     const rawLoc = block.match(/<loc>([^<]+)<\/loc>/i)?.[1];
     if (!rawLoc) throw new Error("Sitemap URL block is missing <loc>");
     const pageUrl = new URL(decodeXml(rawLoc));
     if (pageUrl.origin !== SITE_URL) throw new Error(`Wrong sitemap host: ${pageUrl.href}`);
-    const pathname = pageUrl.pathname === "/" ? "/" : pageUrl.pathname.replace(/\/+$/, "");
-    if (seen.has(pathname)) throw new Error(`Duplicate sitemap path: ${pathname}`);
-    seen.add(pathname);
+    if (!expectedUrls.has(pageUrl.href)) throw new Error(`Sitemap contains a non-authoritative URL: ${pageUrl.href}`);
+    if (seenUrls.has(pageUrl.href)) throw new Error(`Duplicate sitemap URL: ${pageUrl.href}`);
+    seenUrls.add(pageUrl.href);
 
+    const pathname = pageUrl.pathname === "/" ? "/" : pageUrl.pathname.replace(/\/+$/, "");
     const imageUrl = productByPath.get(pathname)?.image_url ?? taxonomyByPath.get(pathname)?.image_url;
     if (imageUrl) {
       block = block.replace(
@@ -286,6 +303,10 @@ async function finalizeSitemap(productByPath, taxonomyByPath) {
     }
     return block;
   });
+
+  for (const expectedUrl of expectedUrls) {
+    if (!seenUrls.has(expectedUrl)) throw new Error(`Sitemap is missing authoritative URL: ${expectedUrl}`);
+  }
 
   const imageCount = outputBlocks.filter((block) => block.includes("<image:image>")).length;
   if (imageCount !== EXPECTED_PRODUCTS + EXPECTED_TAXONOMY) {
