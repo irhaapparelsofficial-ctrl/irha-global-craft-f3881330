@@ -6,6 +6,7 @@ import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
 const DIST_DIR = resolve(process.env.IRHA_DIST_DIR || "dist");
 const SITE_URL = "https://irhaapparels.com";
 const MANIFEST_PATH = join(DIST_DIR, "catalog-route-manifest.json");
+const SEO_MANIFEST_PATH = join(DIST_DIR, "seo-route-manifest.json");
 const SITEMAP_PATH = join(DIST_DIR, "sitemap.xml");
 const GENERIC_ROUTE_SHELL = /<main id="irha-static-crawler-shell" data-irha-route-shell="([^"]+)"[\s\S]*?<\/main>/i;
 const PRODUCT_SHELL = 'data-irha-product-shell="true"';
@@ -190,8 +191,30 @@ async function main() {
   }
   const taxonomy = taxonomyPaths(manifest.products);
   if (taxonomy.size !== EXPECTED_TAXONOMY_SHELLS) throw new Error(`Expected ${EXPECTED_TAXONOMY_SHELLS} taxonomy routes; found ${taxonomy.size}`);
+
+  const seoManifest = JSON.parse(await readFile(SEO_MANIFEST_PATH, "utf8"));
+  if (seoManifest.schemaVersion !== 1 || !Array.isArray(seoManifest.routes)) {
+    throw new Error("Authoritative SEO route manifest is missing or invalid");
+  }
+  const expectedCanonicalPaths = new Set(
+    seoManifest.routes
+      .filter((route) => route.indexable && route.sitemap)
+      .map((route) => cleanPath(route.path)),
+  );
+  if (expectedCanonicalPaths.size !== seoManifest.sitemapCount) {
+    throw new Error(`Authoritative SEO manifest count mismatch: expected ${seoManifest.sitemapCount}, derived ${expectedCanonicalPaths.size}`);
+  }
+
   const canonicalPaths = sitemapPaths(await readFile(SITEMAP_PATH, "utf8"));
-  if (canonicalPaths.size !== 411) throw new Error(`Expected 411 canonical sitemap routes; found ${canonicalPaths.size}`);
+  if (canonicalPaths.size !== expectedCanonicalPaths.size) {
+    throw new Error(`SEO manifest/sitemap route count mismatch: manifest ${expectedCanonicalPaths.size}, sitemap ${canonicalPaths.size}`);
+  }
+  for (const pathname of expectedCanonicalPaths) {
+    if (!canonicalPaths.has(pathname)) throw new Error(`Sitemap is missing authoritative route: ${pathname}`);
+  }
+  for (const pathname of canonicalPaths) {
+    if (!expectedCanonicalPaths.has(pathname)) throw new Error(`Sitemap contains non-authoritative route: ${pathname}`);
+  }
 
   let coreShellsRendered = 0;
   let taxonomyShellsDeferred = 0;
@@ -251,7 +274,7 @@ async function main() {
   if (coreShellsRendered !== EXPECTED_CORE_SHELLS) {
     throw new Error(`Expected ${EXPECTED_CORE_SHELLS} core route shells; rendered ${coreShellsRendered}`);
   }
-  console.log(`Rendered ${coreShellsRendered} route-specific core shells, deferred ${taxonomyShellsDeferred} taxonomy shells, preserved ${productShellsPreserved} product shells and preserved ${specializedShellsPreserved} specialized shells`);
+  console.log(`Rendered ${coreShellsRendered} route-specific core shells, deferred ${taxonomyShellsDeferred} taxonomy shells, preserved ${productShellsPreserved} product shells and preserved ${specializedShellsPreserved} specialized shells from ${canonicalPaths.size} authoritative sitemap routes`);
 }
 
 main().catch((error) => {
