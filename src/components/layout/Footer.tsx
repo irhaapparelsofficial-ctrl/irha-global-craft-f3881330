@@ -5,6 +5,7 @@ import { SEO_BUYER_INTENT_FOOTER_LINKS, SEO_BUYER_INTENT_LANDING_PAGES } from "@
 import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
 import { GERMAN_GATEWAY_CONTENT } from "@/lib/germanGatewayContent";
 import { getLocaleGateway, getRouteLocale, type LocaleCode } from "@/lib/i18nFoundation";
+import { ROUTES } from "@/data/buyerCapabilities";
 import LanguageSelector from "@/components/LanguageSelector";
 
 function InstagramIcon({ size = 18 }: { size?: number }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>; }
@@ -17,36 +18,41 @@ const COPY: Record<LocaleCode, {
   trade: string; tradeNote: string; privacyHeading: string; privacyText: string; priority: string;
   rights: string; privacy: string; terms: string; cookies: string;
 }> = {
-  en: { tagline: "Manufacturing Specialists", intro: "Custom apparel manufacturing for brands, wholesalers and importers.", detail: "Made-to-order Bavarian wear, sportswear, leatherwear, streetwear and leisure apparel from Sialkot, Pakistan.", published: "Product programs", buyers: "For buyers", contact: "Contact", trade: "Supported trade terms", tradeNote: "Final Incoterm, destination coverage, duties and commercial responsibility are confirmed in the written quotation.", privacyHeading: "Data privacy & GDPR", privacyText: "Inquiry data and private tech packs are collected for quotation, sampling and order communication. Buyers can review the privacy policy, manage non-essential cookies, or request access and deletion through the published contact details.", priority: "Priority sourcing markets", rights: "All rights reserved.", privacy: "Privacy / GDPR", terms: "Terms", cookies: "Cookie settings" },
-  de: { tagline: "Fertigungsspezialisten", intro: "Kundenspezifische Bekleidungsfertigung für Marken, Großhändler und Importeure.", detail: "Made-to-order Fertigung in Sialkot, Pakistan. Der vollständige Katalog bleibt auf Englisch verfügbar.", published: "Veröffentlichte Seiten", buyers: "Für Einkäufer", contact: "Kontakt", trade: "Unterstützte Handelsbedingungen", tradeNote: "Incoterm, Zielort, Abgaben und Verantwortlichkeiten werden im schriftlichen Angebot bestätigt.", privacyHeading: "Datenschutz & DSGVO", privacyText: "Anfragedaten und private Tech Packs werden für Angebot, Muster und Auftragskommunikation verarbeitet. Details stehen in der englischen Datenschutzrichtlinie.", priority: "Deutsche B2B-Seiten", rights: "Alle Rechte vorbehalten.", privacy: "Datenschutz (Englisch)", terms: "Bedingungen (Englisch)", cookies: "Cookie-Einstellungen" },
-  fr: { tagline: "Spécialistes de la fabrication", intro: "Fabrication de vêtements personnalisés pour marques, grossistes et importateurs.", detail: "Production sur commande à Sialkot, au Pakistan. Le catalogue complet reste disponible en anglais.", published: "Pages publiées", buyers: "Pour les acheteurs", contact: "Contact", trade: "Conditions commerciales disponibles", tradeNote: "L’Incoterm final, la destination, les droits et les responsabilités commerciales sont confirmés dans l’offre écrite.", privacyHeading: "Confidentialité et RGPD", privacyText: "Les données de demande et les dossiers techniques privés sont utilisés pour le devis, l’échantillonnage et le suivi de commande. La politique détaillée est disponible en anglais.", priority: "Pages B2B en français", rights: "Tous droits réservés.", privacy: "Confidentialité (anglais)", terms: "Conditions (anglais)", cookies: "Paramètres des cookies" },
-  nl: { tagline: "Productiespecialisten", intro: "Maatwerk kledingproductie voor merken, groothandels en importeurs.", detail: "Productie op bestelling in Sialkot, Pakistan. De volledige catalogus blijft beschikbaar in het Engels.", published: "Gepubliceerde pagina’s", buyers: "Voor inkopers", contact: "Contact", trade: "Ondersteunde handelsvoorwaarden", tradeNote: "De definitieve Incoterm, bestemming, heffingen en commerciële verantwoordelijkheden worden in de schriftelijke offerte bevestigd.", privacyHeading: "Privacy en AVG", privacyText: "Aanvraaggegevens en vertrouwelijke tech packs worden gebruikt voor offertes, monsters en ordercommunicatie. De volledige privacyverklaring is beschikbaar in het Engels.", priority: "Nederlandstalige B2B-pagina’s", rights: "Alle rechten voorbehouden.", privacy: "Privacy (Engels)", terms: "Voorwaarden (Engels)", cookies: "Cookie-instellingen" },
+  en: { tagline: "Manufacturing Specialists", intro: "Custom apparel manufacturing for brands, wholesalers and importers.", detail: "Made-to-order Bavarian wear, sportswear, leatherwear, streetwear and leisure apparel from Sialkot, Pakistan.", published: "Product programs", buyers: "For buyers", contact: "Contact", trade: "Supported trade terms", tradeNote: "The named place, destination coverage, duties and commercial responsibility are confirmed in the written quotation. DDP is destination and shipment dependent.", privacyHeading: "Data privacy & GDPR", privacyText: "Inquiry data and private tech packs are collected for quotation, sampling and order communication. Buyers can review the privacy policy, manage non-essential cookies, or request access and deletion through the published contact details.", priority: "Priority sourcing markets", rights: "All rights reserved.", privacy: "Privacy / GDPR", terms: "Terms", cookies: "Cookie settings" },
+  de: { tagline: "Fertigungsspezialisten", intro: "Kundenspezifische Bekleidungsfertigung für Marken, Großhändler und Importeure.", detail: "Made-to-order Fertigung in Sialkot, Pakistan. Der vollständige Katalog bleibt auf Englisch verfügbar.", published: "Veröffentlichte Seiten", buyers: "Für Einkäufer", contact: "Kontakt", trade: "Unterstützte Handelsbedingungen", tradeNote: "Benannter Ort, Zielabdeckung, Abgaben und Verantwortlichkeiten werden im schriftlichen Angebot bestätigt. DDP hängt von Zielort und Sendung ab.", privacyHeading: "Datenschutz & DSGVO", privacyText: "Anfragedaten und private Tech Packs werden für Angebot, Muster und Auftragskommunikation verarbeitet. Details stehen in der englischen Datenschutzrichtlinie.", priority: "Deutsche B2B-Seiten", rights: "Alle Rechte vorbehalten.", privacy: "Datenschutz (Englisch)", terms: "Bedingungen (Englisch)", cookies: "Cookie-Einstellungen" },
+  fr: { tagline: "Spécialistes de la fabrication", intro: "Fabrication de vêtements personnalisés pour marques, grossistes et importateurs.", detail: "Production sur commande à Sialkot, au Pakistan. Le catalogue complet reste disponible en anglais.", published: "Pages publiées", buyers: "Pour les acheteurs", contact: "Contact", trade: "Conditions commerciales disponibles", tradeNote: "Le lieu nommé, la couverture de destination, les droits et les responsabilités sont confirmés dans l’offre écrite. Le DDP dépend de la destination et de l’envoi.", privacyHeading: "Confidentialité et RGPD", privacyText: "Les données de demande et les dossiers techniques privés sont utilisés pour le devis, l’échantillonnage et le suivi de commande. La politique détaillée est disponible en anglais.", priority: "Pages B2B en français", rights: "Tous droits réservés.", privacy: "Confidentialité (anglais)", terms: "Conditions (anglais)", cookies: "Paramètres des cookies" },
+  nl: { tagline: "Productiespecialisten", intro: "Maatwerk kledingproductie voor merken, groothandels en importeurs.", detail: "Productie op bestelling in Sialkot, Pakistan. De volledige catalogus blijft beschikbaar in het Engels.", published: "Gepubliceerde pagina’s", buyers: "Voor inkopers", contact: "Contact", trade: "Ondersteunde handelsvoorwaarden", tradeNote: "De genoemde plaats, bestemmingsdekking, heffingen en verantwoordelijkheden worden in de schriftelijke offerte bevestigd. DDP hangt af van bestemming en zending.", privacyHeading: "Privacy en AVG", privacyText: "Aanvraaggegevens en vertrouwelijke tech packs worden gebruikt voor offertes, monsters en ordercommunicatie. De volledige privacyverklaring is beschikbaar in het Engels.", priority: "Nederlandstalige B2B-pagina’s", rights: "Alle rechten voorbehouden.", privacy: "Privacy (Engels)", terms: "Voorwaarden (Engels)", cookies: "Cookie-instellingen" },
 };
 
 const DIRECT_LINKS: Record<LocaleCode, ReadonlyArray<{ label: string; href: string }>> = {
   en: [
-    { label: "Products", href: "/products" }, { label: "Inquiry Cart", href: "/inquiry-cart" },
-    { label: "Manufacturing", href: "/manufacturing" }, { label: "Buyer Trust", href: "/buyer-trust" },
-    { label: "Factory Video Call", href: "/factory-video-call" }, { label: "Deutsch", href: "/de/" },
+    { label: "Materials", href: ROUTES.materials.en }, { label: "Buyer Information", href: ROUTES.buyerInformation.en },
+    { label: "Inquiry Cart", href: "/inquiry-cart" }, { label: "Buyer Trust", href: "/buyer-trust" },
+    { label: "Factory Video Call", href: "/factory-video-call" }, { label: "Compliance Review", href: "/compliance" },
   ],
   de: [
-    { label: "Deutsche Übersicht", href: "/de/" }, { label: "Anfrageliste", href: "/inquiry-cart" },
-    { label: "Fabrik-Videoanruf", href: "/factory-video-call" }, { label: "Katalog (Englisch)", href: "/products" },
-    { label: "Käufervertrauen (Englisch)", href: "/buyer-trust" },
+    { label: "Materialien", href: ROUTES.materials.de }, { label: "Einkäuferinformationen", href: ROUTES.buyerInformation.de },
+    { label: "Anfrageliste", href: "/inquiry-cart" }, { label: "Fabrik-Videoanruf", href: "/factory-video-call" },
+    { label: "Katalog (Englisch)", href: "/products" },
   ],
   fr: [
-    { label: "Accueil français", href: "/fr/" }, { label: "Liste de demande", href: "/inquiry-cart" },
-    { label: "Visite vidéo de l’usine", href: "/factory-video-call" }, { label: "Catalogue (anglais)", href: "/products" },
-    { label: "Informations acheteurs (anglais)", href: "/buyer-trust" },
+    { label: "Matières", href: ROUTES.materials.fr }, { label: "Informations acheteurs", href: ROUTES.buyerInformation.fr },
+    { label: "Liste de demande", href: "/inquiry-cart" }, { label: "Visite vidéo de l’usine", href: "/factory-video-call" },
+    { label: "Catalogue (anglais)", href: "/products" },
   ],
   nl: [
-    { label: "Nederlandse startpagina", href: "/nl/" }, { label: "Aanvraaglijst", href: "/inquiry-cart" },
-    { label: "Live videogesprek met de fabriek", href: "/factory-video-call" }, { label: "Catalogus (Engels)", href: "/products" },
-    { label: "Informatie voor inkopers (Engels)", href: "/buyer-trust" },
+    { label: "Materialen", href: ROUTES.materials.nl }, { label: "Inkopersinformatie", href: ROUTES.buyerInformation.nl },
+    { label: "Aanvraaglijst", href: "/inquiry-cart" }, { label: "Live videogesprek met de fabriek", href: "/factory-video-call" },
+    { label: "Catalogus (Engels)", href: "/products" },
   ],
 };
 
-const INCOTERMS = ["FOB Sialkot", "CIF", "EXW", "DDP"] as const;
+const TRADE_TERMS: Record<LocaleCode, readonly string[]> = {
+  en: ["EXW", "FOB — named Pakistani point", "CIF — named destination", "DDP — where available"],
+  de: ["EXW", "FOB — benannter pakistanischer Ort", "CIF — benanntes Ziel", "DDP — soweit verfügbar"],
+  fr: ["EXW", "FOB — point pakistanais nommé", "CIF — destination nommée", "DDP — si disponible"],
+  nl: ["EXW", "FOB — genoemde Pakistaanse plaats", "CIF — genoemde bestemming", "DDP — waar beschikbaar"],
+};
 
 export default function Footer() {
   const { pathname } = useLocation();
@@ -99,7 +105,7 @@ export default function Footer() {
       </div>
 
       <div className="container-luxe mt-10 grid gap-5 border-t border-foreground/10 pt-6 md:grid-cols-[1fr_1.3fr]">
-        <div><p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/38">{copy.trade}</p><div className="mt-3 flex flex-wrap gap-2">{INCOTERMS.map((term) => <span key={term} className="border border-foreground/15 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-foreground/58">{term}</span>)}</div><p className="mt-3 text-[10px] leading-5 text-foreground/38">{copy.tradeNote}</p></div>
+        <div><p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/38">{copy.trade}</p><div className="mt-3 flex flex-wrap gap-2">{TRADE_TERMS[locale].map((term) => <Link key={term} to={`${ROUTES.buyerInformation[locale]}#logistics`} className="border border-foreground/15 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-foreground/58 hover:border-primary hover:text-primary">{term}</Link>)}</div><p className="mt-3 text-[10px] leading-5 text-foreground/38">{copy.tradeNote}</p></div>
         <div><p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/38">{copy.privacyHeading}</p><p className="mt-3 max-w-3xl text-[11px] leading-6 text-foreground/48">{copy.privacyText}</p></div>
       </div>
 
