@@ -5,7 +5,7 @@ const DIST_DIR = resolve(process.env.IRHA_DIST_DIR || "dist");
 const SITE_URL = "https://irhaapparels.com";
 const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
-const EXPECTED_SITEMAP_URLS = 407;
+const EXPECTED_SITEMAP_URLS = 411;
 const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
 const TEMPORARY_QUERY_PATTERN =
   /(?:^|[?&])(?:token|signature|expires|x-amz-[^=]*|x-goog-[^=]*|policy|key-pair-id)=/i;
