@@ -1,21 +1,19 @@
-const SITE_MEDIA_ROOT = "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media";
+import {
+  CATEGORY_MEDIA_REGISTRY,
+  MAIN_CATEGORY_SLUGS,
+  canonicalCategoryMedia,
+  type MainCategorySlug,
+} from "@/lib/categoryMediaRegistry";
 
 /**
- * Curated, category-correct imagery for homepage and category hero placements.
- * Featured hero slots must use polished catalogue artwork or generated product
- * media, never raw factory/Drive photography. A filename or generated-media
- * label is not visual verification: only map assets here after confirming that
- * the rendered subject matches the category.
+ * Compatibility export for callers that still need a simple category-to-source map.
+ * The canonical registry owns identity, provenance, crop metadata and curation rules.
  */
-export const CATEGORY_HERO_MEDIA = {
-  "bavarian-trachten-wear": "/product-media/traditional-knee-length-lederhosen/web/traditional-knee-length-lederhosen-design-01-front-web-1600.webp",
-  sportswear: `${SITE_MEDIA_ROOT}/migrated-lovable/06/06a0ca39e249179c78d66560a2e869b8be2eaa26f91492dfc74cd0b47531b49c.png`,
-  "premium-leather-apparel": `${SITE_MEDIA_ROOT}/catalog-migrated/2413dfaf-52c6-4495-bdee-84ed4f7bcc7e/6f7593c5f41340cd1cb6.png`,
-  "streetwear-activewear": `${SITE_MEDIA_ROOT}/catalog-migrated/a9a240d8-d213-4e32-96fb-502ad97af81e/03846f889cb017b8911c.png`,
-  "leisure-nightwear": `${SITE_MEDIA_ROOT}/catalog-migrated/7e5c462f-cfef-47b1-a5f5-690b1f42f4c6/ecb3eae8a15738828efc.png`,
-} as const;
+export const CATEGORY_HERO_MEDIA = Object.fromEntries(
+  MAIN_CATEGORY_SLUGS.map((slug) => [slug, CATEGORY_MEDIA_REGISTRY[slug].src]),
+) as Record<MainCategorySlug, string>;
 
-export type HeroCategorySlug = keyof typeof CATEGORY_HERO_MEDIA;
+export type HeroCategorySlug = MainCategorySlug;
 
 export const HERO_PROGRAMS = [
   { slug: "bavarian-trachten-wear", name: "Bavarian & Trachten", image: CATEGORY_HERO_MEDIA["bavarian-trachten-wear"] },
@@ -26,7 +24,7 @@ export const HERO_PROGRAMS = [
 ] as const;
 
 export function categoryHeroImage(slug: string, fallback?: string | null) {
-  return CATEGORY_HERO_MEDIA[slug as HeroCategorySlug] ?? fallback ?? "";
+  return canonicalCategoryMedia(slug)?.src ?? fallback ?? "";
 }
 
 export function topCategorySlugFromPath(pathname: string) {

@@ -15,8 +15,11 @@ import {
   CollectionCatalogCard,
   ProductCatalogCard,
 } from "@/components/catalog/CatalogListingCard";
+import { useCanonicalCategoryMedia } from "@/hooks/useCanonicalCategoryMedia";
 import { useNormalizedCategory } from "@/hooks/usePublicCategoryData";
 import { usePublishedCategoryTaxonomy } from "@/hooks/usePublishedCatalogTaxonomy";
+import { isMainCategorySlug } from "@/lib/categoryMediaRegistry";
+import { curateCategorySlides } from "@/lib/categorySlideshow";
 import {
   buildCategoryTaxonomy,
   taxonomyAudiencePath,
@@ -59,6 +62,7 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   const invalidLocale = Boolean(params.locale && !isTaxonomyLocale(params.locale));
   const { category, isLoading } = useNormalizedCategory(categorySlug);
   const publishedTaxonomy = usePublishedCategoryTaxonomy(category);
+  const { mediaBySlug } = useCanonicalCategoryMedia();
   const shortlist = useShortlist();
   const compare = useCompare();
 
@@ -112,12 +116,6 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
   }));
   const currentLocale = TAXONOMY_LOCALES.find((candidate) => candidate.code === locale)!;
   const products = collection?.products ?? [];
-  const firstHeroProduct = products[0] ?? audience?.collections[0]?.products[0];
-  const heroImage = firstHeroProduct?.originalImage
-    ?? firstHeroProduct?.gallery?.[0]
-    ?? category.originalImage
-    ?? firstHeroProduct?.image
-    ?? category.image;
   const heroLabel = collectionName ?? audienceName ?? topName;
   const quoteContext = collectionName ?? audienceName ?? topName;
   const structuredQuoteLink = `/inquiry?intent=rfq&category=${encodeURIComponent(category.slug)}&categoryName=${encodeURIComponent(quoteContext)}${collection ? `&collection=${encodeURIComponent(collection.slug)}&collectionName=${encodeURIComponent(collectionName ?? collection.name)}` : ""}`;
@@ -127,21 +125,15 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
     : audience
       ? audience.collections.flatMap((item) => item.products)
       : taxonomy.audiences.flatMap((item) => item.collections.flatMap((child) => child.products));
-  const heroSlides = [
-    heroImage,
-    ...heroProducts.map((product) => product.originalImage ?? product.gallery?.[0] ?? product.image),
-  ]
-    .filter((src): src is string => Boolean(src))
-    .filter((src, index, items) => items.indexOf(src) === index)
-    .slice(0, 6)
-    .map((src, index) => ({
-      src,
-      alt: index === 0
-        ? `${heroLabel} custom manufacturing collection`
-        : `${heroLabel} product view ${index + 1}`,
-      fit: "contain" as const,
-      backgroundClassName: "bg-[#f4f0e7]",
-    }));
+  const canonicalMedia = isMainCategorySlug(category.slug) ? mediaBySlug[category.slug] : null;
+  const heroSlides = curateCategorySlides({
+    categorySlug: category.slug,
+    products: heroProducts,
+    media: canonicalMedia,
+    scope: collection ? "collection" : audience ? "audience" : "category",
+    limit: 6,
+  });
+  const heroImage = heroSlides[0]?.src ?? canonicalMedia?.src ?? category.originalImage ?? category.image;
 
   const breadcrumbItems = [
     { name: ui.home, path: locale === "en" ? "/" : `/intl/${locale}/products/${category.slug}` },
@@ -203,7 +195,10 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
         jsonLd={jsonLd}
       />
 
-      <section className="relative overflow-hidden border-b border-border/60 pb-14 pt-32 md:pb-20 md:pt-40">
+      <section
+        className="relative overflow-hidden border-b border-border/60 pb-14 pt-32 md:pb-20 md:pt-40"
+        data-category-media-id={canonicalMedia?.id}
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.1),transparent_42%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/75" />
         <div className="container-luxe relative grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
@@ -309,8 +304,8 @@ export default function CategoryTaxonomyPage({ audienceOverride }: Props) {
                     href={taxonomyCollectionPath(category.slug, audience.slug, item.slug, locale)}
                     name={name}
                     description={item.description}
-                    image={firstProduct?.image ?? category.image}
-                    originalImage={firstProduct?.originalImage ?? category.originalImage}
+                    image={firstProduct?.image ?? canonicalMedia?.src ?? category.image}
+                    originalImage={firstProduct?.originalImage ?? canonicalMedia?.src ?? category.originalImage}
                     count={item.products.length}
                     actionLabel={ui.viewCollection}
                   />

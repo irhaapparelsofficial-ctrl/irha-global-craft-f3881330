@@ -4,41 +4,48 @@ import SEO from "@/components/SEO";
 import CategoryAudienceNavigator from "@/components/CategoryAudienceNavigator";
 import HeroMediaSlideshow from "@/components/HeroMediaSlideshow";
 import ThumbnailImage from "@/components/ThumbnailImage";
+import { useCanonicalCategoryMedia } from "@/hooks/useCanonicalCategoryMedia";
 import { usePublicCategories, type NormalizedCategory } from "@/hooks/usePublicCategoryData";
 import { usePublishedCategoryTaxonomy } from "@/hooks/usePublishedCatalogTaxonomy";
+import {
+  MAIN_CATEGORY_SLUGS,
+  isMainCategorySlug,
+  type CanonicalCategoryMedia,
+} from "@/lib/categoryMediaRegistry";
 import { buildCategoryTaxonomy } from "@/lib/globalCategoryTaxonomy";
 import { whatsappLink } from "@/lib/constants";
-import bavarianHero from "@/assets/og/og-bavarian-hero.jpg?w=960&format=webp&quality=68";
-import sportswearHero from "@/assets/og/og-sportswear.jpg?w=960&format=webp&quality=68";
-import leatherHero from "@/assets/og/og-leather.jpg?w=960&format=webp&quality=68";
 
 const SITE = "https://irhaapparels.com";
-const FALLBACK_HERO_IMAGES = [bavarianHero, sportswearHero, leatherHero];
 
-function PublishedCategorySection({ category }: { category: NormalizedCategory }) {
+function PublishedCategorySection({
+  category,
+  media,
+}: {
+  category: NormalizedCategory;
+  media: CanonicalCategoryMedia;
+}) {
   const published = usePublishedCategoryTaxonomy(category);
   const taxonomy = published.taxonomy ?? buildCategoryTaxonomy(category);
   const audienceCount = taxonomy.audiences.length;
   const collectionCount = taxonomy.audiences.reduce((total, audience) => total + audience.collections.length, 0);
 
   return (
-    <article className="border-b border-border/60 pb-20 last:border-b-0">
+    <article className="border-b border-border/60 pb-20 last:border-b-0" data-category-media-id={media.id}>
       <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-8">
         <Link to={`/products/${category.slug}`} className="lg:col-span-4 block group">
-          <div className="relative aspect-[4/3] overflow-hidden bg-card">
-            {category.image && (
-              <ThumbnailImage
-                src={category.image}
-                originalSrc={category.originalImage}
-                alt={category.name}
-                loading="lazy"
-                fetchPriority="low"
-                width={960}
-                height={720}
-                sizes="(max-width: 1023px) 92vw, 30vw"
-                className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-700"
-              />
-            )}
+          <div className={`relative aspect-[4/3] overflow-hidden ${media.backgroundClassName}`}>
+            <ThumbnailImage
+              src={media.src}
+              originalSrc={media.src}
+              alt={media.alt}
+              loading="lazy"
+              fetchPriority="low"
+              width={960}
+              height={720}
+              sizes="(max-width: 1023px) 92vw, 30vw"
+              className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-700"
+              style={{ objectPosition: media.position }}
+            />
             <span className="absolute bottom-3 left-3 border border-white/20 bg-black/75 px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/80">
               Digital catalogue reference
             </span>
@@ -67,18 +74,18 @@ function PublishedCategorySection({ category }: { category: NormalizedCategory }
 
 export default function GlobalCollectionsPage() {
   const { categories, isLoading } = usePublicCategories();
+  const { mediaBySlug } = useCanonicalCategoryMedia();
   const totalProducts = categories.reduce((total, category) => total + category.productCount, 0);
-  const categoryHeroImages = categories
-    .map((category) => ({ src: category.image, alt: category.name }))
-    .filter((item): item is { src: string; alt: string } => Boolean(item.src))
-    .slice(0, 5);
-  const heroImages = FALLBACK_HERO_IMAGES.map((fallback, index) =>
-    categoryHeroImages[index] ?? { src: fallback, alt: ["Bavarian Trachten", "Custom sportswear", "Premium leather apparel"][index] },
-  );
-  const heroSlides = [...categoryHeroImages, ...heroImages]
-    .filter((image, index, items) => items.findIndex((item) => item.src === image.src) === index)
-    .slice(0, 6)
-    .map((image) => ({ src: image.src, alt: image.alt, fit: "contain" as const, backgroundClassName: "bg-[#f4f0e7]" }));
+  const heroSlides = MAIN_CATEGORY_SLUGS.map((slug) => {
+    const media = mediaBySlug[slug];
+    return {
+      src: media.src,
+      alt: media.alt,
+      fit: media.fit,
+      position: media.position,
+      backgroundClassName: media.backgroundClassName,
+    };
+  });
 
   if (isLoading && categories.length === 0) {
     return <div className="pt-40 pb-24 container-luxe text-sm text-foreground/60">Loading collections…</div>;
@@ -155,9 +162,16 @@ export default function GlobalCollectionsPage() {
 
       <section className="py-16">
         <div className="container-luxe space-y-20">
-          {categories.map((category) => (
-            <PublishedCategorySection key={category.slug} category={category} />
-          ))}
+          {categories.map((category) => {
+            if (!isMainCategorySlug(category.slug)) return null;
+            return (
+              <PublishedCategorySection
+                key={category.slug}
+                category={category}
+                media={mediaBySlug[category.slug]}
+              />
+            );
+          })}
         </div>
       </section>
     </>

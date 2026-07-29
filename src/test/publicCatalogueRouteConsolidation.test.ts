@@ -28,6 +28,8 @@ describe("public catalogue route consolidation", () => {
 
   it("uses the approved homepage media roles for all five public programs", () => {
     const categoryUniverse = readSource("src/components/sections/HomeCategoryUniverse.tsx");
+    const registry = readSource("src/lib/categoryMediaRegistry.ts");
+    const resolver = readSource("src/hooks/useCanonicalCategoryMedia.ts");
 
     for (const role of [
       "category_bavarian_trachten",
@@ -36,9 +38,12 @@ describe("public catalogue route consolidation", () => {
       "category_streetwear_activewear",
       "category_leisure_nightwear",
     ]) {
-      expect(categoryUniverse).toContain(role);
+      expect(registry).toContain(role);
     }
-    expect(categoryUniverse).toContain("useHomepageMedia");
-    expect(categoryUniverse).toContain("approvedMedia[program.role] || program.image");
+    expect(categoryUniverse).toContain("useCanonicalCategoryMedia");
+    expect(categoryUniverse).toContain("MAIN_CATEGORY_SLUGS.map");
+    expect(categoryUniverse).toContain("data-category-media-id");
+    expect(resolver).toContain("useHomepageMedia");
+    expect(resolver).toContain("resolveCanonicalCategoryMediaMap");
   });
 });
