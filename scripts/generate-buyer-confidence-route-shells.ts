@@ -120,10 +120,19 @@ function replaceHead(html: string, path: string, locale: LocaleCode, title: stri
   return output;
 }
 
+async function readBaseShell(file: string): Promise<string> {
+  try {
+    return await readFile(file, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    return readFile(join(DIST_DIR, "index.html"), "utf8");
+  }
+}
+
 async function render(path: string, locale: LocaleCode, kind: "materials" | "buyer-information"): Promise<void> {
   const file = routeFile(path);
   await mkdir(dirname(file), { recursive: true });
-  const html = await readFile(file, "utf8");
+  const html = await readBaseShell(file);
   const copy = kind === "materials" ? MATERIAL_PAGE_COPY[locale] : BUYER_INFORMATION_COPY[locale];
   const title = `${copy.eyebrow} | Irha Apparels`;
   const description = copy.intro;
