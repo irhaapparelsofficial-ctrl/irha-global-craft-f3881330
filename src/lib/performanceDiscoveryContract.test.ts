@@ -22,10 +22,10 @@ describe("public performance and discovery contract", () => {
     expect(appSource).toContain('<Route path="/:buyerIntentSlug" element={<BuyerIntentLandingPage />} />');
   });
 
-  it("assigns high priority to one LCP image and lazy-loads secondary hero and crest media", () => {
+  it("assigns high priority to one LCP image and lazy-loads secondary hero media", () => {
     expect(heroSource.match(/loading="eager"/g)).toHaveLength(1);
     expect(heroSource.match(/fetchPriority="high"/g)).toHaveLength(1);
-    expect(heroSource.match(/loading="lazy"/g)).toHaveLength(2);
+    expect(heroSource.match(/loading="lazy"/g)).toHaveLength(1);
     expect(heroSource.match(/fetchPriority="low"/g)).toHaveLength(1);
     expect(heroSource).toContain("SECONDARY_PROGRAMS.map");
     expect(heroSource).toContain('data-card-brand="irha-official-crest"');
