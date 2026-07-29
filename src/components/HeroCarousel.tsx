@@ -46,7 +46,7 @@ function HeroCardBrandMark() {
       aria-hidden="true"
       data-card-brand="irha-official-crest"
     >
-      <img src="/favicon.svg" alt="" className="h-full w-full object-contain" loading="lazy" decoding="async" />
+      <img src="/favicon.svg" alt="" className="h-full w-full object-contain" decoding="async" />
     </span>
   );
 }
