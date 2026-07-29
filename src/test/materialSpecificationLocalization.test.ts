@@ -33,10 +33,10 @@ describe("localized material technical specifications", () => {
     expect(generatorSource).toContain("Generated 8 source-backed buyer-confidence static route shells");
   });
 
-  it("creates localized route files from the root shell when the static pipeline has not created them yet", () => {
-    expect(generatorSource).toContain("async function readBaseShell(file: string)");
+  it("creates localized route files from sanitized English route shells when the static pipeline has not created them yet", () => {
+    expect(generatorSource).toContain("async function readBaseShell(file: string, kind:");
     expect(generatorSource).toContain('if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error');
-    expect(generatorSource).toContain('return readFile(join(DIST_DIR, "index.html"), "utf8")');
+    expect(generatorSource).toContain('const templatePath = kind === "materials" ? ROUTES.materials.en : ROUTES.buyerInformation.en');
   });
 
   it("uses the same localized technical values after React hydration", () => {
