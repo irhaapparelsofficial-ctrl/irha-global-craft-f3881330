@@ -116,7 +116,10 @@ function authoritativeSitemapPaths(manifest) {
     return cleanPath(url.pathname);
   });
   assert(new Set(paths).size === paths.length, "Authoritative SEO manifest contains duplicate canonical paths");
-  return { paths, routeByPath: new Map(eligible.map((route) => [cleanPath(new URL(route.canonicalUrl).pathname), route])) };
+  return {
+    paths,
+    routeByPath: new Map(eligible.map((route) => [cleanPath(new URL(route.canonicalUrl).pathname), route])),
+  };
 }
 
 function assertExactSitemapSet(actualPaths, expectedPaths) {
@@ -186,21 +189,19 @@ async function readRoute(pathname) {
   return readFile(pathname === "/" ? join(DIST, "index.html") : join(DIST, pathname.slice(1), "index.html"), "utf8");
 }
 
-function verifyBase(pathname, html) {
-  const isLocaleGateway = /^\/(?:de|fr|nl)$/.test(pathname);
-  const expectedCanonical = pathname === "/" ? `${SITE}/` : isLocaleGateway ? `${SITE}${pathname}/` : `${SITE}${pathname}`;
+function verifyBase(pathname, html, expectedCanonical) {
   assert(titleOf(html), `${pathname} is missing a title`);
   assert(h1Of(html), `${pathname} is missing an H1`);
-  assert(canonicalOf(html) === expectedCanonical, `${pathname} canonical mismatch: ${canonicalOf(html)}`);
+  assert(canonicalOf(html) === expectedCanonical, `${pathname} canonical mismatch: ${canonicalOf(html)} !== ${expectedCanonical}`);
   const main = primaryMain(html);
   assert(main, `${pathname} is missing the primary static main`);
   assert(!main.includes(GENERIC_MARKER), `${pathname} retained the former generic shell marker`);
 }
 
-function verifyCore(pathname, html) {
+function verifyCore(pathname, html, expectedCanonical) {
   const content = CORE_ROUTE_CONTENT[pathname];
   assert(content, `Missing core content model for ${pathname}`);
-  verifyBase(pathname, html);
+  verifyBase(pathname, html, expectedCanonical);
   const main = primaryMain(html);
   assert(main.includes(CORE_SHELL), `${pathname} is missing the core route-content marker`);
   assert(titleOf(html) === content.title, `${pathname} title differs from the approved route content`);
@@ -209,7 +210,7 @@ function verifyCore(pathname, html) {
   assert(main.includes('aria-label="Breadcrumb"'), `${pathname} is missing visible breadcrumbs`);
   assert(main.includes(content.primaryCta.href.replace(/&/g, "&amp;")) || main.includes(content.primaryCta.href), `${pathname} is missing its primary CTA`);
   const nodes = schemas(html).flatMap((schema) => schemaNodes(schema));
-  assert(nodes.some((node) => node["@type"] === content.pageType && node.url === `${SITE}${pathname}`), `${pathname} is missing matching ${content.pageType} schema`);
+  assert(nodes.some((node) => node["@type"] === content.pageType && node.url === expectedCanonical), `${pathname} is missing matching ${content.pageType} schema`);
   assert(nodes.some((node) => node["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
   for (const fingerprint of UNIVERSAL_FINGERPRINTS) assert(!main.includes(fingerprint), `${pathname} retained universal shell text: ${fingerprint}`);
   for (const legacy of LEGACY_INTERNAL_LINKS) assert(!main.includes(`href="${legacy}"`), `${pathname} links through legacy path ${legacy}`);
@@ -217,8 +218,8 @@ function verifyCore(pathname, html) {
   for (const claim of UNSUPPORTED_CLAIMS) assert(!lower.includes(claim), `${pathname} contains unsupported claim text: ${claim}`);
 }
 
-function verifyTaxonomy(pathname, html, node, productByPath) {
-  verifyBase(pathname, html);
+function verifyTaxonomy(pathname, html, node, productByPath, expectedCanonical) {
+  verifyBase(pathname, html, expectedCanonical);
   const main = primaryMain(html);
   assert(main.includes(TAXONOMY_SHELL), `${pathname} is missing the taxonomy route-content marker`);
   assert(main.includes('data-irha-taxonomy-parity="true"'), `${pathname} is missing taxonomy parity marker`);
@@ -237,7 +238,7 @@ function verifyTaxonomy(pathname, html, node, productByPath) {
   assert(main.includes(`href="/products/${segments[1]}"`) || node.kind === "root", `${pathname} is missing its main-category breadcrumb link`);
   if (node.kind === "collection") assert(main.includes(`href="/products/${segments[1]}/${segments[2]}"`), `${pathname} is missing its audience hierarchy link`);
   const nodes = schemas(html).flatMap((schema) => schemaNodes(schema));
-  assert(nodes.some((item) => item["@type"] === "CollectionPage" && item.url === `${SITE}${pathname}`), `${pathname} is missing matching CollectionPage schema`);
+  assert(nodes.some((item) => item["@type"] === "CollectionPage" && item.url === expectedCanonical), `${pathname} is missing matching CollectionPage schema`);
   assert(nodes.some((item) => item["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
   for (const fingerprint of UNIVERSAL_FINGERPRINTS) assert(!main.includes(fingerprint), `${pathname} retained universal shell text: ${fingerprint}`);
   for (const legacy of LEGACY_INTERNAL_LINKS) assert(!main.includes(`href="${legacy}"`), `${pathname} links through legacy path ${legacy}`);
@@ -245,8 +246,8 @@ function verifyTaxonomy(pathname, html, node, productByPath) {
   for (const claim of UNSUPPORTED_CLAIMS) assert(!lower.includes(claim), `${pathname} contains unsupported claim text: ${claim}`);
 }
 
-function verifyProduct(pathname, html, product) {
-  verifyBase(pathname, html);
+function verifyProduct(pathname, html, product, expectedCanonical) {
+  verifyBase(pathname, html, expectedCanonical);
   const main = primaryMain(html);
   assert(main.includes(PRODUCT_SHELL), `${pathname} is missing the product shell marker`);
   assert(!/Loading product/i.test(main), `${pathname} exposes loading-only primary product content`);
@@ -342,10 +343,10 @@ export async function verifyRouteContentFidelity() {
   const { paths: expectedPaths, routeByPath } = authoritativeSitemapPaths(seoManifest);
   assertExactSitemapSet(paths, expectedPaths);
 
-  const manifest = JSON.parse(catalogManifestText);
-  assert(manifest.schemaVersion === 1 && manifest.productCount === EXPECTED_PRODUCTS && manifest.products.length === EXPECTED_PRODUCTS, "Expected the complete 254-product manifest");
-  const productByPath = new Map(manifest.products.map((product) => [product.canonical_path, product]));
-  const taxonomy = routeMap(manifest.products);
+  const catalogManifest = JSON.parse(catalogManifestText);
+  assert(catalogManifest.schemaVersion === 1 && catalogManifest.productCount === EXPECTED_PRODUCTS && catalogManifest.products.length === EXPECTED_PRODUCTS, "Expected the complete 254-product manifest");
+  const productByPath = new Map(catalogManifest.products.map((product) => [product.canonical_path, product]));
+  const taxonomy = routeMap(catalogManifest.products);
   assert(taxonomy.size === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} taxonomy routes, found ${taxonomy.size}`);
   assert(CORE_ROUTE_PATHS.length === 14, `Expected 14 controlled core routes, found ${CORE_ROUTE_PATHS.length}`);
 
@@ -355,32 +356,33 @@ export async function verifyRouteContentFidelity() {
   const owned = { homepage: 0, core: 0, taxonomy: 0, product: 0, specialized: 0 };
   const coreBodies = new Map();
   for (const pathname of paths) {
+    const route = routeByPath.get(pathname);
+    assert(route, `Canonical route is missing from authoritative ownership manifest: ${pathname}`);
+    const expectedCanonical = route.canonicalUrl;
     const html = await readRoute(pathname);
     if (pathname === "/") {
-      verifyBase(pathname, html);
+      verifyBase(pathname, html, expectedCanonical);
       owned.homepage += 1;
       continue;
     }
     if (CORE_ROUTE_CONTENT[pathname]) {
-      verifyCore(pathname, html);
+      verifyCore(pathname, html, expectedCanonical);
       coreBodies.set(pathname, stripHtml(primaryMain(html)));
       owned.core += 1;
       continue;
     }
     if (taxonomy.has(pathname)) {
-      verifyTaxonomy(pathname, html, taxonomy.get(pathname), productByPath);
+      verifyTaxonomy(pathname, html, taxonomy.get(pathname), productByPath, expectedCanonical);
       owned.taxonomy += 1;
       continue;
     }
     if (productByPath.has(pathname)) {
-      verifyProduct(pathname, html, productByPath.get(pathname));
+      verifyProduct(pathname, html, productByPath.get(pathname), expectedCanonical);
       owned.product += 1;
       continue;
     }
-    verifyBase(pathname, html);
+    verifyBase(pathname, html, expectedCanonical);
     const main = primaryMain(html);
-    const route = routeByPath.get(pathname);
-    assert(route, `Canonical route is missing from authoritative ownership manifest: ${pathname}`);
     assert(SPECIALIZED_ROUTE_TYPES.has(route.routeType), `Canonical route has no accepted content owner: ${pathname} (${route.routeType})`);
     assert(!main.includes(CORE_SHELL) && !main.includes(TAXONOMY_SHELL) && !main.includes(PRODUCT_SHELL), `${pathname} has conflicting route ownership markers`);
     owned.specialized += 1;
