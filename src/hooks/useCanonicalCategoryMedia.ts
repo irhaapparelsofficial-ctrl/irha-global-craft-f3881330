@@ -8,7 +8,10 @@ import {
 
 export function useCanonicalCategoryMedia() {
   const query = useHomepageMedia();
-  const approvedMedia = (query.data ?? {}) as Partial<Record<CategoryMediaRole, string>>;
+  const approvedMedia = useMemo(
+    () => (query.data ?? {}) as Partial<Record<CategoryMediaRole, string>>,
+    [query.data],
+  );
   const mediaBySlug = useMemo(
     () => resolveCanonicalCategoryMediaMap(approvedMedia as HomepageMediaMap),
     [approvedMedia],
