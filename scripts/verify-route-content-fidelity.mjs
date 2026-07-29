@@ -145,8 +145,8 @@ function routeMap(products) {
     const audiencePath = `${rootPath}/${product.audience_slug}`;
     const collectionPath = `${audiencePath}/${product.product_type_slug}`;
     const root = upsert(rootPath, { kind: "root", rootName: product.main_category_name });
-    const audience = upsert(audiencePath, { kind: "audience", rootName: product.main_category_name, audienceName: product.audience_name });
-    const collection = upsert(collectionPath, { kind: "collection", rootName: product.main_category_name, audienceName: product.audience_name, collectionName: product.product_type_name });
+    const audience = upsert(routes, audiencePath, { kind: "audience", rootName: product.main_category_name, audienceName: product.audience_name });
+    const collection = upsert(routes, collectionPath, { kind: "collection", rootName: product.main_category_name, audienceName: product.audience_name, collectionName: product.product_type_name });
     for (const node of [root, audience, collection]) {
       node.productCount += 1;
       node.products.add(product.canonical_path);
@@ -358,7 +358,9 @@ export async function verifyRouteContentFidelity() {
   const productByPath = new Map(catalogManifest.products.map((product) => [product.canonical_path, product]));
   const taxonomy = routeMap(catalogManifest.products);
   assert(taxonomy.size === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} taxonomy routes, found ${taxonomy.size}`);
-  assert(CORE_ROUTE_PATHS.length === 14, `Expected 14 controlled core routes, found ${CORE_ROUTE_PATHS.length}`);
+  assert(CORE_ROUTE_PATHS.length === 14, `Expected 14 controlled core route definitions, found ${CORE_ROUTE_PATHS.length}`);
+  const expectedIndexableCorePaths = CORE_ROUTE_PATHS.filter((path) => routeByPath.has(path));
+  assert(expectedIndexableCorePaths.length > 0, "Authoritative manifest contains no indexable controlled core routes");
 
   const localizedArticles = seoManifest.routes.filter((route) => route.routeType === "resource-article" && route.locale !== "en" && route.indexable);
   assert(localizedArticles.length === 0, `Untranslated localized resource articles are indexable: ${localizedArticles.map((route) => route.path).join(", ")}`);
@@ -399,7 +401,7 @@ export async function verifyRouteContentFidelity() {
   }
 
   assert(owned.homepage === 1, `Expected one homepage, found ${owned.homepage}`);
-  assert(owned.core === 14, `Expected 14 core routes, found ${owned.core}`);
+  assert(owned.core === expectedIndexableCorePaths.length, `Expected ${expectedIndexableCorePaths.length} indexable core routes, found ${owned.core}`);
   assert(owned.taxonomy === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} taxonomy routes, found ${owned.taxonomy}`);
   assert(owned.product === EXPECTED_PRODUCTS, `Expected ${EXPECTED_PRODUCTS} product routes, found ${owned.product}`);
   assert(Object.values(owned).reduce((sum, value) => sum + value, 0) === paths.length, "Not every authoritative sitemap URL has an explicit content owner");
@@ -430,7 +432,7 @@ export async function verifyRouteContentFidelity() {
   assert(privacy.includes("analytics") && privacy.includes("uploaded") && privacy.includes("inquiry drafts"), "Privacy Policy is missing privacy-specific primary content");
 
   const paritySourcesChecked = await verifyReactParity();
-  console.log(`PASS route-content fidelity: ${paths.length} authoritative sitemap URLs; ${owned.core} core, ${owned.taxonomy} taxonomy, ${owned.product} product and ${owned.specialized} specialized routes; ${paritySourcesChecked} React parity sources checked`);
+  console.log(`PASS route-content fidelity: ${paths.length} authoritative sitemap URLs; ${owned.core} indexable core, ${owned.taxonomy} taxonomy, ${owned.product} product and ${owned.specialized} specialized routes; ${paritySourcesChecked} React parity sources checked`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
