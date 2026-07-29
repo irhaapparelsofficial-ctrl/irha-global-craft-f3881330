@@ -27,16 +27,16 @@ const replacementRules = [
   [/Digital catalogue references show design direction only; they are not photographs of completed buyer orders\. Materials, construction and finishes are confirmed from the approved specification\./gi, "Product specifications, materials, construction and finishes are confirmed against the approved buyer brief."],
   [/Catalogue visuals are digital references for design direction, not photographs of completed buyer orders\./gi, "Product specifications are confirmed against the approved buyer brief."],
   [/These visuals communicate design direction only\. They are not photographs of completed production or factory proof\./gi, "Browse the available styles and submit the closest product with your specification."],
-  [/Digital catalogue reference for ([^;"<]+); not production proof/gi, "$1 product style"],
-  [/Digital catalogue reference for ([^"<]+)/gi, "$1 product style"],
+  [/Digital catalogue reference for ([^;"<`]+);\s*not\s+production\s+proof/gi, "$1 product style"],
+  [/Digital catalogue reference for ([^"<`;]+)/gi, "$1 product style"],
   [/Digital catalogue reference gallery/gi, "product gallery"],
   [/Digital Catalogue References/gi, "Product Styles"],
-  [/Digital catalogue reference\s*[·•|-]\s*not production proof/gi, "Product style"],
-  [/Catalogue reference\s*[·•|-]\s*not production proof/gi, ""],
-  [/Design direction\s*[·•|-]\s*not production proof/gi, "Product style"],
+  [/Digital catalogue reference\s*[·•|–—-]\s*not\s+production\s+proof/gi, "Product style"],
+  [/Catalogue reference\s*[·•|–—-]\s*not\s+production\s+proof/gi, ""],
+  [/Design direction\s*[·•|–—-]\s*not\s+production\s+proof/gi, "Product style"],
   [/Digital catalogue reference/gi, "Product style"],
   [/Digital reference/gi, "Product style"],
-  [/[;·•|-]?\s*not production proof/gi, ""],
+  [/[;·•|–—-]?\s*not\s+production\s+proof/gi, ""],
   [/Reference image/gi, "Product photo"],
   [/Image unavailable/gi, "Irha Apparels"],
   [/Media status/gi, "Direct verification"],
@@ -90,7 +90,7 @@ const prohibitedPresentationPatterns = [
   /website-age trust/i,
   /digital catalogue reference/i,
   /digital reference/i,
-  /not production proof/i,
+  /not\s+production\s+proof/i,
   /genuine (?:factory|sample).{0,60}pending/i,
   /(?:factory|real )?media pending/i,
   /photography pending/i,
@@ -153,12 +153,21 @@ function applyOfficialBranding(source) {
     );
 }
 
-function sanitize(source) {
-  const safeCopy = replacementRules.reduce(
+function applyCopyRules(source) {
+  return replacementRules.reduce(
     (current, [pattern, replacement]) => current.replace(pattern, replacement),
     source,
   );
-  return applyOfficialBranding(safeCopy);
+}
+
+function sanitize(source) {
+  // Run twice because one broad legacy replacement can reveal a second prohibited fragment
+  // inside minified template strings. The final targeted pass is deliberately idempotent.
+  const firstPass = applyCopyRules(source);
+  const secondPass = applyCopyRules(firstPass)
+    .replace(/[;·•|–—-]?\s*not\s+production\s+proof/gi, "")
+    .replace(/digital\s+(?:catalogue\s+)?reference/gi, "Product style");
+  return applyOfficialBranding(secondPass);
 }
 
 async function main() {
