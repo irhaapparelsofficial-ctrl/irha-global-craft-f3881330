@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 const hero = read("src/components/HeroCarousel.tsx");
 const heroMedia = read("src/lib/heroMedia.ts");
+const categoryMediaRegistry = read("src/lib/categoryMediaRegistry.ts");
 const home = read("src/pages/Home.tsx");
 const navbar = read("src/components/layout/Navbar.tsx");
 const layout = read("src/components/layout/Layout.tsx");
@@ -33,16 +34,17 @@ describe("polished B2B homepage", () => {
 
   it("presents clean product-first studio hero media with one LCP image", () => {
     for (const label of ["Bavarian &amp; Trachten", "Sportswear", "Leatherwear", "Streetwear", "Leisurewear"]) expect(hero).toContain(label);
-    for (const slug of ["bavarian-trachten-wear", "sportswear", "premium-leather-apparel", "streetwear-activewear", "leisure-nightwear"]) expect(heroMedia).toContain(`"${slug}"`);
+    for (const slug of ["bavarian-trachten-wear", "sportswear", "premium-leather-apparel", "streetwear-activewear", "leisure-nightwear"]) expect(categoryMediaRegistry).toContain(`"${slug}"`);
     expect(hero).toContain("CATEGORY_HERO_MEDIA");
     expect(hero).toContain("SECONDARY_PROGRAMS.map");
     expect(hero).toContain("object-contain");
     expect(hero).toContain("bg-[#101722]");
     expect(hero.match(/loading="eager"/g)).toHaveLength(1);
     expect(hero.match(/loading="lazy"/g)).toHaveLength(1);
-    expect(heroMedia).toContain("SITE_MEDIA_ROOT");
-    expect(heroMedia).toContain("site-media");
-    expect(heroMedia).not.toContain("@/assets/og/");
+    expect(categoryMediaRegistry).toContain("SITE_MEDIA_ROOT");
+    expect(categoryMediaRegistry).toContain("site-media");
+    expect(heroMedia).toContain("CATEGORY_MEDIA_REGISTRY");
+    expect(categoryMediaRegistry).not.toContain("@/assets/og/");
     expect(hero).not.toContain("SPORTS_PRODUCT_IMAGE");
     expect(hero).not.toContain("LEATHER_PRODUCT_IMAGE");
     expect(hero).not.toContain("BAVARIAN_PRODUCT_IMAGE");
@@ -76,7 +78,9 @@ describe("polished B2B homepage", () => {
     expect(capabilities).toContain("OEM, ODM & Private Label");
     expect(capabilities).toContain("Sample Before Bulk");
     expect(categories).toContain("Choose the product line your business needs");
-    expect(categories).toContain("CATEGORY_HERO_MEDIA");
+    expect(categories).toContain("useCanonicalCategoryMedia");
+    expect(categories).toContain("MAIN_CATEGORY_SLUGS");
+    expect(categories).toContain("data-category-media-id");
     expect(categories).toContain("object-contain");
     expect(categories).not.toContain("@/assets/og/");
     expect(categories).not.toContain("usePublicCatalogTree");
