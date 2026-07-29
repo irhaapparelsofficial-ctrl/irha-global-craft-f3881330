@@ -1,5 +1,10 @@
-import { useEffect, useMemo, useState, type ImgHTMLAttributes } from "react";
+import { useEffect, useMemo, useState, type ImgHTMLAttributes, type SyntheticEvent } from "react";
 import { responsiveImageAttributes } from "@/lib/imageThumbnails";
+import {
+  CONTROLLED_IMAGE_FALLBACK,
+  reportImageFailure,
+  type ImageLoadState,
+} from "@/lib/imageLoading";
 
 type ResilientImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   sources: Array<string | null | undefined>;
@@ -11,12 +16,15 @@ const DEFAULT_RESPONSIVE_SIZES = "(max-width: 640px) 92vw, (max-width: 1024px) 5
 export default function ResilientImage({
   sources,
   onError,
+  onLoad,
   loading = "lazy",
   decoding = "async",
   fetchPriority,
   sizes,
   srcSet,
   responsive = true,
+  className,
+  style,
   ...props
 }: ResilientImageProps) {
   const candidates = useMemo(
@@ -26,13 +34,27 @@ export default function ResilientImage({
   const sourceKey = candidates.join("|");
   const [sourceIndex, setSourceIndex] = useState(0);
   const [responsiveFailed, setResponsiveFailed] = useState(false);
+  const [imageState, setImageState] = useState<ImageLoadState>("idle");
 
   useEffect(() => {
+    let cancelled = false;
     setSourceIndex(0);
     setResponsiveFailed(false);
-  }, [sourceKey]);
+    if (candidates.length === 0) {
+      setImageState("failed");
+      return () => { cancelled = true; };
+    }
+    setImageState("requested");
+    queueMicrotask(() => {
+      if (!cancelled) setImageState("loading");
+    });
+    return () => { cancelled = true; };
+  }, [candidates.length, sourceKey]);
 
-  const currentSource = candidates[sourceIndex] ?? "/placeholder.svg";
+  const controlledFallbackActive = sourceIndex >= candidates.length;
+  const currentSource = controlledFallbackActive
+    ? CONTROLLED_IMAGE_FALLBACK
+    : candidates[sourceIndex];
   const responsiveAttributes = useMemo(() => {
     for (const candidate of candidates) {
       const attributes = responsiveImageAttributes(candidate);
@@ -43,7 +65,36 @@ export default function ResilientImage({
   const useResponsiveSet = responsive
     && !responsiveFailed
     && sourceIndex === 0
+    && !controlledFallbackActive
     && Boolean(srcSet || responsiveAttributes.srcSet);
+  const visible = imageState === "loaded" || imageState === "failed";
+
+  const requestNextSource = () => {
+    setImageState("requested");
+    queueMicrotask(() => setImageState("loading"));
+  };
+
+  const handleError = (event: SyntheticEvent<HTMLImageElement>) => {
+    if (controlledFallbackActive) {
+      setImageState("failed");
+      onError?.(event);
+      return;
+    }
+    if (useResponsiveSet) {
+      setResponsiveFailed(true);
+      requestNextSource();
+      return;
+    }
+    if (sourceIndex + 1 < candidates.length) {
+      setSourceIndex((current) => current + 1);
+      requestNextSource();
+      return;
+    }
+    reportImageFailure(currentSource);
+    setSourceIndex(candidates.length);
+    setImageState("failed");
+    onError?.(event);
+  };
 
   return (
     <img
@@ -53,20 +104,20 @@ export default function ResilientImage({
       sizes={useResponsiveSet ? sizes || DEFAULT_RESPONSIVE_SIZES : sizes}
       loading={loading}
       decoding={decoding}
-      fetchPriority={fetchPriority ?? (loading === "eager" ? "high" : "low")}
+      fetchPriority={fetchPriority ?? (loading === "lazy" ? "low" : undefined)}
+      onLoad={(event) => {
+        setImageState(controlledFallbackActive ? "failed" : "loaded");
+        onLoad?.(event);
+      }}
+      onError={handleError}
+      aria-busy={imageState === "requested" || imageState === "loading" ? "true" : undefined}
+      className={className}
+      style={{ ...style, visibility: visible ? "visible" : "hidden" }}
+      data-managed-image="true"
+      data-image-state={imageState}
       data-responsive-image={useResponsiveSet ? "true" : undefined}
       data-responsive-fallback={responsiveFailed ? "true" : undefined}
-      onError={(event) => {
-        if (useResponsiveSet) {
-          setResponsiveFailed(true);
-          return;
-        }
-        if (sourceIndex + 1 < candidates.length) {
-          setSourceIndex((current) => current + 1);
-          return;
-        }
-        onError?.(event);
-      }}
+      data-fallback-active={controlledFallbackActive ? "true" : undefined}
     />
   );
 }
