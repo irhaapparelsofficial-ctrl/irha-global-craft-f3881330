@@ -7,6 +7,9 @@ on:
     paths:
       - automation/ia-b2b-e003.patch
       - .github/workflows/ia-b2b-e003-autopatch.yml
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -17,6 +20,7 @@ concurrency:
 
 jobs:
   apply-and-verify:
+    if: github.event_name == 'push' || github.event.pull_request.head.ref == 'ia-b2b-e003-final-buyer-readiness'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
