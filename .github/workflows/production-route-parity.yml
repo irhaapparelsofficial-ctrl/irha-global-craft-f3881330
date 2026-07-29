@@ -57,7 +57,7 @@ jobs:
           latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
           checked_out="$(git rev-parse HEAD)"
           test "$checked_out" = "$SOURCE_SHA" || { echo "Checked out $checked_out instead of $SOURCE_SHA"; exit 1; }
-          test "$SOURCE_SHA" = "$latest_main" || { echo "Refusing stale crawl: $SOURCE_SHA != $latest_main"; exit 1; }
+          test "$SOURCE_SHA" = "$latest_main" || { echo "Refusing stale production crawl: $SOURCE_SHA != $latest_main"; exit 1; }
 
           status_json="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/status")"
           required_contexts=(
@@ -91,7 +91,14 @@ jobs:
           npx tsc --noEmit
           npx vitest run src/test/routeContentStaticFidelity.test.ts src/test/cloudflareRouteShellAssets.test.ts src/test/productionConvergenceBarrier.test.ts src/test/productionRouteParityCrawler.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
 
-      - name: Generate authoritative route, sitemap and redirect inputs
+      - name: Wait for exact production convergence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$CRAWL_OUTPUT_DIR"
+          npx tsx scripts/wait-for-production-convergence.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/production-convergence.log"
+
+      - name: Generate exact production catalogue and redirect manifests
         shell: bash
         run: |
           set -euo pipefail
@@ -104,13 +111,6 @@ jobs:
           test -s public/seo-route-manifest.json
           test -s public/sitemap.xml
           test -s public/_redirects
-
-      - name: Wait for exact production convergence
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$CRAWL_OUTPUT_DIR"
-          npx tsx scripts/wait-for-production-convergence.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/production-convergence.log"
 
       - name: Run complete live production crawl
         id: crawl
