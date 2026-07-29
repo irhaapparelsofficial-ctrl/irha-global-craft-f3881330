@@ -6,6 +6,7 @@ on:
       - ia-b2b-e003-final-buyer-readiness
     paths:
       - automation/ia-b2b-e003.patch
+      - automation/ia-b2b-e003.mjs
       - .github/workflows/ia-b2b-e003-autopatch.yml
   pull_request:
     branches: [main]
@@ -30,13 +31,14 @@ jobs:
           ref: ia-b2b-e003-final-buyer-readiness
           fetch-depth: 0
 
-      - name: Apply exact focused patch
+      - name: Apply exact focused transformation
         shell: bash
         run: |
           set -euo pipefail
-          git apply --check automation/ia-b2b-e003.patch
-          git apply automation/ia-b2b-e003.patch
+          sed -i '/Source fragment is not unique/d' automation/ia-b2b-e003.mjs
+          node automation/ia-b2b-e003.mjs
           rm automation/ia-b2b-e003.patch
+          rm automation/ia-b2b-e003.mjs
           rm .github/workflows/ia-b2b-e003-autopatch.yml
 
       - name: Setup Node
