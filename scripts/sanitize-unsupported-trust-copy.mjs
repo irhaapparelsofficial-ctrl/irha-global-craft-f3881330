@@ -108,6 +108,14 @@ const unsupportedCertificationPatterns = [
   /(?:certificate|certification)[-_ ]logo[^"'\s]*/i,
 ];
 
+const faviconLinks = [
+  '<link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />',
+  '<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />',
+  '<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />',
+  '<link rel="shortcut icon" href="/favicon.ico" />',
+  '<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />',
+].join("\n    ");
+
 async function listTextFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
@@ -127,11 +135,29 @@ function countMatches(source, pattern) {
   return [...source.matchAll(new RegExp(pattern.source, flags))].length;
 }
 
+function applyOfficialBranding(source) {
+  return source
+    .replace(/\/placeholder\.svg/gi, "/favicon.svg")
+    .replace(
+      /<link rel="icon" type="image\/svg\+xml" sizes="any" href="\/favicon\.svg" \/>\s*<link rel="shortcut icon" href="\/favicon\.svg" \/>\s*<link rel="apple-touch-icon" href="\/icon-512x512\.png" \/>/gi,
+      faviconLinks,
+    )
+    .replace(
+      /<link rel="apple-touch-icon"(?: sizes="[^"]+")? href="\/icon-512x512\.png" \/>/gi,
+      '<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />',
+    )
+    .replace(
+      /<div class="irha-boot-bar irha-boot-logo" style="width:174px;height:22px"><\/div>/gi,
+      '<img class="irha-boot-logo" src="/irha-brand-mark.svg" alt="Irha Apparels" width="174" height="48" style="width:174px;height:48px;object-fit:contain" />',
+    );
+}
+
 function sanitize(source) {
-  return replacementRules.reduce(
+  const safeCopy = replacementRules.reduce(
     (current, [pattern, replacement]) => current.replace(pattern, replacement),
     source,
   );
+  return applyOfficialBranding(safeCopy);
 }
 
 async function main() {
