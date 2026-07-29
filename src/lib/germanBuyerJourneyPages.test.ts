@@ -4,6 +4,7 @@ import { GERMAN_GATEWAY_CONTENT } from "./germanGatewayContent";
 import { getHreflangAlternates, getPublishedLocalizedRoutes, getXDefaultPath } from "./i18nFoundation";
 
 const pairedEnglishRoutes = new Map([
+  ["/de/bavarian-wear", "/products/bavarian-trachten-wear"],
   ["/de/lederhosen-hersteller", "/lederhosen-manufacturer-germany"],
   ["/de/dirndl-grosshandel", "/dirndl-manufacturer-austria"],
   ["/de/bekleidungshersteller-deutschland", "/germany-apparel-manufacturer"],
@@ -25,13 +26,12 @@ const germanBuyerConfidenceRoutes = [
 ];
 
 describe("German pilot buyer journey", () => {
-  it("preserves the six buyer-intent pages while adding two reviewed buyer-confidence routes", () => {
-    expect(GERMAN_BUYER_JOURNEY_PAGES).toHaveLength(6);
-    expect(new Set(GERMAN_BUYER_JOURNEY_PATHS).size).toBe(6);
+  it("preserves seven complete buyer-intent pages while adding two reviewed buyer-confidence routes", () => {
+    expect(GERMAN_BUYER_JOURNEY_PAGES).toHaveLength(7);
+    expect(new Set(GERMAN_BUYER_JOURNEY_PATHS).size).toBe(7);
 
     const establishedPublished = [
       "/de/",
-      "/de/bavarian-wear",
       ...GERMAN_BUYER_JOURNEY_PATHS,
     ].sort();
     const expectedPublished = [...establishedPublished, ...germanBuyerConfidenceRoutes].sort();
