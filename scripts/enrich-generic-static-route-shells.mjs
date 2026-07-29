@@ -191,7 +191,7 @@ async function main() {
   const taxonomy = taxonomyPaths(manifest.products);
   if (taxonomy.size !== EXPECTED_TAXONOMY_SHELLS) throw new Error(`Expected ${EXPECTED_TAXONOMY_SHELLS} taxonomy routes; found ${taxonomy.size}`);
   const canonicalPaths = sitemapPaths(await readFile(SITEMAP_PATH, "utf8"));
-  if (canonicalPaths.size !== 407) throw new Error(`Expected 407 canonical sitemap routes; found ${canonicalPaths.size}`);
+  if (canonicalPaths.size !== 411) throw new Error(`Expected 411 canonical sitemap routes; found ${canonicalPaths.size}`);
 
   let coreShellsRendered = 0;
   let taxonomyShellsDeferred = 0;
