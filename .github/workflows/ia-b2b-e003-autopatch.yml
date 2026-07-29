@@ -38,6 +38,9 @@ jobs:
           sed -i '/Source fragment is not unique/d' automation/ia-b2b-e003.mjs
           node automation/ia-b2b-e003.mjs
           sed -i 's#src/data/buyerCapabilities.ts#src/lib/categoryMediaRegistry.ts#' src/test/finalBuyerReadinessPolish.test.ts
+          sed -i '/eslint-disable-next-line @typescript-eslint\/no-explicit-any/d' src/pages/InquiryBase.tsx
+          sed -i 's/} as any);/} as never);/' src/pages/InquiryBase.tsx
+          sed -i 's/const e = error as any;/const e = error as { code?: string; message?: string };/' src/pages/InquiryBase.tsx
           rm automation/ia-b2b-e003.patch
           rm automation/ia-b2b-e003.mjs
           rm .github/workflows/ia-b2b-e003-autopatch.yml
