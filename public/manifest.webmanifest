@@ -1,20 +1,26 @@
 {
-  "id": "/admin",
-  "name": "Irha Apparels Admin",
-  "short_name": "Irha Admin",
-  "description": "Irha Apparels owner dashboard with quote and human live-chat alerts.",
-  "start_url": "/admin",
+  "id": "/",
+  "name": "Irha Apparels",
+  "short_name": "Irha Apparels",
+  "description": "B2B custom apparel manufacturing for brands, wholesalers, importers and private-label buyers.",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
-  "categories": ["business", "productivity"],
+  "categories": ["business", "shopping"],
   "icons": [
     {
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
