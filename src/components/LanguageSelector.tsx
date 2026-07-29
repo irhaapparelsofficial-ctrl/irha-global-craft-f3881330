@@ -40,7 +40,7 @@ export default function LanguageSelector({ className, mobile = false }: Props) {
             aria-current={active ? "page" : undefined}
             onClick={() => setExplicitLanguagePreference(locale)}
             className={cn(
-              "inline-flex min-h-9 items-center justify-center rounded px-3 text-[9px] font-semibold uppercase tracking-[0.16em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "inline-flex min-h-11 min-w-11 items-center justify-center rounded px-3 text-[9px] font-semibold uppercase tracking-[0.16em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               active ? "bg-primary text-primary-foreground" : "text-foreground/65 hover:text-primary",
               mobile && "flex-1",
             )}

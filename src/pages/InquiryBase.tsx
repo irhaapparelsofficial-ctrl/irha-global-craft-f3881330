@@ -36,6 +36,26 @@ const contactSchema = z.object({
 
 type Step = 1 | 2 | 3 | 4 | 5;
 const STEP_LABELS = ["Intent", "Requirements", "Files", "Contact", "Review"] as const;
+const SAFE_SUBMISSION_ERROR =
+  "We could not send your inquiry. Your draft is still saved on this device. Please try again or continue on WhatsApp.";
+
+function fieldId(name: string): string {
+  return `inquiry-${name}`;
+}
+
+function fieldA11y(name: string, errors: Record<string, string>) {
+  const invalid = Boolean(errors[name]);
+  return {
+    id: fieldId(name),
+    "data-inquiry-field": name,
+    "aria-invalid": invalid || undefined,
+    "aria-describedby": invalid ? `${fieldId(name)}-error` : undefined,
+  };
+}
+
+function FieldError({ name, errors }: { name: string; errors: Record<string, string> }) {
+  return errors[name] ? <p id={`${fieldId(name)}-error`} className="mt-1 text-xs text-destructive" role="alert">{errors[name]}</p> : null;
+}
 
 function isValidIntent(x: string | null): x is InquiryIntent {
   return !!x && ["rfq", "sample", "catalogue", "reference", "meeting"].includes(x);
@@ -142,6 +162,13 @@ export default function Inquiry() {
 
   const setField = useCallback(<K extends keyof typeof draft>(k: K, v: (typeof draft)[K]) => {
     setDraft((d) => ({ ...d, [k]: v }));
+    setErrors((current) => {
+      const key = String(k);
+      if (!(key in current)) return current;
+      const nextErrors = { ...current };
+      delete nextErrors[key];
+      return nextErrors;
+    });
   }, []);
 
   // ---- Step validation ----
@@ -170,7 +197,12 @@ export default function Inquiry() {
       errs.consent = "Consent is required before submission";
     }
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    const firstInvalidField = Object.keys(errs)[0];
+    if (!firstInvalidField) return true;
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>(`[data-inquiry-field="${firstInvalidField}"]`)?.focus();
+    });
+    return false;
   };
 
   const next = () => {
@@ -285,13 +317,11 @@ export default function Inquiry() {
         source: "inquiry-wizard",
         intent: draft.intent,
         lead_context: leadContext,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         inquiry_ref: ref,
-      } as any);
+      } as never);
       if (error) {
         // Only treat 23505 on inquiry_ref as idempotent success (retry after successful insert).
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const e = error as any;
+        const e = error as { code?: string; message?: string };
         const isDupOnRef =
           e?.code === "23505" &&
           typeof e?.message === "string" &&
@@ -302,9 +332,12 @@ export default function Inquiry() {
       setDone({ ref });
       setStep(5);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Please try again";
-      toast({ title: "Submission failed", description: msg, variant: "destructive" });
+    } catch {
+      toast({
+        title: "Inquiry not sent",
+        description: SAFE_SUBMISSION_ERROR,
+        variant: "destructive",
+      });
       submitLockRef.current = false;
     } finally {
       setSubmitting(false);
@@ -358,6 +391,7 @@ export default function Inquiry() {
                 return (
                   <li key={lbl} className="flex items-center gap-2 md:gap-3 shrink-0">
                     <span
+                      aria-current={active ? "step" : undefined}
                       className={`w-7 h-7 md:w-8 md:h-8 inline-flex items-center justify-center border text-[11px] ${
                         active ? "border-primary bg-primary text-primary-foreground"
                         : past ? "border-primary text-primary"
@@ -409,7 +443,7 @@ export default function Inquiry() {
                   type="button"
                   onClick={back}
                   disabled={step === 1 || submitting}
-                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-foreground/70 hover:text-foreground disabled:opacity-30"
+                  className="inline-flex min-h-11 items-center gap-2 text-xs uppercase tracking-[0.25em] text-foreground/70 hover:text-foreground disabled:opacity-30"
                 >
                   <ArrowLeft size={14} /> Back
                 </button>
@@ -417,7 +451,7 @@ export default function Inquiry() {
                   <button
                     type="button"
                     onClick={next}
-                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90"
+                    className="inline-flex min-h-11 items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90"
                   >
                     Continue <ArrowRight size={14} />
                   </button>
@@ -426,7 +460,7 @@ export default function Inquiry() {
                     type="button"
                     onClick={submit}
                     disabled={submitting}
-                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90 disabled:opacity-60"
+                    className="inline-flex min-h-11 items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-xs uppercase tracking-[0.25em] hover:opacity-90 disabled:opacity-60"
                   >
                     {submitting ? "Sending…" : "Submit inquiry"} <ArrowRight size={14} />
                   </button>
@@ -488,6 +522,7 @@ function StepIntent({
             <button
               key={id}
               type="button"
+              aria-pressed={active}
               onClick={() => setField("intent", id)}
               className={`text-left p-5 border transition-all ${
                 active ? "border-primary bg-primary/5 text-primary" : "border-border/60 hover:border-foreground/40"
@@ -538,20 +573,20 @@ function StepRequirements({
           </select>
         </div>
         <div>
-          <label className={label}>Company / Brand *</label>
-          <input required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
-          {errors.company && <p className="text-xs text-destructive mt-1">{errors.company}</p>}
+          <label htmlFor={fieldId("company")} className={label}>Company / Brand *</label>
+          <input {...fieldA11y("company", errors)} required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
+          <FieldError name="company" errors={errors} />
         </div>
         <div>
-          <label className={label}>Destination country *</label>
-          <input className={input} placeholder="e.g. Germany" value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
-          {errors.country && <p className="text-xs text-destructive mt-1">{errors.country}</p>}
+          <label htmlFor={fieldId("country")} className={label}>Destination country *</label>
+          <input {...fieldA11y("country", errors)} required className={input} placeholder="e.g. Germany" value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
+          <FieldError name="country" errors={errors} />
         </div>
         {(draft.intent === "rfq") && (
           <div>
-            <label className={label}>Estimated quantity *</label>
-            <input className={input} placeholder="e.g. 500 pcs / style" value={draft.quantity ?? ""} onChange={(e) => setField("quantity", e.target.value)} />
-            {errors.quantity && <p className="text-xs text-destructive mt-1">{errors.quantity}</p>}
+            <label htmlFor={fieldId("quantity")} className={label}>Estimated quantity *</label>
+            <input {...fieldA11y("quantity", errors)} required className={input} placeholder="e.g. 500 pcs / style" value={draft.quantity ?? ""} onChange={(e) => setField("quantity", e.target.value)} />
+            <FieldError name="quantity" errors={errors} />
           </div>
         )}
       </div>
@@ -559,9 +594,9 @@ function StepRequirements({
       {draft.intent === "sample" && (
         <div className="grid md:grid-cols-2 gap-4 border-t border-border/40 pt-4">
           <div>
-            <label className={label}>Sample quantity *</label>
-            <input className={input} placeholder="e.g. 2 pcs / style" value={draft.sampleQty ?? ""} onChange={(e) => setField("sampleQty", e.target.value)} />
-            {errors.sampleQty && <p className="text-xs text-destructive mt-1">{errors.sampleQty}</p>}
+            <label htmlFor={fieldId("sampleQty")} className={label}>Sample quantity *</label>
+            <input {...fieldA11y("sampleQty", errors)} required className={input} placeholder="e.g. 2 pcs / style" value={draft.sampleQty ?? ""} onChange={(e) => setField("sampleQty", e.target.value)} />
+            <FieldError name="sampleQty" errors={errors} />
           </div>
           <div>
             <label className={label}>Size</label>
@@ -641,9 +676,9 @@ function StepRequirements({
       {draft.intent === "meeting" && (
         <div className="grid md:grid-cols-2 gap-4 border-t border-border/40 pt-4">
           <div className="md:col-span-2">
-            <label className={label}>Topic *</label>
-            <input className={input} placeholder="e.g. AW26 uniform program" value={draft.meetingTopic ?? ""} onChange={(e) => setField("meetingTopic", e.target.value)} />
-            {errors.meetingTopic && <p className="text-xs text-destructive mt-1">{errors.meetingTopic}</p>}
+            <label htmlFor={fieldId("meetingTopic")} className={label}>Topic *</label>
+            <input {...fieldA11y("meetingTopic", errors)} required className={input} placeholder="e.g. AW26 uniform program" value={draft.meetingTopic ?? ""} onChange={(e) => setField("meetingTopic", e.target.value)} />
+            <FieldError name="meetingTopic" errors={errors} />
           </div>
           <div>
             <label className={label}>Preferred date</label>
@@ -712,29 +747,29 @@ function StepContact({
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         <div>
-          <label className={label}>Full name *</label>
-          <input required autoComplete="name" className={input} value={draft.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
-          {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
+          <label htmlFor={fieldId("name")} className={label}>Full name *</label>
+          <input {...fieldA11y("name", errors)} required autoComplete="name" className={input} value={draft.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
+          <FieldError name="name" errors={errors} />
         </div>
         <div>
-          <label className={label}>Company *</label>
-          <input required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
-          {errors.company && <p className="text-xs text-destructive mt-1">{errors.company}</p>}
+          <label htmlFor={fieldId("company")} className={label}>Company *</label>
+          <input {...fieldA11y("company", errors)} required autoComplete="organization" className={input} value={draft.company ?? ""} onChange={(e) => setField("company", e.target.value)} />
+          <FieldError name="company" errors={errors} />
         </div>
         <div>
-          <label className={label}>Email *</label>
-          <input required type="email" autoComplete="email" className={input} value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} />
-          {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+          <label htmlFor={fieldId("email")} className={label}>Email *</label>
+          <input {...fieldA11y("email", errors)} required type="email" autoComplete="email" className={input} value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} />
+          <FieldError name="email" errors={errors} />
         </div>
         <div>
-          <label className={label}>WhatsApp / phone *</label>
-          <input required type="tel" autoComplete="tel" className={input} placeholder="+1 555 000 0000" value={draft.whatsapp ?? ""} onChange={(e) => setField("whatsapp", e.target.value)} />
-          {errors.whatsapp && <p className="text-xs text-destructive mt-1">{errors.whatsapp}</p>}
+          <label htmlFor={fieldId("whatsapp")} className={label}>WhatsApp / phone *</label>
+          <input {...fieldA11y("whatsapp", errors)} required type="tel" autoComplete="tel" className={input} placeholder="+1 555 000 0000" value={draft.whatsapp ?? ""} onChange={(e) => setField("whatsapp", e.target.value)} />
+          <FieldError name="whatsapp" errors={errors} />
         </div>
         <div className="md:col-span-2">
-          <label className={label}>Country *</label>
-          <input required autoComplete="country-name" className={input} value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
-          {errors.country && <p className="text-xs text-destructive mt-1">{errors.country}</p>}
+          <label htmlFor={fieldId("country")} className={label}>Country *</label>
+          <input {...fieldA11y("country", errors)} required autoComplete="country-name" className={input} value={draft.country ?? ""} onChange={(e) => setField("country", e.target.value)} />
+          <FieldError name="country" errors={errors} />
         </div>
       </div>
     </div>
@@ -816,9 +851,13 @@ function StepReview({
       </section>
       <label className="flex cursor-pointer items-start gap-3 border border-border/60 bg-background/45 p-4 text-sm leading-6">
         <input
+          id={fieldId("consent")}
+          data-inquiry-field="consent"
           type="checkbox"
           checked={draft.consent === true}
           onChange={(event) => setField("consent", event.target.checked)}
+          aria-invalid={Boolean(errors.consent) || undefined}
+          aria-describedby={errors.consent ? `${fieldId("consent")}-error` : undefined}
           className="mt-1 h-4 w-4 shrink-0 accent-primary"
         />
         <span>
@@ -826,7 +865,7 @@ function StepReview({
           <Link to="/privacy-policy" className="text-primary underline underline-offset-2">Privacy policy</Link>
         </span>
       </label>
-      {errors.consent && <p className="text-xs text-destructive" role="alert">{errors.consent}</p>}
+      <FieldError name="consent" errors={errors} />
       <p className="text-[11px] leading-5 text-foreground/55">
         Submission is acknowledged on screen and reviewed manually. Follow-up timing depends on the requirement and is not guaranteed until a team member responds.
       </p>
