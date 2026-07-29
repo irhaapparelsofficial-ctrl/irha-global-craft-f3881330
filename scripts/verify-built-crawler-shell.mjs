@@ -40,8 +40,39 @@ function parseSchemas(html, file) {
   });
 }
 
-const [html, robots, sitemap, llms, llmsFull] = await Promise.all([
-  read("index.html"), read("robots.txt"), read("sitemap.xml"), read("llms.txt"), read("llms-full.txt"),
+function decodeXml(value) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function verifySitemapAgainstManifest(sitemap, manifest) {
+  assert(manifest.schemaVersion === 1 && Array.isArray(manifest.routes), "Authoritative SEO manifest is missing or invalid");
+  const expectedUrls = manifest.routes
+    .filter((route) => route.indexable && route.sitemap)
+    .map((route) => route.canonicalUrl);
+  const expectedSet = new Set(expectedUrls);
+  assert(expectedSet.size === manifest.sitemapCount, `SEO manifest sitemap count drift: ${manifest.sitemapCount} vs ${expectedSet.size}`);
+
+  const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => decodeXml(match[1]));
+  const sitemapSet = new Set(sitemapUrls);
+  assert(sitemapUrls.length === sitemapSet.size, `Sitemap contains ${sitemapUrls.length - sitemapSet.size} duplicate URLs`);
+  assert(sitemapSet.size === expectedSet.size, `Expected ${expectedSet.size} sitemap URLs, found ${sitemapSet.size}`);
+  for (const url of expectedSet) assert(sitemapSet.has(url), `Sitemap is missing authoritative URL: ${url}`);
+  for (const url of sitemapSet) assert(expectedSet.has(url), `Sitemap contains non-authoritative URL: ${url}`);
+  return expectedSet;
+}
+
+const [html, robots, sitemap, llms, llmsFull, seoManifestText] = await Promise.all([
+  read("index.html"),
+  read("robots.txt"),
+  read("sitemap.xml"),
+  read("llms.txt"),
+  read("llms-full.txt"),
+  read("seo-route-manifest.json"),
 ]);
 const canonical = "https://irhaapparels.com";
 const alternateHost = "https://www.irhaapparels.com";
@@ -58,9 +89,8 @@ assert(html.includes('name="robots" content="index,follow,max-image-preview:larg
 for (const term of forbiddenClaims) assert(!html.toLowerCase().includes(term.toLowerCase()), `Built crawler HTML contains unverified legacy claim: ${term}`);
 
 const htmlFiles = await walk(DIST);
-const sitemapCount = [...sitemap.matchAll(/<loc>/g)].length;
-assert(sitemapCount === 411, `Expected 411 sitemap URLs, found ${sitemapCount}`);
-assert(htmlFiles.length >= 411, `Expected at least 411 rendered HTML files, found ${htmlFiles.length}`);
+const expectedUrls = verifySitemapAgainstManifest(sitemap, JSON.parse(seoManifestText));
+assert(htmlFiles.length >= expectedUrls.size, `Expected at least ${expectedUrls.size} rendered HTML files, found ${htmlFiles.length}`);
 
 await verifyRouteContentFidelity();
 
@@ -111,4 +141,4 @@ assert(llms.includes(`${canonical}/`), "llms.txt is missing absolute canonical U
 assert(llmsFull.toLowerCase().includes("two production hubs"), "llms-full.txt is missing the current homepage structure");
 assert(await readFile(join(DIST, "irha-brand-mark.svg"), "utf8").then((value) => value.includes("Official owner-supplied Irha Apparels")), "Canonical crest asset is missing or unverified");
 
-console.log(`PASS ${htmlFiles.length} built HTML files with one canonical Organization, one WebSite, one homepage WebPage, ${sitemapCount} sitemap URLs, valid contact identity and preserved crawler contracts`);
+console.log(`PASS ${htmlFiles.length} built HTML files with one canonical Organization, one WebSite, one homepage WebPage, ${expectedUrls.size} authoritative sitemap URLs, valid contact identity and preserved crawler contracts`);
