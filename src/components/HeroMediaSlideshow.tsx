@@ -50,6 +50,8 @@ export default function HeroMediaSlideshow({
 
   const [index, setIndex] = useState(0);
   const [loadedIndexes, setLoadedIndexes] = useState<Set<number>>(() => new Set([0]));
+  const [firstSlideReady, setFirstSlideReady] = useState(false);
+  const [documentHidden, setDocumentHidden] = useState(() => typeof document !== "undefined" && document.hidden);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -64,8 +66,16 @@ export default function HeroMediaSlideshow({
   }, []);
 
   useEffect(() => {
+    const update = () => setDocumentHidden(document.hidden);
+    update();
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
+  }, []);
+
+  useEffect(() => {
     setIndex((current) => (count > 0 ? Math.min(current, count - 1) : 0));
     setLoadedIndexes(new Set([0]));
+    setFirstSlideReady(false);
   }, [count, normalizedSlides]);
 
   useEffect(() => {
@@ -83,12 +93,12 @@ export default function HeroMediaSlideshow({
   }, [count]);
 
   useEffect(() => {
-    if (count < 2 || paused || reducedMotion) return;
+    if (count < 2 || paused || reducedMotion || documentHidden || !firstSlideReady) return;
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % count);
     }, intervalMs);
     return () => window.clearInterval(timer);
-  }, [count, intervalMs, paused, reducedMotion]);
+  }, [count, documentHidden, firstSlideReady, intervalMs, paused, reducedMotion]);
 
   if (count === 0) return null;
 
@@ -98,6 +108,16 @@ export default function HeroMediaSlideshow({
       role="region"
       aria-roledescription="carousel"
       aria-label={label}
+      onKeyDown={(event) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          go(index - 1);
+        }
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          go(index + 1);
+        }
+      }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -105,6 +125,7 @@ export default function HeroMediaSlideshow({
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false);
       }}
       onTouchStart={(event) => {
+        setPaused(true);
         touchStartX.current = event.touches[0]?.clientX ?? null;
       }}
       onTouchEnd={(event) => {
@@ -135,6 +156,9 @@ export default function HeroMediaSlideshow({
               sizes={imageSizes}
               className={`h-full w-full ${slide.fit === "contain" ? "object-contain" : "object-cover"} ${imageClassName}`}
               style={slide.position ? { objectPosition: slide.position } : undefined}
+              onLoad={() => {
+                if (slideIndex === 0) setFirstSlideReady(true);
+              }}
             />
           )}
         </div>
