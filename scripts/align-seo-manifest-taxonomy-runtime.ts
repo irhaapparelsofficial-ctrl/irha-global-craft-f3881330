@@ -11,6 +11,7 @@ import {
 
 const CATALOG_PATH = resolve("public/catalog-route-manifest.json");
 const SEO_PATH = resolve("public/seo-route-manifest.json");
+const TAXONOMY_ROUTE_TYPES = new Set(["main-division", "audience-group", "product-type"]);
 
 type CatalogManifest = {
   schemaVersion: number;
@@ -23,7 +24,6 @@ type SeoManifest = {
   routeCount: number;
   sitemapCount: number;
   productCount: number;
-  taxonomyCount: number;
   routes: SeoRouteEntry[];
 };
 
@@ -70,16 +70,32 @@ function main() {
   if (catalog.schemaVersion !== 1 || catalog.productCount !== 254 || catalog.products.length !== 254) {
     throw new Error("Taxonomy SEO alignment requires the complete 254-product catalogue manifest");
   }
-  if (seo.schemaVersion !== 1 || !Array.isArray(seo.routes)) {
-    throw new Error("Taxonomy SEO alignment requires the authoritative SEO manifest");
+  if (
+    seo.schemaVersion !== 1
+    || !Array.isArray(seo.routes)
+    || seo.routeCount !== seo.routes.length
+    || seo.productCount !== catalog.productCount
+  ) {
+    throw new Error("Taxonomy SEO alignment requires the complete authoritative SEO manifest");
   }
 
   const identities = taxonomyIdentity(catalog.products);
+  const authoritativeTaxonomyPaths = seo.routes
+    .filter((route) => TAXONOMY_ROUTE_TYPES.has(route.routeType) && route.path !== "/products")
+    .map((route) => route.path);
+  if (
+    authoritativeTaxonomyPaths.length !== identities.size
+    || new Set(authoritativeTaxonomyPaths).size !== authoritativeTaxonomyPaths.length
+  ) {
+    throw new Error(`Authoritative taxonomy inventory drift: manifest ${authoritativeTaxonomyPaths.length}, catalogue ${identities.size}`);
+  }
+  for (const path of authoritativeTaxonomyPaths) {
+    if (!identities.has(path)) throw new Error(`Authoritative taxonomy route is absent from the catalogue hierarchy: ${path}`);
+  }
+
   let aligned = 0;
   const routes = seo.routes.map((route) => {
-    if (!["main-division", "audience-group", "product-type"].includes(route.routeType) || route.path === "/products") {
-      return route;
-    }
+    if (!TAXONOMY_ROUTE_TYPES.has(route.routeType) || route.path === "/products") return route;
     const identity = identities.get(route.path);
     if (!identity) throw new Error(`Taxonomy route is absent from the catalogue hierarchy: ${route.path}`);
     const topName = localizedTopName("en", identity.categorySlug, identity.categoryName);
@@ -99,8 +115,8 @@ function main() {
     };
   });
 
-  if (aligned !== seo.taxonomyCount) {
-    throw new Error(`Expected to align ${seo.taxonomyCount} taxonomy routes, aligned ${aligned}`);
+  if (aligned !== identities.size) {
+    throw new Error(`Expected to align ${identities.size} authoritative taxonomy routes, aligned ${aligned}`);
   }
   const next: SeoManifest = { ...seo, routes };
   writeFileSync(SEO_PATH, `${JSON.stringify(next, null, 2)}\n`, "utf8");
