@@ -33,6 +33,12 @@ describe("localized material technical specifications", () => {
     expect(generatorSource).toContain("Generated 8 source-backed buyer-confidence static route shells");
   });
 
+  it("creates localized route files from the root shell when the static pipeline has not created them yet", () => {
+    expect(generatorSource).toContain("async function readBaseShell(file: string)");
+    expect(generatorSource).toContain('if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error');
+    expect(generatorSource).toContain('return readFile(join(DIST_DIR, "index.html"), "utf8")');
+  });
+
   it("uses the same localized technical values after React hydration", () => {
     expect(runtimeSource).toContain("const specification = localizedMaterialSpecification(material, locale)");
     expect(runtimeSource).toContain("value={specification.composition}");
