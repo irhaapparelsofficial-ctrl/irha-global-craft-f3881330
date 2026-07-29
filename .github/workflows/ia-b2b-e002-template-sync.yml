@@ -1,0 +1,75 @@
+name: IA-B2B-E002 Template Sync
+
+on:
+  push:
+    branches:
+      - feat/ia-b2b-e002-buyer-confidence
+    paths:
+      - .github/workflows/ia-b2b-e002-template-sync.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync-template-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout focused branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/ia-b2b-e002-buyer-confidence
+          fetch-depth: 0
+
+      - name: Use sanitized English route templates for localized shells
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          generator = Path("scripts/generate-buyer-confidence-route-shells.ts")
+          source = generator.read_text(encoding="utf-8")
+          replacements = [
+              (
+                  "async function readBaseShell(file: string): Promise<string> {",
+                  "async function readBaseShell(file: string, kind: \"materials\" | \"buyer-information\"): Promise<string> {",
+              ),
+              (
+                  "    return readFile(join(DIST_DIR, \"index.html\"), \"utf8\");",
+                  "    const templatePath = kind === \"materials\" ? ROUTES.materials.en : ROUTES.buyerInformation.en;\n    return readFile(routeFile(templatePath), \"utf8\");",
+              ),
+              (
+                  "  const html = await readBaseShell(file);",
+                  "  const html = await readBaseShell(file, kind);",
+              ),
+          ]
+          for old, new in replacements:
+              if old not in source:
+                  raise SystemExit(f"Missing expected generator text: {old}")
+              source = source.replace(old, new, 1)
+          generator.write_text(source, encoding="utf-8")
+
+          test = Path("src/test/materialSpecificationLocalization.test.ts")
+          test_source = test.read_text(encoding="utf-8")
+          test_source = test_source.replace(
+              "async function readBaseShell(file: string)",
+              "async function readBaseShell(file: string, kind:",
+          )
+          test_source = test_source.replace(
+              "return readFile(join(DIST_DIR, \"index.html\"), \"utf8\")",
+              "const templatePath = kind === \"materials\" ? ROUTES.materials.en : ROUTES.buyerInformation.en",
+          )
+          test_source = test_source.replace(
+              "creates localized route files from the root shell when the static pipeline has not created them yet",
+              "creates localized route files from sanitized English route shells when the static pipeline has not created them yet",
+          )
+          test.write_text(test_source, encoding="utf-8")
+          PY
+
+      - name: Remove one-time workflow and commit focused fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/ia-b2b-e002-template-sync.yml
+          git add scripts/generate-buyer-confidence-route-shells.ts src/test/materialSpecificationLocalization.test.ts
+          git diff --cached --check
+          git commit -m "fix(build): clone sanitized route shells for localized pages"
+          git push origin HEAD:feat/ia-b2b-e002-buyer-confidence
