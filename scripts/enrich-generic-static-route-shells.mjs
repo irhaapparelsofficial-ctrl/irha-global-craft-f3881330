@@ -12,7 +12,6 @@ const GENERIC_ROUTE_SHELL = /<main id="irha-static-crawler-shell" data-irha-rout
 const PRODUCT_SHELL = 'data-irha-product-shell="true"';
 const EXPECTED_PRODUCT_SHELLS = 254;
 const EXPECTED_TAXONOMY_SHELLS = 105;
-const EXPECTED_CORE_SHELLS = CORE_ROUTE_PATHS.length;
 const SPECIALIZED_PATHS = new Set([
   "/de",
   "/fr",
@@ -21,6 +20,7 @@ const SPECIALIZED_PATHS = new Set([
   "/blog",
 ]);
 const SPECIALIZED_PREFIXES = ["/markets/", "/blog/"];
+const EXPECTED_CORE_SHELLS = CORE_ROUTE_PATHS.filter((pathname) => !isSpecialized(cleanPath(pathname))).length;
 const UNIVERSAL_FINGERPRINTS = [
   "Five specialist apparel categories.",
   "From requirement to shipping review.",
