@@ -15,6 +15,11 @@ type ThumbnailImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
 };
 
 const DEFAULT_RESPONSIVE_SIZES = "(max-width: 640px) 92vw, (max-width: 1024px) 48vw, 33vw";
+const LEGACY_PLACEHOLDER = /(?:^|\/)placeholder\.svg(?:[?#]|$)/i;
+
+function usableSource(value: string | null | undefined): value is string {
+  return Boolean(value?.trim()) && !LEGACY_PLACEHOLDER.test(value!);
+}
 
 export default function ThumbnailImage({
   src,
@@ -40,7 +45,7 @@ export default function ThumbnailImage({
     [original],
   );
   const sources = useMemo(
-    () => Array.from(new Set([candidate, original, fallbackSrc].filter((value): value is string => Boolean(value?.trim())))),
+    () => Array.from(new Set([candidate, original, fallbackSrc].filter(usableSource))),
     [candidate, fallbackSrc, original],
   );
   const sourceKey = sources.join("|");
