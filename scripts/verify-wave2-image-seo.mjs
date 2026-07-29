@@ -41,7 +41,10 @@ function runVerifier() {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(process.execPath, ["scripts/verify-built-image-seo.mjs"], {
       stdio: "inherit",
-      env: process.env,
+      env: {
+        ...process.env,
+        IRHA_IMAGE_SEO_TEMPORARY_PATHS: JSON.stringify([...TEMPORARY_PATHS]),
+      },
     });
     child.once("error", reject);
     child.once("exit", (code, signal) => {
@@ -84,4 +87,4 @@ try {
   await rm(HOLD_DIR, { recursive: true, force: true });
 }
 
-console.log("Verified image SEO against the unchanged 407-route baseline while preserving Wave 2 output");
+console.log(`Verified image SEO against the authoritative manifest with ${TEMPORARY_PATHS.size} localized routes held for final i18n processing`);
