@@ -16,6 +16,7 @@ type HeroMediaSlideshowProps = {
   className?: string;
   imageClassName?: string;
   controlsClassName?: string;
+  imageSizes?: string;
   label?: string;
   priority?: boolean;
   showArrows?: boolean;
@@ -39,6 +40,7 @@ export default function HeroMediaSlideshow({
   className = "absolute inset-0",
   imageClassName = "",
   controlsClassName = "bottom-5 right-5",
+  imageSizes = "100vw",
   label = "Featured images",
   priority = true,
   showArrows = true,
@@ -116,7 +118,7 @@ export default function HeroMediaSlideshow({
         <div
           key={slide.src}
           aria-hidden={slideIndex !== index}
-          className={`absolute inset-0 transition-[opacity,transform] duration-1000 ease-out ${
+          className={`absolute inset-0 transition-[opacity,transform] duration-1000 ease-out motion-reduce:transition-none ${
             slideIndex === index ? "scale-100 opacity-100" : "pointer-events-none scale-[1.02] opacity-0"
           } ${slide.backgroundClassName ?? ""}`}
         >
@@ -130,7 +132,7 @@ export default function HeroMediaSlideshow({
               loading={priority && slideIndex === 0 ? "eager" : "lazy"}
               fetchPriority={priority && slideIndex === 0 ? "high" : "low"}
               decoding="async"
-              sizes="(max-width: 767px) 100vw, (max-width: 1279px) 100vw, 100vw"
+              sizes={imageSizes}
               className={`h-full w-full ${slide.fit === "contain" ? "object-contain" : "object-cover"} ${imageClassName}`}
               style={slide.position ? { objectPosition: slide.position } : undefined}
             />
@@ -144,7 +146,7 @@ export default function HeroMediaSlideshow({
             type="button"
             onClick={() => go(index - 1)}
             aria-label="Previous image"
-            className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/25 bg-black/45 text-white backdrop-blur-sm transition-colors hover:border-gold hover:text-gold md:flex"
+            className="absolute left-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center border border-white/25 bg-black/45 text-white backdrop-blur-sm transition-colors hover:border-gold hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold md:flex"
           >
             <ChevronLeft size={17} />
           </button>
@@ -152,7 +154,7 @@ export default function HeroMediaSlideshow({
             type="button"
             onClick={() => go(index + 1)}
             aria-label="Next image"
-            className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/25 bg-black/45 text-white backdrop-blur-sm transition-colors hover:border-gold hover:text-gold md:flex"
+            className="absolute right-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center border border-white/25 bg-black/45 text-white backdrop-blur-sm transition-colors hover:border-gold hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold md:flex"
           >
             <ChevronRight size={17} />
           </button>
@@ -160,7 +162,7 @@ export default function HeroMediaSlideshow({
       )}
 
       {count > 1 && showDots && (
-        <div className={`absolute z-20 flex items-center gap-2 ${controlsClassName}`}>
+        <div className={`absolute z-20 flex items-center gap-0.5 ${controlsClassName}`}>
           {normalizedSlides.map((slide, slideIndex) => (
             <button
               key={`${slide.src}-dot`}
@@ -168,10 +170,15 @@ export default function HeroMediaSlideshow({
               onClick={() => setIndex(slideIndex)}
               aria-label={`Show image ${slideIndex + 1} of ${count}`}
               aria-current={slideIndex === index ? "true" : undefined}
-              className={`h-1.5 rounded-full border border-black/20 shadow-sm transition-all ${
-                slideIndex === index ? "w-8 bg-gold" : "w-4 bg-white/65 hover:bg-white"
-              }`}
-            />
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+            >
+              <span
+                aria-hidden="true"
+                className={`h-1.5 rounded-full border border-black/20 shadow-sm transition-all motion-reduce:transition-none ${
+                  slideIndex === index ? "w-8 bg-gold" : "w-4 bg-white/65 group-hover:bg-white"
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}
