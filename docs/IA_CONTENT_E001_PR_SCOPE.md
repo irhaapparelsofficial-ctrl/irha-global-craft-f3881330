@@ -1,0 +1,1 @@
+Focused PR scope: public wording sanitation, official branding derivatives, controlled fallback and card UI branding. No unrelated features.
