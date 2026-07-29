@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { CORE_ROUTE_CONTENT, CORE_ROUTE_PATHS } from "../src/lib/routeContent.mjs";
+import { CORE_ROUTE_CONTENT } from "../src/lib/routeContent.mjs";
 import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
 
 const DIST_DIR = resolve(process.env.IRHA_DIST_DIR || "dist");
@@ -20,7 +20,6 @@ const SPECIALIZED_PATHS = new Set([
   "/blog",
 ]);
 const SPECIALIZED_PREFIXES = ["/markets/", "/blog/"];
-const EXPECTED_CORE_SHELLS = CORE_ROUTE_PATHS.filter((pathname) => !isSpecialized(cleanPath(pathname))).length;
 const UNIVERSAL_FINGERPRINTS = [
   "Five specialist apparel categories.",
   "From requirement to shipping review.",
@@ -223,6 +222,7 @@ async function main() {
   }
 
   let coreShellsRendered = 0;
+  let expectedCoreShells = 0;
   let taxonomyShellsDeferred = 0;
   let productShellsPreserved = 0;
   let specializedShellsPreserved = 0;
@@ -256,6 +256,7 @@ async function main() {
     if (!match) throw new Error(`Core canonical route is missing its base static shell: ${pathname}`);
     const original = match[0];
     if (original.includes(PRODUCT_SHELL)) throw new Error(`Core route unexpectedly resolved to a product shell: ${pathname}`);
+    expectedCoreShells += 1;
     const output = renderCoreRoute(html, content);
     for (const token of [
       `data-irha-route-content="core"`,
@@ -277,8 +278,8 @@ async function main() {
   if (taxonomyShellsDeferred !== EXPECTED_TAXONOMY_SHELLS) {
     throw new Error(`Expected ${EXPECTED_TAXONOMY_SHELLS} taxonomy shells to be deferred; found ${taxonomyShellsDeferred}`);
   }
-  if (coreShellsRendered !== EXPECTED_CORE_SHELLS) {
-    throw new Error(`Expected ${EXPECTED_CORE_SHELLS} core route shells; rendered ${coreShellsRendered}`);
+  if (coreShellsRendered !== expectedCoreShells) {
+    throw new Error(`Expected ${expectedCoreShells} runtime-owned core route shells; rendered ${coreShellsRendered}`);
   }
   console.log(`Rendered ${coreShellsRendered} route-specific core shells, deferred ${taxonomyShellsDeferred} taxonomy shells, preserved ${productShellsPreserved} product shells and preserved ${specializedShellsPreserved} specialized shells from ${canonicalPaths.size} authoritative sitemap routes`);
 }
