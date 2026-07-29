@@ -27,6 +27,7 @@ describe("Wave 2 raw HTML and edge contracts", () => {
     const patch = readFileSync("scripts/patch-wave2-worker-routes.mjs", "utf8");
     expect(patch).toContain('"/fr/"');
     expect(patch).toContain('"/nl/"');
+    expect(patch).toContain("if (finalLocations.length !== 421)");
     expect(patch).toContain("Expected 421 pre-finalizer sitemap URLs");
     const manifest = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
     expect(manifest.scripts.build).toContain("patch-wave2-worker-routes.mjs");
