@@ -19,6 +19,7 @@ import ThumbnailImage from "@/components/ThumbnailImage";
 import { usePublicProduct } from "@/hooks/usePublicCatalog";
 import { findPublishedProductRoute, usePublishedCatalogTaxonomyRelease } from "@/hooks/usePublishedCatalogTaxonomy";
 import { resolveGallery } from "@/lib/assetResolver";
+import { resolveBuyerReadyProductContent } from "@/lib/buyerReadyProductContent";
 import { whatsappLink } from "@/lib/constants";
 import { pushRecentlyViewed, useCompare, useShortlist } from "@/lib/shortlist";
 import { ORGANIZATION_ID, SITE_URL, WEBSITE_ID, breadcrumbSchema } from "@/lib/seoSchema";
@@ -121,6 +122,28 @@ export default function CanonicalProductDetail() {
         candidate.id !== product.id && items.findIndex((item) => item.id === candidate.id) === index,
     )
     .slice(0, 4);
+  const buyerContent = resolveBuyerReadyProductContent({
+    name: product.name,
+    slug: product.slug,
+    seo_title: product.seo_title,
+    seo_description: product.seo_description,
+    short_description: product.short_description,
+    description: product.description,
+    mainCategorySlug: category.slug,
+    mainCategoryName: category.name,
+    audienceSlug: publishedRoute?.audience.slug,
+    audienceName,
+    productTypeSlug: publishedRoute?.collection.slug,
+    productTypeName: collectionName,
+    specs: product.specs,
+    primary_material: product.primary_material,
+    fabric_composition: product.fabric_composition,
+    gsm: product.gsm,
+    available_sizes: product.available_sizes,
+    available_colors: product.available_colors,
+    customization: product.customization,
+    packaging_standard: product.packaging_standard,
+  });
 
   const b2bRows: Array<{ label: string; value: string }> = [
     { label: "Program type", value: "OEM, ODM and private label" },
@@ -182,10 +205,9 @@ export default function CanonicalProductDetail() {
   });
   if (product.sku) quoteParams.set("code", product.sku);
   const quotePath = `/inquiry?${quoteParams.toString()}`;
-  const fallbackDescription = `${product.name} custom B2B manufacturing by Irha Apparels in Sialkot. OEM, ODM and private-label requirements are reviewed before quotation and production commitments.`;
-  const metaDescription = product.seo_description ?? product.description?.slice(0, 158) ?? fallbackDescription;
-  const serviceId = `${url}#service`;
-  const productImageAlt = `Digital catalogue reference for ${product.name} made-to-order manufacturing`;
+  const metaDescription = buyerContent.seoDescription;
+  const productId = `${url}#product`;
+  const productImageAlt = `${product.name} custom manufacturing catalogue reference for ${collectionName}`;
   const breadcrumbItems = [
     { name: "Home", path: "/" },
     { name: "Collections", path: "/products" },
@@ -208,19 +230,18 @@ export default function CanonicalProductDetail() {
       name: product.name,
       description: metaDescription,
       isPartOf: { "@id": WEBSITE_ID },
-      about: { "@id": serviceId },
-      mainEntity: { "@id": serviceId },
+      about: { "@id": productId },
+      mainEntity: { "@id": productId },
       inLanguage: "en",
     },
     {
       "@context": "https://schema.org",
-      "@type": "Service",
-      "@id": serviceId,
-      name: `Custom ${product.name} Manufacturing`,
-      serviceType: "B2B custom apparel manufacturing",
-      description: product.description ?? fallbackDescription,
-      provider: { "@id": ORGANIZATION_ID },
-      areaServed: { "@type": "Place", name: "Worldwide" },
+      "@type": "Product",
+      "@id": productId,
+      name: product.name,
+      description: buyerContent.openingAnswer,
+      sku: product.sku ?? undefined,
+      manufacturer: { "@id": ORGANIZATION_ID },
       category: `${category.name} > ${audienceName} > ${collectionName}`,
       url,
       image: gallery,
@@ -235,7 +256,7 @@ export default function CanonicalProductDetail() {
   return (
     <>
       <SEO
-        title={product.seo_title ?? `${product.name} Wholesale Manufacturer | Sialkot Garment Factory`}
+        title={buyerContent.seoTitle}
         description={metaDescription}
         path={canonicalPath}
         image={gallery[0] ?? fallbackImage}
@@ -270,6 +291,8 @@ export default function CanonicalProductDetail() {
                   fallbackSrc={fallbackImage}
                   alt={productImageAlt}
                   className="absolute inset-0 h-full w-full object-contain p-3 sm:p-6"
+                  width={1200}
+                  height={1200}
                   loading="eager"
                   fetchPriority="high"
                   responsive={false}
@@ -319,6 +342,8 @@ export default function CanonicalProductDetail() {
                         fallbackSrc={fallbackImage}
                         alt={`${productImageAlt}, view ${index + 1}`}
                         className="h-full w-full object-contain p-1"
+                        width={1200}
+                        height={1200}
                         responsive={false}
                       />
                     </button>
@@ -341,7 +366,7 @@ export default function CanonicalProductDetail() {
                 <p className="mt-3 text-[9px] uppercase tracking-[0.26em] text-foreground/45">SKU · {product.sku}</p>
               )}
               <p className="mt-5 text-sm leading-relaxed text-foreground/72 sm:text-base">
-                {product.short_description ?? product.description ?? fallbackDescription}
+                {buyerContent.openingAnswer}
               </p>
 
               {product.specs?.length > 0 && (
@@ -440,10 +465,25 @@ export default function CanonicalProductDetail() {
               <p className="eyebrow mb-3">Product program</p>
               <h2 id="product-description" className="font-display text-2xl sm:text-3xl">Description and buyer options</h2>
               <p className="mt-4 text-sm leading-relaxed text-foreground/70 sm:text-base">
-                {product.description ?? fallbackDescription}
+                {buyerContent.description}
               </p>
 
+              <h3 className="mt-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">Buyer and collection uses</h3>
+              <ul className="mt-4 grid gap-3">
+                {buyerContent.buyerUseCases.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/75">
+                    <Check size={14} className="mt-0.5 shrink-0 text-primary" /> {item}
+                  </li>
+                ))}
+              </ul>
+
+              <h3 className="mt-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">Material and construction review</h3>
+              <p className="mt-4 text-sm leading-relaxed text-foreground/70">{buyerContent.materialGuidance}</p>
+              <p className="mt-3 text-sm leading-relaxed text-foreground/70">{buyerContent.constructionGuidance}</p>
+
               <h3 className="mt-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">Customization reviewed per brief</h3>
+              <p className="mt-4 text-sm leading-relaxed text-foreground/70">{buyerContent.customizationGuidance}</p>
+              <p className="mt-3 text-sm leading-relaxed text-foreground/70">{buyerContent.sizeAndFitGuidance}</p>
               <ul className="mt-4 grid gap-3 sm:grid-cols-2">
                 {customizationItems.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/75 capitalize">
@@ -480,6 +520,43 @@ export default function CanonicalProductDetail() {
             </section>
           </div>
 
+          <section className="mt-14 grid gap-6 border-t border-border/60 pt-10 lg:mt-20 lg:grid-cols-2 lg:gap-10 lg:pt-12" aria-labelledby="product-sampling-workflow">
+            <div className="rounded-2xl border border-border/60 bg-card/25 p-5 sm:p-7">
+              <p className="eyebrow mb-3">From brief to bulk order</p>
+              <h2 id="product-sampling-workflow" className="font-display text-2xl sm:text-3xl">Sampling and approval workflow</h2>
+              <ol className="mt-5 space-y-4">
+                {buyerContent.samplingSteps.map((step, index) => (
+                  <li key={step} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3 text-sm leading-relaxed text-foreground/75">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-primary/50 text-[10px] text-primary">{index + 1}</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <h3 className="mt-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">MOQ and production timing</h3>
+              <p className="mt-4 text-sm leading-relaxed text-foreground/70">{buyerContent.moqAndLeadTime}</p>
+              <h3 className="mt-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">Packaging and logistics</h3>
+              <p className="mt-4 text-sm leading-relaxed text-foreground/70">{buyerContent.packagingAndLogistics}</p>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-card/25 p-5 sm:p-7">
+              <p className="eyebrow mb-3">Buyer questions</p>
+              <h2 className="font-display text-2xl sm:text-3xl">{product.name} FAQs</h2>
+              <div className="mt-5 divide-y divide-border/60">
+                {buyerContent.faqs.map((faq) => (
+                  <section key={faq.question} className="py-5 first:pt-0">
+                    <h3 className="text-base font-medium text-foreground">{faq.question}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-foreground/70">{faq.answer}</p>
+                  </section>
+                ))}
+              </div>
+              <nav aria-label="Related buyer resources" className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-[10px] uppercase tracking-[0.16em]">
+                <Link to="/materials" className="text-primary hover:text-primary/70">Material library</Link>
+                <Link to="/resources" className="text-primary hover:text-primary/70">Buyer guides</Link>
+                <Link to="/buyer-information" className="text-primary hover:text-primary/70">Order and logistics preparation</Link>
+              </nav>
+            </div>
+          </section>
+
           {relatedProducts.length > 0 && (
             <section className="mt-14 border-t border-border/60 pt-10 lg:mt-20 lg:pt-12" aria-labelledby="related-products">
               <div className="flex items-end justify-between gap-4">
@@ -504,6 +581,8 @@ export default function CanonicalProductDetail() {
                           fallbackSrc={fallbackImage}
                           alt={`Digital catalogue reference for ${related.name}`}
                           className="h-full w-full object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]"
+                          width={1200}
+                          height={1200}
                         />
                       </div>
                       <p className="mt-3 truncate text-[8px] uppercase tracking-[0.16em] text-foreground/42">{collectionName}</p>
