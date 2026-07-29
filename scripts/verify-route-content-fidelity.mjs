@@ -7,7 +7,7 @@ import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
 const DIST = resolve(process.env.IRHA_DIST_DIR || "dist");
 const SOURCE_ROOT = resolve(process.env.IRHA_SOURCE_ROOT || ".");
 const SITE = "https://irhaapparels.com";
-const EXPECTED_SITEMAP = 407;
+const EXPECTED_SITEMAP = 411;
 const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
 const PRODUCT_SHELL = 'data-irha-product-shell="true"';
