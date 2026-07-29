@@ -37,8 +37,16 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function xmlDecode(value: string): string {
-  return value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+function decodeHtmlText(value: string): string {
+  return value
+    .replace(/&#x([0-9a-f]+);/gi, (_match, code: string) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&#(\d+);/g, (_match, code: string) => String.fromCodePoint(Number.parseInt(code, 10)))
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'");
 }
 
 function routeHtmlPath(path: string): string {
@@ -54,7 +62,11 @@ function htmlLang(locale: string): string {
 }
 
 function stripTags(value: string): string {
-  return value.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+  const text = value
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ");
+  return decodeHtmlText(text).replace(/\s+/g, " ").trim();
 }
 
 function setMeta(html: string, route: SeoRouteEntry): string {
@@ -82,7 +94,6 @@ function setMeta(html: string, route: SeoRouteEntry): string {
     ...(route.xDefault ? [`<link data-irha-authoritative-hreflang="true" rel="alternate" hreflang="x-default" href="${escapeHtml(route.xDefault)}" />`] : []),
   ];
   if (alternateLinks.length) output = output.replace("</head>", `  ${alternateLinks.join("\n  ")}\n</head>`);
-
   return output;
 }
 
@@ -242,7 +253,7 @@ function setVisibleIdentity(html: string, route: SeoRouteEntry): string {
 }
 
 function extractSitemapUrls(xml: string): string[] {
-  return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => xmlDecode(match[1]));
+  return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => decodeHtmlText(match[1]));
 }
 
 function extractJsonLdTypes(html: string): string[] {
@@ -271,13 +282,13 @@ function extractJsonLdTypes(html: string): string[] {
 
 function verifyRoute(route: SeoRouteEntry, html: string, findings: Finding[]) {
   const expectedLang = htmlLang(route.locale);
-  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1]?.replace(/&amp;/g, "&").trim();
-  const canonical = html.match(/<link\b[^>]*rel="canonical"[^>]*href="([^"]+)"[^>]*>/i)?.[1];
+  const title = decodeHtmlText(html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || "").trim();
+  const canonical = decodeHtmlText(html.match(/<link\b[^>]*rel="canonical"[^>]*href="([^"]+)"[^>]*>/i)?.[1] || "");
   const language = html.match(/<html\b[^>]*lang="([^"]+)"/i)?.[1];
   const h1 = stripTags(html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i)?.[0] || "");
   const robots = html.match(/<meta\b[^>]*name="robots"[^>]*content="([^"]+)"[^>]*>/i)?.[1] || "";
   const types = extractJsonLdTypes(html);
-  const alternates = new Map([...html.matchAll(/<link\b[^>]*rel="alternate"[^>]*hreflang="([^"]+)"[^>]*href="([^"]+)"[^>]*>/gi)].map((match) => [match[1], match[2]]));
+  const alternates = new Map([...html.matchAll(/<link\b[^>]*rel="alternate"[^>]*hreflang="([^"]+)"[^>]*href="([^"]+)"[^>]*>/gi)].map((match) => [match[1], decodeHtmlText(match[2])]));
 
   if (title !== route.title) findings.push({ severity: "critical", route: route.path, code: "TITLE_MISMATCH", detail: `${title || "missing"} !== ${route.title}` });
   if (canonical !== route.canonicalUrl) findings.push({ severity: "critical", route: route.path, code: "CANONICAL_MISMATCH", detail: `${canonical || "missing"} !== ${route.canonicalUrl}` });
