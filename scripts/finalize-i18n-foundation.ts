@@ -19,20 +19,36 @@ import {
 const DIST_DIR = resolve("dist");
 const SITEMAP_PATH = join(DIST_DIR, "sitemap.xml");
 const SITE_URL = "https://irhaapparels.com";
-const EXPECTED_SITEMAP_URLS = 418;
-const EXPECTED_LOCALIZED_ROUTES: Readonly<Record<Exclude<LocaleCode, "en">, number>> = { de: 8, fr: 5, nl: 5 };
+const EXPECTED_SITEMAP_URLS = 426;
+const EXPECTED_LOCALIZED_ROUTES: Readonly<Record<Exclude<LocaleCode, "en">, number>> = { de: 10, fr: 7, nl: 7 };
 const SELECTOR_LOCALES: readonly LocaleCode[] = ["en", "de", "fr", "nl"];
 
-function escapeHtml(value: string): string { return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;"); }
-function absolute(path: string): string { return path === "/" ? `${SITE_URL}/` : `${SITE_URL}${path}`; }
-function routeFromFile(file: string): string { const rel = relative(DIST_DIR, dirname(file)).split(sep).join("/"); return rel === "" ? "/" : normalizeRoutePath(`/${rel}/`); }
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function absolute(path: string): string {
+  return path === "/" ? `${SITE_URL}/` : `${SITE_URL}${path}`;
+}
+
+function routeFromFile(file: string): string {
+  const rel = relative(DIST_DIR, dirname(file)).split(sep).join("/");
+  return rel === "" ? "/" : normalizeRoutePath(`/${rel}/`);
+}
 
 function ensureGermanEntryInSitemap(xml: string): string {
   const entryUrl = absolute("/de/");
   if (xml.includes(`<loc>${entryUrl}</loc>`)) return xml;
   if (!xml.includes("</urlset>")) throw new Error("Built sitemap is missing </urlset>");
   const today = new Date().toISOString().slice(0, 10);
-  const entry = ["  <url>", `    <loc>${entryUrl}</loc>`, `    <lastmod>${today}</lastmod>`, "    <changefreq>monthly</changefreq>", "    <priority>0.90</priority>", "  </url>"].join("\n");
+  const entry = [
+    "  <url>",
+    `    <loc>${entryUrl}</loc>`,
+    `    <lastmod>${today}</lastmod>`,
+    "    <changefreq>monthly</changefreq>",
+    "    <priority>0.90</priority>",
+    "  </url>",
+  ].join("\n");
   return xml.replace("</urlset>", `${entry}\n</urlset>`);
 }
 
@@ -62,17 +78,26 @@ function localizeGermanSharedShell(html: string, path: string): string {
     .replace(/>Privacy</g, ">Datenschutz (Englisch)<")
     .replace(/>Related sourcing pages</g, ">Weitere Beschaffungsseiten<")
     .replace(/B2B manufacturing/g, "B2B-Fertigung")
-    .replace("Experienced manufacturer in Sialkot, Pakistan. The website is newly built, and qualified buyers may request a live factory video call before placing an order.", "Erfahrener Bekleidungshersteller in Sialkot, Pakistan. Qualifizierte Einkäufer können vor einer Bestellung eine Live-Fabrikbesichtigung per Video vereinbaren.");
-  if (path === "/de/bavarian-wear") output = output.replace(/<main id=["']irha-static-crawler-shell["'][\s\S]*?<\/main>/i, germanBavarianShell());
+    .replace(
+      "Experienced manufacturer in Sialkot, Pakistan. The website is newly built, and qualified buyers may request a live factory video call before placing an order.",
+      "Erfahrener Bekleidungshersteller in Sialkot, Pakistan. Qualifizierte Einkäufer können vor einer Bestellung eine Live-Fabrikbesichtigung per Video vereinbaren.",
+    );
+  if (path === "/de/bavarian-wear") {
+    output = output.replace(/<main id=["']irha-static-crawler-shell["'][\s\S]*?<\/main>/i, germanBavarianShell());
+  }
   return output;
 }
-function removeAlternates(html: string): string { return html.replace(/\s*<link\s+rel=["']alternate["'][^>]*>/gi, ""); }
+
+function removeAlternates(html: string): string {
+  return html.replace(/\s*<link\s+rel=["']alternate["'][^>]*>/gi, "");
+}
 
 function setHead(html: string, path: string): string {
   const registered = getPublishedRoute(path);
   const locale = getRouteLocale(path);
   const direction = getRouteDirection(path);
   let output = html.replace(/<html\s+lang=["'][^"']*["'](?:\s+dir=["'][^"']*["'])?/i, `<html lang="${locale}" dir="${direction}"`);
+
   if (registered) {
     output = output
       .replace(/<link\s+rel=["']canonical["']\s+href=["'][^"']*["']\s*\/?\s*>/i, `<link rel="canonical" href="${absolute(registered.path)}" />`)
@@ -84,8 +109,11 @@ function setHead(html: string, path: string): string {
   } else if (["de", "fr", "nl"].includes(locale)) {
     output = output.replace(/<meta\s+name=["']robots["']\s+content=["'][^"']*["']\s*\/?\s*>/i, '<meta name="robots" content="noindex,follow,max-image-preview:large" />');
   }
+
   if (locale === "de") output = localizeGermanSharedShell(output, path);
-  if (!output.includes('data-irha-language-selector="static"')) output = output.replace(/(<div\s+id=["']root["'][^>]*>)/i, `$1${selectorMarkup(path)}`);
+  if (!output.includes('data-irha-language-selector="static"')) {
+    output = output.replace(/(<div\s+id=["']root["'][^>]*>)/i, `$1${selectorMarkup(path)}`);
+  }
   return output;
 }
 
@@ -112,7 +140,9 @@ function buildGermanEntry(template: string): string {
   const rawShellPattern = /<main\s+id=["']irha-static-crawler-shell["'][\s\S]*?<\/main>/i;
   if (!rawShellPattern.test(html)) throw new Error("Could not find the raw shell for the German gateway");
   html = html.replace(rawShellPattern, germanGatewayShell());
-  if (!html.includes('data-irha-language-selector="static"')) html = html.replace(/(<div\s+id=["']root["'][^>]*>)/i, `$1${selectorMarkup(page.path)}`);
+  if (!html.includes('data-irha-language-selector="static"')) {
+    html = html.replace(/(<div\s+id=["']root["'][^>]*>)/i, `$1${selectorMarkup(page.path)}`);
+  }
   return html;
 }
 
@@ -127,21 +157,27 @@ async function main() {
   const germanOutput = join(DIST_DIR, "de", "index.html");
   await mkdir(dirname(germanOutput), { recursive: true });
   await writeFile(germanOutput, buildGermanEntry(rootTemplate), "utf8");
+
   const files = await listHtmlFiles(DIST_DIR);
   for (const file of files) {
     const route = routeFromFile(file);
     const html = await readFile(file, "utf8");
     await writeFile(file, setHead(html, route), "utf8");
   }
+
   const sitemap = ensureGermanEntryInSitemap(await readFile(SITEMAP_PATH, "utf8"));
   await writeFile(SITEMAP_PATH, sitemap, "utf8");
   const sitemapLocs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1].replace(/&amp;/g, "&"));
   const publishedLocalized = getPublishedLocalizedRoutes();
+
   for (const [locale, expected] of Object.entries(EXPECTED_LOCALIZED_ROUTES)) {
     const count = publishedLocalized.filter((route) => route.locale === locale).length;
     if (count !== expected) throw new Error(`Expected ${expected} published ${locale} routes, found ${count}`);
   }
-  if (sitemapLocs.length !== EXPECTED_SITEMAP_URLS) throw new Error(`Expected ${EXPECTED_SITEMAP_URLS} sitemap URLs, found ${sitemapLocs.length}`);
+  if (sitemapLocs.length !== EXPECTED_SITEMAP_URLS) {
+    throw new Error(`Expected ${EXPECTED_SITEMAP_URLS} sitemap URLs, found ${sitemapLocs.length}`);
+  }
+
   for (const route of publishedLocalized) {
     const file = join(DIST_DIR, route.path.slice(1), "index.html");
     const html = await readFile(file, "utf8");
@@ -153,9 +189,15 @@ async function main() {
     const unpublishedInternalLink = localizedLinks.find((path) => !isPublishedLocalizedRoute(path));
     if (unpublishedInternalLink) throw new Error(`Published localized route links to unpublished URL ${unpublishedInternalLink}: ${route.path}`);
   }
+
   const localizedPrefix = new RegExp(`^${SITE_URL}/(?:de|fr|nl)/`);
   const unexpectedLocalized = sitemapLocs.filter((loc) => localizedPrefix.test(loc) && !publishedLocalized.some((route) => absolute(route.path) === loc));
   if (unexpectedLocalized.length > 0) throw new Error(`Unpublished localized sitemap URLs: ${unexpectedLocalized.join(", ")}`);
+
   console.log(`Internationalization foundation finalized: ${files.length} HTML shells, ${publishedLocalized.length} published localized routes, ${sitemapLocs.length} sitemap URLs`);
 }
-main().catch((error) => { console.error(error); process.exitCode = 1; });
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

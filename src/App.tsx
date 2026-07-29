@@ -60,6 +60,7 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const BuyerTrust = lazy(() => import("./pages/BuyerTrust"));
 const BuyerResources = lazy(() => import("./pages/BuyerResources"));
 const FactoryVideoCall = lazy(() => import("./pages/FactoryVideoCall"));
+const BuyerConfidence = lazy(() => import("./pages/BuyerConfidence"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const AdminRuntime = lazy(() => import("@/components/admin/AdminRuntime"));
@@ -158,6 +159,16 @@ const App = () => (
                 <Route path="/markets" element={<Markets />} />
                 <Route path="/markets/:countrySlug" element={<MarketLandingPage />} />
                 <Route path="/manufacturing" element={<Manufacturing />} />
+                <Route path="/materials" element={<BuyerConfidence />} />
+                <Route path="/buyer-information" element={<BuyerConfidence />} />
+                <Route path="/de/materialien" element={<BuyerConfidence />} />
+                <Route path="/de/einkaeufer-informationen" element={<BuyerConfidence />} />
+                <Route path="/fr/matieres" element={<BuyerConfidence />} />
+                <Route path="/fr/informations-acheteurs" element={<BuyerConfidence />} />
+                <Route path="/nl/materialen" element={<BuyerConfidence />} />
+                <Route path="/nl/kopersinformatie" element={<BuyerConfidence />} />
+                <Route path="/shipping-incoterms" element={<Navigate to="/buyer-information#logistics" replace />} />
+                <Route path="/confidentiality" element={<Navigate to="/buyer-information#confidentiality" replace />} />
                 <Route path="/compliance" element={<Compliance />} />
                 <Route path="/buyer-trust" element={<BuyerTrust />} />
                 <Route path="/factory-video-call" element={<FactoryVideoCall />} />
@@ -165,8 +176,8 @@ const App = () => (
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/sustainability" element={<Navigate to="/inquiry?intent=rfq" replace />} />
-                <Route path="/shipping-returns" element={<Navigate to="/resources#shipping-questions" replace />} />
+                <Route path="/sustainability" element={<Navigate to="/buyer-information#sustainability" replace />} />
+                <Route path="/shipping-returns" element={<Navigate to="/buyer-information#logistics" replace />} />
                 <Route path="/inquiry" element={<Inquiry />} />
                 <Route path="/inquiry-cart" element={<InquiryCart />} />
                 <Route path="/shortlist" element={<Navigate to="/inquiry-cart" replace />} />

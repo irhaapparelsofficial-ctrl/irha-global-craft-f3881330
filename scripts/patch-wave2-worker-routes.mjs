@@ -51,7 +51,7 @@ for (const route of wave2Routes) {
     throw new Error(`Wave 2 sitemap route must appear exactly once: ${route}`);
   }
 }
-if (finalLocations.length !== 417) throw new Error(`Expected 417 pre-finalizer sitemap URLs after Wave 2 append; found ${finalLocations.length}`);
+if (finalLocations.length !== 421) throw new Error(`Expected 421 pre-finalizer sitemap URLs after Wave 2 append; found ${finalLocations.length}`);
 await writeFile(sitemapPath, sitemap, "utf8");
 
 console.log("Patched Cloudflare worker and appended 10 French/Dutch sitemap routes");

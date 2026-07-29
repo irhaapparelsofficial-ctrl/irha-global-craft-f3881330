@@ -72,7 +72,7 @@ describe("route-specific static content architecture", () => {
     const finalVerifier = read("scripts/verify-route-parity-build.ts");
     const routeVerifier = read("scripts/verify-route-content-fidelity.mjs");
     expect(finalVerifier).toContain("verifyRouteContentFidelity");
-    expect(routeVerifier).toContain("EXPECTED_SITEMAP = 407");
+    expect(routeVerifier).toContain("EXPECTED_SITEMAP = 411");
     expect(routeVerifier).toContain("lists a child outside its authoritative assignment");
     expect(routeVerifier).toContain("Canonical route has no accepted content owner");
     expect(routeVerifier).toContain("loading-only primary product content");

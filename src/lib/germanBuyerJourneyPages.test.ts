@@ -19,22 +19,28 @@ const forbiddenFallbackCopy = [
   "Experienced manufacturer in Sialkot",
 ];
 
+const germanBuyerConfidenceRoutes = [
+  "/de/einkaeufer-informationen",
+  "/de/materialien",
+];
+
 describe("German pilot buyer journey", () => {
-  it("completes exactly the six buyer-intent pages inside the fixed eight-route German inventory", () => {
+  it("preserves the six buyer-intent pages while adding two reviewed buyer-confidence routes", () => {
     expect(GERMAN_BUYER_JOURNEY_PAGES).toHaveLength(6);
     expect(new Set(GERMAN_BUYER_JOURNEY_PATHS).size).toBe(6);
 
-    const expectedPublished = [
+    const establishedPublished = [
       "/de/",
       "/de/bavarian-wear",
       ...GERMAN_BUYER_JOURNEY_PATHS,
     ].sort();
+    const expectedPublished = [...establishedPublished, ...germanBuyerConfidenceRoutes].sort();
     const publishedGerman = getPublishedLocalizedRoutes()
       .filter((route) => route.locale === "de")
       .map((route) => route.path)
       .sort();
     expect(publishedGerman).toEqual(expectedPublished);
-    expect(GERMAN_GATEWAY_CONTENT.links.map((link) => link.href).sort()).toEqual(expectedPublished.filter((path) => path !== "/de/"));
+    expect(GERMAN_GATEWAY_CONTENT.links.map((link) => link.href).sort()).toEqual(establishedPublished.filter((path) => path !== "/de/"));
   });
 
   it("contains complete native-German B2B copy without raw English fallbacks", () => {
