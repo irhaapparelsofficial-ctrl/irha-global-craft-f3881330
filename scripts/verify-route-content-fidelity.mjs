@@ -14,6 +14,7 @@ const CORE_SHELL = 'data-irha-route-content="core"';
 const TAXONOMY_SHELL = 'data-irha-route-content="taxonomy"';
 const GENERIC_MARKER = 'data-irha-rich-route-shell="true"';
 const SPECIALIZED_ROUTE_TYPES = new Set([
+  "homepage",
   "localized-market",
   "resource-index",
   "resource-article",
