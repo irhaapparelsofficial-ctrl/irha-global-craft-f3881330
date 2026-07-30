@@ -1,10 +1,25 @@
 import { IA_MEDIA_E001_PRODUCT_MEDIA } from "@/lib/iaMediaE001Runtime";
 import { PRODUCT_REAL_MEDIA } from "@/lib/productRealMedia";
 
+const PUBLIC_SITE_ORIGIN = "https://irhaapparels.com";
+const CATALOG_PRODUCT_DIRECTORY = /^p\d{3}-(.+)$/i;
+
 export function uniqueProductImages(images: Array<string | null | undefined>): string[] {
   return images
     .filter((image): image is string => Boolean(image))
     .filter((image, index, all) => all.indexOf(image) === index);
+}
+
+export function productSlugFromProductMediaUrl(value: string): string | null {
+  try {
+    const url = new URL(value, PUBLIC_SITE_ORIGIN);
+    const segments = decodeURIComponent(url.pathname).split("/").filter(Boolean);
+    const productIndex = segments.lastIndexOf("products");
+    const directory = productIndex >= 0 ? segments[productIndex + 1] : null;
+    return directory?.match(CATALOG_PRODUCT_DIRECTORY)?.[1] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -22,4 +37,16 @@ export function selectAuthoritativeProductGallery(slug: string, baseGallery: str
   }
 
   return uniqueProductImages(baseGallery).slice(0, 6);
+}
+
+/**
+ * Resolves an existing product gallery to its exact committed authority by the
+ * canonical `catalog/products/pNNN-<slug>/` directory embedded in its URLs.
+ * This keeps direct product-detail routes aligned with collection adapters even
+ * before the guarded database remediation is applied.
+ */
+export function selectAuthoritativeProductGalleryFromUrls(baseGallery: string[]): string[] {
+  const unique = uniqueProductImages(baseGallery);
+  const slug = unique.map(productSlugFromProductMediaUrl).find((candidate): candidate is string => Boolean(candidate));
+  return slug ? selectAuthoritativeProductGallery(slug, unique) : unique.slice(0, 6);
 }
