@@ -1,6 +1,6 @@
 name: IA Media E001 Remediation
 
-run-name: IA-MEDIA-E001 ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'plan' }} · ${{ github.sha }}
+run-name: IA-MEDIA-E001 ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'stage' }} · ${{ github.sha }}
 
 on:
   push:
@@ -10,16 +10,19 @@ on:
       - ".github/workflows/ia-media-e001-remediation.yml"
       - "ops/ia-media-e001/**"
       - "scripts/remediate-p001-p007-media.mjs"
+      - "scripts/stage-p001-p007-media.mjs"
+      - "src/lib/iaMediaE001Runtime.ts"
       - "src/test/iaMediaE001Plan.test.ts"
   workflow_dispatch:
     inputs:
       mode:
-        description: Resolve only, apply production remediation, or verify existing immutable objects
+        description: Plan, stage immutable objects, apply database remediation, or verify objects
         required: true
         default: plan
         type: choice
         options:
           - plan
+          - stage
           - apply
           - verify
       confirm:
@@ -32,12 +35,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'apply' && 'irha-production-mutation' || format('ia-media-e001-plan-{0}', github.ref) }}
+  group: ${{ (github.event_name != 'workflow_dispatch' || inputs.mode == 'stage' || inputs.mode == 'apply') && 'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}
   cancel-in-progress: false
 
 env:
   SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
-  IA_MEDIA_EFFECTIVE_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'plan' }}
+  IA_MEDIA_EFFECTIVE_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'stage' }}
   IA_MEDIA_EFFECTIVE_CONFIRM: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm || 'NO' }}
 
 jobs:
@@ -79,7 +82,14 @@ jobs:
       - name: Install exact dependencies
         run: bash scripts/ci/retry.sh 3 5 -- npm ci --legacy-peer-deps --no-audit --no-fund
 
-      - name: Resolve, checksum and process owner originals
+      - name: Stage immutable recovery media
+        if: env.IA_MEDIA_EFFECTIVE_MODE == 'stage'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/stage-p001-p007-media.mjs
+
+      - name: Plan, apply or verify remediation
+        if: env.IA_MEDIA_EFFECTIVE_MODE != 'stage'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           IA_MEDIA_MODE: ${{ env.IA_MEDIA_EFFECTIVE_MODE }}
@@ -91,7 +101,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ia-media-e001-${{ env.IA_MEDIA_EFFECTIVE_MODE }}-${{ github.sha }}
-          path: artifacts/ia-media-e001
+          path: |
+            artifacts/ia-media-e001
+            artifacts/ia-media-e001-stage
           if-no-files-found: error
           retention-days: 90
 
@@ -104,8 +116,9 @@ jobs:
             echo "- Mode: \`$IA_MEDIA_EFFECTIVE_MODE\`"
             echo "- Exact source SHA: \`${SOURCE_SHA:-$GITHUB_SHA}\`"
             echo "- Supabase project: \`$SUPABASE_PROJECT_ID\`"
-            echo "- Production mutation lock: \`irha-production-mutation\`"
+            echo "- Shared mutation lock: \`irha-production-mutation\`"
             echo "- Source policy: preserved Drive originals + SHA-256 + pixel-reviewed role plan"
             echo "- Responsive contract: \`360 / 720 / 1200 / 1600\`"
             echo "- Retired tiers excluded: \`480 / 2400\`"
+            echo "- Stage mode writes immutable versioned objects only; database mutation remains false"
           } >> "$GITHUB_STEP_SUMMARY"
