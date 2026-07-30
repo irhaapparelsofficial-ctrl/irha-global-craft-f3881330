@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
+import { IA_MEDIA_E001_PRODUCT_MEDIA } from "@/lib/iaMediaE001Runtime";
 
 type PlannedImage = {
   driveFileId: string;
@@ -28,6 +29,7 @@ type MediaPlanModule = {
   REJECTED_CANDIDATES: Array<{ sku: string; driveFileId: string | null; reason: string }>;
 };
 
+const STORAGE_ORIGIN = "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media";
 let plan: MediaPlanModule;
 
 beforeAll(async () => {
@@ -85,20 +87,52 @@ describe("IA-MEDIA-E001 deterministic media plan", () => {
     }
   });
 
+  it("binds every buyer-facing runtime URL to the exact visual plan", () => {
+    expect(Object.keys(IA_MEDIA_E001_PRODUCT_MEDIA).sort()).toEqual(
+      plan.PRODUCTS.map((product) => product.slug).sort(),
+    );
+
+    for (const product of plan.PRODUCTS) {
+      const expected = [...product.images]
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map((image) => {
+          const order = String(image.displayOrder).padStart(2, "0");
+          return `${STORAGE_ORIGIN}/catalog/recovery/${plan.MEDIA_VERSION}/${product.slug}/${order}-${image.role}-${image.driveFileId}.webp`;
+        });
+      expect(IA_MEDIA_E001_PRODUCT_MEDIA[product.slug]?.gallery).toEqual(expected);
+      expect(expected[0]).toContain("/01-hero-");
+      expect(new Set(expected).size).toBe(expected.length);
+    }
+  });
+
   it("uses the current responsive contract and excludes retired delivery tiers", () => {
     expect(plan.RESPONSIVE_WIDTHS).toEqual([360, 720, 1200, 1600]);
     expect(plan.RESPONSIVE_WIDTHS).not.toContain(480);
     expect(plan.RESPONSIVE_WIDTHS).not.toContain(2400);
 
     const executor = readFileSync(resolve(process.cwd(), "scripts/remediate-p001-p007-media.mjs"), "utf8");
-    expect(executor).toContain("thumbnails/${originalPath}.webp");
-    expect(executor).toContain("responsive/${width}/${originalPath}.webp");
-    expect(executor).toContain("upsert: false");
-    expect(executor).toContain("Original checksum mismatch");
-    expect(executor).toContain("verifyWebp");
+    const staging = readFileSync(resolve(process.cwd(), "scripts/stage-p001-p007-media.mjs"), "utf8");
+    for (const implementation of [executor, staging]) {
+      expect(implementation).toContain("thumbnails/${originalPath}.webp");
+      expect(implementation).toContain("responsive/${width}/${originalPath}.webp");
+      expect(implementation).toContain("upsert: false");
+      expect(implementation).toContain("Original checksum mismatch");
+      expect(implementation).toContain("verifyWebp");
+      expect(implementation).not.toContain("responsive/480/");
+      expect(implementation).not.toContain("responsive/2400/");
+    }
     expect(executor).toContain("rollback-manifest.json");
-    expect(executor).not.toContain("responsive/480/");
-    expect(executor).not.toContain("responsive/2400/");
+  });
+
+  it("keeps branch staging immutable and database-independent", () => {
+    const staging = readFileSync(resolve(process.cwd(), "scripts/stage-p001-p007-media.mjs"), "utf8");
+    expect(staging).toContain("databaseMutated: false");
+    expect(staging).toContain("stage-result.json");
+    expect(staging).toContain("Staged and verified");
+    expect(staging).not.toContain('/database/query');
+    expect(staging).not.toContain('.from("products")');
+    expect(staging).not.toContain("UPDATE public.products");
+    expect(staging).not.toContain("UPDATE public.catalog_drive_files");
   });
 
   it("records the P001 filename contradiction instead of inventing a rear view", () => {
@@ -123,7 +157,7 @@ describe("IA-MEDIA-E001 deterministic media plan", () => {
   });
 
   it("does not map any requested product to shoe or placeholder media", () => {
-    const serialized = JSON.stringify(plan.PRODUCTS).toLowerCase();
+    const serialized = JSON.stringify({ plan: plan.PRODUCTS, runtime: IA_MEDIA_E001_PRODUCT_MEDIA }).toLowerCase();
     for (const forbidden of ["shoe", "footwear", "question-mark", "placeholder", "lovable"]) {
       expect(serialized).not.toContain(forbidden);
     }
