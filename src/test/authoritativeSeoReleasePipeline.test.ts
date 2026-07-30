@@ -32,6 +32,7 @@ describe("authoritative SEO release pipeline", () => {
 
   it("validates material route state only after final manifest transformations", () => {
     const packageJson = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
+    // The committed state must be checked against the final immutable manifest, never the pre-build manifest.
     const exactCheck = "node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check";
 
     for (const scriptName of ["build", "build:dev"] as const) {
