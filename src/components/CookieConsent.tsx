@@ -87,10 +87,11 @@ const save = (categories: Categories) => {
 };
 
 export default function CookieConsent() {
-  const [visible, setVisible] = useState(false);
+  const [initialConsent] = useState<Consent | null>(() => readStored());
+  const [visible, setVisible] = useState(() => initialConsent === null);
   const [customizing, setCustomizing] = useState(false);
-  const [analytics, setAnalytics] = useState(false);
-  const [ads, setAds] = useState(false);
+  const [analytics, setAnalytics] = useState(() => initialConsent?.categories.analytics ?? false);
+  const [ads, setAds] = useState(() => initialConsent?.categories.ads ?? false);
 
   useEffect(() => {
     document.documentElement.dataset.cookieConsentOpen = visible ? "true" : "false";
@@ -110,14 +111,12 @@ export default function CookieConsent() {
   }, []);
 
   useEffect(() => {
-    const stored = readStored();
-    if (stored) {
-      applyAndLoad(stored.categories);
+    if (initialConsent) {
+      applyAndLoad(initialConsent.categories);
       return;
     }
     applyConsent({ analytics: false, ads: false });
-    setVisible(true);
-  }, []);
+  }, [initialConsent]);
 
   const close = useCallback(() => {
     setVisible(false);
@@ -154,7 +153,7 @@ export default function CookieConsent() {
       aria-labelledby="cookie-consent-title"
       aria-describedby="cookie-consent-description"
       aria-live="polite"
-      className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl"
+      className="relative z-[100] mx-auto mt-[calc(5.25rem+env(safe-area-inset-top))] w-[calc(100%-1.25rem)] max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl"
     >
       <div className="p-3 sm:p-3.5">
         <div className="flex items-start justify-between gap-3">
