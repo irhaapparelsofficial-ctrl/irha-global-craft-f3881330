@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { NormalizedCategory, NormalizedProduct } from "@/hooks/usePublicCategoryData";
-import type {
-  AudienceSlug,
-  CategoryTaxonomy,
-  TaxonomyAudience,
-  TaxonomyCollection,
-  TaxonomyProduct,
+import {
+  buildCategoryTaxonomy,
+  type AudienceSlug,
+  type CategoryTaxonomy,
+  type TaxonomyAudience,
+  type TaxonomyCollection,
+  type TaxonomyProduct,
 } from "@/lib/globalCategoryTaxonomy";
 
 export type PublishedTaxonomyNode = {
@@ -200,10 +201,16 @@ export function usePublishedCatalogTaxonomyRelease() {
 
 export function usePublishedCategoryTaxonomy(category: NormalizedCategory | null) {
   const query = usePublishedCatalogTaxonomyRelease();
+  const fallbackTaxonomy = category ? buildCategoryTaxonomy(category) : null;
+  const publishedTaxonomy = category && query.data
+    ? buildPublishedCategoryTaxonomy(category, query.data)
+    : null;
+  const taxonomy = publishedTaxonomy ?? fallbackTaxonomy;
 
   return {
     ...query,
-    taxonomy: category && query.data ? buildPublishedCategoryTaxonomy(category, query.data) : null,
+    isLoading: query.isLoading && !taxonomy,
+    taxonomy,
     hasPublishedRelease: Boolean(query.data?.nodes.length && query.data?.assignments.length),
   };
 }
