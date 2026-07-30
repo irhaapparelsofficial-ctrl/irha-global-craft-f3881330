@@ -1,0 +1,120 @@
+name: IA Media E001 Visual Acceptance
+
+run-name: IA-MEDIA-E001 visual · ${{ github.sha }}
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - ".github/workflows/ia-media-e001-visual-acceptance.yml"
+      - "scripts/capture-ia-media-e001-visual-evidence.mjs"
+      - "src/components/layout/Navbar.tsx"
+      - "src/components/layout/Footer.tsx"
+      - "src/lib/brandAssets.ts"
+      - "src/lib/imageLoading.ts"
+      - "src/lib/iaMediaE001Runtime.ts"
+      - "src/lib/productGalleryAuthority.ts"
+      - "ops/ia-media-e001/**"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ia-media-e001-visual-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PREVIEW_BRANCH: github-preview
+  PREVIEW_ORIGIN: https://github-preview.${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}.pages.dev
+  PRODUCTION_ORIGIN: https://irhaapparels.com
+  LAST_STAGED_OBJECT: https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/responsive/1600/catalog/recovery/ia-media-e001-20260730/deer-suede-lederhosen/06-macro-1VyctJT-q7ExkAf90TXGp2DKL4czoWUtV.webp.webp
+
+jobs:
+  visual-acceptance:
+    if: github.event.pull_request.head.ref == 'codex/official-logo-p001-p007-media-recovery'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Checkout exact pull-request merge source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Wait for all immutable Storage objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 180); do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' "${LAST_STAGED_OBJECT}?attempt=${attempt}")"
+            if [ "$status" = "200" ]; then
+              echo "Final ordered responsive object is available"
+              exit 0
+            fi
+            echo "Storage staging pending (attempt $attempt, HTTP $status)"
+            sleep 10
+          done
+          echo "Immutable P001-P007 staging did not finish within 30 minutes"
+          exit 1
+
+      - name: Wait for exact immutable preview source
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$GITHUB_SHA"
+          for attempt in $(seq 1 240); do
+            body="$(curl -fsS -H 'Cache-Control: no-cache, no-store' "${PREVIEW_ORIGIN}/build.json?expected=${expected}&attempt=${attempt}" || true)"
+            actual="$(printf '%s' "$body" | jq -r '.source_commit // empty' 2>/dev/null || true)"
+            if [ "$actual" = "$expected" ]; then
+              echo "Exact immutable preview is live at $PREVIEW_ORIGIN"
+              exit 0
+            fi
+            echo "Preview pending (attempt $attempt, expected $expected, actual ${actual:-unavailable})"
+            sleep 15
+          done
+          echo "Exact immutable preview did not propagate within 60 minutes"
+          exit 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact project dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Install isolated browser harness
+        run: |
+          npm install --no-save --package-lock=false --legacy-peer-deps --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Capture before-and-after responsive evidence
+        env:
+          IA_MEDIA_PREVIEW_ORIGIN: ${{ env.PREVIEW_ORIGIN }}
+          IA_MEDIA_PRODUCTION_ORIGIN: ${{ env.PRODUCTION_ORIGIN }}
+          IA_MEDIA_EXPECTED_SHA: ${{ github.sha }}
+          IA_MEDIA_VISUAL_OUTPUT: artifacts/ia-media-e001-visual
+        run: node scripts/capture-ia-media-e001-visual-evidence.mjs
+
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-visual-${{ github.sha }}
+          path: artifacts/ia-media-e001-visual
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish acceptance summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f artifacts/ia-media-e001-visual/visual-acceptance-summary.md ]; then
+            cat artifacts/ia-media-e001-visual/visual-acceptance-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "IA-MEDIA-E001 visual report was not generated" >> "$GITHUB_STEP_SUMMARY"
+          fi
