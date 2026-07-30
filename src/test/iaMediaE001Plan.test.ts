@@ -141,9 +141,10 @@ describe("IA-MEDIA-E001 deterministic media plan", () => {
     expect(p001?.images.some((image) => image.role === "rear_three_quarter")).toBe(false);
     expect(p001?.images.find((image) => image.driveFileId === "1pMkT7GnFg1UV1hhC6So9z4hOERF7cAXw"))
       .toMatchObject({ role: "three_quarter", roleIndex: 2, displayOrder: 3, confidence: "verified" });
-    expect(plan.REJECTED_CANDIDATES.some((candidate) =>
-      candidate.sku === "IRHA-P001" && candidate.reason.includes("filename-labelled candidate visibly showed the front bib"),
-    ).toBe(true);
+    expect(plan.REJECTED_CANDIDATES.some(
+      (candidate) => candidate.sku === "IRHA-P001"
+        && candidate.reason.includes("filename-labelled candidate visibly showed the front bib"),
+    )).toBe(true);
   });
 
   it("rejects the checksum-identical P003 duplicate and never publishes exact duplicate Drive IDs", () => {
