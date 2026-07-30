@@ -465,7 +465,7 @@ export default function CanonicalProductDetail() {
               <p className="eyebrow mb-3">Product program</p>
               <h2 id="product-description" className="font-display text-2xl sm:text-3xl">Description and buyer options</h2>
               <p className="mt-4 text-sm leading-relaxed text-foreground/70 sm:text-base">
-                {buyerContent.description}
+                {buyerContent.productDescription}
               </p>
 
               <h3 className="mt-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">Buyer and collection uses</h3>
