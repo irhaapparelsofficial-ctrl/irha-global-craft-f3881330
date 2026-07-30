@@ -120,31 +120,9 @@ function authoritativeSchema(route: SeoRouteEntry, routeByPath: Map<string, SeoR
   };
 
   if (route.routeType === "homepage") {
-    base["@graph"].push(
-      {
-        "@type": "Organization",
-        "@id": `${SITE_URL}/#organization`,
-        name: "Irha Apparels",
-        url: `${SITE_URL}/`,
-        logo: `${SITE_URL}/irha-brand-mark.svg`,
-        email: "irhaapparelsofficial@gmail.com",
-        telephone: "+92 320 4110066",
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: "Sialkot",
-          addressRegion: "Punjab",
-          addressCountry: "PK",
-        },
-      },
-      {
-        "@type": "WebSite",
-        "@id": `${SITE_URL}/#website`,
-        url: `${SITE_URL}/`,
-        name: "Irha Apparels",
-        publisher: { "@id": `${SITE_URL}/#organization` },
-        inLanguage: htmlLang(route.locale),
-      },
-    );
+    // ensure-static-identity.mjs owns the canonical Organization, WebSite and
+    // homepage WebPage graph. Do not emit a second, conflicting entity graph.
+    return null;
   } else if (route.routeType === "resource-article") {
     base["@graph"].push({
       "@type": "Article",
