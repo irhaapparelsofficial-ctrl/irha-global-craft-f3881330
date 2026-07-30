@@ -1,0 +1,142 @@
+name: IA-SEO-E005R Final Closure
+
+run-name: IA-SEO-E005R exact-live closure · ${{ github.sha }}
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  actions: write
+  contents: read
+  statuses: read
+
+concurrency:
+  group: ia-seo-e005r-final-closure
+  cancel-in-progress: true
+
+jobs:
+  close:
+    if: contains(github.event.head_commit.message, '[ia-seo-e005r-close]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - name: Require exact current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$SOURCE_SHA" = "$latest_main" || {
+            echo "::error title=Superseded closure source::$SOURCE_SHA is not current main $latest_main"
+            exit 1
+          }
+
+      - name: Wait for exact-SHA release and Supabase closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            "Irha Quality Gate"
+            "Irha Cloudflare Production"
+            "Irha Search Discovery"
+            "Irha Supabase Function Reconciliation"
+          )
+
+          for attempt in $(seq 1 240); do
+            latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            test "$SOURCE_SHA" = "$latest_main" || {
+              echo "::error title=Closure superseded::$SOURCE_SHA is not current main $latest_main"
+              exit 1
+            }
+
+            status_json="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/status")"
+            all_green=true
+            line="attempt=$attempt"
+            for context in "${required[@]}"; do
+              state="$(printf '%s' "$status_json" | jq -r --arg context "$context" '[.statuses[] | select(.context == $context)][0].state // "missing"')"
+              line="$line | $context=$state"
+              [ "$state" = "success" ] || all_green=false
+            done
+            echo "$line"
+
+            if [ "$all_green" = "true" ]; then
+              exit 0
+            fi
+            sleep 15
+          done
+
+          echo "::error title=Release closure timed out::Required exact-SHA release or Supabase status did not become green"
+          exit 1
+
+      - name: Dispatch exact-current Brand Live verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run verify-official-brand-live.yml --ref main
+
+      - name: Require Brand Live success
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 100); do
+            latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            test "$SOURCE_SHA" = "$latest_main" || {
+              echo "::error title=Brand proof superseded::$SOURCE_SHA is not current main $latest_main"
+              exit 1
+            }
+            state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/status" --jq '[.statuses[] | select(.context == "Irha Brand Live")][0].state // "missing"')"
+            echo "Brand Live attempt=$attempt state=$state"
+            [ "$state" = "success" ] && exit 0
+            [ "$state" = "failure" ] && {
+              echo "::error title=Brand Live failed::Exact-SHA Brand Live verification failed"
+              exit 1
+            }
+            sleep 10
+          done
+          echo "::error title=Brand Live timed out::Exact-SHA Brand Live status did not become green"
+          exit 1
+
+      - name: Dispatch final production route crawl
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run production-route-parity.yml --ref main
+
+      - name: Require final production route crawl success
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 240); do
+            latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            test "$SOURCE_SHA" = "$latest_main" || {
+              echo "::error title=Production crawl superseded::$SOURCE_SHA is not current main $latest_main"
+              exit 1
+            }
+            state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/status" --jq '[.statuses[] | select(.context == "Irha Production Route Parity")][0].state // "missing"')"
+            echo "Production Route Parity attempt=$attempt state=$state"
+            [ "$state" = "success" ] && exit 0
+            [ "$state" = "failure" ] && {
+              echo "::error title=Production route crawl failed::Exact-live crawl failed"
+              exit 1
+            }
+            sleep 15
+          done
+          echo "::error title=Production route crawl timed out::Exact-live crawl status did not become green"
+          exit 1
+
+      - name: Record final closure
+        shell: bash
+        run: |
+          {
+            echo "## IA-SEO-E005R final closure"
+            echo "- Exact source: \`$SOURCE_SHA\`"
+            echo "- Quality Gate: \`success\`"
+            echo "- Cloudflare Production: \`success\`"
+            echo "- Search Discovery: \`success\`"
+            echo "- Supabase Function Reconciliation: \`success\`"
+            echo "- Brand Live: \`success\`"
+            echo "- Production Route Parity: \`success\`"
+          } >> "$GITHUB_STEP_SUMMARY"
