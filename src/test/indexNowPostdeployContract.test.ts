@@ -75,6 +75,6 @@ describe("IndexNow post-production contract", () => {
 
     expect(workflow).not.toMatch(/notify:\n\s+if:/);
     expect(workflow).toContain("Record ignored non-release completion");
-    expect(workflow).toContain("Submission attempted: \`false\`");
+    expect(workflow).toContain("Submission attempted: \\`false\\`");
   });
 });
