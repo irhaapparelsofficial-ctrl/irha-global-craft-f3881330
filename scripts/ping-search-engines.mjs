@@ -155,11 +155,39 @@ export function readCanonicalSitemapUrls(sitemapPath = DEFAULT_SITEMAP_PATH) {
   return unique;
 }
 
+function readSitemapEntries(sitemapPath = DEFAULT_SITEMAP_PATH) {
+  const xml = readFileSync(sitemapPath, "utf8");
+  const entries = new Map();
+  for (const match of xml.matchAll(/<url\\b[^>]*>([\\s\\S]*?)<\\/url>/gi)) {
+    const location = match[1].match(/<loc>([^<]+)<\\/loc>/i)?.[1]?.trim();
+    if (!location) continue;
+    const normalized = normalizeUrl(location);
+    if (normalized) entries.set(normalized, match[0]);
+  }
+  if (entries.size === 0) throw new Error(`Sitemap has no URL entries: ${sitemapPath}`);
+  return entries;
+}
+
+export function readChangedCanonicalSitemapUrls(
+  sitemapPath = DEFAULT_SITEMAP_PATH,
+  previousSitemapPath,
+) {
+  if (!previousSitemapPath) return [];
+  const current = readSitemapEntries(sitemapPath);
+  const previous = readSitemapEntries(previousSitemapPath);
+  const candidates = new Set([...current.keys(), ...previous.keys()]);
+  return [...candidates]
+    .filter(isIndexableCanonicalUrl)
+    .filter((url) => current.get(url) !== previous.get(url))
+    .sort();
+}
+
 export function resolveChangedUrls({
   args = process.argv.slice(2),
   env = process.env,
   sitemapPath = DEFAULT_SITEMAP_PATH,
 } = {}) {
+  const previousSitemapPath = String(env.INDEXNOW_PREVIOUS_SITEMAP ?? "").trim();
   const envValues = String(env.INDEXNOW_URLS ?? "")
     .split(/[\n,]/)
     .map((value) => value.trim())
@@ -168,6 +196,7 @@ export function resolveChangedUrls({
   let candidates;
   if (args.length > 0) candidates = args;
   else if (envValues.length > 0) candidates = envValues;
+  else if (previousSitemapPath) candidates = readChangedCanonicalSitemapUrls(sitemapPath, previousSitemapPath);
   else candidates = readCanonicalSitemapUrls(sitemapPath);
 
   const urls = candidates.map(normalizeUrl).filter(Boolean).filter(isIndexableCanonicalUrl);
@@ -204,7 +233,12 @@ async function submitIndexNow(payload) {
 }
 
 export async function main() {
-  const payload = buildIndexNowPayload();
+  const urlList = resolveChangedUrls();
+  if (urlList.length === 0) {
+    console.log("[indexnow] no canonical URL changes; submission skipped");
+    return;
+  }
+  const payload = buildIndexNowPayload(urlList);
 
   if (process.env.INDEXNOW_DRY_RUN === "1") {
     console.log(JSON.stringify(payload, null, 2));
