@@ -22,6 +22,15 @@ describe("SEC-M03 canonical parity control", () => {
     );
   });
 
+  it("publishes an exact-SHA reconciliation status and retains closure evidence", () => {
+    expect(workflow).toContain("statuses: write");
+    expect(workflow).toContain("Publish exact reconciliation status");
+    expect(workflow).toContain('context="Irha Supabase Function Reconciliation"');
+    expect(workflow).toContain("Exact public-schema types and Edge source parity passed");
+    expect(workflow).toContain("sec-m03-parity-closure-${{ env.SOURCE_SHA }}");
+    expect(workflow).toContain("retention-days: 7");
+  });
+
   it("uses authenticated Management API JSON for deterministic inventories and source retrieval", () => {
     expect(workflow).toContain('https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions');
     expect(workflow).toContain('functions/$function_name');
