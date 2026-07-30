@@ -155,7 +155,7 @@ export default function GermanBavarianWear() {
         <div className="container-luxe grid gap-10 lg:grid-cols-2">
           <div>
             <p className="eyebrow">Fertigungs- und Freigabeumfang</p>
-            <h2 className="mt-3 font-display text-4xl">Für nachvollziehbare und widerenholbare Handelsprogramme entwickelt.</h2>
+            <h2 className="mt-3 font-display text-4xl">Für nachvollziehbare und wiederholbare Handelsprogramme entwickelt.</h2>
             <p className="mt-5 text-sm leading-7 text-foreground/65">
               Machbarkeit, Mindestmenge, Musteraufwand, Produktionszeit, Verpackung und Lieferbedingungen werden erst nach Prüfung der konkreten Produktspezifikation bestätigt.
             </p>
