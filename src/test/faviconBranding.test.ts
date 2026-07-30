@@ -43,6 +43,9 @@ describe("Irha favicon branding", () => {
     expect(packageJson).toContain("node scripts/version-official-brand-assets.mjs");
     expect(versioningScript).toContain(`const BRAND_VERSION = "${BRAND_VERSION}"`);
     expect(versioningScript).toContain("Unversioned favicon link remains");
+    expect(versioningScript).toContain('href="/favicon.svg"');
+    expect(versioningScript).toContain('href="${VERSIONED_FAVICON}"');
+    expect(versioningScript).toContain("manifest.icons = manifest.icons.map");
 
     expect(redirects).toContain("/favicon.ico /favicon.svg 200");
     expect(redirects).not.toContain("/favicon.ico /favicon.svg 301");
@@ -76,13 +79,12 @@ describe("Irha favicon branding", () => {
     expect(liveVerification).toContain('context="Irha Brand Live"');
     expect(liveVerification).toContain("Official Irha Apparels Manufacturing Specialists crest supplied by the owner");
 
-    expect(manifest.icons[0]).toEqual({
-      src: `/favicon.svg?v=${BRAND_VERSION}`,
-      sizes: "any",
-      type: "image/svg+xml",
-      purpose: "any",
-    });
-    expect(manifest.icons.every((icon) => icon.src.endsWith(`?v=${BRAND_VERSION}`))).toBe(true);
+    expect(manifest.icons).toEqual(expect.arrayContaining([
+      expect.objectContaining({ src: "/favicon.svg", sizes: "any", type: "image/svg+xml" }),
+      expect.objectContaining({ src: "/icon-192x192.png", sizes: "192x192", type: "image/png" }),
+      expect.objectContaining({ src: "/icon-512x512.png", sizes: "512x512", type: "image/png" }),
+    ]));
+    expect(manifest.icons.every((icon) => !icon.src.includes("?"))).toBe(true);
 
     expect(existsSync(resolve(process.cwd(), "public/irha-search-favicon-2026.svg"))).toBe(false);
   });
