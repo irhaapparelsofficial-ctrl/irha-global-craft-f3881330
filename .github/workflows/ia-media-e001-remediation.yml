@@ -1,8 +1,16 @@
 name: IA Media E001 Remediation
 
-run-name: IA-MEDIA-E001 ${{ inputs.mode }} · ${{ github.sha }}
+run-name: IA-MEDIA-E001 ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'plan' }} · ${{ github.sha }}
 
 on:
+  push:
+    branches:
+      - codex/official-logo-p001-p007-media-recovery
+    paths:
+      - ".github/workflows/ia-media-e001-remediation.yml"
+      - "ops/ia-media-e001/**"
+      - "scripts/remediate-p001-p007-media.mjs"
+      - "src/test/iaMediaE001Plan.test.ts"
   workflow_dispatch:
     inputs:
       mode:
@@ -24,11 +32,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ inputs.mode == 'apply' && 'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}
+  group: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'apply' && 'irha-production-mutation' || format('ia-media-e001-plan-{0}', github.ref) }}
   cancel-in-progress: false
 
 env:
   SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  IA_MEDIA_EFFECTIVE_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'plan' }}
+  IA_MEDIA_EFFECTIVE_CONFIRM: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm || 'NO' }}
 
 jobs:
   remediate:
@@ -36,7 +46,7 @@ jobs:
     timeout-minutes: 55
     environment: production
     steps:
-      - name: Checkout exact dispatch source
+      - name: Checkout exact workflow source
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -49,8 +59,8 @@ jobs:
         run: |
           set -euo pipefail
           checked_out="$(git rev-parse HEAD)"
-          if [ "${{ inputs.mode }}" = "apply" ]; then
-            test "${{ inputs.confirm }}" = "APPLY_IA_MEDIA_E001" || {
+          if [ "$IA_MEDIA_EFFECTIVE_MODE" = "apply" ]; then
+            test "$IA_MEDIA_EFFECTIVE_CONFIRM" = "APPLY_IA_MEDIA_E001" || {
               echo "Apply confirmation is missing"
               exit 1
             }
@@ -72,15 +82,15 @@ jobs:
       - name: Resolve, checksum and process owner originals
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          IA_MEDIA_MODE: ${{ inputs.mode }}
-          IA_MEDIA_CONFIRM: ${{ inputs.confirm }}
+          IA_MEDIA_MODE: ${{ env.IA_MEDIA_EFFECTIVE_MODE }}
+          IA_MEDIA_CONFIRM: ${{ env.IA_MEDIA_EFFECTIVE_CONFIRM }}
         run: node scripts/remediate-p001-p007-media.mjs
 
       - name: Upload immutable evidence and rollback manifest
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ia-media-e001-${{ inputs.mode }}-${{ github.sha }}
+          name: ia-media-e001-${{ env.IA_MEDIA_EFFECTIVE_MODE }}-${{ github.sha }}
           path: artifacts/ia-media-e001
           if-no-files-found: error
           retention-days: 90
@@ -91,7 +101,7 @@ jobs:
         run: |
           {
             echo "## IA-MEDIA-E001"
-            echo "- Mode: \`${{ inputs.mode }}\`"
+            echo "- Mode: \`$IA_MEDIA_EFFECTIVE_MODE\`"
             echo "- Exact source SHA: \`${SOURCE_SHA:-$GITHUB_SHA}\`"
             echo "- Supabase project: \`$SUPABASE_PROJECT_ID\`"
             echo "- Production mutation lock: \`irha-production-mutation\`"
