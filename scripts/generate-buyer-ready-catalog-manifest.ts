@@ -239,9 +239,9 @@ function buyerSafeRow(row: BuyerReadyCatalogRoute): BuyerReadyCatalogRoute {
     product_name: content.name,
     seo_title: content.seoTitle,
     seo_h1: content.h1,
-    seo_description: content.seoDescription,
+    seo_description: content.description,
     short_description: content.shortDescription,
-    product_description: content.description,
+    product_description: content.productDescription,
     opening_answer: content.openingAnswer,
     buyer_use_cases: content.buyerUseCases,
     material_guidance: content.materialGuidance,
@@ -452,7 +452,8 @@ async function main() {
     schemaVersion: 1,
     generatedAt,
     productCount: rows.length,
-    contentPolicy: "shared-product-specific-buyer-content-with-truthful-order-qualification",
+    contentPolicy: "shared-buyer-ready-source-with-safe-fallbacks",
+    contentStandard: "product-specific-buyer-content-with-truthful-order-qualification",
     products: rows,
   }, null, 2)}\n`);
   writeQueryMap(rows, generatedAt);
