@@ -47,6 +47,27 @@ describe("IndexNow canonical sitemap discovery", () => {
     ]);
   });
 
+  it("builds a change-only notification diff from the parent sitemap", async () => {
+    const { resolveChangedUrls } = await loadIndexNowModule();
+    const previousSitemapPath = writeSitemap([
+      "https://irhaapparels.com/",
+      "https://irhaapparels.com/products/removed",
+    ]);
+    const currentSitemapPath = writeSitemap([
+      "https://irhaapparels.com/",
+      "https://irhaapparels.com/products/added",
+    ]);
+
+    expect(resolveChangedUrls({
+      args: [],
+      env: { INDEXNOW_PREVIOUS_SITEMAP: previousSitemapPath },
+      sitemapPath: currentSitemapPath,
+    })).toEqual([
+      "https://irhaapparels.com/products/added",
+      "https://irhaapparels.com/products/removed",
+    ]);
+  });
+
   it("rejects a sitemap that leaks the redirecting www host", async () => {
     const { readCanonicalSitemapUrls } = await loadIndexNowModule();
     const sitemapPath = writeSitemap(["https://www.irhaapparels.com/products"]);
