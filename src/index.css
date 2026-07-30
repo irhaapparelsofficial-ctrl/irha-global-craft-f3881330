@@ -57,6 +57,11 @@
   .guided-field textarea { @apply min-h-12 w-full rounded-md border border-border/70 bg-background/70 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-1 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50; }
   .guided-field textarea { @apply min-h-24 resize-y; }
   .guided-field input[readonly] { @apply bg-muted/30 font-semibold text-primary; }
+
+  /* Keep the canonical product loading state viewport-stable while the live
+     catalogue and taxonomy resolve, so the footer never enters and then exits
+     the mobile viewport during the initial product render. */
+  .container-luxe.pb-24.pt-40.text-sm.text-muted-foreground { min-height: 100svh; }
 }
 
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
