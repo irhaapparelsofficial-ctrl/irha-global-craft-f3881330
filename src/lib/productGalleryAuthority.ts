@@ -3,6 +3,7 @@ import { PRODUCT_REAL_MEDIA } from "@/lib/productRealMedia";
 
 const PUBLIC_SITE_ORIGIN = "https://irhaapparels.com";
 const CATALOG_PRODUCT_DIRECTORY = /^p\d{3}-(.+)$/i;
+const IA_MEDIA_E001_PATH = "/ia-media-e001-20260730/";
 
 export function uniqueProductImages(images: Array<string | null | undefined>): string[] {
   return images
@@ -49,4 +50,15 @@ export function selectAuthoritativeProductGalleryFromUrls(baseGallery: string[])
   const unique = uniqueProductImages(baseGallery);
   const slug = unique.map(productSlugFromProductMediaUrl).find((candidate): candidate is string => Boolean(candidate));
   return slug ? selectAuthoritativeProductGallery(slug, unique) : unique.slice(0, 6);
+}
+
+/**
+ * Replaces only an unversioned legacy P001-P007 card image with the exact
+ * immutable hero. Existing IA-MEDIA derivatives and alternate frames remain
+ * untouched so gallery selection can never collapse back to the hero.
+ */
+export function selectAuthoritativeProductImageSource(value: string): string {
+  if (!value || value.includes(IA_MEDIA_E001_PATH)) return value;
+  const slug = productSlugFromProductMediaUrl(value);
+  return (slug ? IA_MEDIA_E001_PRODUCT_MEDIA[slug]?.gallery[0] : null) ?? value;
 }
