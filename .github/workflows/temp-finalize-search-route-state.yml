@@ -73,3 +73,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "fix(seo): seal final deployed material route state"
           git push origin HEAD:main
+
+# Triggered after the workflow was present on the default branch.
