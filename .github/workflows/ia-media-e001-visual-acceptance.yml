@@ -9,6 +9,7 @@ on:
     paths:
       - ".github/workflows/ia-media-e001-visual-acceptance.yml"
       - "scripts/capture-ia-media-e001-visual-evidence.mjs"
+      - "scripts/resolve-cloudflare-preview-deployment.mjs"
       - "src/components/layout/Navbar.tsx"
       - "src/components/layout/Footer.tsx"
       - "src/lib/brandAssets.ts"
@@ -28,9 +29,12 @@ concurrency:
 
 env:
   PREVIEW_BRANCH: github-preview
-  PREVIEW_ORIGIN: https://github-preview.${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}.pages.dev
+  PREVIEW_URL: https://github-preview.${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}.pages.dev
   PRODUCTION_ORIGIN: https://irhaapparels.com
   LAST_STAGED_OBJECT: https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/responsive/1600/catalog/recovery/ia-media-e001-20260730/deer-suede-lederhosen/06-macro-1VyctJT-q7ExkAf90TXGp2DKL4czoWUtV.webp.webp
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
 
 jobs:
   visual-acceptance:
@@ -60,16 +64,23 @@ jobs:
           echo "Immutable P001-P007 staging did not finish within 30 minutes"
           exit 1
 
+      - name: Resolve exact immutable preview deployment
+        run: node scripts/resolve-cloudflare-preview-deployment.mjs
+
       - name: Wait for exact immutable preview source
         shell: bash
         run: |
           set -euo pipefail
+          test "$PREVIEW_URL" != "$PREVIEW_ALIAS_URL" || {
+            echo "Visual acceptance must not use the mutable preview alias"
+            exit 1
+          }
           expected="$GITHUB_SHA"
           for attempt in $(seq 1 240); do
-            body="$(curl -fsS -H 'Cache-Control: no-cache, no-store' "${PREVIEW_ORIGIN}/build.json?expected=${expected}&attempt=${attempt}" || true)"
+            body="$(curl -fsS -H 'Cache-Control: no-cache, no-store' "${PREVIEW_URL}/build.json?expected=${expected}&attempt=${attempt}" || true)"
             actual="$(printf '%s' "$body" | jq -r '.source_commit // empty' 2>/dev/null || true)"
             if [ "$actual" = "$expected" ]; then
-              echo "Exact immutable preview is live at $PREVIEW_ORIGIN"
+              echo "Exact immutable preview is live at $PREVIEW_URL"
               exit 0
             fi
             echo "Preview pending (attempt $attempt, expected $expected, actual ${actual:-unavailable})"
@@ -93,12 +104,13 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Capture before-and-after responsive evidence
-        env:
-          IA_MEDIA_PREVIEW_ORIGIN: ${{ env.PREVIEW_ORIGIN }}
-          IA_MEDIA_PRODUCTION_ORIGIN: ${{ env.PRODUCTION_ORIGIN }}
-          IA_MEDIA_EXPECTED_SHA: ${{ github.sha }}
-          IA_MEDIA_VISUAL_OUTPUT: artifacts/ia-media-e001-visual
-        run: node scripts/capture-ia-media-e001-visual-evidence.mjs
+        shell: bash
+        run: |
+          IA_MEDIA_PREVIEW_ORIGIN="$PREVIEW_URL" \
+          IA_MEDIA_PRODUCTION_ORIGIN="$PRODUCTION_ORIGIN" \
+          IA_MEDIA_EXPECTED_SHA="$GITHUB_SHA" \
+          IA_MEDIA_VISUAL_OUTPUT="artifacts/ia-media-e001-visual" \
+          node scripts/capture-ia-media-e001-visual-evidence.mjs
 
       - name: Upload visual evidence
         if: always()
