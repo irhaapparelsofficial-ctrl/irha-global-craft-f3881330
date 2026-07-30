@@ -120,31 +120,9 @@ function authoritativeSchema(route: SeoRouteEntry, routeByPath: Map<string, SeoR
   };
 
   if (route.routeType === "homepage") {
-    base["@graph"].push(
-      {
-        "@type": "Organization",
-        "@id": `${SITE_URL}/#organization`,
-        name: "Irha Apparels",
-        url: `${SITE_URL}/`,
-        logo: `${SITE_URL}/irha-brand-mark.svg`,
-        email: "irhaapparelsofficial@gmail.com",
-        telephone: "+92 320 4110066",
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: "Sialkot",
-          addressRegion: "Punjab",
-          addressCountry: "PK",
-        },
-      },
-      {
-        "@type": "WebSite",
-        "@id": `${SITE_URL}/#website`,
-        url: `${SITE_URL}/`,
-        name: "Irha Apparels",
-        publisher: { "@id": `${SITE_URL}/#organization` },
-        inLanguage: htmlLang(route.locale),
-      },
-    );
+    // ensure-static-identity.mjs owns the canonical Organization, WebSite and
+    // homepage WebPage graph. Do not emit a second, conflicting entity graph.
+    return null;
   } else if (route.routeType === "resource-article") {
     base["@graph"].push({
       "@type": "Article",
@@ -280,6 +258,34 @@ function extractJsonLdTypes(html: string): string[] {
   return [...types].sort();
 }
 
+
+function collectJsonLdNodes(value: unknown, nodes: Record<string, unknown>[] = []): Record<string, unknown>[] {
+  if (Array.isArray(value)) {
+    for (const item of value) collectJsonLdNodes(item, nodes);
+    return nodes;
+  }
+  if (!value || typeof value !== "object") return nodes;
+  const record = value as Record<string, unknown>;
+  if (record["@type"] || record["@id"]) nodes.push(record);
+  for (const child of Object.values(record)) collectJsonLdNodes(child, nodes);
+  return nodes;
+}
+
+function canonicalIdentityCounts(html: string) {
+  const nodes: Record<string, unknown>[] = [];
+  for (const match of html.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      collectJsonLdNodes(JSON.parse(match[1]) as unknown, nodes);
+    } catch {
+      // extractJsonLdTypes reports invalid JSON-LD separately.
+    }
+  }
+  return {
+    organizations: nodes.filter((node) => node["@type"] === "Organization" && node["@id"] === `${SITE_URL}/#organization`).length,
+    websites: nodes.filter((node) => node["@type"] === "WebSite" && node["@id"] === `${SITE_URL}/#website`).length,
+  };
+}
+
 function verifyRoute(route: SeoRouteEntry, html: string, findings: Finding[]) {
   const expectedLang = htmlLang(route.locale);
   const title = decodeHtmlText(html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || "").trim();
@@ -288,6 +294,9 @@ function verifyRoute(route: SeoRouteEntry, html: string, findings: Finding[]) {
   const h1 = stripTags(html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i)?.[0] || "");
   const robots = html.match(/<meta\b[^>]*name="robots"[^>]*content="([^"]+)"[^>]*>/i)?.[1] || "";
   const types = extractJsonLdTypes(html);
+  const identity = canonicalIdentityCounts(html);
+  if (identity.organizations !== 1) findings.push({ severity: "critical", route: route.path, code: "CANONICAL_ORGANIZATION_COUNT", detail: `Expected one canonical Organization, found ${identity.organizations}` });
+  if (identity.websites !== 1) findings.push({ severity: "critical", route: route.path, code: "CANONICAL_WEBSITE_COUNT", detail: `Expected one canonical WebSite, found ${identity.websites}` });
   const alternates = new Map([...html.matchAll(/<link\b[^>]*rel="alternate"[^>]*hreflang="([^"]+)"[^>]*href="([^"]+)"[^>]*>/gi)].map((match) => [match[1], decodeHtmlText(match[2])]));
 
   if (title !== route.title) findings.push({ severity: "critical", route: route.path, code: "TITLE_MISMATCH", detail: `${title || "missing"} !== ${route.title}` });

@@ -20,6 +20,9 @@ describe("IndexNow post-production contract", () => {
     const workflow = read(".github/workflows/indexnow-after-production.yml");
 
     expect(workflow).toContain("for attempt in $(seq 1 12)");
+    expect(workflow).toContain("fetch-depth: 2");
+    expect(workflow).toContain("Resolve previous canonical sitemap for change-only submission");
+    expect(workflow).toContain("INDEXNOW_PREVIOUS_SITEMAP: /tmp/previous-sitemap.xml");
     expect(workflow).toContain("$CANONICAL_ORIGIN/build.json?search_discovery=");
     expect(workflow).toContain(".source_commit == $sha");
     expect(workflow).toContain("$CANONICAL_ORIGIN/sitemap.xml?search_discovery=");

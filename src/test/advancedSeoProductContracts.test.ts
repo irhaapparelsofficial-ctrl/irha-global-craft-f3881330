@@ -67,6 +67,20 @@ describe("advanced product SEO and AEO contracts", () => {
     expect(shells).toContain("product.buyer_faqs");
   });
 
+  it("guards canonical entity identity and localized static metadata parity", () => {
+    const authoritative = read("scripts/apply-authoritative-seo-manifest.ts");
+    const finalizer = read("scripts/finalize-seo-route-manifest.ts");
+
+    expect(authoritative).toContain("canonicalIdentityCounts");
+    expect(authoritative).toContain("CANONICAL_ORGANIZATION_COUNT");
+    expect(authoritative).toContain("CANONICAL_WEBSITE_COUNT");
+    expect(authoritative).not.toContain("irhaapparelsofficial@gmail.com");
+    expect(finalizer).toContain("BUYER_INFORMATION_COPY");
+    expect(finalizer).toContain("const copy = BUYER_INFORMATION_COPY[locale]");
+    expect(finalizer).toContain("route.alternates.length > 0");
+    expect(finalizer).toContain("route.xDefault = null");
+  });
+
   it("does not expose prohibited website-age messaging in new ranking content", () => {
     for (const path of [
       "src/lib/buyerReadyProductContent.ts",

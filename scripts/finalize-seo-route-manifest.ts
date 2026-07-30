@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import type { BuyerReadyCatalogRoute } from "./generate-buyer-ready-catalog-manifest";
 import { SEO_BUYER_INTENT_LANDING_PAGES } from "../src/lib/buyerIntentSeoPages";
 import { MARKET_PAGES } from "../src/lib/marketPages";
+import { BUYER_INFORMATION_COPY } from "../src/data/buyerCapabilities";
 import {
   LOCALIZED_ROUTE_REGISTRY,
   LOCALE_REGISTRY,
@@ -573,7 +574,11 @@ function localizedSeed(path: string) {
   if (path.endsWith("/materialien")) return { title: "Materialien für individuelle Bekleidung | Irha Apparels", description: "Materialrichtungen für individuelle B2B-Bekleidungsprogramme.", h1: "Material- und Stoffbibliothek", component: "BuyerConfidence", type: "materials" as SeoRouteType };
   if (path.endsWith("/matieres")) return { title: "Matières pour vêtements sur mesure | Irha Apparels", description: "Orientations matières pour les programmes de vêtements B2B sur mesure.", h1: "Bibliothèque de matières et tissus", component: "BuyerConfidence", type: "materials" as SeoRouteType };
   if (path.endsWith("/materialen")) return { title: "Materialen voor maatwerkkleding | Irha Apparels", description: "Materiaalrichtingen voor B2B-maatwerk kledingprogramma's.", h1: "Materiaal- en stoffenbibliotheek", component: "BuyerConfidence", type: "materials" as SeoRouteType };
-  if (path.includes("einkaeufer") || path.includes("informations-acheteurs") || path.includes("kopersinformatie")) return { title: "Buyer Information | Irha Apparels", description: "Localized buyer information for quotation, logistics, confidentiality and compliance-readiness review.", h1: "Buyer Information", component: "BuyerConfidence", type: "buyer-information" as SeoRouteType };
+  if (path.includes("einkaeufer") || path.includes("informations-acheteurs") || path.includes("kopersinformatie")) {
+    const locale: LocaleCode = path.startsWith("/de/") ? "de" : path.startsWith("/fr/") ? "fr" : "nl";
+    const copy = BUYER_INFORMATION_COPY[locale];
+    return { title: `${copy.eyebrow} | Irha Apparels`, description: copy.intro, h1: copy.title, component: "BuyerConfidence", type: "buyer-information" as SeoRouteType };
+  }
   return null;
 }
 
@@ -679,6 +684,12 @@ function applyEquivalence(routes: Map<string, SeoRouteEntry>) {
         .sort((a, b) => a.hreflang.localeCompare(b.hreflang) || a.path.localeCompare(b.path));
       route.xDefault = english?.canonicalUrl ?? null;
     }
+  }
+
+  for (const route of routes.values()) {
+    if (!route.indexable || !route.sitemap || localeCode(route.locale) === "en" || route.alternates.length > 0) continue;
+    route.alternates = [{ hreflang: localeCode(route.locale), path: route.path, url: route.canonicalUrl }];
+    route.xDefault = null;
   }
 }
 
