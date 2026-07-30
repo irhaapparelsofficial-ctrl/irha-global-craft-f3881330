@@ -39,6 +39,7 @@ export type BuyerReadyProductContent = {
   seoDescription: string;
   shortDescription: string;
   description: string;
+  productDescription: string;
   openingAnswer: string;
   buyerUseCases: string[];
   materialGuidance: string;
@@ -449,14 +450,27 @@ const stableVariant = (value: string, variants: number) => {
 };
 
 function categoryProfile(mainCategorySlug: string): CategoryProfile {
-  return CATEGORY_PROFILES[mainCategorySlug] ?? {
-    buyers: "brands, wholesalers, importers, retailers and private-label sourcing buyers",
-    collectionUse: "custom apparel, wholesale and private-label programs",
-    materialReview:
-      "Composition, weight, colour, surface and care requirements are confirmed against the buyer brief and approved sample.",
-    qualityFocus: "fit, construction, material consistency, branding placement and packing",
-    relatedGuide: "tech-pack, sampling and private-label order preparation",
-  };
+  switch (mainCategorySlug) {
+    case "bavarian-trachten-wear":
+      return CATEGORY_PROFILES["bavarian-trachten-wear"];
+    case "premium-leather-apparel":
+      return CATEGORY_PROFILES["premium-leather-apparel"];
+    case "sportswear":
+      return CATEGORY_PROFILES.sportswear;
+    case "streetwear-activewear":
+      return CATEGORY_PROFILES["streetwear-activewear"];
+    case "leisure-nightwear":
+      return CATEGORY_PROFILES["leisure-nightwear"];
+    default:
+      return {
+        buyers: "brands, wholesalers, importers, retailers and private-label sourcing buyers",
+        collectionUse: "custom apparel, wholesale and private-label programs",
+        materialReview:
+          "Composition, weight, colour, surface and care requirements are confirmed against the buyer brief and approved sample.",
+        qualityFocus: "fit, construction, material consistency, branding placement and packing",
+        relatedGuide: "tech-pack, sampling and private-label order preparation",
+      };
+  }
 }
 
 function productTypeProfile(productTypeSlug: string, productTypeName: string): ProductTypeProfile {
@@ -494,6 +508,14 @@ function usableSeoTitle(value: string | null | undefined, name: string) {
 export function hasBlockedBuyerReadyTerm(value: string) {
   const lower = value.toLowerCase();
   return BLOCKED_PUBLIC_TERMS.some((term) => lower.includes(term));
+}
+
+function safeSource(values: Array<string | null | undefined>, fallback: string) {
+  for (const value of values) {
+    const normalized = clean(value);
+    if (normalized && !hasBlockedBuyerReadyTerm(normalized)) return normalized;
+  }
+  return fallback;
 }
 
 export function buyerReadyProgramDescription(mainCategorySlug: string, productName: string) {
@@ -554,7 +576,7 @@ export function resolveBuyerReadyProductContent(
   ];
 
   const packagingAndLogistics =
-    `${clean(input.packaging_standard) || "Individual or bulk packing is selected against the buyer brief"}. ` +
+    `${safeSource([input.packaging_standard], "Individual or bulk packing is selected against the buyer brief")}. ` +
     `Labels, hangtags, barcode or carton marks, assortment, destination, Incoterm and freight responsibility are confirmed per order; third-party transit and customs outcomes are not presented as factory guarantees.`;
 
   const moqAndLeadTime =
@@ -584,7 +606,7 @@ export function resolveBuyerReadyProductContent(
     `Before a ${name} quotation is confirmed, the buyer records ${decisionSummary}, market, size-and-colour quantities, artwork, labels, packing and destination. Sample review then checks ${productType.construction}, measurements and ${category.qualityFocus} against the order specification.`,
     `Development starts with the ${name} use case and these decisions: ${decisionPoints.join("; ")}. Material direction, measurements, branding, packaging and destination are reviewed before quotation; the sample is assessed for ${productType.construction} and ${category.qualityFocus}.`,
   ];
-  const description = `${openingAnswer} ${descriptionClosings[narrativeVariant]}`;
+  const productDescription = `${openingAnswer} ${descriptionClosings[narrativeVariant]}`;
 
   const seoTitle =
     usableSeoTitle(input.seo_title, name)
@@ -650,7 +672,8 @@ export function resolveBuyerReadyProductContent(
     seoTitle,
     seoDescription,
     shortDescription: openingAnswer,
-    description,
+    description: seoDescription,
+    productDescription,
     openingAnswer,
     buyerUseCases,
     materialGuidance,
