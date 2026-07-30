@@ -44,7 +44,7 @@ jobs:
             --input /tmp/live-seo-route-manifest.json \
             --output seo/search-route-state.json
 
-      - name: Apply deterministic closure guards
+      - name: Verify package scope and commit exact baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -61,92 +61,10 @@ jobs:
           assert.deepEqual(current, base, 'package.json changed outside the two approved search-state scripts');
           NODE
 
-          python - <<'PY'
-          from pathlib import Path
-
-          quality_path = Path('.github/workflows/quality.yml')
-          quality = quality_path.read_text()
-          quality_step = '''      - name: Verify committed material search route state
-                shell: bash
-                run: |
-                  set -euo pipefail
-                  git diff --exit-code -- seo/search-route-state.json
-
-          '''.replace('                ', '        ')
-          quality_marker = '      - name: Audit immutable production artifact\n'
-          if 'Verify committed material search route state' not in quality:
-              if quality_marker not in quality:
-                  raise SystemExit('Quality workflow insertion marker missing')
-              quality = quality.replace(quality_marker, quality_step + quality_marker, 1)
-              quality_path.write_text(quality)
-
-          reconcile_path = Path('.github/workflows/supabase-functions-reconcile.yml')
-          reconcile = reconcile_path.read_text()
-          permissions_before = 'permissions:\n  contents: read\n  statuses: read\n'
-          permissions_after = 'permissions:\n  contents: read\n  statuses: write\n'
-          if permissions_before in reconcile:
-              reconcile = reconcile.replace(permissions_before, permissions_after, 1)
-          elif permissions_after not in reconcile:
-              raise SystemExit('Supabase reconciliation permissions marker missing')
-
-          status_step = '''
-
-                - name: Publish exact reconciliation status
-                  if: always()
-                  shell: bash
-                  env:
-                    GH_TOKEN: __GITHUB_TOKEN_EXPRESSION__
-                    RECONCILIATION_JOB_STATUS: __JOB_STATUS_EXPRESSION__
-                  run: |
-                    set -euo pipefail
-                    state=failure
-                    description="Supabase Function Reconciliation failed"
-                    if [ "$RECONCILIATION_JOB_STATUS" = "success" ]; then
-                      state=success
-                      description="Exact public-schema types and Edge source parity passed"
-                    elif [ "$RECONCILIATION_JOB_STATUS" = "cancelled" ]; then
-                      state=error
-                      description="Supabase Function Reconciliation was cancelled"
-                    fi
-                    gh api --method POST \\
-                      "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \\
-                      -f state="$state" \\
-                      -f context="Irha Supabase Function Reconciliation" \\
-                      -f description="$description" \\
-                      -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \\
-                      >/dev/null
-          '''.replace('                ', '      ')
-          status_step = status_step.replace('__GITHUB_TOKEN_EXPRESSION__', '$' + '{{ github.token }}')
-          status_step = status_step.replace('__JOB_STATUS_EXPRESSION__', '$' + '{{ job.status }}')
-          if 'Publish exact reconciliation status' not in reconcile:
-              reconcile = reconcile.rstrip() + status_step + '\n'
-          reconcile_path.write_text(reconcile)
-
-          indexnow_path = Path('.github/workflows/indexnow-after-production.yml')
-          indexnow = indexnow_path.read_text()
-          old = '                src/test/indexNowPostdeployContract.test.ts)\n'
-          new = '                src/test/indexNowPostdeployContract.test.ts|\\\n                src/test/supabaseReconciliationStatus.test.ts)\n'
-          if old in indexnow:
-              indexnow = indexnow.replace(old, new, 1)
-          elif 'src/test/supabaseReconciliationStatus.test.ts)' not in indexnow:
-              raise SystemExit('IndexNow baseline allowlist marker missing')
-          indexnow_path.write_text(indexnow)
-          PY
-
-      - name: Commit exact baseline and self-remove
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm .github/workflows/temp-seal-search-route-state.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            seo/search-route-state.json \
-            .github/workflows/quality.yml \
-            .github/workflows/supabase-functions-reconcile.yml \
-            .github/workflows/indexnow-after-production.yml \
-            .github/workflows/temp-seal-search-route-state.yml
+          git add seo/search-route-state.json
           git diff --cached --stat
           git diff --cached --quiet && exit 0
-          git commit -m "ci(search): seal deterministic release discovery state"
+          git commit -m "chore(search): record exact material route baseline"
           git push origin "HEAD:${{ github.head_ref }}"
