@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ChevronDown, X } from "lucide-react";
 
 const STORAGE_KEY = "irha_cookie_consent_v1";
+const COOKIE_CONSENT_SLOT_ID = "irha-cookie-consent-slot";
 const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
 const GOOGLE_ANALYTICS_ID = "G-RV39YH4CPF";
 const GOOGLE_ADS_ID = "AW-18279003993";
@@ -92,6 +94,22 @@ export default function CookieConsent() {
   const [customizing, setCustomizing] = useState(false);
   const [analytics, setAnalytics] = useState(() => initialConsent?.categories.analytics ?? false);
   const [ads, setAds] = useState(() => initialConsent?.categories.ads ?? false);
+  const [host, setHost] = useState<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const root = document.getElementById("root");
+    if (!root) return;
+    const existing = document.getElementById(COOKIE_CONSENT_SLOT_ID);
+    const slot = existing ?? document.createElement("div");
+    if (!existing) {
+      slot.id = COOKIE_CONSENT_SLOT_ID;
+      root.prepend(slot);
+    }
+    setHost(slot);
+    return () => {
+      if (!existing) slot.remove();
+    };
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.cookieConsentOpen = visible ? "true" : "false";
@@ -145,9 +163,9 @@ export default function CookieConsent() {
     close();
   }, [analytics, ads, close]);
 
-  if (!visible) return null;
+  if (!visible || !host) return null;
 
-  return (
+  return createPortal(
     <section
       role="dialog"
       aria-labelledby="cookie-consent-title"
@@ -205,6 +223,7 @@ export default function CookieConsent() {
           </button>
         )}
       </div>
-    </section>
+    </section>,
+    host,
   );
 }
