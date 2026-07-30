@@ -673,14 +673,7 @@ function applyEquivalence(routes: Map<string, SeoRouteEntry>) {
     const members = [...memberSet]
       .map((path) => routes.get(path))
       .filter((route): route is SeoRouteEntry => Boolean(route?.indexable && route.sitemap));
-    if (members.length < 2) {
-      if (members.length === 1 && members[0].locale !== "en") {
-        const route = members[0];
-        route.alternates = [{ hreflang: localeCode(route.locale), path: route.path, url: route.canonicalUrl }];
-        route.xDefault = null;
-      }
-      continue;
-    }
+    if (members.length < 2) continue;
     const expectedPaths = new Set(members.map((route) => route.path));
     if (expectedPaths.size !== memberSet.size) continue;
     const english = members.find((route) => localeCode(route.locale) === "en");
@@ -693,6 +686,12 @@ function applyEquivalence(routes: Map<string, SeoRouteEntry>) {
     }
   }
 }
+
+  for (const route of routes.values()) {
+    if (!route.indexable || !route.sitemap || localeCode(route.locale) === "en" || route.alternates.length > 0) continue;
+    route.alternates = [{ hreflang: localeCode(route.locale), path: route.path, url: route.canonicalUrl }];
+    route.xDefault = null;
+  }
 
 function validate(routes: SeoRouteEntry[]) {
   const ids = new Set<string>();
