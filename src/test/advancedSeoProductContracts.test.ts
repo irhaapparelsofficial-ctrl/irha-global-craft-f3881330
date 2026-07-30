@@ -9,11 +9,15 @@ describe("advanced product SEO and AEO contracts", () => {
     const runtime = read("src/pages/CanonicalProductDetail.tsx");
     const shells = read("scripts/generate-static-route-shells.ts");
     const seoManifest = read("scripts/finalize-seo-route-manifest.ts");
+    const parityCrawler = read("scripts/crawl-production-route-parity.ts");
 
     expect(manifest).toContain("resolveBuyerReadyProductContent");
     expect(runtime).toContain("resolveBuyerReadyProductContent");
     expect(shells).toContain("product.opening_answer");
     expect(seoManifest).toContain("product.body_text");
+    expect(parityCrawler).toContain("resolveBuyerReadyProductContent");
+    expect(parityCrawler).toContain("expectedTitle: content.seoTitle");
+    expect(parityCrawler).toContain("expectedDescription: content.description");
   });
 
   it("maps every product to one canonical commercial query cluster", () => {
