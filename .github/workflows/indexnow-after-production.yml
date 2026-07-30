@@ -233,7 +233,8 @@ jobs:
                 scripts/ping-search-engines.mjs|\
                 seo/search-route-state.json|\
                 src/test/indexNowCanonicalSitemap.test.ts|\
-                src/test/indexNowPostdeployContract.test.ts)
+                src/test/indexNowPostdeployContract.test.ts|\
+                src/test/searchDiscoveryWorkflow.test.ts)
                   ;;
                 *)
                   echo "Unapproved route-state baseline file: $changed_file" >&2
