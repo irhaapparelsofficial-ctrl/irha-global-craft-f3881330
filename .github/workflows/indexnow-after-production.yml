@@ -87,7 +87,7 @@ jobs:
             "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state=pending \
             -f context="Irha Search Discovery" \
-            -f description="Verifying live canonical sitemap for IndexNow" \
+            -f description="Verifying live canonical sitemap and material route state" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
 
@@ -99,7 +99,7 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
-      - name: Fetch and verify exact live canonical sitemap
+      - name: Fetch and verify exact live canonical sitemap and route state
         if: steps.resolve.outputs.relevant == 'true'
         shell: bash
         env:
@@ -113,6 +113,7 @@ jobs:
             cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
             build_ok=false
             sitemap_ok=false
+            manifest_ok=false
             key_ok=false
             reason=""
 
@@ -149,6 +150,37 @@ jobs:
             fi
 
             if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ]; then
+              if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
+                "$CANONICAL_ORIGIN/seo-route-manifest.json?search_discovery=$cache_bust" \
+                -o /tmp/live-seo-route-manifest.json && \
+                jq -e --arg origin "$CANONICAL_ORIGIN" '
+                  .schemaVersion == 1 and
+                  .canonicalOrigin == $origin and
+                  (.routes | type == "array") and
+                  .routeCount == (.routes | length) and
+                  .sitemapCount == ([.routes[] | select(.indexable == true and .sitemap == true)] | length) and
+                  all(.routes[] | select(.indexable == true and .sitemap == true); (.canonicalUrl | startswith($origin + "/")))
+                ' /tmp/live-seo-route-manifest.json >/dev/null; then
+                sed -n 's#.*<loc>\([^<]*\)</loc>.*#\1#p' /tmp/live-sitemap.xml | sort -u > /tmp/live-sitemap-urls.txt
+                jq -r '.routes[] | select(.indexable == true and .sitemap == true) | .canonicalUrl' \
+                  /tmp/live-seo-route-manifest.json | sort -u > /tmp/live-manifest-urls.txt
+                node scripts/generate-search-route-state.mjs \
+                  --input /tmp/live-seo-route-manifest.json \
+                  --output /tmp/live-search-route-state.json
+
+                if [ "$(wc -l < /tmp/live-sitemap-urls.txt | tr -d ' ')" = "$url_count" ] && \
+                  cmp -s /tmp/live-sitemap-urls.txt /tmp/live-manifest-urls.txt && \
+                  cmp -s seo/search-route-state.json /tmp/live-search-route-state.json; then
+                  manifest_ok=true
+                else
+                  reason="live sitemap, route manifest or committed material state mismatch"
+                fi
+              else
+                reason="seo-route-manifest.json unavailable or invalid"
+              fi
+            fi
+
+            if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ] && [ "$manifest_ok" = "true" ]; then
               if curl -fsSL --connect-timeout 10 --max-time 40 \
                 "$CANONICAL_ORIGIN/19d2833c43fe6e05e2a4416f65a53cdc.txt?search_discovery=$cache_bust" \
                 -o /tmp/indexnow-key.txt && \
@@ -159,13 +191,13 @@ jobs:
               fi
             fi
 
-            printf 'attempt=%s build=%s sitemap=%s key=%s reason=%s\n' \
-              "$attempt" "$build_ok" "$sitemap_ok" "$key_ok" "$reason" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
+            printf 'attempt=%s build=%s sitemap=%s manifest=%s key=%s reason=%s\n' \
+              "$attempt" "$build_ok" "$sitemap_ok" "$manifest_ok" "$key_ok" "$reason" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
 
-            if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ] && [ "$key_ok" = "true" ]; then
-              cp /tmp/live-sitemap.xml public/sitemap.xml
+            if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ] && \
+              [ "$manifest_ok" = "true" ] && [ "$key_ok" = "true" ]; then
               verified=true
-              echo "Verified live canonical sitemap for IndexNow: urls=$url_count source=$SOURCE_SHA"
+              echo "Verified live canonical sitemap and material route state: urls=$url_count source=$SOURCE_SHA" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
               break
             fi
 
@@ -173,36 +205,72 @@ jobs:
           done
 
           if [ "$verified" != "true" ]; then
-            echo "Live canonical sitemap did not reach exact release parity after 12 attempts" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
+            echo "Live canonical sitemap and route state did not reach exact release parity after 12 attempts" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
             exit 1
           fi
 
-      - name: Resolve previous canonical sitemap for change-only submission
+      - name: Resolve previous authoritative material route state
+        id: previous
         if: steps.resolve.outputs.relevant == 'true'
         shell: bash
         env:
           SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
         run: |
           set -euo pipefail
-          git show "${SOURCE_SHA}^:public/sitemap.xml" > /tmp/previous-sitemap.xml
-          test -s /tmp/previous-sitemap.xml
+          if git cat-file -e "${SOURCE_SHA}^:seo/search-route-state.json" 2>/dev/null; then
+            git show "${SOURCE_SHA}^:seo/search-route-state.json" > /tmp/previous-search-route-state.json
+            echo "initialized=false" >> "$GITHUB_OUTPUT"
+          else
+            git diff --name-only "${SOURCE_SHA}^" "$SOURCE_SHA" > /tmp/baseline-changed-files.txt
+            unapproved=false
+            while IFS= read -r changed_file; do
+              case "$changed_file" in
+                .github/workflows/indexnow-after-production.yml|\
+                .github/workflows/quality.yml|\
+                .github/workflows/supabase-functions-reconcile.yml|\
+                package.json|\
+                scripts/generate-search-route-state.mjs|\
+                scripts/ping-search-engines.mjs|\
+                seo/search-route-state.json|\
+                src/test/indexNowCanonicalSitemap.test.ts|\
+                src/test/indexNowPostdeployContract.test.ts|\
+                src/test/searchDiscoveryWorkflow.test.ts)
+                  ;;
+                *)
+                  echo "Unapproved route-state baseline file: $changed_file" >&2
+                  unapproved=true
+                  ;;
+              esac
+            done < /tmp/baseline-changed-files.txt
+            [ "$unapproved" = "false" ]
+            cp /tmp/live-search-route-state.json /tmp/previous-search-route-state.json
+            echo "initialized=true" >> "$GITHUB_OUTPUT"
+            echo "[indexnow] deterministic route-state baseline initialized; current release has no buyer-visible SEO changes" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
+          fi
+          test -s /tmp/previous-search-route-state.json
 
-      - name: Submit verified sitemap URLs to IndexNow
+      - name: Submit only materially changed canonical URLs to IndexNow
         if: steps.resolve.outputs.relevant == 'true'
         shell: bash
         env:
           INDEXNOW_STRICT: "1"
-          INDEXNOW_PREVIOUS_SITEMAP: /tmp/previous-sitemap.xml
+          INDEXNOW_ROUTE_STATE: /tmp/live-search-route-state.json
+          INDEXNOW_PREVIOUS_ROUTE_STATE: /tmp/previous-search-route-state.json
         run: |
           set -euo pipefail
-          bash scripts/ci/retry.sh 3 10 -- node scripts/ping-search-engines.mjs
+          bash scripts/ci/retry.sh 3 10 -- node scripts/ping-search-engines.mjs 2>&1 | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
 
       - name: Preserve search discovery diagnostics
         if: always() && steps.resolve.outputs.relevant == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: search-discovery-${{ steps.resolve.outputs.source_sha }}
-          path: /tmp/search-discovery-diagnostic.txt
+          path: |
+            /tmp/search-discovery-diagnostic.txt
+            /tmp/live-sitemap.xml
+            /tmp/live-seo-route-manifest.json
+            /tmp/live-search-route-state.json
+            /tmp/previous-search-route-state.json
           if-no-files-found: warn
           retention-days: 2
           compression-level: 0
@@ -218,10 +286,14 @@ jobs:
           set -euo pipefail
           state=failure
           description="$(tail -n 1 "$SEARCH_DISCOVERY_DIAGNOSTIC" 2>/dev/null | tr '\r\n' ' ' | sed 's/[[:space:]]\+/ /g' | cut -c1-140 || true)"
-          [ -n "$description" ] || description="IndexNow canonical sitemap submission failed"
+          [ -n "$description" ] || description="IndexNow material route-state verification failed"
           if [ "$JOB_STATUS" = "success" ]; then
             state=success
-            description="Verified canonical sitemap accepted by IndexNow"
+            if grep -Fq '[indexnow] no material canonical URL changes; submission skipped' "$SEARCH_DISCOVERY_DIAGNOSTIC"; then
+              description="No material canonical URL changes; IndexNow skipped"
+            else
+              description="Verified changed canonical URLs accepted by IndexNow"
+            fi
           fi
 
           gh api --method POST \

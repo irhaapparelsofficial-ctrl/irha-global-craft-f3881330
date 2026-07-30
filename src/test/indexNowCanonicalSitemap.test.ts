@@ -11,13 +11,38 @@ async function loadIndexNowModule() {
   return import(`${moduleUrl}?test=${Date.now()}-${Math.random()}`);
 }
 
-function writeSitemap(locations: string[]) {
+async function loadSearchRouteStateModule() {
+  const moduleUrl = pathToFileURL(resolve(process.cwd(), "scripts/generate-search-route-state.mjs")).href;
+  return import(`${moduleUrl}?test=${Date.now()}-${Math.random()}`);
+}
+
+function createTemporaryPath(fileName: string) {
   const directory = mkdtempSync(join(tmpdir(), "irha-indexnow-"));
   temporaryDirectories.push(directory);
-  const path = join(directory, "sitemap.xml");
+  return join(directory, fileName);
+}
+
+function writeSitemap(locations: string[]) {
+  const path = createTemporaryPath("sitemap.xml");
   const entries = locations.map((location) => `  <url><loc>${location}</loc></url>`).join("\n");
   writeFileSync(path, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset>\n${entries}\n</urlset>\n`, "utf8");
   return path;
+}
+
+function writeRouteState(entries: Array<{ url: string; digest: string }>) {
+  const path = createTemporaryPath("search-route-state.json");
+  writeFileSync(path, `${JSON.stringify({
+    schemaVersion: 1,
+    canonicalOrigin: "https://irhaapparels.com",
+    routeCount: entries.length,
+    routes: entries,
+    contentDigest: `sha256:${"f".repeat(64)}`,
+  }, null, 2)}\n`, "utf8");
+  return path;
+}
+
+function routeDigest(character: string) {
+  return `sha256:${character.repeat(64)}`;
 }
 
 afterEach(() => {
@@ -47,7 +72,123 @@ describe("IndexNow canonical sitemap discovery", () => {
     ]);
   });
 
-  it("builds a change-only notification diff from the parent sitemap", async () => {
+  it("builds a change-only notification diff from deterministic route states", async () => {
+    const { resolveChangedUrls } = await loadIndexNowModule();
+    const shared = "https://irhaapparels.com/";
+    const changed = "https://irhaapparels.com/products/changed";
+    const added = "https://irhaapparels.com/products/added";
+    const removed = "https://irhaapparels.com/products/removed";
+    const previousStatePath = writeRouteState([
+      { url: shared, digest: routeDigest("a") },
+      { url: changed, digest: routeDigest("b") },
+      { url: removed, digest: routeDigest("c") },
+    ]);
+    const currentStatePath = writeRouteState([
+      { url: shared, digest: routeDigest("a") },
+      { url: changed, digest: routeDigest("d") },
+      { url: added, digest: routeDigest("e") },
+    ]);
+
+    expect(resolveChangedUrls({
+      args: [],
+      env: {
+        INDEXNOW_ROUTE_STATE: currentStatePath,
+        INDEXNOW_PREVIOUS_ROUTE_STATE: previousStatePath,
+      },
+    })).toEqual([added, changed, removed]);
+  });
+
+  it("returns zero URLs for an unchanged release", async () => {
+    const { resolveChangedUrls } = await loadIndexNowModule();
+    const entries = [
+      { url: "https://irhaapparels.com/", digest: routeDigest("a") },
+      { url: "https://irhaapparels.com/products", digest: routeDigest("b") },
+    ];
+    const previousStatePath = writeRouteState(entries);
+    const currentStatePath = writeRouteState(entries);
+
+    expect(resolveChangedUrls({
+      args: [],
+      env: {
+        INDEXNOW_ROUTE_STATE: currentStatePath,
+        INDEXNOW_PREVIOUS_ROUTE_STATE: previousStatePath,
+      },
+    })).toEqual([]);
+  });
+
+  it("ignores timestamp-only route touches but detects buyer-visible route changes", async () => {
+    const { buildSearchRouteState } = await loadSearchRouteStateModule();
+    const route = {
+      routeType: "individual-product",
+      path: "/products/example",
+      locale: "en",
+      indexable: true,
+      sitemap: true,
+      title: "Example Product Manufacturer",
+      description: "Original buyer description",
+      h1: "Example Product",
+      bodyText: "Original buyer body",
+      lastmod: "2026-07-29T00:00:00.000Z",
+      canonicalUrl: "https://irhaapparels.com/products/example",
+    };
+    const manifest = {
+      schemaVersion: 1,
+      canonicalOrigin: "https://irhaapparels.com",
+      routeCount: 1,
+      sitemapCount: 1,
+      routes: [route],
+    };
+
+    const original = buildSearchRouteState(manifest);
+    const timestampOnly = buildSearchRouteState({
+      ...manifest,
+      routes: [{ ...route, lastmod: "2026-07-30T00:00:00.000Z" }],
+    });
+    const materialChange = buildSearchRouteState({
+      ...manifest,
+      routes: [{ ...route, bodyText: "Materially revised buyer body" }],
+    });
+
+    expect(timestampOnly.routes[0].digest).toBe(original.routes[0].digest);
+    expect(timestampOnly.contentDigest).toBe(original.contentDigest);
+    expect(materialChange.routes[0].digest).not.toBe(original.routes[0].digest);
+    expect(materialChange.contentDigest).not.toBe(original.contentDigest);
+  });
+
+  it("preserves localized gateway trailing-slash canonicals", async () => {
+    const { resolveChangedUrls } = await loadIndexNowModule();
+    const { buildSearchRouteState } = await loadSearchRouteStateModule();
+    const gateways = [
+      "https://irhaapparels.com/de/",
+      "https://irhaapparels.com/fr/",
+      "https://irhaapparels.com/nl/",
+    ];
+    const sitemapPath = writeSitemap(gateways);
+    const routes = gateways.map((canonicalUrl, index) => ({
+      routeType: "localized-market",
+      path: new URL(canonicalUrl).pathname,
+      locale: ["de-DE", "fr-FR", "nl-NL"][index],
+      indexable: true,
+      sitemap: true,
+      title: `Gateway ${index}`,
+      description: `Localized gateway ${index}`,
+      h1: `Gateway ${index}`,
+      lastmod: null,
+      canonicalUrl,
+    }));
+    const state = buildSearchRouteState({
+      schemaVersion: 1,
+      canonicalOrigin: "https://irhaapparels.com",
+      routeCount: routes.length,
+      sitemapCount: routes.length,
+      routes,
+    });
+
+    expect(resolveChangedUrls({ args: [], env: {}, sitemapPath })).toEqual(gateways);
+    expect(state.routes.map((route) => route.url)).toEqual(gateways);
+  });
+
+  it("retains the legacy sitemap diff only as an explicit compatibility fallback", async () => {
     const { resolveChangedUrls } = await loadIndexNowModule();
     const previousSitemapPath = writeSitemap([
       "https://irhaapparels.com/",

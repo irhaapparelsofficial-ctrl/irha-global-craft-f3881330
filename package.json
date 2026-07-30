@@ -21,8 +21,8 @@
     "verify:seo-manifest": "npx tsx scripts/apply-authoritative-seo-manifest.ts && npx tsx scripts/enrich-authoritative-article-dates.ts && npx tsx scripts/seal-authoritative-worker.ts",
     "generate:thumbnails": "node scripts/generate-image-thumbnails.mjs",
     "generate:catalog-pdfs": "node scripts/generate-catalog-pdfs.mjs",
-    "generate:market-sitemap": "npx tsx scripts/finalize-seo-route-manifest.ts && npx tsx scripts/align-seo-manifest-taxonomy-runtime.ts && node scripts/seal-seo-manifest-determinism.mjs",
-    "prepare:public-assets": "npx tsx scripts/generate-buyer-ready-catalog-manifest.ts && NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/generate-buyer-ready-redirects.ts && npx tsx scripts/finalize-seo-route-manifest.ts && npx tsx scripts/align-seo-manifest-taxonomy-runtime.ts && node scripts/seal-seo-manifest-determinism.mjs && node scripts/enforce-public-index-policy.mjs sitemap && npm run generate:thumbnails && npm run generate:catalog-pdfs",
+    "generate:market-sitemap": "npx tsx scripts/finalize-seo-route-manifest.ts && npx tsx scripts/align-seo-manifest-taxonomy-runtime.ts && node scripts/seal-seo-manifest-determinism.mjs && node scripts/generate-search-route-state.mjs --write",
+    "prepare:public-assets": "npx tsx scripts/generate-buyer-ready-catalog-manifest.ts && NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/generate-buyer-ready-redirects.ts && npx tsx scripts/finalize-seo-route-manifest.ts && npx tsx scripts/align-seo-manifest-taxonomy-runtime.ts && node scripts/seal-seo-manifest-determinism.mjs && node scripts/generate-search-route-state.mjs --check && node scripts/enforce-public-index-policy.mjs sitemap && npm run generate:thumbnails && npm run generate:catalog-pdfs",
     "predev": "node scripts/clean-transient-public-builds.mjs && node -e \"console.log('Preview workspace ready')\"",
     "prebuild": "node scripts/clean-transient-public-builds.mjs && node scripts/verify-deployment-source.mjs && node scripts/verify-secret-safety.mjs && node scripts/verify-migration-order.mjs",
     "notify:search": "node scripts/ping-search-engines.mjs"

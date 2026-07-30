@@ -11,6 +11,7 @@ export const HOST = "irhaapparels.com";
 export const INDEXNOW_KEY = "19d2833c43fe6e05e2a4416f65a53cdc";
 export const INDEXNOW_ENDPOINT = "https://api.indexnow.org/IndexNow";
 export const DEFAULT_SITEMAP_PATH = resolve("public/sitemap.xml");
+export const DEFAULT_ROUTE_STATE_PATH = resolve("seo/search-route-state.json");
 
 export const NON_INDEXABLE_PATHS = new Set([
   "/studio",
@@ -114,7 +115,8 @@ export const DEFAULT_CHANGED_PATHS = [
 ].filter((path) => !NON_INDEXABLE_PATHS.has(path));
 
 function canonicalPathname(url) {
-  return url.pathname === "/" ? "/" : url.pathname.replace(/\/+$/, "");
+  if (url.pathname === "/" || /^\/(?:de|fr|nl)\/$/.test(url.pathname)) return url.pathname;
+  return url.pathname.replace(/\/+$/, "");
 }
 
 function normalizeUrl(value) {
@@ -182,11 +184,52 @@ export function readChangedCanonicalSitemapUrls(
     .sort();
 }
 
+export function readSearchRouteStateEntries(statePath = DEFAULT_ROUTE_STATE_PATH) {
+  const state = JSON.parse(readFileSync(statePath, "utf8"));
+  if (state?.schemaVersion !== 1 || state?.canonicalOrigin !== ORIGIN || !Array.isArray(state?.routes)) {
+    throw new Error(`Invalid search route state: ${statePath}`);
+  }
+  if (state.routeCount !== state.routes.length || state.routes.length === 0) {
+    throw new Error(`Search route state count mismatch: ${statePath}`);
+  }
+
+  const entries = new Map();
+  for (const route of state.routes) {
+    const url = normalizeUrl(route?.url);
+    const digest = String(route?.digest ?? "");
+    if (!url || !/^sha256:[0-9a-f]{64}$/.test(digest)) {
+      throw new Error(`Invalid search route state entry: ${statePath}`);
+    }
+    if (!isIndexableCanonicalUrl(url)) {
+      throw new Error(`Search route state contains a non-indexable URL: ${url}`);
+    }
+    if (entries.has(url)) throw new Error(`Duplicate search route state URL: ${url}`);
+    entries.set(url, digest);
+  }
+  return entries;
+}
+
+export function readChangedCanonicalRouteStateUrls(
+  statePath = DEFAULT_ROUTE_STATE_PATH,
+  previousStatePath,
+) {
+  if (!previousStatePath) return [];
+  const current = readSearchRouteStateEntries(statePath);
+  const previous = readSearchRouteStateEntries(previousStatePath);
+  const candidates = new Set([...current.keys(), ...previous.keys()]);
+  return [...candidates]
+    .filter(isIndexableCanonicalUrl)
+    .filter((url) => current.get(url) !== previous.get(url))
+    .sort();
+}
+
 export function resolveChangedUrls({
   args = process.argv.slice(2),
   env = process.env,
   sitemapPath = DEFAULT_SITEMAP_PATH,
 } = {}) {
+  const routeStatePath = String(env.INDEXNOW_ROUTE_STATE ?? "").trim();
+  const previousRouteStatePath = String(env.INDEXNOW_PREVIOUS_ROUTE_STATE ?? "").trim();
   const previousSitemapPath = String(env.INDEXNOW_PREVIOUS_SITEMAP ?? "").trim();
   const envValues = String(env.INDEXNOW_URLS ?? "")
     .split(/[\n,]/)
@@ -196,8 +239,14 @@ export function resolveChangedUrls({
   let candidates;
   if (args.length > 0) candidates = args;
   else if (envValues.length > 0) candidates = envValues;
-  else if (previousSitemapPath) candidates = readChangedCanonicalSitemapUrls(sitemapPath, previousSitemapPath);
-  else candidates = readCanonicalSitemapUrls(sitemapPath);
+  else if (previousRouteStatePath) {
+    candidates = readChangedCanonicalRouteStateUrls(
+      routeStatePath || DEFAULT_ROUTE_STATE_PATH,
+      previousRouteStatePath,
+    );
+  } else if (previousSitemapPath) {
+    candidates = readChangedCanonicalSitemapUrls(sitemapPath, previousSitemapPath);
+  } else candidates = readCanonicalSitemapUrls(sitemapPath);
 
   const urls = candidates.map(normalizeUrl).filter(Boolean).filter(isIndexableCanonicalUrl);
   return [...new Set(urls)];
@@ -235,7 +284,7 @@ async function submitIndexNow(payload) {
 export async function main() {
   const urlList = resolveChangedUrls();
   if (urlList.length === 0) {
-    console.log("[indexnow] no canonical URL changes; submission skipped");
+    console.log("[indexnow] no material canonical URL changes; submission skipped");
     return;
   }
   const payload = buildIndexNowPayload(urlList);
