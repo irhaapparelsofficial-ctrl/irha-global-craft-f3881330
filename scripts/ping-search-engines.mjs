@@ -158,8 +158,8 @@ export function readCanonicalSitemapUrls(sitemapPath = DEFAULT_SITEMAP_PATH) {
 function readSitemapEntries(sitemapPath = DEFAULT_SITEMAP_PATH) {
   const xml = readFileSync(sitemapPath, "utf8");
   const entries = new Map();
-  for (const match of xml.matchAll(/<url\\b[^>]*>([\\s\\S]*?)<\\/url>/gi)) {
-    const location = match[1].match(/<loc>([^<]+)<\\/loc>/i)?.[1]?.trim();
+  for (const match of xml.matchAll(/<url\b[^>]*>([\s\S]*?)<\/url>/gi)) {
+    const location = match[1].match(/<loc>([^<]+)<\/loc>/i)?.[1]?.trim();
     if (!location) continue;
     const normalized = normalizeUrl(location);
     if (normalized) entries.set(normalized, match[0]);
