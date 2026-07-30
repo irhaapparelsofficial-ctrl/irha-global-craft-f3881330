@@ -1,0 +1,1752 @@
+{
+  "schemaVersion": 1,
+  "canonicalOrigin": "https://irhaapparels.com",
+  "routeCount": 436,
+  "routes": [
+    {
+      "url": "https://irhaapparels.com/",
+      "digest": "sha256:b61ea20b780fbbc6cc69c555945ef48b212810955594376b5def8b11fe64060a"
+    },
+    {
+      "url": "https://irhaapparels.com/about",
+      "digest": "sha256:30cc9e8e7bdc5f8714a4418b4b3454bf74674977f7c09ed8da39b62b709ae933"
+    },
+    {
+      "url": "https://irhaapparels.com/australia-apparel-manufacturer",
+      "digest": "sha256:87f7c5e990cec19616c243d931ffba3506063b15f9d5d44fe9d815617cc22a53"
+    },
+    {
+      "url": "https://irhaapparels.com/austria-apparel-manufacturer",
+      "digest": "sha256:d9dcd0392d6d3508077958b8495f2f7365ae02f0007a6f8b8be3b5969379cd03"
+    },
+    {
+      "url": "https://irhaapparels.com/blog",
+      "digest": "sha256:4449b877b3d4beb47c69352f2873f39e5b914338756ad0b48f495adfec94d4d0"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/apparel-decoration-method-selection",
+      "digest": "sha256:524f273a4aefae890ef799fcd086a341ba33a2bc2ff3f3e7c1fd57ecf5dde9c2"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/apparel-sampling-product-development-process",
+      "digest": "sha256:7d2bdcdffc61a8a227bb3dd4b56131e74f378e5d1e6cac4d137eae84afd36f94"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/choose-gsm-custom-tshirts-hoodies-sweatshirts",
+      "digest": "sha256:239771ce030df065a4530abbf8b021c08d1d405ba9791e4b175c1dd6c98101db"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/clothing-tech-pack-checklist",
+      "digest": "sha256:eccee5e9f8ce3c79d5d810e6396e4627baa5b9a37d36adb62f579459f0cca68e"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/custom-football-kit-manufacturer-checklist",
+      "digest": "sha256:5b415dade7896a9c67189a5f510cfa387da5de34555068d39dfc81796e26cb3e"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/heavyweight-hoodie-manufacturer-rfq-guide",
+      "digest": "sha256:8965a03fd060b764c2cfe5d986f6b88196d9f7824ce44291609761f8a88f5613"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/how-to-source-private-label-lederhosen",
+      "digest": "sha256:bdb50dfb2f0f50228960e9384851356f022733dfe8df45ad6f38cf5e71fd2848"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/oem-vs-odm-vs-private-label-apparel",
+      "digest": "sha256:fadd1a50cffb2ace479a805974d295a9ca8438d2f1110e09f150af34e00523b8"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/private-label-leather-jacket-development-guide",
+      "digest": "sha256:20cd9b17af8155ec188fa85e1059627bfba43b1fd8a13eda91b94ae925544bc5"
+    },
+    {
+      "url": "https://irhaapparels.com/blog/private-label-nightwear-specification-checklist",
+      "digest": "sha256:3cfb6db9d087e77fb5eb79229998cb2222f13c0a574dfb0eaa023ac92815a0cf"
+    },
+    {
+      "url": "https://irhaapparels.com/buyer-information",
+      "digest": "sha256:793017c68c409836be4323caf1053a462c766b786a7f6d26ece839eb88beabd6"
+    },
+    {
+      "url": "https://irhaapparels.com/buyer-trust",
+      "digest": "sha256:1b03736bf1aed0a90c5c2e3364bf484941e2c5411710c8b091f3d5dc4ac5af67"
+    },
+    {
+      "url": "https://irhaapparels.com/canada-apparel-manufacturer",
+      "digest": "sha256:74aac5fb04aa666ab4f5007016fddc04808eb38bfb5b43e7dbdb215d1b2e46f0"
+    },
+    {
+      "url": "https://irhaapparels.com/compliance",
+      "digest": "sha256:4f1dbf02bb0528bb25b984338a4c96d01f0888925062a706837e2f7a2db497de"
+    },
+    {
+      "url": "https://irhaapparels.com/contact",
+      "digest": "sha256:a9bf6070aab8b93db9aa91fc96911d316c03331a3be1158b6bc66aa123717dd4"
+    },
+    {
+      "url": "https://irhaapparels.com/custom-leather-jacket-manufacturer-canada",
+      "digest": "sha256:98d414942e90442639880c3ccb53b3c9de4ef1d891bc075d0616ab755656b31f"
+    },
+    {
+      "url": "https://irhaapparels.com/custom-sportswear-manufacturer-germany",
+      "digest": "sha256:2a2408b6d64da0e05d1cfe6e1e3f5f1ec539d310439245fc2223e0d169a109f8"
+    },
+    {
+      "url": "https://irhaapparels.com/custom-sportswear-manufacturer-uk",
+      "digest": "sha256:d8ea3e21353adb5f17c626057cd76a05bc88fce61e5ed4ea5a597a1571881a0a"
+    },
+    {
+      "url": "https://irhaapparels.com/de",
+      "digest": "sha256:2f099f55c54971ebf6fbcc97a97895c732f4968a4f7e7de9959d4c3a50f56b38"
+    },
+    {
+      "url": "https://irhaapparels.com/de/bavarian-wear",
+      "digest": "sha256:348c46061f0e9d284acebbc565c4fccc0b29187d10f28ea0d6d2c5e6e223765b"
+    },
+    {
+      "url": "https://irhaapparels.com/de/bekleidungshersteller-deutschland",
+      "digest": "sha256:827ca90b9f4b245556bb0c2f5cc277720bea428cfaceb5ec05042b2b4ff22d2d"
+    },
+    {
+      "url": "https://irhaapparels.com/de/dirndl-grosshandel",
+      "digest": "sha256:912cdbca1885053a8e27afcc270cc50c45e5083c8129e5646a4f236867b340b1"
+    },
+    {
+      "url": "https://irhaapparels.com/de/einkaeufer-informationen",
+      "digest": "sha256:4e058ae2553952de396a48f58cd80687ac9beb1324723d18a75daf21ffbd67eb"
+    },
+    {
+      "url": "https://irhaapparels.com/de/lederbekleidung-hersteller",
+      "digest": "sha256:b933d283ac541932bbf5825c62f88bee2685353370dc3f5455b2f6bd9cda7dd8"
+    },
+    {
+      "url": "https://irhaapparels.com/de/lederhosen-hersteller",
+      "digest": "sha256:f0d3bd53efc7f9f234d3df009501f790845dad85a31e398ce68bea13a07c1841"
+    },
+    {
+      "url": "https://irhaapparels.com/de/materialien",
+      "digest": "sha256:2a315978b6a6a7da9e508b1d52631eb250877f40de80144c64a335d646229cd4"
+    },
+    {
+      "url": "https://irhaapparels.com/de/sportbekleidung-hersteller",
+      "digest": "sha256:dc576d7a95d5e62d7bcc7a868723400fc380812a940ff5101cf784f8012ae3e9"
+    },
+    {
+      "url": "https://irhaapparels.com/de/trachten-private-label",
+      "digest": "sha256:428342a92f3837af14bf462ecd78472f1c7dc964c89f09b3d4822a2323e51501"
+    },
+    {
+      "url": "https://irhaapparels.com/dirndl-manufacturer-austria",
+      "digest": "sha256:a79c87283ba37246a0211baa09936c467d9e7f6ada1eb53f0948108a45f78e00"
+    },
+    {
+      "url": "https://irhaapparels.com/factory-video-call",
+      "digest": "sha256:c0327e6fe3641df4485bf74a8219bc51bf7e80fc29ed70f2b97b9e70ff10b4fd"
+    },
+    {
+      "url": "https://irhaapparels.com/faq",
+      "digest": "sha256:b9b20ade1bbe5970acc1cff336cb643dca18d23a9c9138aecda09039b839e118"
+    },
+    {
+      "url": "https://irhaapparels.com/fr",
+      "digest": "sha256:00ba3e8054e63f532cd86a375aeda4c253eae77f66809a08c2461568dab1f709"
+    },
+    {
+      "url": "https://irhaapparels.com/fr/fabricant-vetements",
+      "digest": "sha256:d2c0c1671dd7e94abf7e07e26e2fd7dddf75eed7719007c35a0f84baae4693bb"
+    },
+    {
+      "url": "https://irhaapparels.com/fr/fabricant-vetements-cuir",
+      "digest": "sha256:3fb39b91f789d4884d77a777cd535018532f3ea2732217a266351aef60e8855c"
+    },
+    {
+      "url": "https://irhaapparels.com/fr/fabricant-vetements-sport",
+      "digest": "sha256:6127d7eed4229426a9659adb7c3bb8f6a22612ae19345fd6fa153e4347b9f7cf"
+    },
+    {
+      "url": "https://irhaapparels.com/fr/fabrication-marque-blanche",
+      "digest": "sha256:88dc4f2788e37eed2bd144bfbf67b83977da0243f3ca08a17002f49189195432"
+    },
+    {
+      "url": "https://irhaapparels.com/fr/informations-acheteurs",
+      "digest": "sha256:e955d03302db0715dee82d27f89afe875423d8be484301c1fcc3fdd2e59f4ad7"
+    },
+    {
+      "url": "https://irhaapparels.com/fr/matieres",
+      "digest": "sha256:707a8583a1717dd73150a7f959437efee95d25a3f6c1635bf683529d29ec9016"
+    },
+    {
+      "url": "https://irhaapparels.com/germany-apparel-manufacturer",
+      "digest": "sha256:17afd455bd995bb282fc4accce7a1e64496e76039fd018233c24485b886f4ea9"
+    },
+    {
+      "url": "https://irhaapparels.com/inquiry",
+      "digest": "sha256:84ba7c1f8faca5de3accd4788ec484b721c8f14544f1c12c6c4f2df7e09bf21b"
+    },
+    {
+      "url": "https://irhaapparels.com/leather-apparel-manufacturer-germany",
+      "digest": "sha256:10c24952a9855af54542c78b11f26be818e4b0f5e6a6946858dbf909f3f138fc"
+    },
+    {
+      "url": "https://irhaapparels.com/lederhosen-manufacturer-germany",
+      "digest": "sha256:59b81325bae73d29160cbb6e0e72a40a5394bd34355fe69ca78da6ac1dd2b89e"
+    },
+    {
+      "url": "https://irhaapparels.com/manufacturing",
+      "digest": "sha256:5dec13a473857f4d2abfbdec4bab751fd6bec4122a67ad1fdf447c8937249857"
+    },
+    {
+      "url": "https://irhaapparels.com/markets",
+      "digest": "sha256:4b741f3ef7f055505956c08ca4f7f2e8e86fd738542b99a3d97e94668e46a789"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/australia",
+      "digest": "sha256:daf817c28e853a99ec837e871bfa5751fc755079c2aceb9c2eb8f0b84a12643a"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/austria",
+      "digest": "sha256:0d68271b87e9d5637a911611498c58aa39daef2fe6749400fd31956d24059e2c"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/canada",
+      "digest": "sha256:c935db091cdcda9420f356a2c34d1422289b30c55e4236a71c618f5c10a21a42"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/germany",
+      "digest": "sha256:247af614cd1bd9baf042c9d90c71004a635f89b6fb7b39d06c0ab20610ebef26"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/netherlands",
+      "digest": "sha256:d2f0b1bea2c624eba35a2abcb4ecfa8e1313b8220fcc66b17fa76733d2d4f2ae"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/new-zealand",
+      "digest": "sha256:7f6544cb0dd4c18b8f6566f24cc1a2521efc8142e7db16eae62d978d4f8119d4"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/switzerland",
+      "digest": "sha256:fe7c51240c47d39690bf40aaa46cf93e8eacb902629408fbadef8ad1a9c286c4"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/united-kingdom",
+      "digest": "sha256:d3df3afa3660e627328de115ffd97515396ec8502a71101a143fb08d9034b32a"
+    },
+    {
+      "url": "https://irhaapparels.com/markets/united-states",
+      "digest": "sha256:ddeb9741f65e7575001e10f7d0a5ae2e5913182a2ef1238728050df6c10759b4"
+    },
+    {
+      "url": "https://irhaapparels.com/materials",
+      "digest": "sha256:e0ad161efb6eab2c007c87c1e43b0f9e92949cda1ac88d88ad1177b43ccfb966"
+    },
+    {
+      "url": "https://irhaapparels.com/netherlands-apparel-manufacturer",
+      "digest": "sha256:bcb3897d8ff76a7ddeff6587535870658e99c4b999d2b4e298cab0b62db32e78"
+    },
+    {
+      "url": "https://irhaapparels.com/new-zealand-apparel-manufacturer",
+      "digest": "sha256:c83b28b25fab72fb2c42c8e158e08c84d1f3ffb07f542f5dfe7271b7d4a896a7"
+    },
+    {
+      "url": "https://irhaapparels.com/nl",
+      "digest": "sha256:b2a868ae62e574fd03c64ec725ac0ee389d6060d0ccf184804e05aaa7c55d47e"
+    },
+    {
+      "url": "https://irhaapparels.com/nl/kledingfabrikant",
+      "digest": "sha256:1e4af9c027d6dc34958e23473d325e7c3e797d35044dac69baaec5030aa2b336"
+    },
+    {
+      "url": "https://irhaapparels.com/nl/kopersinformatie",
+      "digest": "sha256:5b4698b7c1528ae6fcbd13613ccc0ce8db6d95f4ede2eebde94f8efb3b18c613"
+    },
+    {
+      "url": "https://irhaapparels.com/nl/leren-kleding-fabrikant",
+      "digest": "sha256:5434cb1cb50c903e45656926e9025a80b12f9f5044f0d50a70e1b56f4a4d3884"
+    },
+    {
+      "url": "https://irhaapparels.com/nl/materialen",
+      "digest": "sha256:ca070453ce77549671103419eac76b3e0dbbfdc0ef6046b0c9a1d253ac93d820"
+    },
+    {
+      "url": "https://irhaapparels.com/nl/private-label-kleding",
+      "digest": "sha256:7d103679dee2a5e5f7426933888640f3575d5064c89a0d3389a4b0313d91480d"
+    },
+    {
+      "url": "https://irhaapparels.com/nl/sportkleding-fabrikant",
+      "digest": "sha256:e7bd393a2508302f59b5c3faf57ca845d382f0fdc6209bde84133241a8a17292"
+    },
+    {
+      "url": "https://irhaapparels.com/privacy-policy",
+      "digest": "sha256:24c5e4815e8dd3b68c8bde08f83a0258c300aa6b140bf20f5dccbab30ae1a68c"
+    },
+    {
+      "url": "https://irhaapparels.com/private-label-streetwear-manufacturer-usa",
+      "digest": "sha256:0c9690e7c3319eddc937b1251db6e0590146c48d751c2d6217a4570c7061f5a1"
+    },
+    {
+      "url": "https://irhaapparels.com/products",
+      "digest": "sha256:0f191cf15defe32f5fc62b69ca665b4821a07eaafeba3d1e4881869382e58209"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear",
+      "digest": "sha256:53c6328102b3b9cd66c97421b77bfb0109308d48593e32adee69e2321da6bcfd"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories",
+      "digest": "sha256:43199b6bb7ddbd8e0f9d47f1e31634f96b6c54f15b9f89106d38d585d3c3fe69"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories",
+      "digest": "sha256:9a43735423cde085772b7911faba3f95a7d177a7d5100e79869243d43dc76f00"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories/alpine-neck-scarf",
+      "digest": "sha256:84e846af75ffada933dc0ad825a786d50f92663b72d51e890eba614b81a6722e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories/alpine-wool-hat",
+      "digest": "sha256:a878790e6a41976d02eadbc719785c1a70935e3e19a7785e169ec545db86dda9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories/bavarian-boots",
+      "digest": "sha256:6bba21da3f79eb504318fef845c6ce9c8af9932a311ef32daaf4d229b907b63a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories/haferl-shoes",
+      "digest": "sha256:655fd4c8c5fb6075d552fc28d350a37b148582a712dc021c5b45a21e59c864ac"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories/knee-high-trachten-socks",
+      "digest": "sha256:60e4974c6aef452a80090d28f350e1839cf15210ec6dce3a3bd86226205b98e8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories/loferl-socks",
+      "digest": "sha256:0d3605aa5ebe7ad88ee2fca2f4296cf53d6f09d7f1988b53e3ba24b3d53483a2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories/trachten-leather-belt",
+      "digest": "sha256:837777a55728f4e13c524fb52a3d753977fce1602c24e4d66d34faea6e743426"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/accessories/traditional-leather-hat",
+      "digest": "sha256:322283e01f79da718224c9f581bc9213ecd6cf7fb4b598478022d995cbdb2eb4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/bags",
+      "digest": "sha256:26df261fe3b23164f16e23c508ee325b43550cdaad40d581a3bc73ff582ec160"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/bags/trachten-leather-bag",
+      "digest": "sha256:a18247c8071032a341445e6ed37ba387a87ef45cd59064a1c0aea25f8f95b938"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/lederhosen",
+      "digest": "sha256:67c398eb72b7c9d3196364d9ab170fb8d9d6084d3e1b95526df545f9d3107b4a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/accessories/lederhosen/lederhosen-suspenders",
+      "digest": "sha256:5d22193cfc462143c5079f0ee9123f3d5b4259acad96d8c22475aad1247b9acf"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids",
+      "digest": "sha256:813a5177aa05f4e8734c578e8de4918d48d837ca3dce4a355f6a59d64b0b2346"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/blouses",
+      "digest": "sha256:d9f51e7c7e7788c406dc235a1dde8188a58e6c6c079111d0f555e6aa89a7b615"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/blouses/girls-dirndl-blouse",
+      "digest": "sha256:1af92e858ce46690e659de6b148562b4a28548585f5239b9915f8d3468c94c3b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/dirndl-dresses",
+      "digest": "sha256:0e5d5d702e5e3b7ccdd9be9b4eaa3f81ea234ea32fbaf4beeb18a8ee87899a49"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/dirndl-dresses/girls-modern-dirndl",
+      "digest": "sha256:ac22f84282ce7a664ccc679eb7bd5250dfb24bc0ec2a993598dde210b6c3b443"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/dirndl-dresses/girls-traditional-dirndl",
+      "digest": "sha256:d3f3b317b1ae2e073ab64732b72db91a5c095af3f05473e01168e7fc10a966f9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/jackets-outerwear",
+      "digest": "sha256:b2e30aac261f27807349e396de172c63f1e87f35c88f18417012c4425683ece6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/jackets-outerwear/kids-trachten-jacket",
+      "digest": "sha256:04623c131f2f28c4685aac4d427cf9c0530bcd40ff8b3a86e1aefc74f4cd1af5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/lederhosen",
+      "digest": "sha256:06e713d1a46baedfaebd6580538ea89de4ac8cf4b724514d7da5dbfdc18a90d5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/lederhosen/boys-knee-length-lederhosen",
+      "digest": "sha256:880e635942c28f62d25c0f1cb04d7d4d17e9cfa05933f15876e80bbd20a24c5f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/lederhosen/boys-short-lederhosen",
+      "digest": "sha256:f57583989202e51f1a2f6faf3b81970be14960fdf44faac35e4ee82330defd8b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/trachten-shirts",
+      "digest": "sha256:7650ed575ce060fce4ca624e81e96f8fbe04c1c92f31bb59678d300434005007"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/trachten-shirts/boys-trachten-shirt",
+      "digest": "sha256:5ca869368a9238decf58f91122cd7d9ca1aaaac03835e1a78f7d4f6cd64a1c32"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/vests-waistcoats",
+      "digest": "sha256:99ef7e731b0cd55d250e2dd2068fcc4aa80e7533de06fd3ae5f1f38d288a0aae"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/kids/vests-waistcoats/boys-trachten-vest",
+      "digest": "sha256:0b383221449d2ecff92839e12860ec378cb8f7f5dabe430a396b511dd6872e13"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men",
+      "digest": "sha256:427bafd32f1ffadda99e83e9457ca98652192cf243257978bdfa3977c0f5dc38"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/jackets-outerwear",
+      "digest": "sha256:0b687b2990f18654251d11ca15679910aa1b71e52cd6d0e5fe9e48169bb66fac"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/jackets-outerwear/loden-jacket",
+      "digest": "sha256:d63359ea056d97ba085cb4bf8db2d46610bb6b04c52d7b7f949066997ad28c31"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/jackets-outerwear/traditional-janker-jacket",
+      "digest": "sha256:841b1e31719da66d744d9e08e49dc1c3f707f324568f595177e9fa073479aeef"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen",
+      "digest": "sha256:3e029cd9c1122e7184345f7e01206ad8585eafa175b785a2c0ae33df27491656"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/deer-suede-lederhosen",
+      "digest": "sha256:0d0ee8806d4c9e150e9ddf65e3704a8b785174442d4659fbd26a6348ace193c6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/goat-suede-lederhosen",
+      "digest": "sha256:76062dbcd549a57c23e7b619cf8575dfe66a79251fee1bd21e74053970dd3703"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/knee-length-lederhosen",
+      "digest": "sha256:4270f4d687b060358072728dedc78e3e77e75af3c5793c637c89e1aff44b5d07"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/long-lederhosen",
+      "digest": "sha256:c474aee31204acc0abf5132c5fd19a4b001838b8d893fcb7a8c44407d3629c06"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/premium-embroidered-lederhosen",
+      "digest": "sha256:a2ef5b741228e7f7ad463ad06892f89bd130a458d6ca006781639c4332625a7f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/short-lederhosen",
+      "digest": "sha256:70c2ad555e979dd1563093b28c2b16cd58e45b84f4c03025a16c8298d4724f2e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/vintage-lederhosen",
+      "digest": "sha256:27ebdc6a702406e282f24e4412c9e0d8517131e49c0269eaf861c5d860442334"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/pants-joggers",
+      "digest": "sha256:a75b1c0a3e113cbb8d7539d9a3ad9ffa912043c5d2b0c472acdc6f8b4ee90068"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/pants-joggers/trachten-trousers",
+      "digest": "sha256:b0fd2a60e60e8388b24e3c46c27a235656daf8b438583ba9eb0fcd7a18918feb"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/trachten-shirts",
+      "digest": "sha256:dfff3abb83dac94b2cc068134ea308f40d02255354f0546ea399a48efdd1ab35"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/trachten-shirts/checked-trachten-shirt",
+      "digest": "sha256:71b026c2bf68d5a6ffd538afd49934dc1bb271a88cf96d5657124cf1acc76f16"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/trachten-shirts/embroidered-trachten-shirt",
+      "digest": "sha256:4adb04ec0de76c65d85cbd34319dcb0b281a0753a6875af822c6125d8e1c648d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/trachten-shirts/linen-trachten-shirt",
+      "digest": "sha256:661cde275d3129673ba92779bfb5eff3793336b9da5281e4867a5d844cac7ced"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/trachten-shirts/traditional-trachten-shirt",
+      "digest": "sha256:6b3820b7e7c6298f167f5f6488df8791e01c185b35270600257d968a8131c1f7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/trachten-shirts/velvet-trachten-shirt",
+      "digest": "sha256:2418ca68964be63a68a316048658c0cd4ea7a53610c86fdf0a447fa1492344ca"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/vests-waistcoats",
+      "digest": "sha256:0462eecd123674afa04133a62a16d45daf1ddc382a079ea7e335056645ea6fca"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/vests-waistcoats/wool-trachten-vest",
+      "digest": "sha256:734e7b0a3b54c63841bc0ca1a0d64688dc81533cc633727121c9d9f8891397ac"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women",
+      "digest": "sha256:e7eac5b20ca220bc09ca7a8f6249a8454de773063905192673dda0a99f46fc4f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/aprons",
+      "digest": "sha256:691d922f013a416015a90cf238656494fda5d1eb424b6583f2c5c15ece89c868"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/aprons/embroidered-dirndl-apron",
+      "digest": "sha256:9d50085b1b73e3325896d0255a3120d1833990d9d6b34473aedf30bb90efa29d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/blouses",
+      "digest": "sha256:5462df304890a40429a5cbb46e36ba110779daf3caafc4bb04690741eeae7df5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/blouses/classic-dirndl-blouse",
+      "digest": "sha256:5b7315dfbb343f3849e0dc353cd58a935011f485e1a081dde7647530d632ee35"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/blouses/high-neck-dirndl-blouse",
+      "digest": "sha256:33ca70995712617334ba4da5180b167a7c2580e40c6627a4b5b4588060265c5d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/blouses/lace-dirndl-blouse",
+      "digest": "sha256:54488cef6e4719b8c1af93031ba07f9bca071b6f36399d1d196881d3af13427a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/blouses/off-shoulder-dirndl-blouse",
+      "digest": "sha256:6a21f98b44f64a0a823aa1c1a1affafda2afefce19bcceb3fe2d6896392482aa"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/blouses/puff-sleeve-dirndl-blouse",
+      "digest": "sha256:d26615efab34c30764c2d7ae4a434baa00f0fb6cbce8059cfb83c4587cab39bd"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses",
+      "digest": "sha256:0a537131865fdaddace37fc95f175d3cb1abc8d69797adccde689cd0ce24af24"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/cotton-dirndl",
+      "digest": "sha256:2a9f3cf8b462269091bc715bf1e9985b50b62d4835af5f328bae36434a943add"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/linen-dirndl",
+      "digest": "sha256:ae3566de2a55f4d0dc5298f203f071b0a7fd49792247df436f7306ba7f9be2bb"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/long-dirndl",
+      "digest": "sha256:e01acb90024cdba7c9b02c8a5b714b1a87c3f0de802eb7108d3f42d3dc6355c0"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/midi-dirndl",
+      "digest": "sha256:7208806b47e7bd3130daee15d9bb2b383ae62a8ccd1b259b54b6e513ae8ec3e6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/mini-dirndl",
+      "digest": "sha256:7947e6cd7acdd24b1ad08f0f61a41d2b41fb273ed79d34a968a59b70c49af8b7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/modern-dirndl",
+      "digest": "sha256:31b457ce92847ec3f8c21f022a6eb4d59bb61df5edae25aef8ec1373531860a9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/oktoberfest-dirndl",
+      "digest": "sha256:6814341615b46f15ffe9f26fc2227280bd5980b1f87fdd02ab4f663ae15983b7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/premium-embroidered-dirndl",
+      "digest": "sha256:fe258e7c9bdb10a040d4d14fdd1efd37eaafdd4e58ecb31d6de56347dedceca8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/traditional-dirndl",
+      "digest": "sha256:dcfdeccbc04de8e1406bc35d8890da93eb28fb3f22a75b5c1c764341ad07a692"
+    },
+    {
+      "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/velvet-dirndl",
+      "digest": "sha256:621df7824952ed580d004b5d890c18b5166c6801b9091a3381bd36d287ba7ac1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear",
+      "digest": "sha256:80bf6e1f31ce0fca3fba3a694cd3bdb4e31955b23fd1a8e2fc150fb2ae3e9995"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality",
+      "digest": "sha256:9142f465b2e0fe1cd074f9f726070e5f817c82e191ac7b13bc5eb3c728d74ef7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/accessories",
+      "digest": "sha256:05922e6d9cdf333dc0d3e0a0dba82012d2064a22ed5346b3451877ce605e2a35"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/accessories/hospitality-slipper-set",
+      "digest": "sha256:42928c9444f737147e920f1a6a555ed5df73079a428140f5d8edd9aeef1962cd"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/matching-sets",
+      "digest": "sha256:e5aab56ce5b16bf5d43208ff7ea4c137882fdca92f712db2ca219b97ea4e23ea"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/matching-sets/luxury-guest-sleepwear-set",
+      "digest": "sha256:2cc29cf1425039e700e824663d1a6e90c2c6c15bd8da808faed24b1e66d0f9cf"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/matching-sets/resort-lounge-set",
+      "digest": "sha256:66347086cf52d08b61c030598c80869b0e47c43302af744ef5b9fa94f1c7d3ff"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/pajama-sleep-sets",
+      "digest": "sha256:03a69d18fcce574f28256324b625548eb1af330fdc23e97d0d9c176e32ce752e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/pajama-sleep-sets/hotel-pajama-set",
+      "digest": "sha256:d0a7739a2394161c28277b0565308b4eeee77a6f5e7a0b59daa14b0d658ae5e7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/robes",
+      "digest": "sha256:23137212862067745ac81350fa0c75b1d9cfb364ecbb5576f5852f65e38aefea"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/robes/hotel-bathrobe",
+      "digest": "sha256:600257783649446472d22e8e42afeb5f51bc8a3a43335c6671a3f33f1ae99232"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/robes/spa-robe",
+      "digest": "sha256:b671a4736282ea00e9562688578dab1b7bb7d9b3d507cf2b8dc25d9b5a3bcf34"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality/robes/waffle-robe",
+      "digest": "sha256:e545559b52210e3781ec613e49c4b72a6d5b146095aba64be88d013c9dcedae5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids",
+      "digest": "sha256:ca0f2e0a6b4d277eab9fba84acdef74821324c4e494a0fac95ade6c8f2f99027"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/custom-apparel",
+      "digest": "sha256:c06c71bf0baca6e2d4f88cb149de839c7bf715633177fe5c395d1a3a6c643e1e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/custom-apparel/kids-onesie",
+      "digest": "sha256:678f31bc95814f9b0ce7bf51e7f113c5fa8ed1b22b09fcb588271704cc7d6fe4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/hoodies",
+      "digest": "sha256:4a89a7475a7db37f532cf1f8c77c32f618364bf10b6822e906dd2853f12bbdb3"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/hoodies/kids-hoodie",
+      "digest": "sha256:ae4493c21a652e6fe926f194e8aa68b412cf404c41e6f41cde6699dd7492eadd"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/matching-sets",
+      "digest": "sha256:d904347241cbf4de1a806614723aa07ef4d0558f6d980f34761ce56e3bb74692"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/matching-sets/kids-casual-tracksuit",
+      "digest": "sha256:15e05f1ebeda7ca9b571de3118399d923781041337c73b6b9212db15a7a43bc4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/matching-sets/kids-lounge-set",
+      "digest": "sha256:c0357edb2fcd97c4f5e2b626e57f7dea2dfc9baeaeb150a081c867880f219e09"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pajama-sleep-sets",
+      "digest": "sha256:eec15e3f2bdc621cd0e1cb7214135e599d1f02cf06205790337a746fb99b7511"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pajama-sleep-sets/boys-pajama-set",
+      "digest": "sha256:c230020a34011038f4e27a081e37eda922ca326c2a8770548d64a4ac259f11ac"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pajama-sleep-sets/girls-pajama-set",
+      "digest": "sha256:23e9e6536aa584f8d3a6d22d344919d01610f35379f8e9e3457352d712c64c07"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pajama-sleep-sets/kids-flannel-pajama-set",
+      "digest": "sha256:c85a38bc1ca074b2c640c22a8c38afbab2cd2968d7ed7abe48423024a52a7fe2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pajama-sleep-sets/kids-fleece-sleep-set",
+      "digest": "sha256:5de54cc1d652ae50e1f4de767ebf9123680762cbf623aa1f26d84525834ee23e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pajama-sleep-sets/kids-printed-pajama-set",
+      "digest": "sha256:72a5c59335c239dc341ed01947a3ca6fa583bde510693b4b3774a701ae5b6edf"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pajama-sleep-sets/kids-thermal-sleep-set",
+      "digest": "sha256:3d78c66d25671186432ff4ef856919e64d70c6737ed319eee6172db4087e7360"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pants-joggers",
+      "digest": "sha256:338e11f19fc44cd195abdc46d25e4ede49f32a0109e2c19a42e4aed75e379546"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/pants-joggers/kids-jogger",
+      "digest": "sha256:db7f463918a355536e0aeacf2bb2561a0591f38e2f5fd85d117fb410e8fb24a1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/robes",
+      "digest": "sha256:72fcfdec16c6bf39cb19075c37051f5e61f95efc41265ae8f35832b739a43949"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/robes/kids-sleep-robe",
+      "digest": "sha256:02f2acda933e68e7829eefb4a6d28fb25c2c655f39b10398abe9579766b9cfd1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/shirts-tops",
+      "digest": "sha256:da05038d2aa62b6f0591c4367dc8ac8484c58cab26176e9c255947cbf6a9acab"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/shirts-tops/kids-polo-shirt",
+      "digest": "sha256:7d3f790aaa52c631ea18129b807fa99f79a118c0d94e2a59c0a8063d524b95e0"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/shirts-tops/kids-sweatshirt",
+      "digest": "sha256:cd976d1633462a894f35da33349d3ddd604981de9eb889bebf7cd846ed7c7263"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/t-shirts",
+      "digest": "sha256:ca0903073316cce033a62b7520b95d761e8345080c2733de0a464c917cc1029b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/kids/t-shirts/kids-basic-t-shirt",
+      "digest": "sha256:0fc96a54df7619d017cf82fde4d6aedaafb65a2c72885ff081fbb65760e96d78"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men",
+      "digest": "sha256:9bf2ad4a17d2d85cc13ba803d74f677eeb45bcf7b95e8d5a043e2a84eb5bb417"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/matching-sets",
+      "digest": "sha256:4cbbad286fa6a5896e07392f39098c478088adff5e21ea2c9239ee91c74305a1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/matching-sets/mens-lounge-set",
+      "digest": "sha256:7ded68bc3fb21bd59fe2047617eefb168c05e5b61755b25642e5566435312090"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pajama-sleep-sets",
+      "digest": "sha256:7166ce9a61a248fb33cd01b4b296e18279667ae2312e92b46bb7677295ef4b70"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pajama-sleep-sets/mens-cotton-pajama-set",
+      "digest": "sha256:42eae44fb4868a7cf385dbbc8d64f180ec79cea3478f18d9993a7d9ba640c684"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pajama-sleep-sets/mens-flannel-pajama-set",
+      "digest": "sha256:180f1406406bb44d2b7cdac2d4c5882254e561afeb7aa38dd518295922a4beb9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pajama-sleep-sets/mens-night-suit",
+      "digest": "sha256:a39547446340bdd744a86f4cd0fc1c2fc54dc9fa2a9bd14d37d05d56a44ddfea"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pajama-sleep-sets/mens-satin-pajama-set",
+      "digest": "sha256:dafe84fa0e5c0240ba925af53b1018a2b2ba6a287c50eb5f4d8c37175fc03835"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pajama-sleep-sets/mens-silk-pajama-set",
+      "digest": "sha256:f335608d49e3350f3f63155726ff130a24c31f5a8cce8c7ce9cea4d240099ce8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pajama-sleep-sets/mens-thermal-sleep-set",
+      "digest": "sha256:63d82233acf1e6c8df051c1d5c252ae28c28bb90962ad542d94fe495928576b6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pants-joggers",
+      "digest": "sha256:86f025a52cbdc8ec4af762c9965d459d02dc8c26deeab09787a3bd9c1ebd4a85"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pants-joggers/casual-chino-pants",
+      "digest": "sha256:587a0b7750588c475551d3a5e09d6e7a221dd950261066ba0bb62d3943f36fe1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pants-joggers/casual-jogger",
+      "digest": "sha256:00123ccdaad97d4021f2758a8f9a6f51afb5ad8dbb6979e4f8d1391b2ea23049"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/pants-joggers/mens-sleep-pants",
+      "digest": "sha256:f9f087c9281fcb265e7a90de22449ef3829db8f96754ecc6600c959fa661b8ac"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/robes",
+      "digest": "sha256:27474378e882c6822ef7279d47286bd19db2425149784c2b81c8145de5307ad0"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/robes/mens-sleep-robe",
+      "digest": "sha256:6674186e4f893bf7f7428b54cf9e32c060cc6ee713967af59747e43d4601346d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/shirts-tops",
+      "digest": "sha256:48262e12782a629a4ee8647053d2837d4704966aac4e880c4f187bb7d2f54c32"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/shirts-tops/casual-button-up-shirt",
+      "digest": "sha256:36c66179438efb082cdd3b6f33207032ea33fa30ed111e7464c85bd892dd0bd9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/shirts-tops/henley-long-sleeve-shirt",
+      "digest": "sha256:59b3a0660e719097042c64db272400aed58c4dd815bea2ca8261e8dad000c77b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/shirts-tops/henley-short-sleeve-shirt",
+      "digest": "sha256:0617ad60ff044e58ac78b949e8b71fd5d982908ccc1b55f625af322d2ddaa1d5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/shirts-tops/mens-premium-polo-shirt",
+      "digest": "sha256:16743e0695ac36f671b9f6d493e870da7f67dee341ee5298c78a85258361e029"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/shorts",
+      "digest": "sha256:394a956f6297e64bf66e6f201078ba889ff94e2657ca896cbb28eb73b7c329c4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/shorts/cotton-chino-shorts",
+      "digest": "sha256:0d393e30cacb8e8935ded0d0ae61f97b7519bd0d2d0d207e64f12f6003abc3ed"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/shorts/lounge-shorts",
+      "digest": "sha256:f4f37c6f2a67ef23aab938fc90d7cee756ef410453e18cb008ca0b20d648503b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/t-shirts",
+      "digest": "sha256:5ce4e686cf0e46946ccd61de2cc095bd44a43d9738172b460c473c1c2d5e651d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/t-shirts/essential-crewneck-t-shirt",
+      "digest": "sha256:29e7873f98d70de24a20992f40cf757ee1f233f80b36029a362b2bfe06c416f5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/t-shirts/essential-v-neck-t-shirt",
+      "digest": "sha256:ee783b62b10a46ca088d545226baf5a15a2f9f45d4e489b7e1c0f1ac74a9a0e2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/men/t-shirts/mens-sleep-t-shirt",
+      "digest": "sha256:8222dbe44f23aa92e0f75abe5ae4be20642555e46f92b9c8009c3374e986914c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex",
+      "digest": "sha256:64cd718552b0cd6b25429fd2d3e9ccc14de4a615a8b2e8872123419420077cc6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/hoodies",
+      "digest": "sha256:18f4df5e9f7774f633b8133b34e94975911278154727d71e5f9df2da2dc25f58"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/hoodies/unisex-lightweight-hoodie",
+      "digest": "sha256:ea0e2289725511b38a62172ffb6a6cb6b989e8ea035098675d64a5faea753da0"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/jackets-outerwear",
+      "digest": "sha256:56bf1a80320f4a19761a3837ebe8b275b635a7c402d1501474ebc4533144df22"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/jackets-outerwear/unisex-fleece-jacket",
+      "digest": "sha256:afeeac496a5b9dca37492e6dacc204cc157de74e1b6709efcd71962dd6847c4a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/matching-sets",
+      "digest": "sha256:5cb58d7a6d319f3748a338a93de9564e4296d79ee85fae35459305823504fecd"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/matching-sets/unisex-casual-tracksuit",
+      "digest": "sha256:0131c710b96074b3ecf0aa614ff3299efeda34efec07859b04612240e4237ea7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/matching-sets/unisex-lounge-set",
+      "digest": "sha256:546d085ec551f1f2c43edf7fda1e26bb12560a01550bdac3fd51c0aa19ffb6aa"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/shirts-tops",
+      "digest": "sha256:664d0c446527b818c138cad9442888231ae2f3bdb6791c349ea1c2df836dffb4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/shirts-tops/unisex-pullover-sweatshirt",
+      "digest": "sha256:80afb7df777a04fd7098c8c334e21488a84005950fcc536cfcb4cdd8be3d0733"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/shirts-tops/unisex-zip-sweatshirt",
+      "digest": "sha256:fe8ad824cc4693c321739b43e6a8b8816a7d30c25ccd262fac87210d45ce82c6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/t-shirts",
+      "digest": "sha256:39ed16d3279c4fab2705aafe4b6d15c65ae90dff5a5cc0fb7e66fd1d0150aece"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/t-shirts/unisex-crewneck-t-shirt",
+      "digest": "sha256:ea3b8a06fc099fac6f85cc964ad04f41f8fb1732bc618d65607d5f2d967f50eb"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/unisex/t-shirts/unisex-oversized-t-shirt",
+      "digest": "sha256:e79e55925827be4ee0fd6b176e0c171dace0a296c1a1dd19481db5a5134a25d5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women",
+      "digest": "sha256:c4390d67737d7436c8d65fc514b85980f5bb444c06526b32948bfd32c0851a70"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/blouses",
+      "digest": "sha256:cbd184bacb0c3ca19e1483269605a0390fb123629bd9093099dd564f4c5a1265"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/blouses/womens-casual-blouse",
+      "digest": "sha256:66ecc445a9f8e5e5fba840475f43225e663879744f8648ed86a4cadbbbeea02b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/custom-apparel",
+      "digest": "sha256:b21f29a7cb972e2bef8233644d35d7cfd5886249f726fa83b8658bd04e7bb4d2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/custom-apparel/womens-lightwear-cardigan",
+      "digest": "sha256:b36a58a1d031cc5bd476ea3550114de8bc0c8718a76a56a7217b9b4df84f0cdc"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/custom-apparel/womens-long-sleeve-top",
+      "digest": "sha256:9fe92e0cde3d6d5a9f0c597cbe828d7f4edb41eb14ec38faf7fdb95415b86f83"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/jackets-outerwear",
+      "digest": "sha256:c4c699c1d0b9501e093416e877f538bfe401359aa83f9717c4f1a8394dbdc3ae"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/jackets-outerwear/womens-casual-zip-jacket",
+      "digest": "sha256:cb83e0f5dd9a26f93ae3599a035ee77a562c1ea1002e7e0c1993bc37ef8347bf"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/matching-sets",
+      "digest": "sha256:542d7f00ea7afcb67990d525b95bb61c0b27e9e91b13ad18d64f90a265e4104c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/matching-sets/womens-camisole-short-set",
+      "digest": "sha256:4203c9f51c2f9e0aa9765cbb90c6219a21538d9905d6cccc92f8d13a5a6ac8c2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/matching-sets/womens-long-lounge-set",
+      "digest": "sha256:dc1dc5750e399b12664303c021e6334564497ea1e724f81df9086728fa3e843b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/matching-sets/womens-relaxed-set",
+      "digest": "sha256:10a8cd9ff766bdaf1e9dfe031fbe266f5cdf78316d2b129173f56c69134c0c36"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/nightgowns-sleep-shirts",
+      "digest": "sha256:5686a3ed49d09144d2efc5283842dcb8ff4839b83837193a916c968fbc1757c3"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/nightgowns-sleep-shirts/womens-lace-trim-night-dress",
+      "digest": "sha256:8c2d565db6854abfef7b03b52784d9ca5193a934ea60de2fdbd54f652763e65b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/nightgowns-sleep-shirts/womens-nightgown",
+      "digest": "sha256:3af56760037fb3ab6943d72ec369245482a760c2c4f269c687e1a49204e47840"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/nightgowns-sleep-shirts/womens-sleep-shirt",
+      "digest": "sha256:a9fb0c6c7214cd60572007ea74a2795dc7fcaaeae2041587c67ee0f6e84149b4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pajama-sleep-sets",
+      "digest": "sha256:46ab8f4389199ac914546f9311cab5171274284771b54766226b69e912b5fdf5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pajama-sleep-sets/womens-button-down-sleep-set",
+      "digest": "sha256:52e09c6c011782bd8363aa80de0d68781722413a50d1b34620eb0b0d71926fc5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pajama-sleep-sets/womens-cotton-pajama-set",
+      "digest": "sha256:1c9e9ae1de50e472d8a055e0d67ba449aeaa151a55c63bd3638fb0feb3c80f54"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pajama-sleep-sets/womens-flannel-pajama-set",
+      "digest": "sha256:bf71ac632c1041aeb992eafa0cdc50f4942043a25b6229660cc9e22271dc3ae2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pajama-sleep-sets/womens-modal-pajama-set",
+      "digest": "sha256:ed27475c56fd7a86a45d5eb4a1dd42049869f339308675911e7c11ed83746750"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pajama-sleep-sets/womens-satin-pajama-set",
+      "digest": "sha256:8377eefa6e108b3dd1cf95b8d1738d93dfc1b0f7cc7a463b8a3842afdcf753a4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pajama-sleep-sets/womens-silk-pajama-set",
+      "digest": "sha256:8f3f5c1afff0cc26b8d3c9b1ee11107715713b2304357fed9eb9c89c6a3f4812"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pajama-sleep-sets/womens-thermal-sleep-set",
+      "digest": "sha256:53626d579f70dbfa8e6af1f450fa6c799d66e7c910f7604dc39f03f9a881ee06"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pants-joggers",
+      "digest": "sha256:780d4541e4e96d02e6dd60b500a1349d095c6b5ed02ca2ffc0c73b5a37ae0946"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pants-joggers/womens-casual-jogger",
+      "digest": "sha256:5d0120f948f5589b7726700e604f855dde461f03eeca7c3897a2f3f906dea58e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/pants-joggers/womens-lounge-pants",
+      "digest": "sha256:3fd49f943a4a6fcfcb44aa2a01201e390cb4ccde7ca892e4a0e4b423459f309d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/robes",
+      "digest": "sha256:f15df64797a113a61c3b891292c9047574101e82b60717eb7dd2c12a8f33a9fe"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/robes/womens-plush-robe",
+      "digest": "sha256:f1ff956fe794cee05dd700d6d07cf1367751b646ab35d8c29581509341c6b497"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/robes/womens-satin-robe",
+      "digest": "sha256:eca866ee1e9a7c3d71ff75fbaf0b06fc6f60d19d0f0fc49e44020f2d1a9119ea"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/shirts-tops",
+      "digest": "sha256:8a09045f1e089b1793e9b3a865d903f59fee6726323a13d43c7f5b4c8377e11a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/shirts-tops/womens-polo-shirt",
+      "digest": "sha256:d906e41f3f686c6417b0490829ea684fa849724beea2361c99e52589acf68e07"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/shorts",
+      "digest": "sha256:703fe1772eb83182b3ca10ddfbdbe59ca1b42658c020f1ea8d19bdbbcb57064f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/shorts/womens-lounge-shorts",
+      "digest": "sha256:6bbf586429ac00ce9299d3135b0f4f55ce43d3c8a8ef3b9491bda92971caee74"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/t-shirts",
+      "digest": "sha256:146a3c7380cfe9947f8aabf0204475a1f6eb75c23a290d994daff4331a3860d1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/t-shirts/womens-oversized-sleep-t-shirt",
+      "digest": "sha256:11aa8bc1544c924f8b93c0046e8bf67d3b86a3654ccc5da0d9a731db70f8b3d4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/leisure-nightwear/women/t-shirts/womens-relaxed-t-shirt",
+      "digest": "sha256:4548e627a79f3f9784442dd055bf01479a0a77e1ea6ad9d6bc4448e8f1605aae"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel",
+      "digest": "sha256:67a24932ee4ae85bcabd5649a2c39650b56a6f4e6ad8df27aefc8d3117e24ddf"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories",
+      "digest": "sha256:971d328543134cd84ec4f8909b8bee8bb20890a31fdcefe45edfcce0d52b6c06"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/accessories",
+      "digest": "sha256:9d0d07673fdea8eff5a6264e72cd6bb8627a7909750d403e8c0889099d8962c9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/accessories/leather-belt",
+      "digest": "sha256:d566a5af23a97456a36e26c9f6d691ff6eb302a4a2c2bc0c38a2c5cb81d4cfd8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/accessories/leather-gloves",
+      "digest": "sha256:cb799cd07a1521a4f39ced176f6e1a268bc78e834cffb27221b8276d98e5c89a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/accessories/leather-motorcycle-gloves",
+      "digest": "sha256:8f65bbab6e74a9db51439f06a520a3e4db46330199650324adac896cfe6a8f3a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/aprons",
+      "digest": "sha256:a7a4e33f30d604c356ec2e816825283a3d48061bbbcf1b49b31b5c7d0f7bf145"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/aprons/leather-work-apron",
+      "digest": "sha256:33365056b1affafd64098c8ce00890c43950b94e26fd542bea741f46b6b1f34c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/bags",
+      "digest": "sha256:b63e05b3e01aaf72dc5f6a332e64e5d70a86248d1802a9888707fab6c9a5f28c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/bags/leather-backpack",
+      "digest": "sha256:5b920511cac82fd0c503a607171547ec79aea5afdb6aac9e2698002c058b352b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/bags/leather-duffle-bag",
+      "digest": "sha256:d11340510da1a2f427b7cb51b39d3ebd37ba63a0901c621bf1f533bf113c14de"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/bags/leather-messenger-bag",
+      "digest": "sha256:41d48d8c90ef61931b1db0702ea47328dc9c9bd415b27fcf4216a5b4b7959ca9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/bags/leather-tote-bag",
+      "digest": "sha256:b3df1c0d19dc86819c55c9feef2693fd95e697ace1b12be50125045d45b50f50"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/bags/leather-waist-bag",
+      "digest": "sha256:7fc731d64abcf9f6df5ed1ab10b20e6665117ba4b9b50f5924add9ab8c1a8c2a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/custom-apparel",
+      "digest": "sha256:4bd32c4ed61ccbefab741157dbeb82c421f373ccf15b24a691cc7eab447bdb86"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/custom-apparel/leather-wallet",
+      "digest": "sha256:33cda29063e319cfbf7fd732a48849e4e334fb73d773b6cf27913b4de85edea6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men",
+      "digest": "sha256:b8923cbe34dd34ecd1f4d69dd8e512dfa0beb1e8ba1e5e372b38ccf3bd94ad4d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/custom-apparel",
+      "digest": "sha256:61d6594e12e9a8715923832a2d6fe5251856b65578470c8db68cd690ebb680fc"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/custom-apparel/leather-blazer",
+      "digest": "sha256:c08984bfacb91a3718b152be7551b5f32b791559fcdc815f9d65ce8b37ee15d6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/hoodies",
+      "digest": "sha256:e08b139af6e4412848e04a2bcf2a5045e493d11cdb7c258a196e7cfeb2e09667"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/hoodies/leather-hoodie",
+      "digest": "sha256:1daa15f1fd1451086a67bb0d13ac010e06ffa40497216cceb7be6026dbb971fb"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear",
+      "digest": "sha256:2e54968d31a9bc1b68fcabc73d6d3d980c6ce354d843b2f1b56981911bd00781"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/cafe-racer-leather-jacket",
+      "digest": "sha256:178bfe22e55e1e38af489679577e17e6c139a1635124534c79e29f79c455a4d3"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/classic-leather-biker-jacket",
+      "digest": "sha256:4b5fdf5f82416b2ad42cc2613618b5f6c5a86d45c7f357fd2c613f34a46474bd"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/classic-leather-coat",
+      "digest": "sha256:b4cbbe72f50e674d85f891d2b84d4138f3c81cb945e0b61361b90e5104d41371"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/leather-aviator-jacket",
+      "digest": "sha256:8f70b977797e47fe96e44f7649ae6e3f5af623a84704bc842d707df32ee873a2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/leather-bomber-jacket",
+      "digest": "sha256:f5ecd1fb369da3c6b4245c0116d4b6b0884f1d33432fbb149245ea2a15a74c2a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/leather-field-jacket",
+      "digest": "sha256:e97a0946cf30b5d419e9d1cd058b3b1c3dfd7e362dda5add3384f5f8fe3c1f24"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/leather-motorcycle-jacket",
+      "digest": "sha256:e3137e3162dcc029b70ca67582abe590cadd7dcc0f21d364fe80103366fab1a6"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/leather-puffer-jacket",
+      "digest": "sha256:5ddbbe49d9470919beb47ea17c504c81f640a9f228c9d6bb72fbe04bbbbdb49b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/leather-trench-coat",
+      "digest": "sha256:f662ad82b98ad5da02bc37b36bc7a3b356e67cda2abb21f77011a835ba4a618c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/suede-leather-jacket",
+      "digest": "sha256:e96ff06cd3183cdc6147d97ef4c5882104044ef792d06b16b5c29431bae0e5fe"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/pants-joggers",
+      "digest": "sha256:0276b1cd537ecd8b423922ce1bd33819a6b379673430d6b6ec56eb04620e55dc"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/pants-joggers/leather-cargo-pants",
+      "digest": "sha256:3ea190cbea6c42574e6fa20c4001cfe08314732e4ceab50ba43967236bad8b5c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/pants-joggers/leather-pants",
+      "digest": "sha256:2245e5da66e13930b6ae23eb27fddc5b24912d177ce9a823dc08002e0320adc2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/shirts-tops",
+      "digest": "sha256:e1afbeea0d4d5668b31ab95d9de2fedceefc19f9b6f5ae5d8207160e835edaba"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/shirts-tops/leather-shirt",
+      "digest": "sha256:2de373ba4346042d13070062e9a88478d709b03eab997cf77c273767bd27b0b1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/shorts",
+      "digest": "sha256:7e12e49745fcd7a721aeb94bf00b6214a37ae0c7af10fbd9f6f874190ef5e936"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/shorts/leather-shorts",
+      "digest": "sha256:58e064c348f655f8781bdc6f9eef30288de3aa5016148c43a46427e3a8680986"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/vests-waistcoats",
+      "digest": "sha256:85ca445a64255b853a12fa16536f6af85bab1a0e542756dc129e68ed317597f2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/vests-waistcoats/leather-vest",
+      "digest": "sha256:45168a99c2a7ce023610f2849b106688dce58ce20e46d0d913ed75e47730191d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/men/vests-waistcoats/leather-waistcoat",
+      "digest": "sha256:1ec0b6ef8dfea6f8d50fbebe020c2dab0a0a4c2d27b3a913282be2de1103769f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women",
+      "digest": "sha256:ceeae0471f093d4545c4d7ca5ce43a3f9d887021cfd58b7a4aedc39c83037b30"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/custom-apparel",
+      "digest": "sha256:15d00121f1db87ecef258cc1bbe775274c40249d27f504dc475e9c558d25e72f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/custom-apparel/womens-leather-blazer",
+      "digest": "sha256:5013234aa79c0eb5d1f4630cccb18e285de24b245f5cf3874b5d116083cdbc95"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/dresses-skirts",
+      "digest": "sha256:bbacf7ad96151a0a981c905174105e52b00db210edb154eb62689ed584597914"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/dresses-skirts/leather-dress",
+      "digest": "sha256:8db98a24f77307c2f154af913599d3b8e39e243c9e94f535031093dad76557cd"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/dresses-skirts/leather-skirt",
+      "digest": "sha256:3c4f14509bce7da002887fcecc7e04f997caabdee4f51b751823f3c2ee3a50d8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/jackets-outerwear",
+      "digest": "sha256:b7dc81d9e8e29d7c42ad3a54bbc7fea086eb0085b498ccdba79268335ad8b149"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/jackets-outerwear/womens-leather-biker-jacket",
+      "digest": "sha256:7a79c927901c47322af5429e8d37a6a9ebcaadd07ec7c0184c447a21fdd01d61"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/jackets-outerwear/womens-leather-bomber-jacket",
+      "digest": "sha256:9377efcc68bd80c69ebeba12c545ef5287f8e2f07a4b93886d62af26c3c8fa1b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/jackets-outerwear/womens-leather-puffer-jacket",
+      "digest": "sha256:5ead52b198b19617534c5994f51829719521f6939b59eb784eaf6f0e6876a9c8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/jackets-outerwear/womens-leather-trench-coat",
+      "digest": "sha256:b92c799dbbd48e6ddfd7b32dcb1984eeb70df2fed048c78365510fba7aa8cd14"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/jackets-outerwear/womens-suede-jacket",
+      "digest": "sha256:9cfb251bbe45d993cc3aa98cbe175d0264406051857d0f3a1c0edfb97a9aef2f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/pants-joggers",
+      "digest": "sha256:f83cf81aecb7f0c0165a614cfe0aa39cc1171b6eaefb11d665ec118d1e7e17aa"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/pants-joggers/womens-leather-cargo-pants",
+      "digest": "sha256:c465f7e0cf8cb7e2a4c057d3e9ef488ead7504e4bdc1516cecebbc34bd3f6c1f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/pants-joggers/womens-leather-pants",
+      "digest": "sha256:962408c39ba111b457c63f6afc1acbb782b5296450f228d0dff00036271a5e38"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/shirts-tops",
+      "digest": "sha256:2a1ba63fc8dd790c62ad91860676ecd23c8a3798fa859999d0084ce8ff0a2ea1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/shirts-tops/womens-leather-shirt",
+      "digest": "sha256:d6e0654900e47d98c4e921f530f38408963fac01739c13ca6caa89d434e42256"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/vests-waistcoats",
+      "digest": "sha256:a9b6659643058511221f054b8287a725fe4df08723ed6ac89f5459b5d9bc28eb"
+    },
+    {
+      "url": "https://irhaapparels.com/products/premium-leather-apparel/women/vests-waistcoats/womens-leather-vest",
+      "digest": "sha256:56c4b614f35fb5e383d4b6ffcc53f2e8c4a34a40af14a4d3eafc7e9fdd952185"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear",
+      "digest": "sha256:70d5ef47a7eddf6ea85d03ec6f3d5c77b699091eeeabf1f76e7d9b9a6895f9f7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports",
+      "digest": "sha256:9641d42b341cf8c1eb37336d3f083070081580d801e50fd04315590a8b57e2cb"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports/combat-sportswear",
+      "digest": "sha256:71fb2867ca798d34477a176971bd6a20abe62aa9277e5cdb93425eed89715d6f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports/combat-sportswear/boxing-robe",
+      "digest": "sha256:9f120ed9cc5cc85dd436b00324b1c59f13ce4d5a2f4eb45ac50faa3006cc39f5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports/combat-sportswear/boxing-shorts",
+      "digest": "sha256:13f7a6d80bbfc47abf9aec03689b8d15e63423c89025ab35ad53cce5ab56979d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports/combat-sportswear/boxing-training-set",
+      "digest": "sha256:7a61e85f11fdb40f50da168ba38ef291c1a975741b447c4c623a5c6ff26e3291"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports/combat-sportswear/mma-fight-shorts",
+      "digest": "sha256:a29c4bc8bdfde898f497921cb1f9ad78ea7042a133287a53bec560d73ab57883"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports/combat-sportswear/mma-rash-guard",
+      "digest": "sha256:31e86c8521fadd3a0062c4110a1563dc2508ec426f9840548a289107a5060e73"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports/combat-sportswear/mma-training-set",
+      "digest": "sha256:e5b0777b578ad610c290c1accf9bdbfff3056b5051264f8594374c4d7b23e3e0"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/combat-sports/combat-sportswear/wrestling-singlet",
+      "digest": "sha256:6ca3f5e7002a0801947828198be35750aa031cbe3f191293cbc0e6b8e13ae281"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear",
+      "digest": "sha256:8876796a39f572fc88ab77594ae46e68fb5754490918500a10bd1744b52902fc"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear",
+      "digest": "sha256:4758658057247f40df0c0dd884de8983d5ccdb459489be02632cd64f047ed950"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/compression-set",
+      "digest": "sha256:0ba60f13a2cfa389567e376ef54b5767bd6c58677b9108b96827e11d3502f24c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/compression-shirt",
+      "digest": "sha256:9e12185e830516cb28416d2f8ff704682b2a11fc4463824919c8c735c15edb1b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/compression-tights",
+      "digest": "sha256:d29dc1a1deb0a51c704f97eb78f69283175f91301cba2d65b61def9c15401d4a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/cycling-bib-shorts",
+      "digest": "sha256:d0e40879dffd6db3cedc19b59a3a52dba224a15263d75aabc4da12cc9c5bf63c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/cycling-jersey",
+      "digest": "sha256:663f4f3e0192ba1a10fc0c1d0cd379a322295fa60df8fa4c3c6e367fa10c1c8e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/gym-tank-top",
+      "digest": "sha256:aff6f076d1b4801b91e5788419923654e2dc90f0be60a28c25b73c8b64ceaa33"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/running-jacket",
+      "digest": "sha256:5a0130eacade2640ef035606dd6cb130ab3f8be199731591b08f27851815e7d8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/running-shorts",
+      "digest": "sha256:ee6084c01dc058282a5cfaa7c0d5d748566221ad6348a58168b7724b011cf2f7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/running-singlet",
+      "digest": "sha256:72a76864332f34a97e6f8d4d750d3c7a4643b2e616e4b3b40cd26855abaec235"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/womens-gym-leggings",
+      "digest": "sha256:8d5a9eac07a5daeb90cb51bd9bb50b257ad5b7bcc530b0ba201aaa1804ac9b64"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/womens-sports-bra",
+      "digest": "sha256:ef780e0e5e0a4f97a4b1b9cf4427b8691fab2f870f8d80b5237ea3bbf4e6fdad"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/womens-yoga-set",
+      "digest": "sha256:b2e85058998f6542d16c5e2145bfa3aafd12c4e8241d07ff031d0d534386b7d8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club",
+      "digest": "sha256:d27c57930445c4ad574e3984e3ef38a19b202d961bb320ff6e561408f2366ea9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms",
+      "digest": "sha256:6a6c34f42d02e217efaabc852574558d98df25cc9d19ad9d8d0341823309ef3b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/american-football-uniform",
+      "digest": "sha256:d3e6f4f69b06ffad992d478999baca9065b99c1d79b76a82fd81dd13dba8ae08"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/baseball-uniform",
+      "digest": "sha256:fdb7ff0d71a2b9626b19a3f887d4a58652f0233161f9b6d78cd97fa5e5e72037"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/basketball-uniform",
+      "digest": "sha256:a3f9af74ea9021d3481d03652a02c1fae2aebab0feb7d680ef219ac172fe1160"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/cricket-uniform",
+      "digest": "sha256:bb8e7675928e25ab894201c11fe55ab8082870c73715de189cda1080fbc5eca3"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/esports-jersey",
+      "digest": "sha256:29931fe1539fc8c3d9820c300f3fd336544483c3b9c2d87371beea1c1f2b3d2c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/field-hockey-uniform",
+      "digest": "sha256:491c2d844977701be5053b8b5c30cac63a27debb51a029ebea7a81e3b005d018"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/futsal-uniform",
+      "digest": "sha256:139ba43f272617afa78952ecc642988acdaead3b40449a17b87791f364d7d28e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/handball-uniform",
+      "digest": "sha256:55d75d69de46f682dc0534698cd3430d64df1b281294048349c5c3c5077df4d8"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/ice-hockey-jersey",
+      "digest": "sha256:0cf6a1756041d8bf0c228bd394e7bbabd403a8fa6ec7c9443d30d857c5806000"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/netball-uniform",
+      "digest": "sha256:65d3b922a8cc72088d1892f73e1d09a5335e12c8b1752ced4c9ea0af0d868fad"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/rugby-uniform",
+      "digest": "sha256:6892368f4ae9e7cf0300da82ccb16d91c4b0d0d50ee066b71db4b924083d9f9e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/soccer-away-kit",
+      "digest": "sha256:7c56202c49d912fc8aca184d8d5ce15757e9eb37f863c1c8aabd22e73c86df3f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/soccer-goalkeeper-kit",
+      "digest": "sha256:be20f02376c659c1c3dfc8e0a35b45c8f3adceb2612c1ba953189ba542e9c7fa"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/soccer-home-kit",
+      "digest": "sha256:2f1d4f8fc023559c2802177108cb38ee6381d4331d3fda8dcc2b29fca72d7633"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/volleyball-uniform",
+      "digest": "sha256:8e318961bc7946f5874402d7f7cd3b957a21cd0ec55e5ee8bbc54cc40b1c04a4"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training",
+      "digest": "sha256:98f94df849ed0044fc3d83fd75070a9c3eea0f5b162b489b611a299019ea4c6a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear",
+      "digest": "sha256:fa4cf8da7e77b37719e50a48c1a1bbf1d8f7d27408db07cf9d7ac3043a5f6b78"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/quarter-zip-training-top",
+      "digest": "sha256:afce1b5dd25216763a78c3e3366046444bc547bfb76e15536126b71b9559f463"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/sports-warm-up-suit",
+      "digest": "sha256:8adf088068f94477f6fea2dcf70e28d595940e662b7f3541749f492c7ea23a5b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/sports-windbreaker",
+      "digest": "sha256:41cc698f4cbdabe06fd5b2cf59cc97c4bcc4795b2e127e52e8c7e36da1e59062"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/team-bench-jacket",
+      "digest": "sha256:4801d1e2e88ae042e5c5e2a7a2e12860f2f827d203a5432020a517d97f92f221"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/team-tracksuit",
+      "digest": "sha256:6f07be68df7938430fd766472abf41906d43816c7edf2fda11c4969dcd9e79c7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/training-bib",
+      "digest": "sha256:5c871345713cc8dc8f4c566055d5898237b51a0dd2c9c42ed8f57d3a03407109"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/training-pants",
+      "digest": "sha256:f3a8b897638caaf92d489d2e9ffc5db581ac147817939b312743b05cdd4b0cd1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/training-polo",
+      "digest": "sha256:28e1873ed6763fe080b6cf7f6c8350e60fdf5d09818ac6fbb8cb4c023dad1925"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/training-shorts",
+      "digest": "sha256:c3bb0538af3873bdcf1c564ac9214aa699f5242e16e331a79915ebf5d715ab24"
+    },
+    {
+      "url": "https://irhaapparels.com/products/sportswear/training/training-wear/training-t-shirt",
+      "digest": "sha256:d6b93dfbd8c10706bd7e7189d4f0a116d0a599d4bfbe905376d3d4df60b88469"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear",
+      "digest": "sha256:b25b323f4f843661922e5eada8f4365aff453b8701aa2136529fe35bdc99757b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex",
+      "digest": "sha256:e3ee56096b383e20b9ad96e25b32bfa60890d0be916fbca38a2032122f54e782"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms",
+      "digest": "sha256:f71ece2c4e65978aef08985090313ae44b8392312bcac53fb852bc0c05b66936"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/cargo-pants",
+      "digest": "sha256:2c1cf5fcbfe1871bebfdcecca86468417bfe43295d60f043336741128fef064b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/cargo-shorts",
+      "digest": "sha256:3f85fd1495e1ac5e3ac29960c34923fe288304167a82c71a4cdd51f37d5219e7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/jogger-pants",
+      "digest": "sha256:acd21de41658a49b0ab8b359b7d6aefd00e5e3d9d3852de4e9c5555cfc55198a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/parachute-pants",
+      "digest": "sha256:0560bb313308b17b3c081b6bc24d53673a280623e238012af8c749d1e8f11962"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/sweat-shorts",
+      "digest": "sha256:a177474eaf7b4daf9f9dea91b89c1f395128f08d1bbad6bbb95f48669fffeaeb"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/sweatpants",
+      "digest": "sha256:97e710ca4c1bdb40c5dbf001ab7a42e8be551a28c86abfec1a0367d49e763fbc"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/tech-fleece-tracksuit",
+      "digest": "sha256:6a181413dfc28cc5e9f5ac91ae7b20a7f743ef58b73dc02412be3bf27238b8ee"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/track-pants",
+      "digest": "sha256:5cacdadbdd4cad94c6a418d5c693ee6dbb1ac2e47b30c2d6f00d678b82fede22"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/utility-shorts",
+      "digest": "sha256:20e3fe5bfa94905436069fce1da8e87f3869984f5967fbaa08999c0d93c49b14"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/bottoms/wide-leg-pants",
+      "digest": "sha256:7ed542d6d169217888d8910933a86f103e6a1eb78282469e42435d545055d1d7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/matching-sets",
+      "digest": "sha256:fb904cba1b350ff241179a0f7a8570e599c3d4cb369e3dff5935bc141b883def"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/matching-sets/cargo-tracksuit",
+      "digest": "sha256:ba3abfc849dfac016162d371d4f0815a0b3db91f982f95765fa3ab225a07ed92"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/matching-sets/oversized-hoodie-jogger-set",
+      "digest": "sha256:6134fe0a73099d1e238a70d3fd2ed41b66f7b1bd588e40039a0bdcb1eebe5a08"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/matching-sets/streetwear-tracksuit",
+      "digest": "sha256:15040c99301018eebc0bd6a3dc3a27addfdc96838f0f7da1893c6e9db5893744"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/matching-sets/summer-t-shirt-shorts-set",
+      "digest": "sha256:b84a499093d80e0a203a507b3551ffdeceb4ff0d3b3cf765a7504df2a18a29ff"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/matching-sets/sweatshirt-jogger-set",
+      "digest": "sha256:33f8ce9dd70a28f69bd481aa3531dadadc1438adafd46c75311a97efc1c729af"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/matching-sets/techwear-set",
+      "digest": "sha256:944c3f6e7a5e585568e259313429abc30b4647b4ea6322448dcecb3d8075c8fb"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/matching-sets/zip-hoodie-jogger-set",
+      "digest": "sha256:b3871c406e13f5e5053282badb9cee448d83ffe289ef5eb9838bed3165f8490a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear",
+      "digest": "sha256:d0d71bc1bb0bd867b998ffcd8093b58865f210dcda32ee2ceb14d2b43ae5a4b7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear/coach-jacket",
+      "digest": "sha256:7a1b3cf6f9a4fecf63b2e13988ab328a114b73b5602501bf1f77c3b629634969"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear/puffer-jacket",
+      "digest": "sha256:b4e65e270ef6ac6533ff86f325e9b67547280f858150b037d9fd39971028738d"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear/sherpa-jacket",
+      "digest": "sha256:c599ad986552f8a3bafbdeb52e95f24b8674b3cec8b78f1219b56f4101fb955f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear/streetwear-bomber-jacket",
+      "digest": "sha256:f29c9fbf91226218a6af9b633f8ae817064013c69545a3c916aade53c867b31f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear/technical-shell-jacket",
+      "digest": "sha256:73be6f940b6e918849484b4f5af8b3c6353a909ca24cef17c927d55fbf06cb1a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear/utility-jacket",
+      "digest": "sha256:e2a5baf0cf79d9f85737252658340d23fd4297008284dfeff0acf33feb3a9b20"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear/varsity-jacket",
+      "digest": "sha256:e63df2327af50a73a5dad218e62aed1a36b358a22c4473f700422b22dc371195"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/outerwear/windbreaker-jacket",
+      "digest": "sha256:6915af2e6aeff4a29ecb0e9582bfe963a49e0e1c73c82bca3abf5ed041225cf2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops",
+      "digest": "sha256:9c9ad39c81ab0faa1b1c02ce235f43bdcf783394ec8e8cf452b1b00d9f2844f9"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/crewneck-sweatshirt",
+      "digest": "sha256:dd138360fea025e984eebfd6f827d1d184e1842e3a613751d29f17c5ee9f4fb5"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/cropped-hoodie",
+      "digest": "sha256:1bf3d38e7fbcf0a0069c78da66c8f7db7d95fcb036891bf5140038ed718d3fa1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/graphic-t-shirt",
+      "digest": "sha256:e241ed8fdc9b1827d6fafc506e89dd8fc44e6fce35eb26851502e7c58c68d00f"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/heavyweight-sweatshirt",
+      "digest": "sha256:f91cedf9b2b04bfadd060dbfe0083b4ec5c49d72383962d156f47e0ab1e8ce96"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/heavyweight-t-shirt",
+      "digest": "sha256:c1c780f748e8523106ddca76211c27defaa1a4a8cf3fa0dc39e0ce18e9af1ec2"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/long-sleeve-t-shirt",
+      "digest": "sha256:32b3d44e287a7f2bddb2184358ad6bf858c846a7eb743df19e22dab19fc0de53"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/overshirt",
+      "digest": "sha256:74ed4c2c3b7cb317f5647d2762e796b873c3b9398efa7a05a883ec55dc208717"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/oversized-pullover-hoodie",
+      "digest": "sha256:85e06f6c2789fc51f6c1696ba071af5359d9a1260d8fdb18def67b493c943eb1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/oversized-t-shirt",
+      "digest": "sha256:4ab9eda1038a9505aa0f63c8a9f5331ce0ef58fc8a09151c9971ca46b3baa71c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/premium-zip-hoodie",
+      "digest": "sha256:fd9e1497edca22e7f91f9aa1d4d686082bff29e96dfd47f16d508008ae5e8202"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/streetwear-premium-polo-shirt",
+      "digest": "sha256:7d269f4a70b3998147549b660649e13158ee140bffcd1fd5990b9e7892862112"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/unisex/tops/streetwear-shirt",
+      "digest": "sha256:b1c510a2a9357a44b4b28804ec455343409aaa19dce0be649fcdde38731ade8e"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women",
+      "digest": "sha256:b211a7efe5700b043b805974fa19f669f10760b1bc4095b7f5fd15f2e3f125fe"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/hoodies",
+      "digest": "sha256:19353b89a21ca0a552f72c003f031b3c6a8f021696adb53c887b08a6cf5371fd"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/hoodies/womens-cropped-hoodie",
+      "digest": "sha256:b6e7af1f77898efd6162d08b489fb5d9ced452192f04ac2c5357640df90cb6e1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/hoodies/womens-oversized-hoodie",
+      "digest": "sha256:dc5e1c6eb99ac2e98b2bcd7577966cc486d3dcaead0cfa39249626bbfa193d5b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/matching-sets",
+      "digest": "sha256:bbd05976a5af0ab759d26b6241a003eaeee86d10fb485bd870eea793bc355f3b"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/matching-sets/womens-streetwear-tracksuit",
+      "digest": "sha256:c3de37802ff400ba34666b20d723c9a924e8ba735363b39bc1d8e21684eeb0ed"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/pants-joggers",
+      "digest": "sha256:57288bef93f384b52577dafcf0d633881d2d79138a83a46a198414ed433819f7"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/pants-joggers/womens-cargo-pants",
+      "digest": "sha256:02b161ad42f48662bf03e4247922c316c16e4911be8e0f22d059b0533feacb02"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/pants-joggers/womens-parachute-pants",
+      "digest": "sha256:98e5bb0eef5fc09aa6ee399e9e136a8c488a8f7f8838e5a9f2f5248cfe42155c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/shorts",
+      "digest": "sha256:8b14d273a621bb9648517b7bf5c770ac22bfbbd31213f5668ba3fe12a4661f0a"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/shorts/womens-cargo-shorts",
+      "digest": "sha256:a373954cfae1cd073636501a70499e1b12fa7a42eb484f3f8eb4a146182700e1"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/t-shirts",
+      "digest": "sha256:d0468f8a2adca35fa6749e08f06b7014f7f9bae66f4f44ef2dde65eb94bb1205"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/t-shirts/womens-cropped-t-shirt",
+      "digest": "sha256:41de0aee7467e4f05019a176a3e2ad9da6aa9580b14176c1bda614e2fff2b24c"
+    },
+    {
+      "url": "https://irhaapparels.com/products/streetwear-activewear/women/t-shirts/womens-oversized-t-shirt",
+      "digest": "sha256:a98669f6d3b609230dfda89d4bd8e40ccf40362603fedd511f4647d74aa1ef30"
+    },
+    {
+      "url": "https://irhaapparels.com/repeat-order",
+      "digest": "sha256:e45b2bdf60c6551383168d7180d6d94b0e836f9157eb5c85f343b7fda88d482e"
+    },
+    {
+      "url": "https://irhaapparels.com/resources",
+      "digest": "sha256:9e83b0a2d59882d3f7a4a82b1930114747bb1d053b91d4c4941995334f7514be"
+    },
+    {
+      "url": "https://irhaapparels.com/switzerland-apparel-manufacturer",
+      "digest": "sha256:96571f30f1cf7c0a2e37c51f1a594ed076dae188b1665163489c32ec90e10927"
+    },
+    {
+      "url": "https://irhaapparels.com/terms-of-service",
+      "digest": "sha256:82b5e269c647fa17f771873cce9f8ba8b5f3403ecbe9133579e9439f7151b38d"
+    },
+    {
+      "url": "https://irhaapparels.com/uk-custom-apparel-manufacturer",
+      "digest": "sha256:54edc77cd90c99f6ac637d5bf49878efb0f1f05b8b9b74653365450406d51d27"
+    },
+    {
+      "url": "https://irhaapparels.com/usa-private-label-clothing-manufacturer",
+      "digest": "sha256:c1332406ba791fb15019de63c84aeb91631eb440aa94c34545d132a61194e6cd"
+    }
+  ],
+  "contentDigest": "sha256:98feeed55a0b6879ebcd2e74fdb45ceeb9c99c6a5b61493722ac16a0d1f5e986"
+}
