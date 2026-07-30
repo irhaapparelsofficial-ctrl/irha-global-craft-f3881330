@@ -115,7 +115,8 @@ export const DEFAULT_CHANGED_PATHS = [
 ].filter((path) => !NON_INDEXABLE_PATHS.has(path));
 
 function canonicalPathname(url) {
-  return url.pathname === "/" ? "/" : url.pathname.replace(/\/+$/, "");
+  if (url.pathname === "/" || /^\/(?:de|fr|nl)\/$/.test(url.pathname)) return url.pathname;
+  return url.pathname.replace(/\/+$/, "");
 }
 
 function normalizeUrl(value) {
