@@ -22,8 +22,11 @@ const required = (name) => {
 };
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
+const productCode = (product) => product.sku.replace(/^IRHA-/, "").toLowerCase();
+const productStorageRoot = (product) =>
+  `catalog/products/${productCode(product)}-${product.slug}/${MEDIA_VERSION}`;
 const targetOriginalPath = (product, image) =>
-  `catalog/recovery/${MEDIA_VERSION}/${product.slug}/${String(image.displayOrder).padStart(2, "0")}-${image.role}-${image.driveFileId}.webp`;
+  `${productStorageRoot(product)}/${String(image.displayOrder).padStart(2, "0")}-${image.role}-${image.driveFileId}.webp`;
 const variantPath = (originalPath, width) => width === 720
   ? `thumbnails/${originalPath}.webp`
   : `responsive/${width}/${originalPath}.webp`;
@@ -87,6 +90,7 @@ async function generateObjects(client, catalogById) {
       if (source.product_drive_folder_id !== product.driveFolderId) {
         throw new Error(`${image.driveFileId} belongs to unexpected Drive folder`);
       }
+      if (!source.media_asset_id) throw new Error(`${image.driveFileId} has no canonical media asset linkage`);
 
       const sourceBuffer = await downloadOrThrow(client, source.original_bucket, source.original_object_path);
       const sourceChecksumSha256 = sha256(sourceBuffer);
@@ -107,6 +111,7 @@ async function generateObjects(client, catalogById) {
         productSku: product.sku,
         productSlug: product.slug,
         sourceDriveFileId: image.driveFileId,
+        mediaAssetId: source.media_asset_id,
         role: image.role,
         displayOrder: image.displayOrder,
         path: originalPath,
@@ -132,6 +137,7 @@ async function generateObjects(client, catalogById) {
           productSku: product.sku,
           productSlug: product.slug,
           sourceDriveFileId: image.driveFileId,
+          mediaAssetId: source.media_asset_id,
           role: image.role,
           displayOrder: image.displayOrder,
           path: variantPath(originalPath, width),
@@ -146,11 +152,13 @@ async function generateObjects(client, catalogById) {
         productSlug: product.slug,
         sourceDriveFileId: image.driveFileId,
         sourceDriveFolderId: product.driveFolderId,
+        mediaAssetId: source.media_asset_id,
         originalFilename: source.source_name,
         originalMimeType: source.source_mime_type,
         originalDimensions: { width: sourceMetadata.width, height: sourceMetadata.height },
         sourceChecksumSha256,
         sourceStorage: { bucket: source.original_bucket, path: source.original_object_path },
+        canonicalProductPath: originalPath,
         role: image.role,
         displayOrder: image.displayOrder,
         confidence: image.confidence,
@@ -173,7 +181,7 @@ async function main() {
   const selectedIds = PRODUCTS.flatMap((product) => product.images.map((image) => image.driveFileId));
   const { data: catalogRows, error } = await client
     .from("catalog_drive_files")
-    .select("drive_file_id,product_drive_folder_id,source_name,source_mime_type,checksum_sha256,original_bucket,original_object_path")
+    .select("drive_file_id,product_drive_folder_id,source_name,source_mime_type,checksum_sha256,original_bucket,original_object_path,media_asset_id")
     .in("drive_file_id", selectedIds);
   if (error) throw error;
   if (catalogRows.length !== selectedIds.length) {
@@ -194,6 +202,7 @@ async function main() {
         productSku: object.productSku,
         productSlug: object.productSlug,
         sourceDriveFileId: object.sourceDriveFileId,
+        mediaAssetId: object.mediaAssetId,
         role: object.role,
         displayOrder: object.displayOrder,
         bucket: SITE_MEDIA_BUCKET,
@@ -211,9 +220,7 @@ async function main() {
     const newPaths = uploaded.filter((item) => !item.reused).map((item) => item.path);
     if (newPaths.length > 0) {
       const { error: removeError } = await client.storage.from(SITE_MEDIA_BUCKET).remove(newPaths);
-      if (removeError) {
-        throw new AggregateError([stageError, removeError], "Staging failed and immutable-object rollback also failed");
-      }
+      if (removeError) throw new AggregateError([stageError, removeError], "Staging failed and immutable-object rollback also failed");
     }
     throw stageError;
   }
@@ -221,6 +228,7 @@ async function main() {
   const result = {
     executionId: EXECUTION_ID,
     mediaVersion: MEDIA_VERSION,
+    canonicalPathPolicy: "catalog/products/<product-code>-<slug>/<version>/",
     stagedAt: new Date().toISOString(),
     databaseMutated: false,
     responsiveWidths: RESPONSIVE_WIDTHS,
@@ -233,10 +241,7 @@ async function main() {
       .map((item) => ({ bucket: item.bucket, path: item.path, checksumSha256: item.checksumSha256 })),
   };
   await writeFile(resolve(ARTIFACT_DIR, "stage-result.json"), `${JSON.stringify(result, null, 2)}\n`);
-  await writeFile(
-    resolve(ARTIFACT_DIR, "stage-result.sha256"),
-    `${sha256(JSON.stringify(result))}  stage-result.json\n`,
-  );
+  await writeFile(resolve(ARTIFACT_DIR, "stage-result.sha256"), `${sha256(JSON.stringify(result))}  stage-result.json\n`);
   console.log(`Staged and verified ${uploaded.length} immutable objects from ${sources.length} owner sources; database mutation: false`);
 }
 
