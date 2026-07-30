@@ -89,7 +89,7 @@ export default function Footer() {
               width="760"
               height="160"
               className="h-auto w-[13.5rem] shrink-0 object-contain object-left"
-              loading="lazy"
+              loading="eager"
               decoding="async"
             />
             <span className="sr-only">{PUBLIC_IDENTITY.name} — {copy.tagline}</span>
