@@ -249,7 +249,9 @@ async function inspectProduct(page, failures, product, strict) {
   if (strict) await assertHeaderLogo(page);
 
   const heroSelector = `img[alt^="${product.name} custom manufacturing catalogue reference"]`;
-  const hero = page.locator(heroSelector).first();
+  const strictHero = page.locator(heroSelector).first();
+  const baselineHero = page.locator('img[fetchpriority="high"], img[loading="eager"]').first();
+  const hero = strict ? strictHero : ((await strictHero.count()) > 0 ? strictHero : baselineHero);
   await hero.waitFor({ state: "visible", timeout: 30_000 });
   await hero.evaluate((image) => image.decode());
   const thumbnailButtons = page.locator('[aria-label="Product reference gallery"] button[aria-label^="View "]');
