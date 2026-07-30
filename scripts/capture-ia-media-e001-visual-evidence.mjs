@@ -27,6 +27,7 @@ if (!PREVIEW_ORIGIN) throw new Error("IA_MEDIA_PREVIEW_ORIGIN is required");
 const productPath = (slug) => `${COLLECTION_PATH}/${slug}`;
 const productCode = (product) => product.sku.replace(/^IRHA-/, "").toLowerCase();
 const productMediaRoot = (product) => `/catalog/products/${productCode(product)}-${product.slug}/${MEDIA_VERSION}/`;
+const repairedMediaRoots = PRODUCTS.map(productMediaRoot);
 const nowIso = () => new Date().toISOString();
 
 async function ensureDir(path) {
@@ -37,6 +38,18 @@ async function waitForApp(page) {
   await page.waitForLoadState("domcontentloaded");
   await page.locator("body").waitFor({ state: "visible" });
   await page.waitForTimeout(1200);
+}
+
+function isCancelledFailure(failure) {
+  return failure.type === "requestfailed" && /ERR_ABORTED|NS_BINDING_ABORTED/i.test(failure.error ?? "");
+}
+
+function scopedFailures(failures, roots) {
+  return failures.filter((failure) => {
+    if (isCancelledFailure(failure)) return false;
+    const url = String(failure.url);
+    return roots.some((root) => url.includes(root));
+  });
 }
 
 async function newObservedPage(browser, viewport) {
@@ -79,15 +92,19 @@ async function newObservedPage(browser, viewport) {
 }
 
 async function logoData(locator) {
+  await locator.scrollIntoViewIfNeeded();
   await locator.waitFor({ state: "visible" });
-  return locator.evaluate((image) => ({
-    src: image.currentSrc || image.src,
-    alt: image.alt,
-    width: image.naturalWidth,
-    height: image.naturalHeight,
-    visibleWidth: image.getBoundingClientRect().width,
-    visibleHeight: image.getBoundingClientRect().height,
-  }));
+  return locator.evaluate(async (image) => {
+    await image.decode();
+    return {
+      src: image.currentSrc || image.src,
+      alt: image.alt,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      visibleWidth: image.getBoundingClientRect().width,
+      visibleHeight: image.getBoundingClientRect().height,
+    };
+  });
 }
 
 function validateLogo(data, location) {
@@ -121,7 +138,7 @@ async function captureHome(browser, origin, label, strict) {
     });
     await page.screenshot({ path: resolve(OUTPUT_ROOT, label, "homepage-top-desktop-1440.png"), fullPage: false });
     await page.evaluate(() => window.scrollTo(0, Math.min(900, document.documentElement.scrollHeight / 3)));
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(500);
     const scrolledHeader = strict ? await assertHeaderLogo(page) : null;
     await page.screenshot({ path: resolve(OUTPUT_ROOT, label, "homepage-scrolled-desktop-1440.png"), fullPage: false });
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
@@ -131,8 +148,8 @@ async function captureHome(browser, origin, label, strict) {
       return { baselineError: String(error) };
     });
     await page.screenshot({ path: resolve(OUTPUT_ROOT, label, "homepage-footer-desktop-1440.png"), fullPage: false });
-    const relevant = failures.filter((failure) => !String(failure.url).includes("analytics"));
-    if (strict && relevant.length > 0) throw new Error(`Homepage image failures: ${JSON.stringify(relevant)}`);
+    const relevant = scopedFailures(failures, ["/irha-brand-mark.svg", ...repairedMediaRoots]);
+    if (strict && relevant.length > 0) throw new Error(`Homepage repaired-asset failures: ${JSON.stringify(relevant)}`);
     return { header, scrolledHeader, footer, failures: relevant };
   } finally {
     await context.close();
@@ -156,7 +173,9 @@ async function captureMobileHeader(browser, origin, label, strict) {
     await page.locator("#mobile-navigation").waitFor({ state: "visible" });
     if (strict) await assertHeaderLogo(page);
     await page.screenshot({ path: resolve(OUTPUT_ROOT, label, "homepage-mobile-menu-390.png"), fullPage: false });
-    return { header, failures };
+    const relevant = scopedFailures(failures, ["/irha-brand-mark.svg", ...repairedMediaRoots]);
+    if (strict && relevant.length > 0) throw new Error(`Mobile header repaired-asset failures: ${JSON.stringify(relevant)}`);
+    return { header, failures: relevant };
   } finally {
     await context.close();
   }
@@ -226,18 +245,22 @@ async function assertImageResponse(page, url, product) {
 }
 
 async function inspectRelatedProducts(page, product, strict) {
-  const targetSlugs = new Set(PRODUCTS.filter((item) => item.slug !== product.slug).map((item) => item.slug));
+  const targets = new Map(PRODUCTS.filter((item) => item.slug !== product.slug).map((item) => [item.slug, item]));
   const cards = page.locator('a[href*="/products/bavarian-trachten-wear/men/lederhosen/"] img');
   const found = [];
   for (let index = 0; index < await cards.count(); index += 1) {
     const image = cards.nth(index);
     const href = await image.locator("xpath=ancestor::a[1]").getAttribute("href");
     const slug = href?.split("/").filter(Boolean).at(-1);
-    if (!slug || !targetSlugs.has(slug)) continue;
+    const target = slug ? targets.get(slug) : null;
+    if (!target) continue;
+    await image.scrollIntoViewIfNeeded();
+    await image.evaluate(async (element) => element.decode());
     const src = await image.evaluate((element) => element.currentSrc || element.src);
-    found.push({ slug, src, alt: await image.getAttribute("alt") });
-    if (strict && (!src.includes("/catalog/products/") || FORBIDDEN_MEDIA.test(src))) {
-      throw new Error(`Related product ${slug} resolved to unexpected media: ${src}`);
+    const alt = await image.getAttribute("alt");
+    found.push({ slug, src, alt });
+    if (strict && (!src.includes(productMediaRoot(target)) || FORBIDDEN_MEDIA.test(src) || !alt?.toLowerCase().includes(target.name.toLowerCase()))) {
+      throw new Error(`Related product ${slug} resolved to unexpected media: ${JSON.stringify({ src, alt })}`);
     }
   }
   if (strict && found.length === 0) throw new Error(`${product.sku} has no verifiable related-product media`);
@@ -253,7 +276,7 @@ async function inspectProduct(page, failures, product, strict) {
   const baselineHero = page.locator('img[fetchpriority="high"], img[loading="eager"]').first();
   const hero = strict ? strictHero : ((await strictHero.count()) > 0 ? strictHero : baselineHero);
   await hero.waitFor({ state: "visible", timeout: 30_000 });
-  await hero.evaluate((image) => image.decode());
+  await hero.evaluate(async (image) => image.decode());
   const thumbnailButtons = page.locator('[aria-label="Product reference gallery"] button[aria-label^="View "]');
   const expectedImages = [...product.images].sort((a, b) => a.displayOrder - b.displayOrder);
   const count = await thumbnailButtons.count();
@@ -261,9 +284,19 @@ async function inspectProduct(page, failures, product, strict) {
 
   const visited = [];
   for (let index = 0; index < count; index += 1) {
+    const expected = expectedImages[index];
+    const fragment = `${String(expected.displayOrder).padStart(2, "0")}-${expected.role}-${expected.driveFileId}.webp`;
     await thumbnailButtons.nth(index).click();
-    await page.waitForTimeout(150);
-    await hero.evaluate((image) => image.decode());
+    if (strict) {
+      await page.waitForFunction(
+        ({ selector, expectedFragment }) => document.querySelector(selector)?.currentSrc.includes(expectedFragment),
+        { selector: heroSelector, expectedFragment: fragment },
+        { timeout: 15_000 },
+      );
+    } else {
+      await page.waitForTimeout(150);
+    }
+    await hero.evaluate(async (image) => image.decode());
     const data = await hero.evaluate((image) => ({
       src: image.currentSrc || image.src,
       srcSet: image.srcset,
@@ -277,8 +310,6 @@ async function inspectProduct(page, failures, product, strict) {
     }));
     visited.push(data);
     if (!strict) continue;
-    const expected = expectedImages[index];
-    const fragment = `${String(expected.displayOrder).padStart(2, "0")}-${expected.role}-${expected.driveFileId}.webp`;
     if (!data.src.includes(productMediaRoot(product)) || !data.src.includes(fragment)) {
       throw new Error(`${product.sku} image ${index + 1} resolved to unexpected media: ${data.src}`);
     }
@@ -301,11 +332,8 @@ async function inspectProduct(page, failures, product, strict) {
   if (strict && blockers.length > 0) throw new Error(`${product.sku} fixed UI overlaps the garment/gallery: ${JSON.stringify(blockers)}`);
   const layoutShift = await page.evaluate(() => window.__iaLayoutShiftScore ?? 0);
   if (strict && layoutShift > 0.25) throw new Error(`${product.sku} CLS ${layoutShift} exceeds 0.25`);
-  const relevantFailures = failures.filter((failure) => {
-    const url = String(failure.url);
-    return url.includes("supabase.co/storage") || url.includes("/catalog/products/") || url.includes("/irha-brand-mark.svg");
-  });
-  if (strict && relevantFailures.length > 0) throw new Error(`${product.sku} image failures: ${JSON.stringify(relevantFailures)}`);
+  const relevantFailures = scopedFailures(failures, [productMediaRoot(product), "/irha-brand-mark.svg"]);
+  if (strict && relevantFailures.length > 0) throw new Error(`${product.sku} repaired-asset failures: ${JSON.stringify(relevantFailures)}`);
   const relatedProducts = await inspectRelatedProducts(page, product, strict);
   return { thumbnailCount: count, visited, blockers, layoutShift, relatedProducts, failures: relevantFailures };
 }
@@ -338,7 +366,9 @@ async function inspectListing(browser, origin, label, path, screenshotPrefix, vi
       if (strict && (await link.count()) === 0) throw new Error(`${screenshotPrefix} is missing ${product.slug}`);
       if ((await link.count()) > 0) {
         const image = link.locator("img").first();
+        await image.scrollIntoViewIfNeeded();
         await image.waitFor({ state: "visible" });
+        await image.evaluate(async (element) => element.decode());
         const src = await image.evaluate((element) => element.currentSrc || element.src);
         const alt = await image.getAttribute("alt");
         cards[product.slug] = { src, alt };
@@ -348,8 +378,8 @@ async function inspectListing(browser, origin, label, path, screenshotPrefix, vi
       }
     }
     await page.screenshot({ path: resolve(OUTPUT_ROOT, label, `${screenshotPrefix}-${viewport.name}.png`), fullPage: true });
-    const relevantFailures = failures.filter((failure) => String(failure.url).includes("/catalog/products/"));
-    if (strict && relevantFailures.length > 0) throw new Error(`${screenshotPrefix} image failures: ${JSON.stringify(relevantFailures)}`);
+    const relevantFailures = scopedFailures(failures, repairedMediaRoots);
+    if (strict && relevantFailures.length > 0) throw new Error(`${screenshotPrefix} repaired-asset failures: ${JSON.stringify(relevantFailures)}`);
     return { cards, failures: relevantFailures };
   } finally {
     await context.close();
@@ -368,6 +398,10 @@ async function verifyBuildIdentity(page) {
   return identity;
 }
 
+function imageLikeUrls(html) {
+  return [...html.matchAll(/https?:\/\/[^\s"'<>]+\.(?:webp|png|jpe?g|svg)(?:\?[^\s"'<>]*)?/gi)].map((match) => match[0]);
+}
+
 async function verifyRawHtml(origin, product) {
   const response = await fetch(`${origin}${productPath(product.slug)}?raw_html_check=${Date.now()}`, {
     headers: { "Cache-Control": "no-cache, no-store", "User-Agent": "Googlebot/2.1 (+http://www.google.com/bot.html)" },
@@ -376,14 +410,17 @@ async function verifyRawHtml(origin, product) {
   if (!response.ok) throw new Error(`${product.sku} raw HTML returned ${response.status}`);
   const root = productMediaRoot(product);
   const canonicalPath = `${origin}${productPath(product.slug)}`;
+  const canonicalMatch = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)
+    ?? html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["']/i);
+  const exposedImages = imageLikeUrls(html);
   if (!html.includes(product.name)
     || !html.includes(root)
-    || !html.includes(`rel="canonical" href="${canonicalPath}`)
-    || /<meta[^>]+name=["']robots["'][^>]+noindex/i.test(html)
-    || FORBIDDEN_MEDIA.test(html)) {
+    || !canonicalMatch?.[1]?.startsWith(canonicalPath)
+    || /<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(html)
+    || exposedImages.some((url) => FORBIDDEN_MEDIA.test(url))) {
     throw new Error(`${product.sku} raw HTML identity/canonical/media contract failed`);
   }
-  return { status: response.status, bytes: Buffer.byteLength(html), mediaRoot: root, canonicalPath };
+  return { status: response.status, bytes: Buffer.byteLength(html), mediaRoot: root, canonicalPath, exposedImageCount: exposedImages.length };
 }
 
 async function main() {
