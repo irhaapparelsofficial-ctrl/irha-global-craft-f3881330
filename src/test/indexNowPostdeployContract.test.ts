@@ -60,12 +60,15 @@ describe("IndexNow post-production contract", () => {
     expect(workflow).toContain('context="Irha Search Discovery"');
   });
 
-  it("requires the committed material route state to remain generation-current", () => {
-    const packageJson = read("package.json");
+  it("requires the committed material route state to match the final immutable manifest", () => {
+    const packageJson = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
     const generator = read("scripts/generate-search-route-state.mjs");
+    const exactCheck = "node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check";
 
-    expect(packageJson).toContain("node scripts/generate-search-route-state.mjs --write");
-    expect(packageJson).toContain("node scripts/generate-search-route-state.mjs --check");
+    expect(packageJson.scripts.build).toContain(exactCheck);
+    expect(packageJson.scripts["build:dev"]).toContain(exactCheck);
+    expect(packageJson.scripts["prepare:public-assets"]).not.toContain("generate-search-route-state.mjs");
+    expect(packageJson.scripts["generate:market-sitemap"]).not.toContain("generate-search-route-state.mjs");
     expect(generator).toContain("Committed material search route state is stale");
     expect(generator).toContain("checkSearchRouteState");
   });
