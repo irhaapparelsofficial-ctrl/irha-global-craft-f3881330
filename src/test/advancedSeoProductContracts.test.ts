@@ -77,7 +77,8 @@ describe("advanced product SEO and AEO contracts", () => {
     expect(authoritative).not.toContain("irhaapparelsofficial@gmail.com");
     expect(finalizer).toContain("BUYER_INFORMATION_COPY");
     expect(finalizer).toContain("const copy = BUYER_INFORMATION_COPY[locale]");
-    expect(finalizer).toContain('members.length === 1 && members[0].locale !== "en"');
+    expect(finalizer).toContain("route.alternates.length > 0");
+    expect(finalizer).toContain("route.xDefault = null");
   });
 
   it("does not expose prohibited website-age messaging in new ranking content", () => {
