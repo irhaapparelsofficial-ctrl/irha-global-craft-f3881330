@@ -9,7 +9,7 @@ describe("search discovery workflow", () => {
     expect(workflow).toContain("for attempt in $(seq 1 12)");
     expect(workflow).toContain("live build source is $live_sha, expected $SOURCE_SHA");
     expect(workflow).toContain("sleep 5");
-    expect(workflow).toContain("Live canonical sitemap did not reach exact release parity after 12 attempts");
+    expect(workflow).toContain("Live canonical sitemap and route state did not reach exact release parity after 12 attempts");
   });
 
   it("checks build identity, canonical sitemap rules and the IndexNow key", () => {
