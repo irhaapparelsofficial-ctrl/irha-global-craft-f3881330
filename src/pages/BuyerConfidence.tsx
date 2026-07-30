@@ -28,7 +28,7 @@ import { localizedMaterialSpecification } from "@/data/materialSpecificationCopy
 import { getRouteLocale, type LocaleCode } from "@/lib/i18nFoundation";
 import { ORGANIZATION_ID, SITE_URL, WEBSITE_ID, breadcrumbSchema } from "@/lib/seoSchema";
 
-const MATERIAL_PATHS = new Set(Object.values(ROUTES.materials));
+const MATERIAL_PATHS = new Set<string>(Object.values(ROUTES.materials));
 
 function isMaterialsRoute(pathname: string) {
   return MATERIAL_PATHS.has(pathname.replace(/\/+$/, "") || "/");
