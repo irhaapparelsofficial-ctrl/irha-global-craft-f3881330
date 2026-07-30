@@ -13,6 +13,7 @@ import {
   localizedTaxonomySeo,
   localizedTopName,
 } from "../src/lib/taxonomyI18n";
+import { resolveBuyerReadyProductContent } from "../src/lib/buyerReadyProductContent";
 
 const execFileAsync = promisify(execFile);
 const ORIGIN = (process.env.CRAWL_ORIGIN || "https://irhaapparels.com").replace(/\/$/, "");
@@ -59,6 +60,14 @@ type ReleaseProduct = {
   image_url?: string | null;
   gallery?: string[] | null;
   updated_at?: string | null;
+  specs?: string[] | null;
+  primary_material?: string | null;
+  fabric_composition?: string | null;
+  gsm?: string | null;
+  available_sizes?: string[] | null;
+  available_colors?: string[] | null;
+  customization?: Record<string, boolean> | null;
+  packaging_standard?: string | null;
 };
 type ReleasePayload = { products: ReleaseProduct[] };
 type TaxonomyNode = {
@@ -362,12 +371,33 @@ function productExpectations(release: ReleasePayload, taxonomy: TaxonomyPayload)
     const audience = leaf?.parent_id ? nodes.get(leaf.parent_id) : undefined;
     const root = audience?.parent_id ? nodes.get(audience.parent_id) : undefined;
     if (!product || !leaf || !audience || !root) continue;
-    const fallback = `${product.name} custom B2B manufacturing by Irha Apparels in Sialkot. OEM, ODM and private-label requirements are reviewed before quotation and production commitments.`;
+    const content = resolveBuyerReadyProductContent({
+      name: product.name,
+      slug: product.slug,
+      seo_title: product.seo_title,
+      seo_description: product.seo_description,
+      short_description: product.short_description,
+      description: product.description,
+      mainCategorySlug: root.slug,
+      mainCategoryName: root.name,
+      audienceSlug: audience.slug,
+      audienceName: audience.name,
+      productTypeSlug: leaf.slug,
+      productTypeName: leaf.name,
+      specs: product.specs,
+      primary_material: product.primary_material,
+      fabric_composition: product.fabric_composition,
+      gsm: product.gsm,
+      available_sizes: product.available_sizes,
+      available_colors: product.available_colors,
+      customization: product.customization,
+      packaging_standard: product.packaging_standard,
+    });
     result.set(cleanPath(assignment.canonical_path), {
       product, assignment, leaf, audience, root,
-      expectedTitle: product.seo_title?.trim() || `${product.name} Wholesale Manufacturer | Sialkot Garment Factory`,
-      expectedH1: product.name,
-      expectedDescription: product.seo_description?.trim() || product.description?.slice(0, 158) || fallback,
+      expectedTitle: content.seoTitle,
+      expectedH1: content.h1,
+      expectedDescription: content.description,
       imageUrl: product.image_url || product.gallery?.find(Boolean) || "",
     });
   }
