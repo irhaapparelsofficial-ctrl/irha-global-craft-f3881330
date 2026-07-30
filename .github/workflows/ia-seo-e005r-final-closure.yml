@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh workflow run verify-official-brand-live.yml --ref main
+          gh workflow run verify-official-brand-live.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Require Brand Live success
         shell: bash
@@ -103,7 +103,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh workflow run production-route-parity.yml --ref main
+          gh workflow run production-route-parity.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Require final production route crawl success
         shell: bash
