@@ -1,0 +1,101 @@
+name: IA Media E001 Remediation
+
+run-name: IA-MEDIA-E001 ${{ inputs.mode }} · ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Resolve only, apply production remediation, or verify existing immutable objects
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+          - verify
+      confirm:
+        description: Type APPLY_IA_MEDIA_E001 only for apply mode
+        required: false
+        default: "NO"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ inputs.mode == 'apply' && 'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    environment: production
+    steps:
+      - name: Checkout exact dispatch source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Guard production mutation source and confirmation
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          checked_out="$(git rev-parse HEAD)"
+          if [ "${{ inputs.mode }}" = "apply" ]; then
+            test "${{ inputs.confirm }}" = "APPLY_IA_MEDIA_E001" || {
+              echo "Apply confirmation is missing"
+              exit 1
+            }
+            test "$GITHUB_REF" = "refs/heads/main" || {
+              echo "Production apply is restricted to main"
+              exit 1
+            }
+            latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            test "$checked_out" = "$latest_main" || {
+              echo "Dispatch source $checked_out is not exact current main $latest_main"
+              exit 1
+            }
+          fi
+          echo "SOURCE_SHA=$checked_out" >> "$GITHUB_ENV"
+
+      - name: Install exact dependencies
+        run: bash scripts/ci/retry.sh 3 5 -- npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Resolve, checksum and process owner originals
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          IA_MEDIA_MODE: ${{ inputs.mode }}
+          IA_MEDIA_CONFIRM: ${{ inputs.confirm }}
+        run: node scripts/remediate-p001-p007-media.mjs
+
+      - name: Upload immutable evidence and rollback manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-${{ inputs.mode }}-${{ github.sha }}
+          path: artifacts/ia-media-e001
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Record guarded outcome
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## IA-MEDIA-E001"
+            echo "- Mode: \`${{ inputs.mode }}\`"
+            echo "- Exact source SHA: \`${SOURCE_SHA:-$GITHUB_SHA}\`"
+            echo "- Supabase project: \`$SUPABASE_PROJECT_ID\`"
+            echo "- Production mutation lock: \`irha-production-mutation\`"
+            echo "- Source policy: preserved Drive originals + SHA-256 + pixel-reviewed role plan"
+            echo "- Responsive contract: \`360 / 720 / 1200 / 1600\`"
+            echo "- Retired tiers excluded: \`480 / 2400\`"
+          } >> "$GITHUB_STEP_SUMMARY"
