@@ -12,6 +12,9 @@ const FORBIDDEN_MEDIA = /(shoe|footwear|question[-_ ]?mark|placeholder|lovable)/
 const LOGO_ALT = "Official Irha Apparels Manufacturing Specialists logo";
 const COLLECTION_PATH = "/products/bavarian-trachten-wear/men/lederhosen";
 const FINDER_PATH = "/products/all?q=lederhosen";
+const GALLERY_SETTLE_TIMEOUT_MS = 15_000;
+const GALLERY_POLL_INTERVAL_MS = 100;
+const GALLERY_TRANSITIONS = [];
 const VIEWPORTS = [
   { name: "mobile-360", width: 360, height: 800 },
   { name: "mobile-390", width: 390, height: 844 },
@@ -28,6 +31,38 @@ const productPath = (slug) => `${COLLECTION_PATH}/${slug}`;
 const productCode = (product) => product.sku.replace(/^IRHA-/, "").toLowerCase();
 const productMediaRoot = (product) => `/catalog/products/${productCode(product)}-${product.slug}/${MEDIA_VERSION}/`;
 const nowIso = () => new Date().toISOString();
+const expectedFilenameFragment = (image) => `${String(image.displayOrder).padStart(2, "0")}-${image.role}-${image.driveFileId}.webp`;
+const expectedMediaIdentity = (product, image) => `${productMediaRoot(product).replace(/^\//, "")}${expectedFilenameFragment(image)}`;
+
+function normalizeMediaIdentity(value) {
+  if (!value) return "";
+  try {
+    const url = new URL(value, PREVIEW_ORIGIN);
+    let pathname = decodeURIComponent(url.pathname);
+    const marker = "/storage/v1/object/public/site-media/";
+    const markerIndex = pathname.indexOf(marker);
+    pathname = markerIndex >= 0 ? pathname.slice(markerIndex + marker.length) : pathname.replace(/^\/+/, "");
+    pathname = pathname
+      .replace(/^responsive\/(?:360|720|1200|1600)\//i, "")
+      .replace(/^thumbnails\//i, "")
+      .replace(/\.webp\.webp$/i, ".webp");
+    return pathname;
+  } catch {
+    return decodeURIComponent(String(value).split(/[?#]/, 1)[0] ?? "")
+      .replace(/^\/+/, "")
+      .replace(/^responsive\/(?:360|720|1200|1600)\//i, "")
+      .replace(/^thumbnails\//i, "")
+      .replace(/\.webp\.webp$/i, ".webp");
+  }
+}
+
+function srcSetCandidates(srcSet) {
+  if (!srcSet) return [];
+  return srcSet
+    .split(",")
+    .map((candidate) => candidate.trim().split(/\s+/, 1)[0])
+    .filter(Boolean);
+}
 
 async function ensureDir(path) {
   await mkdir(path, { recursive: true });
@@ -44,6 +79,7 @@ async function createPage(browser, viewport) {
   const page = await context.newPage();
   await page.addInitScript(() => {
     window.__iaLayoutShiftScore = 0;
+    window.__iaMediaNodeCounter = 0;
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
@@ -72,6 +108,8 @@ async function decodeImage(locator) {
     const rect = image.getBoundingClientRect();
     return {
       src: image.currentSrc || image.src,
+      declaredSrc: image.src,
+      currentSrc: image.currentSrc,
       srcSet: image.srcset,
       alt: image.alt,
       width: image.naturalWidth,
@@ -81,6 +119,7 @@ async function decodeImage(locator) {
       state: image.dataset.imageState,
       fallbackActive: image.dataset.fallbackActive,
       responsiveFallback: image.dataset.responsiveFallback,
+      complete: image.complete,
     };
   });
 }
@@ -90,9 +129,9 @@ async function assertImageEndpoint(page, url, label) {
   const contentType = response.headers()["content-type"] ?? "";
   const bytes = (await response.body()).length;
   if (!response.ok() || !contentType.startsWith("image/webp") || bytes < 100) {
-    throw new Error(`${label} endpoint failed: ${response.status()} ${contentType} ${bytes} ${url}`);
+    throw new Error(`${label} endpoint failed: ${response.status()} ${contentType} ${bytes} ${response.url()}`);
   }
-  return { status: response.status(), contentType, bytes };
+  return { url: response.url(), status: response.status(), contentType, bytes };
 }
 
 async function assertOfficialLogo(page, scope, label) {
@@ -263,10 +302,135 @@ async function inspectRelatedProducts(page, product) {
   return found;
 }
 
-async function inspectProduct(page, product) {
+async function gallerySnapshot(page, heroSelector) {
+  return page.evaluate(({ heroSelector }) => {
+    const image = document.querySelector(heroSelector);
+    const gallery = document.querySelector('[aria-label="Product reference gallery"]');
+    const buttons = gallery ? [...gallery.querySelectorAll('button[aria-label^="View "]')] : [];
+    if (image && !image.dataset.iaEvidenceNode) {
+      window.__iaMediaNodeCounter = (window.__iaMediaNodeCounter ?? 0) + 1;
+      image.dataset.iaEvidenceNode = String(window.__iaMediaNodeCounter);
+    }
+    const rect = image?.getBoundingClientRect();
+    const selectedIndices = buttons
+      .map((button, index) => button.classList.contains("border-primary") ? index : -1)
+      .filter((index) => index >= 0);
+    return {
+      heroFound: Boolean(image),
+      nodeId: image?.dataset.iaEvidenceNode ?? null,
+      declaredSrc: image?.src ?? "",
+      currentSrc: image?.currentSrc ?? "",
+      alt: image?.alt ?? "",
+      srcSet: image?.srcset ?? "",
+      imageState: image?.dataset.imageState ?? null,
+      fallbackActive: image?.dataset.fallbackActive ?? null,
+      responsiveFallback: image?.dataset.responsiveFallback ?? null,
+      complete: image?.complete ?? false,
+      naturalWidth: image?.naturalWidth ?? 0,
+      naturalHeight: image?.naturalHeight ?? 0,
+      visible: Boolean(rect && rect.width > 0 && rect.height > 0 && getComputedStyle(image).visibility !== "hidden"),
+      rect: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null,
+      selectedIndices,
+      selectedButtons: selectedIndices.map((index) => ({
+        index,
+        ariaLabel: buttons[index]?.getAttribute("aria-label") ?? null,
+        className: buttons[index]?.className ?? null,
+      })),
+      thumbnailCount: buttons.length,
+    };
+  }, { heroSelector });
+}
+
+function snapshotMatchesExpected(snapshot, product, expected, index) {
+  const identity = expectedMediaIdentity(product, expected);
+  const root = productMediaRoot(product).replace(/^\//, "");
+  const declaredIdentity = normalizeMediaIdentity(snapshot.declaredSrc);
+  const currentIdentity = normalizeMediaIdentity(snapshot.currentSrc || snapshot.declaredSrc);
+  const responsiveIdentities = srcSetCandidates(snapshot.srcSet).map(normalizeMediaIdentity);
+  const sameResponsiveSource = responsiveIdentities.every((candidate) => candidate === identity);
+  const hasExpectedSelection = snapshot.selectedIndices.length === 1 && snapshot.selectedIndices[0] === index;
+  const exactAlt = snapshot.alt.trim().toLowerCase().includes(product.name.toLowerCase())
+    && !/^(?:product|image|catalogue reference)$/i.test(snapshot.alt.trim());
+  const identityMatches = declaredIdentity === identity || currentIdentity === identity;
+  const rootMatches = declaredIdentity.startsWith(root) && currentIdentity.startsWith(root);
+  return {
+    settled: hasExpectedSelection
+      && exactAlt
+      && identityMatches
+      && rootMatches
+      && sameResponsiveSource
+      && snapshot.naturalWidth > 0
+      && snapshot.naturalHeight > 0
+      && snapshot.imageState === "loaded"
+      && snapshot.fallbackActive !== "true"
+      && snapshot.complete
+      && snapshot.visible
+      && !FORBIDDEN_MEDIA.test(snapshot.declaredSrc)
+      && !FORBIDDEN_MEDIA.test(snapshot.currentSrc),
+    identity,
+    declaredIdentity,
+    currentIdentity,
+    responsiveIdentities,
+    hasExpectedSelection,
+    exactAlt,
+    identityMatches,
+    rootMatches,
+    sameResponsiveSource,
+  };
+}
+
+async function waitForGallerySettled(page, product, viewport, index, expected, heroSelector, transition) {
+  const started = Date.now();
+  let lastSnapshot = await gallerySnapshot(page, heroSelector);
+  let lastMatch = snapshotMatchesExpected(lastSnapshot, product, expected, index);
+  while (!lastMatch.settled && Date.now() - started < GALLERY_SETTLE_TIMEOUT_MS) {
+    await page.waitForTimeout(GALLERY_POLL_INTERVAL_MS);
+    lastSnapshot = await gallerySnapshot(page, heroSelector);
+    lastMatch = snapshotMatchesExpected(lastSnapshot, product, expected, index);
+  }
+  transition.elapsedTransitionMs = Date.now() - started;
+  transition.settledSnapshot = lastSnapshot;
+  transition.settledMatch = lastMatch;
+  if (!lastMatch.settled) {
+    throw new Error(`${product.sku} ${product.slug} ${viewport.name} gallery index ${index} did not settle within ${GALLERY_SETTLE_TIMEOUT_MS}ms: ${JSON.stringify({
+      expectedDriveFileId: expected.driveFileId,
+      expectedRole: expected.role,
+      expectedIdentity: lastMatch.identity,
+      actualDeclaredIdentity: lastMatch.declaredIdentity,
+      actualCurrentIdentity: lastMatch.currentIdentity,
+      selectedIndices: lastSnapshot.selectedIndices,
+      imageState: lastSnapshot.imageState,
+      fallbackActive: lastSnapshot.fallbackActive,
+      naturalWidth: lastSnapshot.naturalWidth,
+      naturalHeight: lastSnapshot.naturalHeight,
+      srcSet: lastSnapshot.srcSet,
+      nodeId: lastSnapshot.nodeId,
+    })}`);
+  }
+  return lastSnapshot;
+}
+
+async function requireStableHeroFrame(page, product, expected, index, heroSelector) {
+  const before = await gallerySnapshot(page, heroSelector);
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  const after = await gallerySnapshot(page, heroSelector);
+  const beforeMatch = snapshotMatchesExpected(before, product, expected, index);
+  const afterMatch = snapshotMatchesExpected(after, product, expected, index);
+  const rectStable = before.rect && after.rect
+    && Math.abs(before.rect.x - after.rect.x) < 0.5
+    && Math.abs(before.rect.y - after.rect.y) < 0.5
+    && Math.abs(before.rect.width - after.rect.width) < 0.5
+    && Math.abs(before.rect.height - after.rect.height) < 0.5;
+  if (!beforeMatch.settled || !afterMatch.settled || before.nodeId !== after.nodeId || !rectStable) {
+    throw new Error(`${product.sku} gallery index ${index} hero frame was not stable: ${JSON.stringify({ before, after, beforeMatch, afterMatch, rectStable })}`);
+  }
+  return { nodeId: after.nodeId, rect: after.rect, currentSrc: after.currentSrc };
+}
+
+async function inspectProduct(page, product, viewport) {
   await page.locator("h1").filter({ hasText: product.name }).first().waitFor({ state: "visible", timeout: 30_000 });
   await assertOfficialLogo(page, "header", `${product.sku} header`);
-  const heroSelector = `img[alt^="${product.name} custom manufacturing catalogue reference"]`;
+  const heroSelector = 'div:has(> [aria-label="Product reference gallery"]) > div:first-child img[data-managed-image="true"]';
   const hero = page.locator(heroSelector).first();
   const thumbnails = page.locator('[aria-label="Product reference gallery"] button[aria-label^="View "]');
   const expectedImages = [...product.images].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -276,32 +440,58 @@ async function inspectProduct(page, product) {
   const visited = [];
   for (let index = 0; index < count; index += 1) {
     const expected = expectedImages[index];
-    const fragment = `${String(expected.displayOrder).padStart(2, "0")}-${expected.role}-${expected.driveFileId}.webp`;
-    await thumbnails.nth(index).click();
-    await page.waitForFunction(
-      ({ selector, expectedFragment }) => document.querySelector(selector)?.currentSrc.includes(expectedFragment),
-      { selector: heroSelector, expectedFragment: fragment },
-      { timeout: 15_000 },
-    );
+    const transition = {
+      sku: product.sku,
+      productSlug: product.slug,
+      viewport: { name: viewport.name, width: viewport.width, height: viewport.height },
+      thumbnailIndex: index,
+      expectedDriveFileId: expected.driveFileId,
+      expectedRole: expected.role,
+      expectedCanonicalFilenameFragment: expectedFilenameFragment(expected),
+      expectedMediaIdentity: expectedMediaIdentity(product, expected),
+      startedAt: nowIso(),
+    };
+    GALLERY_TRANSITIONS.push(transition);
+    transition.beforeClick = await gallerySnapshot(page, heroSelector);
+    const alreadySelected = transition.beforeClick.selectedIndices.length === 1
+      && transition.beforeClick.selectedIndices[0] === index;
+    transition.action = alreadySelected ? "verify-existing-selection" : "click-thumbnail";
+    const clickStarted = Date.now();
+    if (!alreadySelected) await thumbnails.nth(index).click();
+    transition.immediateAfterClick = await gallerySnapshot(page, heroSelector);
+    transition.clickElapsedMs = Date.now() - clickStarted;
+
+    await waitForGallerySettled(page, product, viewport, index, expected, heroSelector, transition);
     const data = await decodeImage(hero);
-    if (!data.src.includes(productMediaRoot(product))
-      || !data.src.includes(fragment)
+    const identity = expectedMediaIdentity(product, expected);
+    const normalizedDeclared = normalizeMediaIdentity(data.declaredSrc);
+    const normalizedCurrent = normalizeMediaIdentity(data.currentSrc || data.declaredSrc);
+    const normalizedResponsive = srcSetCandidates(data.srcSet).map(normalizeMediaIdentity);
+    if (!normalizedDeclared.startsWith(productMediaRoot(product).replace(/^\//, ""))
+      || !normalizedCurrent.startsWith(productMediaRoot(product).replace(/^\//, ""))
+      || (normalizedDeclared !== identity && normalizedCurrent !== identity)
+      || normalizedResponsive.some((candidate) => candidate !== identity)
       || !data.alt.toLowerCase().includes(product.name.toLowerCase())
-      || FORBIDDEN_MEDIA.test(data.src)
+      || FORBIDDEN_MEDIA.test(data.declaredSrc)
+      || FORBIDDEN_MEDIA.test(data.currentSrc)
       || data.width <= 0
       || data.height <= 0
       || data.state !== "loaded"
       || data.fallbackActive === "true") {
-      throw new Error(`${product.sku} image ${index + 1} failed: ${JSON.stringify(data)}`);
+      throw new Error(`${product.sku} image ${index + 1} failed: ${JSON.stringify({ data, identity, normalizedDeclared, normalizedCurrent, normalizedResponsive })}`);
     }
-    if (data.srcSet && (!data.srcSet.includes(productMediaRoot(product)) || /responsive\/(?:480|2400)\//.test(data.srcSet))) {
-      throw new Error(`${product.sku} image ${index + 1} has invalid srcset: ${data.srcSet}`);
+    if (data.srcSet && /responsive\/(?:480|2400)\//.test(data.srcSet)) {
+      throw new Error(`${product.sku} image ${index + 1} has retired responsive tier: ${data.srcSet}`);
     }
-    data.response = await assertImageEndpoint(page, data.src, `${product.sku} image ${index + 1}`);
-    visited.push(data);
+    data.response = await assertImageEndpoint(page, data.currentSrc || data.declaredSrc, `${product.sku} image ${index + 1}`);
+    data.stableFrame = await requireStableHeroFrame(page, product, expected, index, heroSelector);
+    transition.networkResponse = data.response;
+    transition.stableFrame = data.stableFrame;
+    transition.finishedAt = nowIso();
+    visited.push({ ...data, expectedDriveFileId: expected.driveFileId, expectedRole: expected.role, normalizedIdentity: normalizedCurrent || normalizedDeclared });
   }
 
-  if (new Set(visited.map((item) => item.src)).size !== visited.length) {
+  if (new Set(visited.map((item) => item.normalizedIdentity)).size !== visited.length) {
     throw new Error(`${product.sku} gallery rendered duplicate displayed frames`);
   }
   const blockers = await fixedOverlapEvidence(page, heroSelector, '[aria-label="Product reference gallery"]');
@@ -320,7 +510,7 @@ async function captureStrictProduct(browser, origin, label, product, viewport) {
       timeout: 45_000,
     });
     await waitForApp(page);
-    const evidence = await inspectProduct(page, product);
+    const evidence = await inspectProduct(page, product, viewport);
     await page.screenshot({
       path: resolve(OUTPUT_ROOT, label, `${product.sku.toLowerCase()}-${viewport.name}.png`),
       fullPage: viewport.width >= 1280,
@@ -417,6 +607,7 @@ async function main() {
     buildIdentity: null,
     beforeProduction: { products: {} },
     afterPreview: { products: {}, collections: {}, finder: null, rawHtml: {} },
+    galleryTransitions: GALLERY_TRANSITIONS,
     status: "running",
     errors: [],
   };
@@ -480,7 +671,7 @@ async function main() {
     await writeFile(resolve(OUTPUT_ROOT, "visual-acceptance-report.json"), `${JSON.stringify(report, null, 2)}\n`);
     await writeFile(
       resolve(OUTPUT_ROOT, "visual-acceptance-summary.md"),
-      `# IA-MEDIA-E001 Visual Acceptance\n\n- Status: **${report.status}**\n- Expected SHA: \`${report.expectedSha ?? "not supplied"}\`\n- Exact source SHA: \`${report.buildIdentity?.source_commit ?? "unavailable"}\`\n- Products: P001–P007\n- Viewports: ${VIEWPORTS.map((viewport) => `${viewport.name} (${viewport.width}×${viewport.height})`).join(", ")}\n- Raw HTML parity: ${REQUIRE_RAW_HTML ? "required" : "preview visual only"}\n- Completed: ${report.finishedAt}\n`,
+      `# IA-MEDIA-E001 Visual Acceptance\n\n- Status: **${report.status}**\n- Expected SHA: \`${report.expectedSha ?? "not supplied"}\`\n- Exact source SHA: \`${report.buildIdentity?.source_commit ?? "unavailable"}\`\n- Products: P001–P007\n- Viewports: ${VIEWPORTS.map((viewport) => `${viewport.name} (${viewport.width}×${viewport.height})`).join(", ")}\n- Raw HTML parity: ${REQUIRE_RAW_HTML ? "required" : "preview visual only"}\n- Gallery transitions recorded: ${GALLERY_TRANSITIONS.length}\n- Completed: ${report.finishedAt}\n`,
     );
     await browser.close();
   }
