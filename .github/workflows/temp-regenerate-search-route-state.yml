@@ -1,0 +1,81 @@
+name: Temporary Regenerate Search Route State
+
+on:
+  pull_request:
+    branches: [main]
+    types: [synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'codex/indexnow-material-change-parity-20260730'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exact PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/indexnow-material-change-parity-20260730
+          fetch-depth: 2
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Generate authoritative manifest and material route state
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsx scripts/generate-buyer-ready-catalog-manifest.ts
+          NODE_OPTIONS=--import=./scripts/patch-supabase-rpc-pagination.mjs npx tsx scripts/generate-buyer-ready-redirects.ts
+          npx tsx scripts/finalize-seo-route-manifest.ts
+          npx tsx scripts/align-seo-manifest-taxonomy-runtime.ts
+          node scripts/seal-seo-manifest-determinism.mjs
+          node scripts/generate-search-route-state.mjs --write
+
+      - name: Verify deterministic 436-route state
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp seo/search-route-state.json /tmp/search-route-state.first.json
+          first_sha="$(sha256sum seo/search-route-state.json | awk '{print $1}')"
+          node scripts/generate-search-route-state.mjs --write
+          second_sha="$(sha256sum seo/search-route-state.json | awk '{print $1}')"
+          test "$first_sha" = "$second_sha"
+          cmp -s /tmp/search-route-state.first.json seo/search-route-state.json
+          jq -e '.schemaVersion == 1 and .canonicalOrigin == "https://irhaapparels.com" and .routeCount == 436 and (.routes | length) == 436' seo/search-route-state.json >/dev/null
+          jq -e '.schemaVersion == 1 and .canonicalOrigin == "https://irhaapparels.com" and .sitemapCount == 436 and (.routes | map(select(.indexable == true and .sitemap == true)) | length) == 436' public/seo-route-manifest.json >/dev/null
+          jq -r '.routes[].url' seo/search-route-state.json | sort -u > /tmp/state-urls.txt
+          jq -r '.routes[] | select(.indexable == true and .sitemap == true) | .canonicalUrl' public/seo-route-manifest.json | sort -u > /tmp/manifest-urls.txt
+          cmp -s /tmp/state-urls.txt /tmp/manifest-urls.txt
+          ! grep -q '"lastmod"' seo/search-route-state.json
+          test "$(jq -r '.routes[].url' seo/search-route-state.json | sort -u | wc -l | tr -d ' ')" = "436"
+          echo "route_state_sha256=$second_sha"
+
+      - name: Commit only corrected route state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          git diff --exit-code -- . ':(exclude)seo/search-route-state.json' ':(exclude)public/seo-route-manifest.json' ':(exclude)public/sitemap.xml' ':(exclude)public/buyer-ready-catalog.json' ':(exclude)public/_redirects' || {
+            echo "Unexpected generated repository changes outside allowed transient outputs" >&2
+            exit 1
+          }
+          git checkout -- public/seo-route-manifest.json public/sitemap.xml public/buyer-ready-catalog.json public/_redirects 2>/dev/null || true
+          git add seo/search-route-state.json
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(seo): refresh deterministic material route state"
+          git push origin HEAD:codex/indexnow-material-change-parity-20260730
