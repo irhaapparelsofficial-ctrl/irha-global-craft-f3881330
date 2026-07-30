@@ -39,7 +39,8 @@ function parseArguments(args = process.argv.slice(2)) {
 }
 
 function canonicalPathname(url) {
-  return url.pathname === "/" ? "/" : url.pathname.replace(/\/+$/, "");
+  if (url.pathname === "/" || /^\/(?:de|fr|nl)\/$/.test(url.pathname)) return url.pathname;
+  return url.pathname.replace(/\/+$/, "");
 }
 
 function normalizeCanonicalUrl(value) {
@@ -164,7 +165,7 @@ export function checkSearchRouteState({
   }
   if (committed !== expected) {
     throw new Error(
-      `Committed material search route state is stale. Run node scripts/generate-search-route-state.mjs --write before merging.`,
+      "Committed material search route state is stale. Run node scripts/generate-search-route-state.mjs --write before merging.",
     );
   }
   return state;
