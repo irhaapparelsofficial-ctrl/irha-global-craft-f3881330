@@ -75,6 +75,9 @@ describe("SEC-M03 canonical parity control", () => {
   it("requires the exact reviewed migration and project baseline", () => {
     expect(generator).toContain('const projectId = "pvzjiozismyxqrzmtfbi"');
     expect(generator).toContain("const liveMigrationCount = 375");
-    expect(generator).toContain("expected exactly one canonical replacement target");
+    expect(generator).toContain("replaceLegacyOrRequireCurrent");
+    expect(generator).toContain("legacyCount === 1 && currentCount === 0");
+    expect(generator).toContain("legacyCount === 0 && currentCount === 1");
+    expect(generator).toContain("expected exactly one canonical replacement target or one already-current target");
   });
 });
