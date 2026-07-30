@@ -78,8 +78,9 @@ button[aria-label="Open live chat with the Irha Apparels team"] { display: none 
   section[data-chat-kind="human"] { left: auto !important; right: 1.5rem !important; }
 }
 
-@media (max-width: 767px) {
-  /* Mobile uses the persistent Live Support / Request Quote dock, not a second launcher. */
+@media (max-width: 1024px) {
+  /* Product media occupies the full tablet viewport; use the persistent page
+     conversion paths instead of overlaying the separate support launcher. */
   button[aria-label="Open Irha Live Support — AI guide and human team"] { display: none !important; }
 }
 
