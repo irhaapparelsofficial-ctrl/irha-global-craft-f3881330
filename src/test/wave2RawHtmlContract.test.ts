@@ -40,6 +40,9 @@ describe("Wave 2 raw HTML and edge contracts", () => {
     expect(manifestBuilder).toContain("addBlogRoutes(routes, blogPosts)");
     expect(manifestBuilder).toContain('routeType: "resource-article"');
     expect(manifestBuilder).toContain("equivalentGroup: null");
+    expect(manifestBuilder).toContain('members.length === 1 && members[0].locale !== "en"');
+    expect(manifestBuilder).toContain("route.alternates = [{ hreflang: localeCode(route.locale)");
+    expect(manifestBuilder).toContain("BUYER_INFORMATION_COPY");
 
     const publishedLocalized = getPublishedLocalizedRoutes();
     expect(publishedLocalized.length).toBeGreaterThan(0);
