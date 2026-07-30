@@ -155,6 +155,39 @@ describe("IndexNow canonical sitemap discovery", () => {
     expect(materialChange.contentDigest).not.toBe(original.contentDigest);
   });
 
+  it("preserves localized gateway trailing-slash canonicals", async () => {
+    const { resolveChangedUrls } = await loadIndexNowModule();
+    const { buildSearchRouteState } = await loadSearchRouteStateModule();
+    const gateways = [
+      "https://irhaapparels.com/de/",
+      "https://irhaapparels.com/fr/",
+      "https://irhaapparels.com/nl/",
+    ];
+    const sitemapPath = writeSitemap(gateways);
+    const routes = gateways.map((canonicalUrl, index) => ({
+      routeType: "localized-market",
+      path: new URL(canonicalUrl).pathname,
+      locale: ["de-DE", "fr-FR", "nl-NL"][index],
+      indexable: true,
+      sitemap: true,
+      title: `Gateway ${index}`,
+      description: `Localized gateway ${index}`,
+      h1: `Gateway ${index}`,
+      lastmod: null,
+      canonicalUrl,
+    }));
+    const state = buildSearchRouteState({
+      schemaVersion: 1,
+      canonicalOrigin: "https://irhaapparels.com",
+      routeCount: routes.length,
+      sitemapCount: routes.length,
+      routes,
+    });
+
+    expect(resolveChangedUrls({ args: [], env: {}, sitemapPath })).toEqual(gateways);
+    expect(state.routes.map((route) => route.url)).toEqual(gateways);
+  });
+
   it("retains the legacy sitemap diff only as an explicit compatibility fallback", async () => {
     const { resolveChangedUrls } = await loadIndexNowModule();
     const previousSitemapPath = writeSitemap([
