@@ -139,12 +139,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          check_sha="${{ github.event.pull_request.head.sha }}"
           for attempt in $(seq 1 180); do
-            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$GITHUB_SHA&per_page=100")"
+            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$check_sha&per_page=100")"
             qg="$(jq -r '[.workflow_runs[] | select(.name == "Quality Gate")][0].conclusion // empty' <<<"$runs")"
             preview="$(jq -r '[.workflow_runs[] | select((.name | ascii_downcase | contains("cloudflare")) and ((.display_title // "") | ascii_downcase | contains("preview")))][0].conclusion // empty' <<<"$runs")"
             if [ "$qg" = "success" ] && [ "$preview" = "success" ]; then
-              echo "Exact latest Quality Gate and Safe Cloudflare Preview passed"
+              echo "Exact latest Quality Gate and Safe Cloudflare Preview passed for $check_sha"
               exit 0
             fi
             if [ "$qg" = "failure" ] || [ "$qg" = "cancelled" ] || [ "$preview" = "failure" ] || [ "$preview" = "cancelled" ]; then
