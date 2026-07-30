@@ -19,12 +19,27 @@ on:
       - "ops/ia-media-e001/**"
       - "package.json"
       - "package-lock.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/ia-media-e001-visual-acceptance.yml"
+      - "scripts/capture-ia-media-e001-visual-evidence.mjs"
+      - "scripts/resolve-cloudflare-preview-deployment.mjs"
+      - "src/components/layout/Navbar.tsx"
+      - "src/components/layout/Footer.tsx"
+      - "src/lib/brandAssets.ts"
+      - "src/lib/imageLoading.ts"
+      - "src/lib/iaMediaE001Runtime.ts"
+      - "src/lib/productGalleryAuthority.ts"
+      - "ops/ia-media-e001/**"
+      - "package.json"
+      - "package-lock.json"
 
 permissions:
   contents: read
 
 concurrency:
-  group: ia-media-e001-visual-${{ github.event.pull_request.number }}
+  group: ia-media-e001-visual-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 env:
@@ -40,7 +55,7 @@ env:
 
 jobs:
   visual-acceptance:
-    if: github.event.pull_request.head.ref == 'codex/official-logo-p001-p007-media-recovery'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'codex/official-logo-p001-p007-media-recovery'
     runs-on: ubuntu-latest
     timeout-minutes: 70
     steps:
@@ -131,4 +146,91 @@ jobs:
             cat artifacts/ia-media-e001-visual/visual-acceptance-summary.md >> "$GITHUB_STEP_SUMMARY"
           else
             echo "IA-MEDIA-E001 visual report was not generated" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  production-visual-acceptance:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - name: Checkout exact final-main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Wait for all immutable Storage objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 180); do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' "${LAST_STAGED_OBJECT}?attempt=${attempt}")"
+            if [ "$status" = "200" ]; then
+              echo "Final ordered responsive object is available"
+              exit 0
+            fi
+            echo "Storage verification pending (attempt $attempt, HTTP $status)"
+            sleep 10
+          done
+          echo "Immutable P001-P007 objects were not available within 30 minutes"
+          exit 1
+
+      - name: Wait for exact final-main production source
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$GITHUB_SHA"
+          for attempt in $(seq 1 240); do
+            body="$(curl -fsS -H 'Cache-Control: no-cache, no-store' "${PRODUCTION_ORIGIN}/build.json?expected=${expected}&attempt=${attempt}" || true)"
+            actual="$(printf '%s' "$body" | jq -r '.source_commit // empty' 2>/dev/null || true)"
+            if [ "$actual" = "$expected" ]; then
+              echo "Exact final-main production artifact is live"
+              exit 0
+            fi
+            echo "Production pending (attempt $attempt, expected $expected, actual ${actual:-unavailable})"
+            sleep 15
+          done
+          echo "Exact final-main production artifact did not propagate within 60 minutes"
+          exit 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact project dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Install isolated browser harness
+        run: |
+          npm install --no-save --package-lock=false --legacy-peer-deps --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Capture exact-production responsive evidence
+        shell: bash
+        run: |
+          IA_MEDIA_PREVIEW_ORIGIN="$PRODUCTION_ORIGIN" \
+          IA_MEDIA_PRODUCTION_ORIGIN="$PRODUCTION_ORIGIN" \
+          IA_MEDIA_EXPECTED_SHA="$GITHUB_SHA" \
+          IA_MEDIA_VISUAL_OUTPUT="artifacts/ia-media-e001-production-visual" \
+          node scripts/capture-ia-media-e001-visual-evidence.mjs
+
+      - name: Upload exact-production visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-production-visual-${{ github.sha }}
+          path: artifacts/ia-media-e001-production-visual
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish production acceptance summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f artifacts/ia-media-e001-production-visual/visual-acceptance-summary.md ]; then
+            cat artifacts/ia-media-e001-production-visual/visual-acceptance-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "IA-MEDIA-E001 production visual report was not generated" >> "$GITHUB_STEP_SUMMARY"
           fi
