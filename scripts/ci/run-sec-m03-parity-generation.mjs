@@ -9,25 +9,41 @@ const dispatcherVersion = 8;
 const dispatcherHash = "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48";
 const liveMigrationCount = 375;
 
-function replaceExactlyOnce(source, before, after, label) {
-  const first = source.indexOf(before);
-  const last = source.lastIndexOf(before);
-  if (first < 0 || first !== last) {
-    throw new Error(`${label} expected exactly one canonical replacement target`);
+function occurrenceCount(source, target) {
+  let count = 0;
+  let offset = 0;
+  while (true) {
+    const index = source.indexOf(target, offset);
+    if (index < 0) return count;
+    count += 1;
+    offset = index + target.length;
   }
-  return source.slice(0, first) + after + source.slice(first + before.length);
+}
+
+function replaceLegacyOrRequireCurrent(source, legacy, current, label) {
+  const legacyCount = occurrenceCount(source, legacy);
+  const currentCount = occurrenceCount(source, current);
+  if (legacyCount === 1 && currentCount === 0) {
+    return source.replace(legacy, current);
+  }
+  if (legacyCount === 0 && currentCount === 1) {
+    return source;
+  }
+  throw new Error(
+    `${label} expected exactly one canonical replacement target or one already-current target; legacy=${legacyCount} current=${currentCount}`,
+  );
 }
 
 function patchedProvenanceSource() {
   const path = resolve(root, "scripts/ci/generate-migration-provenance.mjs");
   let source = readFileSync(path, "utf8");
-  source = replaceExactlyOnce(
+  source = replaceLegacyOrRequireCurrent(
     source,
     "if (result.payload.totals.live !== 374) {",
     `if (result.payload.totals.live !== ${liveMigrationCount}) {`,
     "migration provenance count guard",
   );
-  source = replaceExactlyOnce(
+  source = replaceLegacyOrRequireCurrent(
     source,
     "`Expected 374 live migrations, found ${result.payload.totals.live}`",
     `\`Expected ${liveMigrationCount} live migrations, found \${result.payload.totals.live}\``,
@@ -39,19 +55,19 @@ function patchedProvenanceSource() {
 function patchedManifestSource() {
   const path = resolve(root, "scripts/ci/generate-supabase-manifest.mjs");
   let source = readFileSync(path, "utf8");
-  source = replaceExactlyOnce(
+  source = replaceLegacyOrRequireCurrent(
     source,
     'dispatcher.version !== 7 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "62da00683ce93174c7850f38640ba279ea5baa6de77129045a1670681e153ec7"',
     `dispatcher.version !== ${dispatcherVersion} || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "${dispatcherHash}"`,
     "notification dispatcher invariant",
   );
-  source = replaceExactlyOnce(
+  source = replaceLegacyOrRequireCurrent(
     source,
     "if (database.live_migrations.count !== 374)",
     `if (database.live_migrations.count !== ${liveMigrationCount})`,
     "manifest migration count guard",
   );
-  source = replaceExactlyOnce(
+  source = replaceLegacyOrRequireCurrent(
     source,
     '"Expected 374 live migrations"',
     `"Expected ${liveMigrationCount} live migrations"`,
