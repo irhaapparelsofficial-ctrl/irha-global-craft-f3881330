@@ -11,6 +11,7 @@ function parseArguments(args = process.argv.slice(2)) {
   const options = {
     input: DEFAULT_ROUTE_MANIFEST_PATH,
     output: DEFAULT_ROUTE_STATE_PATH,
+    check: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -25,6 +26,10 @@ function parseArguments(args = process.argv.slice(2)) {
       if (!value) throw new Error("--output requires a path");
       options.output = resolve(value);
       index += 1;
+    } else if (argument === "--check") {
+      options.check = true;
+    } else if (argument === "--write") {
+      options.check = false;
     } else {
       throw new Error(`Unknown argument: ${argument}`);
     }
@@ -126,21 +131,52 @@ export function buildSearchRouteState(manifest) {
   };
 }
 
+export function renderSearchRouteState(state) {
+  return `${JSON.stringify(state, null, 2)}\n`;
+}
+
+function buildStateFromManifest(inputPath) {
+  const manifest = JSON.parse(readFileSync(inputPath, "utf8"));
+  return buildSearchRouteState(manifest);
+}
+
 export function generateSearchRouteState({
   inputPath = DEFAULT_ROUTE_MANIFEST_PATH,
   outputPath = DEFAULT_ROUTE_STATE_PATH,
 } = {}) {
-  const manifest = JSON.parse(readFileSync(inputPath, "utf8"));
-  const state = buildSearchRouteState(manifest);
+  const state = buildStateFromManifest(inputPath);
   mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+  writeFileSync(outputPath, renderSearchRouteState(state), "utf8");
+  return state;
+}
+
+export function checkSearchRouteState({
+  inputPath = DEFAULT_ROUTE_MANIFEST_PATH,
+  outputPath = DEFAULT_ROUTE_STATE_PATH,
+} = {}) {
+  const state = buildStateFromManifest(inputPath);
+  const expected = renderSearchRouteState(state);
+  let committed;
+  try {
+    committed = readFileSync(outputPath, "utf8");
+  } catch (error) {
+    throw new Error(`Committed material search route state is missing at ${outputPath}: ${String(error)}`);
+  }
+  if (committed !== expected) {
+    throw new Error(
+      `Committed material search route state is stale. Run node scripts/generate-search-route-state.mjs --write before merging.`,
+    );
+  }
   return state;
 }
 
 export function main(args = process.argv.slice(2)) {
   const options = parseArguments(args);
-  const state = generateSearchRouteState({ inputPath: options.input, outputPath: options.output });
-  console.log(`[search-route-state] routes=${state.routeCount} digest=${state.contentDigest}`);
+  const state = options.check
+    ? checkSearchRouteState({ inputPath: options.input, outputPath: options.output })
+    : generateSearchRouteState({ inputPath: options.input, outputPath: options.output });
+  const mode = options.check ? "verified" : "written";
+  console.log(`[search-route-state] ${mode} routes=${state.routeCount} digest=${state.contentDigest}`);
 }
 
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
