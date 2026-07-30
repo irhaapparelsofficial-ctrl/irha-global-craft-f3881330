@@ -30,6 +30,8 @@ concurrency:
 env:
   PREVIEW_BRANCH: github-preview
   PREVIEW_URL: https://github-preview.irha-apparels.pages.dev
+  PREVIEW_RESOLVE_ATTEMPTS: "120"
+  PREVIEW_RESOLVE_DELAY_MS: "10000"
   PRODUCTION_ORIGIN: https://irhaapparels.com
   LAST_STAGED_OBJECT: https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/responsive/1600/catalog/recovery/ia-media-e001-20260730/deer-suede-lederhosen/06-macro-1VyctJT-q7ExkAf90TXGp2DKL4czoWUtV.webp.webp
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
