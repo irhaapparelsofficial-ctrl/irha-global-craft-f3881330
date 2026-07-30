@@ -1,0 +1,68 @@
+name: Temporary Branch Finalize Search Route State
+
+on:
+  push:
+    branches:
+      - codex/indexnow-material-change-parity-20260730
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-branch-final-search-route-state
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Checkout exact branch source
+        uses: actions/checkout@v4
+        with:
+          ref: codex/indexnow-material-change-parity-20260730
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Build exact immutable production artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm --ignore-scripts run build
+
+      - name: Generate and verify final deployed material route state
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output /tmp/final-state-a.json --write
+          node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output /tmp/final-state-b.json --write
+          cmp -s /tmp/final-state-a.json /tmp/final-state-b.json
+          jq -e '.schemaVersion == 1 and .canonicalOrigin == "https://irhaapparels.com" and .routeCount == 436 and (.routes | length) == 436' /tmp/final-state-a.json >/dev/null
+          jq -e '.schemaVersion == 1 and .canonicalOrigin == "https://irhaapparels.com" and .sitemapCount == 436 and (.routes | map(select(.indexable == true and .sitemap == true)) | length) == 436' dist/seo-route-manifest.json >/dev/null
+          jq -r '.routes[].url' /tmp/final-state-a.json | sort -u > /tmp/state-urls.txt
+          jq -r '.routes[] | select(.indexable == true and .sitemap == true) | .canonicalUrl' dist/seo-route-manifest.json | sort -u > /tmp/manifest-urls.txt
+          cmp -s /tmp/state-urls.txt /tmp/manifest-urls.txt
+          ! grep -q '"lastmod"' /tmp/final-state-a.json
+          cp /tmp/final-state-a.json seo/search-route-state.json
+          echo "route_state_sha256=$(sha256sum seo/search-route-state.json | awk '{print $1}')"
+          jq -r '.contentDigest' seo/search-route-state.json
+
+      - name: Commit only final route-state artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- . ':(exclude)seo/search-route-state.json'
+          git add seo/search-route-state.json
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(seo): seal final deployed material route state"
+          git push origin HEAD:codex/indexnow-material-change-parity-20260730
