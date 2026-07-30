@@ -214,3 +214,58 @@ jobs:
             -f description="$description" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
+
+  finalize-search-route-state:
+    name: finalize-search-route-state
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout exact quality source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: true
+
+      - name: Download exact immutable quality artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: production-dist-${{ github.sha }}
+          path: /tmp/production-dist
+
+      - name: Generate deterministic state from immutable manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/generate-search-route-state.mjs \
+            --input /tmp/production-dist/seo-route-manifest.json \
+            --output /tmp/final-search-route-state.json \
+            --write
+          jq -e '.schemaVersion == 1 and .canonicalOrigin == "https://irhaapparels.com" and .routeCount == 436 and (.routes | length) == 436' /tmp/final-search-route-state.json >/dev/null
+          jq -r '.routes[].url' /tmp/final-search-route-state.json | sort -u > /tmp/state-urls.txt
+          jq -r '.routes[] | select(.indexable == true and .sitemap == true) | .canonicalUrl' /tmp/production-dist/seo-route-manifest.json | sort -u > /tmp/manifest-urls.txt
+          cmp -s /tmp/state-urls.txt /tmp/manifest-urls.txt
+          ! grep -q '"lastmod"' /tmp/final-search-route-state.json
+          cp /tmp/final-search-route-state.json seo/search-route-state.json
+          echo "route_state_sha256=$(sha256sum seo/search-route-state.json | awk '{print $1}')"
+          jq -r '.contentDigest' seo/search-route-state.json
+
+      - name: Commit only immutable material route state
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$latest_main" = "$GITHUB_SHA"
+          git diff --exit-code -- . ':(exclude)seo/search-route-state.json'
+          git add seo/search-route-state.json
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(seo): seal immutable material route state"
+          git push origin HEAD:main
