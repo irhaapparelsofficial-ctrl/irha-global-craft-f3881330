@@ -685,13 +685,13 @@ function applyEquivalence(routes: Map<string, SeoRouteEntry>) {
       route.xDefault = english?.canonicalUrl ?? null;
     }
   }
-}
 
   for (const route of routes.values()) {
     if (!route.indexable || !route.sitemap || localeCode(route.locale) === "en" || route.alternates.length > 0) continue;
     route.alternates = [{ hreflang: localeCode(route.locale), path: route.path, url: route.canonicalUrl }];
     route.xDefault = null;
   }
+}
 
 function validate(routes: SeoRouteEntry[]) {
   const ids = new Set<string>();
