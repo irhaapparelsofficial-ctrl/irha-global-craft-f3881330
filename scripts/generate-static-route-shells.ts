@@ -255,6 +255,18 @@ function productShell(product: BuyerReadyCatalogRoute, meta: RouteMeta): string 
     category: product.main_category_slug,
   });
   const quotePath = `/inquiry?${quoteParams.toString()}`;
+  const useCases = product.buyer_use_cases
+    .map((item) => `<li>${escapeHtml(item)}</li>`)
+    .join("");
+  const decisionPoints = product.decision_points
+    ? product.decision_points.map((item) => `<li>${escapeHtml(item)}</li>`).join("")
+    : "";
+  const samplingSteps = product.sampling_steps
+    .map((item) => `<li>${escapeHtml(item)}</li>`)
+    .join("");
+  const faqs = product.buyer_faqs
+    .map(({ question, answer }) => `<section><h3>${escapeHtml(question)}</h3><p>${escapeHtml(answer)}</p></section>`)
+    .join("");
   return `<main id="irha-static-crawler-shell" data-irha-route-shell="${escapeHtml(product.canonical_path)}" data-irha-product-shell="true" style="min-height:100vh;background:#0a0a0a;color:#f5f1e8;padding:40px 24px;font-family:Arial,sans-serif;line-height:1.6">
         <div style="max-width:1120px;margin:0 auto">
           <nav aria-label="Breadcrumb" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;font-size:14px">
@@ -271,15 +283,51 @@ function productShell(product: BuyerReadyCatalogRoute, meta: RouteMeta): string 
             <section style="flex:1 1 420px;min-width:0">
               <p style="margin:0 0 12px;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:#c9a45c">${escapeHtml(product.reference_code)} · Custom B2B Manufacturing</p>
               <h1 style="margin:0 0 20px;font-size:clamp(34px,6vw,64px);line-height:1.08">${escapeHtml(meta.heading)}</h1>
-              <p style="font-size:18px;color:#d7d0c4">${escapeHtml(meta.description)}</p>
+              <p style="font-size:18px;color:#d7d0c4">${escapeHtml(product.opening_answer)}</p>
               <p style="color:#d7d0c4"><strong>Style code:</strong> ${escapeHtml(product.reference_code)}</p>
-              <p style="color:#aaa29a">Material, construction, sizing, branding, packaging, sampling, quantity and production timing are confirmed against the buyer-approved specification.</p>
+              <p style="color:#aaa29a">${escapeHtml(product.moq_lead_time)}</p>
               <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:30px">
                 <a href="${escapeHtml(quotePath)}" style="color:#0a0a0a;background:#e8c477;padding:12px 18px;text-decoration:none">Request a Manufacturing Quote</a>
                 <a href="/contact" style="color:#e8c477;padding:11px 18px;border:1px solid #e8c477;text-decoration:none">Contact Irha Apparels</a>
               </div>
             </section>
           </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:48px">
+            <section style="border:1px solid #302b24;padding:24px">
+              <h2>Who this ${escapeHtml(product.product_name)} program is for</h2>
+              <ul>${useCases}</ul>
+              ${decisionPoints ? `<h3>Decisions to include in the brief</h3><ul>${decisionPoints}</ul>` : ""}
+            </section>
+            <section style="border:1px solid #302b24;padding:24px">
+              <h2>Material and construction review</h2>
+              <p>${escapeHtml(product.material_guidance)}</p>
+              <p>${escapeHtml(product.construction_guidance)}</p>
+            </section>
+            <section style="border:1px solid #302b24;padding:24px">
+              <h2>Customization, colour, size and fit</h2>
+              <p>${escapeHtml(product.customization_guidance)}</p>
+              <p>${escapeHtml(product.size_fit_guidance)}</p>
+            </section>
+            <section style="border:1px solid #302b24;padding:24px">
+              <h2>Sampling and approval workflow</h2>
+              <ol>${samplingSteps}</ol>
+            </section>
+            <section style="border:1px solid #302b24;padding:24px">
+              <h2>MOQ, production, packaging and logistics</h2>
+              <p>${escapeHtml(product.moq_lead_time)}</p>
+              <p>${escapeHtml(product.packaging_logistics)}</p>
+            </section>
+            <section style="border:1px solid #302b24;padding:24px">
+              <h2>${escapeHtml(product.product_name)} buyer questions</h2>
+              ${faqs}
+            </section>
+          </div>
+          <nav aria-label="Related buyer resources" style="display:flex;flex-wrap:wrap;gap:18px;margin-top:36px">
+            <a href="${escapeHtml(typePath)}" style="color:#e8c477">Related ${escapeHtml(product.product_type_name)}</a>
+            <a href="/materials" style="color:#e8c477">Material Library</a>
+            <a href="/resources" style="color:#e8c477">Buyer Guides</a>
+            <a href="/buyer-information" style="color:#e8c477">Order and Logistics Preparation</a>
+          </nav>
         </div>
       </main>`;
 }
@@ -306,11 +354,10 @@ function jsonLdScripts(pathname: string, meta: RouteMeta, product?: BuyerReadyCa
     "@id": `${canonical}#product`,
     url: canonical,
     name: product.product_name,
-    description: meta.description,
+    description: product.opening_answer,
     image: product.gallery,
     sku: product.reference_code,
     category: `${product.main_category_name} > ${product.audience_name} > ${product.product_type_name}`,
-    brand: { "@type": "Brand", name: "Irha Apparels" },
     manufacturer: { "@id": `${SITE_URL}/#organization` },
   };
   const breadcrumbs = {
@@ -403,8 +450,14 @@ async function verify(paths: string[], manifest: ManifestPayload) {
     if (!output.includes(`data-irha-product-shell="true"`)) throw new Error(`${product.reference_code} product shell missing`);
     if (!output.includes(`>${expectedH1}</h1>`)) throw new Error(`${product.reference_code} H1 mismatch`);
     if (!output.includes(product.image_url)) throw new Error(`${product.reference_code} front image missing`);
+    if (!output.includes('width="1200" height="1200"')) throw new Error(`${product.reference_code} image dimensions missing`);
+    if (!output.includes("Sampling and approval workflow")) throw new Error(`${product.reference_code} buyer workflow missing`);
+    if (!output.includes(`${escapeHtml(product.product_name)} buyer questions`)) throw new Error(`${product.reference_code} buyer FAQ missing`);
     if (!output.includes('"@type":"Product"')) throw new Error(`${product.reference_code} Product schema missing`);
     if (!output.includes('"@type":"BreadcrumbList"')) throw new Error(`${product.reference_code} Breadcrumb schema missing`);
+    if (/"offers"|"review"|"aggregateRating"|"price"/i.test(output.match(/<script data-irha-route-jsonld="true"[\s\S]*?<\/script>/gi)?.join("") ?? "")) {
+      throw new Error(`${product.reference_code} contains unsupported Product commerce schema`);
+    }
     if (output.includes(`<title>${HOME_TITLE}</title>`) || /Loading product/i.test(output)) {
       throw new Error(`${product.reference_code} still exposes a generic or loading shell`);
     }
