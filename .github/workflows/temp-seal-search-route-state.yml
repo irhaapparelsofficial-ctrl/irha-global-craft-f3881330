@@ -48,6 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch --no-tags --depth=1 origin main:refs/remotes/origin/main
           git show origin/main:package.json > /tmp/main-package.json
           node - <<'NODE'
           const fs = require('node:fs');
@@ -94,8 +95,8 @@ jobs:
                   if: always()
                   shell: bash
                   env:
-                    GH_TOKEN: ${{ github.token }}
-                    RECONCILIATION_JOB_STATUS: ${{ job.status }}
+                    GH_TOKEN: __GITHUB_TOKEN_EXPRESSION__
+                    RECONCILIATION_JOB_STATUS: __JOB_STATUS_EXPRESSION__
                   run: |
                     set -euo pipefail
                     state=failure
@@ -115,6 +116,8 @@ jobs:
                       -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \\
                       >/dev/null
           '''.replace('                ', '      ')
+          status_step = status_step.replace('__GITHUB_TOKEN_EXPRESSION__', '$' + '{{ github.token }}')
+          status_step = status_step.replace('__JOB_STATUS_EXPRESSION__', '$' + '{{ job.status }}')
           if 'Publish exact reconciliation status' not in reconcile:
               reconcile = reconcile.rstrip() + status_step + '\n'
           reconcile_path.write_text(reconcile)
