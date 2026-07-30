@@ -29,12 +29,12 @@ concurrency:
 
 env:
   PREVIEW_BRANCH: github-preview
-  PREVIEW_URL: https://github-preview.${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}.pages.dev
+  PREVIEW_URL: https://github-preview.irha-apparels.pages.dev
   PRODUCTION_ORIGIN: https://irhaapparels.com
   LAST_STAGED_OBJECT: https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/responsive/1600/catalog/recovery/ia-media-e001-20260730/deer-suede-lederhosen/06-macro-1VyctJT-q7ExkAf90TXGp2DKL4czoWUtV.webp.webp
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-  CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
+  CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
 
 jobs:
   visual-acceptance:
