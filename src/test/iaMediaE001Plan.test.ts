@@ -87,20 +87,23 @@ describe("IA-MEDIA-E001 deterministic media plan", () => {
     }
   });
 
-  it("binds every buyer-facing runtime URL to the exact visual plan", () => {
+  it("binds every buyer-facing runtime URL to the exact canonical product path", () => {
     expect(Object.keys(IA_MEDIA_E001_PRODUCT_MEDIA).sort()).toEqual(
       plan.PRODUCTS.map((product) => product.slug).sort(),
     );
 
     for (const product of plan.PRODUCTS) {
+      const code = product.sku.replace(/^IRHA-/, "").toLowerCase();
       const expected = [...product.images]
         .sort((a, b) => a.displayOrder - b.displayOrder)
         .map((image) => {
           const order = String(image.displayOrder).padStart(2, "0");
-          return `${STORAGE_ORIGIN}/catalog/recovery/${plan.MEDIA_VERSION}/${product.slug}/${order}-${image.role}-${image.driveFileId}.webp`;
+          return `${STORAGE_ORIGIN}/catalog/products/${code}-${product.slug}/${plan.MEDIA_VERSION}/${order}-${image.role}-${image.driveFileId}.webp`;
         });
       expect(IA_MEDIA_E001_PRODUCT_MEDIA[product.slug]?.gallery).toEqual(expected);
       expect(expected[0]).toContain("/01-hero-");
+      expect(expected.every((url) => url.includes("/catalog/products/"))).toBe(true);
+      expect(expected.every((url) => !url.includes("/catalog/recovery/"))).toBe(true);
       expect(new Set(expected).size).toBe(expected.length);
     }
   });
@@ -115,6 +118,7 @@ describe("IA-MEDIA-E001 deterministic media plan", () => {
     for (const implementation of [executor, staging]) {
       expect(implementation).toContain("thumbnails/${originalPath}.webp");
       expect(implementation).toContain("responsive/${width}/${originalPath}.webp");
+      expect(implementation).toContain("catalog/products/${productCode(product)}-${product.slug}/${MEDIA_VERSION}");
       expect(implementation).toContain("upsert: false");
       expect(implementation).toContain("Original checksum mismatch");
       expect(implementation).toContain("verifyWebp");
@@ -122,6 +126,10 @@ describe("IA-MEDIA-E001 deterministic media plan", () => {
       expect(implementation).not.toContain("responsive/2400/");
     }
     expect(executor).toContain("rollback-manifest.json");
+    expect(executor).toContain("mediaAssets");
+    expect(executor).toContain("media_asset_id");
+    expect(executor).toContain("checksum_sha256");
+    expect(executor).toContain("UPDATE public.media_assets");
   });
 
   it("keeps branch staging immutable and database-independent", () => {
@@ -129,7 +137,7 @@ describe("IA-MEDIA-E001 deterministic media plan", () => {
     expect(staging).toContain("databaseMutated: false");
     expect(staging).toContain("stage-result.json");
     expect(staging).toContain("Staged and verified");
-    expect(staging).not.toContain('/database/query');
+    expect(staging).not.toContain("/database/query");
     expect(staging).not.toContain('.from("products")');
     expect(staging).not.toContain("UPDATE public.products");
     expect(staging).not.toContain("UPDATE public.catalog_drive_files");
