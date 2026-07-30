@@ -60,13 +60,14 @@ describe("IndexNow post-production contract", () => {
     expect(workflow).toContain('context="Irha Search Discovery"');
   });
 
-  it("requires the committed material route state to remain build-current", () => {
+  it("requires the committed material route state to remain generation-current", () => {
     const packageJson = read("package.json");
-    const qualityWorkflow = read(".github/workflows/quality.yml");
+    const generator = read("scripts/generate-search-route-state.mjs");
 
-    expect(packageJson).toContain("node scripts/generate-search-route-state.mjs");
-    expect(qualityWorkflow).toContain("Verify committed material search route state");
-    expect(qualityWorkflow).toContain("git diff --exit-code -- seo/search-route-state.json");
+    expect(packageJson).toContain("node scripts/generate-search-route-state.mjs --write");
+    expect(packageJson).toContain("node scripts/generate-search-route-state.mjs --check");
+    expect(generator).toContain("Committed material search route state is stale");
+    expect(generator).toContain("checkSearchRouteState");
   });
 
   it("creates a real observer job for irrelevant upstream completions", () => {
