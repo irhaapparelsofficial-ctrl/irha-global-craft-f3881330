@@ -84,8 +84,25 @@ const LEGACY_REDIRECTS = [
 ] as const;
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); }, [pathname]);
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (hash) {
+      const id = decodeURIComponent(hash.slice(1));
+      let frame = 0;
+      let attempts = 0;
+      const tryScroll = () => {
+        const target = document.getElementById(id);
+        if (target) {
+          target.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" });
+          return;
+        }
+        if (attempts++ < 20) frame = window.requestAnimationFrame(tryScroll);
+      };
+      frame = window.requestAnimationFrame(tryScroll);
+      return () => window.cancelAnimationFrame(frame);
+    }
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, [pathname, hash]);
   return null;
 }
 
