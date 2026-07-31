@@ -158,25 +158,18 @@ jobs:
           echo "Exact-head Quality Gate/Preview checks did not complete within 30 minutes"
           exit 1
 
-      - name: Apply guarded production media remediation
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          IA_MEDIA_MODE: apply
-          IA_MEDIA_CONFIRM: APPLY_IA_MEDIA_E001
-        run: node scripts/remediate-p001-p007-media.mjs
-
-      - name: Reverify exact production objects and database mappings
+      - name: Verify existing guarded production media remediation
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           IA_MEDIA_MODE: verify
           IA_MEDIA_CONFIRM: NO
         run: node scripts/remediate-p001-p007-media.mjs
 
-      - name: Upload visual, remediation and rollback evidence
+      - name: Upload visual and production-state verification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ia-media-e001-visual-remediation-${{ github.sha }}
+          name: ia-media-e001-visual-verification-${{ github.sha }}
           path: |
             artifacts/ia-media-e001-visual
             artifacts/ia-media-e001
@@ -192,10 +185,10 @@ jobs:
           else
             echo "IA-MEDIA-E001 visual report was not generated" >> "$GITHUB_STEP_SUMMARY"
           fi
-          if [ -f artifacts/ia-media-e001/apply-result.json ]; then
-            echo "- Guarded production remediation: **applied and verified**" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/ia-media-e001/post-mutation-verification.json ]; then
+            echo "- Guarded production remediation: **previously applied; exact current state verified without a second mutation**" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "- Guarded production remediation: **not applied**" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Guarded production remediation state: **not verified**" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   production-visual-acceptance:
