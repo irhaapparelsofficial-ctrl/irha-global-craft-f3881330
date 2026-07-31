@@ -1,0 +1,294 @@
+name: IA Media E001 Content Export
+
+on:
+  pull_request:
+    branches:
+      - codex/ia-media-e001-recovery-base-v4
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: ia-media-e001-content-export-v1
+  cancel-in-progress: false
+
+jobs:
+  export:
+    if: github.event.pull_request.head.ref == 'codex/ia-media-e001-export-controller'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      VERIFIED_CONTROLLER: c3053b1ef60405d0b7f210f67b6d3a1a3cad5c17
+      VERIFIED_RUN: "30667853177"
+      SOURCE_SHA: ca03213251658ae91a9f525011170225829ee19f
+      SOURCE_BRANCH: codex/official-logo-p001-p007-media-recovery
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+      CONTENT_BRANCH: codex/ia-media-e001-clean-content
+      RECOVERY_BASE: codex/ia-media-e001-recovery-base-v4
+
+    steps:
+      - name: Checkout verified controller
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERIFIED_CONTROLLER }}
+          fetch-depth: 0
+
+      - name: Verify immutable inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main "$SOURCE_BRANCH" "$RECOVERY_BASE" "$CLEAN_BRANCH" "$CONTENT_BRANCH" --no-tags
+          test "$(git rev-parse HEAD)" = "$VERIFIED_CONTROLLER"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$SOURCE_BRANCH")" = "$SOURCE_SHA"
+          test "$(git rev-parse "origin/$RECOVERY_BASE")" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$VERIFIED_CONTROLLER"
+          test "$(git rev-parse "origin/$CONTENT_BRANCH")" = "$EXPECTED_MAIN"
+          cp .github/recovery/ia-media-e001-patch.py /tmp/ia-media-e001-patch.py
+          cp .github/recovery/product-primary-image-path.mjs /tmp/product-primary-image-path.mjs
+          cp .github/recovery/iaMediaE001ImageSeoPath.test.ts /tmp/iaMediaE001ImageSeoPath.test.ts
+
+      - name: Assemble exact recovery tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --detach "$EXPECTED_MAIN"
+          selected=(
+            ".github/workflows/ia-media-e001-remediation.yml"
+            ".github/workflows/ia-media-e001-visual-acceptance.yml"
+            "docs/IA_MEDIA_E001_STAGED_EVIDENCE.md"
+            "ops/ia-media-e001/media-plan.mjs"
+            "package.json"
+            "scripts/capture-ia-media-e001-visual-evidence.mjs"
+            "scripts/remediate-p001-p007-media.mjs"
+            "scripts/resolve-cloudflare-preview-deployment.mjs"
+            "scripts/stage-p001-p007-media.mjs"
+            "scripts/version-official-brand-assets.mjs"
+            "src/components/ThumbnailImage.tsx"
+            "src/components/layout/Navbar.tsx"
+            "src/hooks/usePublishedCatalogTaxonomy.ts"
+            "src/lib/__checks__/productGalleryAuthority.test.ts"
+            "src/lib/assetResolver.ts"
+            "src/lib/brandAssets.ts"
+            "src/lib/iaMediaE001Runtime.ts"
+            "src/lib/imageLoading.ts"
+            "src/lib/productGalleryAuthority.ts"
+            "src/test/faviconBranding.test.ts"
+            "src/test/iaMediaE001AuthorizationContract.test.ts"
+            "src/test/iaMediaE001Plan.test.ts"
+            "src/test/iaMediaE001TaxonomyFallback.test.ts"
+            "src/test/iaUxE001.test.tsx"
+            "src/test/publicBrandingSanitation.test.ts"
+            "supabase/migrations/20260731151915_align_drive_gallery_with_selected_media.sql"
+            "supabase/repository-migrations.json"
+          )
+          git checkout "$SOURCE_SHA" -- "${selected[@]}"
+          python /tmp/ia-media-e001-patch.py
+          mkdir -p scripts/lib
+          cp /tmp/product-primary-image-path.mjs scripts/lib/product-primary-image-path.mjs
+          cp /tmp/iaMediaE001ImageSeoPath.test.ts src/test/iaMediaE001ImageSeoPath.test.ts
+          git add -N scripts/lib/product-primary-image-path.mjs src/test/iaMediaE001ImageSeoPath.test.ts
+          git diff --check
+
+          cat > /tmp/allowed-files.txt <<'EOF'
+          .github/workflows/ia-media-e001-remediation.yml
+          .github/workflows/ia-media-e001-visual-acceptance.yml
+          docs/IA_MEDIA_E001_STAGED_EVIDENCE.md
+          ops/ia-media-e001/media-plan.mjs
+          package.json
+          scripts/capture-ia-media-e001-visual-evidence.mjs
+          scripts/lib/product-primary-image-path.mjs
+          scripts/remediate-p001-p007-media.mjs
+          scripts/resolve-cloudflare-preview-deployment.mjs
+          scripts/stage-p001-p007-media.mjs
+          scripts/verify-built-image-seo.mjs
+          scripts/version-official-brand-assets.mjs
+          src/components/ThumbnailImage.tsx
+          src/components/layout/Footer.tsx
+          src/components/layout/Navbar.tsx
+          src/hooks/usePublishedCatalogTaxonomy.ts
+          src/lib/__checks__/productGalleryAuthority.test.ts
+          src/lib/assetResolver.ts
+          src/lib/brandAssets.ts
+          src/lib/iaMediaE001Runtime.ts
+          src/lib/imageLoading.ts
+          src/lib/productGalleryAuthority.ts
+          src/test/faviconBranding.test.ts
+          src/test/iaMediaE001AuthorizationContract.test.ts
+          src/test/iaMediaE001ImageSeoPath.test.ts
+          src/test/iaMediaE001Plan.test.ts
+          src/test/iaMediaE001TaxonomyFallback.test.ts
+          src/test/iaUxE001.test.tsx
+          src/test/publicBrandingSanitation.test.ts
+          supabase/migrations/20260731151915_align_drive_gallery_with_selected_media.sql
+          supabase/repository-migrations.json
+          EOF
+          sed -i 's/^          //' /tmp/allowed-files.txt
+          sort -o /tmp/allowed-files.txt /tmp/allowed-files.txt
+          git diff --name-only "$EXPECTED_MAIN" | sort > /tmp/actual-files.txt
+          diff -u /tmp/allowed-files.txt /tmp/actual-files.txt
+          test ! -e .semgrep.yml
+          test -z "$(git diff --name-only "$EXPECTED_MAIN" -- .github/workflows/quality.yml src/components/CookieConsent.tsx src/components/ui/toaster.tsx src/index.css)"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Reconfirm focused gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t lint_files < <(git diff --name-only "$EXPECTED_MAIN" -- '*.ts' '*.tsx' '*.mjs')
+          npx eslint "${lint_files[@]}"
+          npx vitest run src/test/iaMediaE001ImageSeoPath.test.ts
+
+      - name: Build and materialize route state
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp package.json /tmp/ia-media-package.json
+          cp seo/search-route-state.json /tmp/search-route-state.before.json
+          restore_package() {
+            cp /tmp/ia-media-package.json package.json
+          }
+          trap restore_package EXIT
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("package.json")
+          source = path.read_text(encoding="utf-8")
+          old = "node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check"
+          new = "node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --write"
+          count = source.count(old)
+          if count < 1:
+              raise SystemExit("final search route-state command not found")
+          path.write_text(source.replace(old, new), encoding="utf-8")
+          PY
+          npm run build
+          restore_package
+          trap - EXIT
+          cmp -s package.json /tmp/ia-media-package.json
+          node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check
+
+      - name: Constrain material change and remove residue
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+
+          const before = JSON.parse(readFileSync("/tmp/search-route-state.before.json", "utf8"));
+          const after = JSON.parse(readFileSync("seo/search-route-state.json", "utf8"));
+          const beforeMap = new Map(before.routes.map((route) => [route.url, route.digest]));
+          const afterMap = new Map(after.routes.map((route) => [route.url, route.digest]));
+          if (before.schemaVersion !== after.schemaVersion) throw new Error("route-state schema changed");
+          if (before.canonicalOrigin !== after.canonicalOrigin) throw new Error("canonical origin changed");
+          if (before.routeCount !== after.routeCount) throw new Error("route count changed");
+          if (beforeMap.size !== afterMap.size) throw new Error("URL set size changed");
+          for (const url of beforeMap.keys()) {
+            if (!afterMap.has(url)) throw new Error(`route removed: ${url}`);
+          }
+          for (const url of afterMap.keys()) {
+            if (!beforeMap.has(url)) throw new Error(`route added: ${url}`);
+          }
+          const changedRoutes = [...afterMap.entries()]
+            .filter(([url, digest]) => beforeMap.get(url) !== digest)
+            .map(([url]) => url)
+            .sort();
+          const expectedSuffixes = [
+            "/products/deer-suede-lederhosen",
+            "/products/goat-suede-lederhosen",
+            "/products/knee-length-lederhosen",
+            "/products/long-lederhosen",
+            "/products/premium-embroidered-lederhosen",
+            "/products/short-lederhosen",
+            "/products/vintage-lederhosen",
+          ];
+          if (changedRoutes.length !== expectedSuffixes.length) {
+            throw new Error(`expected 7 changed routes, received ${changedRoutes.length}`);
+          }
+          for (const suffix of expectedSuffixes) {
+            if (!changedRoutes.some((url) => url.endsWith(suffix))) {
+              throw new Error(`missing expected changed route: ${suffix}`);
+            }
+          }
+          writeFileSync("/tmp/material-route-changes.json", `${JSON.stringify(changedRoutes, null, 2)}\n`, "utf8");
+          NODE
+
+          git restore --source="$EXPECTED_MAIN" --staged --worktree -- public package-lock.json
+          git clean -fdx -- public dist
+          test -z "$(git clean -ndx -- public dist)"
+
+          if ! git diff --quiet -- seo/search-route-state.json; then
+            echo "seo/search-route-state.json" >> /tmp/allowed-files.txt
+          fi
+          sort -u -o /tmp/allowed-files.txt /tmp/allowed-files.txt
+          git diff --name-only "$EXPECTED_MAIN" | sort > /tmp/actual-files.txt
+          diff -u /tmp/allowed-files.txt /tmp/actual-files.txt
+          test -z "$(git diff --name-only "$EXPECTED_MAIN" -- public/ dist/ package-lock.json)"
+          git diff --check
+
+      - name: Export workflow payload and content commit
+        id: export
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload=/tmp/ia-media-e001-workflow-payload
+          rm -rf "$payload"
+          mkdir -p "$payload/.github/workflows"
+          cp .github/workflows/ia-media-e001-remediation.yml "$payload/.github/workflows/"
+          cp .github/workflows/ia-media-e001-visual-acceptance.yml "$payload/.github/workflows/"
+          cp /tmp/material-route-changes.json "$payload/"
+          {
+            echo "expected_main=$EXPECTED_MAIN"
+            echo "verified_controller=$VERIFIED_CONTROLLER"
+            echo "verified_full_run=$VERIFIED_RUN"
+            echo "source_sha=$SOURCE_SHA"
+            echo "production_mutation=no"
+          } > "$payload/verification.txt"
+
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$EXPECTED_MAIN"
+          test "$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)" = "$SOURCE_SHA"
+          test "$(git ls-remote origin "refs/heads/$CLEAN_BRANCH" | cut -f1)" = "$VERIFIED_CONTROLLER"
+          test "$(git ls-remote origin "refs/heads/$CONTENT_BRANCH" | cut -f1)" = "$EXPECTED_MAIN"
+
+          git switch -c ia-media-e001-content-commit
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git restore --staged -- \
+            .github/workflows/ia-media-e001-remediation.yml \
+            .github/workflows/ia-media-e001-visual-acceptance.yml
+          grep -v -E '^\.github/workflows/ia-media-e001-(remediation|visual-acceptance)\.yml$' \
+            /tmp/allowed-files.txt > /tmp/content-files.txt
+          git diff --cached --name-only | sort > /tmp/staged-files.txt
+          diff -u /tmp/content-files.txt /tmp/staged-files.txt
+          git commit -m "fix(media): recover verified IA-MEDIA-E001 content"
+          content_sha="$(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_MAIN"
+          echo "content_sha=$content_sha" >> "$GITHUB_OUTPUT"
+          echo "$content_sha" > "$payload/content-head-sha.txt"
+          git push --force-with-lease="refs/heads/$CONTENT_BRANCH:$EXPECTED_MAIN" \
+            origin "HEAD:refs/heads/$CONTENT_BRANCH"
+
+      - name: Upload workflow payload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-workflow-payload-${{ steps.export.outputs.content_sha || github.run_id }}
+          path: /tmp/ia-media-e001-workflow-payload
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish summary
+        if: always()
+        run: |
+          {
+            echo "## IA-MEDIA-E001 permission-safe content export"
+            echo "- Verified controller: \`$VERIFIED_CONTROLLER\`"
+            echo "- Prior full validation run: \`$VERIFIED_RUN\`"
+            echo "- Content head: \`${{ steps.export.outputs.content_sha || 'not-created' }}\`"
+            echo "- Production mutation: **no**"
+          } >> "$GITHUB_STEP_SUMMARY"
