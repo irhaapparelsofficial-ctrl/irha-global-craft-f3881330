@@ -403,6 +403,14 @@
       "git_blob_sha": "82b99c356d9647f823c8dcf693726123b23bbe08",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260731151915",
+      "name": "align_drive_gallery_with_selected_media",
+      "path": "supabase/migrations/20260731151915_align_drive_gallery_with_selected_media.sql",
+      "git_blob_sha": "a50d952005b7d15e29165b6c1e12987d2ea0aa91",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
