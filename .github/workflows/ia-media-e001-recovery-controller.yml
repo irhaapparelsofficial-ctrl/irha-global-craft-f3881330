@@ -25,6 +25,7 @@ jobs:
       SOURCE_BRANCH: codex/official-logo-p001-p007-media-recovery
       CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
       RECOVERY_BASE: codex/ia-media-e001-recovery-base-v4
+
     steps:
       - name: Checkout exact controller head
         uses: actions/checkout@v4
@@ -32,7 +33,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Verify immutable heads and preserve controller inputs
+      - name: Verify immutable heads and preserve recovery inputs
         shell: bash
         run: |
           set -euo pipefail
@@ -46,7 +47,7 @@ jobs:
           cp .github/recovery/product-primary-image-path.mjs /tmp/product-primary-image-path.mjs
           cp .github/recovery/iaMediaE001ImageSeoPath.test.ts /tmp/iaMediaE001ImageSeoPath.test.ts
 
-      - name: Assemble exact clean recovery from main
+      - name: Assemble exact clean recovery from immutable main
         shell: bash
         run: |
           set -euo pipefail
@@ -87,6 +88,7 @@ jobs:
           cp /tmp/iaMediaE001ImageSeoPath.test.ts src/test/iaMediaE001ImageSeoPath.test.ts
           git add -N scripts/lib/product-primary-image-path.mjs src/test/iaMediaE001ImageSeoPath.test.ts
           git diff --check
+
           cat > /tmp/allowed-files.txt <<'EOF'
           .github/workflows/ia-media-e001-remediation.yml
           .github/workflows/ia-media-e001-visual-acceptance.yml
@@ -121,8 +123,8 @@ jobs:
           supabase/repository-migrations.json
           EOF
           sed -i 's/^          //' /tmp/allowed-files.txt
-          git diff --name-only "$EXPECTED_MAIN" | sort > /tmp/actual-files.txt
           sort -o /tmp/allowed-files.txt /tmp/allowed-files.txt
+          git diff --name-only "$EXPECTED_MAIN" | sort > /tmp/actual-files.txt
           diff -u /tmp/allowed-files.txt /tmp/actual-files.txt
           test ! -e .semgrep.yml
           test -z "$(git diff --name-only "$EXPECTED_MAIN" -- .github/workflows/quality.yml src/components/CookieConsent.tsx src/components/ui/toaster.tsx src/index.css)"
@@ -163,7 +165,7 @@ jobs:
       - name: Run full tests
         run: npm test -- --run
 
-      - name: Run one production build and materialize final route state
+      - name: Build once and materialize final route state
         shell: bash
         run: |
           set -euo pipefail
@@ -192,7 +194,7 @@ jobs:
           cmp -s package.json /tmp/ia-media-package.json
           node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check
 
-      - name: Constrain generated route-state to exact final-manifest state
+      - name: Constrain route state and remove all build residue
         shell: bash
         run: |
           set -euo pipefail
@@ -222,6 +224,11 @@ jobs:
           writeFileSync("/tmp/material-route-changes.json", `${JSON.stringify(changedRoutes, null, 2)}\n`, "utf8");
           console.log(`Final-manifest route state verified: URLs unchanged, changed digests=${changedRoutes.length}.`);
           NODE
+
+          git restore --source="$EXPECTED_MAIN" --staged --worktree -- public package-lock.json
+          git clean -fdx -- public dist
+          test -z "$(git clean -ndx -- public dist)"
+
           if ! git diff --quiet -- seo/search-route-state.json; then
             echo "seo/search-route-state.json" >> /tmp/allowed-files.txt
           fi
@@ -254,6 +261,7 @@ jobs:
             echo "full_tests=passed"
             echo "production_build=passed"
             echo "final_dist_route_state_check=passed"
+            echo "build_residue_removed=passed"
           } > "$evidence_dir/pre-push-verification.txt"
 
       - name: Replace controller branch with one clean commit
