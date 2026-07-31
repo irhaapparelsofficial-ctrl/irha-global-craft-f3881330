@@ -55,7 +55,9 @@ jobs:
           from pathlib import Path
           import re
 
+          expression_open = "$" + "{{"
           clean_branch = "codex/ia-media-e001-clean-recovery"
+          source_branch = "codex/official-logo-p001-p007-media-recovery"
 
           remediation = Path(".github/workflows/ia-media-e001-remediation.yml")
           text = remediation.read_text(encoding="utf-8")
@@ -68,33 +70,50 @@ jobs:
           )
           if count != 1:
               raise SystemExit("could not remove automatic staging trigger")
-          replacements = {
-              "run-name: IA-MEDIA-E001 ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'stage' }} · ${{ github.sha }}":
-                  "run-name: IA-MEDIA-E001 ${{ inputs.mode }} · ${{ github.sha }}",
-              "group: ${{ (github.event_name != 'workflow_dispatch' || inputs.mode == 'stage' || inputs.mode == 'apply') && 'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}":
-                  "group: ${{ (inputs.mode == 'stage' || inputs.mode == 'apply') && 'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}",
-              "IA_MEDIA_EFFECTIVE_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'stage' }}":
-                  "IA_MEDIA_EFFECTIVE_MODE: ${{ inputs.mode }}",
-              "IA_MEDIA_EFFECTIVE_CONFIRM: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm || 'NO' }}":
-                  "IA_MEDIA_EFFECTIVE_CONFIRM: ${{ inputs.confirm }}",
-          }
-          for old, new in replacements.items():
-              if old not in text:
-                  raise SystemExit(f"remediation replacement anchor missing: {old}")
-              text = text.replace(old, new, 1)
+
+          run_name = (
+              "run-name: IA-MEDIA-E001 "
+              + expression_open
+              + " inputs.mode }} · "
+              + expression_open
+              + " github.sha }}"
+          )
+          group = (
+              "  group: "
+              + expression_open
+              + " (inputs.mode == 'stage' || inputs.mode == 'apply') && "
+              + "'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}"
+          )
+          mode = "IA_MEDIA_EFFECTIVE_MODE: " + expression_open + " inputs.mode }}"
+          confirm = "IA_MEDIA_EFFECTIVE_CONFIRM: " + expression_open + " inputs.confirm }}"
+
+          substitutions = (
+              (r"^run-name: IA-MEDIA-E001 .*?$", run_name),
+              (r"^  group: .*?$", group),
+              (r"^IA_MEDIA_EFFECTIVE_MODE: .*?$", mode),
+              (r"^IA_MEDIA_EFFECTIVE_CONFIRM: .*?$", confirm),
+          )
+          for pattern, replacement in substitutions:
+              text, replaced = re.subn(pattern, replacement, text, count=1, flags=re.M)
+              if replaced != 1:
+                  raise SystemExit(f"remediation replacement count changed for {pattern}: {replaced}")
+
+          if re.search(r"^  push:$", text, flags=re.M):
+              raise SystemExit("automatic push trigger remains")
+          for expected in (run_name, group, mode, confirm):
+              if expected not in text:
+                  raise SystemExit(f"patched remediation value missing: {expected}")
           remediation.write_text(text, encoding="utf-8")
 
           visual = Path(".github/workflows/ia-media-e001-visual-acceptance.yml")
-          text = visual.read_text(encoding="utf-8")
-          source_branch = "codex/official-logo-p001-p007-media-recovery"
-          if text.count(source_branch) != 1:
+          visual_text = visual.read_text(encoding="utf-8")
+          if visual_text.count(source_branch) != 1:
               raise SystemExit("visual workflow source branch guard count changed")
-          visual.write_text(text.replace(source_branch, clean_branch, 1), encoding="utf-8")
+          visual_text = visual_text.replace(source_branch, clean_branch, 1)
+          if source_branch in visual_text or clean_branch not in visual_text:
+              raise SystemExit("visual workflow branch guard was not patched")
+          visual.write_text(visual_text, encoding="utf-8")
           PY
-
-          test -z "$(grep -n 'branches:.*codex/official-logo-p001-p007-media-recovery' .github/workflows/ia-media-e001-remediation.yml || true)"
-          grep -Fq "run-name: IA-MEDIA-E001 ${{ inputs.mode }} · ${{ github.sha }}" .github/workflows/ia-media-e001-remediation.yml
-          grep -Fq "github.event.pull_request.head.ref == 'codex/ia-media-e001-clean-recovery'" .github/workflows/ia-media-e001-visual-acceptance.yml
 
           payload=/tmp/ia-media-e001-workflow-payload
           rm -rf "$payload"
