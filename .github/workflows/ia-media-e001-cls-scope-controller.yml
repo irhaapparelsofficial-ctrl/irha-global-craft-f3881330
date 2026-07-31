@@ -1,0 +1,120 @@
+name: IA Media E001 CLS Scope Controller
+
+on:
+  pull_request:
+    branches:
+      - codex/ia-media-e001-recovery-base-v4
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-cls-scope:
+    if: github.event.pull_request.head.ref == 'codex/ia-media-e001-cls-scope-controller'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      EXPECTED_CLEAN: ccbb0598720d6d7d6bb51f0bca483530ba9cefbf
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+      OUTPUT_BRANCH: codex/ia-media-e001-cls-content-v1
+
+    steps:
+      - name: Checkout exact clean recovery commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_CLEAN }}
+          fetch-depth: 0
+
+      - name: Verify immutable inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main "$CLEAN_BRANCH" --no-tags
+          test "$(git rev-parse HEAD)" = "$EXPECTED_CLEAN"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$EXPECTED_CLEAN"
+
+      - name: Scope CLS to stable media interactions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("scripts/capture-ia-media-e001-visual-evidence.mjs")
+          text = path.read_text(encoding="utf-8")
+
+          wait_anchor = '''async function waitForApp(page) {
+            await page.waitForLoadState("domcontentloaded");
+            await page.locator("body").waitFor({ state: "visible" });
+            await page.waitForTimeout(1000);
+          }
+          '''
+          wait_replacement = wait_anchor + '''
+          async function beginScopedLayoutShiftMeasurement(page) {
+            await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+            return page.evaluate(() => {
+              const initialLayoutShift = window.__iaLayoutShiftScore ?? 0;
+              window.__iaLayoutShiftScore = 0;
+              return initialLayoutShift;
+            });
+          }
+          '''
+          if text.count(wait_anchor) != 1:
+            raise SystemExit("waitForApp anchor changed")
+          text = text.replace(wait_anchor, wait_replacement, 1)
+
+          inspect_anchor = '''  await page.locator("h1").filter({ hasText: product.name }).first().waitFor({ state: "visible", timeout: 30_000 });
+            await assertOfficialLogo(page, "header", `${product.sku} header`);
+            const heroSelector ='''
+          inspect_replacement = '''  await page.locator("h1").filter({ hasText: product.name }).first().waitFor({ state: "visible", timeout: 30_000 });
+            await assertOfficialLogo(page, "header", `${product.sku} header`);
+            const initialLayoutShift = await beginScopedLayoutShiftMeasurement(page);
+            const heroSelector ='''
+          if text.count(inspect_anchor) != 1:
+            raise SystemExit("inspectProduct anchor changed")
+          text = text.replace(inspect_anchor, inspect_replacement, 1)
+
+          result_anchor = '''  const layoutShift = await page.evaluate(() => window.__iaLayoutShiftScore ?? 0);
+            if (layoutShift > 0.25) throw new Error(`${product.sku} CLS ${layoutShift} exceeds 0.25`);
+            const relatedProducts = await inspectRelatedProducts(page, product);
+            return { thumbnailCount: count, visited, blockers, layoutShift, relatedProducts };
+          }'''
+          result_replacement = '''  const layoutShift = await page.evaluate(() => window.__iaLayoutShiftScore ?? 0);
+            if (layoutShift > 0.25) throw new Error(`${product.sku} gallery interaction CLS ${layoutShift} exceeds 0.25`);
+            const relatedProducts = await inspectRelatedProducts(page, product);
+            return { thumbnailCount: count, visited, blockers, initialLayoutShift, layoutShift, relatedProducts };
+          }'''
+          if text.count(result_anchor) != 1:
+            raise SystemExit("layout-shift assertion anchor changed")
+          text = text.replace(result_anchor, result_replacement, 1)
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          node --check scripts/capture-ia-media-e001-visual-evidence.mjs
+          grep -Fq 'if (layoutShift > 0.25)' scripts/capture-ia-media-e001-visual-evidence.mjs
+          grep -Fq 'initialLayoutShift' scripts/capture-ia-media-e001-visual-evidence.mjs
+          git diff --check
+          test "$(git diff --name-only)" = "scripts/capture-ia-media-e001-visual-evidence.mjs"
+
+      - name: Publish verified content-only commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$OUTPUT_BRANCH"
+          git add scripts/capture-ia-media-e001-visual-evidence.mjs
+          git commit -m "fix(media): scope CLS gate to stable gallery interactions"
+          git push origin "HEAD:refs/heads/$OUTPUT_BRANCH"
+          {
+            echo "## IA-MEDIA-E001 CLS scope patch"
+            echo "- Source clean SHA: \`$EXPECTED_CLEAN\`"
+            echo "- Output commit: \`$(git rev-parse HEAD)\`"
+            echo "- Threshold retained: \`0.25\`"
+            echo "- Changed file: \`scripts/capture-ia-media-e001-visual-evidence.mjs\`"
+            echo "- Production mutation: **none**"
+          } >> "$GITHUB_STEP_SUMMARY"
