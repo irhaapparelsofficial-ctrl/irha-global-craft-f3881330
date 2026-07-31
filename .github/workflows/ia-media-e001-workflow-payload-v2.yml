@@ -1,0 +1,144 @@
+name: IA Media E001 Workflow Payload V2
+
+on:
+  pull_request:
+    branches:
+      - codex/ia-media-e001-recovery-base-v4
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.event.pull_request.head.ref == 'codex/ia-media-e001-payload-export-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      VERIFIED_CONTROLLER: c3053b1ef60405d0b7f210f67b6d3a1a3cad5c17
+      SOURCE_SHA: ca03213251658ae91a9f525011170225829ee19f
+      SOURCE_BRANCH: codex/official-logo-p001-p007-media-recovery
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+      CONTENT_BRANCH: codex/ia-media-e001-clean-content
+      CONTENT_SHA: d5a759c2ddc87b275ddd1b0b61eb75ecc43d0340
+      RECOVERY_BASE: codex/ia-media-e001-recovery-base-v4
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERIFIED_CONTROLLER }}
+          fetch-depth: 0
+
+      - name: Verify immutable refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main "$SOURCE_BRANCH" "$RECOVERY_BASE" "$CLEAN_BRANCH" "$CONTENT_BRANCH" --no-tags
+          test "$(git rev-parse HEAD)" = "$VERIFIED_CONTROLLER"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$SOURCE_BRANCH")" = "$SOURCE_SHA"
+          test "$(git rev-parse "origin/$RECOVERY_BASE")" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$VERIFIED_CONTROLLER"
+          test "$(git rev-parse "origin/$CONTENT_BRANCH")" = "$CONTENT_SHA"
+
+      - name: Build exact workflow payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout "$SOURCE_SHA" -- \
+            .github/workflows/ia-media-e001-remediation.yml \
+            .github/workflows/ia-media-e001-visual-acceptance.yml
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          open_expr = "$" + "{{"
+          source_branch = "codex/official-logo-p001-p007-media-recovery"
+          clean_branch = "codex/ia-media-e001-clean-recovery"
+
+          remediation = Path(".github/workflows/ia-media-e001-remediation.yml")
+          text = remediation.read_text(encoding="utf-8")
+          text, count = re.subn(
+              r"on:\n  push:\n.*?  workflow_dispatch:\n",
+              "on:\n  workflow_dispatch:\n",
+              text,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise SystemExit("automatic trigger block count changed")
+
+          run_name = "run-name: IA-MEDIA-E001 " + open_expr + " inputs.mode }} · " + open_expr + " github.sha }}"
+          group = (
+              "  group: " + open_expr
+              + " (inputs.mode == 'stage' || inputs.mode == 'apply') && "
+              + "'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}"
+          )
+          mode_value = "IA_MEDIA_EFFECTIVE_MODE: " + open_expr + " inputs.mode }}"
+          confirm_value = "IA_MEDIA_EFFECTIVE_CONFIRM: " + open_expr + " inputs.confirm }}"
+
+          text, count = re.subn(r"^run-name: IA-MEDIA-E001 .*?$", run_name, text, count=1, flags=re.M)
+          if count != 1:
+              raise SystemExit("run-name count changed")
+          text, count = re.subn(r"^  group: .*?$", group, text, count=1, flags=re.M)
+          if count != 1:
+              raise SystemExit("concurrency group count changed")
+          text, count = re.subn(
+              r"^(\s*)IA_MEDIA_EFFECTIVE_MODE: .*?$",
+              lambda match: match.group(1) + mode_value,
+              text,
+              count=1,
+              flags=re.M,
+          )
+          if count != 1:
+              raise SystemExit("effective mode count changed")
+          text, count = re.subn(
+              r"^(\s*)IA_MEDIA_EFFECTIVE_CONFIRM: .*?$",
+              lambda match: match.group(1) + confirm_value,
+              text,
+              count=1,
+              flags=re.M,
+          )
+          if count != 1:
+              raise SystemExit("effective confirm count changed")
+
+          if re.search(r"^  push:$", text, flags=re.M):
+              raise SystemExit("automatic push trigger remains")
+          for expected in (run_name, group, mode_value, confirm_value):
+              if expected not in text:
+                  raise SystemExit(f"expected patched value missing: {expected}")
+          remediation.write_text(text, encoding="utf-8")
+
+          visual = Path(".github/workflows/ia-media-e001-visual-acceptance.yml")
+          visual_text = visual.read_text(encoding="utf-8")
+          if visual_text.count(source_branch) != 1:
+              raise SystemExit("visual source branch count changed")
+          visual_text = visual_text.replace(source_branch, clean_branch, 1)
+          if source_branch in visual_text or visual_text.count(clean_branch) != 1:
+              raise SystemExit("visual clean branch guard invalid")
+          visual.write_text(visual_text, encoding="utf-8")
+          PY
+
+          payload=/tmp/ia-media-e001-workflow-payload-v2
+          rm -rf "$payload"
+          mkdir -p "$payload"
+          cp .github/workflows/ia-media-e001-remediation.yml "$payload/"
+          cp .github/workflows/ia-media-e001-visual-acceptance.yml "$payload/"
+          sha256sum "$payload"/*.yml > "$payload/sha256sums.txt"
+          {
+            echo "expected_main=$EXPECTED_MAIN"
+            echo "verified_controller=$VERIFIED_CONTROLLER"
+            echo "source_sha=$SOURCE_SHA"
+            echo "content_sha=$CONTENT_SHA"
+            echo "production_mutation=no"
+          } > "$payload/verification.txt"
+
+      - name: Upload exact workflow payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-exact-workflow-payload-v2-${{ github.sha }}
+          path: /tmp/ia-media-e001-workflow-payload-v2
+          if-no-files-found: error
+          retention-days: 30
