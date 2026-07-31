@@ -1,4 +1,3 @@
-const LEGACY_FRONT_FILENAME = /-front\.(?:avif|jpe?g|png|webp)$/i;
 const IA_MEDIA_E001_REFERENCE_CODES = new Set([
   "P001",
   "P002",
@@ -9,28 +8,42 @@ const IA_MEDIA_E001_REFERENCE_CODES = new Set([
   "P007",
 ]);
 const IA_MEDIA_E001_RELEASE = "ia-media-e001-20260730";
-const IA_MEDIA_E001_HERO_FILENAME = /^01-hero-[A-Za-z0-9_-]{20,}\.webp$/;
+
+const normalizeReferenceCode = (value) =>
+  String(value ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/^IRHA-/, "");
+
+const normalizePathname = (value) => {
+  try {
+    return decodeURIComponent(String(value ?? "").trim()).replace(/\/{2,}/g, "/");
+  } catch {
+    return "";
+  }
+};
+
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export function isDeterministicProductPrimaryPath(referenceCode, pathname) {
-  const reference = String(referenceCode || "").toUpperCase();
+  const reference = normalizeReferenceCode(referenceCode);
+  if (!/^P\d{3}$/.test(reference)) return false;
+
   const referencePrefix = reference.toLowerCase();
-  const segments = String(pathname || "").split("/").filter(Boolean);
-  const catalogIndex = segments.findIndex(
-    (segment, index) => segment === "catalog" && segments[index + 1] === "products",
+  const normalizedPath = normalizePathname(pathname);
+  const escapedPrefix = escapeRegExp(referencePrefix);
+
+  const legacyFrontPattern = new RegExp(
+    `(?:^|/)catalog/products/${escapedPrefix}-[^/]+/${escapedPrefix}-[^/]*-front\\.(?:avif|jpe?g|png|webp)$`,
+    "i",
   );
-  if (catalogIndex < 0) return false;
+  if (legacyFrontPattern.test(normalizedPath)) return true;
 
-  const productDirectory = segments[catalogIndex + 2] || "";
-  const tail = segments.slice(catalogIndex + 3);
-  if (!productDirectory.startsWith(`${referencePrefix}-`)) return false;
+  if (!IA_MEDIA_E001_REFERENCE_CODES.has(reference)) return false;
 
-  if (tail.length === 1) {
-    const filename = tail[0];
-    return filename.startsWith(`${referencePrefix}-`) && LEGACY_FRONT_FILENAME.test(filename);
-  }
-
-  return IA_MEDIA_E001_REFERENCE_CODES.has(reference)
-    && tail.length === 2
-    && tail[0] === IA_MEDIA_E001_RELEASE
-    && IA_MEDIA_E001_HERO_FILENAME.test(tail[1]);
+  const verifiedHeroPattern = new RegExp(
+    `(?:^|/)catalog/products/${escapedPrefix}-[^/]+/${IA_MEDIA_E001_RELEASE}/01-hero-[A-Za-z0-9_-]{20,}\\.webp$`,
+    "i",
+  );
+  return verifiedHeroPattern.test(normalizedPath);
 }
