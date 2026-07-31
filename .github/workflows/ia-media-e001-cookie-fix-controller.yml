@@ -1,0 +1,105 @@
+name: IA Media E001 Cookie Fix Controller
+
+on:
+  pull_request:
+    branches:
+      - codex/ia-media-e001-recovery-base-v4
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-cookie:
+    if: github.event.pull_request.head.ref == 'codex/ia-media-e001-cookie-fix-controller-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      CLEAN_SHA: 03fe4a9b3e05fadd1821f29ec0f06d30d00ae5df
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+      TARGET_BRANCH: codex/ia-media-e001-cookie-overlap-fix-content
+
+    steps:
+      - name: Checkout exact clean source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CLEAN_SHA }}
+          fetch-depth: 0
+
+      - name: Verify immutable inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main "$CLEAN_BRANCH" "$TARGET_BRANCH" --no-tags
+          test "$(git rev-parse HEAD)" = "$CLEAN_SHA"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$CLEAN_SHA"
+          test "$(git rev-parse "origin/$TARGET_BRANCH")" = "$CLEAN_SHA"
+          test "$(git rev-parse "$CLEAN_SHA^")" = "$EXPECTED_MAIN"
+
+      - name: Compact default cookie dialog
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/components/CookieConsent.tsx")
+          text = path.read_text(encoding="utf-8")
+          old_import = 'import { ChevronDown, X } from "lucide-react";'
+          assert text.count(old_import) == 1
+          text = text.replace(old_import, 'import { X } from "lucide-react";', 1)
+
+          old_privacy = '''              <Link to="/privacy-policy" className="text-white/90 underline underline-offset-2 hover:text-primary">Privacy</Link>
+            </p>'''
+          new_privacy = '''              <Link to="/privacy-policy" className="text-white/90 underline underline-offset-2 hover:text-primary">Privacy</Link>{" "}
+              {!customizing && (
+                <button
+                  type="button"
+                  onClick={() => setCustomizing(true)}
+                  className="text-white/90 underline underline-offset-2 hover:text-primary"
+                >
+                  Settings
+                </button>
+              )}
+            </p>'''
+          assert text.count(old_privacy) == 1
+          text = text.replace(old_privacy, new_privacy, 1)
+
+          old_settings = '''
+        {!customizing && (
+          <button type="button" onClick={() => setCustomizing(true)} className="mt-1 inline-flex min-h-7 w-full items-center justify-center gap-1 text-[9px] font-medium text-white/50 hover:text-white">
+            Settings <ChevronDown size={11} />
+          </button>
+        )}
+'''
+          assert text.count(old_settings) == 1
+          text = text.replace(old_settings, "\n", 1)
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          git diff --check
+          test "$(git diff --name-only)" = "src/components/CookieConsent.tsx"
+          test -z "$(grep -F 'ChevronDown' src/components/CookieConsent.tsx || true)"
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify focused quality
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx eslint src/components/CookieConsent.tsx
+          npx tsc --noEmit
+
+      - name: Push verified focused content
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/CookieConsent.tsx
+          git commit -m "fix(ux): keep cookie consent clear of product media"
+          test "$(git diff --name-only "$CLEAN_SHA" HEAD)" = "src/components/CookieConsent.tsx"
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
