@@ -114,7 +114,7 @@
       "version": "20260717161000",
       "name": "realtime_site_visitor_alerts",
       "path": "supabase/migrations/20260717161000_realtime_site_visitor_alerts.sql",
-      "git_blob_sha": "8e7931e0be01c6441f1344fbbd651b3227433a38",
+      "git_blob_sha": "8e7931e3f37649c7b07242e9ea9cd4c5bff5845e",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     },
