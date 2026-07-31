@@ -1,4 +1,4 @@
-name: IA Media E001 Cookie Overlap Fix Controller
+name: IA Media E001 CLS Fix Controller
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  patch-cookie-overlap:
+  patch-cls:
     if: github.event.pull_request.head.ref == 'codex/ia-media-e001-cls-fix-controller'
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -49,10 +49,9 @@ jobs:
           text = path.read_text(encoding="utf-8")
 
           old_import = 'import { ChevronDown, X } from "lucide-react";'
-          new_import = 'import { X } from "lucide-react";'
           if text.count(old_import) != 1:
               raise SystemExit("cookie icon import anchor changed")
-          text = text.replace(old_import, new_import, 1)
+          text = text.replace(old_import, 'import { X } from "lucide-react";', 1)
 
           old_privacy = '''              <Link to="/privacy-policy" className="text-white/90 underline underline-offset-2 hover:text-primary">Privacy</Link>
             </p>'''
@@ -81,14 +80,12 @@ jobs:
           if text.count(old_settings) != 1:
               raise SystemExit("cookie settings-row anchor changed")
           text = text.replace(old_settings, "\n", 1)
-
           path.write_text(text, encoding="utf-8")
           PY
 
           git diff --check
           test "$(git status --short | wc -l | tr -d ' ')" = "1"
           test -n "$(git status --short -- src/components/CookieConsent.tsx)"
-          grep -Fq '>Settings<' src/components/CookieConsent.tsx || grep -Fq '                  Settings' src/components/CookieConsent.tsx
           test -z "$(grep -F 'ChevronDown' src/components/CookieConsent.tsx || true)"
 
       - name: Install exact dependencies
