@@ -197,22 +197,17 @@ jobs:
             .filter(([url, digest]) => beforeMap.get(url) !== digest)
             .map(([url]) => url)
             .sort();
-          const expectedSuffixes = [
-            "/products/deer-suede-lederhosen",
-            "/products/goat-suede-lederhosen",
-            "/products/knee-length-lederhosen",
-            "/products/long-lederhosen",
-            "/products/premium-embroidered-lederhosen",
-            "/products/short-lederhosen",
-            "/products/vintage-lederhosen",
+          const expectedRoutes = [
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/deer-suede-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/goat-suede-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/knee-length-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/long-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/premium-embroidered-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/short-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/vintage-lederhosen",
           ];
-          if (changedRoutes.length !== expectedSuffixes.length) {
-            throw new Error(`expected 7 changed routes, received ${changedRoutes.length}`);
-          }
-          for (const suffix of expectedSuffixes) {
-            if (!changedRoutes.some((url) => url.endsWith(suffix))) {
-              throw new Error(`missing expected changed route: ${suffix}`);
-            }
+          if (JSON.stringify(changedRoutes) !== JSON.stringify(expectedRoutes)) {
+            throw new Error(`changed route set mismatch: ${JSON.stringify(changedRoutes)}`);
           }
           writeFileSync("/tmp/material-route-changes.json", `${JSON.stringify(changedRoutes, null, 2)}\n`, "utf8");
           NODE
