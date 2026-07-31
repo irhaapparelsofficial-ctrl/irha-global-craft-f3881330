@@ -14,6 +14,8 @@ const COLLECTION_PATH = "/products/bavarian-trachten-wear/men/lederhosen";
 const FINDER_PATH = "/products/all?q=lederhosen";
 const GALLERY_SETTLE_TIMEOUT_MS = 15_000;
 const GALLERY_POLL_INTERVAL_MS = 100;
+const LISTING_SETTLE_TIMEOUT_MS = 30_000;
+const LISTING_POLL_INTERVAL_MS = 250;
 const GALLERY_TRANSITIONS = [];
 const VIEWPORTS = [
   { name: "mobile-360", width: 360, height: 800 },
@@ -33,6 +35,7 @@ const productMediaRoot = (product) => `/catalog/products/${productCode(product)}
 const nowIso = () => new Date().toISOString();
 const expectedFilenameFragment = (image) => `${String(image.displayOrder).padStart(2, "0")}-${image.role}-${image.driveFileId}.webp`;
 const expectedMediaIdentity = (product, image) => `${productMediaRoot(product).replace(/^\//, "")}${expectedFilenameFragment(image)}`;
+const normalizePathname = (value) => value.replace(/\/+$/, "") || "/";
 
 function normalizeMediaIdentity(value) {
   if (!value) return "";
@@ -521,6 +524,54 @@ async function captureStrictProduct(browser, origin, label, product, viewport) {
   }
 }
 
+async function listingSnapshot(page, expectedPathname) {
+  return page.evaluate(({ expectedPathname, expectedSlugs }) => {
+    const hrefs = [...document.querySelectorAll("a[href]")]
+      .map((link) => {
+        try {
+          return new URL(link.getAttribute("href") ?? "", window.location.href).pathname;
+        } catch {
+          return "";
+        }
+      })
+      .filter(Boolean);
+    const presentSlugs = expectedSlugs.filter((slug) => hrefs.some((href) => href.endsWith(`/${slug}`)));
+    const missingSlugs = expectedSlugs.filter((slug) => !presentSlugs.includes(slug));
+    const bodyText = document.body?.innerText ?? "";
+    const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+    return {
+      href: window.location.href,
+      pathname,
+      expectedPathname,
+      pathnameMatches: pathname === expectedPathname,
+      title: document.title,
+      h1: document.querySelector("h1")?.textContent?.trim() ?? null,
+      loadingTextVisible: /Loading (?:collection|products|catalogue)/i.test(bodyText),
+      presentSlugs,
+      missingSlugs,
+      observedProductHrefs: [...new Set(hrefs.filter((href) => expectedSlugs.some((slug) => href.endsWith(`/${slug}`))))].sort(),
+    };
+  }, { expectedPathname, expectedSlugs: PRODUCTS.map((product) => product.slug) });
+}
+
+async function waitForListingSettled(page, path, label) {
+  const expectedPathname = normalizePathname(path.split("?", 1)[0]);
+  const started = Date.now();
+  let snapshot = await listingSnapshot(page, expectedPathname);
+  while (
+    (!snapshot.pathnameMatches || snapshot.loadingTextVisible || snapshot.missingSlugs.length > 0)
+    && Date.now() - started < LISTING_SETTLE_TIMEOUT_MS
+  ) {
+    await page.waitForTimeout(LISTING_POLL_INTERVAL_MS);
+    snapshot = await listingSnapshot(page, expectedPathname);
+  }
+  snapshot.elapsedMs = Date.now() - started;
+  if (!snapshot.pathnameMatches || snapshot.loadingTextVisible || snapshot.missingSlugs.length > 0) {
+    throw new Error(`${label} did not settle within ${LISTING_SETTLE_TIMEOUT_MS}ms: ${JSON.stringify(snapshot)}`);
+  }
+  return snapshot;
+}
+
 async function inspectListing(browser, origin, label, path, screenshotPrefix, viewport) {
   const { context, page } = await createPage(browser, viewport);
   try {
@@ -529,11 +580,12 @@ async function inspectListing(browser, origin, label, path, screenshotPrefix, vi
       timeout: 45_000,
     });
     await waitForApp(page);
+    const listingState = await waitForListingSettled(page, path, `${screenshotPrefix} ${viewport.name}`);
     await assertOfficialLogo(page, "header", `${screenshotPrefix} header`);
     const cards = {};
     for (const product of PRODUCTS) {
       const link = page.locator(`a[href$="/${product.slug}"]`).first();
-      if ((await link.count()) === 0) throw new Error(`${screenshotPrefix} is missing ${product.slug}`);
+      if ((await link.count()) === 0) throw new Error(`${screenshotPrefix} is missing ${product.slug}: ${JSON.stringify(listingState)}`);
       const data = await decodeImage(link.locator("img").first());
       if (!data.src.includes(productMediaRoot(product))
         || FORBIDDEN_MEDIA.test(data.src)
@@ -548,7 +600,7 @@ async function inspectListing(browser, origin, label, path, screenshotPrefix, vi
       cards[product.slug] = data;
     }
     await page.screenshot({ path: resolve(OUTPUT_ROOT, label, `${screenshotPrefix}-${viewport.name}.png`), fullPage: true });
-    return { cards };
+    return { cards, listingState };
   } finally {
     await context.close();
   }
