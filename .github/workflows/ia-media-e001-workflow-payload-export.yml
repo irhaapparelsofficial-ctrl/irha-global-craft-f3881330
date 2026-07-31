@@ -1,0 +1,120 @@
+name: IA Media E001 Workflow Payload Export
+
+on:
+  pull_request:
+    branches:
+      - codex/ia-media-e001-recovery-base-v4
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  export-workflows:
+    if: github.event.pull_request.head.ref == 'codex/ia-media-e001-payload-export-controller'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      VERIFIED_CONTROLLER: c3053b1ef60405d0b7f210f67b6d3a1a3cad5c17
+      SOURCE_SHA: ca03213251658ae91a9f525011170225829ee19f
+      SOURCE_BRANCH: codex/official-logo-p001-p007-media-recovery
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+      CONTENT_BRANCH: codex/ia-media-e001-clean-content
+      CONTENT_SHA: d5a759c2ddc87b275ddd1b0b61eb75ecc43d0340
+      RECOVERY_BASE: codex/ia-media-e001-recovery-base-v4
+
+    steps:
+      - name: Checkout verified controller
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERIFIED_CONTROLLER }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify immutable inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main "$SOURCE_BRANCH" "$RECOVERY_BASE" "$CLEAN_BRANCH" "$CONTENT_BRANCH" --no-tags
+          test "$(git rev-parse HEAD)" = "$VERIFIED_CONTROLLER"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$SOURCE_BRANCH")" = "$SOURCE_SHA"
+          test "$(git rev-parse "origin/$RECOVERY_BASE")" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$VERIFIED_CONTROLLER"
+          test "$(git rev-parse "origin/$CONTENT_BRANCH")" = "$CONTENT_SHA"
+
+      - name: Materialize deterministic workflow payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout "$SOURCE_SHA" -- \
+            .github/workflows/ia-media-e001-remediation.yml \
+            .github/workflows/ia-media-e001-visual-acceptance.yml
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          clean_branch = "codex/ia-media-e001-clean-recovery"
+
+          remediation = Path(".github/workflows/ia-media-e001-remediation.yml")
+          text = remediation.read_text(encoding="utf-8")
+          text, count = re.subn(
+              r"on:\n  push:\n.*?  workflow_dispatch:\n",
+              "on:\n  workflow_dispatch:\n",
+              text,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise SystemExit("could not remove automatic staging trigger")
+          replacements = {
+              "run-name: IA-MEDIA-E001 ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'stage' }} · ${{ github.sha }}":
+                  "run-name: IA-MEDIA-E001 ${{ inputs.mode }} · ${{ github.sha }}",
+              "group: ${{ (github.event_name != 'workflow_dispatch' || inputs.mode == 'stage' || inputs.mode == 'apply') && 'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}":
+                  "group: ${{ (inputs.mode == 'stage' || inputs.mode == 'apply') && 'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}",
+              "IA_MEDIA_EFFECTIVE_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'stage' }}":
+                  "IA_MEDIA_EFFECTIVE_MODE: ${{ inputs.mode }}",
+              "IA_MEDIA_EFFECTIVE_CONFIRM: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm || 'NO' }}":
+                  "IA_MEDIA_EFFECTIVE_CONFIRM: ${{ inputs.confirm }}",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f"remediation replacement anchor missing: {old}")
+              text = text.replace(old, new, 1)
+          remediation.write_text(text, encoding="utf-8")
+
+          visual = Path(".github/workflows/ia-media-e001-visual-acceptance.yml")
+          text = visual.read_text(encoding="utf-8")
+          source_branch = "codex/official-logo-p001-p007-media-recovery"
+          if text.count(source_branch) != 1:
+              raise SystemExit("visual workflow source branch guard count changed")
+          visual.write_text(text.replace(source_branch, clean_branch, 1), encoding="utf-8")
+          PY
+
+          test -z "$(grep -n 'branches:.*codex/official-logo-p001-p007-media-recovery' .github/workflows/ia-media-e001-remediation.yml || true)"
+          grep -Fq "run-name: IA-MEDIA-E001 ${{ inputs.mode }} · ${{ github.sha }}" .github/workflows/ia-media-e001-remediation.yml
+          grep -Fq "github.event.pull_request.head.ref == 'codex/ia-media-e001-clean-recovery'" .github/workflows/ia-media-e001-visual-acceptance.yml
+
+          payload=/tmp/ia-media-e001-workflow-payload
+          rm -rf "$payload"
+          mkdir -p "$payload"
+          cp .github/workflows/ia-media-e001-remediation.yml "$payload/"
+          cp .github/workflows/ia-media-e001-visual-acceptance.yml "$payload/"
+          sha256sum "$payload"/*.yml > "$payload/sha256sums.txt"
+          {
+            echo "expected_main=$EXPECTED_MAIN"
+            echo "verified_controller=$VERIFIED_CONTROLLER"
+            echo "source_sha=$SOURCE_SHA"
+            echo "content_sha=$CONTENT_SHA"
+            echo "production_mutation=no"
+          } > "$payload/verification.txt"
+
+      - name: Upload exact workflow payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-exact-workflow-payload-${{ github.sha }}
+          path: /tmp/ia-media-e001-workflow-payload
+          if-no-files-found: error
+          retention-days: 30
