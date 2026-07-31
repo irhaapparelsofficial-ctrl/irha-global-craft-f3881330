@@ -1,0 +1,227 @@
+name: IA Media E001 Recovery Controller V3
+
+on:
+  pull_request:
+    branches:
+      - codex/ia-media-e001-recovery-base-v3
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: ia-media-e001-recovery-controller-v3
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    if: github.event.pull_request.head.ref == 'codex/ia-media-e001-clean-recovery'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      SOURCE_SHA: ca03213251658ae91a9f525011170225829ee19f
+      SOURCE_BRANCH: codex/official-logo-p001-p007-media-recovery
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+      RECOVERY_BASE: codex/ia-media-e001-recovery-base-v3
+    steps:
+      - name: Checkout exact controller head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Verify immutable heads and preserve controller inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          controller_sha="${{ github.event.pull_request.head.sha }}"
+          git fetch origin main "$SOURCE_BRANCH" "$RECOVERY_BASE" "$CLEAN_BRANCH" --no-tags
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$SOURCE_BRANCH")" = "$SOURCE_SHA"
+          test "$(git rev-parse "origin/$RECOVERY_BASE")" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$controller_sha"
+          cp .github/recovery/ia-media-e001-patch.py /tmp/ia-media-e001-patch.py
+          cp .github/recovery/product-primary-image-path.mjs /tmp/product-primary-image-path.mjs
+          cp .github/recovery/iaMediaE001ImageSeoPath.test.ts /tmp/iaMediaE001ImageSeoPath.test.ts
+
+      - name: Assemble exact clean recovery from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --detach "$EXPECTED_MAIN"
+          selected=(
+            ".github/workflows/ia-media-e001-remediation.yml"
+            ".github/workflows/ia-media-e001-visual-acceptance.yml"
+            "docs/IA_MEDIA_E001_STAGED_EVIDENCE.md"
+            "ops/ia-media-e001/media-plan.mjs"
+            "package.json"
+            "scripts/capture-ia-media-e001-visual-evidence.mjs"
+            "scripts/remediate-p001-p007-media.mjs"
+            "scripts/resolve-cloudflare-preview-deployment.mjs"
+            "scripts/stage-p001-p007-media.mjs"
+            "scripts/version-official-brand-assets.mjs"
+            "src/components/ThumbnailImage.tsx"
+            "src/components/layout/Navbar.tsx"
+            "src/hooks/usePublishedCatalogTaxonomy.ts"
+            "src/lib/__checks__/productGalleryAuthority.test.ts"
+            "src/lib/assetResolver.ts"
+            "src/lib/brandAssets.ts"
+            "src/lib/iaMediaE001Runtime.ts"
+            "src/lib/imageLoading.ts"
+            "src/lib/productGalleryAuthority.ts"
+            "src/test/faviconBranding.test.ts"
+            "src/test/iaMediaE001AuthorizationContract.test.ts"
+            "src/test/iaMediaE001Plan.test.ts"
+            "src/test/iaMediaE001TaxonomyFallback.test.ts"
+            "src/test/iaUxE001.test.tsx"
+            "src/test/publicBrandingSanitation.test.ts"
+            "supabase/migrations/20260731151915_align_drive_gallery_with_selected_media.sql"
+            "supabase/repository-migrations.json"
+          )
+          git checkout "$SOURCE_SHA" -- "${selected[@]}"
+          python /tmp/ia-media-e001-patch.py
+          mkdir -p scripts/lib
+          cp /tmp/product-primary-image-path.mjs scripts/lib/product-primary-image-path.mjs
+          cp /tmp/iaMediaE001ImageSeoPath.test.ts src/test/iaMediaE001ImageSeoPath.test.ts
+          git add -N scripts/lib/product-primary-image-path.mjs src/test/iaMediaE001ImageSeoPath.test.ts
+          git diff --check
+          cat > /tmp/allowed-files.txt <<'EOF'
+          .github/workflows/ia-media-e001-remediation.yml
+          .github/workflows/ia-media-e001-visual-acceptance.yml
+          docs/IA_MEDIA_E001_STAGED_EVIDENCE.md
+          ops/ia-media-e001/media-plan.mjs
+          package.json
+          scripts/capture-ia-media-e001-visual-evidence.mjs
+          scripts/lib/product-primary-image-path.mjs
+          scripts/remediate-p001-p007-media.mjs
+          scripts/resolve-cloudflare-preview-deployment.mjs
+          scripts/stage-p001-p007-media.mjs
+          scripts/verify-built-image-seo.mjs
+          scripts/version-official-brand-assets.mjs
+          src/components/ThumbnailImage.tsx
+          src/components/layout/Footer.tsx
+          src/components/layout/Navbar.tsx
+          src/hooks/usePublishedCatalogTaxonomy.ts
+          src/lib/__checks__/productGalleryAuthority.test.ts
+          src/lib/assetResolver.ts
+          src/lib/brandAssets.ts
+          src/lib/iaMediaE001Runtime.ts
+          src/lib/imageLoading.ts
+          src/lib/productGalleryAuthority.ts
+          src/test/faviconBranding.test.ts
+          src/test/iaMediaE001AuthorizationContract.test.ts
+          src/test/iaMediaE001ImageSeoPath.test.ts
+          src/test/iaMediaE001Plan.test.ts
+          src/test/iaMediaE001TaxonomyFallback.test.ts
+          src/test/iaUxE001.test.tsx
+          src/test/publicBrandingSanitation.test.ts
+          supabase/migrations/20260731151915_align_drive_gallery_with_selected_media.sql
+          supabase/repository-migrations.json
+          EOF
+          sed -i 's/^          //' /tmp/allowed-files.txt
+          git diff --name-only "$EXPECTED_MAIN" | sort > /tmp/actual-files.txt
+          sort -o /tmp/allowed-files.txt /tmp/allowed-files.txt
+          diff -u /tmp/allowed-files.txt /tmp/actual-files.txt
+          test ! -e .semgrep.yml
+          test -z "$(git diff --name-only "$EXPECTED_MAIN" -- .github/workflows/quality.yml src/components/CookieConsent.tsx src/components/ui/toaster.tsx src/index.css)"
+
+      - name: Prove exact production media path contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { isDeterministicProductPrimaryPath } from "./scripts/lib/product-primary-image-path.mjs";
+          const productionUrl = "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog/products/p001-short-lederhosen/ia-media-e001-20260730/01-hero-1VlsVH6GCmMwD1RAQppOnWJmKnwop0mmY.webp";
+          const pathname = new URL(productionUrl).pathname;
+          for (const reference of ["P001", " IRHA-P001 "]) {
+            if (!isDeterministicProductPrimaryPath(reference, pathname)) {
+              throw new Error(`exact production path contract rejected ${reference}: ${pathname}`);
+            }
+          }
+          if (isDeterministicProductPrimaryPath("P008", pathname.replace("p001-short-lederhosen", "p008-other-product"))) {
+            throw new Error("P008 incorrectly accepted the IA-MEDIA-E001 nested path contract");
+          }
+          console.log("Exact production P001 path contract passed.");
+          NODE
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Run changed-file lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t lint_files < <(git diff --name-only "$EXPECTED_MAIN" -- '*.ts' '*.tsx' '*.mjs')
+          test "${#lint_files[@]}" -gt 0
+          npx eslint "${lint_files[@]}"
+
+      - name: Run focused media-path regression
+        run: npx vitest run src/test/iaMediaE001ImageSeoPath.test.ts
+
+      - name: Run full tests
+        run: npm test -- --run
+
+      - name: Run production build
+        run: npm run build
+
+      - name: Create immutable pre-push evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/ia-media-e001-recovery
+          git diff --name-status "$EXPECTED_MAIN" > artifacts/ia-media-e001-recovery/changed-files.txt
+          git diff --stat "$EXPECTED_MAIN" > artifacts/ia-media-e001-recovery/diff-stat.txt
+          {
+            echo "expected_main=$EXPECTED_MAIN"
+            echo "source_sha=$SOURCE_SHA"
+            echo "controller_head=${{ github.event.pull_request.head.sha }}"
+            echo "changed_files=$(wc -l < /tmp/actual-files.txt)"
+            echo "exact_production_path_contract=passed"
+            echo "changed_file_lint=passed"
+            echo "focused_media_path_regression=passed"
+            echo "full_tests=passed"
+            echo "production_build=passed"
+          } > artifacts/ia-media-e001-recovery/pre-push-verification.txt
+
+      - name: Replace controller branch with one clean commit
+        id: push
+        shell: bash
+        run: |
+          set -euo pipefail
+          controller_sha="${{ github.event.pull_request.head.sha }}"
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$EXPECTED_MAIN"
+          test "$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)" = "$SOURCE_SHA"
+          test "$(git ls-remote origin "refs/heads/$RECOVERY_BASE" | cut -f1)" = "$EXPECTED_MAIN"
+          test "$(git ls-remote origin "refs/heads/$CLEAN_BRANCH" | cut -f1)" = "$controller_sha"
+          git switch -c ia-media-e001-clean-commit
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(media): recover official logo and P001-P007 verified media"
+          clean_sha="$(git rev-parse HEAD)"
+          echo "clean_sha=$clean_sha" >> "$GITHUB_OUTPUT"
+          echo "$clean_sha" > artifacts/ia-media-e001-recovery/clean-head-sha.txt
+          git push --force-with-lease="refs/heads/$CLEAN_BRANCH:$controller_sha" origin "HEAD:refs/heads/$CLEAN_BRANCH"
+
+      - name: Upload recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-clean-recovery-v3-${{ steps.push.outputs.clean_sha || github.run_id }}
+          path: artifacts/ia-media-e001-recovery
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Publish summary
+        if: always()
+        run: |
+          {
+            echo "## IA-MEDIA-E001 clean recovery V3"
+            echo "- Exact main: \`$EXPECTED_MAIN\`"
+            echo "- Exact contaminated source: \`$SOURCE_SHA\`"
+            echo "- Clean head: \`${{ steps.push.outputs.clean_sha || 'not-created' }}\`"
+            echo "- Production mutation performed: **no**"
+            echo "- Excluded: Semgrep, generic Quality Gate, cookie, toaster and broad CSS changes"
+          } >> "$GITHUB_STEP_SUMMARY"
