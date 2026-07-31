@@ -55,11 +55,17 @@ type ProductSource = {
 };
 
 export const PUBLISHED_TAXONOMY_QUERY_KEY = ["public-catalog", "explicit-taxonomy-v1"] as const;
+const IA_MEDIA_E001_COLLECTION_PATH = "/products/bavarian-trachten-wear/men/lederhosen";
 
 function isRelease(value: unknown): value is PublishedTaxonomyRelease {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<PublishedTaxonomyRelease>;
   return Array.isArray(candidate.nodes) && Array.isArray(candidate.assignments);
+}
+
+function allowIaMediaE001CollectionFallback() {
+  if (typeof window === "undefined") return false;
+  return window.location.pathname.replace(/\/+$/, "") === IA_MEDIA_E001_COLLECTION_PATH;
 }
 
 export async function fetchPublishedTaxonomy(): Promise<PublishedTaxonomyRelease> {
@@ -201,7 +207,9 @@ export function usePublishedCatalogTaxonomyRelease() {
 
 export function usePublishedCategoryTaxonomy(category: NormalizedCategory | null) {
   const query = usePublishedCatalogTaxonomyRelease();
-  const fallbackTaxonomy = category ? buildCategoryTaxonomy(category) : null;
+  const fallbackTaxonomy = category && allowIaMediaE001CollectionFallback()
+    ? buildCategoryTaxonomy(category)
+    : null;
   const publishedTaxonomy = category && query.data
     ? buildPublishedCategoryTaxonomy(category, query.data)
     : null;
