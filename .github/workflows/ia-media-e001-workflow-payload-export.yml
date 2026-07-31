@@ -84,14 +84,14 @@ jobs:
               + " (inputs.mode == 'stage' || inputs.mode == 'apply') && "
               + "'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}"
           )
-          mode = "IA_MEDIA_EFFECTIVE_MODE: " + expression_open + " inputs.mode }}"
-          confirm = "IA_MEDIA_EFFECTIVE_CONFIRM: " + expression_open + " inputs.confirm }}"
+          mode = "  IA_MEDIA_EFFECTIVE_MODE: " + expression_open + " inputs.mode }}"
+          confirm = "  IA_MEDIA_EFFECTIVE_CONFIRM: " + expression_open + " inputs.confirm }}"
 
           substitutions = (
               (r"^run-name: IA-MEDIA-E001 .*?$", run_name),
               (r"^  group: .*?$", group),
-              (r"^IA_MEDIA_EFFECTIVE_MODE: .*?$", mode),
-              (r"^IA_MEDIA_EFFECTIVE_CONFIRM: .*?$", confirm),
+              (r"^  IA_MEDIA_EFFECTIVE_MODE: .*?$", mode),
+              (r"^  IA_MEDIA_EFFECTIVE_CONFIRM: .*?$", confirm),
           )
           for pattern, replacement in substitutions:
               text, replaced = re.subn(pattern, replacement, text, count=1, flags=re.M)
