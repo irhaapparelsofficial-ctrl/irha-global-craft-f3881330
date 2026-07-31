@@ -47,57 +47,63 @@ jobs:
 
           path = Path("src/pages/CanonicalProductDetail.tsx")
           text = path.read_text(encoding="utf-8")
-          old = '''  if (isLoading || (isFetching && !data) || (taxonomyRelease.isLoading && !taxonomyRelease.data)) {
-            return <div className="container-luxe pb-24 pt-40 text-sm text-muted-foreground">Loading product…</div>;
-          }
-          '''
-          new = '''  if (isLoading || (isFetching && !data) || (taxonomyRelease.isLoading && !taxonomyRelease.data)) {
-            return (
-              <section
-                className="pb-32 pt-36 sm:pt-40 md:pb-20"
-                aria-busy="true"
-                aria-label="Loading product"
-              >
-                <div className="container-luxe">
-                  <div
-                    className="mb-6 h-4 w-64 max-w-[75vw] rounded bg-muted/30 sm:mb-8"
-                    aria-hidden="true"
-                  />
-                  <div className="grid gap-8 xl:grid-cols-12 xl:gap-14">
-                    <div className="min-w-0 xl:col-span-7">
-                      <div
-                        className="aspect-square rounded-2xl border border-border/70 bg-[#0d0d0d] sm:aspect-[5/4] lg:aspect-[4/5]"
-                        aria-hidden="true"
-                      />
-                      <div className="mt-3 flex gap-3 overflow-hidden pb-2 sm:mt-4" aria-hidden="true">
-                        {Array.from({ length: 6 }, (_, index) => (
-                          <span
-                            key={index}
-                            className="h-20 w-20 shrink-0 rounded-xl border border-border/60 bg-card sm:h-24 sm:w-24"
-                          />
-                        ))}
-                      </div>
-                      <div className="mt-3 h-10 max-w-xl rounded bg-muted/20" aria-hidden="true" />
-                    </div>
-                    <div className="xl:col-span-5">
-                      <div className="h-3 w-28 rounded bg-muted/30" aria-hidden="true" />
-                      <div className="mt-4 h-12 w-4/5 rounded bg-muted/40" aria-hidden="true" />
-                      <div className="mt-4 h-20 rounded bg-muted/20" aria-hidden="true" />
-                      <div className="mt-6 grid grid-cols-2 gap-3" aria-hidden="true">
-                        <span className="h-14 rounded bg-muted/20" />
-                        <span className="h-14 rounded bg-muted/20" />
-                      </div>
-                    </div>
-                  </div>
-                  <span className="sr-only">Loading product…</span>
-                </div>
-              </section>
-            );
-          }
-          '''
-          if text.count(old) != 1:
-              raise SystemExit(f"loading-state anchor count changed: {text.count(old)}")
-          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          condition = "  if (isLoading || (isFetching && !data) || (taxonomyRelease.isLoading && !taxonomyRelease.data)) {\n"
+          next_guard = "  if (error || !data)"
+          start = text.find(condition)
+          end = text.find(next_guard, start + len(condition)) if start >= 0 else -1
+          if start < 0 or end < 0:
+              raise SystemExit(f"loading-state structural anchors missing: start={start}, end={end}")
+          old = text[start:end]
+          if old.count("Loading product…") != 1 or "return <div" not in old:
+              raise SystemExit("loading-state block shape changed")
+
+          new = "\n".join([
+              "  if (isLoading || (isFetching && !data) || (taxonomyRelease.isLoading && !taxonomyRelease.data)) {",
+              "    return (",
+              "      <section",
+              "        className=\"pb-32 pt-36 sm:pt-40 md:pb-20\"",
+              "        aria-busy=\"true\"",
+              "        aria-label=\"Loading product\"",
+              "      >",
+              "        <div className=\"container-luxe\">",
+              "          <div",
+              "            className=\"mb-6 h-4 w-64 max-w-[75vw] rounded bg-muted/30 sm:mb-8\"",
+              "            aria-hidden=\"true\"",
+              "          />",
+              "          <div className=\"grid gap-8 xl:grid-cols-12 xl:gap-14\">",
+              "            <div className=\"min-w-0 xl:col-span-7\">",
+              "              <div",
+              "                className=\"aspect-square rounded-2xl border border-border/70 bg-[#0d0d0d] sm:aspect-[5/4] lg:aspect-[4/5]\"",
+              "                aria-hidden=\"true\"",
+              "              />",
+              "              <div className=\"mt-3 flex gap-3 overflow-hidden pb-2 sm:mt-4\" aria-hidden=\"true\">",
+              "                {Array.from({ length: 6 }, (_, index) => (",
+              "                  <span",
+              "                    key={index}",
+              "                    className=\"h-20 w-20 shrink-0 rounded-xl border border-border/60 bg-card sm:h-24 sm:w-24\"",
+              "                  />",
+              "                ))}",
+              "              </div>",
+              "              <div className=\"mt-3 h-10 max-w-xl rounded bg-muted/20\" aria-hidden=\"true\" />",
+              "            </div>",
+              "            <div className=\"xl:col-span-5\">",
+              "              <div className=\"h-3 w-28 rounded bg-muted/30\" aria-hidden=\"true\" />",
+              "              <div className=\"mt-4 h-12 w-4/5 rounded bg-muted/40\" aria-hidden=\"true\" />",
+              "              <div className=\"mt-4 h-20 rounded bg-muted/20\" aria-hidden=\"true\" />",
+              "              <div className=\"mt-6 grid grid-cols-2 gap-3\" aria-hidden=\"true\">",
+              "                <span className=\"h-14 rounded bg-muted/20\" />",
+              "                <span className=\"h-14 rounded bg-muted/20\" />",
+              "              </div>",
+              "            </div>",
+              "          </div>",
+              "          <span className=\"sr-only\">Loading product…</span>",
+              "        </div>",
+              "      </section>",
+              "    );",
+              "  }",
+              "",
+          ])
+          path.write_text(text[:start] + new + text[end:], encoding="utf-8")
           PY
 
           git diff --check
