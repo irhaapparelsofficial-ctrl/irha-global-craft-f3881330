@@ -1,0 +1,172 @@
+name: IA Media E001 Recovery Builder
+
+on:
+  push:
+    branches:
+      - codex/ia-media-e001-recovery-builder
+    paths:
+      - ".github/workflows/ia-media-e001-recovery-builder.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: ia-media-e001-recovery-builder
+  cancel-in-progress: false
+
+jobs:
+  build-clean-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      SOURCE_SHA: ca03213251658ae91a9f525011170225829ee19f
+      SOURCE_BRANCH: codex/official-logo-p001-p007-media-recovery
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+    steps:
+      - name: Checkout recovery controller
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify immutable source heads
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main "$SOURCE_BRANCH" --no-tags
+          actual_main="$(git rev-parse origin/main)"
+          actual_source="$(git rev-parse "origin/$SOURCE_BRANCH")"
+          test "$actual_main" = "$EXPECTED_MAIN" || {
+            echo "main moved: expected $EXPECTED_MAIN, got $actual_main"
+            exit 1
+          }
+          test "$actual_source" = "$SOURCE_SHA" || {
+            echo "source branch moved: expected $SOURCE_SHA, got $actual_source"
+            exit 1
+          }
+          if git ls-remote --exit-code --heads origin "$CLEAN_BRANCH" >/dev/null 2>&1; then
+            echo "clean recovery branch already exists; refusing to overwrite"
+            exit 1
+          fi
+
+      - name: Assemble exact IA-MEDIA-E001 scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --detach "$EXPECTED_MAIN"
+          selected=(
+            ".github/workflows/ia-media-e001-remediation.yml"
+            ".github/workflows/ia-media-e001-visual-acceptance.yml"
+            "docs/IA_MEDIA_E001_STAGED_EVIDENCE.md"
+            "ops/ia-media-e001/media-plan.mjs"
+            "package.json"
+            "scripts/capture-ia-media-e001-visual-evidence.mjs"
+            "scripts/remediate-p001-p007-media.mjs"
+            "scripts/resolve-cloudflare-preview-deployment.mjs"
+            "scripts/stage-p001-p007-media.mjs"
+            "scripts/version-official-brand-assets.mjs"
+            "src/components/ThumbnailImage.tsx"
+            "src/components/layout/Navbar.tsx"
+            "src/hooks/usePublishedCatalogTaxonomy.ts"
+            "src/lib/__checks__/productGalleryAuthority.test.ts"
+            "src/lib/assetResolver.ts"
+            "src/lib/brandAssets.ts"
+            "src/lib/iaMediaE001Runtime.ts"
+            "src/lib/imageLoading.ts"
+            "src/lib/productGalleryAuthority.ts"
+            "src/test/faviconBranding.test.ts"
+            "src/test/iaMediaE001AuthorizationContract.test.ts"
+            "src/test/iaMediaE001Plan.test.ts"
+            "src/test/iaMediaE001TaxonomyFallback.test.ts"
+            "src/test/iaUxE001.test.tsx"
+            "src/test/publicBrandingSanitation.test.ts"
+            "supabase/migrations/20260731151915_align_drive_gallery_with_selected_media.sql"
+            "supabase/repository-migrations.json"
+          )
+          git checkout "$SOURCE_SHA" -- "${selected[@]}"
+          echo "ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQoKY2xlYW5fYnJhbmNoID0gImNvZGV4L2lhLW1lZGlhLWUwMDEtY2xlYW4tcmVjb3ZlcnkiCgpyZW1lZGlhdGlvbiA9IFBhdGgoIi5naXRodWIvd29ya2Zsb3dzL2lhLW1lZGlhLWUwMDEtcmVtZWRpYXRpb24ueW1sIikKdGV4dCA9IHJlbWVkaWF0aW9uLnJlYWRfdGV4dCgpCnRleHQsIGNvdW50ID0gcmUuc3VibigKICAgIHIib246XG4gIHB1c2g6XG4uKj8gIHdvcmtmbG93X2Rpc3BhdGNoOlxuIiwKICAgICJvbjpcbiAgd29ya2Zsb3dfZGlzcGF0Y2g6XG4iLAogICAgdGV4dCwKICAgIGNvdW50PTEsCiAgICBmbGFncz1yZS5TLAopCmlmIGNvdW50ICE9IDE6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCJjb3VsZCBub3QgcmVtb3ZlIGF1dG9tYXRpYyBzdGFnaW5nIHRyaWdnZXIiKQpyZXBsYWNlbWVudHMgPSB7CiAgICAicnVuLW5hbWU6IElBLU1FRElBLUUwMDEgJHt7IGdpdGh1Yi5ldmVudF9uYW1lID09ICd3b3JrZmxvd19kaXNwYXRjaCcgJiYgaW5wdXRzLm1vZGUgfHwgJ3N0YWdlJyB9fSDCtCAke3sgZ2l0aHViLnNoYSB9fSI6CiAgICAgICAgInJ1bi1uYW1lOiBJQS1NRURJQS1FMDAxICR7eyBpbnB1dHMubW9kZSB9fSDCtCAke3sgZ2l0aHViLnNoYSB9fSIsCiAgICAiZ3JvdXA6ICR7eyAoZ2l0aHViLmV2ZW50X25hbWUgIT0gJ3dvcmtmbG93X2Rpc3BhdGNoJyB8fCBpbnB1dHMubW9kZSA9PSAnc3RhZ2UnIHx8IGlucHV0cy5tb2RlID09ICdhcHBseScpICYmICdpcmhhLXByb2R1Y3Rpb24tbXV0YXRpb24nIHx8IGZvcm1hdCgnaWEtbWVkaWEtZTAwMS17MH0tezF9JywgaW5wdXRzLm1vZGUsIGdpdGh1Yi5yZWYpIH19IjoKICAgICAgICAiZ3JvdXA6ICR7eyAoaW5wdXRzLm1vZGUgPT0gJ3N0YWdlJyB8fCBpbnB1dHMubW9kZSA9PSAnYXBwbHknKSAmJiAnaXJoYS1wcm9kdWN0aW9uLW11dGF0aW9uJyB8fCBmb3JtYXQoJ2lhLW1lZGlhLWUwMDEtezB9LXsxfScsIGlucHV0cy5tb2RlLCBnaXRodWIucmVmKSB9fSIsCiAgICAiSUFfTUVESUFfRUZGRUNUSVZFX01PREU6ICR7eyBnaXRodWIuZXZlbnRfbmFtZSA9PSAnd29ya2Zsb3dfZGlzcGF0Y2gnICYmIGlucHV0cy5tb2RlIHx8ICdzdGFnZScgfX0iOgogICAgICAgICJJQV9NRURJQV9FRkZFQ1RJVkVfTU9ERTogJHt7IGlucHV0cy5tb2RlIH19IiwKICAgICJJQV9NRURJQV9FRkZFQ1RJVkVfQ09ORklSTTogJHt7IGdpdGh1Yi5ldmVudF9uYW1lID09ICd3b3JrZmxvd19kaXNwYXRjaCcgJiYgaW5wdXRzLmNvbmZpcm0gfHwgJ05PJyB9fSI6CiAgICAgICAgIklBX01FRElBX0VGRkVDVElWRV9DT05GSVJNOiAke3sgaW5wdXRzLmNvbmZpcm0gfX0iLAp9CmZvciBvbGQsIG5ldyBpbiByZXBsYWNlbWVudHMuaXRlbXMoKToKICAgIGlmIG9sZCBub3QgaW4gdGV4dDoKICAgICAgICByYWlzZSBTeXN0ZW1FeGl0KGYicmVtZWRpYXRpb24gcmVwbGFjZW1lbnQgYW5jaG9yIG1pc3Npbmc6IHtvbGR9IikKICAgIHRleHQgPSB0ZXh0LnJlcGxhY2Uob2xkLCBuZXcsIDEpCnJlbWVkaWF0aW9uLndyaXRlX3RleHQodGV4dCkKCnZpc3VhbCA9IFBhdGgoIi5naXRodWIvd29ya2Zsb3dzL2lhLW1lZGlhLWUwMDEtdmlzdWFsLWFjY2VwdGFuY2UueW1sIikKdGV4dCA9IHZpc3VhbC5yZWFkX3RleHQoKQpvbGQgPSAiY29kZXgvb2ZmaWNpYWwtbG9nby1wMDAxLXAeDAcL1bWVkaWEtcmVjb3ZlcnkiCmlmIG9sZCBub3QgaW4gdGV4dDoKICAgIHJhaXNlIFN5c3RlbUV4aXQoInZpc3VhbCB3b3JrZmxvdyBzb3VyY2UgYnJhbmNoIGd1YXJkIG1pc3NpbmciKQp2aXN1YWwud3JpdGVfdGV4dCh0ZXh0LnJlcGxhY2Uob2xkLCBjbGVhbl9icmFuY2gpKQoKZm9vdGVyID0gUGF0aCgic3JjL2NvbXBvbmVudHMvbGF5b3V0L0Zvb3Rlci50c3giKQp0ZXh0ID0gZm9vdGVyLnJlYWRfdGV4dCgpCmltcG9ydF9hbmNob3IgPSAnaW1wb3J0IHsgUFVCTElDX0lERU5USVRZIH0gZnJvbSAiQC9saWIvcHVibGljSWRlbnRpdHkubWpzIjtc bicK aWYgaW1wb3J0X2FuY2hvciBub3QgaW4gdGV4dDoKICAgIHJhaXNlIFN5c3RlbUV4aXQoImZvb3RlciBpbXBvcnQgYW5jaG9yIG1pc3NpbmciKQp0ZXh0ID0gdGV4dC5yZXBsYWNlKAogICAgaW1wb3J0X2FuY2hvciwKICAgIGltcG9ydF9hbmNob3IgKyAnaW1wb3J0IHsgQlJBTkRfQVNTRVRTIH0gZnJvbSAiQC9saWIvYnJhbmRBc3NldHMiO1xuJywKICAgIDEsCikKb2xkX2Jsb2NrID0gJycnICAgICAgICAgIDxMaW5rIHRvPXtnZXRMb2NhbGVHYXRld2F5KGxvY2FsZSl9IGNsYXNzTmFtZT0iaW5saW5lLWZsZXggaXRlbXMtY2VudGVyIGdhcC0zIiBhcmlhLWxhYmVsPXtgYCR7UFVCTElDX0lERU5USVRZLm5hbWV9ICR7Y29weS50YWdsaW5lfWB9PgogICAgICAgICAgICA8aW1nIHNyYz0iL2lyaGEtYnJhbmQtbWFyay5zdmciIGFsdD0iT2ZmaWNpYWwgSXJoYSBBcHBhcmVscyBNYW51ZmFjdHVyaW5nIFNwZWNpYWxpc3RzIGNyZXN0IiBjbGFzc05hbWU9ImgtMjAgdy0yMCBzaHJpbmstMCBvYmplY3QtY29udGFpbiBvYmplY3QtbGVmdCIgLz4KICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJsZWFkaW5nLW5vbmUiPjxzcGFuIGNsYXNzTmFtZT0iYmxvY2sgZm9udC1kaXNwbGF5IHRleHQtMnhsIGZvbnQtc2VtaWJvbGQgdGV4dC1mb3JlZ3JvdW5kIj57UFVCTElDX0lERU5USVRZLm5hbWV9PC9zcGFuPjxzcGFuIGNsYXNzTmFtZT0ibXQtMS41IGJsb2NrIHRleHQtWzhweF0gZm9udC1ib2xkIHVwcGVyY2FzZSB0cmFja2luZy1bMC4yMmVtXSB0ZXh0LXByaW1hcnkiPntjb3B5LnRhZ2xpbmV9PC9zcGFuPjwvc3Bhbj4KICAgICAgICAgIDwvTGluaz4nJycKbmV3X2Jsb2NrID0gJycnICAgICAgICAgIDxMaW5rIHRvPXtnZXRMb2NhbGVHYXRld2F5KGxvY2FsZSl9IGNsYXNzTmFtZT0iaW5saW5lLWZsZXggaXRlbXMtY2VudGVyIiBhcmlhLWxhYmVsPXtgJHtQVUJMSUNfSURFTlRJVFkubmFtZX0gJHtjb3B5LnRhZ2xpbmV9YD4KICAgICAgICAgICAgPGltZwogICAgICAgICAgICAgIHNyYz17QlJBTkRfQVNTRVRTLmZvb3RlckxvZ299CiAgICAgICAgICAgICAgYWx0PSJPZmZpY2lhbCBJcmhhIEFwcGFyZWxzIE1hbnVmYWN0dXJpbmcgU3BlY2lhbGlzdHMgbG9nbyIKICAgICAgICAgICAgICB3aWR0aD0iNzYwIgogICAgICAgICAgICAgIGhlaWdodD0iMTYwIgogICAgICAgICAgICAgIGNsYXNzTmFtZT0iaC1hdXRvIHctWzEzLjVyZW1dIHNocmluay0wIG9iamVjdC1jb250YWluIG9iamVjdC1sZWZ0IgogICAgICAgICAgICAgIGxvYWRpbmc9ImVhZ2VyIgogICAgICAgICAgICAgIGRlY29kaW5nPSJhc3luYyIKICAgICAgICAgICAgLz4KICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJzci1vbmx5Ij57UFVCTElDX0lERU5USVRZLm5hbWV9IOKAlCB7Y29weS50YWdsaW5lfTwvc3Bhbj4KICAgICAgICAgIDwvTGluaz4nJycKaWYgb2xkX2Jsb2NrIG5vdCBpbiB0ZXh0OgogICAgcmFpc2UgU3lzdGVtRXhpdCgiZm9vdGVyIGxvZ28gYmxvY2sgbWlzc2luZyIpCmZvb3Rlci53cml0ZV90ZXh0KHRleHQucmVwbGFjZShvbGRfYmxvY2ssIG5ld19ibG9jaywgMSkpCgp2ZXJpZmllciA9IFBhdGgoInNjcmlwdHMvdmVyaWZ5LWJ1aWx0LWltYWdlLXNlby5tanMiKQp0ZXh0ID0gdmVyaWZpZXIucmVhZF90ZXh0KCkKaW1wb3J0X2FuY2hvciA9ICdpbXBvcnQgeyBKU0RPTSB9IGZyb20gImpzZG9tIjtc bicKaWYgaW1wb3J0X2FuY2hvciBub3QgaW4gdGV4dDoKICAgIHJhaXNlIFN5c3RlbUV4aXQoImltYWdlIFNFTyBpbXBvcnQgYW5jaG9yIG1pc3NpbmciKQp0ZXh0ID0gdGV4dC5yZXBsYWNlKAogICAgaW1wb3J0X2FuY2hvciwKICAgIGltcG9ydF9hbmNob3IgKyAnaW1wb3J0IHsgaXNEZXRlcm1pbmlzdGljUHJvZHVjdFByaW1hcnlQYXRoIH0gZnJvbSAiLi9saWIvcHJvZHVjdC1wcmltYXJ5LWltYWdlLXBhdGgubWpzIjtc bicsCiAgICAxLAopCm9sZCA9ICcnJyAgICBjb25zdCByZWZlcmVuY2VQcmVmaXggPSBwcm9kdWN0LnJlZmVyZW5jZV9jb2RlLnRvTG93ZXJDYXNlKCk7CiAgICBjb25zdCBwYXRobmFtZSA9IG5ldyBVUkwocHJpbWFyeSkucGF0aG5hbWU7CiAgICBjb25zdCBkaXJlY3RvcnkgPSBwYXRobmFtZS5zcGxpdCgiLyIpLmF0KC0yKSB8fCAiIjsKICAgIGNvbnN0IGZpbGVuYW1lID0gcGF0aG5hbWUuc3BsaXQoIi8iKS5hdCgtMSkgfHwgIiI7CiAgICBpZiAoIXBhdGhuYW1lLmluY2x1ZGVzKCIvY2F0YWxvZy9wcm9kdWN0cy8iKQogICAgICB8fCAhZGlyZWN0b3J5LnN0YXJ0c1dpdGgoYCR7cmVmZXJlbmNlUHJlZml4fS1gKQogICAgICB8fCAhZmlsZW5hbWUuc3RhcnRzV2l0aChgJHtyZWZlcmVuY2VQcmVmaXh9LWA pCiAgICAgIHx8ICEvLWZyb250XFwuKD86YXZpZnxqcGU/Z3xwbmd8d2VicCkkaS50ZXN0KGZpbGVuYW1lKSkgewogICAgICB0aHJvdyBuZXcgRXJyb3IoYCR7cHJvZHVjdC5yZWZlcmVuY2VfY29kZX0gcHJpbWFyeSBpbWFnZSBwYXRoIGlzIG5vdCBkZXRlcm1pbmlzdGljOiAke3ByaW1hcnl9YCk7CiAgICB9JycnCm5ldyA9ICcnICAgIGNvbnN0IHBhdGhuYW1lID0gbmV3IFVSTChwcmltYXJ5KS5wYXRobmFtZTsKICAgIGlmICghaXNEZXRlcm1pbmlzdGljUHJvZHVjdFByaW1hcnlQYXRoKHByb2R1Y3QucmVmZXJlbmNlX2NvZGUsIHBhdGhuYW1lKSkgewogICAgICB0aHJvdyBuZXcgRXJyb3IoYCR7cHJvZHVjdC5yZWZlcmVuY2VfY29kZX0gcHJpbWFyeSBpbWFnZSBwYXRoIGlzIG5vdCBkZXRlcm1pbmlzdGljOiAke3ByaW1hcnl9YCk7CiAgICB9JycnCmlmIG9sZCBub3QgaW4gdGV4dDoKICAgIHJhaXNlIFN5c3RlbUV4aXQoImltYWdlIFNFTyBkZXRlcm1pbmlzdGljLXBhdGggYmxvY2sgbWlzc2luZyIpCnZlcmlmaWVyLndyaXRlX3RleHQodGV4dC5yZXBsYWNlKG9sZCwgbmV3LCAxKSkK" | base64 -d > /tmp/ia-media-patch.py
+          python /tmp/ia-media-patch.py
+          mkdir -p scripts/lib
+          echo "Y29uc3QgTEVHQUNZX0ZST05UX0ZJTEVOQU1FID0gLy1mcm9udFwuKD86YXZpZnxqcGU/Z3xwbmd8d2VicCkkaTsKY29uc3QgSUFfTUVESUFfRTAwMV9SRUZFUkVOQ0VfQ09ERVMgPSBuZXcgU2V0KFsKICAiUDAwMSIsCiAgIlAwMDIiLAogICJQMDAzIiwKICAiUDAwNCIsCiAgIlAwMDUiLAogICJQMDA2IiwKICAiUDAwNyIsCl0pOwpjb25zdCBJQV9NRURJQV9FMDAxX1JFTEVBU0UgPSAiaWEtbWVkaWEtZTAwMS0yMDI2MDczMCI7CmNvbnN0IElBX01FRElBX0UwMDFfSEVST19GSUxFTkFNRSA9IC9eMDEtaGVyby1bQS1aYS16MC05Xy1dezIwLH1cLndlYnAkLzsKCmV4cG9ydCBmdW5jdGlvbiBpc0RldGVybWluaXN0aWNQcm9kdWN0UHJpbWFyeVBhdGgocmVmZXJlbmNlQ29kZSwgcGF0aG5hbWUpIHsKICBjb25zdCByZWZlcmVuY2UgPSBTdHJpbmcocmVmZXJlbmNlQ29kZSB8fCAiIikudG9VcHBlckNhc2UoKTsKICBjb25zdCByZWZlcmVuY2VQcmVmaXggPSByZWZlcmVuY2UudG9Mb3dlckNhc2UoKTsKICBjb25zdCBzZWdtZW50cyA9IFN0cmluZyhwYXRobmFtZSB8fCAiIikuc3BsaXQoIi8iKS5maWx0ZXIoQm9vbGVhbik7CiAgY29uc3QgY2F0YWxvZ0luZGV4ID0gc2VnbWVudHMuZmluZEluZGV4KAogICAgKHNlZ21lbnQsIGluZGV4KSA9PiBzZWdtZW50ID09PSAiY2F0YWxvZyIgJiYgc2VnbWVudHNbaW5kZXggKyAxXSA9PT0gInByb2R1Y3RzIiwKICApOwogIGlmIChjYXRhbG9nSW5kZXggPCAwKSByZXR1cm4gZmFsc2U7CgogIGNvbnN0IHByb2R1Y3REaXJlY3RvcnkgPSBzZWdtZW50c1tjYXRhbG9nSW5kZXggKyAyXSB8fCAiIjsKICBjb25zdCB0YWlsID0gc2VnbWVudHMuc2xpY2UoY2F0YWxvZ0luZGV4ICsgMyk7CiAgaWYgKCFwcm9kdWN0RGlyZWN0b3J5LnN0YXJ0c1dpdGgoYCR7cmVmZXJlbmNlUHJlZml4fS1gKSkgcmV0dXJuIGZhbHNlOwoKICBpZiAodGFpbC5sZW5ndGggPT09IDEpIHsKICAgIGNvbnN0IGZpbGVuYW1lID0gdGFpbFswXTsKICAgIHJldHVybiBmaWxlbmFtZS5zdGFydHNXaXRoKG Ake3JlZmVyZW5jZVByZWZpeH0tYCkgJiYgTEVHQUNZX0ZST05UX0ZJTEVOQU1FLnRlc3QoZmlsZW5hbWUpOwogIH0KCiAgcmV0dXJuIElBX01FRElBX0UwMDFfUkVGRVJFTkNFX0NPRE VTLmhhcyhyZWZlcmVuY2UpCiAgICAmJiB0YWlsLmxlbmd0aCA9PT0gMgogICAgJiYgdGFpbFswXSA9PT0gSUFfTUVESUFfRTAwMV9SRUxFQVNF CiAgICAmJiBJQV9NRURJQV9FMDAxX0hFUk9fRklMRU5BTUUudGVzdCh0YWlsWzFdKTsKfQo=" | base64 -d > scripts/lib/product-primary-image-path.mjs
+          echo "aW1wb3J0IHsgZGVzY3JpYmUsIGV4cGVjdCwgaXQgfSBmcm9tICJ2aXRlc3QiOwppbXBvcnQgeyBpc0RldGVybWluaXN0aWNQcm9kdWN0UHJpbWFyeVBhdGggfSBmcm9tICIuLi8uLi9zY3JpcHRzL2xpYi9wcm9kdWN0LXByaW1hcnktaW1hZ2UtcGF0aC5tanMiOwoKY29uc3QgcGhhc2VIZXJvID0gKGNvZGUsIHNsdWcsIGZpbGUgPSAiMDEtaGVyby0xVmxzVkg2R0NtTXdEMVJBUXBwT25XSm1LbndvcDBtbVkud2VicCIpID0+CiAgYC9zdG9yYWdlL3YxL29iamVjdC9wdWJsaWMvc2l0ZS1tZWRpYS9jYXRhbG9nL3Byb2R1Y3RzLyR7Y29kZS50b0xvd2VyQ2FzZSgpfS0ke3NsdWd9L2lhLW1lZGlhLWUwMDEtMjAyNjA3MzAvJHtmaWxlfWA7CgpkZXNjcmliZSgiSUEtTUVESUEtRTAwMSBkZXRlcm1pbmlzdGljIHByaW1hcnktaW1hZ2UgcGF0aHMiLCAoKSA9PiB7CiAgaXQoImFjY2VwdHMgb25seSB0aGUgZXhhY3QgUDAwMS1QMDA3IGltbXV0YWJsZSBoZXJvIGNvbnRyYWN0IiwgKCkgPT4gewogICAgZXhwZWN0KGlzRGV0ZXJtaW5pc3RpY1Byb2R1Y3RQcmltYXJ5UGF0aCgiUDAwMSIsIHBoYXNlSGVybygiUDAwMSIsICJzaG9ydC1sZWRlcmhvc2VuIikpKS50b0JlKHRydWUpOwogICAgZXhwZWN0KGlzRGV0ZXJtaW5pc3RpY1Byb2R1Y3RQcmltYXJ5UGF0aCgiUDAwNyIsIHBoYXNlSGVybygiUDAwNyIsICJkZWVyLXN1ZWRlLWxlZGVyaG9zZW4iKSkpLnRvQmUodHJ1ZSk7CiAgICBleHBlY3QoaXNEZXRlcm1pbmlzdGljUHJvZHVjdFByaW1hcnlQYXRoKCJQMDA4IiwgcGhhc2VIZXJvKCJQMDA4IiwgIm90aGVyLXByb2R1Y3QiKSkpLnRvQmUoZmFsc2UpOwogICAgZXhwZWN0KGlzRGV0ZXJtaW5pc3RpY1Byb2R1Y3RQcmltYXJ5UGF0aCgKICAgICAgIlAwMDEiLAogICAgICBwaGFzZUhlcm8oIlAwMDEiLCAic2hvcnQtbGVkZXJob3NlbiIsICIwMi10aHJlZV9xdWFydGVyLTFzdEZZcWpFdVJEYjBaY0pMeHhxWmV5V1E0UmhrMEd2Qy53ZWJwIiksCiAgICApKS50b0JlKGZhbHNlKTsKICAgIGV4cGVjdChpc0RldGVybWluaXN0aWNQcm9kdWN0UHJpbWFyeVBhdGgoCiAgICAgICJQMDAxIiwKICAgICAgIi9jYXRhbG9nL3Byb2R1Y3RzL3AwMDEtc2hvcnQtbGVkZXJob3Nlbi9hbm90aGVyLXJlbGVhc2UvMDEtaGVyby0xVmxzVkg2R0NtTXdEMVJBUXBwT25XSm1LbndvcDBtbV k u d2VicCIsCiAgICApKS50b0JlKGZhbHNlKTsKICB9KTsKCiAgaXQoInByZXNlcnZlcyB0aGUgZXhpc3RpbmcgZGV0ZXJtaW5pc3RpYyBmcm9udC1maWxlIGNvbnRyYWN0IGZvciBhbGwgb3RoZXIgcHJvZHVjdHMiLCAoKSA9PiB7CiAgICBleHBlY3QoaXNEZXRlcm1pbmlzdGljUHJvZHVjdFByaW1hcnlQYXRoKAogICAgICAiUDAwOCIsCiAgICAgICIvY2F0YWxvZy9wcm9kdWN0cy9wMDA4LWV4YW1wbGUvcDAwOC1leGFtcGxlLWZyb250LndlYnAiLAogICAgKSkudG9CZSh0cnVlKTsKICAgIGV4cGVjdChpc0RldGVybWluaXN0aWNQcm9kdWN0UHJpbWFyeVBhdGgoCiAgICAgICJQMDA4IiwKICAgICAgIi9jYXRhbG9nL3Byb2R1Y3RzL3AwMDgtZXhhbXBsZS9wMDA4LWV4YW1wbGUtc2lkZS53ZWJwIiwKICAgICkpLnRvQmUoZmFsc2UpOwogIH0pOwp9KTsK" | base64 -d > src/test/iaMediaE001ImageSeoPath.test.mjs
+          git diff --check
+          test ! -e .semgrep.yml
+          test "$(git diff --name-only "$EXPECTED_MAIN" -- .github/workflows/quality.yml | wc -l)" -eq 0
+          test "$(git diff --name-only "$EXPECTED_MAIN" -- src/components/CookieConsent.tsx | wc -l)" -eq 0
+          test "$(git diff --name-only "$EXPECTED_MAIN" -- src/components/ui/toaster.tsx | wc -l)" -eq 0
+          test "$(git diff --name-only "$EXPECTED_MAIN" -- src/index.css | wc -l)" -eq 0
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Run changed-file lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t lint_files < <(git diff --name-only "$EXPECTED_MAIN" -- '*.ts' '*.tsx' '*.mjs')
+          test "${#lint_files[@]}" -gt 0
+          npx eslint "${lint_files[@]}"
+
+      - name: Run full tests
+        run: npm test -- --run
+
+      - name: Run production build
+        run: npm run build
+
+      - name: Record clean recovery evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/ia-media-e001-recovery
+          {
+            echo "expected_main=$EXPECTED_MAIN"
+            echo "source_sha=$SOURCE_SHA"
+            echo "clean_branch=$CLEAN_BRANCH"
+            echo "changed_files=$(git diff --name-only "$EXPECTED_MAIN" | wc -l)"
+            echo "tests=passed"
+            echo "build=passed"
+          } > artifacts/ia-media-e001-recovery/pre-push-verification.txt
+          git diff --name-status "$EXPECTED_MAIN" > artifacts/ia-media-e001-recovery/changed-files.txt
+          git diff --stat "$EXPECTED_MAIN" > artifacts/ia-media-e001-recovery/diff-stat.txt
+
+      - name: Create and push one clean commit
+        id: push
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          actual_main="$(git ls-remote origin refs/heads/main | cut -f1)"
+          actual_source="$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)"
+          test "$actual_main" = "$EXPECTED_MAIN"
+          test "$actual_source" = "$SOURCE_SHA"
+          git switch -c "$CLEAN_BRANCH"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(media): recover official logo and P001-P007 verified media"
+          clean_sha="$(git rev-parse HEAD)"
+          echo "clean_sha=$clean_sha" >> "$GITHUB_OUTPUT"
+          git push origin "HEAD:refs/heads/$CLEAN_BRANCH"
+          echo "$clean_sha" > artifacts/ia-media-e001-recovery/clean-head-sha.txt
+
+      - name: Upload immutable pre-push evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-clean-recovery-${{ steps.push.outputs.clean_sha }}
+          path: artifacts/ia-media-e001-recovery
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish recovery summary
+        run: |
+          {
+            echo "## IA-MEDIA-E001 clean recovery"
+            echo "- Main: \`$EXPECTED_MAIN\`"
+            echo "- Contaminated source inspected: \`$SOURCE_SHA\`"
+            echo "- Clean head: \`${{ steps.push.outputs.clean_sha }}\`"
+            echo "- Clean branch: \`$CLEAN_BRANCH\`"
+            echo "- Changed-file lint, full tests and production build passed before branch push."
+            echo "- Generic Semgrep/Quality Gate, cookie, toaster and broad CSS changes were excluded."
+          } >> "$GITHUB_STEP_SUMMARY"
