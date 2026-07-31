@@ -115,13 +115,21 @@ describe("IA-MEDIA-E001 deterministic media plan", () => {
 
     const executor = readFileSync(resolve(process.cwd(), "scripts/remediate-p001-p007-media.mjs"), "utf8");
     const staging = readFileSync(resolve(process.cwd(), "scripts/stage-p001-p007-media.mjs"), "utf8");
+
+    expect(staging).toContain("thumbnails/${originalPath}.webp");
+    expect(staging).toContain("responsive/${width}/${originalPath}.webp");
+    expect(staging).toContain("catalog/products/${productCode(product)}-${product.slug}/${MEDIA_VERSION}");
+    expect(staging).toContain("upsert: false");
+    expect(staging).toContain("Original checksum mismatch");
+    expect(staging).toContain("verifyWebp");
+
+    expect(executor).toContain('const root = (product) => `catalog/products/${code(product)}-${product.slug}/${MEDIA_VERSION}`;');
+    expect(executor).toContain('const canonicalPath = (product, image) => `${root(product)}/${String(image.displayOrder).padStart(2, "0")}-${image.role}-${image.driveFileId}.webp`;');
+    expect(executor).toContain('const variantPath = (path, width) => width === 720 ? `thumbnails/${path}.webp` : `responsive/${width}/${path}.webp`;');
+    expect(executor).toContain("verifyObject");
+    expect(executor).toContain("storageObjects.length !== 205");
+
     for (const implementation of [executor, staging]) {
-      expect(implementation).toContain("thumbnails/${originalPath}.webp");
-      expect(implementation).toContain("responsive/${width}/${originalPath}.webp");
-      expect(implementation).toContain("catalog/products/${productCode(product)}-${product.slug}/${MEDIA_VERSION}");
-      expect(implementation).toContain("upsert: false");
-      expect(implementation).toContain("Original checksum mismatch");
-      expect(implementation).toContain("verifyWebp");
       expect(implementation).not.toContain("responsive/480/");
       expect(implementation).not.toContain("responsive/2400/");
     }
