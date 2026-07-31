@@ -85,6 +85,7 @@ jobs:
           mkdir -p scripts/lib
           cp /tmp/product-primary-image-path.mjs scripts/lib/product-primary-image-path.mjs
           cp /tmp/iaMediaE001ImageSeoPath.test.mjs src/test/iaMediaE001ImageSeoPath.test.mjs
+          git add -N scripts/lib/product-primary-image-path.mjs src/test/iaMediaE001ImageSeoPath.test.mjs
           git diff --check
           cat > /tmp/allowed-files.txt <<'EOF'
           .github/workflows/ia-media-e001-remediation.yml
