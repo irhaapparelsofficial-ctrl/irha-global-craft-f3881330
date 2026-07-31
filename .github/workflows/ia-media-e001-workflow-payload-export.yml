@@ -30,7 +30,6 @@ jobs:
         with:
           ref: ${{ env.VERIFIED_CONTROLLER }}
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Verify immutable inputs
         shell: bash
