@@ -3,7 +3,7 @@ name: IA Media E001 Recovery Controller
 on:
   pull_request:
     branches:
-      - codex/ia-media-e001-recovery-base-v2
+      - codex/ia-media-e001-recovery-base-v4
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: ia-media-e001-recovery-controller-v2
+  group: ia-media-e001-recovery-controller-v4
   cancel-in-progress: false
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       SOURCE_SHA: ca03213251658ae91a9f525011170225829ee19f
       SOURCE_BRANCH: codex/official-logo-p001-p007-media-recovery
       CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
-      RECOVERY_BASE: codex/ia-media-e001-recovery-base-v2
+      RECOVERY_BASE: codex/ia-media-e001-recovery-base-v4
     steps:
       - name: Checkout exact controller head
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
           test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$controller_sha"
           cp .github/recovery/ia-media-e001-patch.py /tmp/ia-media-e001-patch.py
           cp .github/recovery/product-primary-image-path.mjs /tmp/product-primary-image-path.mjs
-          cp .github/recovery/iaMediaE001ImageSeoPath.test.mjs /tmp/iaMediaE001ImageSeoPath.test.mjs
+          cp .github/recovery/iaMediaE001ImageSeoPath.test.ts /tmp/iaMediaE001ImageSeoPath.test.ts
 
       - name: Assemble exact clean recovery from main
         shell: bash
@@ -84,8 +84,8 @@ jobs:
           python /tmp/ia-media-e001-patch.py
           mkdir -p scripts/lib
           cp /tmp/product-primary-image-path.mjs scripts/lib/product-primary-image-path.mjs
-          cp /tmp/iaMediaE001ImageSeoPath.test.mjs src/test/iaMediaE001ImageSeoPath.test.mjs
-          git add -N scripts/lib/product-primary-image-path.mjs src/test/iaMediaE001ImageSeoPath.test.mjs
+          cp /tmp/iaMediaE001ImageSeoPath.test.ts src/test/iaMediaE001ImageSeoPath.test.ts
+          git add -N scripts/lib/product-primary-image-path.mjs src/test/iaMediaE001ImageSeoPath.test.ts
           git diff --check
           cat > /tmp/allowed-files.txt <<'EOF'
           .github/workflows/ia-media-e001-remediation.yml
@@ -112,7 +112,7 @@ jobs:
           src/lib/productGalleryAuthority.ts
           src/test/faviconBranding.test.ts
           src/test/iaMediaE001AuthorizationContract.test.ts
-          src/test/iaMediaE001ImageSeoPath.test.mjs
+          src/test/iaMediaE001ImageSeoPath.test.ts
           src/test/iaMediaE001Plan.test.ts
           src/test/iaMediaE001TaxonomyFallback.test.ts
           src/test/iaUxE001.test.tsx
@@ -133,7 +133,6 @@ jobs:
           set -euo pipefail
           node --input-type=module <<'NODE'
           import { isDeterministicProductPrimaryPath } from "./scripts/lib/product-primary-image-path.mjs";
-
           const productionUrl = "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog/products/p001-short-lederhosen/ia-media-e001-20260730/01-hero-1VlsVH6GCmMwD1RAQppOnWJmKnwop0mmY.webp";
           const pathname = new URL(productionUrl).pathname;
           for (const reference of ["P001", " IRHA-P001 "]) {
@@ -159,7 +158,7 @@ jobs:
           npx eslint "${lint_files[@]}"
 
       - name: Run focused media-path regression
-        run: npx vitest run src/test/iaMediaE001ImageSeoPath.test.mjs
+        run: npx vitest run src/test/iaMediaE001ImageSeoPath.test.ts
 
       - name: Run full tests
         run: npm test -- --run
@@ -210,7 +209,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ia-media-e001-clean-recovery-${{ steps.push.outputs.clean_sha || github.run_id }}
+          name: ia-media-e001-clean-recovery-v4-${{ steps.push.outputs.clean_sha || github.run_id }}
           path: artifacts/ia-media-e001-recovery
           if-no-files-found: warn
           retention-days: 90
@@ -219,7 +218,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## IA-MEDIA-E001 recovery controller"
+            echo "## IA-MEDIA-E001 clean recovery V4"
             echo "- Exact main: \`$EXPECTED_MAIN\`"
             echo "- Exact contaminated source: \`$SOURCE_SHA\`"
             echo "- Clean head: \`${{ steps.push.outputs.clean_sha || 'not-created' }}\`"
