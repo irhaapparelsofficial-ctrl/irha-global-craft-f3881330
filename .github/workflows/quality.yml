@@ -58,7 +58,7 @@ jobs:
       - name: Run Semgrep Security Scan
         env:
           SEMGREP_SEND_METRICS: "off"
-        run: semgrep ci --config .semgrep.yml --error
+        run: semgrep scan --config .semgrep.yml --error
 
       - name: Verify deployment source lock
         run: node scripts/verify-deployment-source.mjs
@@ -182,7 +182,7 @@ jobs:
             echo "- Source: \`$GITHUB_SHA\`"
             echo "- Dependency install: exact npm lockfile via \`npm ci\`"
             echo "- Dependency manifests: immutable"
-            echo "- Semgrep 1.170.0 with the committed local security policy: required"
+            echo "- Semgrep 1.170.0 local-policy scan with findings-as-errors: required"
             echo "- Deployment source lock, secret safety and migration registry: required"
             echo "- Static Supabase parity: required"
             echo "- TypeScript and changed-file strict ESLint: required"
