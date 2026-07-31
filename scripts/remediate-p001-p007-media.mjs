@@ -197,6 +197,11 @@ function buildMutationSql(productUpdates, fileUpdates, assetUpdates) {
   return `
 BEGIN;
 
+-- Supabase Management API SQL sessions do not carry user JWT claims.
+-- Establish the reviewed transaction-local service role before protected
+-- media_assets writes; commit or rollback clears this context automatically.
+select set_config('request.jwt.claim.role', 'service_role', true);
+
 DO $$
 BEGIN
   IF EXISTS (
@@ -401,6 +406,11 @@ function buildRollbackSql(rollback) {
   }));
   return `
 BEGIN;
+
+-- Supabase Management API SQL sessions do not carry user JWT claims.
+-- Establish the reviewed transaction-local service role before protected
+-- media_assets writes; commit or rollback clears this context automatically.
+select set_config('request.jwt.claim.role', 'service_role', true);
 
 WITH payload AS (
   SELECT * FROM jsonb_to_recordset(${jsonbLiteral(assetRows)}) AS item(
