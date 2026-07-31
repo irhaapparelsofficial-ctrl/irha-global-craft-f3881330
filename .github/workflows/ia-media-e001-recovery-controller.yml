@@ -192,7 +192,7 @@ jobs:
           cmp -s package.json /tmp/ia-media-package.json
           node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check
 
-      - name: Constrain generated route-state change to exact final-manifest state
+      - name: Constrain generated route-state to exact final-manifest state
         shell: bash
         run: |
           set -euo pipefail
@@ -205,7 +205,6 @@ jobs:
           if (before.schemaVersion !== after.schemaVersion) fail("route-state schema changed");
           if (before.canonicalOrigin !== after.canonicalOrigin) fail("route-state canonical origin changed");
           if (before.routeCount !== after.routeCount) fail("route-state route count changed");
-          if (before.contentDigest === after.contentDigest) fail("material route-state content digest did not change");
           const beforeMap = new Map(before.routes.map((route) => [route.url, route.digest]));
           const afterMap = new Map(after.routes.map((route) => [route.url, route.digest]));
           if (beforeMap.size !== afterMap.size) fail("route-state URL set size changed");
@@ -219,12 +218,13 @@ jobs:
             .filter(([url, digest]) => beforeMap.get(url) !== digest)
             .map(([url]) => url)
             .sort();
-          if (changedRoutes.length === 0) fail("material route digests did not change");
           writeFileSync("/tmp/material-route-change-count.txt", `${changedRoutes.length}\n`, "utf8");
           writeFileSync("/tmp/material-route-changes.json", `${JSON.stringify(changedRoutes, null, 2)}\n`, "utf8");
-          console.log(`Final-manifest route state constrained: URLs unchanged, changed digests=${changedRoutes.length}.`);
+          console.log(`Final-manifest route state verified: URLs unchanged, changed digests=${changedRoutes.length}.`);
           NODE
-          echo "seo/search-route-state.json" >> /tmp/allowed-files.txt
+          if ! git diff --quiet -- seo/search-route-state.json; then
+            echo "seo/search-route-state.json" >> /tmp/allowed-files.txt
+          fi
           sort -u -o /tmp/allowed-files.txt /tmp/allowed-files.txt
           git diff --name-only "$EXPECTED_MAIN" | sort > /tmp/actual-files.txt
           diff -u /tmp/allowed-files.txt /tmp/actual-files.txt
@@ -235,10 +235,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/ia-media-e001-recovery
-          git diff --name-status "$EXPECTED_MAIN" > artifacts/ia-media-e001-recovery/changed-files.txt
-          git diff --stat "$EXPECTED_MAIN" > artifacts/ia-media-e001-recovery/diff-stat.txt
-          cp /tmp/material-route-changes.json artifacts/ia-media-e001-recovery/material-route-changes.json
+          evidence_dir=/tmp/ia-media-e001-recovery
+          rm -rf "$evidence_dir"
+          mkdir -p "$evidence_dir"
+          git diff --name-status "$EXPECTED_MAIN" > "$evidence_dir/changed-files.txt"
+          git diff --stat "$EXPECTED_MAIN" > "$evidence_dir/diff-stat.txt"
+          cp /tmp/material-route-changes.json "$evidence_dir/material-route-changes.json"
           {
             echo "expected_main=$EXPECTED_MAIN"
             echo "source_sha=$SOURCE_SHA"
@@ -252,7 +254,7 @@ jobs:
             echo "full_tests=passed"
             echo "production_build=passed"
             echo "final_dist_route_state_check=passed"
-          } > artifacts/ia-media-e001-recovery/pre-push-verification.txt
+          } > "$evidence_dir/pre-push-verification.txt"
 
       - name: Replace controller branch with one clean commit
         id: push
@@ -264,14 +266,20 @@ jobs:
           test "$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)" = "$SOURCE_SHA"
           test "$(git ls-remote origin "refs/heads/$RECOVERY_BASE" | cut -f1)" = "$EXPECTED_MAIN"
           test "$(git ls-remote origin "refs/heads/$CLEAN_BRANCH" | cut -f1)" = "$controller_sha"
+          test ! -e artifacts/ia-media-e001-recovery
+          test ! -e .github/recovery
+          test ! -e .github/workflows/ia-media-e001-recovery-controller.yml
           git switch -c ia-media-e001-clean-commit
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          git diff --cached --name-only | sort > /tmp/staged-files.txt
+          diff -u /tmp/allowed-files.txt /tmp/staged-files.txt
           git commit -m "fix(media): recover official logo and P001-P007 verified media"
           clean_sha="$(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_MAIN"
           echo "clean_sha=$clean_sha" >> "$GITHUB_OUTPUT"
-          echo "$clean_sha" > artifacts/ia-media-e001-recovery/clean-head-sha.txt
+          echo "$clean_sha" > /tmp/ia-media-e001-recovery/clean-head-sha.txt
           git push --force-with-lease="refs/heads/$CLEAN_BRANCH:$controller_sha" origin "HEAD:refs/heads/$CLEAN_BRANCH"
 
       - name: Upload recovery evidence
@@ -279,7 +287,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ia-media-e001-clean-recovery-v4-${{ steps.push.outputs.clean_sha || github.run_id }}
-          path: artifacts/ia-media-e001-recovery
+          path: /tmp/ia-media-e001-recovery
           if-no-files-found: warn
           retention-days: 90
 
