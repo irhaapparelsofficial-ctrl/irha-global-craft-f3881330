@@ -1,0 +1,120 @@
+rules:
+  - id: irha.javascript.no-eval
+    message: Avoid eval(); it executes dynamically constructed code and can enable code injection.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"
+      confidence: HIGH
+    pattern: eval(...)
+    paths:
+      include:
+        - src/**
+        - scripts/**
+        - ops/**
+        - supabase/functions/**
+
+  - id: irha.javascript.no-function-constructor
+    message: Avoid the Function constructor; it evaluates strings as code.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"
+      confidence: HIGH
+    pattern: new Function(...)
+    paths:
+      include:
+        - src/**
+        - scripts/**
+        - ops/**
+        - supabase/functions/**
+
+  - id: irha.frontend.no-service-role-env
+    message: Service-role credentials must never be referenced from browser-delivered source or public assets.
+    severity: ERROR
+    languages: [generic]
+    metadata:
+      category: security
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+      confidence: HIGH
+    pattern-regex: '(?i)\b(?:VITE_|PUBLIC_|NEXT_PUBLIC_)[A-Z0-9_]*(?:SERVICE_ROLE|SUPABASE_SERVICE)[A-Z0-9_]*\b'
+    paths:
+      include:
+        - src/**
+        - public/**
+        - index.html
+
+  - id: irha.sql.no-disable-row-level-security
+    message: Do not disable PostgreSQL row-level security in production migrations.
+    severity: ERROR
+    languages: [generic]
+    metadata:
+      category: security
+      cwe: "CWE-284: Improper Access Control"
+      confidence: HIGH
+    pattern-regex: '(?i)\bALTER\s+TABLE\b[\s\S]{0,300}?\bDISABLE\s+ROW\s+LEVEL\s+SECURITY\b'
+    paths:
+      include:
+        - supabase/migrations/**
+        - supabase/**/*.sql
+
+  - id: irha.sql.no-force-bypassrls
+    message: Do not grant BYPASSRLS to application-facing database roles.
+    severity: ERROR
+    languages: [generic]
+    metadata:
+      category: security
+      cwe: "CWE-284: Improper Access Control"
+      confidence: HIGH
+    pattern-regex: '(?i)\bALTER\s+ROLE\s+(?:anon|authenticated|authenticator)\b[\s\S]{0,200}?\bBYPASSRLS\b'
+    paths:
+      include:
+        - supabase/migrations/**
+        - supabase/**/*.sql
+
+  - id: irha.shell.no-remote-script-pipe
+    message: Do not pipe remote downloads directly into a shell; verify and execute immutable content instead.
+    severity: ERROR
+    languages: [generic]
+    metadata:
+      category: security
+      cwe: "CWE-494: Download of Code Without Integrity Check"
+      confidence: HIGH
+    pattern-regex: '(?i)\b(?:curl|wget)\b[^\n|]*(?:\||\|&)\s*(?:sudo\s+)?(?:ba|z|da)?sh\b'
+    paths:
+      include:
+        - scripts/**
+        - ops/**
+        - .github/workflows/**
+        - "*.sh"
+
+  - id: irha.shell.no-world-writable-permissions
+    message: Avoid chmod 777; world-writable executable content violates least privilege.
+    severity: ERROR
+    languages: [generic]
+    metadata:
+      category: security
+      cwe: "CWE-732: Incorrect Permission Assignment for Critical Resource"
+      confidence: HIGH
+    pattern-regex: '(?m)^\s*chmod\s+(?:-R\s+)?777\b'
+    paths:
+      include:
+        - scripts/**
+        - ops/**
+        - .github/workflows/**
+        - "*.sh"
+
+  - id: irha.github-actions.no-pull-request-target
+    message: pull_request_target executes with base-repository privileges and must not be used for untrusted PR code.
+    severity: ERROR
+    languages: [generic]
+    metadata:
+      category: security
+      cwe: "CWE-829: Inclusion of Functionality from Untrusted Control Sphere"
+      confidence: HIGH
+    pattern-regex: '(?m)^\s*pull_request_target\s*:'
+    paths:
+      include:
+        - .github/workflows/**
