@@ -94,3 +94,11 @@ new_block = '''    const pathname = new URL(primary).pathname;
 if old_block not in text:
     raise SystemExit("image SEO deterministic-path block missing")
 verifier.write_text(text.replace(old_block, new_block, 1))
+
+favicon_test = Path("src/test/faviconBranding.test.ts")
+text = favicon_test.read_text()
+old_line = r'''    expect(workerPatch).toContain('X-Irha-Favicon-Source\", \"official-owner-crest');'''
+new_line = '''    expect(workerPatch).toContain('X-Irha-Favicon-Source", "official-owner-crest');'''
+if old_line not in text:
+    raise SystemExit("favicon lint-fix anchor missing")
+favicon_test.write_text(text.replace(old_line, new_line, 1))
