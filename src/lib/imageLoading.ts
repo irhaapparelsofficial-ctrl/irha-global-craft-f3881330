@@ -1,6 +1,8 @@
+import { BRAND_ASSETS } from "@/lib/brandAssets";
+
 export type ImageLoadState = "idle" | "requested" | "loading" | "loaded" | "failed";
 
-export const CONTROLLED_IMAGE_FALLBACK = "/favicon.svg";
+export const CONTROLLED_IMAGE_FALLBACK = BRAND_ASSETS.controlledFallback;
 
 function sanitizedImagePath(source?: string | null) {
   if (!source) return "[missing-source]";
