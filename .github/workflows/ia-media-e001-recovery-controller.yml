@@ -163,8 +163,84 @@ jobs:
       - name: Run full tests
         run: npm test -- --run
 
-      - name: Run production build
-        run: npm run build
+      - name: Run one production build and materialize final route state
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp package.json /tmp/ia-media-package.json
+          cp seo/search-route-state.json /tmp/search-route-state.before.json
+          restore_package() {
+            cp /tmp/ia-media-package.json package.json
+          }
+          trap restore_package EXIT
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("package.json")
+          source = path.read_text(encoding="utf-8")
+          old = "node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check"
+          new = "node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --write"
+          count = source.count(old)
+          if count < 1:
+              raise SystemExit("final search route state check command not found")
+          path.write_text(source.replace(old, new), encoding="utf-8")
+          print(f"Temporarily changed {count} final-manifest route-state command(s) to write mode.")
+          PY
+          npm run build
+          restore_package
+          trap - EXIT
+          cmp -s package.json /tmp/ia-media-package.json
+          node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check
+
+      - name: Constrain generated route-state change to material IA-MEDIA effects
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+
+          const before = JSON.parse(readFileSync("/tmp/search-route-state.before.json", "utf8"));
+          const after = JSON.parse(readFileSync("seo/search-route-state.json", "utf8"));
+          const fail = (message) => { throw new Error(message); };
+          if (before.schemaVersion !== after.schemaVersion) fail("route-state schema changed");
+          if (before.canonicalOrigin !== after.canonicalOrigin) fail("route-state canonical origin changed");
+          if (before.routeCount !== after.routeCount) fail("route-state route count changed");
+          const beforeMap = new Map(before.routes.map((route) => [route.url, route.digest]));
+          const afterMap = new Map(after.routes.map((route) => [route.url, route.digest]));
+          if (beforeMap.size !== afterMap.size) fail("route-state URL set size changed");
+          for (const url of beforeMap.keys()) {
+            if (!afterMap.has(url)) fail(`route removed from material state: ${url}`);
+          }
+          for (const url of afterMap.keys()) {
+            if (!beforeMap.has(url)) fail(`route added to material state: ${url}`);
+          }
+          const changedRoutes = [...afterMap.entries()]
+            .filter(([url, digest]) => beforeMap.get(url) !== digest)
+            .map(([url]) => url)
+            .sort();
+          const expectedProductRoutes = [
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/short-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/knee-length-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/long-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/vintage-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/premium-embroidered-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/goat-suede-lederhosen",
+            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/deer-suede-lederhosen",
+          ];
+          for (const url of expectedProductRoutes) {
+            if (!changedRoutes.includes(url)) fail(`expected IA-MEDIA product digest did not change: ${url}`);
+          }
+          if (changedRoutes.length === 0) fail("material route state did not change");
+          writeFileSync("/tmp/material-route-change-count.txt", `${changedRoutes.length}\n`, "utf8");
+          writeFileSync("/tmp/material-route-changes.json", `${JSON.stringify(changedRoutes, null, 2)}\n`, "utf8");
+          console.log(`Material route state constrained: URLs unchanged, changed digests=${changedRoutes.length}.`);
+          NODE
+          echo "seo/search-route-state.json" >> /tmp/allowed-files.txt
+          sort -u -o /tmp/allowed-files.txt /tmp/allowed-files.txt
+          git diff --name-only "$EXPECTED_MAIN" | sort > /tmp/actual-files.txt
+          diff -u /tmp/allowed-files.txt /tmp/actual-files.txt
+          test -z "$(git diff --name-only "$EXPECTED_MAIN" -- public/ dist/ package-lock.json)"
+          git diff --check
 
       - name: Create immutable pre-push evidence
         shell: bash
@@ -173,16 +249,20 @@ jobs:
           mkdir -p artifacts/ia-media-e001-recovery
           git diff --name-status "$EXPECTED_MAIN" > artifacts/ia-media-e001-recovery/changed-files.txt
           git diff --stat "$EXPECTED_MAIN" > artifacts/ia-media-e001-recovery/diff-stat.txt
+          cp /tmp/material-route-changes.json artifacts/ia-media-e001-recovery/material-route-changes.json
           {
             echo "expected_main=$EXPECTED_MAIN"
             echo "source_sha=$SOURCE_SHA"
             echo "controller_head=${{ github.event.pull_request.head.sha }}"
             echo "changed_files=$(wc -l < /tmp/actual-files.txt)"
+            echo "material_route_digest_changes=$(cat /tmp/material-route-change-count.txt)"
+            echo "route_url_set_changed=no"
             echo "exact_production_path_contract=passed"
             echo "changed_file_lint=passed"
             echo "focused_media_path_regression=passed"
             echo "full_tests=passed"
             echo "production_build=passed"
+            echo "final_dist_route_state_check=passed"
           } > artifacts/ia-media-e001-recovery/pre-push-verification.txt
 
       - name: Replace controller branch with one clean commit
