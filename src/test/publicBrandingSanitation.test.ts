@@ -67,7 +67,8 @@ describe("IA-CONTENT-E001 public branding sanitation", () => {
     const hero = readText("src/components/HeroCarousel.tsx");
     const placeholder = readText("public/placeholder.svg");
 
-    expect(imageLoading).toContain('CONTROLLED_IMAGE_FALLBACK = "/favicon.svg"');
+    expect(imageLoading).toContain("CONTROLLED_IMAGE_FALLBACK = BRAND_ASSETS.controlledFallback");
+    expect(imageLoading).not.toContain('CONTROLLED_IMAGE_FALLBACK = "/favicon.svg"');
     expect(resilientImage).toContain('data-brand-fallback={controlledFallbackActive ? "irha-official-crest" : undefined}');
     expect(resilientImage).not.toMatch(/Image unavailable|question mark/i);
     expect(cards).toContain('data-card-brand="irha-official-crest"');
