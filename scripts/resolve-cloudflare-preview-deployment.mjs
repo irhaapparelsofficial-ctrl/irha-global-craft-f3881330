@@ -1,5 +1,6 @@
 import { appendFile } from "node:fs/promises";
 
+// IA-MEDIA-E001 exact-head release gates use this resolver to bind browser evidence to an immutable preview deployment.
 const token = process.env.CLOUDFLARE_API_TOKEN?.trim();
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
 const project = process.env.CLOUDFLARE_PROJECT_NAME?.trim();
