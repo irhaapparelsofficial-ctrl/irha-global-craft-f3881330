@@ -3,7 +3,7 @@ name: IA Media E001 Recovery Controller
 on:
   pull_request:
     branches:
-      - codex/ia-media-e001-recovery-base
+      - codex/ia-media-e001-recovery-base-v2
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: ia-media-e001-recovery-controller
+  group: ia-media-e001-recovery-controller-v2
   cancel-in-progress: false
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       SOURCE_SHA: ca03213251658ae91a9f525011170225829ee19f
       SOURCE_BRANCH: codex/official-logo-p001-p007-media-recovery
       CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
-      RECOVERY_BASE: codex/ia-media-e001-recovery-base
+      RECOVERY_BASE: codex/ia-media-e001-recovery-base-v2
     steps:
       - name: Checkout exact controller head
         uses: actions/checkout@v4
@@ -127,6 +127,26 @@ jobs:
           test ! -e .semgrep.yml
           test -z "$(git diff --name-only "$EXPECTED_MAIN" -- .github/workflows/quality.yml src/components/CookieConsent.tsx src/components/ui/toaster.tsx src/index.css)"
 
+      - name: Prove exact production media path contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { isDeterministicProductPrimaryPath } from "./scripts/lib/product-primary-image-path.mjs";
+
+          const productionUrl = "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/catalog/products/p001-short-lederhosen/ia-media-e001-20260730/01-hero-1VlsVH6GCmMwD1RAQppOnWJmKnwop0mmY.webp";
+          const pathname = new URL(productionUrl).pathname;
+          for (const reference of ["P001", " IRHA-P001 "]) {
+            if (!isDeterministicProductPrimaryPath(reference, pathname)) {
+              throw new Error(`exact production path contract rejected ${reference}: ${pathname}`);
+            }
+          }
+          if (isDeterministicProductPrimaryPath("P008", pathname.replace("p001-short-lederhosen", "p008-other-product"))) {
+            throw new Error("P008 incorrectly accepted the IA-MEDIA-E001 nested path contract");
+          }
+          console.log("Exact production P001 path contract passed.");
+          NODE
+
       - name: Install exact dependencies
         run: npm ci --legacy-peer-deps --no-audit --no-fund
 
@@ -137,6 +157,9 @@ jobs:
           mapfile -t lint_files < <(git diff --name-only "$EXPECTED_MAIN" -- '*.ts' '*.tsx' '*.mjs')
           test "${#lint_files[@]}" -gt 0
           npx eslint "${lint_files[@]}"
+
+      - name: Run focused media-path regression
+        run: npx vitest run src/test/iaMediaE001ImageSeoPath.test.mjs
 
       - name: Run full tests
         run: npm test -- --run
@@ -156,7 +179,9 @@ jobs:
             echo "source_sha=$SOURCE_SHA"
             echo "controller_head=${{ github.event.pull_request.head.sha }}"
             echo "changed_files=$(wc -l < /tmp/actual-files.txt)"
+            echo "exact_production_path_contract=passed"
             echo "changed_file_lint=passed"
+            echo "focused_media_path_regression=passed"
             echo "full_tests=passed"
             echo "production_build=passed"
           } > artifacts/ia-media-e001-recovery/pre-push-verification.txt
@@ -169,6 +194,7 @@ jobs:
           controller_sha="${{ github.event.pull_request.head.sha }}"
           test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$EXPECTED_MAIN"
           test "$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)" = "$SOURCE_SHA"
+          test "$(git ls-remote origin "refs/heads/$RECOVERY_BASE" | cut -f1)" = "$EXPECTED_MAIN"
           test "$(git ls-remote origin "refs/heads/$CLEAN_BRANCH" | cut -f1)" = "$controller_sha"
           git switch -c ia-media-e001-clean-commit
           git config user.name "github-actions[bot]"
