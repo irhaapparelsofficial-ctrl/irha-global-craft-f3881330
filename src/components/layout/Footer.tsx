@@ -3,6 +3,7 @@ import { Mail, MapPin, MessageCircle } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { SEO_BUYER_INTENT_FOOTER_LINKS, SEO_BUYER_INTENT_LANDING_PAGES } from "@/lib/buyerIntentSeoPages";
 import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
+import { BRAND_ASSETS } from "@/lib/brandAssets";
 import { GERMAN_GATEWAY_CONTENT } from "@/lib/germanGatewayContent";
 import { getLocaleGateway, getRouteLocale, type LocaleCode } from "@/lib/i18nFoundation";
 import { ROUTES } from "@/data/buyerCapabilities";
@@ -81,9 +82,17 @@ export default function Footer() {
     <footer className="relative border-t border-border/60 bg-[#080808] pb-24 pt-12 text-foreground/80 md:pb-8 md:pt-16" lang={locale}>
       <div className="container-luxe grid gap-9 sm:grid-cols-2 lg:grid-cols-[1.35fr_.8fr_.8fr_1fr] lg:gap-10">
         <div className="sm:col-span-2 lg:col-span-1">
-          <Link to={getLocaleGateway(locale)} className="inline-flex items-center gap-3" aria-label={`${PUBLIC_IDENTITY.name} ${copy.tagline}`}>
-            <img src="/irha-brand-mark.svg" alt="Official Irha Apparels Manufacturing Specialists crest" className="h-20 w-20 shrink-0 object-contain object-left" />
-            <span className="leading-none"><span className="block font-display text-2xl font-semibold text-foreground">{PUBLIC_IDENTITY.name}</span><span className="mt-1.5 block text-[8px] font-bold uppercase tracking-[0.22em] text-primary">{copy.tagline}</span></span>
+          <Link to={getLocaleGateway(locale)} className="inline-flex items-center" aria-label={`${PUBLIC_IDENTITY.name} ${copy.tagline}`}>
+            <img
+              src={BRAND_ASSETS.footerLogo}
+              alt="Official Irha Apparels Manufacturing Specialists logo"
+              width="760"
+              height="160"
+              className="h-auto w-[13.5rem] shrink-0 object-contain object-left"
+              loading="eager"
+              decoding="async"
+            />
+            <span className="sr-only">{PUBLIC_IDENTITY.name} — {copy.tagline}</span>
           </Link>
           <p className="mt-4 max-w-md text-sm font-medium leading-6 text-foreground/85">{copy.intro}</p>
           <p className="mt-2 max-w-md text-xs leading-5 text-foreground/52">{copy.detail}</p>

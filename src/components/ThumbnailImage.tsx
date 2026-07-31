@@ -6,6 +6,7 @@ import {
   reportImageFailure,
   type ImageLoadState,
 } from "@/lib/imageLoading";
+import { selectAuthoritativeProductImageSource } from "@/lib/productGalleryAuthority";
 
 type ThumbnailImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src?: string | null;
@@ -37,8 +38,8 @@ export default function ThumbnailImage({
   style,
   ...props
 }: ThumbnailImageProps) {
-  const original = originalSrc || src || "";
-  const requested = src || original;
+  const original = selectAuthoritativeProductImageSource(originalSrc || src || "");
+  const requested = selectAuthoritativeProductImageSource(src || original);
   const candidate = useMemo(() => thumbnailUrl(requested) || requested, [requested]);
   const responsiveAttributes = useMemo(
     () => responsiveImageAttributes(original),

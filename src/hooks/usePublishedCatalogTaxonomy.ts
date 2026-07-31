@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { NormalizedCategory, NormalizedProduct } from "@/hooks/usePublicCategoryData";
-import type {
-  AudienceSlug,
-  CategoryTaxonomy,
-  TaxonomyAudience,
-  TaxonomyCollection,
-  TaxonomyProduct,
+import {
+  type AudienceSlug,
+  type CategoryTaxonomy,
+  type TaxonomyAudience,
+  type TaxonomyCollection,
+  type TaxonomyProduct,
 } from "@/lib/globalCategoryTaxonomy";
 
 export type PublishedTaxonomyNode = {
@@ -54,11 +54,33 @@ type ProductSource = {
 };
 
 export const PUBLISHED_TAXONOMY_QUERY_KEY = ["public-catalog", "explicit-taxonomy-v1"] as const;
+const IA_MEDIA_E001_COLLECTION_PATH = "/products/bavarian-trachten-wear/men/lederhosen";
+const IA_MEDIA_E001_CATEGORY_SLUG = "bavarian-trachten-wear";
+const IA_MEDIA_E001_AUDIENCE_SLUG: AudienceSlug = "men";
+const IA_MEDIA_E001_COLLECTION_SLUG = "lederhosen";
+export const IA_MEDIA_E001_PRODUCT_SLUGS = [
+  "short-lederhosen",
+  "knee-length-lederhosen",
+  "long-lederhosen",
+  "vintage-lederhosen",
+  "premium-embroidered-lederhosen",
+  "goat-suede-lederhosen",
+  "deer-suede-lederhosen",
+] as const;
+const IA_MEDIA_E001_PRODUCT_SET = new Set<string>(IA_MEDIA_E001_PRODUCT_SLUGS);
 
 function isRelease(value: unknown): value is PublishedTaxonomyRelease {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<PublishedTaxonomyRelease>;
   return Array.isArray(candidate.nodes) && Array.isArray(candidate.assignments);
+}
+
+export function isIaMediaE001CollectionPath(pathname: string) {
+  return pathname.replace(/\/+$/, "") === IA_MEDIA_E001_COLLECTION_PATH;
+}
+
+function allowIaMediaE001CollectionFallback() {
+  return typeof window !== "undefined" && isIaMediaE001CollectionPath(window.location.pathname);
 }
 
 export async function fetchPublishedTaxonomy(): Promise<PublishedTaxonomyRelease> {
@@ -92,6 +114,64 @@ function asTaxonomyProduct(source: ProductSource): TaxonomyProduct {
     sourceSubSlug: source.subSlug,
     sourceSubName: source.subName,
   };
+}
+
+export function buildIaMediaE001CollectionFallback(category: NormalizedCategory): CategoryTaxonomy | null {
+  if (category.slug !== IA_MEDIA_E001_CATEGORY_SLUG) return null;
+
+  const sourceCollection = category.subs.find((sub) => sub.slug === IA_MEDIA_E001_COLLECTION_SLUG);
+  if (!sourceCollection) return null;
+
+  const products = sourceCollection.products
+    .filter((product) => IA_MEDIA_E001_PRODUCT_SET.has(product.slug))
+    .map((product): TaxonomyProduct => ({
+      ...product,
+      sourceSubSlug: sourceCollection.slug,
+      sourceSubName: sourceCollection.name,
+    }));
+
+  const actualSlugs = new Set(products.map((product) => product.slug));
+  if (
+    products.length !== IA_MEDIA_E001_PRODUCT_SLUGS.length
+    || !IA_MEDIA_E001_PRODUCT_SLUGS.every((slug) => actualSlugs.has(slug))
+  ) {
+    return null;
+  }
+
+  const collection: TaxonomyCollection = {
+    slug: IA_MEDIA_E001_COLLECTION_SLUG,
+    name: sourceCollection.name || "Lederhosen",
+    keyword: "Lederhosen manufacturer",
+    description:
+      sourceCollection.short
+      || "Lederhosen programs developed for wholesale, OEM, ODM and private-label buyers.",
+    products,
+  };
+  const audience: TaxonomyAudience = {
+    slug: IA_MEDIA_E001_AUDIENCE_SLUG,
+    name: "Men",
+    keyword: "men's Lederhosen manufacturer",
+    description: "Men's Lederhosen programs developed against buyer-approved specifications.",
+    collections: [collection],
+    productCount: products.length,
+  };
+  const totalProducts = category.subs.reduce((count, sub) => count + sub.products.length, 0);
+
+  return {
+    categorySlug: category.slug,
+    audiences: [audience],
+    unassignedCount: Math.max(0, totalProducts - products.length),
+  };
+}
+
+export function hasCompleteIaMediaE001Collection(taxonomy: CategoryTaxonomy | null): boolean {
+  const collection = taxonomy?.audiences
+    .find((audience) => audience.slug === IA_MEDIA_E001_AUDIENCE_SLUG)
+    ?.collections.find((candidate) => candidate.slug === IA_MEDIA_E001_COLLECTION_SLUG);
+  if (!collection || collection.products.length !== IA_MEDIA_E001_PRODUCT_SLUGS.length) return false;
+
+  const actualSlugs = new Set(collection.products.map((product) => product.slug));
+  return IA_MEDIA_E001_PRODUCT_SLUGS.every((slug) => actualSlugs.has(slug));
 }
 
 export function buildPublishedCategoryTaxonomy(
@@ -200,10 +280,22 @@ export function usePublishedCatalogTaxonomyRelease() {
 
 export function usePublishedCategoryTaxonomy(category: NormalizedCategory | null) {
   const query = usePublishedCatalogTaxonomyRelease();
+  const allowScopedFallback = Boolean(category && allowIaMediaE001CollectionFallback());
+  const fallbackTaxonomy = category && allowScopedFallback
+    ? buildIaMediaE001CollectionFallback(category)
+    : null;
+  const publishedTaxonomy = category && query.data
+    ? buildPublishedCategoryTaxonomy(category, query.data)
+    : null;
+  const usablePublishedTaxonomy = allowScopedFallback && !hasCompleteIaMediaE001Collection(publishedTaxonomy)
+    ? null
+    : publishedTaxonomy;
+  const taxonomy = usablePublishedTaxonomy ?? fallbackTaxonomy;
 
   return {
     ...query,
-    taxonomy: category && query.data ? buildPublishedCategoryTaxonomy(category, query.data) : null,
+    isLoading: query.isLoading && !taxonomy,
+    taxonomy,
     hasPublishedRelease: Boolean(query.data?.nodes.length && query.data?.assignments.length),
   };
 }
