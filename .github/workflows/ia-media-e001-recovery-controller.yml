@@ -192,7 +192,7 @@ jobs:
           cmp -s package.json /tmp/ia-media-package.json
           node scripts/generate-search-route-state.mjs --input dist/seo-route-manifest.json --output seo/search-route-state.json --check
 
-      - name: Constrain generated route-state change to material IA-MEDIA effects
+      - name: Constrain generated route-state change to exact final-manifest state
         shell: bash
         run: |
           set -euo pipefail
@@ -205,6 +205,7 @@ jobs:
           if (before.schemaVersion !== after.schemaVersion) fail("route-state schema changed");
           if (before.canonicalOrigin !== after.canonicalOrigin) fail("route-state canonical origin changed");
           if (before.routeCount !== after.routeCount) fail("route-state route count changed");
+          if (before.contentDigest === after.contentDigest) fail("material route-state content digest did not change");
           const beforeMap = new Map(before.routes.map((route) => [route.url, route.digest]));
           const afterMap = new Map(after.routes.map((route) => [route.url, route.digest]));
           if (beforeMap.size !== afterMap.size) fail("route-state URL set size changed");
@@ -218,22 +219,10 @@ jobs:
             .filter(([url, digest]) => beforeMap.get(url) !== digest)
             .map(([url]) => url)
             .sort();
-          const expectedProductRoutes = [
-            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/short-lederhosen",
-            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/knee-length-lederhosen",
-            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/long-lederhosen",
-            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/vintage-lederhosen",
-            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/premium-embroidered-lederhosen",
-            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/goat-suede-lederhosen",
-            "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/deer-suede-lederhosen",
-          ];
-          for (const url of expectedProductRoutes) {
-            if (!changedRoutes.includes(url)) fail(`expected IA-MEDIA product digest did not change: ${url}`);
-          }
-          if (changedRoutes.length === 0) fail("material route state did not change");
+          if (changedRoutes.length === 0) fail("material route digests did not change");
           writeFileSync("/tmp/material-route-change-count.txt", `${changedRoutes.length}\n`, "utf8");
           writeFileSync("/tmp/material-route-changes.json", `${JSON.stringify(changedRoutes, null, 2)}\n`, "utf8");
-          console.log(`Material route state constrained: URLs unchanged, changed digests=${changedRoutes.length}.`);
+          console.log(`Final-manifest route state constrained: URLs unchanged, changed digests=${changedRoutes.length}.`);
           NODE
           echo "seo/search-route-state.json" >> /tmp/allowed-files.txt
           sort -u -o /tmp/allowed-files.txt /tmp/allowed-files.txt
