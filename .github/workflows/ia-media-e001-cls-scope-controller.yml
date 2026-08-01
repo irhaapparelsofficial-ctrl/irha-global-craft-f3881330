@@ -103,24 +103,48 @@ jobs:
               raise SystemExit("fixed overlap anchor changed")
           text = text.replace(empty_anchor, empty_replacement, 1)
 
-          capture_anchor = '''    await waitForApp(page);
+          capture_function = '''async function captureStrictProduct(browser, origin, label, product, viewport) {
+            const { context, page } = await createPage(browser, viewport);
+            try {
+              await page.goto(`${origin}${productPath(product.slug)}?ia_media_e001=${Date.now()}`, {
+                waitUntil: "domcontentloaded",
+                timeout: 45_000,
+              });
+              await waitForApp(page);
               const evidence = await inspectProduct(page, product, viewport);
-              await page.screenshot({'''
-          capture_replacement = '''    await waitForApp(page);
+              await page.screenshot({
+                path: resolve(OUTPUT_ROOT, label, `${product.sku.toLowerCase()}-${viewport.name}.png`),
+                fullPage: viewport.width >= 1280,
+              });
+              return evidence;
+            } finally {
+              await context.close();
+            }
+          }
+          '''
+          patched_capture_function = '''async function captureStrictProduct(browser, origin, label, product, viewport) {
+            const { context, page } = await createPage(browser, viewport);
+            try {
+              await page.goto(`${origin}${productPath(product.slug)}?ia_media_e001=${Date.now()}`, {
+                waitUntil: "domcontentloaded",
+                timeout: 45_000,
+              });
+              await waitForApp(page);
               const consent = await dismissCookieConsent(page);
               const evidence = await inspectProduct(page, product, viewport);
-              await page.screenshot({'''
-          if text.count(capture_anchor) != 1:
-              raise SystemExit("captureStrictProduct anchor changed")
-          text = text.replace(capture_anchor, capture_replacement, 1)
-
-          return_anchor = '''    return evidence;
-            } finally {'''
-          return_replacement = '''    return { ...evidence, consent };
-            } finally {'''
-          if text.count(return_anchor) != 1:
-              raise SystemExit("captureStrictProduct return anchor changed")
-          text = text.replace(return_anchor, return_replacement, 1)
+              await page.screenshot({
+                path: resolve(OUTPUT_ROOT, label, `${product.sku.toLowerCase()}-${viewport.name}.png`),
+                fullPage: viewport.width >= 1280,
+              });
+              return { ...evidence, consent };
+            } finally {
+              await context.close();
+            }
+          }
+          '''
+          if text.count(capture_function) != 1:
+              raise SystemExit("captureStrictProduct exact function anchor changed")
+          text = text.replace(capture_function, patched_capture_function, 1)
 
           script.write_text(text, encoding="utf-8")
           PY
