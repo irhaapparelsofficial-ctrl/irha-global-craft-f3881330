@@ -1,7 +1,7 @@
 export const BRAND_ASSET_VERSION = "ia-brand-visual-e001-20260801";
 
 const versioned = (path: string) => `${path}?v=${BRAND_ASSET_VERSION}`;
-const OFFICIAL_OWNER_CREST = "/favicon.svg";
+const OFFICIAL_OWNER_CREST = "/icon-512x512.png";
 
 export const BRAND_ASSETS = Object.freeze({
   headerLogo: versioned(OFFICIAL_OWNER_CREST),
