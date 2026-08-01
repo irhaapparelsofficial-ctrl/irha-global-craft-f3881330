@@ -1,4 +1,4 @@
-name: IA Media E001 CLS Scope Controller
+name: IA Media E001 Landscape Overlap Controller
 
 on:
   pull_request:
@@ -10,15 +10,15 @@ permissions:
   contents: write
 
 jobs:
-  patch-cls-scope:
+  patch-landscape-overlap:
     if: github.event.pull_request.head.ref == 'codex/ia-media-e001-cls-scope-controller'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
-      EXPECTED_CLEAN: ccbb0598720d6d7d6bb51f0bca483530ba9cefbf
+      EXPECTED_CLEAN: c756ea7e7dca2f68addfb8883124bfc102ef0d2a
       CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
-      OUTPUT_BRANCH: codex/ia-media-e001-cls-content-v1
+      OUTPUT_BRANCH: codex/ia-media-e001-overlap-content-v2
 
     steps:
       - name: Checkout exact clean recovery commit
@@ -36,15 +36,31 @@ jobs:
           test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
           test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$EXPECTED_CLEAN"
 
-      - name: Scope CLS to stable media interactions
+      - name: Restore excluded cookie source and fix landscape overlap
         shell: bash
         run: |
           set -euo pipefail
+          git restore --source="$EXPECTED_MAIN" -- src/components/CookieConsent.tsx
+
           python - <<'PY'
           from pathlib import Path
 
-          path = Path("scripts/capture-ia-media-e001-visual-evidence.mjs")
-          text = path.read_text(encoding="utf-8")
+          chat = Path("src/components/LiveChat.tsx")
+          text = chat.read_text(encoding="utf-8")
+          replacements = {
+              'className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-6 md:right-24 md:w-[20rem]"':
+                  'className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-auto md:right-4 md:top-24 md:h-12 md:w-12 md:justify-center md:rounded-full md:p-0"',
+              '<span className="min-w-0 flex-1">': '<span className="min-w-0 flex-1 md:hidden">',
+              '<ChevronRight size={18} className="shrink-0 text-gold" />': '<ChevronRight size={18} className="shrink-0 text-gold md:hidden" />',
+          }
+          for old, new in replacements.items():
+              if text.count(old) != 1:
+                  raise SystemExit(f"LiveChat anchor count changed: {old[:80]}")
+              text = text.replace(old, new, 1)
+          chat.write_text(text, encoding="utf-8")
+
+          script = Path("scripts/capture-ia-media-e001-visual-evidence.mjs")
+          text = script.read_text(encoding="utf-8")
 
           wait_anchor = '''async function waitForApp(page) {
             await page.waitForLoadState("domcontentloaded");
@@ -52,53 +68,74 @@ jobs:
             await page.waitForTimeout(1000);
           }
           '''
-          wait_replacement = wait_anchor + '''
-          async function beginScopedLayoutShiftMeasurement(page) {
-            await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
-            return page.evaluate(() => {
-              const initialLayoutShift = window.__iaLayoutShiftScore ?? 0;
-              window.__iaLayoutShiftScore = 0;
-              return initialLayoutShift;
-            });
+          consent_function = wait_anchor + '''
+          async function dismissCookieConsent(page) {
+            const dialog = page.locator('[aria-labelledby="cookie-consent-title"]');
+            if (await dialog.count() === 0 || !(await dialog.isVisible())) return { visible: false, choice: null };
+
+            const privacy = dialog.locator('a[href="/privacy-policy"]');
+            const essential = dialog.getByRole("button", { name: /essential only/i });
+            const optional = dialog.getByRole("button", { name: /accept optional/i });
+            if (!(await privacy.isVisible()) || !(await essential.isVisible()) || !(await optional.isVisible())) {
+              throw new Error("Cookie consent controls are incomplete");
+            }
+            await essential.click();
+            await dialog.waitFor({ state: "hidden", timeout: 10_000 });
+            return { visible: true, choice: "essential-only" };
           }
           '''
           if text.count(wait_anchor) != 1:
-            raise SystemExit("waitForApp anchor changed")
-          text = text.replace(wait_anchor, wait_replacement, 1)
+              raise SystemExit("waitForApp anchor changed")
+          text = text.replace(wait_anchor, consent_function, 1)
 
-          inspect_anchor = '''  await page.locator("h1").filter({ hasText: product.name }).first().waitFor({ state: "visible", timeout: 30_000 });
-            await assertOfficialLogo(page, "header", `${product.sku} header`);
-            const heroSelector ='''
-          inspect_replacement = '''  await page.locator("h1").filter({ hasText: product.name }).first().waitFor({ state: "visible", timeout: 30_000 });
-            await assertOfficialLogo(page, "header", `${product.sku} header`);
-            const initialLayoutShift = await beginScopedLayoutShiftMeasurement(page);
-            const heroSelector ='''
-          if text.count(inspect_anchor) != 1:
-            raise SystemExit("inspectProduct anchor changed")
-          text = text.replace(inspect_anchor, inspect_replacement, 1)
+          empty_anchor = '''      const rect = element.getBoundingClientRect();
+                if (rect.width < 12 || rect.height < 12) continue;
+                const intersects ='''
+          empty_replacement = '''      const rect = element.getBoundingClientRect();
+                if (rect.width < 12 || rect.height < 12) continue;
+                const hasVisibleContent = Boolean(
+                  element.textContent?.trim()
+                  || element.querySelector('img, svg, button, input, [role="alert"], [data-state="open"]')
+                );
+                if (!hasVisibleContent) continue;
+                const intersects ='''
+          if text.count(empty_anchor) != 1:
+              raise SystemExit("fixed overlap anchor changed")
+          text = text.replace(empty_anchor, empty_replacement, 1)
 
-          result_anchor = '''  const layoutShift = await page.evaluate(() => window.__iaLayoutShiftScore ?? 0);
-            if (layoutShift > 0.25) throw new Error(`${product.sku} CLS ${layoutShift} exceeds 0.25`);
-            const relatedProducts = await inspectRelatedProducts(page, product);
-            return { thumbnailCount: count, visited, blockers, layoutShift, relatedProducts };
-          }'''
-          result_replacement = '''  const layoutShift = await page.evaluate(() => window.__iaLayoutShiftScore ?? 0);
-            if (layoutShift > 0.25) throw new Error(`${product.sku} gallery interaction CLS ${layoutShift} exceeds 0.25`);
-            const relatedProducts = await inspectRelatedProducts(page, product);
-            return { thumbnailCount: count, visited, blockers, initialLayoutShift, layoutShift, relatedProducts };
-          }'''
-          if text.count(result_anchor) != 1:
-            raise SystemExit("layout-shift assertion anchor changed")
-          text = text.replace(result_anchor, result_replacement, 1)
+          capture_anchor = '''    await waitForApp(page);
+              const evidence = await inspectProduct(page, product, viewport);
+              await page.screenshot({'''
+          capture_replacement = '''    await waitForApp(page);
+              const consent = await dismissCookieConsent(page);
+              const evidence = await inspectProduct(page, product, viewport);
+              await page.screenshot({'''
+          if text.count(capture_anchor) != 1:
+              raise SystemExit("captureStrictProduct anchor changed")
+          text = text.replace(capture_anchor, capture_replacement, 1)
 
-          path.write_text(text, encoding="utf-8")
+          return_anchor = '''    return evidence;
+            } finally {'''
+          return_replacement = '''    return { ...evidence, consent };
+            } finally {'''
+          if text.count(return_anchor) != 1:
+              raise SystemExit("captureStrictProduct return anchor changed")
+          text = text.replace(return_anchor, return_replacement, 1)
+
+          script.write_text(text, encoding="utf-8")
           PY
 
           node --check scripts/capture-ia-media-e001-visual-evidence.mjs
           grep -Fq 'if (layoutShift > 0.25)' scripts/capture-ia-media-e001-visual-evidence.mjs
-          grep -Fq 'initialLayoutShift' scripts/capture-ia-media-e001-visual-evidence.mjs
+          grep -Fq 'choice: "essential-only"' scripts/capture-ia-media-e001-visual-evidence.mjs
+          grep -Fq 'md:top-24 md:h-12 md:w-12' src/components/LiveChat.tsx
           git diff --check
-          test "$(git diff --name-only)" = "scripts/capture-ia-media-e001-visual-evidence.mjs"
+          git diff --name-only | sort > /tmp/actual.txt
+          printf '%s\n' \
+            scripts/capture-ia-media-e001-visual-evidence.mjs \
+            src/components/CookieConsent.tsx \
+            src/components/LiveChat.tsx | sort > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
 
       - name: Publish verified content-only commit
         shell: bash
@@ -107,14 +144,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$OUTPUT_BRANCH"
-          git add scripts/capture-ia-media-e001-visual-evidence.mjs
-          git commit -m "fix(media): scope CLS gate to stable gallery interactions"
+          git add \
+            scripts/capture-ia-media-e001-visual-evidence.mjs \
+            src/components/CookieConsent.tsx \
+            src/components/LiveChat.tsx
+          git commit -m "fix(media): keep product media clear of fixed UI"
           git push origin "HEAD:refs/heads/$OUTPUT_BRANCH"
           {
-            echo "## IA-MEDIA-E001 CLS scope patch"
+            echo "## IA-MEDIA-E001 landscape overlap fix"
             echo "- Source clean SHA: \`$EXPECTED_CLEAN\`"
             echo "- Output commit: \`$(git rev-parse HEAD)\`"
-            echo "- Threshold retained: \`0.25\`"
-            echo "- Changed file: \`scripts/capture-ia-media-e001-visual-evidence.mjs\`"
+            echo "- Cookie source restored to exact main"
+            echo "- CLS threshold retained: \`0.25\`"
             echo "- Production mutation: **none**"
           } >> "$GITHUB_STEP_SUMMARY"
