@@ -1,0 +1,129 @@
+name: IA Media E001 CLS Fix Controller
+
+on:
+  pull_request:
+    branches:
+      - codex/ia-media-e001-recovery-base-v4
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-fixed-ui:
+    if: github.event.pull_request.head.ref == 'codex/ia-media-e001-fixed-ui-controller-v3'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      CLEAN_SHA: c756ea7e7dca2f68addfb8883124bfc102ef0d2a
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+      TARGET_BRANCH: codex/ia-media-e001-fixed-ui-content
+
+    steps:
+      - name: Checkout exact clean source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CLEAN_SHA }}
+          fetch-depth: 0
+
+      - name: Verify immutable inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main "$CLEAN_BRANCH" "$TARGET_BRANCH" --no-tags
+          test "$(git rev-parse HEAD)" = "$CLEAN_SHA"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$CLEAN_SHA"
+          test "$(git rev-parse "origin/$TARGET_BRANCH")" = "$CLEAN_SHA"
+          test "$(git rev-parse "$CLEAN_SHA^")" = "$EXPECTED_MAIN"
+
+      - name: Move fixed controls clear of product media
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path_name: str, old: str, new: str) -> None:
+              path = Path(path_name)
+              text = path.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path_name}: anchor count {count} for {old[:80]!r}")
+              path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          replace_once(
+              "src/components/LiveChat.tsx",
+              'className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-6 md:right-24 md:w-[20rem]"',
+              'className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-6 md:right-24 md:w-[20rem] lg:bottom-auto lg:right-4 lg:top-24 lg:h-14 lg:w-14 lg:justify-center lg:gap-0 lg:rounded-full lg:p-0 xl:bottom-6 xl:right-6 xl:top-auto xl:h-auto xl:w-[20rem] xl:justify-start xl:gap-3 xl:rounded-2xl xl:px-3.5 xl:py-3"',
+          )
+          replace_once(
+              "src/components/LiveChat.tsx",
+              '<span className="min-w-0 flex-1">',
+              '<span className="min-w-0 flex-1 lg:hidden xl:block">',
+          )
+          replace_once(
+              "src/components/LiveChat.tsx",
+              '<ChevronRight size={18} className="shrink-0 text-gold" />',
+              '<ChevronRight size={18} className="shrink-0 text-gold lg:hidden xl:block" />',
+          )
+
+          replace_once(
+              "src/components/CookieConsent.tsx",
+              'className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl"',
+              'className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl lg:bottom-auto lg:top-[5.25rem] lg:max-w-[760px]"',
+          )
+          replace_once(
+              "src/components/CookieConsent.tsx",
+              '<div className="p-3 sm:p-3.5">',
+              '<div className={`p-3 sm:p-3.5 ${customizing ? "" : "lg:flex lg:items-center lg:gap-4"}`}>',
+          )
+          replace_once(
+              "src/components/CookieConsent.tsx",
+              '<div className="flex items-start justify-between gap-3">',
+              '<div className="flex min-w-0 flex-1 items-start justify-between gap-3">',
+          )
+          replace_once(
+              "src/components/CookieConsent.tsx",
+              '<div className="mt-2 grid grid-cols-[1fr_1.15fr] gap-2">',
+              '<div className={`mt-2 grid grid-cols-[1fr_1.15fr] gap-2 ${customizing ? "" : "lg:mt-0 lg:w-[22rem] lg:shrink-0"}`}>',
+          )
+
+          replace_once(
+              "src/components/ui/toast.tsx",
+              '"fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",',
+              '"pointer-events-none fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 empty:hidden sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",',
+          )
+          PY
+
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" = "3"
+          printf '%s\n' "${changed[@]}" | sort > /tmp/actual.txt
+          printf '%s\n' \
+            src/components/CookieConsent.tsx \
+            src/components/LiveChat.tsx \
+            src/components/ui/toast.tsx | sort > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify focused source quality
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx eslint src/components/CookieConsent.tsx src/components/LiveChat.tsx src/components/ui/toast.tsx
+          npx tsc --noEmit
+
+      - name: Push verified fixed UI branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/CookieConsent.tsx src/components/LiveChat.tsx src/components/ui/toast.tsx
+          git commit -m "fix(ux): keep fixed controls clear of product media"
+          test "$(git diff --name-only "$CLEAN_SHA" HEAD | wc -l | tr -d ' ')" = "3"
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
