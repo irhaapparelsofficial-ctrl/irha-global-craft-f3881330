@@ -1,0 +1,280 @@
+name: IA Media E001 Visual Acceptance
+
+run-name: IA-MEDIA-E001 visual · ${{ github.sha }}
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - ".github/workflows/ia-media-e001-visual-acceptance.yml"
+      - "scripts/capture-ia-media-e001-visual-evidence.mjs"
+      - "scripts/remediate-p001-p007-media.mjs"
+      - "scripts/resolve-cloudflare-preview-deployment.mjs"
+      - "src/components/layout/Navbar.tsx"
+      - "src/components/layout/Footer.tsx"
+      - "src/lib/brandAssets.ts"
+      - "src/lib/imageLoading.ts"
+      - "src/lib/iaMediaE001Runtime.ts"
+      - "src/lib/productGalleryAuthority.ts"
+      - "ops/ia-media-e001/**"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/ia-media-e001-visual-acceptance.yml"
+      - "scripts/capture-ia-media-e001-visual-evidence.mjs"
+      - "scripts/remediate-p001-p007-media.mjs"
+      - "scripts/resolve-cloudflare-preview-deployment.mjs"
+      - "src/components/layout/Navbar.tsx"
+      - "src/components/layout/Footer.tsx"
+      - "src/lib/brandAssets.ts"
+      - "src/lib/imageLoading.ts"
+      - "src/lib/iaMediaE001Runtime.ts"
+      - "src/lib/productGalleryAuthority.ts"
+      - "ops/ia-media-e001/**"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ia-media-e001-visual-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  PREVIEW_BRANCH: github-preview
+  PREVIEW_URL: https://github-preview.irha-apparels.pages.dev
+  PREVIEW_RESOLVE_ATTEMPTS: "120"
+  PREVIEW_RESOLVE_DELAY_MS: "10000"
+  PRODUCTION_ORIGIN: https://irhaapparels.com
+  LAST_STAGED_OBJECT: https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/responsive/1600/catalog/products/p007-deer-suede-lederhosen/ia-media-e001-20260730/06-macro-1VyctJT-q7ExkAf90TXGp2DKL4czoWUtV.webp.webp
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+
+jobs:
+  visual-acceptance:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'codex/ia-media-e001-clean-recovery'
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    environment: production
+    steps:
+      - name: Checkout exact pull-request merge source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Wait for all immutable Storage objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 180); do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' "${LAST_STAGED_OBJECT}?attempt=${attempt}")"
+            if [ "$status" = "200" ]; then
+              echo "Final ordered responsive object is available"
+              exit 0
+            fi
+            echo "Storage staging pending (attempt $attempt, HTTP $status)"
+            sleep 10
+          done
+          echo "Immutable P001-P007 staging did not finish within 30 minutes"
+          exit 1
+
+      - name: Resolve exact immutable preview deployment
+        run: node scripts/resolve-cloudflare-preview-deployment.mjs
+
+      - name: Wait for exact immutable preview source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PREVIEW_URL" != "$PREVIEW_ALIAS_URL" || {
+            echo "Visual acceptance must not use the mutable preview alias"
+            exit 1
+          }
+          expected="$GITHUB_SHA"
+          for attempt in $(seq 1 240); do
+            body="$(curl -fsS -H 'Cache-Control: no-cache, no-store' "${PREVIEW_URL}/build.json?expected=${expected}&attempt=${attempt}" || true)"
+            actual="$(printf '%s' "$body" | jq -r '.source_commit // empty' 2>/dev/null || true)"
+            if [ "$actual" = "$expected" ]; then
+              echo "Exact immutable preview is live at $PREVIEW_URL"
+              exit 0
+            fi
+            echo "Preview pending (attempt $attempt, expected $expected, actual ${actual:-unavailable})"
+            sleep 15
+          done
+          echo "Exact immutable preview did not propagate within 60 minutes"
+          exit 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact project dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Install isolated browser harness
+        run: |
+          npm install --no-save --package-lock=false --legacy-peer-deps --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Capture before-and-after responsive evidence
+        shell: bash
+        run: |
+          IA_MEDIA_PREVIEW_ORIGIN="$PREVIEW_URL" \
+          IA_MEDIA_PRODUCTION_ORIGIN="$PRODUCTION_ORIGIN" \
+          IA_MEDIA_EXPECTED_SHA="$GITHUB_SHA" \
+          IA_MEDIA_VISUAL_OUTPUT="artifacts/ia-media-e001-visual" \
+          node scripts/capture-ia-media-e001-visual-evidence.mjs
+
+      - name: Require exact latest Quality Gate and Safe Preview success
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          check_sha="${{ github.event.pull_request.head.sha }}"
+          for attempt in $(seq 1 180); do
+            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$check_sha&per_page=100")"
+            qg="$(jq -r '[.workflow_runs[] | select(.name == "Quality Gate")][0].conclusion // empty' <<<"$runs")"
+            preview="$(jq -r '[.workflow_runs[] | select((.name | ascii_downcase | contains("cloudflare")) and ((.display_title // "") | ascii_downcase | contains("preview")))][0].conclusion // empty' <<<"$runs")"
+            if [ "$qg" = "success" ] && [ "$preview" = "success" ]; then
+              echo "Exact latest Quality Gate and Safe Cloudflare Preview passed for $check_sha"
+              exit 0
+            fi
+            if [ "$qg" = "failure" ] || [ "$qg" = "cancelled" ] || [ "$preview" = "failure" ] || [ "$preview" = "cancelled" ]; then
+              echo "Blocking exact-head check failed: Quality Gate=$qg Preview=$preview"
+              exit 1
+            fi
+            echo "Waiting for exact-head checks (attempt $attempt, Quality Gate=${qg:-pending}, Preview=${preview:-pending})"
+            sleep 10
+          done
+          echo "Exact-head Quality Gate/Preview checks did not complete within 30 minutes"
+          exit 1
+
+      - name: Verify existing guarded production media remediation
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          IA_MEDIA_MODE: verify
+          IA_MEDIA_CONFIRM: NO
+        run: node scripts/remediate-p001-p007-media.mjs
+
+      - name: Upload visual and production-state verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-visual-verification-${{ github.sha }}
+          path: |
+            artifacts/ia-media-e001-visual
+            artifacts/ia-media-e001
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish acceptance summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f artifacts/ia-media-e001-visual/visual-acceptance-summary.md ]; then
+            cat artifacts/ia-media-e001-visual/visual-acceptance-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "IA-MEDIA-E001 visual report was not generated" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f artifacts/ia-media-e001/post-mutation-verification.json ]; then
+            echo "- Guarded production remediation: **previously applied; exact current state verified without a second mutation**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Guarded production remediation state: **not verified**" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  production-visual-acceptance:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - name: Checkout exact final-main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Wait for all immutable Storage objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 180); do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' "${LAST_STAGED_OBJECT}?attempt=${attempt}")"
+            if [ "$status" = "200" ]; then
+              echo "Final ordered responsive object is available"
+              exit 0
+            fi
+            echo "Storage verification pending (attempt $attempt, HTTP $status)"
+            sleep 10
+          done
+          echo "Immutable P001-P007 objects were not available within 30 minutes"
+          exit 1
+
+      - name: Wait for exact final-main production source
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$GITHUB_SHA"
+          for attempt in $(seq 1 240); do
+            body="$(curl -fsS -H 'Cache-Control: no-cache, no-store' "${PRODUCTION_ORIGIN}/build.json?expected=${expected}&attempt=${attempt}" || true)"
+            actual="$(printf '%s' "$body" | jq -r '.source_commit // empty' 2>/dev/null || true)"
+            if [ "$actual" = "$expected" ]; then
+              echo "Exact final-main production artifact is live"
+              exit 0
+            fi
+            echo "Production pending (attempt $attempt, expected $expected, actual ${actual:-unavailable})"
+            sleep 15
+          done
+          echo "Exact final-main production artifact did not propagate within 60 minutes"
+          exit 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact project dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Install isolated browser harness
+        run: |
+          npm install --no-save --package-lock=false --legacy-peer-deps --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Capture exact-production responsive evidence
+        shell: bash
+        run: |
+          IA_MEDIA_PREVIEW_ORIGIN="$PRODUCTION_ORIGIN" \
+          IA_MEDIA_PRODUCTION_ORIGIN="$PRODUCTION_ORIGIN" \
+          IA_MEDIA_EXPECTED_SHA="$GITHUB_SHA" \
+          IA_MEDIA_REQUIRE_RAW_HTML="true" \
+          IA_MEDIA_VISUAL_OUTPUT="artifacts/ia-media-e001-production-visual" \
+          node scripts/capture-ia-media-e001-visual-evidence.mjs
+
+      - name: Upload exact-production visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-production-visual-${{ github.sha }}
+          path: artifacts/ia-media-e001-production-visual
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish production acceptance summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f artifacts/ia-media-e001-production-visual/visual-acceptance-summary.md ]; then
+            cat artifacts/ia-media-e001-production-visual/visual-acceptance-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "IA-MEDIA-E001 production visual report was not generated" >> "$GITHUB_STEP_SUMMARY"
+          fi
