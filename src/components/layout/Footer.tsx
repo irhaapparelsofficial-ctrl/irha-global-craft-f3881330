@@ -86,9 +86,9 @@ export default function Footer() {
             <img
               src={BRAND_ASSETS.footerLogo}
               alt="Official Irha Apparels Manufacturing Specialists logo"
-              width="760"
-              height="160"
-              className="h-auto w-[13.5rem] shrink-0 object-contain object-left"
+              width="192"
+              height="192"
+              className="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24"
               loading="eager"
               decoding="async"
             />
