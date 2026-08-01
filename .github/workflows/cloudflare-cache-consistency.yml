@@ -1,0 +1,427 @@
+name: Cloudflare Cache Consistency
+
+run-name: Cache consistency · ${{ github.event.workflow_run.head_sha }}
+
+on:
+  workflow_run:
+    workflows: ["Cloudflare Current Main Reconcile"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  statuses: write
+
+concurrency:
+  group: cloudflare-cache-consistency-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+env:
+  PAGES_URL: https://irha-apparels.pages.dev
+  CANONICAL_ORIGIN: https://irhaapparels.com
+  WWW_ORIGIN: https://www.irhaapparels.com
+  CLOUDFLARE_ZONE_NAME: irhaapparels.com
+
+jobs:
+  reconcile-cache:
+    if: github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      UPSTREAM_RUN_ID: ${{ github.event.workflow_run.id }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+
+    steps:
+      - name: Freeze exact current main and resolve immutable Quality artifact
+        id: freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          if [ "$SOURCE_SHA" != "$latest_main" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "Superseded cache reconciliation skipped safely: source=$SOURCE_SHA current_main=$latest_main"
+            exit 0
+          fi
+
+          quality_runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/quality.yml/runs?branch=main&per_page=100")"
+          quality_run_id="$(
+            printf '%s' "$quality_runs" |
+              jq -r --arg sha "$SOURCE_SHA" '
+                [
+                  .workflow_runs[]
+                  | select(
+                      .head_sha == $sha
+                      and .head_branch == "main"
+                      and (.event == "push" or .event == "workflow_dispatch")
+                      and .conclusion == "success"
+                    )
+                ]
+                | sort_by(.run_number, .run_attempt)
+                | last
+                | .id // empty
+              '
+          )"
+          test -n "$quality_run_id"
+
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+          echo "quality_run_id=$quality_run_id" >> "$GITHUB_OUTPUT"
+          echo "Exact current main frozen: $SOURCE_SHA; Quality run: $quality_run_id"
+
+      - name: Record superseded no-op
+        if: steps.freeze.outputs.eligible != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare cache consistency"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Result: superseded exact-main guard"
+            echo "- Cloudflare mutation: \`false\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Checkout exact current main
+        if: steps.freeze.outputs.eligible == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Setup Node
+        if: steps.freeze.outputs.eligible == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Download immutable Quality Gate artifact
+        if: steps.freeze.outputs.eligible == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: production-dist-${{ env.SOURCE_SHA }}
+          path: dist
+          run-id: ${{ steps.freeze.outputs.quality_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Verify exact artifact identity and normalize Cloudflare credentials
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/build.json
+
+          jq -e --arg sha "$SOURCE_SHA" \
+            '.source_commit == $sha and .source_identity_state == "verified" and (.build_fingerprint | test("^[0-9a-f]{64}$"))' \
+            dist/build.json >/dev/null
+          expected_fingerprint="$(jq -r '.build_fingerprint' dist/build.json)"
+          echo "EXPECTED_FINGERPRINT=$expected_fingerprint" >> "$GITHUB_ENV"
+
+          token="$(printf '%s' "${CLOUDFLARE_API_TOKEN:-}" | tr -d '[:space:]')"
+          raw_account_id="$(printf '%s' "${CLOUDFLARE_ACCOUNT_ID:-}" | tr -d '[:space:]')"
+          project_name="$(printf '%s' "${CLOUDFLARE_PROJECT_NAME:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          test -n "$project_name"
+          echo "::add-mask::$token"
+
+          account_id="$raw_account_id"
+          if ! [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            account_id="$(printf '%s' "$raw_account_id" | grep -Eo '[0-9a-fA-F]{32}' | head -n 1 || true)"
+          fi
+          [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
+          echo "::add-mask::$account_id"
+
+          echo "CLOUDFLARE_API_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "CLOUDFLARE_ACCOUNT_ID=$account_id" >> "$GITHUB_ENV"
+          echo "CLOUDFLARE_PROJECT_NAME=$project_name" >> "$GITHUB_ENV"
+
+      - name: Prove current Pages deployment before any cache mutation
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suffix in "" "?release_check=${SOURCE_SHA::12}-$RANDOM"; do
+            out="/tmp/pages-pre-$(printf '%s' "$suffix" | sha256sum | cut -c1-12).json"
+            status="$(curl -sS -L --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -o "$out" -w '%{http_code}' \
+              "$PAGES_URL/build.json$suffix" || true)"
+            test "$status" = "200"
+            jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$EXPECTED_FINGERPRINT" \
+              '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
+              "$out" >/dev/null
+          done
+          echo "Pages unbusted and busted identity match the immutable Quality artifact."
+
+      - name: Inspect Cloudflare routing and cache state before mutation
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci/cloudflare-cache-consistency.mjs audit /tmp/cloudflare-cache-before.json \
+            | tee /tmp/cloudflare-cache-before-summary.json
+
+      - name: Reconfirm exact current main before Cloudflare configuration mutation
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$SOURCE_SHA"
+          echo "Exact current main reconfirmed before cache policy mutation."
+
+      - name: Enforce final HTML and release-identity cache bypass
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci/cloudflare-cache-consistency.mjs ensure-policy \
+            | tee /tmp/cloudflare-cache-policy.json
+
+      - name: Reconfirm exact current main before historical cache purge
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$SOURCE_SHA"
+          echo "Exact current main reconfirmed before purge."
+
+      - name: Purge unknown historical Cloudflare cache keys once
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci/cloudflare-cache-consistency.mjs purge \
+            | tee /tmp/cloudflare-cache-purge.json
+
+      - name: Verify Cloudflare cache policy after mutation
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci/cloudflare-cache-consistency.mjs audit /tmp/cloudflare-cache-after.json \
+            | tee /tmp/cloudflare-cache-after-summary.json
+          jq -e '
+            .cache_rules.irha_bypass_rule != null
+            and .cache_rules.irha_bypass_rule.enabled == true
+            and .cache_rules.irha_bypass_rule.action == "set_cache_settings"
+            and .cache_rules.irha_bypass_rule.action_parameters.cache == false
+            and .cache_rules.irha_bypass_is_last == true
+          ' /tmp/cloudflare-cache-after.json >/dev/null
+          jq -e '.purge_everything == true' /tmp/cloudflare-cache-purge.json >/dev/null
+
+      - name: Verify unbusted and query-string release consistency
+        id: verify
+        if: steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          matrix=/tmp/cache-consistency-matrix.tsv
+          printf 'origin\trequest\tstatus\tidentity\tchallenge\tcf_cache_status\tage\tcache_control\tcdn_cache_control\tcf_ray\n' > "$matrix"
+
+          verify_build() {
+            origin="$1"
+            label="$2"
+            suffix="$3"
+            tag="$4"
+            body="/tmp/${label}-${tag}-build.json"
+            headers="/tmp/${label}-${tag}-build.headers"
+            status="$(curl -sS -L --connect-timeout 10 --max-time 40 \
+              -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36' \
+              -H 'Accept: application/json,text/plain,*/*' \
+              -H 'Cache-Control: no-cache' \
+              -D "$headers" -o "$body" -w '%{http_code}' \
+              "$origin/build.json$suffix" || true)"
+
+            challenge=false
+            identity=false
+            if grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then challenge=true; fi
+            if [ "$status" = 200 ] && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$EXPECTED_FINGERPRINT" \
+              '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
+              "$body" >/dev/null 2>&1; then
+              identity=true
+            fi
+
+            header_value() {
+              key="$1"
+              awk -v k="$key" 'BEGIN{IGNORECASE=1} $0 ~ "^" k ":" {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$headers"
+            }
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$label" "/build.json$suffix" "$status" "$identity" "$challenge" \
+              "$(header_value cf-cache-status)" "$(header_value age)" "$(header_value cache-control)" \
+              "$(header_value cdn-cache-control)" "$(header_value cf-ray)" >> "$matrix"
+
+            BUILD_STATUS="$status"
+            BUILD_IDENTITY="$identity"
+            BUILD_CHALLENGE="$challenge"
+          }
+
+          verify_home() {
+            origin="$1"
+            label="$2"
+            suffix="$3"
+            tag="$4"
+            body="/tmp/${label}-${tag}-home.html"
+            headers="/tmp/${label}-${tag}-home.headers"
+            status="$(curl -sS -L --connect-timeout 10 --max-time 40 \
+              -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36' \
+              -H 'Accept: text/html,application/xhtml+xml' \
+              -H 'Cache-Control: no-cache' \
+              -D "$headers" -o "$body" -w '%{http_code}' \
+              "$origin/$suffix" || true)"
+            challenge=false
+            identity=false
+            if grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then challenge=true; fi
+            if [ "$status" = 200 ]; then
+              source_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const m=s.match(/<meta[^>]+name=["'\''']x-irha-source-commit["'\'''][^>]+content=["'\''']([^"'\''']+)/i); process.stdout.write(m?.[1]||"")' "$body")"
+              fingerprint_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const m=s.match(/<meta[^>]+name=["'\''']x-irha-build-fingerprint["'\'''][^>]+content=["'\''']([^"'\''']+)/i); process.stdout.write(m?.[1]||"")' "$body")"
+              if [ "$source_meta" = "$SOURCE_SHA" ] && [ "$fingerprint_meta" = "$EXPECTED_FINGERPRINT" ]; then
+                identity=true
+              fi
+              if grep -Fq 'Two macro hubs.' "$body"; then
+                echo "Historical macro-hubs homepage detected at $origin/$suffix"
+                exit 1
+              fi
+            fi
+
+            header_value() {
+              key="$1"
+              awk -v k="$key" 'BEGIN{IGNORECASE=1} $0 ~ "^" k ":" {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$headers"
+            }
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$label" "/$suffix" "$status" "$identity" "$challenge" \
+              "$(header_value cf-cache-status)" "$(header_value age)" "$(header_value cache-control)" \
+              "$(header_value cdn-cache-control)" "$(header_value cf-ray)" >> "$matrix"
+
+            HOME_STATUS="$status"
+            HOME_IDENTITY="$identity"
+            HOME_CHALLENGE="$challenge"
+          }
+
+          for origin_spec in "$PAGES_URL|pages" "$CANONICAL_ORIGIN|apex"; do
+            origin="${origin_spec%%|*}"
+            label="${origin_spec##*|}"
+
+            build_direct=true
+            home_direct=true
+            challenge_seen=false
+
+            verify_build "$origin" "$label" "" "unbusted"
+            [ "$BUILD_IDENTITY" = true ] || build_direct=false
+            [ "$BUILD_CHALLENGE" = true ] && challenge_seen=true
+
+            verify_build "$origin" "$label" "?release_check=${SOURCE_SHA::12}-$RANDOM" "busted"
+            [ "$BUILD_IDENTITY" = true ] || build_direct=false
+            [ "$BUILD_CHALLENGE" = true ] && challenge_seen=true
+
+            for home_suffix in "" "?a=1" "?utm_source=google" "?cache_probe=${SOURCE_SHA::12}-$RANDOM"; do
+              tag="$(printf '%s' "$home_suffix" | sha256sum | cut -c1-10)"
+              verify_home "$origin" "$label" "$home_suffix" "$tag"
+              [ "$HOME_IDENTITY" = true ] || home_direct=false
+              [ "$HOME_CHALLENGE" = true ] && challenge_seen=true
+            done
+
+            if [ "$label" = pages ]; then
+              test "$build_direct" = true
+              test "$home_direct" = true
+            else
+              echo "apex_build_direct=$build_direct" >> "$GITHUB_OUTPUT"
+              echo "apex_home_direct=$home_direct" >> "$GITHUB_OUTPUT"
+              echo "apex_challenge_seen=$challenge_seen" >> "$GITHUB_OUTPUT"
+              if [ "$build_direct" != true ] || [ "$home_direct" != true ]; then
+                if [ "$challenge_seen" = true ]; then
+                  echo "::warning::GitHub-hosted direct apex observation is challenged; control-plane and independent public-browser verification remain required."
+                else
+                  echo "Apex returned a non-challenge release mismatch."
+                  cat "$matrix"
+                  exit 1
+                fi
+              fi
+            fi
+          done
+
+          www_headers=/tmp/www-cache-consistency.headers
+          www_status="$(curl -sS --connect-timeout 10 --max-time 40 --max-redirs 0 \
+            -D "$www_headers" -o /tmp/www-cache-consistency.body -w '%{http_code}' \
+            "$WWW_ORIGIN/?utm_source=google" || true)"
+          www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$www_headers")"
+          case "$www_status" in 301|302|307|308) ;; *) echo "Unexpected www status: $www_status"; exit 1 ;; esac
+          case "$www_location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $www_location"; exit 1 ;; esac
+
+          cat "$matrix"
+
+      - name: Publish cache-consistency commit status
+        if: always() && steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        env:
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+          APEX_BUILD_DIRECT: ${{ steps.verify.outputs.apex_build_direct }}
+          APEX_HOME_DIRECT: ${{ steps.verify.outputs.apex_home_direct }}
+          APEX_CHALLENGE: ${{ steps.verify.outputs.apex_challenge_seen }}
+        run: |
+          set -euo pipefail
+          state=failure
+          description="Cloudflare cache consistency failed"
+          if [ "$VERIFY_OUTCOME" = success ]; then
+            state=success
+            if [ "$APEX_BUILD_DIRECT" = true ] && [ "$APEX_HOME_DIRECT" = true ]; then
+              description="Unbusted/busted Pages and apex release identities agree"
+            elif [ "$APEX_CHALLENGE" = true ]; then
+              description="Cache policy/purge verified; apex GitHub observer challenged"
+            else
+              description="Cache policy and Pages identity verified"
+            fi
+          fi
+
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
+            -f state="$state" \
+            -f context="Irha Cache Consistency" \
+            -f description="$description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            >/dev/null
+          test "$state" = success
+
+      - name: Upload cache-consistency evidence
+        if: always() && steps.freeze.outputs.eligible == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cache-consistency-${{ env.SOURCE_SHA }}
+          path: |
+            /tmp/cloudflare-cache-before.json
+            /tmp/cloudflare-cache-before-summary.json
+            /tmp/cloudflare-cache-policy.json
+            /tmp/cloudflare-cache-purge.json
+            /tmp/cloudflare-cache-after.json
+            /tmp/cloudflare-cache-after-summary.json
+            /tmp/cache-consistency-matrix.tsv
+            /tmp/pages-*-build.json
+            /tmp/apex-*-build.json
+            /tmp/apex-*-home.html
+            /tmp/apex-*.headers
+            /tmp/www-cache-consistency.headers
+          if-no-files-found: warn
+          retention-days: 3
+          compression-level: 0
+
+      - name: Record cache-consistency result
+        if: always() && steps.freeze.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Cloudflare cache consistency"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Quality run: \`${{ steps.freeze.outputs.quality_run_id }}\`"
+            echo "- Pre-mutation Cloudflare snapshot: recorded"
+            echo "- Cache policy: HTML/release identity bypass enforced as final Cache Rule"
+            echo "- Historical query-key invalidation: one bounded zone purge"
+            echo "- Immutable Pages artifact: unbusted + busted exact identity required"
+            echo "- Apex direct build identity: \`${{ steps.verify.outputs.apex_build_direct }}\`"
+            echo "- Apex direct homepage identity: \`${{ steps.verify.outputs.apex_home_direct }}\`"
+            echo "- Apex GitHub challenge observed: \`${{ steps.verify.outputs.apex_challenge_seen }}\`"
+            echo "- Static asset caching disabled globally: \`false\`"
+          } >> "$GITHUB_STEP_SUMMARY"
