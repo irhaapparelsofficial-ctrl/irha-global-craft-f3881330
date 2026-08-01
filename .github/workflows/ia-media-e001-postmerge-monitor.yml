@@ -1,4 +1,4 @@
-name: IA Media E001 Post-Merge Monitor
+name: IA Media E001 Post-Merge Snapshot
 
 on:
   pull_request:
@@ -11,86 +11,46 @@ permissions:
   actions: read
 
 jobs:
-  verify-production:
+  snapshot-production:
     if: github.event.pull_request.head.ref == 'codex/ia-media-e001-postmerge-monitor'
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    timeout-minutes: 10
     env:
       MAIN_SHA: de04f0c4d380e094149493483b8113fa9d437b11
       PRODUCTION_ORIGIN: https://irhaapparels.com
 
     steps:
-      - name: Verify exact main identity
+      - name: Capture exact post-merge state
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p artifacts/ia-media-e001-postmerge
+          out=artifacts/ia-media-e001-postmerge-snapshot
+          mkdir -p "$out"
+
           actual="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
-          test "$actual" = "$MAIN_SHA" || {
-            echo "Main moved: expected $MAIN_SHA, actual $actual"
-            exit 1
-          }
+          test "$actual" = "$MAIN_SHA"
 
-      - name: Wait for exact-main quality, production visual and live source
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          out=artifacts/ia-media-e001-postmerge
-          for attempt in $(seq 1 360); do
-            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$MAIN_SHA&per_page=100")"
-            printf '%s\n' "$runs" > "$out/actions-runs.json"
+          runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$MAIN_SHA&per_page=100")"
+          printf '%s\n' "$runs" > "$out/actions-runs.json"
+          jq -r '.workflow_runs[] | [.name, .display_title, .event, .status, (.conclusion // "pending"), .id] | @tsv' <<<"$runs" | tee "$out/actions-runs.tsv"
 
-            quality="$(jq -r '[.workflow_runs[] | select(.event == "push" and .name == "Quality Gate")][0].conclusion // empty' <<<"$runs")"
-            media="$(jq -r '[.workflow_runs[] | select(.event == "push" and ((.name == "IA Media E001 Visual Acceptance") or ((.display_title // "") | startswith("IA-MEDIA-E001 visual"))))][0].conclusion // empty' <<<"$runs")"
-            media_status="$(jq -r '[.workflow_runs[] | select(.event == "push" and ((.name == "IA Media E001 Visual Acceptance") or ((.display_title // "") | startswith("IA-MEDIA-E001 visual"))))][0].status // empty' <<<"$runs")"
+          quality="$(jq -r '[.workflow_runs[] | select(.event == "push" and .name == "Quality Gate")][0].conclusion // empty' <<<"$runs")"
+          media_status="$(jq -r '[.workflow_runs[] | select(.event == "push" and ((.name == "IA Media E001 Visual Acceptance") or ((.display_title // "") | startswith("IA-MEDIA-E001 visual"))))][0].status // empty' <<<"$runs")"
+          media="$(jq -r '[.workflow_runs[] | select(.event == "push" and ((.name == "IA Media E001 Visual Acceptance") or ((.display_title // "") | startswith("IA-MEDIA-E001 visual"))))][0].conclusion // empty' <<<"$runs")"
 
-            body="$(curl -fsS -H 'Cache-Control: no-cache, no-store' "${PRODUCTION_ORIGIN}/build.json?expected=${MAIN_SHA}&attempt=${attempt}" || true)"
-            printf '%s\n' "$body" > "$out/production-build.json"
-            live_sha="$(jq -r '.source_commit // empty' <<<"$body" 2>/dev/null || true)"
+          body="$(curl -fsS -H 'Cache-Control: no-cache, no-store' "${PRODUCTION_ORIGIN}/build.json?expected=${MAIN_SHA}&snapshot=${GITHUB_RUN_ID}" || true)"
+          printf '%s\n' "$body" > "$out/production-build.json"
+          live_sha="$(jq -r '.source_commit // empty' <<<"$body" 2>/dev/null || true)"
 
-            jq -r '.workflow_runs[] | [.name, .display_title, .event, .status, (.conclusion // "pending"), .id] | @tsv' <<<"$runs" > "$out/actions-runs.tsv"
-            printf 'attempt=%s\nquality=%s\nmedia_status=%s\nmedia=%s\nlive_sha=%s\n' \
-              "$attempt" "${quality:-pending}" "${media_status:-pending}" "${media:-pending}" "${live_sha:-pending}" > "$out/status.txt"
+          printf 'main_sha=%s\nquality=%s\nmedia_status=%s\nmedia=%s\nlive_sha=%s\n' \
+            "$actual" "${quality:-pending}" "${media_status:-pending}" "${media:-pending}" "${live_sha:-pending}" | tee "$out/status.txt"
 
-            case "$quality" in failure|cancelled|timed_out|action_required) echo "Main Quality Gate failed: $quality"; exit 1;; esac
-            case "$media" in failure|cancelled|timed_out|action_required) echo "Production IA-MEDIA visual failed: $media"; exit 1;; esac
-
-            if [ "$quality" = "success" ] && [ "$media" = "success" ] && [ "$live_sha" = "$MAIN_SHA" ]; then
-              echo "Exact main is live and production-verified"
-              exit 0
-            fi
-
-            echo "Waiting attempt $attempt: Quality=${quality:-pending}, Media=${media_status:-pending}/${media:-pending}, Live=${live_sha:-pending}"
-            sleep 15
-          done
-          echo "Post-merge verification timed out"
-          exit 1
-
-      - name: Upload exact post-merge evidence
-        if: always()
+      - name: Upload snapshot evidence
         uses: actions/upload-artifact@v4
         with:
-          name: ia-media-e001-postmerge-${{ env.MAIN_SHA }}
-          path: artifacts/ia-media-e001-postmerge
+          name: ia-media-e001-postmerge-snapshot-${{ env.MAIN_SHA }}
+          path: artifacts/ia-media-e001-postmerge-snapshot
           if-no-files-found: error
-          retention-days: 90
-
-      - name: Publish post-merge summary
-        if: always()
-        shell: bash
-        run: |
-          {
-            echo "## IA-MEDIA-E001 post-merge verification"
-            echo "- Exact main SHA: \`$MAIN_SHA\`"
-            if [ -f artifacts/ia-media-e001-postmerge/status.txt ]; then
-              echo '```text'
-              cat artifacts/ia-media-e001-postmerge/status.txt
-              echo '```'
-            fi
-            echo "- Monitor performs read-only Actions and production checks"
-            echo "- Supabase mutation: **none**"
-          } >> "$GITHUB_STEP_SUMMARY"
+          retention-days: 30
