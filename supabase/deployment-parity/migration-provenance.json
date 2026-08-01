@@ -1,5 +1,5 @@
 {
-  "canonical_payload_sha256": "b913642c2e82b87a0f027d5deb8dd8ea103844ef98e9e08b3f6cd19f5f0ea937",
+  "canonical_payload_sha256": "b24e7b17ba5be510c0a5033371feb659c8dc7b64bf2e0f1a05ae3310c1e16d18",
   "payload": {
     "classification_policy": {
       "P1": "Exact repository source recovered and linked to the exact live version and name.",
@@ -8672,18 +8672,50 @@
         ],
         "superseding_baseline": "current approved public-schema baseline and canonical deployment manifest",
         "version": "20260728173945"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260731151915",
+          "private.irha_repository_migration_ledger:20260731151915",
+          "supabase/migrations/20260731151915_align_drive_gallery_with_selected_media.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "applied",
+          "execution_mode": "github_management_api_transaction",
+          "file_sha256": "8fe66cafa942e7354798b7aeb2446999cf8f72a54c4fbb74c4addc6dbb3376b8",
+          "git_blob_sha1": "a50d952005b7d15e29165b6c1e12987d2ea0aa91",
+          "repository_path": "supabase/migrations/20260731151915_align_drive_gallery_with_selected_media.sql",
+          "source_commit": "de04f0c4d380e094149493483b8113fa9d437b11"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "33642d93f6eb3fc306954158c4481f38f1dfa4729d7dce85e0a623394d62a56d",
+        "name": "align_drive_gallery_with_selected_media",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "BEGIN"
+        ],
+        "superseding_baseline": null,
+        "version": "20260731151915"
       }
     ],
     "schema_version": 2,
     "totals": {
-      "P1": 4,
+      "P1": 5,
       "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 375
+      "live": 376
     }
   }
 }

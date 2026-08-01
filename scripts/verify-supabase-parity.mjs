@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import {
+  REQUIRED_PRODUCTION_MIGRATION_VERSION,
+  assertCommittedMigrationEvidence,
+} from "./ci/migration-production-parity.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
 const readJson = (path) => JSON.parse(read(path));
@@ -39,16 +43,33 @@ assert.equal(
 );
 assert.equal(provenance.canonical_payload_sha256, manifest.migration_provenance.canonical_payload_sha256);
 assert.equal(provenance.payload.project_id, manifest.identity.supabase_project_id);
-assert.equal(provenance.payload.totals.live, 375);
-assert.equal(provenance.payload.records.length, 375);
-assert.equal(provenance.payload.totals.P1, 4);
-assert.equal(provenance.payload.totals.P2, 371);
+assert.equal(provenance.payload.totals.live, provenance.payload.records.length);
+assert.equal(
+  provenance.payload.totals.P1
+    + provenance.payload.totals.P2
+    + provenance.payload.totals.P3
+    + provenance.payload.totals.P4
+    + provenance.payload.totals.P5,
+  provenance.payload.records.length,
+);
 assert.equal(provenance.payload.totals.P3, 0);
 assert.equal(provenance.payload.totals.P4, 0);
 assert.equal(provenance.payload.totals.P5, 0);
 assert.equal(provenance.payload.totals.all_statements_recovered, true);
 assert.equal(provenance.payload.totals.all_creators_present, true);
-assert.equal(new Set(provenance.payload.records.map((record) => record.version)).size, 375);
+assert.equal(
+  new Set(provenance.payload.records.map((record) => record.version)).size,
+  provenance.payload.records.length,
+);
+assert.ok(
+  provenance.payload.records.some((record) => record.version === REQUIRED_PRODUCTION_MIGRATION_VERSION),
+  `required migration ${REQUIRED_PRODUCTION_MIGRATION_VERSION} is missing`,
+);
+assertCommittedMigrationEvidence({
+  databaseMigrationSummary: manifest.database.live_migrations,
+  databaseMigrationDigest: manifest.database.canonical_digests_sha256.migrations,
+  records: provenance.payload.records,
+});
 for (const record of provenance.payload.records) {
   assert.match(record.version, /^\d{14}$/);
   assert.match(record.class, /^P[12]$/);

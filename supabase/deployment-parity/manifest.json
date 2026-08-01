@@ -81,15 +81,15 @@
     "canonical_digests_sha256": {
       "columns": "e885b2a26113a0d0e7a13ffb1a04e7397b08a921dc901e33034a1cb53ed5dc14",
       "constraints": "05af8906cd94f5f087f5f2eb90e522a826a7ccaf16181adc3d520f1082d0aa12",
-      "functions": "4ecb1d14fe8e63c89c26a41ec2070a69e9c5d76fd331cec4ad39b70e28b7a1d7",
+      "functions": "a42dca4ae4d615028c8ceda8cd8d50d283c2eecdbcc68c9a19483abd76b669e8",
       "indexes": "3641f5881006df448cbf1b0b298de3bad6293c9fbf0354bcb4b11a54346774c3",
-      "migrations": "1f0a66c4e4b36b46f2e4796452008545483c404f43adc7a2cb4be00cece9e8c0",
+      "migrations": "965835248b549c38d51dfb1e2a37a9ef7e78ffff4b8f90ae3bb7423894d2e0b1",
       "policies": "e80cb14c36cd41042f7598b7004a1c102781e95d3f484474bfbd9870ca13fee5",
       "triggers": "a973ab9cfdb51d215c0c6533c1e973cca60712877b61d6ac37dc687fbcc7c05b"
     },
     "live_migrations": {
-      "count": 375,
-      "max_version": "20260728173945",
+      "count": 376,
+      "max_version": "20260731151915",
       "min_version": "20260712185505"
     },
     "public": {
@@ -167,20 +167,20 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "c3e0e67bdafff639bb5402231494146708597f1c62489973fc3245a749cedb2c",
+  "manifest_sha256": "17c7747de72d61ab49db790e878d0465c53695084ddb053c5b3535386bec9ef9",
   "migration_provenance": {
-    "canonical_payload_sha256": "b913642c2e82b87a0f027d5deb8dd8ea103844ef98e9e08b3f6cd19f5f0ea937",
-    "file_sha256": "cb040c031239127063e2225d65c72a25f2ba04aad2407dd34ec0827211ba8820",
+    "canonical_payload_sha256": "b24e7b17ba5be510c0a5033371feb659c8dc7b64bf2e0f1a05ae3310c1e16d18",
+    "file_sha256": "8d54a680b497e67a6a587905d39fecc7eccfc5b2e90f01b593374fbef91e7f6e",
     "path": "supabase/deployment-parity/migration-provenance.json",
     "totals": {
-      "P1": 4,
+      "P1": 5,
       "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 375
+      "live": 376
     }
   },
   "schema_version": 2,

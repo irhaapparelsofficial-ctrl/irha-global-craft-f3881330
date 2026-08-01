@@ -1,6 +1,13 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  REQUIRED_PRODUCTION_MIGRATION_NAME,
+  REQUIRED_PRODUCTION_MIGRATION_PATH,
+  REQUIRED_PRODUCTION_MIGRATION_VERSION,
+  assertExactMigrationParity,
+  deriveProductionMigrationVersions,
+} from "./migration-production-parity.mjs";
 
 const EXPECTED_PROJECT_ID = "pvzjiozismyxqrzmtfbi";
 const MANAGEMENT_API = "https://api.supabase.com";
@@ -258,6 +265,15 @@ async function main() {
   const outputPath = resolve(root, process.env.MIGRATION_PROVENANCE_OUTPUT ?? "supabase/deployment-parity/migration-provenance.json");
   const mode = process.env.MIGRATION_PROVENANCE_MODE ?? "verify";
 
+  if (!existsSync(outputPath)) {
+    throw new ProvenanceError("MISSING_LEDGER", "Committed migration provenance ledger is required as the sealed production baseline");
+  }
+  const committedBaseline = JSON.parse(readFileSync(outputPath, "utf8"));
+  const repositoryManifest = JSON.parse(readFileSync(resolve(root, "supabase/repository-migrations.json"), "utf8"));
+  if (repositoryManifest.project_id !== EXPECTED_PROJECT_ID) {
+    throw new ProvenanceError("PROJECT_MISMATCH", "Repository migration manifest project mismatch");
+  }
+
   await verifyProjectIdentity(projectId, accessToken);
   const migrations = await databaseQuery(
     projectId,
@@ -269,6 +285,22 @@ async function main() {
     accessToken,
     "select version, name, repository_path, git_blob_sha, source_commit, application_state, execution_mode from private.irha_repository_migration_ledger order by version",
   );
+  let migrationParity;
+  try {
+    const productionMigrationVersions = deriveProductionMigrationVersions({
+      baselineRecords: committedBaseline.payload?.records ?? [],
+      repositoryManifest,
+      repositoryLedger,
+      databaseVersions: migrations,
+    });
+    migrationParity = assertExactMigrationParity({
+      databaseVersions: migrations,
+      productionMigrationVersions,
+    });
+  } catch (error) {
+    throw new ProvenanceError("LIVE_MIGRATION_PARITY", error.message);
+  }
+
   const result = buildLedger({
     migrations,
     repositoryLedger,
@@ -280,8 +312,15 @@ async function main() {
   if (result.payload.totals.P5 !== 0) {
     throw new ProvenanceError("UNRESOLVED_P5", `${result.payload.totals.P5} migration provenance record(s) remain P5`);
   }
-  if (result.payload.totals.live !== 375) {
-    throw new ProvenanceError("LIVE_COUNT_DRIFT", `Expected 375 live migrations, found ${result.payload.totals.live}`);
+  const requiredRecord = result.payload.records.find(
+    (record) => record.version === REQUIRED_PRODUCTION_MIGRATION_VERSION,
+  );
+  if (requiredRecord?.name !== REQUIRED_PRODUCTION_MIGRATION_NAME
+      || requiredRecord?.exact_repository_source?.repository_path !== REQUIRED_PRODUCTION_MIGRATION_PATH) {
+    throw new ProvenanceError(
+      "REQUIRED_MIGRATION_PROVENANCE",
+      `Required production migration ${REQUIRED_PRODUCTION_MIGRATION_VERSION} lacks exact repository provenance`,
+    );
   }
 
   if (mode === "write") {
@@ -305,6 +344,9 @@ async function main() {
     P4: result.payload.totals.P4,
     P5: result.payload.totals.P5,
     checksum: result.canonical_payload_sha256,
+    databaseVersions: migrationParity.databaseVersions,
+    productionMigrationFiles: migrationParity.productionMigrationFiles,
+    requiredVersion: migrationParity.requiredVersion,
     mode,
   }));
 }

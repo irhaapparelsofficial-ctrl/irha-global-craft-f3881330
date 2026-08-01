@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  assertCommittedMigrationEvidence,
+  assertExactMigrationParity,
+} from "./migration-production-parity.mjs";
 
 const EXPECTED_PROJECT_ID = "pvzjiozismyxqrzmtfbi";
 const EXPECTED_REPOSITORY = "irhaapparelsofficial-ctrl/irha-global-craft-f3881330";
@@ -99,6 +103,17 @@ async function databaseQuery(projectId, accessToken, query, label) {
     throw new ManifestError("INVENTORY_FAILURE", `${label} returned ${rows.length} rows instead of one`);
   }
   return rows[0];
+}
+
+async function loadDatabaseMigrationVersions(projectId, accessToken) {
+  const payload = await managementRequest(`/v1/projects/${projectId}/database/query`, accessToken, {
+    method: "POST",
+    body: JSON.stringify({
+      query: "select version from supabase_migrations.schema_migrations order by version",
+      read_only: true,
+    }),
+  });
+  return normalizeRows(payload).map((row) => String(row.version));
 }
 
 async function loadDatabaseInventory(projectId, accessToken) {
@@ -295,8 +310,9 @@ async function buildManifest(root, accessToken) {
   const project = await managementRequest(`/v1/projects/${projectId}`, accessToken);
   if (project.id !== projectId || project.status !== "ACTIVE_HEALTHY") throw new ManifestError("PROJECT_IDENTITY_FAILURE", "Supabase project identity or health verification failed");
 
-  const [database, cron, storage, browserExposure, functionPayload] = await Promise.all([
+  const [database, databaseVersions, cron, storage, browserExposure, functionPayload] = await Promise.all([
     loadDatabaseInventory(projectId, accessToken),
+    loadDatabaseMigrationVersions(projectId, accessToken),
     loadCronInventory(projectId, accessToken),
     loadStorageInventory(projectId, accessToken),
     loadBrowserExposure(projectId, accessToken),
@@ -315,7 +331,22 @@ async function buildManifest(root, accessToken) {
   const provenancePath = "supabase/deployment-parity/migration-provenance.json";
   const provenanceRaw = readFileSync(resolve(root, provenancePath), "utf8");
   const provenance = JSON.parse(provenanceRaw);
-  if (provenance.payload?.totals?.live !== database.live_migrations.count || provenance.payload?.totals?.P5 !== 0) throw new ManifestError("PROVENANCE_DRIFT", "Migration provenance ledger does not match live migration history");
+  if (provenance.payload?.totals?.P5 !== 0) {
+    throw new ManifestError("PROVENANCE_DRIFT", "Migration provenance ledger contains unresolved P5 records");
+  }
+  try {
+    assertExactMigrationParity({
+      databaseVersions,
+      productionMigrationVersions: provenance.payload?.records ?? [],
+    });
+    assertCommittedMigrationEvidence({
+      databaseMigrationSummary: database.live_migrations,
+      databaseMigrationDigest: database.canonical_digests_sha256.migrations,
+      records: provenance.payload?.records ?? [],
+    });
+  } catch (error) {
+    throw new ManifestError("MIGRATION_PARITY_DRIFT", error.message);
+  }
 
   const serializationPath = "supabase/deployment-parity/SERIALIZATION.md";
   const serializationRaw = readFileSync(resolve(root, serializationPath), "utf8");
@@ -392,7 +423,6 @@ async function buildManifest(root, accessToken) {
 
   if (privateExposure) throw new ManifestError("PRIVATE_SCHEMA_EXPOSURE", "A private schema is exposed to a browser role");
   if (cron.count !== 8 || cron.active_count !== 8) throw new ManifestError("CRON_DRIFT", "Expected all eight cron jobs to remain active");
-  if (database.live_migrations.count !== 375) throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 375 live migrations");
   return canonicalize({ ...payload, manifest_sha256: sha256(canonicalJson(payload)) });
 }
 
