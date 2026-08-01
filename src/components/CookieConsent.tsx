@@ -154,9 +154,9 @@ export default function CookieConsent() {
       aria-labelledby="cookie-consent-title"
       aria-describedby="cookie-consent-description"
       aria-live="polite"
-      className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl lg:bottom-auto lg:top-[5.25rem] lg:max-w-[760px]"
+      className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl lg:inset-x-auto lg:bottom-4 lg:right-4 lg:top-auto lg:mx-0 lg:w-[min(360px,calc(100vw-2rem))] lg:max-w-none"
     >
-      <div className={`p-3 sm:p-3.5 ${customizing ? "" : "lg:flex lg:items-center lg:gap-4"}`}>
+      <div className="p-3 sm:p-3.5">
         <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h2 id="cookie-consent-title" className="font-sans text-xs font-semibold text-white sm:text-sm">
@@ -200,7 +200,7 @@ export default function CookieConsent() {
           </div>
         )}
 
-        <div className={`mt-2 grid grid-cols-[1fr_1.15fr] gap-2 ${customizing ? "" : "lg:mt-0 lg:w-[22rem] lg:shrink-0"}`}>
+        <div className="mt-2 grid grid-cols-[1fr_1.15fr] gap-2">
           <button type="button" onClick={rejectAll} className="min-h-10 rounded-md border border-white/25 px-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-white/90 transition hover:border-white/50 hover:bg-white/5 sm:text-[10px]">
             Essential only
           </button>
