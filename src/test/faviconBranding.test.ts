@@ -1,14 +1,17 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
-const BRAND_VERSION = "ia-media-e001-20260730";
+const readBytes = (path: string) => readFileSync(resolve(process.cwd(), path));
+const BRAND_VERSION = "ia-brand-visual-e001-20260801";
 
 describe("Irha favicon branding", () => {
-  it("uses the exact owner-supplied crest across search metadata and fallbacks", () => {
+  it("uses the exact owner-supplied crest across search metadata and fallbacks", async () => {
     const index = read("index.html");
     const favicon = read("public/favicon.svg");
+    const brandAssets = read("src/lib/brandAssets.ts");
     const navbar = read("src/components/layout/Navbar.tsx");
     const imageLoading = read("src/lib/imageLoading.ts");
     const packageJson = read("package.json");
@@ -27,6 +30,9 @@ describe("Irha favicon branding", () => {
     expect(index).toContain('<link rel="shortcut icon" href="/favicon.svg" />');
     expect(index.toLowerCase()).not.toContain("lovable favicon");
 
+    expect(brandAssets).toContain('const OFFICIAL_OWNER_CREST = "/icon-512x512.png"');
+    expect(brandAssets).toContain(`BRAND_ASSET_VERSION = "${BRAND_VERSION}"`);
+    expect(brandAssets).not.toContain('OFFICIAL_OWNER_CREST = "/irha-brand-mark.svg"');
     expect(navbar).toContain("BRAND_ASSETS.headerLogo");
     expect(navbar).toContain("Official Irha Apparels Manufacturing Specialists logo");
     expect(navbar).not.toContain('src="/favicon.svg"');
@@ -39,6 +45,17 @@ describe("Irha favicon branding", () => {
     expect(favicon).toContain('<image width="192" height="192"');
     expect(favicon).toContain('href="data:image/webp;base64,');
     expect(favicon.toLowerCase()).not.toContain("lovable");
+
+    const encodedCrest = favicon.match(/href="data:image\/webp;base64,([A-Za-z0-9+/=]+)"/)?.[1];
+    expect(encodedCrest).toBeTruthy();
+    const embeddedCrest = Buffer.from(encodedCrest!, "base64");
+    const faviconMeta = await sharp(embeddedCrest).metadata();
+    expect(faviconMeta).toMatchObject({ format: "webp", width: 192, height: 192 });
+
+    const icon192Meta = await sharp(readBytes("public/icon-192x192.png")).metadata();
+    const icon512Meta = await sharp(readBytes("public/icon-512x512.png")).metadata();
+    expect(icon192Meta).toMatchObject({ format: "png", width: 192, height: 192 });
+    expect(icon512Meta).toMatchObject({ format: "png", width: 512, height: 512 });
 
     expect(packageJson).toContain("node scripts/version-official-brand-assets.mjs");
     expect(versioningScript).toContain(`const BRAND_VERSION = "${BRAND_VERSION}"`);
