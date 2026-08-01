@@ -128,6 +128,7 @@ export default function LiveChat() {
     return restored?.provider ?? "idle";
   });
   const [mobileViewportStyle, setMobileViewportStyle] = useState<CSSProperties>();
+  const [productMediaVisible, setProductMediaVisible] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -154,6 +155,32 @@ export default function LiveChat() {
     const openGuide = () => setOpen(true);
     window.addEventListener(OPEN_EVENT, openGuide);
     return () => window.removeEventListener(OPEN_EVENT, openGuide);
+  }, []);
+
+  useEffect(() => {
+    let observedRegion: Element | null = null;
+    const observer = new IntersectionObserver(([entry]) => {
+      setProductMediaVisible(Boolean(entry?.isIntersecting));
+    }, { threshold: 0.01 });
+
+    const syncObservedRegion = () => {
+      const gallery = document.querySelector('[aria-label="Product reference gallery"]');
+      const nextRegion = gallery?.parentElement ?? null;
+      if (nextRegion === observedRegion) return;
+      if (observedRegion) observer.unobserve(observedRegion);
+      observedRegion = nextRegion;
+      if (observedRegion) observer.observe(observedRegion);
+      else setProductMediaVisible(false);
+    };
+
+    const mutationObserver = new MutationObserver(syncObservedRegion);
+    syncObservedRegion();
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mutationObserver.disconnect();
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -344,24 +371,24 @@ export default function LiveChat() {
 
   return (
     <>
-      {!open && (
+      {!open && !productMediaVisible && (
         <button
           ref={launcherRef}
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Open Irha Live Support — AI guide and human team"
           aria-haspopup="dialog"
-          className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-6 md:right-24 md:w-[20rem]"
+          className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-6 md:right-24 md:w-[20rem] lg:bottom-auto lg:right-4 lg:top-24 lg:h-14 lg:w-14 lg:justify-center lg:gap-0 lg:rounded-full lg:p-0 xl:bottom-6 xl:right-6 xl:top-auto xl:h-auto xl:w-[20rem] xl:justify-start xl:gap-3 xl:rounded-2xl xl:px-3.5 xl:py-3"
         >
           <span className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-gold text-primary-foreground shadow-gold">
             <MessageCircle size={20} />
             <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-black bg-emerald-400" aria-hidden="true" />
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="min-w-0 flex-1 lg:hidden xl:block">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">Irha Live Support</span>
             <span className="mt-1 block text-[11px] leading-snug text-white/75">AI answers now · Human team one tap away</span>
           </span>
-          <ChevronRight size={18} className="shrink-0 text-gold" />
+          <ChevronRight size={18} className="shrink-0 text-gold lg:hidden xl:block" />
         </button>
       )}
 
