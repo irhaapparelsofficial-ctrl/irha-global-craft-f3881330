@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useInquiryCart } from "@/lib/inquiryCart";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
+import { BRAND_ASSETS } from "@/lib/brandAssets";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getLocaleGateway, getRouteLocale, SHARED_UI_COPY, type LocaleCode } from "@/lib/i18nFoundation";
 import { ROUTES } from "@/data/buyerCapabilities";
@@ -105,9 +106,18 @@ export default function Navbar() {
       <span id="nl-primary-navigation-label" className="sr-only" lang="nl">Hoofdnavigatie</span>
       <span id="nl-mobile-navigation-label" className="sr-only" lang="nl">Mobiele navigatie</span>
       <div className="container-luxe flex min-h-16 items-center justify-between gap-3">
-        <Link to={homeHref} className="group flex min-w-0 shrink-0 items-center gap-2.5" aria-label={`${PUBLIC_IDENTITY.name} — ${copy.home}`}>
-          <img src="/favicon.svg" alt="Official Irha Apparels Manufacturing Specialists crest" className="h-14 w-14 shrink-0 object-contain transition-transform group-hover:scale-[1.02] sm:h-16 sm:w-16" loading="eager" decoding="async" />
-          <span className="min-w-0 leading-none"><span className="block whitespace-nowrap font-display text-[1.18rem] font-semibold tracking-[0.01em] text-foreground sm:text-[1.45rem]">{PUBLIC_IDENTITY.name}</span><span className="mt-1 block whitespace-nowrap text-[6.5px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[8px] sm:tracking-[0.22em]">{BRAND_TAGLINE[locale]}</span></span>
+        <Link to={homeHref} className="group flex min-w-0 shrink-0 items-center" aria-label={`${PUBLIC_IDENTITY.name} — ${copy.home}`}>
+          <img
+            src={BRAND_ASSETS.headerLogo}
+            alt="Official Irha Apparels Manufacturing Specialists logo"
+            width="760"
+            height="160"
+            className="h-auto w-[10.75rem] shrink-0 object-contain object-left transition-transform group-hover:scale-[1.01] sm:w-[12.75rem]"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
+          <span className="sr-only">{PUBLIC_IDENTITY.name} — {BRAND_TAGLINE[locale]}</span>
         </Link>
 
         <nav className="hidden items-center gap-4 xl:flex" aria-label="Primary navigation" aria-labelledby={primaryNavigationLabelId}>{CORE_NAV.map((item) => {
