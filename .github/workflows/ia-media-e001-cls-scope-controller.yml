@@ -52,35 +52,36 @@ jobs:
               raise SystemExit("LiveChat state anchor changed")
           text = text.replace(state_anchor, state_replacement, 1)
 
-          messages_effect_anchor = '''useEffect(() => {
-            messagesRef.current = messages;'''
-          media_effect = '''useEffect(() => {
-            let observedRegion: Element | null = null;
-            const observer = new IntersectionObserver(([entry]) => {
-              setProductMediaVisible(Boolean(entry?.isIntersecting));
-            }, { threshold: 0.01 });
-
-            const syncObservedRegion = () => {
-              const gallery = document.querySelector('[aria-label="Product reference gallery"]');
-              const nextRegion = gallery?.parentElement ?? null;
-              if (nextRegion === observedRegion) return;
-              if (observedRegion) observer.unobserve(observedRegion);
-              observedRegion = nextRegion;
-              if (observedRegion) observer.observe(observedRegion);
-              else setProductMediaVisible(false);
-            };
-
-            const mutationObserver = new MutationObserver(syncObservedRegion);
-            syncObservedRegion();
-            mutationObserver.observe(document.body, { childList: true, subtree: true });
-
-            return () => {
-              mutationObserver.disconnect();
-              observer.disconnect();
-            };
-          }, []);
-
-          '''
+          messages_effect_anchor = '  useEffect(() => {\n    messagesRef.current = messages;\n'
+          media_effect = '\n'.join([
+              '  useEffect(() => {',
+              '    let observedRegion: Element | null = null;',
+              '    const observer = new IntersectionObserver(([entry]) => {',
+              '      setProductMediaVisible(Boolean(entry?.isIntersecting));',
+              '    }, { threshold: 0.01 });',
+              '',
+              '    const syncObservedRegion = () => {',
+              '      const gallery = document.querySelector(\'[aria-label="Product reference gallery"]\');',
+              '      const nextRegion = gallery?.parentElement ?? null;',
+              '      if (nextRegion === observedRegion) return;',
+              '      if (observedRegion) observer.unobserve(observedRegion);',
+              '      observedRegion = nextRegion;',
+              '      if (observedRegion) observer.observe(observedRegion);',
+              '      else setProductMediaVisible(false);',
+              '    };',
+              '',
+              '    const mutationObserver = new MutationObserver(syncObservedRegion);',
+              '    syncObservedRegion();',
+              '    mutationObserver.observe(document.body, { childList: true, subtree: true });',
+              '',
+              '    return () => {',
+              '      mutationObserver.disconnect();',
+              '      observer.disconnect();',
+              '    };',
+              '  }, []);',
+              '',
+              '',
+          ])
           if text.count(messages_effect_anchor) != 1:
               raise SystemExit("LiveChat messages effect anchor changed")
           text = text.replace(messages_effect_anchor, media_effect + messages_effect_anchor, 1)
