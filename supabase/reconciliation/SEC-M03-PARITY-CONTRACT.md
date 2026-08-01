@@ -13,7 +13,7 @@ The source verifier preserves each multipart filename, decodes file content as U
 ## Sealed live baseline
 
 - Public schema: 158 tables, 13 views, 204 function signatures, 4 enums.
-- Live migration history: 375 entries; P1=4, P2=371, P3=0, P4=0, P5=0.
+- Live migration history: 376 entries; P1=5, P2=371, P3=0, P4=0, P5=0.
 - Edge classifications: F1=33, F2=14, F3=9, F4=1, F5=0, F6=31.
 - Active cron jobs: 8.
 - Storage buckets: 11.
@@ -22,7 +22,7 @@ The source verifier preserves each multipart filename, decodes file content as U
 
 ## Deterministic drift guards
 
-The migration provenance generator, deployment manifest generator, and committed parity verifier independently require exactly 375 live migrations. The manifest generator also requires the exact notification-dispatcher v8 version, authentication mode, and source hash. These guards fail closed and may not be refreshed unless authenticated live evidence and exact source provenance both pass.
+The migration provenance generator, deployment manifest generator, and committed parity verifier independently require exactly 376 live migrations. The manifest generator also requires the exact notification-dispatcher v8 version, authentication mode, and source hash. These guards fail closed and may not be refreshed unless authenticated live evidence and exact source provenance both pass.
 
 ## Scope boundary
 

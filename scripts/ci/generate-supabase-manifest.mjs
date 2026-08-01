@@ -392,7 +392,7 @@ async function buildManifest(root, accessToken) {
 
   if (privateExposure) throw new ManifestError("PRIVATE_SCHEMA_EXPOSURE", "A private schema is exposed to a browser role");
   if (cron.count !== 8 || cron.active_count !== 8) throw new ManifestError("CRON_DRIFT", "Expected all eight cron jobs to remain active");
-  if (database.live_migrations.count !== 375) throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 375 live migrations");
+  if (database.live_migrations.count !== 376) throw new ManifestError("MIGRATION_COUNT_DRIFT", "Expected 376 live migrations");
   return canonicalize({ ...payload, manifest_sha256: sha256(canonicalJson(payload)) });
 }
 

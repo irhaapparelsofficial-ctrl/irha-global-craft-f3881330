@@ -7,7 +7,7 @@ const root = process.cwd();
 const projectId = "pvzjiozismyxqrzmtfbi";
 const dispatcherVersion = 8;
 const dispatcherHash = "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48";
-const liveMigrationCount = 375;
+const liveMigrationCount = 376;
 
 function occurrenceCount(source, target) {
   let count = 0;
@@ -39,13 +39,13 @@ function patchedProvenanceSource() {
   let source = readFileSync(path, "utf8");
   source = replaceLegacyOrRequireCurrent(
     source,
-    "if (result.payload.totals.live !== 374) {",
+    "if (result.payload.totals.live !== 375) {",
     `if (result.payload.totals.live !== ${liveMigrationCount}) {`,
     "migration provenance count guard",
   );
   source = replaceLegacyOrRequireCurrent(
     source,
-    "`Expected 374 live migrations, found ${result.payload.totals.live}`",
+    "`Expected 375 live migrations, found ${result.payload.totals.live}`",
     `\`Expected ${liveMigrationCount} live migrations, found \${result.payload.totals.live}\``,
     "migration provenance count message",
   );
@@ -63,13 +63,13 @@ function patchedManifestSource() {
   );
   source = replaceLegacyOrRequireCurrent(
     source,
-    "if (database.live_migrations.count !== 374)",
+    "if (database.live_migrations.count !== 375)",
     `if (database.live_migrations.count !== ${liveMigrationCount})`,
     "manifest migration count guard",
   );
   source = replaceLegacyOrRequireCurrent(
     source,
-    '"Expected 374 live migrations"',
+    '"Expected 375 live migrations"',
     `"Expected ${liveMigrationCount} live migrations"`,
     "manifest migration count message",
   );

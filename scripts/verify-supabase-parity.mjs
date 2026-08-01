@@ -39,16 +39,16 @@ assert.equal(
 );
 assert.equal(provenance.canonical_payload_sha256, manifest.migration_provenance.canonical_payload_sha256);
 assert.equal(provenance.payload.project_id, manifest.identity.supabase_project_id);
-assert.equal(provenance.payload.totals.live, 375);
-assert.equal(provenance.payload.records.length, 375);
-assert.equal(provenance.payload.totals.P1, 4);
+assert.equal(provenance.payload.totals.live, 376);
+assert.equal(provenance.payload.records.length, 376);
+assert.equal(provenance.payload.totals.P1, 5);
 assert.equal(provenance.payload.totals.P2, 371);
 assert.equal(provenance.payload.totals.P3, 0);
 assert.equal(provenance.payload.totals.P4, 0);
 assert.equal(provenance.payload.totals.P5, 0);
 assert.equal(provenance.payload.totals.all_statements_recovered, true);
 assert.equal(provenance.payload.totals.all_creators_present, true);
-assert.equal(new Set(provenance.payload.records.map((record) => record.version)).size, 375);
+assert.equal(new Set(provenance.payload.records.map((record) => record.version)).size, 376);
 for (const record of provenance.payload.records) {
   assert.match(record.version, /^\d{14}$/);
   assert.match(record.class, /^P[12]$/);
