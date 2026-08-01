@@ -87,7 +87,11 @@ describe("SEC-M03 canonical parity control", () => {
 
   it("derives exact production migration parity without a fixed migration count", () => {
     expect(generator).toContain('const projectId = "pvzjiozismyxqrzmtfbi"');
-    expect(generator).not.toContain("liveMigrationCount");
+    expect(generator).not.toMatch(/\bconst\s+liveMigrationCount\s*=/);
+    expect(provenanceGenerator).not.toMatch(/totals\.live\s*!==\s*\d+/);
+    expect(provenanceGenerator).not.toMatch(/Expected \d+ live migrations/);
+    expect(manifestGenerator).not.toMatch(/live_migrations\.count\s*!==\s*\d+/);
+    expect(manifestGenerator).not.toMatch(/Expected \d+ live migrations/);
     expect(generator).toContain("requireDynamicMigrationParity");
     expect(generator).toContain("migration-production-parity.mjs");
     expect(provenanceGenerator).toContain("deriveProductionMigrationVersions");
