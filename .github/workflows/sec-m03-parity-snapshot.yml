@@ -1,0 +1,110 @@
+name: SEC M03 Parity Snapshot
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/sec-m03-parity-snapshot.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  snapshot:
+    if: github.event.pull_request.head.ref == 'codex/sec-m03-parity-snapshot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      EXPECTED_MAIN: de04f0c4d380e094149493483b8113fa9d437b11
+      SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout exact main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_MAIN }}
+          persist-credentials: false
+
+      - name: Verify immutable source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_MAIN"
+          test "$(git ls-remote origin refs/heads/main | awk '{print $1}')" = "$EXPECTED_MAIN"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Generate authenticated read-only parity snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}"
+          mkdir -p /tmp/sec-m03-parity-snapshot
+          cp scripts/ci/generate-migration-provenance.mjs /tmp/sec-m03-parity-snapshot/generate-migration-provenance.mjs
+          cp scripts/ci/generate-supabase-manifest.mjs /tmp/sec-m03-parity-snapshot/generate-supabase-manifest.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('/tmp/sec-m03-parity-snapshot/generate-migration-provenance.mjs')
+          s = p.read_text()
+          old = 'if (result.payload.totals.live !== 375) {'
+          new = 'if (result.payload.totals.live !== 376) {'
+          assert s.count(old) == 1 and s.count(new) == 0
+          s = s.replace(old, new)
+          old = '`Expected 375 live migrations, found ${result.payload.totals.live}`'
+          new = '`Expected 376 live migrations, found ${result.payload.totals.live}`'
+          assert s.count(old) == 1 and s.count(new) == 0
+          p.write_text(s)
+
+          p = Path('/tmp/sec-m03-parity-snapshot/generate-supabase-manifest.mjs')
+          s = p.read_text()
+          old = 'if (database.live_migrations.count !== 375)'
+          new = 'if (database.live_migrations.count !== 376)'
+          assert s.count(old) == 1 and s.count(new) == 0
+          s = s.replace(old, new)
+          old = '"Expected 375 live migrations"'
+          new = '"Expected 376 live migrations"'
+          assert s.count(old) == 1 and s.count(new) == 0
+          s = s.replace(old, new)
+          p.write_text(s)
+          PY
+
+          SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" \
+          MIGRATION_PROVENANCE_MODE=write \
+            node /tmp/sec-m03-parity-snapshot/generate-migration-provenance.mjs
+
+          SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" \
+          SUPABASE_MANIFEST_MODE=write \
+            node /tmp/sec-m03-parity-snapshot/generate-supabase-manifest.mjs
+
+      - name: Validate snapshot invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          provenance=supabase/deployment-parity/migration-provenance.json
+          manifest=supabase/deployment-parity/manifest.json
+          test "$(jq -r '.payload.totals.live' "$provenance")" = "376"
+          test "$(jq -r '.payload.records | length' "$provenance")" = "376"
+          test "$(jq -r '.payload.totals.P5' "$provenance")" = "0"
+          test "$(jq -r '.identity.supabase_project_id' "$manifest")" = "$SUPABASE_PROJECT_ID"
+          test "$(jq -r '.database.live_migrations.count' "$manifest")" = "376"
+          test "$(jq -r '[.payload.records[] | select(.version == "20260731151915" and .name == "align_drive_gallery_with_selected_media")] | length' "$provenance")" = "1"
+          jq -r '.payload.totals | {live,P1,P2,P3,P4,P5}' "$provenance" | tee /tmp/sec-m03-parity-snapshot/totals.json
+          jq -r '.payload.records[] | select(.version == "20260731151915") | {version,name,class,exact_repository_source,statement_count}' "$provenance" | tee /tmp/sec-m03-parity-snapshot/new-migration.json
+          cp "$provenance" /tmp/sec-m03-parity-snapshot/migration-provenance.json
+          cp "$manifest" /tmp/sec-m03-parity-snapshot/manifest.json
+
+      - name: Upload immutable snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: sec-m03-parity-snapshot-${{ env.EXPECTED_MAIN }}
+          path: /tmp/sec-m03-parity-snapshot
+          if-no-files-found: error
+          retention-days: 30
