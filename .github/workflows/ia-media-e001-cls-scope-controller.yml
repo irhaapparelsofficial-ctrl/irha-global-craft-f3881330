@@ -52,15 +52,10 @@ jobs:
               raise SystemExit("LiveChat state anchor changed")
           text = text.replace(state_anchor, state_replacement, 1)
 
-          open_effect = '''  useEffect(() => {
-            const openGuide = () => setOpen(true);
-            window.addEventListener(OPEN_EVENT, openGuide);
-            return () => window.removeEventListener(OPEN_EVENT, openGuide);
-          }, []);
-          '''
-          media_effect = open_effect + '''
-          useEffect(() => {
-            let observedRegion = null;
+          messages_effect_anchor = '''useEffect(() => {
+            messagesRef.current = messages;'''
+          media_effect = '''useEffect(() => {
+            let observedRegion: Element | null = null;
             const observer = new IntersectionObserver(([entry]) => {
               setProductMediaVisible(Boolean(entry?.isIntersecting));
             }, { threshold: 0.01 });
@@ -82,13 +77,13 @@ jobs:
             return () => {
               mutationObserver.disconnect();
               observer.disconnect();
-              setProductMediaVisible(false);
             };
           }, []);
+
           '''
-          if text.count(open_effect) != 1:
-              raise SystemExit("LiveChat open effect anchor changed")
-          text = text.replace(open_effect, media_effect, 1)
+          if text.count(messages_effect_anchor) != 1:
+              raise SystemExit("LiveChat messages effect anchor changed")
+          text = text.replace(messages_effect_anchor, media_effect + messages_effect_anchor, 1)
 
           render_anchor = '      {!open && (\n'
           render_replacement = '      {!open && !productMediaVisible && (\n'
