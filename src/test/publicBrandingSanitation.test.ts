@@ -60,7 +60,7 @@ describe("IA-CONTENT-E001 public branding sanitation", () => {
     expect(result.output).toContain("Do you publish certification logos?");
   });
 
-  it("uses the official Irha crest for fallbacks and restrained card chrome", () => {
+  it("keeps the official crest as controlled fallback without product/category watermark overlays", () => {
     const imageLoading = readText("src/lib/imageLoading.ts");
     const resilientImage = readText("src/components/ResilientImage.tsx");
     const cards = readText("src/components/catalog/CatalogListingCard.tsx");
@@ -71,10 +71,10 @@ describe("IA-CONTENT-E001 public branding sanitation", () => {
     expect(imageLoading).not.toContain('CONTROLLED_IMAGE_FALLBACK = "/favicon.svg"');
     expect(resilientImage).toContain('data-brand-fallback={controlledFallbackActive ? "irha-official-crest" : undefined}');
     expect(resilientImage).not.toMatch(/Image unavailable|question mark/i);
-    expect(cards).toContain('data-card-brand="irha-official-crest"');
-    expect(cards).toContain("pointer-events-none");
-    expect(cards).toContain("h-7 w-7");
-    expect(hero).toContain('data-card-brand="irha-official-crest"');
+    expect(cards).not.toContain('data-card-brand="irha-official-crest"');
+    expect(cards).not.toContain('src="/favicon.svg"');
+    expect(hero).not.toContain('data-card-brand="irha-official-crest"');
+    expect(hero).not.toContain('src="/favicon.svg"');
     expect(placeholder).toContain('href="/favicon.svg"');
     expect(placeholder.toLowerCase()).not.toContain("lovable");
   });

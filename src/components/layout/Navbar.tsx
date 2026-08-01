@@ -110,9 +110,9 @@ export default function Navbar() {
           <img
             src={BRAND_ASSETS.headerLogo}
             alt="Official Irha Apparels Manufacturing Specialists logo"
-            width="760"
-            height="160"
-            className="h-auto w-[10.75rem] shrink-0 object-contain object-left transition-transform group-hover:scale-[1.01] sm:w-[12.75rem]"
+            width="192"
+            height="192"
+            className="h-[4.25rem] w-[4.25rem] shrink-0 object-contain transition-transform group-hover:scale-[1.01] sm:h-[4.5rem] sm:w-[4.5rem]"
             loading="eager"
             decoding="async"
             fetchPriority="high"

@@ -79,8 +79,10 @@ describe("B2B buyer-readiness contracts", () => {
 
     expect(card).not.toMatch(/Digital catalogue reference|Digital reference|not production proof/);
     expect(hero).not.toMatch(/Digital catalogue reference|Digital reference|not photographs of completed buyer orders/);
-    expect(card).toContain('data-card-brand="irha-official-crest"');
-    expect(hero).toContain('data-card-brand="irha-official-crest"');
+    expect(card).not.toContain('data-card-brand="irha-official-crest"');
+    expect(card).not.toContain('src="/favicon.svg"');
+    expect(hero).not.toContain('data-card-brand="irha-official-crest"');
+    expect(hero).not.toContain('src="/favicon.svg"');
     expect(sanitizer).toContain("prohibitedPresentationPatterns");
     expect(sanitizer).toContain("Digital catalogue reference");
     expect(sanitizer).toContain("prohibitedPresentationAfter: 0");

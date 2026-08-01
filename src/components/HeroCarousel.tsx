@@ -39,18 +39,6 @@ const SECONDARY_PROGRAMS = [
   },
 ] as const;
 
-function HeroCardBrandMark() {
-  return (
-    <span
-      className="pointer-events-none absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/55 p-1.5 backdrop-blur-sm sm:h-9 sm:w-9"
-      aria-hidden="true"
-      data-card-brand="irha-official-crest"
-    >
-      <img src="/favicon.svg" alt="" className="h-full w-full object-contain" decoding="async" />
-    </span>
-  );
-}
-
 export default function HeroCarousel() {
   const openLiveChat = () => window.dispatchEvent(new CustomEvent("irha:open-human-chat"));
   const { data: approvedMedia = {} } = useHomepageMedia();
@@ -135,7 +123,6 @@ export default function HeroCarousel() {
                 height={1600}
                 className="absolute inset-0 h-full w-full object-contain object-center px-3 pb-24 pt-3 transition-transform duration-1000 group-hover:scale-[1.025] sm:px-6 sm:pb-28 sm:pt-6"
               />
-              <HeroCardBrandMark />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/5 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-6">
                 <p className="text-[7px] font-semibold uppercase tracking-[0.14em] text-primary sm:text-[8px]">Made-to-order program</p>
@@ -162,7 +149,6 @@ export default function HeroCarousel() {
                   height={1600}
                   className="relative h-full w-full object-contain p-2.5 transition-transform duration-1000 group-hover:scale-[1.035] sm:p-4"
                 />
-                <HeroCardBrandMark />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/96 via-black/5 to-transparent" />
                 <div className="absolute inset-x-3 bottom-3 text-white">
                   <p className="text-[7px] uppercase tracking-[0.14em] text-primary">{program.eyebrow}</p>

@@ -2,7 +2,7 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const DIST_ROOT = resolve("dist");
-const BRAND_VERSION = "ia-media-e001-20260730";
+const BRAND_VERSION = "ia-brand-visual-e001-20260801";
 const VERSIONED_FAVICON = `/favicon.svg?v=${BRAND_VERSION}`;
 const VERSIONED_APPLE_ICON = `/apple-touch-icon.png?v=${BRAND_VERSION}`;
 const VERSIONED_MANIFEST = `/manifest.webmanifest?v=${BRAND_VERSION}`;
