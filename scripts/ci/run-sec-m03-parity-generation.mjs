@@ -7,7 +7,6 @@ const root = process.cwd();
 const projectId = "pvzjiozismyxqrzmtfbi";
 const dispatcherVersion = 8;
 const dispatcherHash = "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48";
-const liveMigrationCount = 376;
 
 function occurrenceCount(source, target) {
   let count = 0;
@@ -34,22 +33,22 @@ function replaceLegacyOrRequireCurrent(source, legacy, current, label) {
   );
 }
 
+function requireDynamicMigrationParity(source, label) {
+  if (!source.includes("assertExactMigrationParity")) {
+    throw new Error(`${label} must enforce dynamic exact migration version-set parity`);
+  }
+  if (source.includes("liveMigrationCount")) {
+    throw new Error(`${label} must not depend on a fixed live migration count`);
+  }
+  if (source.includes("Expected 376 live migrations") || source.includes("!== 376")) {
+    throw new Error(`${label} contains a stale fixed migration-count invariant`);
+  }
+  return source;
+}
+
 function patchedProvenanceSource() {
   const path = resolve(root, "scripts/ci/generate-migration-provenance.mjs");
-  let source = readFileSync(path, "utf8");
-  source = replaceLegacyOrRequireCurrent(
-    source,
-    "if (result.payload.totals.live !== 375) {",
-    `if (result.payload.totals.live !== ${liveMigrationCount}) {`,
-    "migration provenance count guard",
-  );
-  source = replaceLegacyOrRequireCurrent(
-    source,
-    "`Expected 375 live migrations, found ${result.payload.totals.live}`",
-    `\`Expected ${liveMigrationCount} live migrations, found \${result.payload.totals.live}\``,
-    "migration provenance count message",
-  );
-  return source;
+  return requireDynamicMigrationParity(readFileSync(path, "utf8"), "migration provenance generator");
 }
 
 function patchedManifestSource() {
@@ -61,19 +60,7 @@ function patchedManifestSource() {
     `dispatcher.version !== ${dispatcherVersion} || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "${dispatcherHash}"`,
     "notification dispatcher invariant",
   );
-  source = replaceLegacyOrRequireCurrent(
-    source,
-    "if (database.live_migrations.count !== 375)",
-    `if (database.live_migrations.count !== ${liveMigrationCount})`,
-    "manifest migration count guard",
-  );
-  source = replaceLegacyOrRequireCurrent(
-    source,
-    '"Expected 375 live migrations"',
-    `"Expected ${liveMigrationCount} live migrations"`,
-    "manifest migration count message",
-  );
-  return source;
+  return requireDynamicMigrationParity(source, "Supabase manifest generator");
 }
 
 function run(scriptPath, extraEnv) {
@@ -92,8 +79,14 @@ const directory = mkdtempSync(join(tmpdir(), "irha-sec-m03-parity-"));
 try {
   const provenancePath = join(directory, "generate-migration-provenance.mjs");
   const manifestPath = join(directory, "generate-supabase-manifest.mjs");
+  const parityHelperPath = join(directory, "migration-production-parity.mjs");
   writeFileSync(provenancePath, patchedProvenanceSource(), "utf8");
   writeFileSync(manifestPath, patchedManifestSource(), "utf8");
+  writeFileSync(
+    parityHelperPath,
+    readFileSync(resolve(root, "scripts/ci/migration-production-parity.mjs"), "utf8"),
+    "utf8",
+  );
 
   run(provenancePath, { MIGRATION_PROVENANCE_MODE: "write" });
   run(manifestPath, { SUPABASE_MANIFEST_MODE: "write" });

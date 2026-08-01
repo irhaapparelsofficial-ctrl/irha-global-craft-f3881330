@@ -22,7 +22,7 @@ The source verifier preserves each multipart filename, decodes file content as U
 
 ## Deterministic drift guards
 
-The migration provenance generator, deployment manifest generator, and committed parity verifier independently require exactly 376 live migrations. The manifest generator also requires the exact notification-dispatcher v8 version, authentication mode, and source hash. These guards fail closed and may not be refreshed unless authenticated live evidence and exact source provenance both pass.
+The migration provenance generator, deployment manifest generator, and committed parity verifier derive migration correctness from the sealed production provenance plus checksum-registered repository migrations recorded as `applied` or `verified_present` in the existing private repository migration ledger. They require unique exact version-set equality with authenticated database migration versions, explicitly protect `20260731151915_align_drive_gallery_with_selected_media`, and exclude staged/future manifest entries that have no applied ledger state. The observed current count of 376 is evidence only, not an executable invariant. The manifest generator also requires the exact notification-dispatcher v8 version, authentication mode, and source hash. These guards fail closed and may not be refreshed unless authenticated live evidence and exact source provenance both pass.
 
 ## Scope boundary
 

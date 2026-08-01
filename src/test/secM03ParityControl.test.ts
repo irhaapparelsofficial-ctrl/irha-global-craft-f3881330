@@ -6,6 +6,10 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 
 const workflow = read(".github/workflows/supabase-functions-reconcile.yml");
 const generator = read("scripts/ci/run-sec-m03-parity-generation.mjs");
+const provenanceGenerator = read("scripts/ci/generate-migration-provenance.mjs");
+const manifestGenerator = read("scripts/ci/generate-supabase-manifest.mjs");
+const migrationParity = read("scripts/ci/migration-production-parity.mjs");
+const parityVerifier = read("scripts/verify-supabase-parity.mjs");
 const sourceVerifier = read("scripts/ci/verify-sec-m03-deployed-sources.mjs");
 const registryRefresh = read("scripts/ci/refresh-sec-m03-live-parity.mjs");
 const parityPlan = JSON.parse(read("supabase/reconciliation/sec-m03-parity-refresh.json"));
@@ -81,9 +85,24 @@ describe("SEC-M03 canonical parity control", () => {
     expect(generator).toContain("const dispatcherVersion = 8");
   });
 
-  it("requires the exact reviewed migration and project baseline", () => {
+  it("derives exact production migration parity without a fixed migration count", () => {
     expect(generator).toContain('const projectId = "pvzjiozismyxqrzmtfbi"');
-    expect(generator).toContain("const liveMigrationCount = 375");
+    expect(generator).not.toContain("liveMigrationCount");
+    expect(generator).toContain("requireDynamicMigrationParity");
+    expect(generator).toContain("migration-production-parity.mjs");
+    expect(provenanceGenerator).toContain("deriveProductionMigrationVersions");
+    expect(provenanceGenerator).toContain("assertExactMigrationParity");
+    expect(provenanceGenerator).toContain("supabase/repository-migrations.json");
+    expect(provenanceGenerator).toContain("private.irha_repository_migration_ledger");
+    expect(manifestGenerator).toContain("assertExactMigrationParity");
+    expect(manifestGenerator).toContain("select version from supabase_migrations.schema_migrations order by version");
+    expect(parityVerifier).toContain("assertCommittedMigrationEvidence");
+    expect(migrationParity).toContain('REQUIRED_PRODUCTION_MIGRATION_VERSION = "20260731151915"');
+    expect(migrationParity).toContain('REQUIRED_PRODUCTION_MIGRATION_NAME = "align_drive_gallery_with_selected_media"');
+    expect(migrationParity).toContain('new Set(["applied", "verified_present"])');
+    expect(migrationParity).toContain("Migration version-set drift");
+    expect(migrationParity).toContain("duplicate migration version");
+    expect(migrationParity).toContain("ledger checksum mismatch");
     expect(generator).toContain("replaceLegacyOrRequireCurrent");
     expect(generator).toContain("legacyCount === 1 && currentCount === 0");
     expect(generator).toContain("legacyCount === 0 && currentCount === 1");
