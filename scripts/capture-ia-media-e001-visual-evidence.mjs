@@ -103,6 +103,24 @@ async function waitForApp(page) {
   await page.waitForTimeout(1000);
 }
 
+async function verifyAndDismissCookieConsent(page) {
+  const dialog = page.locator('[aria-labelledby="cookie-consent-title"]');
+  if (await dialog.count() === 0 || !(await dialog.isVisible())) {
+    return { visible: false, choice: null };
+  }
+
+  const privacy = dialog.locator('a[href="/privacy-policy"]');
+  const essential = dialog.getByRole("button", { name: /essential only/i });
+  const optional = dialog.getByRole("button", { name: /accept optional/i });
+  if (!(await privacy.isVisible()) || !(await essential.isVisible()) || !(await optional.isVisible())) {
+    throw new Error("Cookie consent controls are incomplete");
+  }
+
+  await essential.click();
+  await dialog.waitFor({ state: "hidden", timeout: 10_000 });
+  return { visible: true, choice: "essential-only" };
+}
+
 async function decodeImage(locator) {
   await locator.scrollIntoViewIfNeeded();
   await locator.waitFor({ state: "visible", timeout: 30_000 });
@@ -513,12 +531,13 @@ async function captureStrictProduct(browser, origin, label, product, viewport) {
       timeout: 45_000,
     });
     await waitForApp(page);
+    const consent = await verifyAndDismissCookieConsent(page);
     const evidence = await inspectProduct(page, product, viewport);
     await page.screenshot({
       path: resolve(OUTPUT_ROOT, label, `${product.sku.toLowerCase()}-${viewport.name}.png`),
       fullPage: viewport.width >= 1280,
     });
-    return evidence;
+    return { ...evidence, consent };
   } finally {
     await context.close();
   }

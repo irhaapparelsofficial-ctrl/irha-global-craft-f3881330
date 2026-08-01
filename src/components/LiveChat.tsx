@@ -128,6 +128,7 @@ export default function LiveChat() {
     return restored?.provider ?? "idle";
   });
   const [mobileViewportStyle, setMobileViewportStyle] = useState<CSSProperties>();
+  const [productMediaVisible, setProductMediaVisible] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -154,6 +155,32 @@ export default function LiveChat() {
     const openGuide = () => setOpen(true);
     window.addEventListener(OPEN_EVENT, openGuide);
     return () => window.removeEventListener(OPEN_EVENT, openGuide);
+  }, []);
+
+  useEffect(() => {
+    let observedRegion: Element | null = null;
+    const observer = new IntersectionObserver(([entry]) => {
+      setProductMediaVisible(Boolean(entry?.isIntersecting));
+    }, { threshold: 0.01 });
+
+    const syncObservedRegion = () => {
+      const gallery = document.querySelector('[aria-label="Product reference gallery"]');
+      const nextRegion = gallery?.parentElement ?? null;
+      if (nextRegion === observedRegion) return;
+      if (observedRegion) observer.unobserve(observedRegion);
+      observedRegion = nextRegion;
+      if (observedRegion) observer.observe(observedRegion);
+      else setProductMediaVisible(false);
+    };
+
+    const mutationObserver = new MutationObserver(syncObservedRegion);
+    syncObservedRegion();
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mutationObserver.disconnect();
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -344,7 +371,7 @@ export default function LiveChat() {
 
   return (
     <>
-      {!open && (
+      {!open && !productMediaVisible && (
         <button
           ref={launcherRef}
           type="button"
