@@ -27,6 +27,19 @@ describe("Lovable-free production contract", () => {
     expect(kickoff).toContain("Lovable credits and Lovable Publish are not used");
   });
 
+  it("accepts only successful exact-main Quality runs from authorized non-PR triggers", () => {
+    const kickoff = read(".github/workflows/lovable-free-release.yml");
+
+    expect(kickoff).toContain('.head_sha == $sha');
+    expect(kickoff).toContain('(.event == "push" or .event == "workflow_dispatch")');
+    expect(kickoff).toContain('.head_branch == "main"');
+    expect(kickoff).toContain('.conclusion == "success"');
+    expect(kickoff).not.toContain('and .event == "push"');
+    expect(kickoff).not.toContain('.event == "pull_request"');
+    expect(kickoff).toContain('test "$quality_conclusion" = "success"');
+    expect(kickoff).toContain('Safety lock failed: expected $expected_sha but current main is $latest_main');
+  });
+
   it("ignores skipped non-release reconciliation runs and proves only exact current main", () => {
     const observer = read(".github/workflows/cloudflare-production-status.yml");
 
