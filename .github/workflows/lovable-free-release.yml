@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Resolve exact current main and its push Quality Gate
+      - name: Resolve exact current main and its authorized successful Quality Gate
         id: resolve
         shell: bash
         env:
@@ -57,9 +57,9 @@ jobs:
               .workflow_runs[]
               | select(
                   .head_sha == $sha
-                  and .event == "push"
+                  and (.event == "push" or .event == "workflow_dispatch")
                   and .head_branch == "main"
-                  and (.conclusion == "success" or .conclusion == "failure" or .conclusion == "cancelled")
+                  and .conclusion == "success"
                 )
             ]
             | sort_by(.run_number, .run_attempt)
@@ -68,11 +68,12 @@ jobs:
           ')"
 
           test -n "$quality_run_id" || {
-            echo "No completed push-triggered Quality Gate exists for exact current main $latest_main. Missing status is unverified, not a failure."
+            echo "No completed successful repository-authorized Quality Gate exists for exact current main $latest_main. Missing status is unverified, not a failure."
             exit 1
           }
 
           quality_conclusion="$(printf '%s' "$runs_json" | jq -r --argjson id "$quality_run_id" '.workflow_runs[] | select(.id == $id) | .conclusion')"
+          test "$quality_conclusion" = "success"
 
           echo "source_sha=$latest_main" >> "$GITHUB_OUTPUT"
           echo "quality_run_id=$quality_run_id" >> "$GITHUB_OUTPUT"
