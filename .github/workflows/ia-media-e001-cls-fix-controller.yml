@@ -1,0 +1,124 @@
+name: IA Media E001 CLS Fix Controller
+
+on:
+  pull_request:
+    branches:
+      - codex/ia-media-e001-recovery-base-v4
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-landscape-layout:
+    if: github.event.pull_request.head.ref == 'codex/ia-media-e001-landscape-layout-controller'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_MAIN: 770569e087badea7d38e60b3582426264c514bdf
+      CLEAN_SHA: 4da1974734d801fbd2576d6fcb914f307cf5b0e7
+      CLEAN_BRANCH: codex/ia-media-e001-clean-recovery
+      TARGET_BRANCH: codex/ia-media-e001-landscape-layout-content
+
+    steps:
+      - name: Checkout exact clean source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CLEAN_SHA }}
+          fetch-depth: 0
+
+      - name: Verify immutable inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main "$CLEAN_BRANCH" "$TARGET_BRANCH" --no-tags
+          test "$(git rev-parse HEAD)" = "$CLEAN_SHA"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse "origin/$CLEAN_BRANCH")" = "$CLEAN_SHA"
+          test "$(git rev-parse "origin/$TARGET_BRANCH")" = "$CLEAN_SHA"
+          test "$(git rev-parse "$CLEAN_SHA^")" = "$EXPECTED_MAIN"
+
+      - name: Keep landscape fixed controls outside product media
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          product = Path("src/pages/CanonicalProductDetail.tsx")
+          text = product.read_text(encoding="utf-8")
+          replacements = (
+              (
+                  'grid gap-8 xl:grid-cols-12 xl:gap-14',
+                  'grid gap-8 lg:grid-cols-12 lg:gap-10 xl:gap-14',
+                  2,
+              ),
+              ('min-w-0 xl:col-span-7', 'min-w-0 lg:col-span-7', 2),
+              ('<div className="xl:col-span-5">', '<div className="lg:col-span-5">', 1),
+              (
+                  '<div className="min-w-0 self-start xl:sticky xl:top-28 xl:col-span-5">',
+                  '<div className="min-w-0 self-start lg:sticky lg:top-28 lg:col-span-5">',
+                  1,
+              ),
+              ('sm:grid-cols-2 xl:grid-cols-1', 'sm:grid-cols-2 lg:grid-cols-1', 1),
+          )
+          for old, new, expected in replacements:
+              actual = text.count(old)
+              if actual != expected:
+                  raise SystemExit(f"product layout anchor count changed for {old!r}: {actual}, expected {expected}")
+              text = text.replace(old, new)
+          product.write_text(text, encoding="utf-8")
+
+          consent = Path("src/components/CookieConsent.tsx")
+          text = consent.read_text(encoding="utf-8")
+          replacements = (
+              (
+                  'className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl lg:bottom-auto lg:top-[5.25rem] lg:max-w-[760px]"',
+                  'className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl lg:inset-x-auto lg:bottom-4 lg:right-4 lg:top-auto lg:mx-0 lg:w-[min(360px,calc(100vw-2rem))] lg:max-w-none"',
+              ),
+              (
+                  '<div className={`p-3 sm:p-3.5 ${customizing ? "" : "lg:flex lg:items-center lg:gap-4"}`}>',
+                  '<div className="p-3 sm:p-3.5">',
+              ),
+              (
+                  '<div className={`mt-2 grid grid-cols-[1fr_1.15fr] gap-2 ${customizing ? "" : "lg:mt-0 lg:w-[22rem] lg:shrink-0"}`}>',
+                  '<div className="mt-2 grid grid-cols-[1fr_1.15fr] gap-2">',
+              ),
+          )
+          for old, new in replacements:
+              actual = text.count(old)
+              if actual != 1:
+                  raise SystemExit(f"consent anchor count changed for {old[:90]!r}: {actual}")
+              text = text.replace(old, new, 1)
+          consent.write_text(text, encoding="utf-8")
+          PY
+
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" = "2"
+          printf '%s\n' "${changed[@]}" | sort > /tmp/actual.txt
+          printf '%s\n' \
+            src/components/CookieConsent.tsx \
+            src/pages/CanonicalProductDetail.tsx | sort > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verify focused source quality
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx eslint src/components/CookieConsent.tsx src/pages/CanonicalProductDetail.tsx
+          npx tsc --noEmit
+
+      - name: Push verified landscape layout branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/CookieConsent.tsx src/pages/CanonicalProductDetail.tsx
+          git commit -m "fix(ux): reserve landscape media from fixed controls"
+          test "$(git diff --name-only "$CLEAN_SHA" HEAD | wc -l | tr -d ' ')" = "2"
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
