@@ -7,6 +7,14 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 const readBytes = (path: string) => readFileSync(resolve(process.cwd(), path));
 const BRAND_VERSION = "ia-brand-visual-e001-20260801";
 
+async function expectPngDecodes(path: string, width: number, height: number) {
+  const bytes = readBytes(path);
+  const image = sharp(bytes, { failOn: "error" });
+  const metadata = await image.metadata();
+  expect(metadata).toMatchObject({ format: "png", width, height });
+  await image.raw().toBuffer();
+}
+
 describe("Irha favicon branding", () => {
   it("uses the exact owner-supplied crest across search metadata and fallbacks", async () => {
     const index = read("index.html");
@@ -43,10 +51,10 @@ describe("Irha favicon branding", () => {
     expect(favicon).toContain('<title id="title">Irha Apparels</title>');
     expect(favicon).toContain("Official Irha Apparels Manufacturing Specialists crest supplied by the owner");
     expect(favicon).toContain('<image width="192" height="192"');
-    expect(favicon).toContain('href="data:image/webp;base64,');
+    expect(favicon).toContain('href="data:image/png;base64,');
     expect(favicon.toLowerCase()).not.toContain("lovable");
 
-    const crestPrefix = 'href="data:image/webp;base64,';
+    const crestPrefix = 'href="data:image/png;base64,';
     const crestStart = favicon.indexOf(crestPrefix);
     expect(crestStart).toBeGreaterThanOrEqual(0);
     const payloadStart = crestStart + crestPrefix.length;
@@ -55,13 +63,18 @@ describe("Irha favicon branding", () => {
     const encodedCrest = favicon.slice(payloadStart, crestEnd).replace(/\s+/g, "");
     expect(encodedCrest).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
     const embeddedCrest = Buffer.from(encodedCrest, "base64");
-    const faviconMeta = await sharp(embeddedCrest).metadata();
-    expect(faviconMeta).toMatchObject({ format: "webp", width: 192, height: 192 });
+    expect(Buffer.compare(embeddedCrest, readBytes("public/icon-192x192.png"))).toBe(0);
+    const faviconImage = sharp(embeddedCrest, { failOn: "error" });
+    const faviconMeta = await faviconImage.metadata();
+    expect(faviconMeta).toMatchObject({ format: "png", width: 192, height: 192 });
+    await faviconImage.raw().toBuffer();
 
-    const icon192Meta = await sharp(readBytes("public/icon-192x192.png")).metadata();
-    const icon512Meta = await sharp(readBytes("public/icon-512x512.png")).metadata();
-    expect(icon192Meta).toMatchObject({ format: "png", width: 192, height: 192 });
-    expect(icon512Meta).toMatchObject({ format: "png", width: 512, height: 512 });
+    await expectPngDecodes("public/favicon-16x16.png", 16, 16);
+    await expectPngDecodes("public/favicon-32x32.png", 32, 32);
+    await expectPngDecodes("public/favicon-48x48.png", 48, 48);
+    await expectPngDecodes("public/apple-touch-icon.png", 180, 180);
+    await expectPngDecodes("public/icon-192x192.png", 192, 192);
+    await expectPngDecodes("public/icon-512x512.png", 512, 512);
 
     expect(packageJson).toContain("node scripts/version-official-brand-assets.mjs");
     expect(versioningScript).toContain(`const BRAND_VERSION = "${BRAND_VERSION}"`);
