@@ -1,3 +1,5 @@
+import { selectAuthoritativeProductGalleryFromUrls } from "@/lib/productGalleryAuthority";
+
 // Resolves catalog and legacy asset paths to production-safe Vite URLs.
 // Full remote URLs and public-root assets remain unchanged.
 const assets = import.meta.glob("/src/assets/**/*.{avif,jpg,jpeg,png,webp,svg}", {
@@ -63,5 +65,5 @@ export function resolveImportedResponsiveSrcSet(assetUrl?: string | null): strin
 
 export function resolveGallery(items?: string[] | null): string[] {
   if (!items?.length) return [];
-  return items.map(resolveAsset);
+  return selectAuthoritativeProductGalleryFromUrls(items).map(resolveAsset);
 }
