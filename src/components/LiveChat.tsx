@@ -351,17 +351,17 @@ export default function LiveChat() {
           onClick={() => setOpen(true)}
           aria-label="Open Irha Live Support — AI guide and human team"
           aria-haspopup="dialog"
-          className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-6 md:right-24 md:w-[20rem]"
+          className="fixed bottom-[calc(5.55rem+env(safe-area-inset-bottom))] right-3 z-[68] flex w-[min(21rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-gold/55 bg-black/95 px-3.5 py-3 text-left text-white shadow-[0_18px_55px_rgba(0,0,0,.72)] backdrop-blur-xl transition-transform hover:scale-[1.01] md:bottom-auto md:right-4 md:top-24 md:h-12 md:w-12 md:justify-center md:rounded-full md:p-0"
         >
           <span className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-gold text-primary-foreground shadow-gold">
             <MessageCircle size={20} />
             <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-black bg-emerald-400" aria-hidden="true" />
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="min-w-0 flex-1 md:hidden">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">Irha Live Support</span>
             <span className="mt-1 block text-[11px] leading-snug text-white/75">AI answers now · Human team one tap away</span>
           </span>
-          <ChevronRight size={18} className="shrink-0 text-gold" />
+          <ChevronRight size={18} className="shrink-0 text-gold md:hidden" />
         </button>
       )}
 

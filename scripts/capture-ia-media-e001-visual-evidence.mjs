@@ -103,6 +103,21 @@ async function waitForApp(page) {
   await page.waitForTimeout(1000);
 }
 
+async function dismissCookieConsent(page) {
+  const dialog = page.locator('[aria-labelledby="cookie-consent-title"]');
+  if (await dialog.count() === 0 || !(await dialog.isVisible())) return { visible: false, choice: null };
+
+  const privacy = dialog.locator('a[href="/privacy-policy"]');
+  const essential = dialog.getByRole("button", { name: /essential only/i });
+  const optional = dialog.getByRole("button", { name: /accept optional/i });
+  if (!(await privacy.isVisible()) || !(await essential.isVisible()) || !(await optional.isVisible())) {
+    throw new Error("Cookie consent controls are incomplete");
+  }
+  await essential.click();
+  await dialog.waitFor({ state: "hidden", timeout: 10_000 });
+  return { visible: true, choice: "essential-only" };
+}
+
 async function decodeImage(locator) {
   await locator.scrollIntoViewIfNeeded();
   await locator.waitFor({ state: "visible", timeout: 30_000 });
@@ -265,6 +280,11 @@ async function fixedOverlapEvidence(page, heroSelector, gallerySelector) {
       if (style.position !== "fixed" || style.visibility === "hidden" || style.display === "none" || element.closest("header")) continue;
       const rect = element.getBoundingClientRect();
       if (rect.width < 12 || rect.height < 12) continue;
+      const hasVisibleContent = Boolean(
+        element.textContent?.trim()
+        || element.querySelector('img, svg, button, input, [role="alert"], [data-state="open"]')
+      );
+      if (!hasVisibleContent) continue;
       const intersects = (target) => Boolean(target && rect.left < target.right && rect.right > target.left && rect.top < target.bottom && rect.bottom > target.top);
       if (intersects(hero) || intersects(gallery)) {
         blockers.push({
@@ -513,12 +533,13 @@ async function captureStrictProduct(browser, origin, label, product, viewport) {
       timeout: 45_000,
     });
     await waitForApp(page);
+    const consent = await dismissCookieConsent(page);
     const evidence = await inspectProduct(page, product, viewport);
     await page.screenshot({
       path: resolve(OUTPUT_ROOT, label, `${product.sku.toLowerCase()}-${viewport.name}.png`),
       fullPage: viewport.width >= 1280,
     });
-    return evidence;
+    return { ...evidence, consent };
   } finally {
     await context.close();
   }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 const STORAGE_KEY = "irha_cookie_consent_v1";
 const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
@@ -164,16 +164,7 @@ export default function CookieConsent() {
             </h2>
             <p id="cookie-consent-description" className="mt-0.5 text-[10px] leading-4 text-white/70 sm:text-[11px] sm:leading-5">
               Analytics and advertising remain off until accepted. Essential cookies are always on.{" "}
-              <Link to="/privacy-policy" className="text-white/90 underline underline-offset-2 hover:text-primary">Privacy</Link>{" "}
-              {!customizing && (
-                <button
-                  type="button"
-                  onClick={() => setCustomizing(true)}
-                  className="text-white/90 underline underline-offset-2 hover:text-primary"
-                >
-                  Settings
-                </button>
-              )}
+              <Link to="/privacy-policy" className="text-white/90 underline underline-offset-2 hover:text-primary">Privacy</Link>
             </p>
           </div>
           {customizing && (
@@ -208,6 +199,12 @@ export default function CookieConsent() {
             {customizing ? "Save choices" : "Accept optional"}
           </button>
         </div>
+
+        {!customizing && (
+          <button type="button" onClick={() => setCustomizing(true)} className="mt-1 inline-flex min-h-7 w-full items-center justify-center gap-1 text-[9px] font-medium text-white/50 hover:text-white">
+            Settings <ChevronDown size={11} />
+          </button>
+        )}
       </div>
     </section>
   );
