@@ -103,6 +103,9 @@ describe("SEC-M03 canonical parity control", () => {
     expect(migrationParity).toContain("Migration version-set drift");
     expect(migrationParity).toContain("duplicate migration version");
     expect(migrationParity).toContain("ledger checksum mismatch");
+    expect(migrationParity).toContain("newlyObservedLiveVersions");
+    expect(migrationParity).toContain("New live migration");
+    expect(migrationParity).toContain("not authorized by the repository manifest and applied ledger");
     expect(generator).toContain("replaceLegacyOrRequireCurrent");
     expect(generator).toContain("legacyCount === 1 && currentCount === 0");
     expect(generator).toContain("legacyCount === 0 && currentCount === 1");

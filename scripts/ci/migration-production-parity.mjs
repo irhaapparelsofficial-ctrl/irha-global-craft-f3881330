@@ -37,8 +37,9 @@ function exactManifestEntry(entry) {
   };
 }
 
-export function deriveProductionMigrationVersions({ baselineRecords, repositoryManifest, repositoryLedger }) {
+export function deriveProductionMigrationVersions({ baselineRecords, repositoryManifest, repositoryLedger, databaseVersions }) {
   const baselineVersions = normalizeVersions(baselineRecords, "sealed migration provenance");
+  const liveDatabaseVersions = normalizeVersions(databaseVersions, "database migrations");
   if (!repositoryManifest || !Array.isArray(repositoryManifest.migrations)) {
     throw new Error("repository migration manifest is missing migrations");
   }
@@ -62,7 +63,6 @@ export function deriveProductionMigrationVersions({ baselineRecords, repositoryM
   const ledgerByVersion = new Map(repositoryLedger.map((row) => [String(row.version), row]));
   if (ledgerByVersion.size !== ledgerVersions.length) throw new Error("repository migration ledger version index mismatch");
 
-  const approvedAppliedVersions = [];
   for (const entry of repositoryManifest.migrations) {
     const expected = exactManifestEntry(entry);
     const row = ledgerByVersion.get(expected.version);
@@ -74,7 +74,6 @@ export function deriveProductionMigrationVersions({ baselineRecords, repositoryM
     if (String(row.name) !== expected.name) throw new Error(`Repository migration ledger name mismatch for ${expected.version}`);
     if (String(row.repository_path) !== expected.path) throw new Error(`Repository migration ledger path mismatch for ${expected.version}`);
     if (String(row.git_blob_sha) !== expected.git_blob_sha) throw new Error(`Repository migration ledger checksum mismatch for ${expected.version}`);
-    approvedAppliedVersions.push(expected.version);
   }
 
   const requiredManifest = manifestByVersion.get(REQUIRED_PRODUCTION_MIGRATION_VERSION);
@@ -88,7 +87,24 @@ export function deriveProductionMigrationVersions({ baselineRecords, repositoryM
     throw new Error(`Required production migration ${REQUIRED_PRODUCTION_MIGRATION_VERSION} is not recorded as applied`);
   }
 
-  return [...new Set([...baselineVersions, ...approvedAppliedVersions])].sort();
+  const baselineSet = new Set(baselineVersions);
+  const newlyObservedLiveVersions = liveDatabaseVersions.filter((version) => !baselineSet.has(version));
+  const approvedNewVersions = [];
+  for (const version of newlyObservedLiveVersions) {
+    const expected = manifestByVersion.get(version);
+    const row = ledgerByVersion.get(version);
+    if (!expected || !row || !APPLIED_STATES.has(String(row.application_state ?? ""))) {
+      throw new Error(`New live migration ${version} is not authorized by the repository manifest and applied ledger`);
+    }
+    if (String(row.name) !== expected.name
+        || String(row.repository_path) !== expected.path
+        || String(row.git_blob_sha) !== expected.git_blob_sha) {
+      throw new Error(`New live migration ${version} repository authorization mismatch`);
+    }
+    approvedNewVersions.push(version);
+  }
+
+  return [...new Set([...baselineVersions, ...approvedNewVersions])].sort();
 }
 
 export function assertExactMigrationParity({ databaseVersions, productionMigrationVersions }) {

@@ -291,6 +291,7 @@ async function main() {
       baselineRecords: committedBaseline.payload?.records ?? [],
       repositoryManifest,
       repositoryLedger,
+      databaseVersions: migrations,
     });
     migrationParity = assertExactMigrationParity({
       databaseVersions: migrations,
