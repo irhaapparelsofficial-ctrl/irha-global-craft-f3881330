@@ -46,9 +46,15 @@ describe("Irha favicon branding", () => {
     expect(favicon).toContain('href="data:image/webp;base64,');
     expect(favicon.toLowerCase()).not.toContain("lovable");
 
-    const encodedCrest = favicon.match(/href="data:image\/webp;base64,([A-Za-z0-9+/=]+)"/)?.[1];
-    expect(encodedCrest).toBeTruthy();
-    const embeddedCrest = Buffer.from(encodedCrest!, "base64");
+    const crestPrefix = 'href="data:image/webp;base64,';
+    const crestStart = favicon.indexOf(crestPrefix);
+    expect(crestStart).toBeGreaterThanOrEqual(0);
+    const payloadStart = crestStart + crestPrefix.length;
+    const crestEnd = favicon.indexOf('"', payloadStart);
+    expect(crestEnd).toBeGreaterThan(payloadStart);
+    const encodedCrest = favicon.slice(payloadStart, crestEnd).replace(/\s+/g, "");
+    expect(encodedCrest).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
+    const embeddedCrest = Buffer.from(encodedCrest, "base64");
     const faviconMeta = await sharp(embeddedCrest).metadata();
     expect(faviconMeta).toMatchObject({ format: "webp", width: 192, height: 192 });
 

@@ -20,7 +20,7 @@ const decision = read("src/components/sections/BuyerDecisionSection.tsx");
 const finalCta = read("src/components/sections/StartProgramCTA.tsx");
 const sticky = read("src/components/sections/StickyMobileCTA.tsx");
 const styles = read("src/index.css");
-const brand = read("public/irha-brand-mark.svg");
+const brandAssets = read("src/lib/brandAssets.ts");
 
 describe("polished B2B homepage", () => {
   it("identifies the business, buyers and next actions immediately", () => {
@@ -41,7 +41,8 @@ describe("polished B2B homepage", () => {
     expect(hero).toContain("bg-[#101722]");
     expect(hero.match(/loading="eager"/g)).toHaveLength(1);
     expect(hero.match(/loading="lazy"/g)).toHaveLength(1);
-    expect(hero).toContain('data-card-brand="irha-official-crest"');
+    expect(hero).not.toContain('data-card-brand="irha-official-crest"');
+    expect(hero).not.toContain('src="/favicon.svg"');
     expect(categoryMediaRegistry).toContain("SITE_MEDIA_ROOT");
     expect(categoryMediaRegistry).toContain("site-media");
     expect(heroMedia).toContain("CATEGORY_MEDIA_REGISTRY");
@@ -117,8 +118,8 @@ describe("polished B2B homepage", () => {
     expect(consent).toContain("Essential only");
     expect(consent).toContain("Accept optional");
     expect(consent).toContain("Settings");
-    expect(brand).toContain("Irha Apparels");
-    expect(brand).toContain("B2B CUSTOM MANUFACTURING");
+    expect(brandAssets).toContain('const OFFICIAL_OWNER_CREST = "/icon-512x512.png"');
+    expect(brandAssets).not.toContain('OFFICIAL_OWNER_CREST = "/irha-brand-mark.svg"');
     expect(styles).toContain(".font-display");
     expect(styles).toContain("'Playfair Display', Georgia, serif");
   });

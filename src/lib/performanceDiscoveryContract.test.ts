@@ -28,7 +28,8 @@ describe("public performance and discovery contract", () => {
     expect(heroSource.match(/loading="lazy"/g)).toHaveLength(1);
     expect(heroSource.match(/fetchPriority="low"/g)).toHaveLength(1);
     expect(heroSource).toContain("SECONDARY_PROGRAMS.map");
-    expect(heroSource).toContain('data-card-brand="irha-official-crest"');
+    expect(heroSource).not.toContain('data-card-brand="irha-official-crest"');
+    expect(heroSource).not.toContain('src="/favicon.svg"');
     expect(heroSource).toContain('slug: "streetwear-activewear"');
     expect(heroSource).toContain('slug: "leisure-nightwear"');
   });
