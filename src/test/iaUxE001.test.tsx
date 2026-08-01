@@ -71,7 +71,7 @@ describe("IA-UX-E001 managed image states", () => {
 
   it("uses the official Irha fallback and privacy-safe diagnostics without technical buyer wording", () => {
     expect(loading).toContain("CONTROLLED_IMAGE_FALLBACK");
-    expect(loading).toContain('CONTROLLED_IMAGE_FALLBACK = "/favicon.svg"');
+    expect(loading).toContain("CONTROLLED_IMAGE_FALLBACK = BRAND_ASSETS.controlledFallback");
     expect(loading).toContain('new CustomEvent("irha:image-load-failed"');
     expect(loading).toContain("source.split(/[?#]/, 1)[0]");
     expect(loading).not.toMatch(/IMAGE UNAVAILABLE|question-mark/i);

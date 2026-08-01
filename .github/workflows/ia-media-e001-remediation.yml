@@ -1,0 +1,114 @@
+name: IA Media E001 Remediation
+
+run-name: IA-MEDIA-E001 ${{ inputs.mode }} · ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Plan, stage immutable objects, apply database remediation, or verify objects
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - stage
+          - apply
+          - verify
+      confirm:
+        description: Type APPLY_IA_MEDIA_E001 only for apply mode
+        required: false
+        default: "NO"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ (inputs.mode == 'stage' || inputs.mode == 'apply') && 'irha-production-mutation' || format('ia-media-e001-{0}-{1}', inputs.mode, github.ref) }}
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  IA_MEDIA_EFFECTIVE_MODE: ${{ inputs.mode }}
+  IA_MEDIA_EFFECTIVE_CONFIRM: ${{ inputs.confirm }}
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    environment: production
+    steps:
+      - name: Checkout exact workflow source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Guard production mutation source and confirmation
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          checked_out="$(git rev-parse HEAD)"
+          if [ "$IA_MEDIA_EFFECTIVE_MODE" = "apply" ]; then
+            test "$IA_MEDIA_EFFECTIVE_CONFIRM" = "APPLY_IA_MEDIA_E001" || {
+              echo "Apply confirmation is missing"
+              exit 1
+            }
+            test "$GITHUB_REF" = "refs/heads/main" || {
+              echo "Production apply is restricted to main"
+              exit 1
+            }
+            latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+            test "$checked_out" = "$latest_main" || {
+              echo "Dispatch source $checked_out is not exact current main $latest_main"
+              exit 1
+            }
+          fi
+          echo "SOURCE_SHA=$checked_out" >> "$GITHUB_ENV"
+
+      - name: Install exact dependencies
+        run: bash scripts/ci/retry.sh 3 5 -- npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Stage immutable recovery media
+        if: env.IA_MEDIA_EFFECTIVE_MODE == 'stage'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/stage-p001-p007-media.mjs
+
+      - name: Plan, apply or verify remediation
+        if: env.IA_MEDIA_EFFECTIVE_MODE != 'stage'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          IA_MEDIA_MODE: ${{ env.IA_MEDIA_EFFECTIVE_MODE }}
+          IA_MEDIA_CONFIRM: ${{ env.IA_MEDIA_EFFECTIVE_CONFIRM }}
+        run: node scripts/remediate-p001-p007-media.mjs
+
+      - name: Upload immutable evidence and rollback manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ia-media-e001-${{ env.IA_MEDIA_EFFECTIVE_MODE }}-${{ github.sha }}
+          path: |
+            artifacts/ia-media-e001
+            artifacts/ia-media-e001-stage
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Record guarded outcome
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## IA-MEDIA-E001"
+            echo "- Mode: \`$IA_MEDIA_EFFECTIVE_MODE\`"
+            echo "- Exact source SHA: \`${SOURCE_SHA:-$GITHUB_SHA}\`"
+            echo "- Supabase project: \`$SUPABASE_PROJECT_ID\`"
+            echo "- Shared mutation lock: \`irha-production-mutation\`"
+            echo "- Source policy: preserved Drive originals + SHA-256 + pixel-reviewed role plan"
+            echo "- Responsive contract: \`360 / 720 / 1200 / 1600\`"
+            echo "- Retired tiers excluded: \`480 / 2400\`"
+            echo "- Stage mode writes immutable versioned objects only; database mutation remains false"
+          } >> "$GITHUB_STEP_SUMMARY"

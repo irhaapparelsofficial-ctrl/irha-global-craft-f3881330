@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { JSDOM } from "jsdom";
+import { isDeterministicProductPrimaryPath } from "./lib/product-primary-image-path.mjs";
 
 const require = createRequire(import.meta.url);
 const sharp = require("sharp");
@@ -69,14 +70,8 @@ function routeMaps(products) {
     if (!Array.isArray(product.gallery) || product.gallery[0] !== primary) {
       throw new Error(`${product.reference_code} primary image is not gallery slot 1`);
     }
-    const referencePrefix = product.reference_code.toLowerCase();
     const pathname = new URL(primary).pathname;
-    const directory = pathname.split("/").at(-2) || "";
-    const filename = pathname.split("/").at(-1) || "";
-    if (!pathname.includes("/catalog/products/")
-      || !directory.startsWith(`${referencePrefix}-`)
-      || !filename.startsWith(`${referencePrefix}-`)
-      || !/-front\.(?:avif|jpe?g|png|webp)$/i.test(filename)) {
+    if (!isDeterministicProductPrimaryPath(product.reference_code, pathname)) {
       throw new Error(`${product.reference_code} primary image path is not deterministic: ${primary}`);
     }
     productByPath.set(product.canonical_path, { ...product, image_url: primary });

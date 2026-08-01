@@ -65,7 +65,47 @@ export default function CanonicalProductDetail() {
   }, [data]);
 
   if (isLoading || (isFetching && !data) || (taxonomyRelease.isLoading && !taxonomyRelease.data)) {
-    return <div className="container-luxe pb-24 pt-40 text-sm text-muted-foreground">Loading product…</div>;
+    return (
+      <section
+        className="pb-32 pt-36 sm:pt-40 md:pb-20"
+        aria-busy="true"
+        aria-label="Loading product"
+      >
+        <div className="container-luxe">
+          <div
+            className="mb-6 h-4 w-64 max-w-[75vw] rounded bg-muted/30 sm:mb-8"
+            aria-hidden="true"
+          />
+          <div className="grid gap-8 lg:grid-cols-12 lg:gap-10 xl:gap-14">
+            <div className="min-w-0 lg:col-span-7">
+              <div
+                className="aspect-square rounded-2xl border border-border/70 bg-[#0d0d0d] sm:aspect-[5/4] lg:aspect-[4/5]"
+                aria-hidden="true"
+              />
+              <div className="mt-3 flex gap-3 overflow-hidden pb-2 sm:mt-4" aria-hidden="true">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <span
+                    key={index}
+                    className="h-20 w-20 shrink-0 rounded-xl border border-border/60 bg-card sm:h-24 sm:w-24"
+                  />
+                ))}
+              </div>
+              <div className="mt-3 h-10 max-w-xl rounded bg-muted/20" aria-hidden="true" />
+            </div>
+            <div className="lg:col-span-5">
+              <div className="h-3 w-28 rounded bg-muted/30" aria-hidden="true" />
+              <div className="mt-4 h-12 w-4/5 rounded bg-muted/40" aria-hidden="true" />
+              <div className="mt-4 h-20 rounded bg-muted/20" aria-hidden="true" />
+              <div className="mt-6 grid grid-cols-2 gap-3" aria-hidden="true">
+                <span className="h-14 rounded bg-muted/20" />
+                <span className="h-14 rounded bg-muted/20" />
+              </div>
+            </div>
+          </div>
+          <span className="sr-only">Loading product…</span>
+        </div>
+      </section>
+    );
   }
   if (error || !data) return <Navigate to={`/products/${categorySlug}`} replace />;
 
@@ -282,8 +322,8 @@ export default function CanonicalProductDetail() {
             ))}
           </nav>
 
-          <div className="grid gap-8 xl:grid-cols-12 xl:gap-14">
-            <div className="min-w-0 xl:col-span-7">
+          <div className="grid gap-8 lg:grid-cols-12 lg:gap-10 xl:gap-14">
+            <div className="min-w-0 lg:col-span-7">
               <div className="relative aspect-square overflow-hidden rounded-2xl border border-border/70 bg-[#0d0d0d] shadow-[0_28px_80px_rgba(0,0,0,.32)] sm:aspect-[5/4] lg:aspect-[4/5]">
                 <ThumbnailImage
                   src={activeImage}
@@ -355,7 +395,7 @@ export default function CanonicalProductDetail() {
               </p>
             </div>
 
-            <div className="min-w-0 self-start xl:sticky xl:top-28 xl:col-span-5">
+            <div className="min-w-0 self-start lg:sticky lg:top-28 lg:col-span-5">
               <p className="eyebrow mb-3">
                 <Link to={collectionPath} className="hover:text-primary">{collectionName}</Link>
                 <span className="mx-2 text-foreground/30">·</span>
@@ -370,7 +410,7 @@ export default function CanonicalProductDetail() {
               </p>
 
               {product.specs?.length > 0 && (
-                <ul className="mt-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+                <ul className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                   {product.specs.slice(0, 6).map((specification) => (
                     <li key={specification} className="flex items-start gap-2.5 text-sm text-foreground/82">
                       <Check size={15} className="mt-0.5 shrink-0 text-primary" />

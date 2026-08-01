@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, X } from "lucide-react";
+import { X } from "lucide-react";
 
 const STORAGE_KEY = "irha_cookie_consent_v1";
 const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
@@ -154,17 +154,26 @@ export default function CookieConsent() {
       aria-labelledby="cookie-consent-title"
       aria-describedby="cookie-consent-description"
       aria-live="polite"
-      className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl"
+      className="fixed inset-x-2.5 bottom-[max(.55rem,env(safe-area-inset-bottom))] z-[100] mx-auto max-w-[620px] overflow-hidden rounded-xl border border-white/20 bg-black/95 text-white shadow-[0_18px_70px_rgba(0,0,0,.72)] backdrop-blur-xl lg:inset-x-auto lg:bottom-4 lg:right-4 lg:top-auto lg:mx-0 lg:w-[min(360px,calc(100vw-2rem))] lg:max-w-none"
     >
       <div className="p-3 sm:p-3.5">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h2 id="cookie-consent-title" className="font-sans text-xs font-semibold text-white sm:text-sm">
               Optional cookies
             </h2>
             <p id="cookie-consent-description" className="mt-0.5 text-[10px] leading-4 text-white/70 sm:text-[11px] sm:leading-5">
               Analytics and advertising remain off until accepted. Essential cookies are always on.{" "}
-              <Link to="/privacy-policy" className="text-white/90 underline underline-offset-2 hover:text-primary">Privacy</Link>
+              <Link to="/privacy-policy" className="text-white/90 underline underline-offset-2 hover:text-primary">Privacy</Link>{" "}
+              {!customizing && (
+                <button
+                  type="button"
+                  onClick={() => setCustomizing(true)}
+                  className="text-white/90 underline underline-offset-2 hover:text-primary"
+                >
+                  Settings
+                </button>
+              )}
             </p>
           </div>
           {customizing && (
@@ -199,12 +208,6 @@ export default function CookieConsent() {
             {customizing ? "Save choices" : "Accept optional"}
           </button>
         </div>
-
-        {!customizing && (
-          <button type="button" onClick={() => setCustomizing(true)} className="mt-1 inline-flex min-h-7 w-full items-center justify-center gap-1 text-[9px] font-medium text-white/50 hover:text-white">
-            Settings <ChevronDown size={11} />
-          </button>
-        )}
       </div>
     </section>
   );
