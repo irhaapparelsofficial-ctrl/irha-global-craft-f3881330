@@ -11,7 +11,7 @@ export const PUBLIC_IDENTITY = Object.freeze({
   organizationId: "https://irhaapparels.com/#organization",
   websiteId: "https://irhaapparels.com/#website",
   homepageId: "https://irhaapparels.com/#webpage",
-  logoUrl: "https://irhaapparels.com/irha-brand-mark.svg",
+  logoUrl: "https://irhaapparels.com/brand/irha-apparels-official-runtime-512.png",
   telephone: "+92 320 411 0066",
   telephoneHref: "+923204110066",
   whatsappNumber: "923204110066",
