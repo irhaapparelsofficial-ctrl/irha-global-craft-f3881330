@@ -323,28 +323,29 @@ async function ensurePolicy() {
 
   const rulesetId = required("cache ruleset id", phase.payload?.result?.id);
   const rules = phase.payload?.result?.rules ?? [];
-  const existing = rules.find((rule) => rule.description === RULE_DESCRIPTION);
+  const existingIndex = rules.findIndex((rule) => rule.description === RULE_DESCRIPTION);
+  const existing = existingIndex >= 0 ? rules[existingIndex] : null;
   const definition = {
     action: "set_cache_settings",
     action_parameters: { cache: false },
     expression: CACHE_BYPASS_EXPRESSION,
     description: RULE_DESCRIPTION,
     enabled: true,
-    position: { after: "" },
   };
 
   let result;
   if (existing?.id) {
+    const existingIsLast = existingIndex === rules.length - 1;
     result = await cf(
       "PATCH",
       `/zones/${zoneId}/rulesets/${rulesetId}/rules/${existing.id}`,
-      definition,
+      existingIsLast ? definition : { ...definition, position: { after: "" } },
     );
   } else {
     result = await cf(
       "POST",
       `/zones/${zoneId}/rulesets/${rulesetId}/rules`,
-      definition,
+      { ...definition, position: { after: "" } },
     );
   }
 
