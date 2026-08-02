@@ -277,8 +277,8 @@ jobs:
             identity=false
             if grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then challenge=true; fi
             if [ "$status" = 200 ]; then
-              source_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const m=s.match(/<meta[^>]+name=["'\''']x-irha-source-commit["'\'''][^>]+content=["'\''']([^"'\''']+)/i); process.stdout.write(m?.[1]||"")' "$body")"
-              fingerprint_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const m=s.match(/<meta[^>]+name=["'\''']x-irha-build-fingerprint["'\'''][^>]+content=["'\''']([^"'\''']+)/i); process.stdout.write(m?.[1]||"")' "$body")"
+              source_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const q="[\\\""+String.fromCharCode(39)+"]"; const m=s.match(new RegExp("<meta[^>]+name="+q+"x-irha-source-commit"+q+"[^>]+content="+q+"([^\\\""+String.fromCharCode(39)+"]+)","i")); process.stdout.write(m?.[1]||"")' "$body")"
+              fingerprint_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const q="[\\\""+String.fromCharCode(39)+"]"; const m=s.match(new RegExp("<meta[^>]+name="+q+"x-irha-build-fingerprint"+q+"[^>]+content="+q+"([^\\\""+String.fromCharCode(39)+"]+)","i")); process.stdout.write(m?.[1]||"")' "$body")"
               if [ "$source_meta" = "$SOURCE_SHA" ] && [ "$fingerprint_meta" = "$EXPECTED_FINGERPRINT" ]; then
                 identity=true
               fi
