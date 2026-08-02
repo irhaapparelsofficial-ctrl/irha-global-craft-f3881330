@@ -1,1 +1,8 @@
-Official Irha Apparels logo supplied by the owner on 2026-07-17. The production header wordmark and favicon embed the supplied crest without redesigning the crest artwork.
+Official Irha Apparels brand master locked by IA-BRAND-MASTER-E001 on 2026-08-02.
+Authoritative repository source: public/brand/irha-apparels-official-master.png
+SHA-256: 32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87
+MIME: image/png
+Dimensions: 1024x1024
+File size: 1,023,183 bytes
+Source: exact owner-uploaded execution-chat file.
+Runtime, favicon, Apple-touch and PWA assets are technical derivatives of this exact master. Historical PR #825 square/icon classification is superseded and is not the current official logo source.
