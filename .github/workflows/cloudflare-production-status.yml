@@ -122,6 +122,17 @@ jobs:
           set -euo pipefail
           echo "verified=false" >> "$GITHUB_OUTPUT"
           echo "superseded=false" >> "$GITHUB_OUTPUT"
+          echo "apex_challenged=false" >> "$GITHUB_OUTPUT"
+          echo "www_challenged=false" >> "$GITHUB_OUTPUT"
+
+          cloudflare_challenge() {
+            headers="$1"
+            body="$2"
+            if grep -Fqi 'cf-mitigated: challenge' "$headers" 2>/dev/null; then return 0; fi
+            if grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null \
+              && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi
+            return 1
+          }
 
           current_main_or_supersede() {
             latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
@@ -135,13 +146,17 @@ jobs:
           verify_origin() {
             origin="$1"
             label="$2"
+            allow_challenge="$3"
             output="/tmp/${label}-build.json"
+            headers="/tmp/${label}-build.headers"
+            challenge_seen=false
+
             for attempt in $(seq 1 30); do
               current_main_or_supersede
               cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
               status="$(curl -sSL --connect-timeout 10 --max-time 35 \
                 -H 'Cache-Control: no-cache' \
-                -o "$output" -w '%{http_code}' \
+                -D "$headers" -o "$output" -w '%{http_code}' \
                 "$origin/build.json?release_check=$cache_bust" || true)"
               if [ "$status" = "200" ] \
                 && jq -e --arg sha "$SOURCE_SHA" \
@@ -150,17 +165,30 @@ jobs:
                 echo "$label serves exact merged SHA $SOURCE_SHA"
                 return 0
               fi
+
+              if cloudflare_challenge "$headers" "$output"; then
+                challenge_seen=true
+                if [ "$allow_challenge" = "true" ]; then break; fi
+              fi
+
               echo "$label not exact yet: status=$status attempt=$attempt/30"
               sleep 8
             done
+
+            if [ "$allow_challenge" = "true" ] && [ "$challenge_seen" = "true" ]; then
+              echo "${label}_challenged=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::GitHub-hosted $label observer received a verified Cloudflare challenge. Exact Pages identity remains mandatory and independent public verification is required for this custom domain."
+              return 0
+            fi
+
             echo "::error title=Exact production release not proven::$label did not serve merged SHA $SOURCE_SHA"
             head -c 600 "$output" 2>/dev/null || true
             echo
             return 1
           }
 
-          verify_origin "$PAGES_URL" pages
-          verify_origin "$CANONICAL_ORIGIN" apex
+          verify_origin "$PAGES_URL" pages false
+          verify_origin "$CANONICAL_ORIGIN" apex true
           current_main_or_supersede
 
           headers=/tmp/www-headers.txt
@@ -169,11 +197,28 @@ jobs:
             -D "$headers" -o "$body" -w '%{http_code}' \
             "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}-$RANDOM" || true)"
           location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$headers")"
-          case "$status" in 301|302|307|308) ;; *) echo "::error title=Canonical redirect failed::Unexpected www status $status"; exit 1 ;; esac
-          case "$location" in https://irhaapparels.com/*) ;; *) echo "::error title=Canonical redirect failed::Unexpected www location $location"; exit 1 ;; esac
+
+          www_verified=false
+          case "$status" in
+            301|302|307|308)
+              case "$location" in
+                https://irhaapparels.com/*) www_verified=true ;;
+              esac
+              ;;
+          esac
+
+          if [ "$www_verified" = "true" ]; then
+            echo "www canonical redirect verified: status=$status location=$location"
+          elif cloudflare_challenge "$headers" "$body"; then
+            echo "www_challenged=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::GitHub-hosted www observer received a verified Cloudflare challenge. Independent public verification remains required for the canonical redirect."
+          else
+            echo "::error title=Canonical redirect failed::Unexpected non-challenge www response status=$status location=$location"
+            exit 1
+          fi
 
           echo "verified=true" >> "$GITHUB_OUTPUT"
-          echo "Exact production SHA and canonical www redirect verified."
+          echo "Exact Pages production SHA verified; custom domains are either directly verified or explicitly challenge-classified."
 
       - name: Checkout exact release source for artifact audit
         if: >-
@@ -195,12 +240,16 @@ jobs:
           steps.live.outputs.verified == 'true'
         env:
           ARTIFACT_AUDIT_MODE: remote
-          ARTIFACT_ORIGINS: https://irha-apparels.pages.dev,https://irhaapparels.com
+          ARTIFACT_ORIGINS: https://irha-apparels.pages.dev
           EXPECTED_SHA: ${{ steps.relevance.outputs.source_sha }}
+          APEX_CHALLENGED: ${{ steps.live.outputs.apex_challenged }}
         shell: bash
         run: |
           set -euo pipefail
           echo "verified=false" >> "$GITHUB_OUTPUT"
+          if [ "$APEX_CHALLENGED" != "true" ]; then
+            export ARTIFACT_ORIGINS="$ARTIFACT_ORIGINS,https://irhaapparels.com"
+          fi
           node scripts/ci/audit-production-artifacts.mjs | tee /tmp/live-artifact-audit.json
           echo "verified=true" >> "$GITHUB_OUTPUT"
 
@@ -211,8 +260,11 @@ jobs:
           name: exact-live-proof-${{ steps.relevance.outputs.source_sha }}
           path: |
             /tmp/pages-build.json
+            /tmp/pages-build.headers
             /tmp/apex-build.json
+            /tmp/apex-build.headers
             /tmp/www-headers.txt
+            /tmp/www-body.txt
             /tmp/live-artifact-audit.json
           if-no-files-found: warn
           retention-days: 3
@@ -227,6 +279,8 @@ jobs:
           VERIFIED: ${{ steps.live.outputs.verified }}
           SUPERSEDED: ${{ steps.live.outputs.superseded }}
           ARTIFACT_VERIFIED: ${{ steps.artifacts.outputs.verified }}
+          APEX_CHALLENGED: ${{ steps.live.outputs.apex_challenged }}
+          WWW_CHALLENGED: ${{ steps.live.outputs.www_challenged }}
         shell: bash
         run: |
           set -euo pipefail
@@ -239,7 +293,11 @@ jobs:
           description="Exact release or public-artifact audit is not proven"
           if [ "$VERIFIED" = "true" ] && [ "$ARTIFACT_VERIFIED" = "true" ]; then
             state=success
-            description="Exact merged release is live; source-map and public-artifact audit passed"
+            if [ "$APEX_CHALLENGED" = "true" ] || [ "$WWW_CHALLENGED" = "true" ]; then
+              description="Exact Pages release live; custom-domain GitHub observer challenged; artifact audit passed"
+            else
+              description="Exact merged release is live; source-map and public-artifact audit passed"
+            fi
           fi
 
           gh api --method POST \
@@ -250,13 +308,18 @@ jobs:
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
 
+          apex_state=verified
+          www_state=verified
+          [ "$APEX_CHALLENGED" = "true" ] && apex_state=challenged
+          [ "$WWW_CHALLENGED" = "true" ] && www_state=challenged
+
           {
             echo "## Cloudflare Production Status"
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Reconcile run: \`$UPSTREAM_RUN_ID\`"
             echo "- pages.dev exact SHA: \`$VERIFIED\`"
-            echo "- apex exact SHA: \`$VERIFIED\`"
-            echo "- www canonical redirect: \`$VERIFIED\`"
+            echo "- apex GitHub observer: \`$apex_state\`"
+            echo "- www canonical observer: \`$www_state\`"
             echo "- live source-map/public-artifact audit: \`$ARTIFACT_VERIFIED\`"
             echo "- Commit status: \`$state\`"
           } >> "$GITHUB_STEP_SUMMARY"
