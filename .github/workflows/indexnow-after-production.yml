@@ -18,6 +18,7 @@ concurrency:
 
 env:
   CANONICAL_ORIGIN: https://irhaapparels.com
+  PAGES_ORIGIN: https://irha-apparels.pages.dev
   SEARCH_DISCOVERY_DIAGNOSTIC: /tmp/search-discovery-diagnostic.txt
 
 jobs:
@@ -100,6 +101,7 @@ jobs:
           persist-credentials: false
 
       - name: Fetch and verify exact live canonical sitemap and route state
+        id: live
         if: steps.resolve.outputs.relevant == 'true'
         shell: bash
         env:
@@ -108,6 +110,42 @@ jobs:
           set -euo pipefail
           : > "$SEARCH_DISCOVERY_DIAGNOSTIC"
           verified=false
+          apex_challenged=false
+          artifact_origin="$CANONICAL_ORIGIN"
+
+          cloudflare_challenge() {
+            status="$1"
+            headers="$2"
+            body="$3"
+            [ "$status" = "403" ] || return 1
+            if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null; then return 0; fi
+            if grep -Eqi '^server:[[:space:]]*cloudflare' "$headers" 2>/dev/null \
+              && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi
+            return 1
+          }
+
+          fetch_exact_build() {
+            origin="$1"
+            label="$2"
+            cache_bust="$3"
+            body="/tmp/${label}-build.json"
+            headers="/tmp/${label}-build.headers"
+            status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -D "$headers" -o "$body" -w '%{http_code}' \
+              "$origin/build.json?search_discovery=$cache_bust" || true)"
+
+            if [ "$status" = "200" ] && jq -e --arg sha "$SOURCE_SHA" \
+              '.source_commit == $sha and .source_identity_state == "verified" and .expected_origin == "https://irhaapparels.com" and (.build_fingerprint | type == "string" and test("^[0-9a-f]{64}$"))' \
+              "$body" >/dev/null 2>&1; then
+              BUILD_EXACT=true
+            else
+              BUILD_EXACT=false
+            fi
+            BUILD_STATUS="$status"
+            BUILD_HEADERS="$headers"
+            BUILD_BODY="$body"
+          }
 
           for attempt in $(seq 1 12); do
             cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
@@ -116,24 +154,32 @@ jobs:
             manifest_ok=false
             key_ok=false
             reason=""
+            artifact_origin="$CANONICAL_ORIGIN"
 
-            if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-              "$CANONICAL_ORIGIN/build.json?search_discovery=$cache_bust" -o /tmp/live-build.json; then
-              if jq -e --arg sha "$SOURCE_SHA" \
-                '.source_commit == $sha and .source_identity_state == "verified" and .expected_origin == "https://irhaapparels.com"' \
-                /tmp/live-build.json >/dev/null; then
+            fetch_exact_build "$CANONICAL_ORIGIN" apex "$cache_bust"
+            if [ "$BUILD_EXACT" = "true" ]; then
+              build_ok=true
+              cp "$BUILD_BODY" /tmp/live-build.json
+            elif cloudflare_challenge "$BUILD_STATUS" "$BUILD_HEADERS" "$BUILD_BODY"; then
+              apex_challenged=true
+              artifact_origin="$PAGES_ORIGIN"
+              fetch_exact_build "$PAGES_ORIGIN" pages "$cache_bust"
+              if [ "$BUILD_EXACT" = "true" ]; then
                 build_ok=true
+                cp "$BUILD_BODY" /tmp/live-build.json
+                reason="apex observer challenged; exact Pages artifact selected"
               else
-                live_sha="$(jq -r '.source_commit // "missing"' /tmp/live-build.json 2>/dev/null || echo invalid-json)"
-                reason="live build source is $live_sha, expected $SOURCE_SHA"
+                pages_sha="$(jq -r '.source_commit // "missing"' "$BUILD_BODY" 2>/dev/null || echo invalid-json)"
+                reason="apex observer challenged and Pages build source is $pages_sha, expected $SOURCE_SHA"
               fi
             else
-              reason="build.json unavailable"
+              live_sha="$(jq -r '.source_commit // "missing"' "$BUILD_BODY" 2>/dev/null || echo invalid-json)"
+              reason="non-challenge apex build mismatch: status=$BUILD_STATUS source=$live_sha expected=$SOURCE_SHA"
             fi
 
             if [ "$build_ok" = "true" ]; then
               if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-                "$CANONICAL_ORIGIN/sitemap.xml?search_discovery=$cache_bust" -o /tmp/live-sitemap.xml; then
+                "$artifact_origin/sitemap.xml?search_discovery=$cache_bust" -o /tmp/live-sitemap.xml; then
                 url_count="$(grep -c '<loc>' /tmp/live-sitemap.xml || true)"
                 if [ "$url_count" -gt 0 ] && [ "$url_count" -le 10000 ] && \
                   grep -F '<loc>https://irhaapparels.com/' /tmp/live-sitemap.xml >/dev/null && \
@@ -145,13 +191,13 @@ jobs:
                   reason="canonical sitemap contract failed; urls=${url_count:-0}"
                 fi
               else
-                reason="sitemap.xml unavailable"
+                reason="sitemap.xml unavailable from selected exact artifact origin"
               fi
             fi
 
             if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ]; then
               if curl -fsSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-                "$CANONICAL_ORIGIN/seo-route-manifest.json?search_discovery=$cache_bust" \
+                "$artifact_origin/seo-route-manifest.json?search_discovery=$cache_bust" \
                 -o /tmp/live-seo-route-manifest.json && \
                 jq -e --arg origin "$CANONICAL_ORIGIN" '
                   .schemaVersion == 1 and
@@ -176,38 +222,55 @@ jobs:
                   reason="live sitemap, route manifest or committed material state mismatch"
                 fi
               else
-                reason="seo-route-manifest.json unavailable or invalid"
+                reason="seo-route-manifest.json unavailable or invalid from selected exact artifact origin"
               fi
             fi
 
             if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ] && [ "$manifest_ok" = "true" ]; then
               if curl -fsSL --connect-timeout 10 --max-time 40 \
-                "$CANONICAL_ORIGIN/19d2833c43fe6e05e2a4416f65a53cdc.txt?search_discovery=$cache_bust" \
+                "$artifact_origin/19d2833c43fe6e05e2a4416f65a53cdc.txt?search_discovery=$cache_bust" \
                 -o /tmp/indexnow-key.txt && \
                 grep -Fx '19d2833c43fe6e05e2a4416f65a53cdc' /tmp/indexnow-key.txt >/dev/null; then
                 key_ok=true
               else
-                reason="IndexNow ownership key unavailable or invalid"
+                reason="IndexNow ownership key unavailable or invalid from selected exact artifact origin"
               fi
             fi
 
-            printf 'attempt=%s build=%s sitemap=%s manifest=%s key=%s reason=%s\n' \
-              "$attempt" "$build_ok" "$sitemap_ok" "$manifest_ok" "$key_ok" "$reason" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
+            printf 'attempt=%s artifact_origin=%s apex_challenged=%s build=%s sitemap=%s manifest=%s key=%s reason=%s\n' \
+              "$attempt" "$artifact_origin" "$apex_challenged" "$build_ok" "$sitemap_ok" "$manifest_ok" "$key_ok" "$reason" \
+              | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
 
             if [ "$build_ok" = "true" ] && [ "$sitemap_ok" = "true" ] && \
               [ "$manifest_ok" = "true" ] && [ "$key_ok" = "true" ]; then
               verified=true
-              echo "Verified live canonical sitemap and material route state: urls=$url_count source=$SOURCE_SHA" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
+              echo "Verified canonical sitemap/material route state from exact artifact: urls=$url_count source=$SOURCE_SHA artifact_origin=$artifact_origin apex_challenged=$apex_challenged" \
+                | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
               break
             fi
 
             sleep 5
           done
 
+          echo "apex_challenged=$apex_challenged" >> "$GITHUB_OUTPUT"
+          echo "artifact_origin=$artifact_origin" >> "$GITHUB_OUTPUT"
+
           if [ "$verified" != "true" ]; then
-            echo "Live canonical sitemap and route state did not reach exact release parity after 12 attempts" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
+            echo "Canonical sitemap and route state did not reach exact release parity after 12 attempts" | tee -a "$SEARCH_DISCOVERY_DIAGNOSTIC"
             exit 1
           fi
+
+      - name: Reconfirm exact current main before search submission
+        if: steps.resolve.outputs.relevant == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          test "$latest_main" = "$SOURCE_SHA"
+          echo "Exact current main reconfirmed before search discovery submission."
 
       - name: Resolve previous authoritative material route state
         id: previous
@@ -267,6 +330,11 @@ jobs:
           name: search-discovery-${{ steps.resolve.outputs.source_sha }}
           path: |
             /tmp/search-discovery-diagnostic.txt
+            /tmp/apex-build.json
+            /tmp/apex-build.headers
+            /tmp/pages-build.json
+            /tmp/pages-build.headers
+            /tmp/live-build.json
             /tmp/live-sitemap.xml
             /tmp/live-seo-route-manifest.json
             /tmp/live-search-route-state.json
@@ -282,6 +350,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ steps.resolve.outputs.source_sha }}
           JOB_STATUS: ${{ job.status }}
+          APEX_CHALLENGED: ${{ steps.live.outputs.apex_challenged }}
+          ARTIFACT_ORIGIN: ${{ steps.live.outputs.artifact_origin }}
         run: |
           set -euo pipefail
           state=failure
@@ -291,6 +361,8 @@ jobs:
             state=success
             if grep -Fq '[indexnow] no material canonical URL changes; submission skipped' "$SEARCH_DISCOVERY_DIAGNOSTIC"; then
               description="No material canonical URL changes; IndexNow skipped"
+            elif [ "$APEX_CHALLENGED" = "true" ]; then
+              description="Canonical search artifacts verified from exact Pages release; apex observer challenged"
             else
               description="Verified changed canonical URLs accepted by IndexNow"
             fi
@@ -303,3 +375,12 @@ jobs:
             -f description="$description" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
+
+          {
+            echo "## Search Discovery"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Apex GitHub observer challenged: \`${APEX_CHALLENGED:-false}\`"
+            echo "- Verified artifact origin: \`${ARTIFACT_ORIGIN:-unknown}\`"
+            echo "- Canonical origin enforced in sitemap/manifest: \`$CANONICAL_ORIGIN\`"
+            echo "- Commit status: \`$state\`"
+          } >> "$GITHUB_STEP_SUMMARY"
