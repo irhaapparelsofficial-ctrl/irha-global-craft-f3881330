@@ -24,6 +24,18 @@ const extractRunBlock = (workflow: string, stepName: string) => {
     .join("\n");
 };
 
+const expectValidBashStep = (path: string, stepName: string) => {
+  const workflow = read(path);
+  const script = extractRunBlock(workflow, stepName);
+  const result = spawnSync("bash", ["-n", "-s"], {
+    input: script,
+    encoding: "utf8",
+  });
+
+  expect(result.status, result.stderr).toBe(0);
+  return workflow;
+};
+
 describe("Cloudflare cache-consistency release contract", () => {
   it("runs after current-main reconciliation and locks every mutation to exact current main", () => {
     const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
@@ -57,14 +69,11 @@ describe("Cloudflare cache-consistency release contract", () => {
   });
 
   it("keeps the public consistency verifier valid bash", () => {
-    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
-    const script = extractRunBlock(workflow, "Verify unbusted and query-string release consistency");
-    const result = spawnSync("bash", ["-n", "-s"], {
-      input: script,
-      encoding: "utf8",
-    });
+    const workflow = expectValidBashStep(
+      ".github/workflows/cloudflare-cache-consistency.yml",
+      "Verify unbusted and query-string release consistency",
+    );
 
-    expect(result.status, result.stderr).toBe(0);
     expect(workflow).toContain("String.fromCharCode(39)");
   });
 
@@ -93,19 +102,46 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(script).toContain('let mutation = "reaffirmed"');
   });
 
-  it("treats an apex Cloudflare challenge as an observer limitation, not a release mismatch", () => {
-    const workflow = read(".github/workflows/cloudflare-current-main-reconcile.yml");
-    const script = extractRunBlock(workflow, "Verify pages.dev, apex and www canonical behavior");
-    const result = spawnSync("bash", ["-n", "-s"], {
-      input: script,
-      encoding: "utf8",
-    });
+  it("classifies only evidenced Cloudflare challenges in current-main reconciliation", () => {
+    const workflow = expectValidBashStep(
+      ".github/workflows/cloudflare-current-main-reconcile.yml",
+      "Verify pages.dev, apex and www canonical behavior",
+    );
 
-    expect(result.status, result.stderr).toBe(0);
-    expect(workflow).toContain('echo "apex_challenged=false" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain('cf-mitigated: challenge');
+    expect(workflow).toContain('server: cloudflare');
     expect(workflow).toContain("Just a moment...");
     expect(workflow).toContain('echo "apex_challenged=true" >> "$GITHUB_OUTPUT"');
-    expect(workflow).toContain("downstream cache/public verification remains required for apex");
+    expect(workflow).toContain('echo "www_challenged=true" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("Unexpected non-challenge www response");
+    expect(workflow).toContain("downstream public verification required");
+  });
+
+  it("keeps exact production proof strict while allowing a verified custom-domain observer challenge", () => {
+    const workflow = expectValidBashStep(
+      ".github/workflows/cloudflare-production-status.yml",
+      "Verify pages.dev, apex and www against exact merged SHA",
+    );
+
+    expect(workflow).toContain('verify_origin "$PAGES_URL" pages false');
+    expect(workflow).toContain('verify_origin "$CANONICAL_ORIGIN" apex true');
+    expect(workflow).toContain('cf-mitigated: challenge');
+    expect(workflow).toContain('echo "www_challenged=true" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("Unexpected non-challenge www response");
+    expect(workflow).toContain('ARTIFACT_ORIGINS: https://irha-apparels.pages.dev');
+    expect(workflow).toContain('if [ "$APEX_CHALLENGED" != "true" ]; then');
+  });
+
+  it("keeps cache proof challenge-aware without accepting a plain custom-domain mismatch", () => {
+    const workflow = expectValidBashStep(
+      ".github/workflows/cloudflare-cache-consistency.yml",
+      "Verify unbusted and query-string release consistency",
+    );
+
+    expect(workflow).toContain('cf-mitigated: challenge');
+    expect(workflow).toContain('echo "www_challenge_seen=true" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("Unexpected non-challenge www response");
+    expect(workflow).toContain("independent public-browser verification remain required");
   });
 
   it("uses one auditable whole-zone purge because unknown historical query keys cannot be enumerated", () => {
