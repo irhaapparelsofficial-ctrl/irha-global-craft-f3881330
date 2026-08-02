@@ -129,6 +129,26 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(workflow).toContain("WWW_CHALLENGE: ${{ steps.verify.outputs.www_challenge_seen }}");
   });
 
+  it("keeps production status exact on Pages and challenge-aware only for evidenced custom-domain observations", () => {
+    const workflow = read(".github/workflows/cloudflare-production-status.yml");
+    const script = extractRunBlock(workflow, "Verify pages.dev, apex and www against exact merged SHA");
+    const result = spawnSync("bash", ["-n", "-s"], {
+      input: script,
+      encoding: "utf8",
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(workflow).toContain('verify_origin "$PAGES_URL" pages false');
+    expect(workflow).toContain('verify_origin "$CANONICAL_ORIGIN" apex true');
+    expect(workflow).toContain('cf-mitigated: challenge');
+    expect(workflow).toContain('server: cloudflare');
+    expect(workflow).toContain('echo "www_challenged=true" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("Unexpected non-challenge www response");
+    expect(workflow).toContain('ARTIFACT_ORIGINS: https://irha-apparels.pages.dev');
+    expect(workflow).toContain('if [ "$APEX_CHALLENGED" != "true" ]; then');
+    expect(workflow).toContain("independent public verification is required for this custom domain");
+  });
+
   it("uses one auditable whole-zone purge because unknown historical query keys cannot be enumerated", () => {
     const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
 
