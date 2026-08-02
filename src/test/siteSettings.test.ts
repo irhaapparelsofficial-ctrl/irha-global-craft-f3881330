@@ -21,7 +21,7 @@ describe("global site settings", () => {
         main: [{ label: "Unsafe", href: "https://evil.example", enabled: true }],
       },
     });
-    expect(value.brand.logoUrl).toBe("/irha-brand-mark.svg");
+    expect(value.brand.logoUrl).toBe("/brand/irha-apparels-official-runtime-512.png");
     expect(value.brand.logoUrl).toBe(new URL(PUBLIC_IDENTITY.logoUrl).pathname);
     expect(value.navigation.main[0].href).toBe("/");
   });

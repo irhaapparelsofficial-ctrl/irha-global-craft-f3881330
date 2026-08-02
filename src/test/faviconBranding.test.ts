@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 const readBytes = (path: string) => readFileSync(resolve(process.cwd(), path));
-const BRAND_VERSION = "ia-brand-visual-e001-20260801";
+const BRAND_VERSION = "ia-brand-master-e001-20260802-32eee79b";
+const MASTER_SHA256 = "32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87";
 
 async function expectPngDecodes(path: string, width: number, height: number) {
   const bytes = readBytes(path);
@@ -38,9 +39,10 @@ describe("Irha favicon branding", () => {
     expect(index).toContain('<link rel="shortcut icon" href="/favicon.svg" />');
     expect(index.toLowerCase()).not.toContain("lovable favicon");
 
-    expect(brandAssets).toContain('const OFFICIAL_OWNER_CREST = "/icon-512x512.png"');
+    expect(brandAssets).toContain('const OFFICIAL_RUNTIME_CREST = "/brand/irha-apparels-official-runtime-512.png"');
+    expect(brandAssets).toContain('path: "/brand/irha-apparels-official-master.png"');
+    expect(brandAssets).toContain(`sha256: "${MASTER_SHA256}"`);
     expect(brandAssets).toContain(`BRAND_ASSET_VERSION = "${BRAND_VERSION}"`);
-    expect(brandAssets).not.toContain('OFFICIAL_OWNER_CREST = "/irha-brand-mark.svg"');
     expect(navbar).toContain("BRAND_ASSETS.headerLogo");
     expect(navbar).toContain("Official Irha Apparels Manufacturing Specialists logo");
     expect(navbar).not.toContain('src="/favicon.svg"');
@@ -49,7 +51,8 @@ describe("Irha favicon branding", () => {
 
     expect(favicon).toContain('viewBox="0 0 192 192"');
     expect(favicon).toContain('<title id="title">Irha Apparels</title>');
-    expect(favicon).toContain("Official Irha Apparels Manufacturing Specialists crest supplied by the owner");
+    expect(favicon).toContain("Official Irha Apparels Manufacturing Specialists crest derived from the exact owner-uploaded master.");
+    expect(favicon).toContain(`data-master-sha256="${MASTER_SHA256}"`);
     expect(favicon).toContain('<image width="192" height="192"');
     expect(favicon).toContain('href="data:image/png;base64,');
     expect(favicon.toLowerCase()).not.toContain("lovable");
@@ -113,7 +116,9 @@ describe("Irha favicon branding", () => {
     expect(liveVerification).toContain('[ "$source_sha" = "$latest_main" ]');
     expect(liveVerification).toContain('"repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA"');
     expect(liveVerification).toContain('context="Irha Brand Live"');
-    expect(liveVerification).toContain("Official Irha Apparels Manufacturing Specialists crest supplied by the owner");
+    expect(liveVerification).toContain(MASTER_SHA256);
+    expect(liveVerification).toContain("/brand/irha-apparels-official-master.png");
+    expect(liveVerification).toContain("data:image/png;base64,");
 
     expect(manifest.icons).toEqual(expect.arrayContaining([
       expect.objectContaining({ src: "/favicon.svg", sizes: "any", type: "image/svg+xml" }),

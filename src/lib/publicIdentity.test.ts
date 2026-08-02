@@ -20,7 +20,7 @@ describe("canonical public identity", () => {
       "@id": "https://irhaapparels.com/#organization",
       name: "Irha Apparels",
       url: "https://irhaapparels.com/",
-      logo: "https://irhaapparels.com/irha-brand-mark.svg",
+      logo: "https://irhaapparels.com/brand/irha-apparels-official-runtime-512.png",
       telephone: "+92 320 411 0066",
       email: "info@irhaapparels.com",
       address: {
@@ -127,7 +127,7 @@ describe("canonical public identity", () => {
       phone: PUBLIC_IDENTITY.telephoneHref,
       phoneDisplay: PUBLIC_IDENTITY.telephone,
       whatsappNumber: PUBLIC_IDENTITY.whatsappNumber,
-      logoUrl: "/irha-brand-mark.svg",
+      logoUrl: "/brand/irha-apparels-official-runtime-512.png",
       tagline: "Approved editable tagline",
     });
     expect(normalized.socials).toEqual(PUBLIC_IDENTITY.socialProfiles);

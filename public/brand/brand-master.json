@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "executionId": "IA-BRAND-MASTER-E001",
+  "source": "owner-uploaded file in execution chat",
+  "master": {
+    "path": "public/brand/irha-apparels-official-master.png",
+    "publicPath": "/brand/irha-apparels-official-master.png",
+    "sha256": "32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87",
+    "mimeType": "image/png",
+    "width": 1024,
+    "height": 1024,
+    "sizeBytes": 1023183
+  },
+  "generation": {
+    "implementation": "scripts/generate-official-brand-assets.mjs",
+    "library": "sharp",
+    "fit": "contain",
+    "kernel": "lanczos3",
+    "crop": false,
+    "stretch": false
+  },
+  "brandAssetVersion": "ia-brand-master-e001-20260802-32eee79b",
+  "derivatives": [
+    {
+      "path": "public/brand/irha-apparels-official-runtime-512.png",
+      "publicPath": "/brand/irha-apparels-official-runtime-512.png",
+      "width": 512,
+      "height": 512,
+      "role": "runtime",
+      "sha256": "1a87fdefb4315a4ed02600772a6c09cdfa3ac666003fc5af4aca1ff2c8095d2d"
+    },
+    {
+      "path": "public/favicon-16x16.png",
+      "publicPath": "/favicon-16x16.png",
+      "width": 16,
+      "height": 16,
+      "role": "favicon",
+      "sha256": "6501f92162c0b59bdf5531be82ab325c83257d517e1c328a97de9043cbf1d2de"
+    },
+    {
+      "path": "public/favicon-32x32.png",
+      "publicPath": "/favicon-32x32.png",
+      "width": 32,
+      "height": 32,
+      "role": "favicon",
+      "sha256": "649f1ccc30a5ca8358b052fbe5edc033232907cc51b2b661533675238ed19f65"
+    },
+    {
+      "path": "public/favicon-48x48.png",
+      "publicPath": "/favicon-48x48.png",
+      "width": 48,
+      "height": 48,
+      "role": "favicon",
+      "sha256": "e8769662bef74db5ec056e7bd08a7709357d4afe522ac3c2d9de4c1d6af720a0"
+    },
+    {
+      "path": "public/apple-touch-icon.png",
+      "publicPath": "/apple-touch-icon.png",
+      "width": 180,
+      "height": 180,
+      "role": "apple-touch-icon",
+      "sha256": "1cad141c35b7d17090986b452f8af92bcc11cb8127998b50685eabcf2f4a8f17"
+    },
+    {
+      "path": "public/icon-192x192.png",
+      "publicPath": "/icon-192x192.png",
+      "width": 192,
+      "height": 192,
+      "role": "pwa",
+      "sha256": "c0c1925832acc1ed02b11c2a9223ae94469257c73b15df7cf46319bf93d56eb4"
+    },
+    {
+      "path": "public/icon-512x512.png",
+      "publicPath": "/icon-512x512.png",
+      "width": 512,
+      "height": 512,
+      "role": "pwa",
+      "sha256": "1a87fdefb4315a4ed02600772a6c09cdfa3ac666003fc5af4aca1ff2c8095d2d"
+    }
+  ]
+}
