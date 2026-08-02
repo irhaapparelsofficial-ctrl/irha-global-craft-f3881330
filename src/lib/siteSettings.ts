@@ -80,7 +80,7 @@ export const DEFAULT_GLOBAL_SITE_SETTINGS: GlobalSiteSettings = {
     phone: PUBLIC_IDENTITY.telephoneHref,
     phoneDisplay: PUBLIC_IDENTITY.telephone,
     whatsappNumber: PUBLIC_IDENTITY.whatsappNumber,
-    logoUrl: "/irha-brand-mark.svg",
+    logoUrl: "/brand/irha-apparels-official-runtime-512.png",
   },
   navigation: {
     main: [
