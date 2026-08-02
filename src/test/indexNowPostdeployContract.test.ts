@@ -21,10 +21,16 @@ describe("IndexNow post-production contract", () => {
 
     expect(workflow).toContain("for attempt in $(seq 1 12)");
     expect(workflow).toContain("fetch-depth: 2");
-    expect(workflow).toContain("$CANONICAL_ORIGIN/build.json?search_discovery=");
+    expect(workflow).toContain('artifact_origin="$CANONICAL_ORIGIN"');
+    expect(workflow).toContain('fetch_exact_build "$CANONICAL_ORIGIN" apex "$cache_bust"');
+    expect(workflow).toContain('"$origin/build.json?search_discovery=$cache_bust"');
+    expect(workflow).toContain('cloudflare_challenge "$BUILD_STATUS" "$BUILD_HEADERS" "$BUILD_BODY"');
+    expect(workflow).toContain('artifact_origin="$PAGES_ORIGIN"');
+    expect(workflow).toContain('fetch_exact_build "$PAGES_ORIGIN" pages "$cache_bust"');
     expect(workflow).toContain(".source_commit == $sha");
-    expect(workflow).toContain("$CANONICAL_ORIGIN/sitemap.xml?search_discovery=");
-    expect(workflow).toContain("$CANONICAL_ORIGIN/seo-route-manifest.json?search_discovery=");
+    expect(workflow).toContain('.expected_origin == "https://irhaapparels.com"');
+    expect(workflow).toContain('"$artifact_origin/sitemap.xml?search_discovery=$cache_bust"');
+    expect(workflow).toContain('"$artifact_origin/seo-route-manifest.json?search_discovery=$cache_bust"');
     expect(workflow).toContain("/tmp/live-seo-route-manifest.json");
     expect(workflow).toContain("/tmp/live-search-route-state.json");
     expect(workflow).toContain("seo/search-route-state.json");
