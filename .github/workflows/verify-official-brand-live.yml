@@ -35,9 +35,9 @@ jobs:
           source_sha=""
 
           exact_current_source() {
-            observed="$1"
-            current="$2"
-            expected_dispatch="${3:-}"
+            local observed="$1"
+            local current="$2"
+            local expected_dispatch="${3:-}"
             [ "$observed" = "$current" ] || return 1
             [ -z "$expected_dispatch" ] || [ "$observed" = "$expected_dispatch" ]
           }
@@ -141,9 +141,9 @@ jobs:
           apex_origin="https://irhaapparels.com"
 
           cloudflare_challenge() {
-            status="$1"
-            headers="$2"
-            body="$3"
+            local status="$1"
+            local headers="$2"
+            local body="$3"
             [ "$status" = "403" ] || return 1
             if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null; then return 0; fi
             if grep -Eqi '^server:[[:space:]]*cloudflare' "$headers" 2>/dev/null \
@@ -152,7 +152,7 @@ jobs:
           }
 
           challenge_evidence() {
-            headers="$1"
+            local headers="$1"
             awk 'BEGIN{IGNORECASE=1}
               /^(server|cf-ray|cf-mitigated|content-type|cache-control|cf-cache-status):/ {
                 sub(/\r$/, "");
@@ -163,26 +163,30 @@ jobs:
           }
 
           png_dimensions() {
-            python3 -c 'import struct,sys; d=open(sys.argv[1],"rb").read(24); assert d[:8] == bytes.fromhex("89504e470d0a1a0a"); assert struct.unpack(">II", d[16:24]) == (int(sys.argv[2]), int(sys.argv[3]))' "$1" "$2" "$3"
+            local image_path="$1"
+            local expected_width="$2"
+            local expected_height="$3"
+            python3 -c 'import struct,sys; d=open(sys.argv[1],"rb").read(24); assert d[:8] == bytes.fromhex("89504e470d0a1a0a"); assert struct.unpack(">II", d[16:24]) == (int(sys.argv[2]), int(sys.argv[3]))' "$image_path" "$expected_width" "$expected_height"
           }
 
           resolve_observation() {
-            status="$1"
-            headers="$2"
-            body="$3"
-            fallback="$4"
-            effective="$5"
-            route="$6"
-            allow_challenge="$7"
+            local status="$1"
+            local headers="$2"
+            local body="$3"
+            local fallback="$4"
+            local effective_path="$5"
+            local route="$6"
+            local allow_challenge="$7"
+            local evidence=""
 
             if [ "$status" = "200" ]; then
-              cp "$body" "$effective"
+              cp "$body" "$effective_path"
               return 0
             fi
 
             if [ "$allow_challenge" = "true" ] && cloudflare_challenge "$status" "$headers" "$body"; then
               test -s "$fallback"
-              cp "$fallback" "$effective"
+              cp "$fallback" "$effective_path"
               challenge_seen=true
               challenged_routes+=("$route")
               evidence="$(challenge_evidence "$headers")"
@@ -195,37 +199,41 @@ jobs:
           }
 
           brand_payload_contract() {
-            prefix="$1"
-            master_hash="$2"
-            expected="$3"
+            local contract_prefix="$1"
+            local master_hash="$2"
+            local expected="$3"
 
             [ "$master_hash" = "$expected" ] \
-              && png_dimensions "$prefix-master.png" 1024 1024 \
-              && png_dimensions "$prefix-runtime.png" 512 512 \
-              && png_dimensions "$prefix-icon192.png" 192 192 \
-              && png_dimensions "$prefix-icon512.png" 512 512 \
-              && png_dimensions "$prefix-apple.png" 180 180 \
-              && grep -Fq "data-master-sha256=\"$expected\"" "$prefix-favicon.svg" \
-              && grep -Fq 'data:image/png;base64,' "$prefix-favicon.svg" \
-              && grep -Fq "$expected" "$prefix-favicon.ico" \
+              && png_dimensions "$contract_prefix-master.png" 1024 1024 \
+              && png_dimensions "$contract_prefix-runtime.png" 512 512 \
+              && png_dimensions "$contract_prefix-icon192.png" 192 192 \
+              && png_dimensions "$contract_prefix-icon512.png" 512 512 \
+              && png_dimensions "$contract_prefix-apple.png" 180 180 \
+              && grep -Fq "data-master-sha256=\"$expected\"" "$contract_prefix-favicon.svg" \
+              && grep -Fq 'data:image/png;base64,' "$contract_prefix-favicon.svg" \
+              && grep -Fq "$expected" "$contract_prefix-favicon.ico" \
               && jq -e --arg sha "$expected" \
                 '.master.sha256 == $sha and .master.width == 1024 and .master.height == 1024 and .generation.crop == false and .generation.stretch == false' \
-                "$prefix-provenance.json" >/dev/null \
+                "$contract_prefix-provenance.json" >/dev/null \
               && jq -e \
                 '.icons | any(.src | startswith("/icon-192x192.png")) and any(.src | startswith("/icon-512x512.png"))' \
-                "$prefix-manifest.json" >/dev/null \
-              && grep -Fq '/brand/irha-apparels-official-runtime-512.png' "$prefix-home.html"
+                "$contract_prefix-manifest.json" >/dev/null \
+              && grep -Fq '/brand/irha-apparels-official-runtime-512.png' "$contract_prefix-home.html"
           }
 
           verify_origin() {
-            origin="$1"
-            label="$2"
-            allow_challenge="$3"
-            prefix="/tmp/brand-$label"
-            effective="$prefix-effective"
-            fallback="/tmp/brand-pages-effective"
-            challenge_seen=false
-            challenged_routes=()
+            local origin="$1"
+            local label="$2"
+            local allow_challenge="$3"
+            local prefix="/tmp/brand-$label"
+            local effective="$prefix-effective"
+            local fallback="/tmp/brand-pages-effective"
+            local challenge_seen=false
+            local -a challenged_routes=()
+            local attempt cache_bust
+            local master_status runtime_status favicon_status legacy_status icon192_status icon512_status apple_status manifest_status provenance_status home_status
+            local master_ok runtime_ok favicon_ok legacy_ok icon192_ok icon512_ok apple_ok manifest_ok provenance_ok home_ok
+            local master_hash favicon_source routes_csv
 
             for attempt in $(seq 1 18); do
               cache_bust="${SOURCE_SHA::12}-$label-$attempt-$RANDOM"
@@ -316,9 +324,9 @@ jobs:
           apex_origin="https://irhaapparels.com"
 
           cloudflare_challenge() {
-            status="$1"
-            headers="$2"
-            body="$3"
+            local status="$1"
+            local headers="$2"
+            local body="$3"
             [ "$status" = "403" ] || return 1
             if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null; then return 0; fi
             if grep -Eqi '^server:[[:space:]]*cloudflare' "$headers" 2>/dev/null \
@@ -327,11 +335,12 @@ jobs:
           }
 
           route_challenge_or_fail() {
-            status="$1"
-            headers="$2"
-            body="$3"
-            route="$4"
-            allow_challenge="$5"
+            local status="$1"
+            local headers="$2"
+            local body="$3"
+            local route="$4"
+            local allow_challenge="$5"
+            local evidence=""
 
             if [ "$allow_challenge" = "true" ] && cloudflare_challenge "$status" "$headers" "$body"; then
               apex_challenged=true
@@ -352,13 +361,16 @@ jobs:
           }
 
           verify_route_origin() {
-            origin="$1"
-            label="$2"
-            allow_challenge="$3"
-            known_valid_path="${4:-}"
-            prefix="/tmp/routes-$label"
-            apex_challenged=false
-            challenged_routes=()
+            local origin="$1"
+            local label="$2"
+            local allow_challenge="$3"
+            local known_valid_path="${4:-}"
+            local prefix="/tmp/routes-$label"
+            local apex_challenged=false
+            local -a challenged_routes=()
+            local attempt cache_bust
+            local manifest_status manifest_ok valid_path observed_path valid_status valid_ok
+            local legacy_status legacy_location legacy_ok missing_route missing_status missing_marker missing_ok routes_csv
 
             for attempt in $(seq 1 18); do
               cache_bust="${SOURCE_SHA::12}-$label-routes-$attempt-$RANDOM"
