@@ -68,13 +68,29 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(workflow).toContain("String.fromCharCode(39)");
   });
 
-  it("keeps cache-rule enforcement idempotent when the bypass rule is already last", () => {
+  it("bypasses only HTML/release identity while preserving long-lived immutable asset caching", () => {
     const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
 
-    expect(script).toContain("const existingIndex = rules.findIndex");
-    expect(script).toContain("const existingIsLast = existingIndex === rules.length - 1");
-    expect(script).toContain('existingIsLast ? definition : { ...definition, position: { after: "" } }');
-    expect(script).toContain('{ ...definition, position: { after: "" } }');
+    expect(script).toContain('const RULE_DESCRIPTION = "Irha HTML and release identity bypass"');
+    expect(script).toContain('action_parameters: { cache: false }');
+    expect(script).toContain('starts_with(http.request.uri.path, "/assets/")');
+    expect(script).toContain('starts_with(http.request.uri.path, "/responsive/")');
+    expect(script).toContain('starts_with(http.request.uri.path, "/thumbnails/")');
+    expect(script).toContain('starts_with(http.request.uri.path, "/media/")');
+    expect(script).toContain('ends_with(http.request.uri.path, ".js")');
+    expect(script).toContain('http.request.uri.path ne "/sw.js"');
+    expect(script).toContain('position: { after: "" }');
+  });
+
+  it("reaffirms an already-correct final bypass rule without sending an invalid move-to-bottom PATCH", () => {
+    const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
+
+    expect(script).toContain("const existingIsLast = existingIndex >= 0 && existingIndex === rules.length - 1");
+    expect(script).toContain("if (!(existingMatches && existingIsLast))");
+    expect(script).toContain("const patchDefinition = existingIsLast");
+    expect(script).toContain("? baseDefinition");
+    expect(script).toContain(': { ...baseDefinition, position: { after: "" } }');
+    expect(script).toContain('let mutation = "reaffirmed"');
   });
 
   it("treats an apex Cloudflare challenge as an observer limitation, not a release mismatch", () => {
@@ -90,20 +106,6 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(workflow).toContain("Just a moment...");
     expect(workflow).toContain('echo "apex_challenged=true" >> "$GITHUB_OUTPUT"');
     expect(workflow).toContain("downstream cache/public verification remains required for apex");
-  });
-
-  it("bypasses only HTML/release identity while preserving long-lived immutable asset caching", () => {
-    const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
-
-    expect(script).toContain('const RULE_DESCRIPTION = "Irha HTML and release identity bypass"');
-    expect(script).toContain('action_parameters: { cache: false }');
-    expect(script).toContain('starts_with(http.request.uri.path, "/assets/")');
-    expect(script).toContain('starts_with(http.request.uri.path, "/responsive/")');
-    expect(script).toContain('starts_with(http.request.uri.path, "/thumbnails/")');
-    expect(script).toContain('starts_with(http.request.uri.path, "/media/")');
-    expect(script).toContain('ends_with(http.request.uri.path, ".js")');
-    expect(script).toContain('http.request.uri.path ne "/sw.js"');
-    expect(script).toContain('position: { after: "" }');
   });
 
   it("uses one auditable whole-zone purge because unknown historical query keys cannot be enumerated", () => {
