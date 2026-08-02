@@ -118,8 +118,8 @@ describe("polished B2B homepage", () => {
     expect(consent).toContain("Essential only");
     expect(consent).toContain("Accept optional");
     expect(consent).toContain("Settings");
-    expect(brandAssets).toContain('const OFFICIAL_OWNER_CREST = "/icon-512x512.png"');
-    expect(brandAssets).not.toContain('OFFICIAL_OWNER_CREST = "/irha-brand-mark.svg"');
+    expect(brandAssets).toContain('const OFFICIAL_RUNTIME_CREST = "/brand/irha-apparels-official-runtime-512.png"');
+    expect(brandAssets).toContain('path: "/brand/irha-apparels-official-master.png"');
     expect(styles).toContain(".font-display");
     expect(styles).toContain("'Playfair Display', Georgia, serif");
   });
