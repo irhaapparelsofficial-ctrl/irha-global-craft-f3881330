@@ -345,12 +345,33 @@ jobs:
           done
 
           www_headers=/tmp/www-cache-consistency.headers
+          www_body=/tmp/www-cache-consistency.body
           www_status="$(curl -sS --connect-timeout 10 --max-time 40 --max-redirs 0 \
-            -D "$www_headers" -o /tmp/www-cache-consistency.body -w '%{http_code}' \
+            -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36' \
+            -H 'Accept: text/html,application/xhtml+xml' \
+            -D "$www_headers" -o "$www_body" -w '%{http_code}' \
             "$WWW_ORIGIN/?utm_source=google" || true)"
           www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$www_headers")"
-          case "$www_status" in 301|302|307|308) ;; *) echo "Unexpected www status: $www_status"; exit 1 ;; esac
-          case "$www_location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $www_location"; exit 1 ;; esac
+          www_challenge=false
+          if grep -Fqi 'Just a moment...' "$www_body" 2>/dev/null; then www_challenge=true; fi
+          echo "www_challenge_seen=$www_challenge" >> "$GITHUB_OUTPUT"
+          case "$www_status" in
+            301|302|307|308)
+              case "$www_location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $www_location"; exit 1 ;; esac
+              ;;
+            403)
+              if [ "$www_challenge" = true ]; then
+                echo "::warning::GitHub-hosted www redirect observation is challenged; independent public-browser canonical verification remains required."
+              else
+                echo "Unexpected non-challenge www status: $www_status"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "Unexpected www status: $www_status"
+              exit 1
+              ;;
+          esac
 
           cat "$matrix"
 
@@ -362,16 +383,17 @@ jobs:
           APEX_BUILD_DIRECT: ${{ steps.verify.outputs.apex_build_direct }}
           APEX_HOME_DIRECT: ${{ steps.verify.outputs.apex_home_direct }}
           APEX_CHALLENGE: ${{ steps.verify.outputs.apex_challenge_seen }}
+          WWW_CHALLENGE: ${{ steps.verify.outputs.www_challenge_seen }}
         run: |
           set -euo pipefail
           state=failure
           description="Cloudflare cache consistency failed"
           if [ "$VERIFY_OUTCOME" = success ]; then
             state=success
-            if [ "$APEX_BUILD_DIRECT" = true ] && [ "$APEX_HOME_DIRECT" = true ]; then
+            if [ "$APEX_BUILD_DIRECT" = true ] && [ "$APEX_HOME_DIRECT" = true ] && [ "$WWW_CHALLENGE" != true ]; then
               description="Unbusted/busted Pages and apex release identities agree"
-            elif [ "$APEX_CHALLENGE" = true ]; then
-              description="Cache policy/purge verified; apex GitHub observer challenged"
+            elif [ "$APEX_CHALLENGE" = true ] || [ "$WWW_CHALLENGE" = true ]; then
+              description="Cache policy/purge verified; GitHub observer challenged"
             else
               description="Cache policy and Pages identity verified"
             fi
@@ -404,6 +426,7 @@ jobs:
             /tmp/apex-*-home.html
             /tmp/apex-*.headers
             /tmp/www-cache-consistency.headers
+            /tmp/www-cache-consistency.body
           if-no-files-found: warn
           retention-days: 3
           compression-level: 0
@@ -423,5 +446,6 @@ jobs:
             echo "- Apex direct build identity: \`${{ steps.verify.outputs.apex_build_direct }}\`"
             echo "- Apex direct homepage identity: \`${{ steps.verify.outputs.apex_home_direct }}\`"
             echo "- Apex GitHub challenge observed: \`${{ steps.verify.outputs.apex_challenge_seen }}\`"
+            echo "- WWW GitHub challenge observed: \`${{ steps.verify.outputs.www_challenge_seen }}\`"
             echo "- Static asset caching disabled globally: \`false\`"
           } >> "$GITHUB_STEP_SUMMARY"
