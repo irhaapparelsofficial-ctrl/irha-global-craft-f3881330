@@ -15,6 +15,10 @@ concurrency:
   group: brand-live-dispatch-${{ github.event.comment.id }}
   cancel-in-progress: false
 
+env:
+  PAGES_ORIGIN: https://irha-apparels.pages.dev
+  CANONICAL_ORIGIN: https://irhaapparels.com
+
 jobs:
   dispatch:
     if: >-
@@ -66,21 +70,58 @@ jobs:
             }
           done
 
-          cache_bust="${main_sha::12}-$GITHUB_RUN_ID-$RANDOM"
-          bash scripts/ci/retry.sh 3 5 -- curl -fsSL --connect-timeout 10 --max-time 40 \
-            -H 'Cache-Control: no-cache' \
-            "https://irhaapparels.com/build.json?brand_dispatch=$cache_bust" \
-            -o /tmp/live-build.json
-          jq -e --arg sha "$main_sha" \
-            '.source_branch == "main" and .source_commit == $sha and .source_identity_state == "verified"' \
-            /tmp/live-build.json >/dev/null
+          cloudflare_challenge() {
+            status="$1"
+            headers="$2"
+            body="$3"
+            [ "$status" = "403" ] || return 1
+            if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null; then return 0; fi
+            if grep -Eqi '^server:[[:space:]]*cloudflare' "$headers" 2>/dev/null \
+              && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi
+            return 1
+          }
+
+          verify_build() {
+            origin="$1"
+            label="$2"
+            allow_challenge="$3"
+            cache_bust="${main_sha::12}-$label-$GITHUB_RUN_ID-$RANDOM"
+            headers="/tmp/${label}-build.headers"
+            body="/tmp/${label}-build.json"
+            status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+              -H 'Cache-Control: no-cache' \
+              -D "$headers" -o "$body" -w '%{http_code}' \
+              "$origin/build.json?brand_dispatch=$cache_bust" || true)"
+
+            if [ "$status" = "200" ] && jq -e --arg sha "$main_sha" \
+              '.source_branch == "main" and .source_commit == $sha and .source_identity_state == "verified" and (.build_fingerprint | type == "string" and test("^[0-9a-f]{64}$"))' \
+              "$body" >/dev/null 2>&1; then
+              echo "$label exact current-main build identity verified."
+              return 0
+            fi
+
+            if [ "$allow_challenge" = "true" ] && cloudflare_challenge "$status" "$headers" "$body"; then
+              echo "::warning::GitHub-hosted $label build observer received a verified Cloudflare challenge; exact Pages identity remains mandatory and Brand Live will independently verify the custom domain."
+              echo "${label}_challenged=true" >> "$GITHUB_OUTPUT"
+              return 0
+            fi
+
+            observed_sha="$(jq -r '.source_commit // "missing"' "$body" 2>/dev/null || echo invalid-json)"
+            echo "Exact $label release verification failed: status=$status source=$observed_sha expected=$main_sha"
+            return 1
+          }
+
+          echo "apex_challenged=false" >> "$GITHUB_OUTPUT"
+          verify_build "$PAGES_ORIGIN" pages false
+          verify_build "$CANONICAL_ORIGIN" apex true
 
           echo "source_sha=$main_sha" >> "$GITHUB_OUTPUT"
           {
             echo "## Authorized Brand Live dispatch"
             echo "- Exact current main: \`$main_sha\`"
             echo "- Required release statuses: all green"
-            echo "- Live build identity: exact and verified"
+            echo "- Pages live build identity: exact and verified"
+            echo "- Apex observer: exact or explicitly Cloudflare-challenged"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Dispatch exact-main Brand Live once
