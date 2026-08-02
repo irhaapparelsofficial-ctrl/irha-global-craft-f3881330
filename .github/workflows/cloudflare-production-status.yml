@@ -122,6 +122,11 @@ jobs:
           set -euo pipefail
           echo "verified=false" >> "$GITHUB_OUTPUT"
           echo "superseded=false" >> "$GITHUB_OUTPUT"
+          echo "pages_verified=false" >> "$GITHUB_OUTPUT"
+          echo "apex_verified=false" >> "$GITHUB_OUTPUT"
+          echo "apex_challenged=false" >> "$GITHUB_OUTPUT"
+          echo "www_verified=false" >> "$GITHUB_OUTPUT"
+          echo "www_challenged=false" >> "$GITHUB_OUTPUT"
 
           current_main_or_supersede() {
             latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
@@ -135,32 +140,63 @@ jobs:
           verify_origin() {
             origin="$1"
             label="$2"
+            challenge_allowed="$3"
             output="/tmp/${label}-build.json"
+            headers="/tmp/${label}-build.headers"
+            ORIGIN_RESULT="missing"
+
             for attempt in $(seq 1 30); do
               current_main_or_supersede
               cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
               status="$(curl -sSL --connect-timeout 10 --max-time 35 \
                 -H 'Cache-Control: no-cache' \
-                -o "$output" -w '%{http_code}' \
+                -D "$headers" -o "$output" -w '%{http_code}' \
                 "$origin/build.json?release_check=$cache_bust" || true)"
+
+              challenge=false
+              if [ "$status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null || grep -Fqi 'Just a moment...' "$output" 2>/dev/null; }; then
+                challenge=true
+              fi
+
+              if [ "$challenge" = "true" ] && [ "$challenge_allowed" = "true" ]; then
+                ORIGIN_RESULT="challenged"
+                echo "::warning::GitHub-hosted $label observer received a Cloudflare challenge; independent public verification remains required."
+                return 0
+              fi
+
               if [ "$status" = "200" ] \
                 && jq -e --arg sha "$SOURCE_SHA" \
                   '.source_commit == $sha and .source_identity_state == "verified" and (.build_fingerprint | type == "string" and test("^[0-9a-f]{64}$"))' \
                   "$output" >/dev/null 2>&1; then
+                ORIGIN_RESULT="exact"
                 echo "$label serves exact merged SHA $SOURCE_SHA"
                 return 0
               fi
               echo "$label not exact yet: status=$status attempt=$attempt/30"
               sleep 8
             done
+
             echo "::error title=Exact production release not proven::$label did not serve merged SHA $SOURCE_SHA"
             head -c 600 "$output" 2>/dev/null || true
             echo
             return 1
           }
 
-          verify_origin "$PAGES_URL" pages
-          verify_origin "$CANONICAL_ORIGIN" apex
+          verify_origin "$PAGES_URL" pages false
+          [ "$ORIGIN_RESULT" = "exact" ] || { echo "Pages exact release proof is mandatory"; exit 1; }
+          echo "pages_verified=true" >> "$GITHUB_OUTPUT"
+          artifact_origins="$PAGES_URL"
+
+          verify_origin "$CANONICAL_ORIGIN" apex true
+          if [ "$ORIGIN_RESULT" = "exact" ]; then
+            echo "apex_verified=true" >> "$GITHUB_OUTPUT"
+            artifact_origins="$PAGES_URL,$CANONICAL_ORIGIN"
+          elif [ "$ORIGIN_RESULT" = "challenged" ]; then
+            echo "apex_challenged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unexpected apex observer result: $ORIGIN_RESULT"
+            exit 1
+          fi
           current_main_or_supersede
 
           headers=/tmp/www-headers.txt
@@ -169,11 +205,24 @@ jobs:
             -D "$headers" -o "$body" -w '%{http_code}' \
             "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}-$RANDOM" || true)"
           location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$headers")"
-          case "$status" in 301|302|307|308) ;; *) echo "::error title=Canonical redirect failed::Unexpected www status $status"; exit 1 ;; esac
-          case "$location" in https://irhaapparels.com/*) ;; *) echo "::error title=Canonical redirect failed::Unexpected www location $location"; exit 1 ;; esac
+          www_challenge=false
+          if [ "$status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null || grep -Fqi 'Just a moment...' "$body" 2>/dev/null; }; then
+            www_challenge=true
+          fi
 
+          if [ "$www_challenge" = "true" ]; then
+            echo "www_challenged=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::GitHub-hosted www observer received a Cloudflare challenge; independent public verification remains required for canonical redirect."
+          else
+            case "$status" in 301|302|307|308) ;; *) echo "::error title=Canonical redirect failed::Unexpected www status $status"; exit 1 ;; esac
+            case "$location" in https://irhaapparels.com/*) ;; *) echo "::error title=Canonical redirect failed::Unexpected www location $location"; exit 1 ;; esac
+            echo "www_verified=true" >> "$GITHUB_OUTPUT"
+            echo "www canonical redirect verified: status=$status location=$location"
+          fi
+
+          echo "artifact_origins=$artifact_origins" >> "$GITHUB_OUTPUT"
           echo "verified=true" >> "$GITHUB_OUTPUT"
-          echo "Exact production SHA and canonical www redirect verified."
+          echo "Exact Pages release proven; challenged public observers, if any, require independent verification."
 
       - name: Checkout exact release source for artifact audit
         if: >-
@@ -195,7 +244,7 @@ jobs:
           steps.live.outputs.verified == 'true'
         env:
           ARTIFACT_AUDIT_MODE: remote
-          ARTIFACT_ORIGINS: https://irha-apparels.pages.dev,https://irhaapparels.com
+          ARTIFACT_ORIGINS: ${{ steps.live.outputs.artifact_origins }}
           EXPECTED_SHA: ${{ steps.relevance.outputs.source_sha }}
         shell: bash
         run: |
@@ -211,8 +260,11 @@ jobs:
           name: exact-live-proof-${{ steps.relevance.outputs.source_sha }}
           path: |
             /tmp/pages-build.json
+            /tmp/pages-build.headers
             /tmp/apex-build.json
+            /tmp/apex-build.headers
             /tmp/www-headers.txt
+            /tmp/www-body.txt
             /tmp/live-artifact-audit.json
           if-no-files-found: warn
           retention-days: 3
@@ -226,6 +278,12 @@ jobs:
         env:
           VERIFIED: ${{ steps.live.outputs.verified }}
           SUPERSEDED: ${{ steps.live.outputs.superseded }}
+          PAGES_VERIFIED: ${{ steps.live.outputs.pages_verified }}
+          APEX_VERIFIED: ${{ steps.live.outputs.apex_verified }}
+          APEX_CHALLENGED: ${{ steps.live.outputs.apex_challenged }}
+          WWW_VERIFIED: ${{ steps.live.outputs.www_verified }}
+          WWW_CHALLENGED: ${{ steps.live.outputs.www_challenged }}
+          ARTIFACT_ORIGINS: ${{ steps.live.outputs.artifact_origins }}
           ARTIFACT_VERIFIED: ${{ steps.artifacts.outputs.verified }}
         shell: bash
         run: |
@@ -239,7 +297,11 @@ jobs:
           description="Exact release or public-artifact audit is not proven"
           if [ "$VERIFIED" = "true" ] && [ "$ARTIFACT_VERIFIED" = "true" ]; then
             state=success
-            description="Exact merged release is live; source-map and public-artifact audit passed"
+            if [ "$APEX_CHALLENGED" = "true" ] || [ "$WWW_CHALLENGED" = "true" ]; then
+              description="Exact Pages release/artifacts passed; public observer challenged"
+            else
+              description="Exact merged release is live; source-map and public-artifact audit passed"
+            fi
           fi
 
           gh api --method POST \
@@ -254,10 +316,14 @@ jobs:
             echo "## Cloudflare Production Status"
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Reconcile run: \`$UPSTREAM_RUN_ID\`"
-            echo "- pages.dev exact SHA: \`$VERIFIED\`"
-            echo "- apex exact SHA: \`$VERIFIED\`"
-            echo "- www canonical redirect: \`$VERIFIED\`"
+            echo "- pages.dev exact SHA: \`$PAGES_VERIFIED\`"
+            echo "- apex exact SHA from GitHub observer: \`$APEX_VERIFIED\`"
+            echo "- apex GitHub observer challenged: \`$APEX_CHALLENGED\`"
+            echo "- www canonical redirect from GitHub observer: \`$WWW_VERIFIED\`"
+            echo "- www GitHub observer challenged: \`$WWW_CHALLENGED\`"
+            echo "- live artifact audit origins: \`$ARTIFACT_ORIGINS\`"
             echo "- live source-map/public-artifact audit: \`$ARTIFACT_VERIFIED\`"
+            echo "- Independent public verification required when observer challenged: \`true\`"
             echo "- Commit status: \`$state\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
