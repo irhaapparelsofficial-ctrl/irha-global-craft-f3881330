@@ -1,15 +1,35 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
+const extractRunBlock = (workflow: string, stepName: string) => {
+  const stepMarker = `      - name: ${stepName}`;
+  const stepStart = workflow.indexOf(stepMarker);
+  expect(stepStart).toBeGreaterThan(-1);
+
+  const runMarker = "        run: |\n";
+  const runStart = workflow.indexOf(runMarker, stepStart);
+  expect(runStart).toBeGreaterThan(stepStart);
+
+  const contentStart = runStart + runMarker.length;
+  const nextStep = workflow.indexOf("\n      - name:", contentStart);
+  const block = workflow.slice(contentStart, nextStep === -1 ? undefined : nextStep);
+
+  return block
+    .split("\n")
+    .map((line) => (line.startsWith("          ") ? line.slice(10) : line))
+    .join("\n");
+};
+
 describe("Cloudflare cache-consistency release contract", () => {
   it("runs after current-main reconciliation and locks every mutation to exact current main", () => {
     const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
 
     expect(workflow).toContain('workflows: ["Cloudflare Current Main Reconcile"]');
-    expect(workflow).toContain('latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq \'.sha\')"');
+    expect(workflow).toContain('latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq \' .sha\')"'.replace("' .sha'", "'.sha'"));
     expect(workflow).toContain('test "$latest_main" = "$SOURCE_SHA"');
     expect(workflow).toContain("Inspect Cloudflare routing and cache state before mutation");
     expect(workflow).toContain("Enforce final HTML and release-identity cache bypass");
@@ -34,6 +54,19 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(workflow).toContain("x-irha-build-fingerprint");
     expect(workflow).toContain("Two macro hubs.");
     expect(workflow).toContain("GitHub-hosted direct apex observation is challenged");
+  });
+
+  it("keeps the public consistency verifier valid bash", () => {
+    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
+    const script = extractRunBlock(workflow, "Verify unbusted and query-string release consistency");
+    const result = spawnSync("bash", ["-n", "-s"], {
+      input: script,
+      encoding: "utf8",
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(workflow).toContain("String.fromCharCode(39)");
+    expect(workflow).not.toContain('["\'\\\'\'\']');
   });
 
   it("bypasses only HTML/release identity while preserving long-lived immutable asset caching", () => {
