@@ -243,6 +243,7 @@ jobs:
           set -euo pipefail
           echo "verified=false" >> "$GITHUB_OUTPUT"
           echo "superseded=false" >> "$GITHUB_OUTPUT"
+          echo "apex_challenged=false" >> "$GITHUB_OUTPUT"
 
           fail_or_skip_if_superseded() {
             message="$1"
@@ -262,6 +263,7 @@ jobs:
             build_file="/tmp/${label}-build.json"
             marker_file="/tmp/${label}-deployment.json"
             ready=false
+            challenge_seen=false
             last_status="missing"
             last_commit="missing"
             last_fingerprint="missing"
@@ -275,6 +277,13 @@ jobs:
               last_commit="$(jq -r '.source_commit // "missing"' "$build_file" 2>/dev/null || echo missing)"
               last_fingerprint="$(jq -r '.build_fingerprint // "missing"' "$build_file" 2>/dev/null || echo missing)"
 
+              if grep -Fqi 'Just a moment...' "$build_file" 2>/dev/null; then
+                challenge_seen=true
+                if [ "$label" = "apex" ]; then
+                  break
+                fi
+              fi
+
               if [ "$last_status" = "200" ] \
                 && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$RELEASE_FINGERPRINT" \
                   '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
@@ -286,6 +295,12 @@ jobs:
             done
 
             if [ "$ready" != "true" ]; then
+              if [ "$label" = "apex" ] && [ "$challenge_seen" = "true" ]; then
+                echo "apex_challenged=true" >> "$GITHUB_OUTPUT"
+                echo "::warning::GitHub-hosted apex observer received a Cloudflare challenge. Pages exact identity is authoritative for deployment; downstream cache/public verification remains required for apex."
+                return 0
+              fi
+
               echo "origin=$origin status=$last_status source_commit=$last_commit build_fingerprint=$last_fingerprint"
               echo "expected_source_commit=$SOURCE_SHA expected_build_fingerprint=$RELEASE_FINGERPRINT"
               head -c 500 "$build_file" 2>/dev/null || true
@@ -338,6 +353,11 @@ jobs:
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Quality Gate run: \`$QUALITY_RUN_ID\`"
             echo "- Already exact before run: \`${{ steps.live.outputs.exact }}\`"
-            echo "- Apex and Pages source parity: verified"
+            if [ "${{ steps.verify.outputs.apex_challenged }}" = "true" ]; then
+              echo "- Apex GitHub observer: challenged; downstream public verification required"
+              echo "- Pages source parity: verified"
+            else
+              echo "- Apex and Pages source parity: verified"
+            fi
             echo "- www canonical redirect: verified"
           } >> "$GITHUB_STEP_SUMMARY"
