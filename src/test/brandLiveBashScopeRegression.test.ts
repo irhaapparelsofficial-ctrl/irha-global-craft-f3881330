@@ -89,7 +89,7 @@ describe("Brand Live Bash scope regression", () => {
           `test "$prefix" = "$expected_prefix"\n` +
           `test "$effective" = "$expected_effective"\n` +
           `test "$challenge_seen" = true\n` +
-          `test "${challenged_routes[0]}" = /\n` +
+          `test "\${challenged_routes[0]}" = /\n` +
           `grep -Fx exact-pages "$expected_effective-home.html" >/dev/null`,
         [dir, fallback, headers, first, second, challenge],
       );
@@ -163,7 +163,7 @@ describe("Brand Live Bash scope regression", () => {
           `test "$route" = caller-route\n` +
           `test "$allow_challenge" = caller-mode\n` +
           `test "$apex_challenged" = true\n` +
-          `test "${challenged_routes[0]}" = /manifest.webmanifest`,
+          `test "\${challenged_routes[0]}" = /manifest.webmanifest`,
         [headers, body],
       );
 
