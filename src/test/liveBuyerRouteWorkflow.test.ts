@@ -21,8 +21,12 @@ describe("live buyer route verification", () => {
 
   it("allows Cloudflare propagation before declaring the live route contract failed", () => {
     expect(workflow).toContain("for attempt in $(seq 1 18)");
-    expect(workflow).toContain("Route proof attempt $attempt/18");
+    expect(workflow).toContain("Route proof $label attempt $attempt/18");
     expect(workflow).toContain("sleep 10");
+    expect(workflow).toContain('verify_route_origin "$pages_origin" pages false ""');
+    expect(workflow).toContain('verify_route_origin "$apex_origin" apex true "$pages_valid_path"');
+    expect(workflow).toContain('[ "$status" = "403" ] || return 1');
+    expect(workflow).toContain("Buyer route non-challenge failure");
   });
 
   it("publishes one combined live-brand and buyer-route status", () => {
