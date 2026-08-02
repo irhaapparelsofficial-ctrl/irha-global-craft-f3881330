@@ -34,7 +34,20 @@ jobs:
         run: npm ci --legacy-peer-deps --no-audit --no-fund
 
       - name: Apply focused source corrections
-        run: python3 scripts/ci/ia-brand-master-e001-finalize.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/ci/ia-brand-master-e001-finalize.py')
+          text = path.read_text()
+          for name in ['BRAND_VERSION', 'MASTER_PUBLIC_PATH', 'MASTER_SHA256', 'RUNTIME_PATH', 'MASTER_PATH']:
+              old = '$' + chr(123) + name + chr(125)
+              new = '$' + chr(123) * 2 + name + chr(125) * 2
+              text = text.replace(old, new)
+          path.write_text(text)
+          PY
+          python3 scripts/ci/ia-brand-master-e001-finalize.py
 
       - name: Generate exact technical derivatives
         run: node scripts/generate-official-brand-assets.mjs
