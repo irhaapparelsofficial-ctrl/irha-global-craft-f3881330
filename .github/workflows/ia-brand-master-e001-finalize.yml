@@ -1,0 +1,231 @@
+name: IA Brand Master E001 Finalize
+
+on:
+  push:
+    branches:
+      - fix/ia-brand-master-e001
+    paths:
+      - .github/workflows/ia-brand-master-e001-finalize.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ia-brand-master-e001-finalize
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Checkout exact focused branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/ia-brand-master-e001
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Apply remaining brand source-of-truth corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          ROOT = Path('.')
+          MASTER_SHA = '32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87'
+          VERSION = 'ia-brand-master-e001-20260802-32eee79b'
+          RUNTIME = '/brand/irha-apparels-official-runtime-512.png'
+          RUNTIME_URL = f'https://irhaapparels.com{RUNTIME}'
+
+          def replace(path, old, new, count=None):
+              p = ROOT / path
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'Missing expected marker in {path}: {old[:120]!r}')
+              updated = text.replace(old, new) if count is None else text.replace(old, new, count)
+              p.write_text(updated)
+
+          replace('scripts/version-official-brand-assets.mjs',
+                  'const BRAND_VERSION = "ia-brand-visual-e001-20260801";',
+                  f'const BRAND_VERSION = "{VERSION}";')
+
+          replace('src/lib/publicIdentity.mjs',
+                  'logoUrl: "https://irhaapparels.com/irha-brand-mark.svg",',
+                  f'logoUrl: "{RUNTIME_URL}",')
+          replace('src/lib/siteSettings.ts',
+                  'logoUrl: "/irha-brand-mark.svg",',
+                  f'logoUrl: "{RUNTIME}",')
+          replace('src/lib/publicIdentity.test.ts',
+                  'logo: "https://irhaapparels.com/irha-brand-mark.svg",',
+                  f'logo: "{RUNTIME_URL}",')
+          replace('src/lib/publicIdentity.test.ts',
+                  'logoUrl: "/irha-brand-mark.svg",',
+                  f'logoUrl: "{RUNTIME}",')
+          replace('src/test/siteSettings.test.ts',
+                  'expect(value.brand.logoUrl).toBe("/irha-brand-mark.svg");',
+                  f'expect(value.brand.logoUrl).toBe("{RUNTIME}");')
+
+          replace('scripts/sanitize-unsupported-trust-copy.mjs',
+                  'src="/irha-brand-mark.svg"',
+                  f'src="{RUNTIME}"')
+
+          replace('scripts/verify-built-crawler-shell.mjs',
+                  'import { readFile, readdir } from "node:fs/promises";',
+                  'import { createHash } from "node:crypto";\nimport { readFile, readdir, stat } from "node:fs/promises";')
+          replace('scripts/verify-built-crawler-shell.mjs',
+                  'assert(await readFile(join(DIST, "irha-brand-mark.svg"), "utf8").then((value) => value.includes("Official owner-supplied Irha Apparels")), "Canonical crest asset is missing or unverified");',
+                  f'''const builtBrandMaster = await readFile(join(DIST, "brand/irha-apparels-official-master.png"));\nassert(createHash("sha256").update(builtBrandMaster).digest("hex") === "{MASTER_SHA}", "Built official brand master SHA-256 drift");\nassert((await stat(join(DIST, "brand/irha-apparels-official-runtime-512.png"))).size > 0, "Built official runtime crest is missing");''')
+
+          replace('src/test/proB2BHomepage.test.ts',
+                  'expect(brandAssets).toContain(\'const OFFICIAL_OWNER_CREST = "/icon-512x512.png"\');',
+                  f'expect(brandAssets).toContain(\'const OFFICIAL_RUNTIME_CREST = "{RUNTIME}"\');')
+          replace('src/test/proB2BHomepage.test.ts',
+                  'expect(brandAssets).not.toContain(\'OFFICIAL_OWNER_CREST = "/irha-brand-mark.svg"\');',
+                  'expect(brandAssets).toContain(\'path: "/brand/irha-apparels-official-master.png"\');')
+
+          replace('src/test/faviconBranding.test.ts',
+                  'const BRAND_VERSION = "ia-brand-visual-e001-20260801";',
+                  f'const BRAND_VERSION = "{VERSION}";')
+          replace('src/test/faviconBranding.test.ts',
+                  'expect(brandAssets).toContain(\'const OFFICIAL_OWNER_CREST = "/icon-512x512.png"\');',
+                  f'expect(brandAssets).toContain(\'const OFFICIAL_RUNTIME_CREST = "{RUNTIME}"\');')
+          replace('src/test/faviconBranding.test.ts',
+                  'expect(brandAssets).not.toContain(\'OFFICIAL_OWNER_CREST = "/irha-brand-mark.svg"\');',
+                  'expect(brandAssets).toContain(\'path: "/brand/irha-apparels-official-master.png"\');')
+          replace('src/test/faviconBranding.test.ts',
+                  'Official Irha Apparels Manufacturing Specialists crest supplied by the owner',
+                  'Official Irha Apparels Manufacturing Specialists crest derived from the exact owner-uploaded master.',
+                  1)
+          replace('src/test/faviconBranding.test.ts',
+                  'expect(liveVerification).toContain("Official Irha Apparels Manufacturing Specialists crest supplied by the owner");',
+                  f'expect(liveVerification).toContain("{MASTER_SHA}");\n    expect(liveVerification).toContain("/brand/irha-apparels-official-master.png");\n    expect(liveVerification).toContain("data:image/png;base64,");')
+
+          live_path = ROOT / '.github/workflows/verify-official-brand-live.yml'
+          live = live_path.read_text()
+          source_marker = '          origin="https://irhaapparels.com"'
+          if source_marker not in live:
+              raise SystemExit('Brand live source-origin marker missing')
+          live = live.replace(source_marker, '          origin="https://irha-apparels.pages.dev"', 1)
+          start_marker = '      - name: Verify official logo and favicon on production\n'
+          end_marker = '      - name: Verify canonical buyer routes on production\n'
+          start = live.index(start_marker)
+          end = live.index(end_marker, start)
+          old_block = live[start:end]
+          run_marker = '        run: |\n'
+          header_end = old_block.index(run_marker) + len(run_marker)
+          header = old_block[:header_end]
+          script = f'''          set -euo pipefail\n          expected_master="{MASTER_SHA}"\n          pages_origin="https://irha-apparels.pages.dev"\n          apex_origin="https://irhaapparels.com"\n\n          cloudflare_challenge() {{\n            headers="$1"\n            body="$2"\n            if grep -Fqi 'cf-mitigated: challenge' "$headers" 2>/dev/null; then return 0; fi\n            if grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi\n            return 1\n          }}\n\n          png_dimensions() {{\n            python3 -c 'import struct,sys; d=open(sys.argv[1],"rb").read(24); assert d[:8] == bytes.fromhex("89504e470d0a1a0a"); assert struct.unpack(">II", d[16:24]) == (int(sys.argv[2]), int(sys.argv[3]))' "$1" "$2" "$3"\n          }}\n\n          verify_origin() {{\n            origin="$1"\n            label="$2"\n            allow_challenge="$3"\n            ready=false\n\n            for attempt in $(seq 1 18); do\n              cache_bust="${{SOURCE_SHA::12}}-$label-$attempt-$RANDOM"\n              prefix="/tmp/brand-$label"\n              master_status="$(curl -sS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-master.headers" -o "$prefix-master.png" -w '%{{http_code}}' "$origin/brand/irha-apparels-official-master.png?brand_check=$cache_bust" || true)"\n              if [ "$master_status" = "403" ] && cloudflare_challenge "$prefix-master.headers" "$prefix-master.png"; then\n                if [ "$allow_challenge" = "true" ]; then\n                  echo "::warning::GitHub-hosted $label brand observer received a verified Cloudflare challenge; independent public verification remains required."\n                  echo "${{label}}_challenged=true" >> "$GITHUB_OUTPUT"\n                  return 0\n                fi\n              fi\n\n              runtime_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-runtime.png" -w '%{{http_code}}' "$origin/brand/irha-apparels-official-runtime-512.png?brand_check=$cache_bust" || true)"\n              favicon_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-favicon.svg" -w '%{{http_code}}' "$origin/favicon.svg?brand_check=$cache_bust" || true)"\n              legacy_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-favicon-ico.headers" -o "$prefix-favicon.ico" -w '%{{http_code}}' "$origin/favicon.ico?brand_check=$cache_bust" || true)"\n              icon192_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-icon192.png" -w '%{{http_code}}' "$origin/icon-192x192.png?brand_check=$cache_bust" || true)"\n              icon512_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-icon512.png" -w '%{{http_code}}' "$origin/icon-512x512.png?brand_check=$cache_bust" || true)"\n              apple_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-apple.png" -w '%{{http_code}}' "$origin/apple-touch-icon.png?brand_check=$cache_bust" || true)"\n              manifest_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-manifest.json" -w '%{{http_code}}' "$origin/manifest.webmanifest?brand_check=$cache_bust" || true)"\n              provenance_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-provenance.json" -w '%{{http_code}}' "$origin/brand/brand-master.json?brand_check=$cache_bust" || true)"\n              home_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-home.html" -w '%{{http_code}}' "$origin/?brand_check=$cache_bust" || true)"\n              master_hash="$(sha256sum "$prefix-master.png" 2>/dev/null | awk '{{print $1}}' || true)"\n              favicon_source="$(awk 'BEGIN{{IGNORECASE=1}} /^x-irha-favicon-source:/ {{sub(/^[^:]+:[[:space:]]*/, ""); sub(/\\r$/, ""); print}}' "$prefix-favicon-ico.headers" | tail -n 1)"\n\n              echo "Brand proof $label attempt $attempt/18: master=$master_status/$master_hash runtime=$runtime_status favicon=$favicon_status legacy=$legacy_status 192=$icon192_status 512=$icon512_status apple=$apple_status manifest=$manifest_status provenance=$provenance_status home=$home_status"\n\n              if [ "$master_status" = "200" ] && [ "$master_hash" = "$expected_master" ] \\\n                && [ "$runtime_status" = "200" ] && [ "$favicon_status" = "200" ] && [ "$legacy_status" = "200" ] \\\n                && [ "$icon192_status" = "200" ] && [ "$icon512_status" = "200" ] && [ "$apple_status" = "200" ] \\\n                && [ "$manifest_status" = "200" ] && [ "$provenance_status" = "200" ] && [ "$home_status" = "200" ] \\\n                && png_dimensions "$prefix-master.png" 1024 1024 \\\n                && png_dimensions "$prefix-runtime.png" 512 512 \\\n                && png_dimensions "$prefix-icon192.png" 192 192 \\\n                && png_dimensions "$prefix-icon512.png" 512 512 \\\n                && png_dimensions "$prefix-apple.png" 180 180 \\\n                && grep -Fq "data-master-sha256=\\\"$expected_master\\\"" "$prefix-favicon.svg" \\\n                && grep -Fq 'data:image/png;base64,' "$prefix-favicon.svg" \\\n                && grep -Fq "$expected_master" "$prefix-favicon.ico" \\\n                && jq -e --arg sha "$expected_master" '.master.sha256 == $sha and .master.width == 1024 and .master.height == 1024 and .generation.crop == false and .generation.stretch == false' "$prefix-provenance.json" >/dev/null \\\n                && jq -e '.icons | any(.src | startswith("/icon-192x192.png")) and any(.src | startswith("/icon-512x512.png"))' "$prefix-manifest.json" >/dev/null \\\n                && grep -Fq '/brand/irha-apparels-official-runtime-512.png' "$prefix-home.html"; then\n                if [ "$label" = "apex" ]; then\n                  test -z "$favicon_source" || test "$favicon_source" = "official-owner-crest"\n                fi\n                ready=true\n                echo "Exact owner-uploaded master and all normal brand derivatives verified at $label."\n                break\n              fi\n              sleep 10\n            done\n\n            test "$ready" = "true" || {{\n              echo "::error title=Official Irha brand not verified::$label did not serve the exact owner-uploaded master and required derivatives."\n              return 1\n            }}\n          }}\n\n          verify_origin "$pages_origin" pages false\n          verify_origin "$apex_origin" apex true\n'''
+          live = live[:start] + header + script + '\n' + live[end:]
+          live_path.write_text(live)
+
+          contract = f'''import {{ createHash }} from "node:crypto";\nimport {{ readFileSync }} from "node:fs";\nimport {{ resolve }} from "node:path";\nimport sharp from "sharp";\nimport {{ describe, expect, it }} from "vitest";\n\nconst ROOT = process.cwd();\nconst MASTER_PATH = "public/brand/irha-apparels-official-master.png";\nconst MASTER_PUBLIC_PATH = "/brand/irha-apparels-official-master.png";\nconst RUNTIME_PATH = "/brand/irha-apparels-official-runtime-512.png";\nconst MASTER_SHA256 = "{MASTER_SHA}";\nconst BRAND_VERSION = "{VERSION}";\n\nconst readText = (path: string) => readFileSync(resolve(ROOT, path), "utf8");\nconst readBytes = (path: string) => readFileSync(resolve(ROOT, path));\nconst hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");\n\nasync function decoded(path: string, width: number, height: number) {{\n  const image = sharp(readBytes(path), {{ failOn: "error" }});\n  const metadata = await image.metadata();\n  expect(metadata).toMatchObject({{ format: "png", width, height }});\n  return image.raw().toBuffer();\n}}\n\ndescribe("IA-BRAND-MASTER-E001 official brand master contract", () => {{\n  it("locks the exact owner-uploaded master by immutable identity", async () => {{\n    const bytes = readBytes(MASTER_PATH);\n    expect(hash(bytes)).toBe(MASTER_SHA256);\n    expect(bytes.byteLength).toBe(1023183);\n    const metadata = await sharp(bytes, {{ failOn: "error" }}).metadata();\n    expect(metadata).toMatchObject({{ format: "png", width: 1024, height: 1024 }});\n    await sharp(bytes, {{ failOn: "error" }}).raw().toBuffer();\n  }});\n\n  it("records one explicit provenance chain from locked master to every technical derivative", () => {{\n    const provenance = JSON.parse(readText("public/brand/brand-master.json"));\n    expect(provenance).toMatchObject({{\n      schemaVersion: 1,\n      executionId: "IA-BRAND-MASTER-E001",\n      source: "owner-uploaded file in execution chat",\n      master: {{\n        path: MASTER_PATH,\n        publicPath: MASTER_PUBLIC_PATH,\n        sha256: MASTER_SHA256,\n        mimeType: "image/png",\n        width: 1024,\n        height: 1024,\n        sizeBytes: 1023183,\n      }},\n      generation: {{\n        implementation: "scripts/generate-official-brand-assets.mjs",\n        library: "sharp",\n        fit: "contain",\n        kernel: "lanczos3",\n        crop: false,\n        stretch: false,\n      }},\n      brandAssetVersion: BRAND_VERSION,\n    }});\n    expect(provenance.derivatives.map((item: {{ publicPath: string }}) => item.publicPath)).toEqual(expect.arrayContaining([\n      RUNTIME_PATH, "/favicon-16x16.png", "/favicon-32x32.png", "/favicon-48x48.png",\n      "/apple-touch-icon.png", "/icon-192x192.png", "/icon-512x512.png",\n    ]));\n  }});\n\n  it("proves committed raster derivatives are no-crop resizes of the locked master", async () => {{\n    const master = readBytes(MASTER_PATH);\n    for (const [path, size] of [\n      ["public/brand/irha-apparels-official-runtime-512.png", 512],\n      ["public/favicon-16x16.png", 16],\n      ["public/favicon-32x32.png", 32],\n      ["public/favicon-48x48.png", 48],\n      ["public/apple-touch-icon.png", 180],\n      ["public/icon-192x192.png", 192],\n      ["public/icon-512x512.png", 512],\n    ] as const) {{\n      const actual = await decoded(path, size, size);\n      const expected = await sharp(master, {{ failOn: "error" }})\n        .resize(size, size, {{ fit: "contain", position: "centre", withoutEnlargement: true, kernel: sharp.kernel.lanczos3 }})\n        .raw()\n        .toBuffer();\n      expect(Buffer.compare(actual, expected), path).toBe(0);\n    }}\n  }});\n\n  it("keeps runtime, structured identity, fallback and static shell on the official master lineage", () => {{\n    const brandAssets = readText("src/lib/brandAssets.ts");\n    const navbar = readText("src/components/layout/Navbar.tsx");\n    const footer = readText("src/components/layout/Footer.tsx");\n    const imageLoading = readText("src/lib/imageLoading.ts");\n    const publicIdentity = readText("src/lib/publicIdentity.mjs");\n    const siteSettings = readText("src/lib/siteSettings.ts");\n    const sanitizer = readText("scripts/sanitize-unsupported-trust-copy.mjs");\n\n    expect(brandAssets).toContain(`BRAND_ASSET_VERSION = "${{BRAND_VERSION}}"`);\n    expect(brandAssets).toContain(`path: "${{MASTER_PUBLIC_PATH}}"`);\n    expect(brandAssets).toContain(`sha256: "${{MASTER_SHA256}}"`);\n    expect(brandAssets).toContain(`const OFFICIAL_RUNTIME_CREST = "${{RUNTIME_PATH}}"`);\n    expect(brandAssets).not.toContain('const OFFICIAL_OWNER_CREST = "/icon-512x512.png"');\n    expect(navbar).toContain("BRAND_ASSETS.headerLogo");\n    expect(footer).toContain("BRAND_ASSETS.footerLogo");\n    expect(imageLoading).toContain("BRAND_ASSETS.controlledFallback");\n    expect(publicIdentity).toContain(`logoUrl: "https://irhaapparels.com${{RUNTIME_PATH}}"`);\n    expect(siteSettings).toContain(`logoUrl: "${{RUNTIME_PATH}}"`);\n    expect(sanitizer).toContain(`src=\\"${{RUNTIME_PATH}}\\"`);\n  }});\n\n  it("locks favicon and PWA metadata to the same official provenance", async () => {{\n    const favicon = readText("public/favicon.svg");\n    const manifest = JSON.parse(readText("public/manifest.webmanifest"));\n    expect(favicon).toContain(`data-master-sha256="${{MASTER_SHA256}}"`);\n    expect(favicon).toContain("data:image/png;base64,");\n    const prefix = 'href="data:image/png;base64,';\n    const start = favicon.indexOf(prefix) + prefix.length;\n    const end = favicon.indexOf('"', start);\n    expect(start).toBeGreaterThan(prefix.length - 1);\n    expect(end).toBeGreaterThan(start);\n    expect(Buffer.compare(Buffer.from(favicon.slice(start, end).replace(/\\s+/g, ""), "base64"), readBytes("public/icon-192x192.png"))).toBe(0);\n    await decoded("public/icon-192x192.png", 192, 192);\n    await decoded("public/icon-512x512.png", 512, 512);\n    expect(manifest.icons).toEqual(expect.arrayContaining([\n      expect.objectContaining({{ src: "/favicon.svg", sizes: "any" }}),\n      expect.objectContaining({{ src: "/icon-192x192.png", sizes: "192x192" }}),\n      expect.objectContaining({{ src: "/icon-512x512.png", sizes: "512x512" }}),\n    ]));\n  }});\n\n  it("keeps the permanent generator itself hash-locked to this owner master", () => {{\n    const generator = readText("scripts/generate-official-brand-assets.mjs");\n    const liveVerification = readText(".github/workflows/verify-official-brand-live.yml");\n    expect(generator).toContain(`path: "${{MASTER_PATH}}"`);\n    expect(generator).toContain(`sha256: "${{MASTER_SHA256}}"`);\n    expect(generator).toContain('fit: "contain"');\n    expect(generator).toContain("sharp.kernel.lanczos3");\n    expect(generator).toContain("crop: false");\n    expect(generator).toContain("stretch: false");\n    expect(liveVerification).toContain(MASTER_SHA256);\n    expect(liveVerification).toContain(MASTER_PUBLIC_PATH);\n    expect(liveVerification).toContain(RUNTIME_PATH);\n  }});\n}});\n'''
+          (ROOT / 'src/test/brandMasterContract.test.ts').write_text(contract)
+
+          (ROOT / 'public/irha-logo-official-source-note.txt').write_text(
+              f'Official Irha Apparels master logo locked by IA-BRAND-MASTER-E001 on 2026-08-02. '
+              f'Authoritative repository source: public/brand/irha-apparels-official-master.png; SHA-256 {MASTER_SHA}; '
+              'PNG 1024x1024, 1,023,183 bytes. Runtime, favicon, Apple and PWA assets are technical derivatives of that exact owner upload.\n'
+          )
+
+          (ROOT / 'docs/branding/IRHA_EXACT_LOGO_UPDATE_NOTE.md').write_text(f'''# Irha Apparels official brand master\n\nCurrent authority: **IA-BRAND-MASTER-E001 / IRHA-OFFICIAL-BRAND-MASTER-01**.\n\nThe exact owner-uploaded circular navy-and-gold crest supplied on 2026-08-02 is the current and permanent source of truth. It contains “IRHA APPARELS” and “MANUFACTURING SPECIALISTS” around the detailed central shield.\n\n- Master path: `public/brand/irha-apparels-official-master.png`\n- SHA-256: `{MASTER_SHA}`\n- MIME: `image/png`\n- Dimensions: `1024 × 1024`\n- File size: `1,023,183 bytes`\n\nThe master is preserved byte-for-byte. Runtime, favicon, Apple-touch and PWA files are generated technical derivatives using the permanent generator at `scripts/generate-official-brand-assets.mjs`. The previous square/historical icon classification from PR #825 is retained only as history and is not authoritative.\n''')
+
+          for path in ['docs/IA_CONTENT_E001_BRAND_ASSET_PROVENANCE.md', 'docs/IA_BRAND_VISUAL_E001_EVIDENCE.md']:
+              p = ROOT / path
+              text = p.read_text()
+              notice = f'> **Superseded brand authority:** IA-BRAND-MASTER-E001 (2026-08-02) now locks `public/brand/irha-apparels-official-master.png` at SHA-256 `{MASTER_SHA}` as the official owner master. Historical logo classifications below are audit history only.\n\n'
+              if not text.startswith('> **Superseded brand authority:**'):
+                  p.write_text(notice + text)
+
+          (ROOT / 'docs/IA_BRAND_MASTER_E001_EVIDENCE.md').write_text(f'''# IA-BRAND-MASTER-E001 — Brand master evidence\n\nGoal lock: `IRHA-OFFICIAL-BRAND-MASTER-01`\n\n## Authoritative owner upload\n\n- Repository master: `public/brand/irha-apparels-official-master.png`\n- SHA-256: `{MASTER_SHA}`\n- MIME: `image/png`\n- Dimensions: `1024 × 1024`\n- File size: `1,023,183 bytes`\n- Artwork: circular navy-and-gold `IRHA APPARELS / MANUFACTURING SPECIALISTS` crest with detailed central shield\n\nThe repository master is the exact execution-chat owner upload. It is not redrawn, regenerated, approximated or AI-replaced.\n\n## Root cause\n\nPR #825 treated the then-existing square/historical icon lineage as the owner crest. `src/lib/brandAssets.ts` subsequently routed header, footer and controlled fallback through `/icon-512x512.png`. The tests proved internal derivative consistency but did not lock the actual owner master identity.\n\n## Corrected contract\n\n- `src/lib/brandAssets.ts` exposes the immutable master identity and routes normal branding through `{RUNTIME}`.\n- `scripts/generate-official-brand-assets.mjs` generates no-crop, no-stretch technical derivatives from the exact master.\n- `public/brand/brand-master.json` records derivative provenance and hashes.\n- `src/test/brandMasterContract.test.ts` locks exact master SHA, decode/dimensions, derivative pixel lineage, Navbar, Footer, fallback, favicon/PWA metadata and live verification.\n- A cache-version rotation to `{VERSION}` prevents normal runtime branding from continuing to request the previous artwork under the old brand cache key.\n\n## Scope safety\n\nNo product media P001–P254, Supabase database, Supabase Storage, taxonomy, category structure, SEO copy, localization, pricing/MOQ claim, homepage layout or Cloudflare security setting is part of this correction.\n''')
+          PY
+
+      - name: Regenerate deterministic brand derivatives
+        run: node scripts/generate-official-brand-assets.mjs
+
+      - name: Verify exact master bytes after generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' '32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87' 'public/brand/irha-apparels-official-master.png' | sha256sum -c -
+          test "$(wc -c < public/brand/irha-apparels-official-master.png | tr -d ' ')" = '1023183'
+
+      - name: Run focused brand and identity tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx vitest run \
+            src/test/brandMasterContract.test.ts \
+            src/test/faviconBranding.test.ts \
+            src/test/proB2BHomepage.test.ts \
+            src/lib/publicIdentity.test.ts \
+            src/test/siteSettings.test.ts \
+            --reporter=verbose
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Build exact deployable source
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm --ignore-scripts run build
+
+      - name: Verify built master and branding identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' '32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87' 'dist/brand/irha-apparels-official-master.png' | sha256sum -c -
+          grep -R -Fq '/brand/irha-apparels-official-runtime-512.png' dist/index.html
+          grep -Fq 'ia-brand-master-e001-20260802-32eee79b' dist/index.html
+
+      - name: Commit only focused brand correction and retire finalizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            scripts/generate-official-brand-assets.mjs \
+            scripts/version-official-brand-assets.mjs \
+            scripts/sanitize-unsupported-trust-copy.mjs \
+            scripts/verify-built-crawler-shell.mjs \
+            src/lib/brandAssets.ts \
+            src/lib/publicIdentity.mjs \
+            src/lib/publicIdentity.test.ts \
+            src/lib/siteSettings.ts \
+            src/test/siteSettings.test.ts \
+            src/test/faviconBranding.test.ts \
+            src/test/proB2BHomepage.test.ts \
+            src/test/brandMasterContract.test.ts \
+            .github/workflows/verify-official-brand-live.yml \
+            public/brand/irha-apparels-official-master.png \
+            public/brand/irha-apparels-official-runtime-512.png \
+            public/brand/brand-master.json \
+            public/favicon.svg \
+            public/favicon-16x16.png \
+            public/favicon-32x32.png \
+            public/favicon-48x48.png \
+            public/apple-touch-icon.png \
+            public/icon-192x192.png \
+            public/icon-512x512.png \
+            public/irha-brand-mark.svg \
+            public/irha-logo-official-source-note.txt \
+            docs/branding/IRHA_EXACT_LOGO_UPDATE_NOTE.md \
+            docs/IA_CONTENT_E001_BRAND_ASSET_PROVENANCE.md \
+            docs/IA_BRAND_VISUAL_E001_EVIDENCE.md \
+            docs/IA_BRAND_MASTER_E001_EVIDENCE.md
+          git rm .github/workflows/ia-brand-master-e001-finalize.yml
+          echo '--- staged focused paths ---'
+          git diff --cached --name-only
+          git commit -m 'fix(brand): lock exact owner logo master'
+          git push origin HEAD:fix/ia-brand-master-e001
