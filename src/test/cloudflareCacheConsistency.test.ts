@@ -68,6 +68,18 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(workflow).toContain("String.fromCharCode(39)");
   });
 
+  it("treats only a verified Cloudflare browser challenge as an inconclusive www observer result", () => {
+    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
+
+    expect(workflow).toContain("www_challenge=false");
+    expect(workflow).toContain("grep -Fqi 'Just a moment...' \"$www_body\"");
+    expect(workflow).toContain('echo "www_challenge_seen=$www_challenge" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("403)");
+    expect(workflow).toContain('if [ "$www_challenge" = true ]; then');
+    expect(workflow).toContain("Unexpected non-challenge www status");
+    expect(workflow).toContain("GitHub-hosted www redirect observation is challenged");
+  });
+
   it("bypasses only HTML/release identity while preserving long-lived immutable asset caching", () => {
     const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
 
