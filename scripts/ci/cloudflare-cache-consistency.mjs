@@ -325,28 +325,43 @@ async function ensurePolicy() {
   const rules = phase.payload?.result?.rules ?? [];
   const existingIndex = rules.findIndex((rule) => rule.description === RULE_DESCRIPTION);
   const existing = existingIndex >= 0 ? rules[existingIndex] : null;
-  const definition = {
+  const existingIsLast = existingIndex >= 0 && existingIndex === rules.length - 1;
+  const baseDefinition = {
     action: "set_cache_settings",
     action_parameters: { cache: false },
     expression: CACHE_BYPASS_EXPRESSION,
     description: RULE_DESCRIPTION,
     enabled: true,
   };
+  const existingMatches = Boolean(
+    existing &&
+      existing.enabled !== false &&
+      existing.action === baseDefinition.action &&
+      existing.action_parameters?.cache === false &&
+      existing.expression === baseDefinition.expression,
+  );
 
-  let result;
+  let result = { payload: { result: existing } };
+  let mutation = "reaffirmed";
   if (existing?.id) {
-    const existingIsLast = existingIndex === rules.length - 1;
-    result = await cf(
-      "PATCH",
-      `/zones/${zoneId}/rulesets/${rulesetId}/rules/${existing.id}`,
-      existingIsLast ? definition : { ...definition, position: { after: "" } },
-    );
+    if (!(existingMatches && existingIsLast)) {
+      const patchDefinition = existingIsLast
+        ? baseDefinition
+        : { ...baseDefinition, position: { after: "" } };
+      result = await cf(
+        "PATCH",
+        `/zones/${zoneId}/rulesets/${rulesetId}/rules/${existing.id}`,
+        patchDefinition,
+      );
+      mutation = "updated";
+    }
   } else {
     result = await cf(
       "POST",
       `/zones/${zoneId}/rulesets/${rulesetId}/rules`,
-      { ...definition, position: { after: "" } },
+      { ...baseDefinition, position: { after: "" } },
     );
+    mutation = "created";
   }
 
   const verified = await getPhaseEntrypoint(zoneId, CACHE_PHASE);
@@ -366,6 +381,7 @@ async function ensurePolicy() {
 
   process.stdout.write(`${JSON.stringify({
     changed_or_reaffirmed: true,
+    mutation,
     rule_id: rule.id ?? result.payload?.result?.id ?? null,
     ruleset_id: rulesetId,
     is_last: true,
