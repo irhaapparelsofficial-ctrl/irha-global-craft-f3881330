@@ -1,0 +1,25 @@
+{
+  "source": "/favicon-16x16.png",
+  "status": "review_required",
+  "backgroundStyle": "charcoal_studio_v1",
+  "backgroundHex": "#101722",
+  "enhanced": true,
+  "upscaled": true,
+  "qualityScore": 53.27,
+  "reviewReason": "Product mask touches at least three source edges; Automated quality score is low (53.27)",
+  "sourceWidth": 16,
+  "sourceHeight": 16,
+  "masterWidth": 2400,
+  "masterHeight": 3000,
+  "sourceSharpness": 18229.82,
+  "foregroundRatio": 0.61816,
+  "translucentRatio": 0.0,
+  "majorComponents": 1,
+  "outputBytes": {
+    "master": 74658,
+    "360": 3724,
+    "720": 9656,
+    "1200": 19910,
+    "1600": 30918
+  }
+}
