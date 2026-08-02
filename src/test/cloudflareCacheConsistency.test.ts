@@ -68,6 +68,30 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(workflow).toContain("String.fromCharCode(39)");
   });
 
+  it("keeps cache-rule enforcement idempotent when the bypass rule is already last", () => {
+    const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
+
+    expect(script).toContain("const existingIndex = rules.findIndex");
+    expect(script).toContain("const existingIsLast = existingIndex === rules.length - 1");
+    expect(script).toContain('existingIsLast ? definition : { ...definition, position: { after: "" } }');
+    expect(script).toContain('{ ...definition, position: { after: "" } }');
+  });
+
+  it("treats an apex Cloudflare challenge as an observer limitation, not a release mismatch", () => {
+    const workflow = read(".github/workflows/cloudflare-current-main-reconcile.yml");
+    const script = extractRunBlock(workflow, "Verify pages.dev, apex and www canonical behavior");
+    const result = spawnSync("bash", ["-n", "-s"], {
+      input: script,
+      encoding: "utf8",
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(workflow).toContain('echo "apex_challenged=false" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("Just a moment...");
+    expect(workflow).toContain('echo "apex_challenged=true" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("downstream cache/public verification remains required for apex");
+  });
+
   it("bypasses only HTML/release identity while preserving long-lived immutable asset caching", () => {
     const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
 
