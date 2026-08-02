@@ -222,6 +222,16 @@ jobs:
           set -euo pipefail
           matrix=/tmp/cache-consistency-matrix.tsv
           printf 'origin\trequest\tstatus\tidentity\tchallenge\tcf_cache_status\tage\tcache_control\tcdn_cache_control\tcf_ray\n' > "$matrix"
+          echo "www_challenge_seen=false" >> "$GITHUB_OUTPUT"
+
+          cloudflare_challenge() {
+            headers="$1"
+            body="$2"
+            if grep -Fqi 'cf-mitigated: challenge' "$headers" 2>/dev/null; then return 0; fi
+            if grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null \
+              && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi
+            return 1
+          }
 
           verify_build() {
             origin="$1"
@@ -239,7 +249,7 @@ jobs:
 
             challenge=false
             identity=false
-            if grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then challenge=true; fi
+            if cloudflare_challenge "$headers" "$body"; then challenge=true; fi
             if [ "$status" = 200 ] && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$EXPECTED_FINGERPRINT" \
               '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
               "$body" >/dev/null 2>&1; then
@@ -275,7 +285,7 @@ jobs:
               "$origin/$suffix" || true)"
             challenge=false
             identity=false
-            if grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then challenge=true; fi
+            if cloudflare_challenge "$headers" "$body"; then challenge=true; fi
             if [ "$status" = 200 ]; then
               source_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const q="[\\\""+String.fromCharCode(39)+"]"; const m=s.match(new RegExp("<meta[^>]+name="+q+"x-irha-source-commit"+q+"[^>]+content="+q+"([^\\\""+String.fromCharCode(39)+"]+)","i")); process.stdout.write(m?.[1]||"")' "$body")"
               fingerprint_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const q="[\\\""+String.fromCharCode(39)+"]"; const m=s.match(new RegExp("<meta[^>]+name="+q+"x-irha-build-fingerprint"+q+"[^>]+content="+q+"([^\\\""+String.fromCharCode(39)+"]+)","i")); process.stdout.write(m?.[1]||"")' "$body")"
@@ -345,12 +355,30 @@ jobs:
           done
 
           www_headers=/tmp/www-cache-consistency.headers
+          www_body=/tmp/www-cache-consistency.body
           www_status="$(curl -sS --connect-timeout 10 --max-time 40 --max-redirs 0 \
-            -D "$www_headers" -o /tmp/www-cache-consistency.body -w '%{http_code}' \
+            -D "$www_headers" -o "$www_body" -w '%{http_code}' \
             "$WWW_ORIGIN/?utm_source=google" || true)"
           www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$www_headers")"
-          case "$www_status" in 301|302|307|308) ;; *) echo "Unexpected www status: $www_status"; exit 1 ;; esac
-          case "$www_location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $www_location"; exit 1 ;; esac
+
+          www_verified=false
+          case "$www_status" in
+            301|302|307|308)
+              case "$www_location" in
+                https://irhaapparels.com/*) www_verified=true ;;
+              esac
+              ;;
+          esac
+
+          if [ "$www_verified" = "true" ]; then
+            echo "www canonical redirect verified: status=$www_status location=$www_location"
+          elif cloudflare_challenge "$www_headers" "$www_body"; then
+            echo "www_challenge_seen=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::GitHub-hosted www observation is challenged; control-plane and independent public-browser verification remain required."
+          else
+            echo "Unexpected non-challenge www response: status=$www_status location=$www_location"
+            exit 1
+          fi
 
           cat "$matrix"
 
@@ -362,16 +390,17 @@ jobs:
           APEX_BUILD_DIRECT: ${{ steps.verify.outputs.apex_build_direct }}
           APEX_HOME_DIRECT: ${{ steps.verify.outputs.apex_home_direct }}
           APEX_CHALLENGE: ${{ steps.verify.outputs.apex_challenge_seen }}
+          WWW_CHALLENGE: ${{ steps.verify.outputs.www_challenge_seen }}
         run: |
           set -euo pipefail
           state=failure
           description="Cloudflare cache consistency failed"
           if [ "$VERIFY_OUTCOME" = success ]; then
             state=success
-            if [ "$APEX_BUILD_DIRECT" = true ] && [ "$APEX_HOME_DIRECT" = true ]; then
+            if [ "$APEX_CHALLENGE" = true ] || [ "$WWW_CHALLENGE" = true ]; then
+              description="Cache policy/purge verified; custom-domain GitHub observer challenged"
+            elif [ "$APEX_BUILD_DIRECT" = true ] && [ "$APEX_HOME_DIRECT" = true ]; then
               description="Unbusted/busted Pages and apex release identities agree"
-            elif [ "$APEX_CHALLENGE" = true ]; then
-              description="Cache policy/purge verified; apex GitHub observer challenged"
             else
               description="Cache policy and Pages identity verified"
             fi
@@ -404,6 +433,7 @@ jobs:
             /tmp/apex-*-home.html
             /tmp/apex-*.headers
             /tmp/www-cache-consistency.headers
+            /tmp/www-cache-consistency.body
           if-no-files-found: warn
           retention-days: 3
           compression-level: 0
@@ -423,5 +453,6 @@ jobs:
             echo "- Apex direct build identity: \`${{ steps.verify.outputs.apex_build_direct }}\`"
             echo "- Apex direct homepage identity: \`${{ steps.verify.outputs.apex_home_direct }}\`"
             echo "- Apex GitHub challenge observed: \`${{ steps.verify.outputs.apex_challenge_seen }}\`"
+            echo "- www GitHub challenge observed: \`${{ steps.verify.outputs.www_challenge_seen }}\`"
             echo "- Static asset caching disabled globally: \`false\`"
           } >> "$GITHUB_STEP_SUMMARY"
