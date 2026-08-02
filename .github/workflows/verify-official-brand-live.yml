@@ -34,6 +34,14 @@ jobs:
           origin="https://irha-apparels.pages.dev"
           source_sha=""
 
+          exact_current_source() {
+            observed="$1"
+            current="$2"
+            expected_dispatch="${3:-}"
+            [ "$observed" = "$current" ] || return 1
+            [ -z "$expected_dispatch" ] || [ "$observed" = "$expected_dispatch" ]
+          }
+
           for attempt in $(seq 1 18); do
             cache_bust="brand-source-$GITHUB_RUN_ID-$attempt-$RANDOM"
             status="$(curl -sSL --connect-timeout 10 --max-time 40 \
@@ -42,7 +50,12 @@ jobs:
               "$origin/build.json?brand_check=$cache_bust" || true)"
 
             if [ "$status" = "200" ] \
-              && jq -e '.source_identity_state == "verified" and (.source_commit | type == "string" and test("^[0-9a-f]{40}$"))' /tmp/build.json >/dev/null 2>&1; then
+              && jq -e '.source_branch == "main"
+                and .source_identity_state == "verified"
+                and .expected_origin == "https://irhaapparels.com"
+                and (.source_commit | type == "string" and test("^[0-9a-f]{40}$"))
+                and (.build_fingerprint | type == "string" and test("^[0-9a-f]{64}$"))' \
+                /tmp/build.json >/dev/null 2>&1; then
               source_sha="$(jq -r '.source_commit' /tmp/build.json)"
               break
             fi
@@ -57,7 +70,7 @@ jobs:
 
           if [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]]; then
             if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              if [ "$source_sha" = "$latest_main" ] && [ "$source_sha" = "$DISPATCH_SOURCE_SHA" ]; then
+              if exact_current_source "$source_sha" "$latest_main" "$DISPATCH_SOURCE_SHA"; then
                 status_json="$(gh api "repos/$GITHUB_REPOSITORY/commits/$source_sha/status")"
                 exact_search_success="$(printf '%s' "$status_json" | jq '[.statuses[] | select(.context == "Irha Search Discovery" and .state == "success")] | length')"
                 [ "$exact_search_success" -gt 0 ] && relevant=true
@@ -70,7 +83,7 @@ jobs:
                 '[.statuses[] | select(.context == "Irha Search Discovery" and .state == "success" and .target_url == $target)] | length')"
               if [ "$UPSTREAM_CONCLUSION" = "success" ] \
                 && [ "$UPSTREAM_REPOSITORY" = "$GITHUB_REPOSITORY" ] \
-                && [ "$source_sha" = "$latest_main" ] \
+                && exact_current_source "$source_sha" "$latest_main" \
                 && [ "$exact_search_success" -gt 0 ]; then
                 relevant=true
               fi
@@ -128,78 +141,164 @@ jobs:
           apex_origin="https://irhaapparels.com"
 
           cloudflare_challenge() {
-            headers="$1"
-            body="$2"
-            if grep -Fqi 'cf-mitigated: challenge' "$headers" 2>/dev/null; then return 0; fi
-            if grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi
+            status="$1"
+            headers="$2"
+            body="$3"
+            [ "$status" = "403" ] || return 1
+            if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null; then return 0; fi
+            if grep -Eqi '^server:[[:space:]]*cloudflare' "$headers" 2>/dev/null \
+              && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi
             return 1
+          }
+
+          challenge_evidence() {
+            headers="$1"
+            awk 'BEGIN{IGNORECASE=1}
+              /^(server|cf-ray|cf-mitigated|content-type|cache-control|cf-cache-status):/ {
+                sub(/\r$/, "");
+                printf "%s%s", sep, $0;
+                sep="; "
+              }
+              END{print ""}' "$headers" 2>/dev/null
           }
 
           png_dimensions() {
             python3 -c 'import struct,sys; d=open(sys.argv[1],"rb").read(24); assert d[:8] == bytes.fromhex("89504e470d0a1a0a"); assert struct.unpack(">II", d[16:24]) == (int(sys.argv[2]), int(sys.argv[3]))' "$1" "$2" "$3"
           }
 
+          resolve_observation() {
+            status="$1"
+            headers="$2"
+            body="$3"
+            fallback="$4"
+            effective="$5"
+            route="$6"
+            allow_challenge="$7"
+
+            if [ "$status" = "200" ]; then
+              cp "$body" "$effective"
+              return 0
+            fi
+
+            if [ "$allow_challenge" = "true" ] && cloudflare_challenge "$status" "$headers" "$body"; then
+              test -s "$fallback"
+              cp "$fallback" "$effective"
+              challenge_seen=true
+              challenged_routes+=("$route")
+              evidence="$(challenge_evidence "$headers")"
+              echo "::warning::GitHub-hosted $label observer challenge on $route; exact Pages fallback is required. ${evidence:-challenge markers verified}"
+              return 0
+            fi
+
+            echo "::error title=Non-challenge production response::$label $route returned status=$status without explicit Cloudflare challenge evidence."
+            return 1
+          }
+
+          brand_payload_contract() {
+            prefix="$1"
+            master_hash="$2"
+            expected="$3"
+
+            [ "$master_hash" = "$expected" ] \
+              && png_dimensions "$prefix-master.png" 1024 1024 \
+              && png_dimensions "$prefix-runtime.png" 512 512 \
+              && png_dimensions "$prefix-icon192.png" 192 192 \
+              && png_dimensions "$prefix-icon512.png" 512 512 \
+              && png_dimensions "$prefix-apple.png" 180 180 \
+              && grep -Fq "data-master-sha256=\"$expected\"" "$prefix-favicon.svg" \
+              && grep -Fq 'data:image/png;base64,' "$prefix-favicon.svg" \
+              && grep -Fq "$expected" "$prefix-favicon.ico" \
+              && jq -e --arg sha "$expected" \
+                '.master.sha256 == $sha and .master.width == 1024 and .master.height == 1024 and .generation.crop == false and .generation.stretch == false' \
+                "$prefix-provenance.json" >/dev/null \
+              && jq -e \
+                '.icons | any(.src | startswith("/icon-192x192.png")) and any(.src | startswith("/icon-512x512.png"))' \
+                "$prefix-manifest.json" >/dev/null \
+              && grep -Fq '/brand/irha-apparels-official-runtime-512.png' "$prefix-home.html"
+          }
+
           verify_origin() {
             origin="$1"
             label="$2"
             allow_challenge="$3"
-            ready=false
+            prefix="/tmp/brand-$label"
+            effective="$prefix-effective"
+            fallback="/tmp/brand-pages-effective"
+            challenge_seen=false
+            challenged_routes=()
 
             for attempt in $(seq 1 18); do
               cache_bust="${SOURCE_SHA::12}-$label-$attempt-$RANDOM"
-              prefix="/tmp/brand-$label"
-              master_status="$(curl -sS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-master.headers" -o "$prefix-master.png" -w '%{http_code}' "$origin/brand/irha-apparels-official-master.png?brand_check=$cache_bust" || true)"
-              if [ "$master_status" = "403" ] && cloudflare_challenge "$prefix-master.headers" "$prefix-master.png"; then
-                if [ "$allow_challenge" = "true" ]; then
-                  echo "::warning::GitHub-hosted $label brand observer received a verified Cloudflare challenge; independent public verification remains required."
-                  echo "${label}_challenged=true" >> "$GITHUB_OUTPUT"
+
+              master_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-master.headers" -o "$prefix-master.png" -w '%{http_code}' "$origin/brand/irha-apparels-official-master.png?brand_check=$cache_bust" || true)"
+              runtime_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-runtime.headers" -o "$prefix-runtime.png" -w '%{http_code}' "$origin/brand/irha-apparels-official-runtime-512.png?brand_check=$cache_bust" || true)"
+              favicon_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-favicon.headers" -o "$prefix-favicon.svg" -w '%{http_code}' "$origin/favicon.svg?brand_check=$cache_bust" || true)"
+              legacy_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-favicon-ico.headers" -o "$prefix-favicon.ico" -w '%{http_code}' "$origin/favicon.ico?brand_check=$cache_bust" || true)"
+              icon192_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-icon192.headers" -o "$prefix-icon192.png" -w '%{http_code}' "$origin/icon-192x192.png?brand_check=$cache_bust" || true)"
+              icon512_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-icon512.headers" -o "$prefix-icon512.png" -w '%{http_code}' "$origin/icon-512x512.png?brand_check=$cache_bust" || true)"
+              apple_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-apple.headers" -o "$prefix-apple.png" -w '%{http_code}' "$origin/apple-touch-icon.png?brand_check=$cache_bust" || true)"
+              manifest_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-manifest.headers" -o "$prefix-manifest.json" -w '%{http_code}' "$origin/manifest.webmanifest?brand_check=$cache_bust" || true)"
+              provenance_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-provenance.headers" -o "$prefix-provenance.json" -w '%{http_code}' "$origin/brand/brand-master.json?brand_check=$cache_bust" || true)"
+              home_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-home.headers" -o "$prefix-home.html" -w '%{http_code}' "$origin/?brand_check=$cache_bust" || true)"
+
+              set +e
+              resolve_observation "$master_status" "$prefix-master.headers" "$prefix-master.png" "$fallback-master.png" "$effective-master.png" "/brand/irha-apparels-official-master.png" "$allow_challenge"
+              master_ok=$?
+              resolve_observation "$runtime_status" "$prefix-runtime.headers" "$prefix-runtime.png" "$fallback-runtime.png" "$effective-runtime.png" "/brand/irha-apparels-official-runtime-512.png" "$allow_challenge"
+              runtime_ok=$?
+              resolve_observation "$favicon_status" "$prefix-favicon.headers" "$prefix-favicon.svg" "$fallback-favicon.svg" "$effective-favicon.svg" "/favicon.svg" "$allow_challenge"
+              favicon_ok=$?
+              resolve_observation "$legacy_status" "$prefix-favicon-ico.headers" "$prefix-favicon.ico" "$fallback-favicon.ico" "$effective-favicon.ico" "/favicon.ico" "$allow_challenge"
+              legacy_ok=$?
+              resolve_observation "$icon192_status" "$prefix-icon192.headers" "$prefix-icon192.png" "$fallback-icon192.png" "$effective-icon192.png" "/icon-192x192.png" "$allow_challenge"
+              icon192_ok=$?
+              resolve_observation "$icon512_status" "$prefix-icon512.headers" "$prefix-icon512.png" "$fallback-icon512.png" "$effective-icon512.png" "/icon-512x512.png" "$allow_challenge"
+              icon512_ok=$?
+              resolve_observation "$apple_status" "$prefix-apple.headers" "$prefix-apple.png" "$fallback-apple.png" "$effective-apple.png" "/apple-touch-icon.png" "$allow_challenge"
+              apple_ok=$?
+              resolve_observation "$manifest_status" "$prefix-manifest.headers" "$prefix-manifest.json" "$fallback-manifest.json" "$effective-manifest.json" "/manifest.webmanifest" "$allow_challenge"
+              manifest_ok=$?
+              resolve_observation "$provenance_status" "$prefix-provenance.headers" "$prefix-provenance.json" "$fallback-provenance.json" "$effective-provenance.json" "/brand/brand-master.json" "$allow_challenge"
+              provenance_ok=$?
+              resolve_observation "$home_status" "$prefix-home.headers" "$prefix-home.html" "$fallback-home.html" "$effective-home.html" "/" "$allow_challenge"
+              home_ok=$?
+              set -e
+
+              echo "Brand proof $label attempt $attempt/18: master=$master_status runtime=$runtime_status favicon=$favicon_status legacy=$legacy_status 192=$icon192_status 512=$icon512_status apple=$apple_status manifest=$manifest_status provenance=$provenance_status home=$home_status"
+
+              if [ "$master_ok" -eq 0 ] && [ "$runtime_ok" -eq 0 ] && [ "$favicon_ok" -eq 0 ] \
+                && [ "$legacy_ok" -eq 0 ] && [ "$icon192_ok" -eq 0 ] && [ "$icon512_ok" -eq 0 ] \
+                && [ "$apple_ok" -eq 0 ] && [ "$manifest_ok" -eq 0 ] && [ "$provenance_ok" -eq 0 ] \
+                && [ "$home_ok" -eq 0 ]; then
+                master_hash="$(sha256sum "$effective-master.png" 2>/dev/null | awk '{print $1}' || true)"
+                if brand_payload_contract "$effective" "$master_hash" "$expected_master"; then
+                  if [ "$label" = "apex" ] && [ "$legacy_status" = "200" ]; then
+                    favicon_source="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-favicon-source:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' "$prefix-favicon-ico.headers" | tail -n 1)"
+                    test -z "$favicon_source" || test "$favicon_source" = "official-owner-crest"
+                  fi
+
+                  routes_csv="none"
+                  if [ "${#challenged_routes[@]}" -gt 0 ]; then
+                    routes_csv="$(IFS=,; echo "${challenged_routes[*]}")"
+                  fi
+                  echo "${label}_challenged=$challenge_seen" >> "$GITHUB_OUTPUT"
+                  echo "${label}_challenge_routes=$routes_csv" >> "$GITHUB_OUTPUT"
+                  if [ "$challenge_seen" = "true" ]; then
+                    echo "Exact official brand verified from strict Pages release plus challenge-classified $label observations: $routes_csv"
+                  else
+                    echo "Exact owner-uploaded master and all normal brand derivatives verified at $label."
+                  fi
                   return 0
                 fi
               fi
 
-              runtime_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-runtime.png" -w '%{http_code}' "$origin/brand/irha-apparels-official-runtime-512.png?brand_check=$cache_bust" || true)"
-              favicon_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-favicon.svg" -w '%{http_code}' "$origin/favicon.svg?brand_check=$cache_bust" || true)"
-              legacy_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-favicon-ico.headers" -o "$prefix-favicon.ico" -w '%{http_code}' "$origin/favicon.ico?brand_check=$cache_bust" || true)"
-              icon192_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-icon192.png" -w '%{http_code}' "$origin/icon-192x192.png?brand_check=$cache_bust" || true)"
-              icon512_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-icon512.png" -w '%{http_code}' "$origin/icon-512x512.png?brand_check=$cache_bust" || true)"
-              apple_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-apple.png" -w '%{http_code}' "$origin/apple-touch-icon.png?brand_check=$cache_bust" || true)"
-              manifest_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-manifest.json" -w '%{http_code}' "$origin/manifest.webmanifest?brand_check=$cache_bust" || true)"
-              provenance_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-provenance.json" -w '%{http_code}' "$origin/brand/brand-master.json?brand_check=$cache_bust" || true)"
-              home_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-home.html" -w '%{http_code}' "$origin/?brand_check=$cache_bust" || true)"
-              master_hash="$(sha256sum "$prefix-master.png" 2>/dev/null | awk '{print $1}' || true)"
-              favicon_source="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-favicon-source:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' "$prefix-favicon-ico.headers" | tail -n 1)"
-
-              echo "Brand proof $label attempt $attempt/18: master=$master_status/$master_hash runtime=$runtime_status favicon=$favicon_status legacy=$legacy_status 192=$icon192_status 512=$icon512_status apple=$apple_status manifest=$manifest_status provenance=$provenance_status home=$home_status"
-
-              if [ "$master_status" = "200" ] && [ "$master_hash" = "$expected_master" ] \
-                && [ "$runtime_status" = "200" ] && [ "$favicon_status" = "200" ] && [ "$legacy_status" = "200" ] \
-                && [ "$icon192_status" = "200" ] && [ "$icon512_status" = "200" ] && [ "$apple_status" = "200" ] \
-                && [ "$manifest_status" = "200" ] && [ "$provenance_status" = "200" ] && [ "$home_status" = "200" ] \
-                && png_dimensions "$prefix-master.png" 1024 1024 \
-                && png_dimensions "$prefix-runtime.png" 512 512 \
-                && png_dimensions "$prefix-icon192.png" 192 192 \
-                && png_dimensions "$prefix-icon512.png" 512 512 \
-                && png_dimensions "$prefix-apple.png" 180 180 \
-                && grep -Fq "data-master-sha256=\"$expected_master\"" "$prefix-favicon.svg" \
-                && grep -Fq 'data:image/png;base64,' "$prefix-favicon.svg" \
-                && grep -Fq "$expected_master" "$prefix-favicon.ico" \
-                && jq -e --arg sha "$expected_master" '.master.sha256 == $sha and .master.width == 1024 and .master.height == 1024 and .generation.crop == false and .generation.stretch == false' "$prefix-provenance.json" >/dev/null \
-                && jq -e '.icons | any(.src | startswith("/icon-192x192.png")) and any(.src | startswith("/icon-512x512.png"))' "$prefix-manifest.json" >/dev/null \
-                && grep -Fq '/brand/irha-apparels-official-runtime-512.png' "$prefix-home.html"; then
-                if [ "$label" = "apex" ]; then
-                  test -z "$favicon_source" || test "$favicon_source" = "official-owner-crest"
-                fi
-                ready=true
-                echo "Exact owner-uploaded master and all normal brand derivatives verified at $label."
-                break
-              fi
+              challenge_seen=false
+              challenged_routes=()
               sleep 10
             done
 
-            test "$ready" = "true" || {
-              echo "::error title=Official Irha brand not verified::$label did not serve the exact owner-uploaded master and required derivatives."
-              return 1
-            }
+            echo "::error title=Official Irha brand not verified::$label did not serve the exact owner-uploaded master or an explicitly challenge-classified equivalent backed by exact Pages evidence."
+            return 1
           }
 
           verify_origin "$pages_origin" pages false
@@ -213,63 +312,148 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          origin="https://irhaapparels.com"
-          ready=false
+          pages_origin="https://irha-apparels.pages.dev"
+          apex_origin="https://irhaapparels.com"
 
-          for attempt in $(seq 1 18); do
-            cache_bust="${SOURCE_SHA::12}-routes-$attempt-$RANDOM"
-            manifest_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              -o /tmp/catalog-route-manifest.json -w '%{http_code}' \
-              "$origin/catalog-route-manifest.json?route_check=$cache_bust" || true)"
-            manifest_ok=false
-            valid_path=""
-            if [ "$manifest_status" = "200" ] \
-              && jq -e '.schemaVersion == 1 and .productCount == 254 and (.products | length) == 254' /tmp/catalog-route-manifest.json >/dev/null 2>&1; then
-              valid_path="$(jq -r '.products[0].canonical_path // empty' /tmp/catalog-route-manifest.json)"
-              if [[ "$valid_path" == /products/* ]]; then manifest_ok=true; fi
-            fi
-
-            valid_status="000"
-            if [ "$manifest_ok" = "true" ]; then
-              valid_status="$(curl -sS --connect-timeout 10 --max-time 40 \
-                -H 'Cache-Control: no-cache' \
-                -o /tmp/valid-product.html -w '%{http_code}' \
-                "$origin$valid_path?route_check=$cache_bust" || true)"
-            fi
-
-            legacy_status="$(curl -sS --max-redirs 0 --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              -D /tmp/catalogue-headers.txt -o /dev/null -w '%{http_code}' \
-              "$origin/catalogue?route_check=$cache_bust" || true)"
-            legacy_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' /tmp/catalogue-headers.txt | tail -n 1)"
-
-            missing_status="$(curl -sS --max-redirs 0 --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              -D /tmp/missing-headers.txt -o /tmp/missing.html -w '%{http_code}' \
-              "$origin/products/not-a-real-irha-product-$cache_bust" || true)"
-            missing_marker="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-route-status:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' /tmp/missing-headers.txt | tail -n 1)"
-
-            echo "Route proof attempt $attempt/18: manifest=$manifest_status valid=$valid_status legacy=$legacy_status location=${legacy_location:-none} missing=$missing_status marker=${missing_marker:-none}"
-
-            if [ "$manifest_ok" = "true" ] \
-              && [ "$valid_status" = "200" ] \
-              && [ "$legacy_status" = "301" ] \
-              && [[ "$legacy_location" == *"/products"* ]] \
-              && [ "$missing_status" = "404" ] \
-              && [ "$missing_marker" = "not-found" ]; then
-              ready=true
-              echo "Canonical product, legacy redirect and real missing-route 404 verified live."
-              break
-            fi
-
-            sleep 10
-          done
-
-          test "$ready" = "true" || {
-            echo "::error title=Buyer route verification failed::Production did not satisfy canonical 200, one-hop 301 and real 404 contracts."
-            exit 1
+          cloudflare_challenge() {
+            status="$1"
+            headers="$2"
+            body="$3"
+            [ "$status" = "403" ] || return 1
+            if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null; then return 0; fi
+            if grep -Eqi '^server:[[:space:]]*cloudflare' "$headers" 2>/dev/null \
+              && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi
+            return 1
           }
+
+          route_challenge_or_fail() {
+            status="$1"
+            headers="$2"
+            body="$3"
+            route="$4"
+            allow_challenge="$5"
+
+            if [ "$allow_challenge" = "true" ] && cloudflare_challenge "$status" "$headers" "$body"; then
+              apex_challenged=true
+              challenged_routes+=("$route")
+              evidence="$(awk 'BEGIN{IGNORECASE=1}
+                /^(server|cf-ray|cf-mitigated|content-type|cache-control|cf-cache-status):/ {
+                  sub(/\r$/, "");
+                  printf "%s%s", sep, $0;
+                  sep="; "
+                }
+                END{print ""}' "$headers" 2>/dev/null)"
+              echo "::warning::GitHub-hosted apex route observer challenge on $route. ${evidence:-challenge markers verified}"
+              return 0
+            fi
+
+            echo "::error title=Buyer route non-challenge failure::$route returned status=$status without explicit Cloudflare challenge evidence."
+            return 1
+          }
+
+          verify_route_origin() {
+            origin="$1"
+            label="$2"
+            allow_challenge="$3"
+            known_valid_path="${4:-}"
+            prefix="/tmp/routes-$label"
+            apex_challenged=false
+            challenged_routes=()
+
+            for attempt in $(seq 1 18); do
+              cache_bust="${SOURCE_SHA::12}-$label-routes-$attempt-$RANDOM"
+
+              manifest_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+                -H 'Cache-Control: no-cache' \
+                -D "$prefix-manifest.headers" -o "$prefix-manifest.json" -w '%{http_code}' \
+                "$origin/catalog-route-manifest.json?route_check=$cache_bust" || true)"
+
+              manifest_ok=false
+              valid_path="$known_valid_path"
+              if [ "$manifest_status" = "200" ]; then
+                if jq -e '.schemaVersion == 1 and .productCount == 254 and (.products | length) == 254' "$prefix-manifest.json" >/dev/null 2>&1; then
+                  observed_path="$(jq -r '.products[0].canonical_path // empty' "$prefix-manifest.json")"
+                  if [[ "$observed_path" == /products/* ]]; then
+                    manifest_ok=true
+                    valid_path="$observed_path"
+                  fi
+                fi
+              elif route_challenge_or_fail "$manifest_status" "$prefix-manifest.headers" "$prefix-manifest.json" "/catalog-route-manifest.json" "$allow_challenge"; then
+                manifest_ok=true
+              fi
+
+              if [ "$manifest_ok" != "true" ] || [[ "$valid_path" != /products/* ]]; then
+                if [ "$manifest_status" = "200" ]; then
+                  echo "::error title=Buyer route manifest invalid::$label manifest did not expose the exact 254-product contract."
+                fi
+                sleep 10
+                continue
+              fi
+
+              valid_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
+                -H 'Cache-Control: no-cache' \
+                -D "$prefix-valid.headers" -o "$prefix-valid.html" -w '%{http_code}' \
+                "$origin$valid_path?route_check=$cache_bust" || true)"
+              valid_ok=false
+              if [ "$valid_status" = "200" ]; then
+                valid_ok=true
+              elif route_challenge_or_fail "$valid_status" "$prefix-valid.headers" "$prefix-valid.html" "$valid_path" "$allow_challenge"; then
+                valid_ok=true
+              fi
+
+              legacy_status="$(curl -sS --max-redirs 0 --connect-timeout 10 --max-time 40 \
+                -H 'Cache-Control: no-cache' \
+                -D "$prefix-legacy.headers" -o "$prefix-legacy.html" -w '%{http_code}' \
+                "$origin/catalogue?route_check=$cache_bust" || true)"
+              legacy_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' "$prefix-legacy.headers" | tail -n 1)"
+              legacy_ok=false
+              if [ "$legacy_status" = "301" ] && [[ "$legacy_location" == *"/products"* ]]; then
+                legacy_ok=true
+              elif route_challenge_or_fail "$legacy_status" "$prefix-legacy.headers" "$prefix-legacy.html" "/catalogue" "$allow_challenge"; then
+                legacy_ok=true
+              fi
+
+              missing_route="/products/not-a-real-irha-product-$cache_bust"
+              missing_status="$(curl -sS --max-redirs 0 --connect-timeout 10 --max-time 40 \
+                -H 'Cache-Control: no-cache' \
+                -D "$prefix-missing.headers" -o "$prefix-missing.html" -w '%{http_code}' \
+                "$origin$missing_route" || true)"
+              missing_marker="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-route-status:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' "$prefix-missing.headers" | tail -n 1)"
+              missing_ok=false
+              if [ "$missing_status" = "404" ] && [ "$missing_marker" = "not-found" ]; then
+                missing_ok=true
+              elif route_challenge_or_fail "$missing_status" "$prefix-missing.headers" "$prefix-missing.html" "$missing_route" "$allow_challenge"; then
+                missing_ok=true
+              fi
+
+              echo "Route proof $label attempt $attempt/18: manifest=$manifest_status valid=$valid_status legacy=$legacy_status location=${legacy_location:-none} missing=$missing_status marker=${missing_marker:-none}"
+
+              if [ "$manifest_ok" = "true" ] && [ "$valid_ok" = "true" ] \
+                && [ "$legacy_ok" = "true" ] && [ "$missing_ok" = "true" ]; then
+                routes_csv="none"
+                if [ "${#challenged_routes[@]}" -gt 0 ]; then
+                  routes_csv="$(IFS=,; echo "${challenged_routes[*]}")"
+                fi
+                echo "${label}_challenged=$apex_challenged" >> "$GITHUB_OUTPUT"
+                echo "${label}_challenge_routes=$routes_csv" >> "$GITHUB_OUTPUT"
+                ROUTE_VALID_PATH="$valid_path"
+                echo "Canonical buyer route contract verified at $label; challenge routes=$routes_csv"
+                return 0
+              fi
+
+              apex_challenged=false
+              challenged_routes=()
+              sleep 10
+            done
+
+            echo "::error title=Buyer route verification failed::$label did not satisfy canonical 200, one-hop 301 and real 404 contracts or explicit challenge classification."
+            return 1
+          }
+
+          ROUTE_VALID_PATH=""
+          verify_route_origin "$pages_origin" pages false ""
+          pages_valid_path="$ROUTE_VALID_PATH"
+          verify_route_origin "$apex_origin" apex true "$pages_valid_path"
 
       - name: Publish final live-brand status
         if: always() && steps.source.outputs.relevant == 'true'
@@ -277,6 +461,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
           JOB_STATUS: ${{ job.status }}
+          BRAND_APEX_CHALLENGED: ${{ steps.verify.outputs.apex_challenged }}
+          BRAND_CHALLENGE_ROUTES: ${{ steps.verify.outputs.apex_challenge_routes }}
+          ROUTES_APEX_CHALLENGED: ${{ steps.routes.outputs.apex_challenged }}
+          ROUTE_CHALLENGE_ROUTES: ${{ steps.routes.outputs.apex_challenge_routes }}
         shell: bash
         run: |
           set -euo pipefail
@@ -289,7 +477,11 @@ jobs:
           description="Official brand or buyer route verification failed"
           if [ "$JOB_STATUS" = "success" ]; then
             state=success
-            description="Official brand and canonical buyer routes verified live"
+            if [ "${BRAND_APEX_CHALLENGED:-false}" = "true" ] || [ "${ROUTES_APEX_CHALLENGED:-false}" = "true" ]; then
+              description="Exact brand/Pages route contract verified; apex GitHub observer challenge-classified"
+            else
+              description="Official brand and canonical buyer routes verified live"
+            fi
           fi
 
           gh api --method POST \
@@ -299,3 +491,15 @@ jobs:
             -f description="$description" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             >/dev/null
+
+          {
+            echo "## Brand Live"
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Official master SHA-256: \`32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87\`"
+            echo "- Apex brand observer challenged: \`${BRAND_APEX_CHALLENGED:-false}\`"
+            echo "- Apex brand challenge routes: \`${BRAND_CHALLENGE_ROUTES:-none}\`"
+            echo "- Apex buyer-route observer challenged: \`${ROUTES_APEX_CHALLENGED:-false}\`"
+            echo "- Apex buyer-route challenge routes: \`${ROUTE_CHALLENGE_ROUTES:-none}\`"
+            echo "- Commit status: \`$state\`"
+            echo "- Independent public/browser verification remains required whenever an apex challenge is recorded."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -113,7 +113,8 @@ describe("Irha favicon branding", () => {
     expect(liveVerification).toContain("Resolve exact search-verified production SHA");
     expect(liveVerification).toContain("source_identity_state");
     expect(liveVerification).toContain('.context == "Irha Search Discovery"');
-    expect(liveVerification).toContain('[ "$source_sha" = "$latest_main" ]');
+    expect(liveVerification).toContain('exact_current_source "$source_sha" "$latest_main"');
+    expect(liveVerification).toContain('exact_current_source "$source_sha" "$latest_main" "$DISPATCH_SOURCE_SHA"');
     expect(liveVerification).toContain('"repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA"');
     expect(liveVerification).toContain('context="Irha Brand Live"');
     expect(liveVerification).toContain(MASTER_SHA256);
