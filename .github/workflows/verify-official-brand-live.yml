@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          origin="https://irhaapparels.com"
+          origin="https://irha-apparels.pages.dev"
           source_sha=""
 
           for attempt in $(seq 1 18); do
@@ -123,70 +123,87 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          origin="https://irhaapparels.com"
-          ready=false
+          expected_master="32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87"
+          pages_origin="https://irha-apparels.pages.dev"
+          apex_origin="https://irhaapparels.com"
 
-          for attempt in $(seq 1 18); do
-            cache_bust="${SOURCE_SHA::12}-$attempt-$RANDOM"
-            brand_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              -o /tmp/irha-brand-mark.svg -w '%{http_code}' \
-              "$origin/irha-brand-mark.svg?brand_check=$cache_bust" || true)"
-            favicon_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              -o /tmp/favicon.svg -w '%{http_code}' \
-              "$origin/favicon.svg?brand_check=$cache_bust" || true)"
-            legacy_status="$(curl -sS --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              -D /tmp/favicon-headers.txt \
-              -o /tmp/favicon.ico -w '%{http_code}' \
-              "$origin/favicon.ico?brand_check=$cache_bust" || true)"
-            home_status="$(curl -sSL --connect-timeout 10 --max-time 40 \
-              -H 'Cache-Control: no-cache' \
-              -o /tmp/home.html -w '%{http_code}' \
-              "$origin/?brand_check=$cache_bust" || true)"
-
-            brand_hash="$(sha256sum /tmp/irha-brand-mark.svg 2>/dev/null | awk '{print $1}' || true)"
-            favicon_hash="$(sha256sum /tmp/favicon.svg 2>/dev/null | awk '{print $1}' || true)"
-            legacy_hash="$(sha256sum /tmp/favicon.ico 2>/dev/null | awk '{print $1}' || true)"
-            favicon_source="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-favicon-source:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' /tmp/favicon-headers.txt | tail -n 1)"
-
-            echo "Brand proof attempt $attempt/18: brand=$brand_status favicon=$favicon_status legacy=$legacy_status home=$home_status source=${favicon_source:-none} hashes=$brand_hash/$favicon_hash/$legacy_hash"
-
-            if [ "$brand_status" = "200" ] \
-              && [ "$favicon_status" = "200" ] \
-              && [ "$legacy_status" = "200" ] \
-              && [ "$home_status" = "200" ] \
-              && grep -Fq 'Official owner-supplied Irha Apparels Manufacturing Specialists logo' /tmp/irha-brand-mark.svg \
-              && grep -Fq 'data:image/webp;base64,' /tmp/irha-brand-mark.svg \
-              && grep -Fq 'Official Irha Apparels Manufacturing Specialists crest supplied by the owner' /tmp/favicon.svg \
-              && grep -Fq 'data:image/webp;base64,' /tmp/favicon.svg \
-              && ! grep -Fiq 'lovable' /tmp/favicon.svg \
-              && grep -Fq 'Official Irha Apparels Manufacturing Specialists crest supplied by the owner' /tmp/favicon.ico \
-              && grep -Fq 'data:image/webp;base64,' /tmp/favicon.ico \
-              && ! grep -Fiq 'lovable' /tmp/favicon.ico \
-              && grep -Fq 'href="/favicon.svg"' /tmp/home.html; then
-              ready=true
-              echo "Official Irha header logo and favicon content verified live."
-              break
-            fi
-
-            sleep 10
-          done
-
-          test "$ready" = "true" || {
-            echo "::error title=Official Irha brand not verified::Production did not serve the owner-supplied logo on all required favicon paths."
-            echo "--- favicon headers ---"
-            head -c 1000 /tmp/favicon-headers.txt 2>/dev/null || true
-            echo
-            echo "--- favicon.svg head ---"
-            head -c 500 /tmp/favicon.svg 2>/dev/null || true
-            echo
-            echo "--- favicon.ico head ---"
-            head -c 500 /tmp/favicon.ico 2>/dev/null || true
-            echo
-            exit 1
+          cloudflare_challenge() {
+            headers="$1"
+            body="$2"
+            if grep -Fqi 'cf-mitigated: challenge' "$headers" 2>/dev/null; then return 0; fi
+            if grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then return 0; fi
+            return 1
           }
+
+          png_dimensions() {
+            python3 -c 'import struct,sys; d=open(sys.argv[1],"rb").read(24); assert d[:8] == bytes.fromhex("89504e470d0a1a0a"); assert struct.unpack(">II", d[16:24]) == (int(sys.argv[2]), int(sys.argv[3]))' "$1" "$2" "$3"
+          }
+
+          verify_origin() {
+            origin="$1"
+            label="$2"
+            allow_challenge="$3"
+            ready=false
+
+            for attempt in $(seq 1 18); do
+              cache_bust="${SOURCE_SHA::12}-$label-$attempt-$RANDOM"
+              prefix="/tmp/brand-$label"
+              master_status="$(curl -sS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-master.headers" -o "$prefix-master.png" -w '%{http_code}' "$origin/brand/irha-apparels-official-master.png?brand_check=$cache_bust" || true)"
+              if [ "$master_status" = "403" ] && cloudflare_challenge "$prefix-master.headers" "$prefix-master.png"; then
+                if [ "$allow_challenge" = "true" ]; then
+                  echo "::warning::GitHub-hosted $label brand observer received a verified Cloudflare challenge; independent public verification remains required."
+                  echo "${label}_challenged=true" >> "$GITHUB_OUTPUT"
+                  return 0
+                fi
+              fi
+
+              runtime_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-runtime.png" -w '%{http_code}' "$origin/brand/irha-apparels-official-runtime-512.png?brand_check=$cache_bust" || true)"
+              favicon_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-favicon.svg" -w '%{http_code}' "$origin/favicon.svg?brand_check=$cache_bust" || true)"
+              legacy_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -D "$prefix-favicon-ico.headers" -o "$prefix-favicon.ico" -w '%{http_code}' "$origin/favicon.ico?brand_check=$cache_bust" || true)"
+              icon192_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-icon192.png" -w '%{http_code}' "$origin/icon-192x192.png?brand_check=$cache_bust" || true)"
+              icon512_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-icon512.png" -w '%{http_code}' "$origin/icon-512x512.png?brand_check=$cache_bust" || true)"
+              apple_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-apple.png" -w '%{http_code}' "$origin/apple-touch-icon.png?brand_check=$cache_bust" || true)"
+              manifest_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-manifest.json" -w '%{http_code}' "$origin/manifest.webmanifest?brand_check=$cache_bust" || true)"
+              provenance_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-provenance.json" -w '%{http_code}' "$origin/brand/brand-master.json?brand_check=$cache_bust" || true)"
+              home_status="$(curl -sSL --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' -o "$prefix-home.html" -w '%{http_code}' "$origin/?brand_check=$cache_bust" || true)"
+              master_hash="$(sha256sum "$prefix-master.png" 2>/dev/null | awk '{print $1}' || true)"
+              favicon_source="$(awk 'BEGIN{IGNORECASE=1} /^x-irha-favicon-source:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print}' "$prefix-favicon-ico.headers" | tail -n 1)"
+
+              echo "Brand proof $label attempt $attempt/18: master=$master_status/$master_hash runtime=$runtime_status favicon=$favicon_status legacy=$legacy_status 192=$icon192_status 512=$icon512_status apple=$apple_status manifest=$manifest_status provenance=$provenance_status home=$home_status"
+
+              if [ "$master_status" = "200" ] && [ "$master_hash" = "$expected_master" ] \
+                && [ "$runtime_status" = "200" ] && [ "$favicon_status" = "200" ] && [ "$legacy_status" = "200" ] \
+                && [ "$icon192_status" = "200" ] && [ "$icon512_status" = "200" ] && [ "$apple_status" = "200" ] \
+                && [ "$manifest_status" = "200" ] && [ "$provenance_status" = "200" ] && [ "$home_status" = "200" ] \
+                && png_dimensions "$prefix-master.png" 1024 1024 \
+                && png_dimensions "$prefix-runtime.png" 512 512 \
+                && png_dimensions "$prefix-icon192.png" 192 192 \
+                && png_dimensions "$prefix-icon512.png" 512 512 \
+                && png_dimensions "$prefix-apple.png" 180 180 \
+                && grep -Fq "data-master-sha256=\"$expected_master\"" "$prefix-favicon.svg" \
+                && grep -Fq 'data:image/png;base64,' "$prefix-favicon.svg" \
+                && grep -Fq "$expected_master" "$prefix-favicon.ico" \
+                && jq -e --arg sha "$expected_master" '.master.sha256 == $sha and .master.width == 1024 and .master.height == 1024 and .generation.crop == false and .generation.stretch == false' "$prefix-provenance.json" >/dev/null \
+                && jq -e '.icons | any(.src | startswith("/icon-192x192.png")) and any(.src | startswith("/icon-512x512.png"))' "$prefix-manifest.json" >/dev/null \
+                && grep -Fq '/brand/irha-apparels-official-runtime-512.png' "$prefix-home.html"; then
+                if [ "$label" = "apex" ]; then
+                  test -z "$favicon_source" || test "$favicon_source" = "official-owner-crest"
+                fi
+                ready=true
+                echo "Exact owner-uploaded master and all normal brand derivatives verified at $label."
+                break
+              fi
+              sleep 10
+            done
+
+            test "$ready" = "true" || {
+              echo "::error title=Official Irha brand not verified::$label did not serve the exact owner-uploaded master and required derivatives."
+              return 1
+            }
+          }
+
+          verify_origin "$pages_origin" pages false
+          verify_origin "$apex_origin" apex true
 
       - name: Verify canonical buyer routes on production
         if: steps.source.outputs.relevant == 'true'
