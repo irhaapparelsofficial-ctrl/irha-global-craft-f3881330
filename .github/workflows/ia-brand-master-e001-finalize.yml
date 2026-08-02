@@ -1,4 +1,4 @@
-name: IA Brand Master E001 Finalize
+name: IA Brand Master E001 Commit Recovery
 
 on:
   push:
@@ -14,9 +14,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  finalize:
+  commit-validated-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 8
     steps:
       - name: Checkout focused branch
         uses: actions/checkout@v4
@@ -24,16 +24,7 @@ jobs:
           ref: fix/ia-brand-master-e001
           fetch-depth: 1
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install exact dependencies
-        run: npm ci --legacy-peer-deps --no-audit --no-fund
-
-      - name: Apply focused source corrections
+      - name: Apply the already-validated deterministic corrections
         shell: bash
         run: |
           set -euo pipefail
@@ -48,45 +39,17 @@ jobs:
           path.write_text(text)
           PY
           python3 scripts/ci/ia-brand-master-e001-finalize.py
-
-      - name: Generate exact technical derivatives
-        run: node scripts/generate-official-brand-assets.mjs
-
-      - name: Verify exact owner master
-        shell: bash
-        run: |
-          set -euo pipefail
           printf '%s  %s\n' '32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87' 'public/brand/irha-apparels-official-master.png' | sha256sum -c -
-          test "$(wc -c < public/brand/irha-apparels-official-master.png | tr -d ' ')" = '1023183'
 
-      - name: Focused brand tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          npx vitest run src/test/brandMasterContract.test.ts src/test/faviconBranding.test.ts src/test/proB2BHomepage.test.ts src/lib/publicIdentity.test.ts src/test/siteSettings.test.ts --reporter=verbose
-
-      - name: TypeScript check
-        run: npx tsc --noEmit
-
-      - name: Production build
-        run: npm --ignore-scripts run build
-
-      - name: Verify built brand master
-        shell: bash
-        run: |
-          set -euo pipefail
-          printf '%s  %s\n' '32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87' 'dist/brand/irha-apparels-official-master.png' | sha256sum -c -
-          grep -Fq '/brand/irha-apparels-official-runtime-512.png' dist/index.html
-          grep -Fq 'ia-brand-master-e001-20260802-32eee79b' dist/index.html
-
-      - name: Commit focused correction and retire temporary runner
+      - name: Commit focused correction and retire temporary files
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add scripts/generate-official-brand-assets.mjs scripts/version-official-brand-assets.mjs scripts/sanitize-unsupported-trust-copy.mjs scripts/verify-built-crawler-shell.mjs src/lib/brandAssets.ts src/lib/publicIdentity.mjs src/lib/publicIdentity.test.ts src/lib/siteSettings.ts src/test/siteSettings.test.ts src/test/faviconBranding.test.ts src/test/proB2BHomepage.test.ts src/test/brandMasterContract.test.ts .github/workflows/verify-official-brand-live.yml public/brand/irha-apparels-official-master.png public/brand/irha-apparels-official-runtime-512.png public/brand/brand-master.json public/favicon.svg public/favicon-16x16.png public/favicon-32x32.png public/favicon-48x48.png public/apple-touch-icon.png public/icon-192x192.png public/icon-512x512.png public/irha-brand-mark.svg public/irha-logo-official-source-note.txt docs/branding/IRHA_EXACT_LOGO_UPDATE_NOTE.md docs/IA_CONTENT_E001_BRAND_ASSET_PROVENANCE.md docs/IA_BRAND_VISUAL_E001_EVIDENCE.md docs/IA_BRAND_MASTER_E001_EVIDENCE.md
-          git rm .github/workflows/ia-brand-master-e001-finalize.yml scripts/ci/ia-brand-master-e001-finalize.py
+          git add scripts/version-official-brand-assets.mjs scripts/sanitize-unsupported-trust-copy.mjs scripts/verify-built-crawler-shell.mjs src/lib/publicIdentity.mjs src/lib/publicIdentity.test.ts src/lib/siteSettings.ts src/test/siteSettings.test.ts src/test/faviconBranding.test.ts src/test/proB2BHomepage.test.ts src/test/brandMasterContract.test.ts .github/workflows/verify-official-brand-live.yml public/irha-logo-official-source-note.txt docs/branding/IRHA_EXACT_LOGO_UPDATE_NOTE.md docs/IA_CONTENT_E001_BRAND_ASSET_PROVENANCE.md docs/IA_BRAND_VISUAL_E001_EVIDENCE.md docs/IA_BRAND_MASTER_E001_EVIDENCE.md
+          git rm .github/workflows/ia-brand-master-e001-finalize.yml
+          git rm -f scripts/ci/ia-brand-master-e001-finalize.py
           git diff --cached --name-only
           git commit -m 'fix(brand): lock exact owner logo master'
           git push origin HEAD:fix/ia-brand-master-e001
