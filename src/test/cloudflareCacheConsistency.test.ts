@@ -82,6 +82,17 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(script).toContain('position: { after: "" }');
   });
 
+  it("reaffirms an already-correct final bypass rule without sending an invalid move-to-bottom PATCH", () => {
+    const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
+
+    expect(script).toContain("const existingIsLast = existingIndex >= 0 && existingIndex === rules.length - 1");
+    expect(script).toContain("if (!(existingMatches && existingIsLast))");
+    expect(script).toContain("const patchDefinition = existingIsLast");
+    expect(script).toContain("? baseDefinition");
+    expect(script).toContain(': { ...baseDefinition, position: { after: "" } }');
+    expect(script).toContain('let mutation = "reaffirmed"');
+  });
+
   it("uses one auditable whole-zone purge because unknown historical query keys cannot be enumerated", () => {
     const script = read("scripts/ci/cloudflare-cache-consistency.mjs");
 
