@@ -93,7 +93,7 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(script).toContain('let mutation = "reaffirmed"');
   });
 
-  it("treats an apex Cloudflare challenge as an observer limitation, not a release mismatch", () => {
+  it("treats confirmed apex and www Cloudflare challenges as observer limitations, not release mismatches", () => {
     const workflow = read(".github/workflows/cloudflare-current-main-reconcile.yml");
     const script = extractRunBlock(workflow, "Verify pages.dev, apex and www canonical behavior");
     const result = spawnSync("bash", ["-n", "-s"], {
@@ -103,9 +103,30 @@ describe("Cloudflare cache-consistency release contract", () => {
 
     expect(result.status, result.stderr).toBe(0);
     expect(workflow).toContain('echo "apex_challenged=false" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain('echo "www_challenged=false" >> "$GITHUB_OUTPUT"');
     expect(workflow).toContain("Just a moment...");
+    expect(workflow).toContain("cf-mitigated");
     expect(workflow).toContain('echo "apex_challenged=true" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain('echo "www_challenged=true" >> "$GITHUB_OUTPUT"');
     expect(workflow).toContain("downstream cache/public verification remains required for apex");
+    expect(workflow).toContain("Canonical redirect remains subject to downstream independent public verification");
+  });
+
+  it("keeps strict www redirect checks unless the GitHub observer is demonstrably challenged", () => {
+    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
+    const script = extractRunBlock(workflow, "Verify unbusted and query-string release consistency");
+    const result = spawnSync("bash", ["-n", "-s"], {
+      input: script,
+      encoding: "utf8",
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(workflow).toContain('echo "www_challenge_seen=$www_challenge" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("cf-mitigated");
+    expect(workflow).toContain('case "$www_status" in 301|302|307|308)');
+    expect(workflow).toContain('case "$www_location" in https://irhaapparels.com/*)');
+    expect(workflow).toContain("independent public-browser verification remains required for canonical redirect");
+    expect(workflow).toContain("WWW_CHALLENGE: ${{ steps.verify.outputs.www_challenge_seen }}");
   });
 
   it("uses one auditable whole-zone purge because unknown historical query keys cannot be enumerated", () => {

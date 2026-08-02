@@ -244,6 +244,7 @@ jobs:
           echo "verified=false" >> "$GITHUB_OUTPUT"
           echo "superseded=false" >> "$GITHUB_OUTPUT"
           echo "apex_challenged=false" >> "$GITHUB_OUTPUT"
+          echo "www_challenged=false" >> "$GITHUB_OUTPUT"
 
           fail_or_skip_if_superseded() {
             message="$1"
@@ -333,15 +334,25 @@ jobs:
             -D "$www_headers" -o "$www_body" -w '%{http_code}' \
             "$WWW_ORIGIN/products?release_check=${SOURCE_SHA::12}" || true)"
           location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$www_headers")"
-          case "$status" in
-            301|302|307|308) ;;
-            *) cat "$www_headers"; fail_or_skip_if_superseded "Unexpected www GET status: $status" ;;
-          esac
-          case "$location" in
-            https://irhaapparels.com/*) ;;
-            *) cat "$www_headers"; fail_or_skip_if_superseded "Unexpected www redirect: $location" ;;
-          esac
-          echo "www canonical GET redirect verified: status=$status location=$location"
+          www_challenge=false
+          if [ "$status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$www_headers" 2>/dev/null || grep -Fqi 'Just a moment...' "$www_body" 2>/dev/null; }; then
+            www_challenge=true
+          fi
+
+          if [ "$www_challenge" = "true" ]; then
+            echo "www_challenged=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::GitHub-hosted www observer received a Cloudflare challenge. Canonical redirect remains subject to downstream independent public verification."
+          else
+            case "$status" in
+              301|302|307|308) ;;
+              *) cat "$www_headers"; fail_or_skip_if_superseded "Unexpected www GET status: $status" ;;
+            esac
+            case "$location" in
+              https://irhaapparels.com/*) ;;
+              *) cat "$www_headers"; fail_or_skip_if_superseded "Unexpected www redirect: $location" ;;
+            esac
+            echo "www canonical GET redirect verified: status=$status location=$location"
+          fi
           echo "verified=true" >> "$GITHUB_OUTPUT"
 
       - name: Record reconciliation result
@@ -359,5 +370,9 @@ jobs:
             else
               echo "- Apex and Pages source parity: verified"
             fi
-            echo "- www canonical redirect: verified"
+            if [ "${{ steps.verify.outputs.www_challenged }}" = "true" ]; then
+              echo "- www GitHub observer: challenged; downstream public verification required"
+            else
+              echo "- www canonical redirect: verified"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
