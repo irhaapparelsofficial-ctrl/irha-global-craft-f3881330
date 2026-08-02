@@ -1,4 +1,5 @@
-import { readFile, readdir } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
 import { verifyRouteContentFidelity } from "./verify-route-content-fidelity.mjs";
@@ -139,6 +140,8 @@ assert(!sitemap.includes(`<loc>${alternateHost}`), "sitemap still contains www U
 assert(sitemap.includes(`<loc>${canonical}/</loc>`), "sitemap is missing the canonical homepage");
 assert(llms.includes(`${canonical}/`), "llms.txt is missing absolute canonical URLs");
 assert(llmsFull.toLowerCase().includes("two production hubs"), "llms-full.txt is missing the current homepage structure");
-assert(await readFile(join(DIST, "irha-brand-mark.svg"), "utf8").then((value) => value.includes("Official owner-supplied Irha Apparels")), "Canonical crest asset is missing or unverified");
+const builtBrandMaster = await readFile(join(DIST, "brand/irha-apparels-official-master.png"));
+assert(createHash("sha256").update(builtBrandMaster).digest("hex") === "32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87", "Built official brand master SHA-256 drift");
+assert((await stat(join(DIST, "brand/irha-apparels-official-runtime-512.png"))).size > 0, "Built official runtime crest is missing");
 
 console.log(`PASS ${htmlFiles.length} built HTML files with one canonical Organization, one WebSite, one homepage WebPage, ${expectedUrls.size} authoritative sitemap URLs, valid contact identity and preserved crawler contracts`);
