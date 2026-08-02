@@ -24,10 +24,22 @@ describe("owner exact-main dispatch command", () => {
     expect(workflow).toContain("issues: read");
   });
 
-  it("still deduplicates existing exact-main quality runs before dispatch", () => {
+  it("creates one fresh exact-main Quality event for the owner release command while deduplicating active runs", () => {
     expect(workflow).toContain("active_count");
     expect(workflow).toContain("successful_count");
+    expect(workflow).toContain("force_fresh_dispatch=false");
+    expect(workflow).toContain('[ "$EVENT_NAME" = "issue_comment" ] && [ "$COMMENT_BODY" = "/deploy-current-main" ]');
+    expect(workflow).toContain("pre_dispatch_run_number");
+    expect(workflow).toContain('.run_number > $before');
+    expect(workflow).toContain("Main advanced before Quality dispatch");
+    expect(workflow).toContain("Quality REST dispatch did not return HTTP 204");
+    expect(workflow).toContain("awaiting fresh exact run identity");
+  });
+
+  it("keeps non-owner scheduled/bootstrap checks idempotent when exact-main Quality is already successful", () => {
+    expect(workflow).toContain('elif [ "$force_fresh_dispatch" = "true" ] || [ "$successful_count" -eq 0 ]; then');
     expect(workflow).toContain("gh workflow run quality.yml");
+    expect(workflow).toContain("exact-main successful Quality Gate is missing");
     expect(workflow).toContain("exact-main Quality Gate already active");
   });
 });
