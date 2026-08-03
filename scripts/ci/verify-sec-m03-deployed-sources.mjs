@@ -13,6 +13,40 @@ const helperSource = readFileSync(helperPath);
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const rows = [];
 
+function compareDeployedSource(repositorySource, content) {
+  if (typeof content !== "string") {
+    return { matched: false, mode: null, deployedSource: null };
+  }
+
+  const deployedSource = Buffer.from(content, "utf8");
+  if (repositorySource.equals(deployedSource)) {
+    return { matched: true, mode: "exact_bytes", deployedSource };
+  }
+
+  const repositoryHasFinalLf = repositorySource.length > 0 && repositorySource.at(-1) === 0x0a;
+  const deployedHasFinalLf = deployedSource.length > 0 && deployedSource.at(-1) === 0x0a;
+  if (repositoryHasFinalLf === deployedHasFinalLf) {
+    return { matched: false, mode: null, deployedSource };
+  }
+
+  const repositoryComparable = repositoryHasFinalLf
+    ? repositorySource.subarray(0, repositorySource.length - 1)
+    : repositorySource;
+  const deployedComparable = deployedHasFinalLf
+    ? deployedSource.subarray(0, deployedSource.length - 1)
+    : deployedSource;
+
+  if (repositoryComparable.equals(deployedComparable)) {
+    return {
+      matched: true,
+      mode: "single_trailing_lf_transport",
+      deployedSource,
+    };
+  }
+
+  return { matched: false, mode: null, deployedSource };
+}
+
 function resolveDeployedEntrypoint(response, entry, repositorySource) {
   const scopedCandidates = response.files.filter((file) =>
     typeof file?.name === "string" && file.name.endsWith(`${entry.name}/index.ts`)
@@ -22,13 +56,12 @@ function resolveDeployedEntrypoint(response, entry, repositorySource) {
     throw new Error(`Ambiguous scoped entrypoint for ${entry.name}`);
   }
 
-  const exactSourceCandidates = response.files.filter((file) => {
-    if (typeof file?.content !== "string") return false;
-    return repositorySource.equals(Buffer.from(file.content, "utf8"));
-  });
-  if (exactSourceCandidates.length === 1) return exactSourceCandidates[0];
-  if (exactSourceCandidates.length > 1) {
-    throw new Error(`Ambiguous exact-source entrypoint for ${entry.name}`);
+  const repositorySourceCandidates = response.files.filter((file) =>
+    compareDeployedSource(repositorySource, file?.content).matched
+  );
+  if (repositorySourceCandidates.length === 1) return repositorySourceCandidates[0];
+  if (repositorySourceCandidates.length > 1) {
+    throw new Error(`Ambiguous repository-source entrypoint for ${entry.name}`);
   }
   return null;
 }
@@ -56,13 +89,14 @@ for (const entry of plan.functions) {
   const repositorySource = readFileSync(resolve(root, entry.repository_source));
   const deployedEntrypoint = resolveDeployedEntrypoint(response, entry, repositorySource);
   if (!deployedEntrypoint || typeof deployedEntrypoint.content !== "string") {
-    throw new Error(`Exact deployed entrypoint source missing for ${entry.name}`);
+    throw new Error(`Repository-equivalent deployed entrypoint source missing for ${entry.name}`);
   }
 
-  const deployedSource = Buffer.from(deployedEntrypoint.content, "utf8");
-  if (!repositorySource.equals(deployedSource)) {
+  const sourceMatch = compareDeployedSource(repositorySource, deployedEntrypoint.content);
+  if (!sourceMatch.matched || !sourceMatch.deployedSource) {
     throw new Error(`Exact deployed source mismatch for ${entry.name}`);
   }
+  const deployedSource = sourceMatch.deployedSource;
 
   let helperMatched = null;
   if (entry.require_shared_limiter) {
@@ -85,7 +119,9 @@ for (const entry of plan.functions) {
     repository_source: entry.repository_source,
     repository_source_sha256: sha256(repositorySource),
     deployed_source_sha256: sha256(deployedSource),
-    exact_source_match: true,
+    source_match_mode: sourceMatch.mode,
+    exact_source_match: sourceMatch.mode === "exact_bytes",
+    transport_equivalent_source_match: true,
     durable_limiter_helper_match: helperMatched,
     provenance: entry.provenance,
   });
@@ -99,4 +135,4 @@ const evidence = {
   functions: rows.sort((left, right) => left.name.localeCompare(right.name)),
 };
 writeFileSync(outputPath, `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
-console.log(`Verified exact deployed sources for ${rows.length} approved functions.`);
+console.log(`Verified deployment-locked source parity for ${rows.length} approved functions.`);
