@@ -70,12 +70,13 @@ describe("SEC-M03 canonical parity control", () => {
     expect(registryRefresh).toContain("Exact hash mismatch");
   });
 
-  it("accepts only an unambiguous flattened Management API entrypoint fallback", () => {
-    expect(sourceVerifier).toContain("resolveDeployedEntrypoint");
-    expect(sourceVerifier).toContain('file.name === "index.ts"');
-    expect(sourceVerifier).toContain('metadataEntrypoint.endsWith("/index.ts")');
+  it("falls back only to a unique exact repository-source byte match", () => {
+    expect(sourceVerifier).toContain("resolveDeployedEntrypoint(response, entry, repositorySource)");
+    expect(sourceVerifier).toContain("repositorySource.equals(Buffer.from(file.content, \"utf8\"))");
+    expect(sourceVerifier).toContain("exactSourceCandidates.length === 1");
     expect(sourceVerifier).toContain("Ambiguous scoped entrypoint");
-    expect(sourceVerifier).toContain("Ambiguous flattened entrypoint");
+    expect(sourceVerifier).toContain("Ambiguous exact-source entrypoint");
+    expect(sourceVerifier).not.toContain('file.name === "index.ts"');
   });
 
   it("source-verifies protected pre-existing functions without broad deployment", () => {
