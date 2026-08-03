@@ -27,19 +27,6 @@ function json(payload: unknown, status: number) {
   });
 }
 
-function parseJwtRole(token: string): string | null {
-  try {
-    const [, payload] = token.split(".");
-    if (!payload) return null;
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
-    const decoded = JSON.parse(atob(padded));
-    return typeof decoded.role === "string" ? decoded.role : null;
-  } catch {
-    return null;
-  }
-}
-
 async function authorize(req: Request): Promise<Response | null> {
   const schedulerToken = req.headers.get("x-irha-sitemap-token") || "";
   if (/^[A-Za-z0-9_-]{40,120}$/.test(schedulerToken)) {
@@ -50,7 +37,9 @@ async function authorize(req: Request): Promise<Response | null> {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
   if (!token) return json({ error: "Unauthorized" }, 401);
-  if (parseJwtRole(token) === "service_role") return null;
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (serviceRoleKey && constantTimeEqual(token, serviceRoleKey)) return null;
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
