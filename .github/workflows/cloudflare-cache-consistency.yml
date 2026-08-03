@@ -157,18 +157,25 @@ jobs:
               '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
               "$out" >/dev/null
           done
-          echo "Pages unbusted and busted identity match the immutable Quality artifact."
+          echo "Pages unbusted and busted identity match the immutable Quality artifact for the default curl request."
 
       - name: Inspect Cloudflare routing and cache state before mutation
+        id: cache_state
         if: steps.freeze.outputs.eligible == 'true'
         shell: bash
         run: |
           set -euo pipefail
           node scripts/ci/cloudflare-cache-consistency.mjs audit /tmp/cloudflare-cache-before.json \
             | tee /tmp/cloudflare-cache-before-summary.json
+          needs_policy_change="$(jq -r '
+            if (.cache_hazard_count > 0 or .bypass_present != true or .bypass_is_last != true)
+            then "true" else "false" end
+          ' /tmp/cloudflare-cache-before-summary.json)"
+          echo "needs_policy_change=$needs_policy_change" >> "$GITHUB_OUTPUT"
+          echo "Cloudflare zone policy mutation required: $needs_policy_change"
 
       - name: Reconfirm exact current main before Cloudflare configuration mutation
-        if: steps.freeze.outputs.eligible == 'true'
+        if: steps.freeze.outputs.eligible == 'true' && steps.cache_state.outputs.needs_policy_change == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -177,7 +184,7 @@ jobs:
           echo "Exact current main reconfirmed before cache policy mutation."
 
       - name: Enforce final HTML and release-identity cache bypass
-        if: steps.freeze.outputs.eligible == 'true'
+        if: steps.freeze.outputs.eligible == 'true' && steps.cache_state.outputs.needs_policy_change == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -185,7 +192,7 @@ jobs:
             | tee /tmp/cloudflare-cache-policy.json
 
       - name: Reconfirm exact current main before historical cache purge
-        if: steps.freeze.outputs.eligible == 'true'
+        if: steps.freeze.outputs.eligible == 'true' && steps.cache_state.outputs.needs_policy_change == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -194,7 +201,7 @@ jobs:
           echo "Exact current main reconfirmed before purge."
 
       - name: Purge unknown historical Cloudflare cache keys once
-        if: steps.freeze.outputs.eligible == 'true'
+        if: steps.freeze.outputs.eligible == 'true' && steps.cache_state.outputs.needs_policy_change == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -215,7 +222,9 @@ jobs:
             and .cache_rules.irha_bypass_rule.action_parameters.cache == false
             and .cache_rules.irha_bypass_is_last == true
           ' /tmp/cloudflare-cache-after.json >/dev/null
-          jq -e '.purge_everything == true' /tmp/cloudflare-cache-purge.json >/dev/null
+          if [ "${{ steps.cache_state.outputs.needs_policy_change }}" = "true" ]; then
+            jq -e '.purge_everything == true' /tmp/cloudflare-cache-purge.json >/dev/null
+          fi
 
       - name: Verify unbusted and query-string release consistency
         id: verify
@@ -224,25 +233,32 @@ jobs:
         run: |
           set -euo pipefail
           matrix=/tmp/cache-consistency-matrix.tsv
-          printf 'origin\trequest\tstatus\tidentity\tchallenge\tcf_cache_status\tage\tcache_control\tcdn_cache_control\tcf_ray\n' > "$matrix"
+          printf 'origin\tuser_agent\trequest\tstatus\tidentity\tchallenge\tcf_cache_status\tage\tcache_control\tcdn_cache_control\tcf_ray\n' > "$matrix"
+          verification_failed=false
+          echo "apex_build_direct=false" >> "$GITHUB_OUTPUT"
+          echo "apex_home_direct=false" >> "$GITHUB_OUTPUT"
+          echo "apex_challenge_seen=false" >> "$GITHUB_OUTPUT"
+          echo "www_challenge_seen=false" >> "$GITHUB_OUTPUT"
 
           verify_build() {
             origin="$1"
             label="$2"
             suffix="$3"
             tag="$4"
-            body="/tmp/${label}-${tag}-build.json"
-            headers="/tmp/${label}-${tag}-build.headers"
-            status="$(curl -sS -L --connect-timeout 10 --max-time 40 \
-              -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36' \
-              -H 'Accept: application/json,text/plain,*/*' \
-              -H 'Cache-Control: no-cache' \
-              -D "$headers" -o "$body" -w '%{http_code}' \
-              "$origin/build.json$suffix" || true)"
+            ua_mode="$5"
+            body="/tmp/${label}-${ua_mode}-${tag}-build.json"
+            headers="/tmp/${label}-${ua_mode}-${tag}-build.headers"
+            curl_args=(-sS -L --connect-timeout 10 --max-time 40 -H 'Accept: application/json,text/plain,*/*' -H 'Cache-Control: no-cache')
+            if [ "$ua_mode" = browser ]; then
+              curl_args+=(-A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36')
+            fi
+            status="$(curl "${curl_args[@]}" -D "$headers" -o "$body" -w '%{http_code}' "$origin/build.json$suffix" || true)"
 
             challenge=false
             identity=false
-            if grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then challenge=true; fi
+            if [ "$status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null || { grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; }; }; then
+              challenge=true
+            fi
             if [ "$status" = 200 ] && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$EXPECTED_FINGERPRINT" \
               '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
               "$body" >/dev/null 2>&1; then
@@ -253,8 +269,8 @@ jobs:
               key="$1"
               awk -v k="$key" 'BEGIN{IGNORECASE=1} $0 ~ "^" k ":" {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$headers"
             }
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-              "$label" "/build.json$suffix" "$status" "$identity" "$challenge" \
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$label" "$ua_mode" "/build.json$suffix" "$status" "$identity" "$challenge" \
               "$(header_value cf-cache-status)" "$(header_value age)" "$(header_value cache-control)" \
               "$(header_value cdn-cache-control)" "$(header_value cf-ray)" >> "$matrix"
 
@@ -278,7 +294,9 @@ jobs:
               "$origin/$suffix" || true)"
             challenge=false
             identity=false
-            if grep -Fqi 'Just a moment...' "$body" 2>/dev/null; then challenge=true; fi
+            if [ "$status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null || { grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; }; }; then
+              challenge=true
+            fi
             if [ "$status" = 200 ]; then
               source_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const q="[\\\""+String.fromCharCode(39)+"]"; const m=s.match(new RegExp("<meta[^>]+name="+q+"x-irha-source-commit"+q+"[^>]+content="+q+"([^\\\""+String.fromCharCode(39)+"]+)","i")); process.stdout.write(m?.[1]||"")' "$body")"
               fingerprint_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const q="[\\\""+String.fromCharCode(39)+"]"; const m=s.match(new RegExp("<meta[^>]+name="+q+"x-irha-build-fingerprint"+q+"[^>]+content="+q+"([^\\\""+String.fromCharCode(39)+"]+)","i")); process.stdout.write(m?.[1]||"")' "$body")"
@@ -287,7 +305,7 @@ jobs:
               fi
               if grep -Fq 'Two macro hubs.' "$body"; then
                 echo "Historical macro-hubs homepage detected at $origin/$suffix"
-                exit 1
+                verification_failed=true
               fi
             fi
 
@@ -295,8 +313,8 @@ jobs:
               key="$1"
               awk -v k="$key" 'BEGIN{IGNORECASE=1} $0 ~ "^" k ":" {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$headers"
             }
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-              "$label" "/$suffix" "$status" "$identity" "$challenge" \
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$label" "browser" "/$suffix" "$status" "$identity" "$challenge" \
               "$(header_value cf-cache-status)" "$(header_value age)" "$(header_value cache-control)" \
               "$(header_value cdn-cache-control)" "$(header_value cf-ray)" >> "$matrix"
 
@@ -312,36 +330,46 @@ jobs:
             build_direct=true
             home_direct=true
             challenge_seen=false
+            non_challenge_mismatch=false
 
-            verify_build "$origin" "$label" "" "unbusted"
-            [ "$BUILD_IDENTITY" = true ] || build_direct=false
-            [ "$BUILD_CHALLENGE" = true ] && challenge_seen=true
+            for ua_mode in default browser; do
+              verify_build "$origin" "$label" "" "unbusted" "$ua_mode"
+              [ "$BUILD_IDENTITY" = true ] || build_direct=false
+              [ "$BUILD_CHALLENGE" = true ] && challenge_seen=true
+              if [ "$BUILD_IDENTITY" != true ] && [ "$BUILD_CHALLENGE" != true ]; then non_challenge_mismatch=true; fi
 
-            verify_build "$origin" "$label" "?release_check=${SOURCE_SHA::12}-$RANDOM" "busted"
-            [ "$BUILD_IDENTITY" = true ] || build_direct=false
-            [ "$BUILD_CHALLENGE" = true ] && challenge_seen=true
+              verify_build "$origin" "$label" "?release_check=${SOURCE_SHA::12}-$RANDOM" "busted" "$ua_mode"
+              [ "$BUILD_IDENTITY" = true ] || build_direct=false
+              [ "$BUILD_CHALLENGE" = true ] && challenge_seen=true
+              if [ "$BUILD_IDENTITY" != true ] && [ "$BUILD_CHALLENGE" != true ]; then non_challenge_mismatch=true; fi
+            done
 
             for home_suffix in "" "?a=1" "?utm_source=google" "?cache_probe=${SOURCE_SHA::12}-$RANDOM"; do
               tag="$(printf '%s' "$home_suffix" | sha256sum | cut -c1-10)"
               verify_home "$origin" "$label" "$home_suffix" "$tag"
               [ "$HOME_IDENTITY" = true ] || home_direct=false
               [ "$HOME_CHALLENGE" = true ] && challenge_seen=true
+              if [ "$HOME_IDENTITY" != true ] && [ "$HOME_CHALLENGE" != true ]; then non_challenge_mismatch=true; fi
             done
 
             if [ "$label" = pages ]; then
-              test "$build_direct" = true
-              test "$home_direct" = true
+              if [ "$build_direct" != true ] || [ "$home_direct" != true ]; then
+                verification_failed=true
+                echo "Pages returned a non-exact release response; stale/challenged Pages responses are not accepted."
+              fi
             else
               echo "apex_build_direct=$build_direct" >> "$GITHUB_OUTPUT"
               echo "apex_home_direct=$home_direct" >> "$GITHUB_OUTPUT"
               echo "apex_challenge_seen=$challenge_seen" >> "$GITHUB_OUTPUT"
-              if [ "$build_direct" != true ] || [ "$home_direct" != true ]; then
+              if [ "$non_challenge_mismatch" = true ]; then
+                verification_failed=true
+                echo "Apex returned a non-challenge release mismatch."
+              elif [ "$build_direct" != true ] || [ "$home_direct" != true ]; then
                 if [ "$challenge_seen" = true ]; then
                   echo "::warning::GitHub-hosted direct apex observation is challenged; control-plane and independent public-browser verification remain required."
                 else
-                  echo "Apex returned a non-challenge release mismatch."
-                  cat "$matrix"
-                  exit 1
+                  verification_failed=true
+                  echo "Apex release consistency could not be proven."
                 fi
               fi
             fi
@@ -354,7 +382,7 @@ jobs:
             "$WWW_ORIGIN/?utm_source=google" || true)"
           www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$www_headers")"
           www_challenge=false
-          if [ "$www_status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$www_headers" 2>/dev/null || grep -Fqi 'Just a moment...' "$www_body" 2>/dev/null; }; then
+          if [ "$www_status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$www_headers" 2>/dev/null || { grep -Fqi 'server: cloudflare' "$www_headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$www_body" 2>/dev/null; }; }; then
             www_challenge=true
           fi
           echo "www_challenge_seen=$www_challenge" >> "$GITHUB_OUTPUT"
@@ -362,11 +390,18 @@ jobs:
           if [ "$www_challenge" = "true" ]; then
             echo "::warning::GitHub-hosted direct www observation is challenged; independent public-browser verification remains required for canonical redirect."
           else
-            case "$www_status" in 301|302|307|308) ;; *) echo "Unexpected www status: $www_status"; exit 1 ;; esac
-            case "$www_location" in https://irhaapparels.com/*) ;; *) echo "Unexpected www redirect: $www_location"; exit 1 ;; esac
+            case "$www_status" in
+              301|302|307|308) ;;
+              *) echo "Unexpected www status: $www_status"; verification_failed=true ;;
+            esac
+            case "$www_location" in
+              https://irhaapparels.com/*) ;;
+              *) echo "Unexpected www redirect: $www_location"; verification_failed=true ;;
+            esac
           fi
 
           cat "$matrix"
+          test "$verification_failed" = false
 
       - name: Publish cache-consistency commit status
         if: always() && steps.freeze.outputs.eligible == 'true'
@@ -432,10 +467,11 @@ jobs:
             echo "## Cloudflare cache consistency"
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Quality run: \`${{ steps.freeze.outputs.quality_run_id }}\`"
-            echo "- Pre-mutation Cloudflare snapshot: recorded"
-            echo "- Cache policy: HTML/release identity bypass enforced as final Cache Rule"
-            echo "- Historical query-key invalidation: one bounded zone purge"
-            echo "- Immutable Pages artifact: unbusted + busted exact identity required"
+            echo "- Pre-verification Cloudflare snapshot: recorded"
+            echo "- Cloudflare zone mutation required: \`${{ steps.cache_state.outputs.needs_policy_change }}\`"
+            echo "- Cache policy: HTML/release identity bypass verified as final Cache Rule"
+            echo "- Historical query-key purge: performed only when policy drift required mutation"
+            echo "- Immutable Pages artifact: default-UA + browser-UA, unbusted + busted exact identity required"
             echo "- Apex direct build identity: \`${{ steps.verify.outputs.apex_build_direct }}\`"
             echo "- Apex direct homepage identity: \`${{ steps.verify.outputs.apex_home_direct }}\`"
             echo "- Apex GitHub challenge observed: \`${{ steps.verify.outputs.apex_challenge_seen }}\`"
