@@ -55,16 +55,45 @@ describe("realtime website visitor country alerts", () => {
     expect(dashboard).toContain('table: "site_visitors"');
     expect(dashboard).toContain("grid grid-cols-2");
     expect(runtime).toContain("<AdminVisitorPulse />");
-    expect(pulse).toContain("New website visitor");
   });
 
-  it("reuses the production Web Push channel for mobile and desktop", () => {
+  it("uses the deduplicated CRM arrival record for admin-wide realtime and unread visibility", () => {
+    expect(pulse).toContain('from("crm_notifications")');
+    expect(pulse).toContain('channel: "site_visitor", event: "arrival"');
+    expect(pulse).toContain('.eq("status", "unread")');
+    expect(pulse).toContain('table: "crm_notifications"');
+    expect(pulse).toContain("New website visitor");
+    expect(pulse).toContain("Visitor alerts");
+    expect(pulse).toContain("unreadCount");
+    expect(pulse).toContain("ToastAction");
+    expect(pulse).toContain('/admin/visitors?visitor=');
+    expect(pulse).not.toContain('path.startsWith("/admin/visitors")');
+    expect(pulse).not.toContain('path.startsWith("/admin/live-chat")');
+  });
+
+  it("verifies the exact current device before declaring background alerts active", () => {
+    expect(pushSetup).toContain('from("owner_push_subscriptions")');
+    expect(pushSetup).toContain('.eq("endpoint", localSubscription.endpoint)');
+    expect(pushSetup).toContain('updateViaCache: "none"');
+    expect(pushSetup).toContain('"ACTIVE"');
+    expect(pushSetup).toContain('"NEEDS SETUP"');
+    expect(pushSetup).toContain('"BLOCKED BY BROWSER"');
+    expect(pushSetup).toContain('"INSTALL ADMIN TO HOME SCREEN"');
+    expect(pushSetup).toContain("Reconnect alerts");
+    expect(pushSetup).toContain("this exact device subscription");
+  });
+
+  it("reuses the production Web Push channel and keeps visitor pushes visibly presented", () => {
     expect(config).toContain("[functions.site-visitor]");
     expect(config).toMatch(/\[functions\.site-visitor\][\s\S]*?verify_jwt = false/);
-    expect(pushSetup).toMatch(/new (website )?visitor/i);
+    expect(pushSetup).toMatch(/visitor/i);
     expect(pushSetup).toContain('navigator.serviceWorker.register("/irha-owner-sw.js"');
+    expect(pushSetup).toContain("Add to Home Screen");
     expect(pushWorker).toContain('self.addEventListener("push"');
     expect(pushWorker).toContain("showNotification");
+    expect(pushWorker).toContain('payload.kind === "site_visitor"');
+    expect(pushWorker).toContain('self.addEventListener("notificationclick"');
+    expect(pushWorker).toContain("client.navigate(target)");
   });
 
   it("publishes an explicit privacy and accuracy disclosure", () => {

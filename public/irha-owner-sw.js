@@ -16,7 +16,7 @@ self.addEventListener("push", (event) => {
     badge: typeof payload.badge === "string" ? payload.badge : "/icon-512x512.png",
     tag: typeof payload.tag === "string" ? payload.tag : "irha-owner-alert",
     renotify: true,
-    requireInteraction: payload.kind === "live_chat",
+    requireInteraction: payload.kind === "live_chat" || payload.kind === "site_visitor",
     timestamp: Number(payload.timestamp) || Date.now(),
     data: {
       url: typeof payload.url === "string" ? payload.url : "/admin",
