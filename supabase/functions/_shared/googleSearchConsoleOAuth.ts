@@ -146,7 +146,8 @@ async function exchangeRefreshToken(): Promise<TokenExchangeSuccess | SafeFailur
 function isApprovedGoogleSearchConsoleUrl(value: string) {
   if (value === GSC_SITES_LIST_ENDPOINT) return true;
   if (value === "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect") return true;
-  return /^https:\/\/www\.googleapis\.com\/webmasters\/v3\/sites\/[^/]+\/searchAnalytics\/query$/.test(value);
+  if (/^https:\/\/www\.googleapis\.com\/webmasters\/v3\/sites\/[^/]+\/searchAnalytics\/query$/.test(value)) return true;
+  return /^https:\/\/www\.googleapis\.com\/webmasters\/v3\/sites\/[^/]+\/sitemaps(?:\/[^/?#]+)?$/.test(value);
 }
 
 export async function googleSearchConsoleFetch<T>(
