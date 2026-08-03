@@ -9,10 +9,14 @@ const visitorPulse = readFileSync("src/components/admin/AdminVisitorPulse.tsx", 
 const chatLauncher = readFileSync("src/components/admin/AdminLiveChatLauncher.tsx", "utf8");
 
 describe("mobile owner workspace contract", () => {
-  it("does not keep success or zero-state floating cards over the admin workspace", () => {
-    expect(pushSetup).toContain("if (subscription && Notification.permission === \"granted\") return null");
-    expect(pushSetup).not.toContain("Background owner alerts active");
-    expect(visitorPulse).toContain("if (!authorized || liveVisitors.length === 0) return null");
+  it("keeps device health and missed visitor activity compact but persistent", () => {
+    expect(pushSetup).toContain("Alerts on this device");
+    expect(pushSetup).toContain('"ACTIVE"');
+    expect(pushSetup).toContain('"INSTALL ADMIN TO HOME SCREEN"');
+    expect(pushSetup).toContain("max-w-sm");
+    expect(visitorPulse).toContain("if (!authorized || unreadCount === 0 || !latestUnread) return null");
+    expect(visitorPulse).toContain("Visitor alerts");
+    expect(visitorPulse).toContain("max-w-[calc(100vw-6rem)]");
     expect(chatLauncher).toContain("hidden min-h-12");
   });
 
