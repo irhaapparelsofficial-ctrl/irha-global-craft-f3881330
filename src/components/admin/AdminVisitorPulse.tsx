@@ -1,122 +1,187 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Globe2, Radio } from "lucide-react";
+import { BellRing, Globe2 } from "lucide-react";
+import { ToastAction } from "@/components/ui/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-const db = supabase as any;
-const LIVE_WINDOW_MS = 3 * 60 * 1000;
-
-type VisitorRow = {
-  visitor_session_id: string;
-  country_code: string | null;
-  country: string | null;
-  region: string | null;
-  city: string | null;
-  entry_path: string;
-  current_path: string;
-  device_type: string;
-  first_seen_at: string;
-  last_seen_at: string;
+type VisitorNotification = {
+  id: string;
+  body: string;
+  created_at: string;
+  status: string;
+  archived_at: string | null;
+  metadata: unknown;
 };
 
-function countryFlag(code: string | null) {
-  if (!code || !/^[A-Z]{2}$/.test(code)) return "🌐";
-  return String.fromCodePoint(...code.split("").map((letter) => 127397 + letter.charCodeAt(0)));
+function metadataObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
 }
 
-function visitorLabel(visitor: VisitorRow) {
-  const location = [visitor.city, visitor.region, visitor.country || visitor.country_code].filter(Boolean).join(", ");
-  return `${countryFlag(visitor.country_code)} ${location || "Country unavailable"} · ${visitor.device_type}`;
+function isVisitorArrival(notification: VisitorNotification) {
+  const metadata = metadataObject(notification.metadata);
+  return metadata.channel === "site_visitor" && metadata.event === "arrival";
+}
+
+function visitorSessionId(notification: VisitorNotification) {
+  const value = metadataObject(notification.metadata).visitor_session_id;
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function visitorUrl(notification: VisitorNotification) {
+  const sessionId = visitorSessionId(notification);
+  return sessionId
+    ? `/admin/visitors?visitor=${encodeURIComponent(sessionId)}`
+    : "/admin/visitors";
+}
+
+function relativeTime(value: string) {
+  const elapsedMs = Date.now() - new Date(value).getTime();
+  const elapsedMinutes = Math.max(0, Math.floor(elapsedMs / 60_000));
+  if (elapsedMinutes < 1) return "Just now";
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m ago`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours}h ago`;
+  return `${Math.floor(elapsedHours / 24)}d ago`;
 }
 
 export default function AdminVisitorPulse() {
   const [authorized, setAuthorized] = useState(false);
-  const [liveVisitors, setLiveVisitors] = useState<VisitorRow[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [latestUnread, setLatestUnread] = useState<VisitorNotification | null>(null);
   const initialized = useRef(false);
-  const seenSessions = useRef(new Set<string>());
+  const loading = useRef(false);
+  const seenNotificationIds = useRef(new Set<string>());
 
-  const load = useCallback(async (announce = false) => {
-    const path = window.location.pathname;
-    if (!path.startsWith("/admin") || path.startsWith("/admin/visitors") || path.startsWith("/admin/live-chat")) {
-      setAuthorized(false);
-      return;
-    }
+  const announce = useCallback((notification: VisitorNotification) => {
+    if (seenNotificationIds.current.has(notification.id)) return;
+    seenNotificationIds.current.add(notification.id);
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
-    if (!userId) {
-      setAuthorized(false);
-      return;
-    }
-
-    const { data: role } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (role?.role !== "admin") {
-      setAuthorized(false);
-      return;
-    }
-
-    setAuthorized(true);
-    const cutoff = new Date(Date.now() - LIVE_WINDOW_MS).toISOString();
-    const { data, error } = await db
-      .from("site_visitors")
-      .select("visitor_session_id,country_code,country,region,city,entry_path,current_path,device_type,first_seen_at,last_seen_at")
-      .gte("last_seen_at", cutoff)
-      .order("last_seen_at", { ascending: false })
-      .limit(50);
-    if (error) return;
-
-    const rows = (data ?? []) as VisitorRow[];
-    const nextSessions = new Set(rows.map((visitor) => visitor.visitor_session_id));
-    if (initialized.current && announce) {
-      rows
-        .filter((visitor) => !seenSessions.current.has(visitor.visitor_session_id))
-        .sort((a, b) => new Date(a.first_seen_at).getTime() - new Date(b.first_seen_at).getTime())
-        .forEach((visitor) => {
-          toast({ title: "New website visitor", description: `${visitorLabel(visitor)} · ${visitor.entry_path}` });
-        });
-    }
-
-    initialized.current = true;
-    seenSessions.current = nextSessions;
-    setLiveVisitors(rows);
+    const url = visitorUrl(notification);
+    toast({
+      title: "New website visitor",
+      description: `${notification.body} · ${relativeTime(notification.created_at)}`,
+      action: (
+        <ToastAction altText="Open visitor" onClick={() => window.location.assign(url)}>
+          Open
+        </ToastAction>
+      ),
+    });
   }, []);
+
+  const load = useCallback(async (announceNew = false) => {
+    if (loading.current || !window.location.pathname.startsWith("/admin")) return;
+    loading.current = true;
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      if (!userId) {
+        setAuthorized(false);
+        setUnreadCount(0);
+        setLatestUnread(null);
+        return;
+      }
+
+      const { data: role } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (role?.role !== "admin") {
+        setAuthorized(false);
+        setUnreadCount(0);
+        setLatestUnread(null);
+        return;
+      }
+
+      setAuthorized(true);
+      const { data, error, count } = await supabase
+        .from("crm_notifications")
+        .select("id,body,created_at,status,archived_at,metadata", { count: "exact" })
+        .eq("status", "unread")
+        .is("archived_at", null)
+        .contains("metadata", { channel: "site_visitor", event: "arrival" })
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) return;
+
+      const rows = (data ?? []) as VisitorNotification[];
+      if (initialized.current && announceNew) {
+        rows
+          .filter((notification) => !seenNotificationIds.current.has(notification.id))
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .forEach(announce);
+      } else if (!initialized.current) {
+        rows.forEach((notification) => seenNotificationIds.current.add(notification.id));
+      }
+
+      initialized.current = true;
+      setUnreadCount(count ?? rows.length);
+      setLatestUnread(rows[0] ?? null);
+    } finally {
+      loading.current = false;
+    }
+  }, [announce]);
 
   useEffect(() => {
     void load(false);
-    const interval = window.setInterval(() => void load(true), 20_000);
+    const interval = window.setInterval(() => void load(true), 30_000);
     const realtime = supabase
-      .channel("admin-visitor-pulse")
-      .on("postgres_changes", { event: "*", schema: "public", table: "site_visitors" }, () => void load(true))
+      .channel("admin-visitor-arrival-alerts")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "crm_notifications" },
+        (payload) => {
+          const row = payload.new as VisitorNotification | undefined;
+          if (
+            payload.eventType === "INSERT" &&
+            row &&
+            row.status === "unread" &&
+            row.archived_at === null &&
+            isVisitorArrival(row)
+          ) {
+            announce(row);
+          }
+          void load(false);
+        },
+      )
       .subscribe();
-    const authListener = supabase.auth.onAuthStateChange(() => void load(false));
+    const authListener = supabase.auth.onAuthStateChange(() => {
+      initialized.current = false;
+      seenNotificationIds.current.clear();
+      void load(false);
+    });
+
     return () => {
       window.clearInterval(interval);
       authListener.data.subscription.unsubscribe();
       void supabase.removeChannel(realtime);
     };
-  }, [load]);
+  }, [announce, load]);
 
-  if (!authorized || liveVisitors.length === 0) return null;
-  const latest = liveVisitors[0];
+  if (!authorized || unreadCount === 0 || !latestUnread) return null;
 
   return (
     <a
-      href={`/admin/visitors?visitor=${encodeURIComponent(latest.visitor_session_id)}`}
-      className="fixed bottom-[calc(5.35rem+env(safe-area-inset-bottom))] left-3 z-[64] inline-flex min-h-11 max-w-[calc(100vw-6rem)] items-center gap-2 rounded-full border border-sky-400/35 bg-[#07111f]/96 px-3 py-2 text-white shadow-xl backdrop-blur-xl transition hover:border-gold/60 md:bottom-5 md:left-5"
-      aria-label={`Open live visitors dashboard — ${liveVisitors.length} online`}
+      href={visitorUrl(latestUnread)}
+      className="fixed bottom-[calc(5.35rem+env(safe-area-inset-bottom))] left-3 z-[67] inline-flex min-h-11 max-w-[calc(100vw-6rem)] items-center gap-2 rounded-full border border-gold/40 bg-[#07111f]/97 px-3 py-2 text-white shadow-xl backdrop-blur-xl transition hover:border-gold/70 md:bottom-[5.25rem] md:left-5"
+      aria-label={`Open website visitor alerts — ${unreadCount} unread`}
     >
-      <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-400/12 text-sky-300">
+      <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold/12 text-gold">
         <Globe2 size={16} />
-        <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-emerald-400 px-1 text-[8px] font-bold text-[#07111f]">{liveVisitors.length > 99 ? "99+" : liveVisitors.length}</span>
+        <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[8px] font-bold text-[#07111f]">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
       </span>
       <span className="min-w-0">
-        <span className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-emerald-300"><Radio size={9} className="animate-pulse" /> Live now</span>
-        <span className="block truncate text-xs font-medium">{visitorLabel(latest)}</span>
+        <span className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-gold">
+          <BellRing size={9} /> Visitor alerts
+        </span>
+        <span className="block truncate text-xs font-medium">{latestUnread.body}</span>
+        <span className="block text-[9px] text-white/45">{relativeTime(latestUnread.created_at)} · {unreadCount} unread</span>
       </span>
     </a>
   );
