@@ -13,7 +13,7 @@ const helperSource = readFileSync(helperPath);
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const rows = [];
 
-function resolveDeployedEntrypoint(response, entry) {
+function resolveDeployedEntrypoint(response, entry, repositorySource) {
   const scopedCandidates = response.files.filter((file) =>
     typeof file?.name === "string" && file.name.endsWith(`${entry.name}/index.ts`)
   );
@@ -22,17 +22,13 @@ function resolveDeployedEntrypoint(response, entry) {
     throw new Error(`Ambiguous scoped entrypoint for ${entry.name}`);
   }
 
-  const flattenedCandidates = response.files.filter((file) =>
-    typeof file?.name === "string" && file.name === "index.ts"
-  );
-  const metadataEntrypoint = typeof response.entrypoint_path === "string"
-    ? response.entrypoint_path.replaceAll("\\", "/")
-    : "";
-  if (flattenedCandidates.length === 1 && metadataEntrypoint.endsWith("/index.ts")) {
-    return flattenedCandidates[0];
-  }
-  if (flattenedCandidates.length > 1) {
-    throw new Error(`Ambiguous flattened entrypoint for ${entry.name}`);
+  const exactSourceCandidates = response.files.filter((file) => {
+    if (typeof file?.content !== "string") return false;
+    return repositorySource.equals(Buffer.from(file.content, "utf8"));
+  });
+  if (exactSourceCandidates.length === 1) return exactSourceCandidates[0];
+  if (exactSourceCandidates.length > 1) {
+    throw new Error(`Ambiguous exact-source entrypoint for ${entry.name}`);
   }
   return null;
 }
@@ -57,12 +53,12 @@ for (const entry of plan.functions) {
   }
   if (!Array.isArray(response.files)) throw new Error(`Function files missing for ${entry.name}`);
 
-  const deployedEntrypoint = resolveDeployedEntrypoint(response, entry);
+  const repositorySource = readFileSync(resolve(root, entry.repository_source));
+  const deployedEntrypoint = resolveDeployedEntrypoint(response, entry, repositorySource);
   if (!deployedEntrypoint || typeof deployedEntrypoint.content !== "string") {
-    throw new Error(`Deployed entrypoint missing for ${entry.name}`);
+    throw new Error(`Exact deployed entrypoint source missing for ${entry.name}`);
   }
 
-  const repositorySource = readFileSync(resolve(root, entry.repository_source));
   const deployedSource = Buffer.from(deployedEntrypoint.content, "utf8");
   if (!repositorySource.equals(deployedSource)) {
     throw new Error(`Exact deployed source mismatch for ${entry.name}`);
