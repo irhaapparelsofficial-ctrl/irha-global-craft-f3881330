@@ -13,6 +13,30 @@ const helperSource = readFileSync(helperPath);
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const rows = [];
 
+function resolveDeployedEntrypoint(response, entry) {
+  const scopedCandidates = response.files.filter((file) =>
+    typeof file?.name === "string" && file.name.endsWith(`${entry.name}/index.ts`)
+  );
+  if (scopedCandidates.length === 1) return scopedCandidates[0];
+  if (scopedCandidates.length > 1) {
+    throw new Error(`Ambiguous scoped entrypoint for ${entry.name}`);
+  }
+
+  const flattenedCandidates = response.files.filter((file) =>
+    typeof file?.name === "string" && file.name === "index.ts"
+  );
+  const metadataEntrypoint = typeof response.entrypoint_path === "string"
+    ? response.entrypoint_path.replaceAll("\\", "/")
+    : "";
+  if (flattenedCandidates.length === 1 && metadataEntrypoint.endsWith("/index.ts")) {
+    return flattenedCandidates[0];
+  }
+  if (flattenedCandidates.length > 1) {
+    throw new Error(`Ambiguous flattened entrypoint for ${entry.name}`);
+  }
+  return null;
+}
+
 for (const entry of plan.functions) {
   const responsePath = resolve(liveDirectory, `${entry.name}.json`);
   const response = JSON.parse(readFileSync(responsePath, "utf8"));
@@ -33,9 +57,7 @@ for (const entry of plan.functions) {
   }
   if (!Array.isArray(response.files)) throw new Error(`Function files missing for ${entry.name}`);
 
-  const deployedEntrypoint = response.files.find((file) =>
-    typeof file?.name === "string" && file.name.endsWith(`${entry.name}/index.ts`)
-  );
+  const deployedEntrypoint = resolveDeployedEntrypoint(response, entry);
   if (!deployedEntrypoint || typeof deployedEntrypoint.content !== "string") {
     throw new Error(`Deployed entrypoint missing for ${entry.name}`);
   }

@@ -70,6 +70,14 @@ describe("SEC-M03 canonical parity control", () => {
     expect(registryRefresh).toContain("Exact hash mismatch");
   });
 
+  it("accepts only an unambiguous flattened Management API entrypoint fallback", () => {
+    expect(sourceVerifier).toContain("resolveDeployedEntrypoint");
+    expect(sourceVerifier).toContain('file.name === "index.ts"');
+    expect(sourceVerifier).toContain('metadataEntrypoint.endsWith("/index.ts")');
+    expect(sourceVerifier).toContain("Ambiguous scoped entrypoint");
+    expect(sourceVerifier).toContain("Ambiguous flattened entrypoint");
+  });
+
   it("source-verifies protected pre-existing functions without broad deployment", () => {
     expect(workflow).toContain("Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8");
     expect(parityPlan.functions.find((entry: { name: string }) => entry.name === "notification-dispatcher")).toMatchObject({
