@@ -419,6 +419,14 @@
       "git_blob_sha": "b36c1408af28cd2e4d7422c07b0279e364220d46",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260803224500",
+      "name": "harden_crm_communication_history_association",
+      "path": "supabase/migrations/20260803224500_harden_crm_communication_history_association.sql",
+      "git_blob_sha": "ee68d4d97b823d78acd6b90b60b8633ad1a403ee",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
