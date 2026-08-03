@@ -84,6 +84,7 @@ describe("SEC-M03 canonical parity control", () => {
     });
     expect(generator).toContain("const dispatcherVersion = 10");
     expect(generator).toContain("d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c");
+    expect(generator).toContain('dispatcher.version !== 8 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48"');
   });
 
   it("derives exact production migration parity without a fixed migration count", () => {
