@@ -25,11 +25,11 @@
       "name": "notification-dispatcher",
       "registry": "supabase/deployment-parity/functions-f2.json",
       "repository_source": "supabase/functions/notification-dispatcher/index.ts",
-      "exact_version": 8,
-      "exact_hash": "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48",
+      "exact_version": 9,
+      "exact_hash": "3b637373f5f42f7d54768b0ef748b60dcf9ea173a9c54e15e2059de6949cc140",
       "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "Merged buyer-readiness PR #786; parity-only, never deployed by this execution"
+      "provenance": "IA-SEC-E001 PR #846; exact merged source deployed as v9 before anonymous token-consume EXECUTE is revoked"
     },
     {
       "name": "public-lead-gateway",
