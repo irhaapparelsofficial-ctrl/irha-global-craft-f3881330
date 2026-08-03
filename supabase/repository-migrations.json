@@ -427,6 +427,14 @@
       "git_blob_sha": "ee68d4d97b823d78acd6b90b60b8633ad1a403ee",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260803233000",
+      "name": "harden_crm_task_meeting_integrity",
+      "path": "supabase/migrations/20260803233000_harden_crm_task_meeting_integrity.sql",
+      "git_blob_sha": "d3058a9cab663ea47e63aed04b1d24fca62d72b8",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
