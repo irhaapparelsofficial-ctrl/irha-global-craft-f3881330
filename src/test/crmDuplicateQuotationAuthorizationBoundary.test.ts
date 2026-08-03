@@ -14,8 +14,9 @@ function functionBlock(sql: string, name: string) {
   const marker = `create or replace function public.${name.toLowerCase()}`;
   const start = lower.indexOf(marker);
   expect(start, `${name} definition`).toBeGreaterThanOrEqual(0);
-  const next = lower.indexOf("create or replace function public.", start + marker.length);
-  return sql.slice(start, next === -1 ? undefined : next);
+  const bodyEnd = lower.indexOf("\n$$;", start + marker.length);
+  expect(bodyEnd, `${name} body end`).toBeGreaterThan(start);
+  return sql.slice(start, bodyEnd + 4);
 }
 
 function expectAdminGuardBefore(block: string, laterMarker: string) {
