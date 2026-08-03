@@ -55,7 +55,8 @@ describe("B2B inquiry platform contracts", () => {
     expect(robots).toContain("Disallow: /admin");
     expect(robots).toContain("Disallow: /api/");
     expect(sitemap).toContain("fetchPublishedCatalogue");
-    expect(sitemap).toContain("category:categories!inner");
+    expect(sitemap).toContain("/rest/v1/rpc/get_public_sitemap_entries");
+    expect(sitemap).not.toContain("category:categories!inner");
     expect(llms).toContain("https://irhaapparels.com/de/bavarian-wear");
   });
 
