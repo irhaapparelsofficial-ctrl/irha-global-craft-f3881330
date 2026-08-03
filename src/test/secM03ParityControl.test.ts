@@ -70,12 +70,17 @@ describe("SEC-M03 canonical parity control", () => {
     expect(registryRefresh).toContain("Exact hash mismatch");
   });
 
-  it("falls back only to a unique exact repository-source byte match", () => {
-    expect(sourceVerifier).toContain("resolveDeployedEntrypoint(response, entry, repositorySource)");
-    expect(sourceVerifier).toContain("repositorySource.equals(Buffer.from(file.content, \"utf8\"))");
-    expect(sourceVerifier).toContain("exactSourceCandidates.length === 1");
+  it("bounds Management API source transport tolerance to one trailing LF only", () => {
+    expect(sourceVerifier).toContain("compareDeployedSource(repositorySource, content)");
+    expect(sourceVerifier).toContain('mode: "exact_bytes"');
+    expect(sourceVerifier).toContain('mode: "single_trailing_lf_transport"');
+    expect(sourceVerifier).toContain("repositoryHasFinalLf === deployedHasFinalLf");
+    expect(sourceVerifier).toContain("repositorySource.subarray(0, repositorySource.length - 1)");
+    expect(sourceVerifier).toContain("deployedSource.subarray(0, deployedSource.length - 1)");
+    expect(sourceVerifier).toContain("repositorySourceCandidates.length === 1");
     expect(sourceVerifier).toContain("Ambiguous scoped entrypoint");
-    expect(sourceVerifier).toContain("Ambiguous exact-source entrypoint");
+    expect(sourceVerifier).toContain("Ambiguous repository-source entrypoint");
+    expect(sourceVerifier).not.toContain(".trim()");
     expect(sourceVerifier).not.toContain('file.name === "index.ts"');
   });
 
