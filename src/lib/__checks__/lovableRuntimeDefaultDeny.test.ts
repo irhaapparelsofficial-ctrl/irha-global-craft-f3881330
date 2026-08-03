@@ -17,6 +17,7 @@ const GSC_RUNTIME_FILES = [
   "supabase/functions/_shared/googleSearchConsoleOAuth.ts",
   "supabase/functions/gsc-analytics/index.ts",
   "supabase/functions/gsc-inspect/index.ts",
+  "supabase/functions/sitemap-ping/index.ts",
 ] as const;
 
 describe("Lovable runtime is explicit opt-in only", () => {
@@ -59,7 +60,6 @@ describe("Lovable runtime is explicit opt-in only", () => {
     const queue = readFileSync("supabase/migrations/20260716035000_queue_and_finalize_sitemap_submission.sql", "utf8");
     const lock = readFileSync("supabase/migrations/20260716036000_lock_sitemap_scheduler_rpcs.sql", "utf8");
     expect(scheduler).toContain("SCHEDULER_TOKEN_HASH");
-    expect(scheduler).toContain("IRHA_ENABLE_LOVABLE_RUNTIME");
     expect(queue).toContain("/functions/v1/sitemap-ping");
     expect(lock).toContain("FROM anon, authenticated");
     expect(lock).toContain("TO service_role");
