@@ -28,13 +28,15 @@ describe("secure scheduled sitemap submission", () => {
     expect(queueMigration).not.toContain("/functions/v1/scheduled-sitemap-submit");
   });
 
-  it("supports admin JWT auth and the separate Vault scheduler token", () => {
+  it("supports verified admin/service-role auth and the separate Vault scheduler token", () => {
     expect(edge).toContain('req.headers.get("x-irha-sitemap-token")');
     expect(edge).toContain('/^[A-Za-z0-9_-]{40,120}$/');
     expect(edge).toContain("sha256Hex(schedulerToken)");
     expect(edge).toContain("constantTimeEqual(providedHash, SCHEDULER_TOKEN_HASH)");
     expect(edge).toContain('req.headers.get("Authorization")');
-    expect(edge).toContain('parseJwtRole(token) === "service_role"');
+    expect(edge).toContain('Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")');
+    expect(edge).toContain("constantTimeEqual(token, serviceRoleKey)");
+    expect(edge).not.toContain("parseJwtRole(");
     expect(edge).toContain('.eq("role", "admin")');
     expect(config).toContain("[functions.sitemap-ping]\nverify_jwt = false");
     expect(controlMigration).toContain("token_hash text not null");
