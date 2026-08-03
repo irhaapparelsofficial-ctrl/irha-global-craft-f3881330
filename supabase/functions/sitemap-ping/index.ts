@@ -1,13 +1,10 @@
-// Re-submits the canonical sitemap to Google Search Console.
+// Re-submits the canonical sitemap to Google Search Console through the same
+// owner-controlled direct Google OAuth source used by the private GSC tools.
 // Admin users can trigger it from the private SEO monitor. The daily scheduler
 // uses a separate high-entropy Vault token whose SHA-256 digest is safe to keep
 // in source; the raw token never leaves Vault or the protected cron request.
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-function irhaLovableRuntimeKey(): string | undefined {
-  if (Deno.env.get("IRHA_ENABLE_LOVABLE_RUNTIME") !== "true") return undefined;
-  return Deno.env.get("LOVABLE_API_KEY") || undefined;
-}
+import { googleSearchConsoleFetch } from "../_shared/googleSearchConsoleOAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,7 +14,6 @@ const corsHeaders = {
 
 const SITE_PROPERTY = "sc-domain:irhaapparels.com";
 const SITEMAP_URL = "https://irhaapparels.com/sitemap.xml";
-const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
 const SCHEDULER_TOKEN_HASH = "c2afdce4118bd4604f4090fe17fb7f4b4e54ca7f45ba8b069b1ab9fa7ec33368";
 
 function json(payload: unknown, status: number) {
@@ -85,46 +81,29 @@ Deno.serve(async (req) => {
   const denied = await authorize(req);
   if (denied) return denied;
 
-  const lovableKey = irhaLovableRuntimeKey();
-  const gscKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
-  if (!lovableKey || !gscKey) return json({ error: "Google Search Console connection is not configured" }, 503);
+  const siteEnc = encodeURIComponent(SITE_PROPERTY);
+  const sitemapEnc = encodeURIComponent(SITEMAP_URL);
+  const endpoint = `https://www.googleapis.com/webmasters/v3/sites/${siteEnc}/sitemaps/${sitemapEnc}`;
+  const upstream = await googleSearchConsoleFetch<null>(endpoint, { method: "PUT" });
 
-  try {
-    const siteEnc = encodeURIComponent(SITE_PROPERTY);
-    const sitemapEnc = encodeURIComponent(SITEMAP_URL);
-    const upstream = await fetch(
-      `${GATEWAY}/webmasters/v3/sites/${siteEnc}/sitemaps/${sitemapEnc}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": gscKey,
-        },
-      },
-    );
-
-    const raw = await upstream.text();
-    console.log("sitemap-ping", upstream.status, raw.slice(0, 200));
-    if (!upstream.ok) {
-      return json({
-        error: `Google Search Console returned HTTP ${upstream.status}`,
-        property: SITE_PROPERTY,
-        sitemap: SITEMAP_URL,
-        detail: raw.slice(0, 300),
-      }, 502);
-    }
-
+  if (!upstream.ok) {
+    console.error("sitemap-ping direct Google request failed", upstream.code, upstream.upstream_status ?? "no-status");
+    const status = upstream.code === "gsc_oauth_not_configured" ? 503 : 502;
     return json({
-      ok: true,
-      status: upstream.status,
+      error: upstream.code,
       property: SITE_PROPERTY,
       sitemap: SITEMAP_URL,
-      submitted_at: new Date().toISOString(),
-    }, 200);
-  } catch (error) {
-    console.error("sitemap-ping error", error instanceof Error ? error.message : error);
-    return json({ error: "Sitemap submission failed" }, 500);
+      upstream_status: upstream.upstream_status ?? null,
+    }, status);
   }
+
+  return json({
+    ok: true,
+    status: upstream.status,
+    property: SITE_PROPERTY,
+    sitemap: SITEMAP_URL,
+    submitted_at: new Date().toISOString(),
+  }, 200);
 });
 
 async function sha256Hex(value: string): Promise<string> {
