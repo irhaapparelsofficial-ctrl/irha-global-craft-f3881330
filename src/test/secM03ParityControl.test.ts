@@ -70,19 +70,20 @@ describe("SEC-M03 canonical parity control", () => {
     expect(registryRefresh).toContain("Exact hash mismatch");
   });
 
-  it("source-verifies but never deploys protected pre-existing v8 functions", () => {
+  it("source-verifies protected pre-existing functions without broad deployment", () => {
     expect(workflow).toContain("Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8");
     expect(parityPlan.functions.find((entry: { name: string }) => entry.name === "notification-dispatcher")).toMatchObject({
       registry: "supabase/deployment-parity/functions-f2.json",
-      exact_version: 8,
-      exact_hash: "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48",
+      exact_version: 10,
+      exact_hash: "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c",
     });
     expect(parityPlan.functions.find((entry: { name: string }) => entry.name === "public-lead-gateway")).toMatchObject({
       registry: "supabase/deployment-parity/functions-f1.json",
       exact_version: 8,
       exact_hash: "717a53d6c63bcd92485fc2a18e460aab98ec6f5cf6eae0f3b0ef68da1e011471",
     });
-    expect(generator).toContain("const dispatcherVersion = 8");
+    expect(generator).toContain("const dispatcherVersion = 10");
+    expect(generator).toContain("d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c");
   });
 
   it("derives exact production migration parity without a fixed migration count", () => {
