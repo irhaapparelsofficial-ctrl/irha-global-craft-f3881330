@@ -89,7 +89,7 @@ async function requireAdmin(req: Request) {
 }
 
 async function consumeSchedulerToken(token: string) {
-  const verifier = createAnonClient();
+  const verifier = createServiceClient();
   const { data, error } = await verifier.rpc("notification_consume_dispatch_token", { _token: token });
   return !error && data === true;
 }

@@ -411,6 +411,14 @@
       "git_blob_sha": "a50d952005b7d15e29165b6c1e12987d2ea0aa91",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260803213000",
+      "name": "reduce_anonymous_security_definer_surface",
+      "path": "supabase/migrations/20260803213000_reduce_anonymous_security_definer_surface.sql",
+      "git_blob_sha": "b36c1408af28cd2e4d7422c07b0279e364220d46",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }
