@@ -5,8 +5,8 @@ import { join, resolve } from "node:path";
 
 const root = process.cwd();
 const projectId = "pvzjiozismyxqrzmtfbi";
-const dispatcherVersion = 8;
-const dispatcherHash = "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48";
+const dispatcherVersion = 10;
+const dispatcherHash = "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c";
 
 function occurrenceCount(source, target) {
   let count = 0;
