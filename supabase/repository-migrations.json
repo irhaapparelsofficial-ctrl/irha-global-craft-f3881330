@@ -146,7 +146,7 @@
       "version": "20260717212829",
       "name": "pr4_catalogue_completion_workflow",
       "path": "supabase/migrations/20260717212829_05890176-6378-4d4b-8f42-8fe50f2813c4.sql",
-      "git_blob_sha": "c98805c02b305f8742b8b73d90d590d00a60baa5",
+      "git_blob_sha": "c98805c02ac17f63931d16a973fc41290a5aae9",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     },
@@ -425,6 +425,14 @@
       "name": "harden_crm_communication_history_association",
       "path": "supabase/migrations/20260803224500_harden_crm_communication_history_association.sql",
       "git_blob_sha": "ee68d4d97b823d78acd6b90b60b8633ad1a403ee",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260803233000",
+      "name": "harden_crm_task_meeting_integrity",
+      "path": "supabase/migrations/20260803233000_harden_crm_task_meeting_integrity.sql",
+      "git_blob_sha": "d3058a9cab663ea47e63aed04b1d24fca62d72b8",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     }
