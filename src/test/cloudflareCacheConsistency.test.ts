@@ -56,6 +56,14 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(workflow).toContain("GitHub-hosted direct apex observation is challenged");
   });
 
+  it("checks both default and browser user agents for release identity", () => {
+    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
+    expect(workflow).toContain("for ua_mode in default browser; do");
+    expect(workflow).toContain("curl_args=(-sS -L");
+    expect(workflow).toContain("Chrome/140.0 Safari/537.36");
+    expect(workflow).toContain("default-UA + browser-UA, unbusted + busted exact identity required");
+  });
+
   it("keeps the public consistency verifier valid bash", () => {
     const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
     const script = extractRunBlock(workflow, "Verify unbusted and query-string release consistency");
@@ -93,6 +101,13 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(script).toContain('let mutation = "reaffirmed"');
   });
 
+  it("does not mutate or purge an already-correct zone just to heal pages.dev", () => {
+    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
+    expect(workflow).toContain("needs_policy_change=$needs_policy_change");
+    expect(workflow).toContain("steps.cache_state.outputs.needs_policy_change == 'true'");
+    expect(workflow).toContain("Historical query-key purge: performed only when policy drift required mutation");
+  });
+
   it("treats confirmed apex and www Cloudflare challenges as observer limitations, not release mismatches", () => {
     const workflow = read(".github/workflows/cloudflare-current-main-reconcile.yml");
     const script = extractRunBlock(workflow, "Verify pages.dev, apex and www canonical behavior");
@@ -123,10 +138,23 @@ describe("Cloudflare cache-consistency release contract", () => {
     expect(result.status, result.stderr).toBe(0);
     expect(workflow).toContain('echo "www_challenge_seen=$www_challenge" >> "$GITHUB_OUTPUT"');
     expect(workflow).toContain("cf-mitigated");
-    expect(workflow).toContain('case "$www_status" in 301|302|307|308)');
-    expect(workflow).toContain('case "$www_location" in https://irhaapparels.com/*)');
+    expect(workflow).toContain('case "$www_status" in');
+    expect(workflow).toContain("301|302|307|308)");
+    expect(workflow).toContain('case "$www_location" in');
+    expect(workflow).toContain("https://irhaapparels.com/*)");
     expect(workflow).toContain("independent public-browser verification remains required for canonical redirect");
     expect(workflow).toContain("WWW_CHALLENGE: ${{ steps.verify.outputs.www_challenge_seen }}");
+  });
+
+  it("writes diagnostic outputs before a later release mismatch can fail the step", () => {
+    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
+    const script = extractRunBlock(workflow, "Verify unbusted and query-string release consistency");
+    expect(script.indexOf('echo "apex_build_direct=false" >> "$GITHUB_OUTPUT"')).toBeLessThan(
+      script.indexOf('test "$verification_failed" = false'),
+    );
+    expect(script.indexOf('echo "www_challenge_seen=false" >> "$GITHUB_OUTPUT"')).toBeLessThan(
+      script.indexOf('test "$verification_failed" = false'),
+    );
   });
 
   it("keeps production status exact on Pages and challenge-aware only for evidenced custom-domain observations", () => {
