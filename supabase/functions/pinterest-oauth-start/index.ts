@@ -23,20 +23,31 @@ Deno.serve(async (req: Request) => {
     const now = new Date();
     const { data: tokenRow, error: tokenError } = await service
       .from("pinterest_oauth_bootstrap_tokens")
-      .select("token_hash,expires_at,used_at")
+      .select("token_hash,expires_at,used_at,max_uses,use_count")
       .eq("token_hash", tokenHash)
       .maybeSingle();
 
-    if (tokenError || !tokenRow || tokenRow.used_at || new Date(tokenRow.expires_at).getTime() <= now.getTime()) {
+    const maxUses = Number(tokenRow?.max_uses || 1);
+    const useCount = Number(tokenRow?.use_count || 0);
+    if (
+      tokenError ||
+      !tokenRow ||
+      useCount >= maxUses ||
+      new Date(tokenRow.expires_at).getTime() <= now.getTime()
+    ) {
       return Response.redirect(FAILURE_REDIRECT, 302);
     }
 
+    const nextUseCount = useCount + 1;
     const { data: consumed, error: consumeError } = await service
       .from("pinterest_oauth_bootstrap_tokens")
-      .update({ used_at: now.toISOString() })
+      .update({
+        use_count: nextUseCount,
+        used_at: nextUseCount >= maxUses ? now.toISOString() : null,
+      })
       .eq("token_hash", tokenHash)
-      .is("used_at", null)
-      .select("token_hash")
+      .eq("use_count", useCount)
+      .select("token_hash,use_count,max_uses")
       .maybeSingle();
     if (consumeError || !consumed) return Response.redirect(FAILURE_REDIRECT, 302);
 
