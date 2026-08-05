@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
     <main className="mx-auto max-w-3xl px-4 py-24 md:py-32">
       <SEO
         title="Privacy Policy — Irha Apparels"
-        description="How Irha Apparels handles website analytics, visitor presence, inquiry details, live-chat typing previews, uploaded files and local draft data."
+        description="How Irha Apparels handles website analytics, visitor presence, inquiry details, live-chat typing previews, uploaded files, local draft data and user data deletion requests."
         path="/privacy-policy"
       />
 
@@ -72,6 +72,22 @@ export default function PrivacyPolicy() {
           <h2 className="font-display text-2xl text-foreground">How information is used</h2>
           <p className="mt-3">
             Submitted information and essential website-presence data are used to review requirements, respond to inquiries, provide live-chat support, maintain security, manage follow-up and improve the website experience.
+          </p>
+        </section>
+
+        <section id="data-deletion" className="border-t border-border/60 pt-7 scroll-mt-28">
+          <h2 className="font-display text-2xl text-foreground">User data deletion requests</h2>
+          <p className="mt-3">
+            You may request deletion of personal data that Irha Apparels controls and that is associated with a website inquiry, live-chat conversation, or business interaction through Facebook, Instagram or WhatsApp.
+          </p>
+          <p className="mt-3">
+            Send your request to <a className="underline" href={`mailto:${BRAND.email}?subject=Data%20Deletion%20Request`}>{BRAND.email}</a> with the subject <strong>Data Deletion Request</strong>. Include the name, email address or phone number you used to contact us and, where relevant, the channel used so we can locate the correct records. Do not send passwords, access tokens or other account secrets.
+          </p>
+          <p className="mt-3">
+            We may ask for reasonable information to verify that the request relates to you. After verification, we will delete or anonymize the personal data we control that is covered by the request, except where retention is required by law or is reasonably necessary for security, fraud prevention, dispute handling or legitimate business recordkeeping.
+          </p>
+          <p className="mt-3">
+            Browser-only inquiry drafts and local preferences can also be removed directly by clearing this site's browser storage on your device.
           </p>
         </section>
 
