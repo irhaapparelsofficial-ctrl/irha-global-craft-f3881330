@@ -83,7 +83,7 @@ export default function BuyerDecisionSection() {
                 <MessageSquareText size={14} /> Ask the team
               </button>
               <Link to="/buyer-trust#scci-membership" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border/70 px-5 text-[9px] font-semibold uppercase tracking-[0.17em] text-foreground/75 hover:border-primary hover:text-primary">
-                Verify SCCI evidence <ArrowRight size={13} />
+                Buyer trust center · SCCI evidence <ArrowRight size={13} />
               </Link>
             </div>
           </div>
