@@ -105,9 +105,10 @@ describe("SEC-M03 canonical parity control", () => {
       exact_hash: "717a53d6c63bcd92485fc2a18e460aab98ec6f5cf6eae0f3b0ef68da1e011471",
     });
     expect(publicLeadParity).not.toHaveProperty("exact_version");
-    expect(generator).toContain("const dispatcherVersion = 10");
-    expect(generator).toContain("d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c");
-    expect(generator).toContain('dispatcher.version !== 8 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48"');
+    expect(manifestGenerator).toContain("deployed.version < representation.minimum_version");
+    expect(manifestGenerator).not.toContain("deployed.version !== representation.version");
+    expect(manifestGenerator).toContain('expectedFunctions.get("notification-dispatcher")');
+    expect(generator).toContain("requireMonotonicEdgeVersionParity");
   });
 
   it("derives exact production migration parity without a fixed migration count", () => {
@@ -135,9 +136,9 @@ describe("SEC-M03 canonical parity control", () => {
     expect(migrationParity).toContain("newlyObservedLiveVersions");
     expect(migrationParity).toContain("New live migration");
     expect(migrationParity).toContain("not authorized by the repository manifest and applied ledger");
-    expect(generator).toContain("replaceLegacyOrRequireCurrent");
-    expect(generator).toContain("legacyCount === 1 && currentCount === 0");
-    expect(generator).toContain("legacyCount === 0 && currentCount === 1");
-    expect(generator).toContain("expected exactly one canonical replacement target or one already-current target");
+    expect(generator).toContain("requireMonotonicEdgeVersionParity");
+    expect(generator).not.toContain("replaceLegacyOrRequireCurrent");
+    expect(manifestGenerator).toContain("minimum_version: minimumVersion");
+    expect(manifestGenerator).toContain("dispatcherRepresentation.minimum_version");
   });
 });

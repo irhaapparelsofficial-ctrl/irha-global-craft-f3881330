@@ -79,47 +79,47 @@
   },
   "database": {
     "canonical_digests_sha256": {
-      "columns": "e885b2a26113a0d0e7a13ffb1a04e7397b08a921dc901e33034a1cb53ed5dc14",
-      "constraints": "05af8906cd94f5f087f5f2eb90e522a826a7ccaf16181adc3d520f1082d0aa12",
-      "functions": "a42dca4ae4d615028c8ceda8cd8d50d283c2eecdbcc68c9a19483abd76b669e8",
-      "indexes": "3641f5881006df448cbf1b0b298de3bad6293c9fbf0354bcb4b11a54346774c3",
-      "migrations": "965835248b549c38d51dfb1e2a37a9ef7e78ffff4b8f90ae3bb7423894d2e0b1",
+      "columns": "d0f0e2db8104f4a4ed7d23e0fe284b717da01f9b3d8673a9f90f8ec67767aac6",
+      "constraints": "a388ab7abdfff1eac47d42523fa4bfeb9190148eaa63ebd9765a0573950e2193",
+      "functions": "917acacc015bb8697dc497b7590fdeae1b4e363c37aa6ed2349ce66f7f2baee7",
+      "indexes": "39bfca272621a2dcdd156faf9f0394b519016b3055e927dea9de13814e873921",
+      "migrations": "98f4aa80870f1fc27bec2cb1d8d05cd9247d62e5aff785abd10cd86dc753b4d7",
       "policies": "e80cb14c36cd41042f7598b7004a1c102781e95d3f484474bfbd9870ca13fee5",
       "triggers": "a973ab9cfdb51d215c0c6533c1e973cca60712877b61d6ac37dc687fbcc7c05b"
     },
     "live_migrations": {
-      "count": 376,
-      "max_version": "20260731151915",
+      "count": 385,
+      "max_version": "20260803234500",
       "min_version": "20260712185505"
     },
     "public": {
-      "constraints": 945,
+      "constraints": 955,
       "distinct_function_names": 203,
       "enums": 4,
       "function_signatures": 204,
-      "indexes": 666,
+      "indexes": 674,
       "policies": 223,
-      "rls_enabled_tables": 158,
-      "tables": 158,
+      "rls_enabled_tables": 162,
+      "tables": 162,
       "triggers": 140,
       "views": 13
     }
   },
   "edge_functions": {
-    "classification_sha256": "270bf7e02268185b1620491c5359d0b7490293475ffff33c6343c6bbc78ea46d",
+    "classification_sha256": "9ea41f3e46903176a1fcb81415bdcecfe3c0f9bdc6a1ed182899d463692371ed",
     "config_parity": true,
-    "config_toml_sha256": "97dde99e8a5a4409986ef5c1adbf9c7777baa37186e47f51f4942a239274c77f",
-    "deployed_count": 87,
-    "live_inventory_sha256": "17c0dbbd301cfda6b1440fc5bb72d6489cdef68379b84eb4e36f1b6f341e3d65",
+    "config_toml_sha256": "0158fd155c6fab874e13e87a2878b313d7505fd537f3b312dcf3e945273e537f",
+    "deployed_count": 92,
+    "live_inventory_sha256": "394551e0801d9599d1b57ccddc2a3e1fb33f6a3f4ecc085aa43da7032bab0c33",
     "registries": {
       "F1": {
-        "count": 33,
-        "file_sha256": "0a1e4ff4755bd2f4263b63e99d30f4df963cd20db40d3788f17261993087c3e0",
+        "count": 38,
+        "file_sha256": "b0ca6873fbc81f1b9ac43012a2e668773e453d9ebd7b3199f7363b12be575e0d",
         "path": "supabase/deployment-parity/functions-f1.json"
       },
       "F2": {
         "count": 14,
-        "file_sha256": "e2a1e673509242846c4f69a7bcae4eb1f25f971669b9bfebf005b29acf9a4842",
+        "file_sha256": "fb2633b4737d6fedd9fe2c99204add63982d77136143751afb46c00b3dce495c",
         "path": "supabase/deployment-parity/functions-f2.json"
       },
       "F3": {
@@ -150,11 +150,11 @@
     "committed_file": "src/integrations/supabase/types.ts",
     "freshness_gate": "official Supabase CLI public-schema generation and byte-for-byte comparison",
     "private_schemas_excluded": true,
-    "sha256": "931aaed39a81e52f46369b4ad8768476ea5270cdd754e8836ac6b2591354464c",
+    "sha256": "2bb2d2a7d21c35fcfd9d46c37e2ed578dbe7e48f7eaf6919ad2caf64234def06",
     "totals": {
       "enums": 4,
       "function_signatures": 204,
-      "tables": 158,
+      "tables": 162,
       "views": 13
     }
   },
@@ -167,20 +167,20 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "17c7747de72d61ab49db790e878d0465c53695084ddb053c5b3535386bec9ef9",
+  "manifest_sha256": "0481c790adbb510b2562024f15ddf75c215ef53e4253c9054ab0ca0789a71776",
   "migration_provenance": {
-    "canonical_payload_sha256": "b24e7b17ba5be510c0a5033371feb659c8dc7b64bf2e0f1a05ae3310c1e16d18",
-    "file_sha256": "8d54a680b497e67a6a587905d39fecc7eccfc5b2e90f01b593374fbef91e7f6e",
+    "canonical_payload_sha256": "5e8e1b32aeca1763c3ebc66d183fb3b67c662d18f74e6cb64c876c56b7f066e5",
+    "file_sha256": "b78386075cddb91de5adebbe0dc92237d5b6f02c9b2b4b023dcf9874619a6b54",
     "path": "supabase/deployment-parity/migration-provenance.json",
     "totals": {
-      "P1": 5,
+      "P1": 14,
       "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 376
+      "live": 385
     }
   },
   "schema_version": 2,
@@ -188,9 +188,9 @@
     "notification_dispatcher": {
       "custom_auth_required": true,
       "single_use_scheduler_authorization": true,
-      "source_sha256": "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48",
+      "source_sha256": "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c",
       "verify_jwt": false,
-      "version": 8
+      "version": 21
     },
     "sealed_stub_count": 9,
     "secret_values_in_manifest": false,
@@ -198,7 +198,7 @@
   },
   "serialization_contract": {
     "path": "supabase/deployment-parity/SERIALIZATION.md",
-    "sha256": "4271ed5ec365956921ab7f1d4471d1a8db99614565e93bd766f524d3a8c8ee9f"
+    "sha256": "17582319e94b410459c7e4ee4908847b2cba7df16bf8f7e55a9be602575a70ca"
   },
   "storage": {
     "bucket_count": 11,
