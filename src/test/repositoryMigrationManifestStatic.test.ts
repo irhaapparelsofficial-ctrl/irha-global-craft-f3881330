@@ -26,6 +26,17 @@ const manifest = JSON.parse(
   readFileSync(resolve(root, "supabase/repository-migrations.json"), "utf8"),
 ) as Manifest;
 
+const recoveredPinterestMigrations = [
+  ["20260803204636", "pinterest_oauth_control"],
+  ["20260803204702", "pinterest_oauth_control_verify"],
+  ["20260803204750", "pinterest_bootstrap_guard_indexes"],
+  ["20260803210743", "pinterest_operator_jobs"],
+  ["20260803215802", "pinterest_bootstrap_multiuse"],
+  ["20260803215854", "pinterest_bootstrap_multiuse_noop_check"],
+  ["20260803215906", "pinterest_bootstrap_multiuse_cleanup_noop"],
+  ["20260803215920", "pinterest_bootstrap_multiuse_runtime_marker"],
+] as const;
+
 function gitBlobSha(buffer: Buffer) {
   const prefix = Buffer.from(`blob ${buffer.length}\0`, "utf8");
   return createHash("sha1").update(prefix).update(buffer).digest("hex");
@@ -69,6 +80,28 @@ describe("repository migration manifest static contract", () => {
         expect(entry.transactional_dry_run).toBe(true);
         expect(entry.verification_query).toBeUndefined();
       }
+    }
+  });
+
+  it("locks recovered Pinterest live history to verified-present statement evidence", () => {
+    const recoveredVersions = new Set(recoveredPinterestMigrations.map(([version]) => version));
+    const recoveredEntries = manifest.migrations.filter((entry) => recoveredVersions.has(entry.version as typeof recoveredPinterestMigrations[number][0]));
+    expect(recoveredEntries).toHaveLength(recoveredPinterestMigrations.length);
+
+    for (const [version, name] of recoveredPinterestMigrations) {
+      const entry = recoveredEntries.find((candidate) => candidate.version === version);
+      expect(entry).toMatchObject({
+        version,
+        name,
+        path: `supabase/migrations/${version}_${name}.sql`,
+        execution_mode: "verified_present",
+        transactional_dry_run: false,
+      });
+      expect(entry?.verification_query).toContain("supabase_migrations.schema_migrations");
+      expect(entry?.verification_query).toContain(`version = '${version}'`);
+      expect(entry?.verification_query).toContain(`name = '${name}'`);
+      expect(entry?.verification_query).toContain("extensions.digest");
+      expect(entry?.verification_query).toMatch(/[0-9a-f]{64}/);
     }
   });
 });
