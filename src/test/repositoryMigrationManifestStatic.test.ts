@@ -21,10 +21,31 @@ type Manifest = {
   migrations: ManifestEntry[];
 };
 
+type ProvenanceRecord = {
+  version: string;
+  name: string;
+  class: string;
+  exact_repository_source: {
+    application_state?: string;
+    execution_mode?: string;
+    git_blob_sha1?: string;
+    repository_path?: string;
+  } | null;
+};
+
+type MigrationProvenance = {
+  payload: {
+    records: ProvenanceRecord[];
+  };
+};
+
 const root = process.cwd();
 const manifest = JSON.parse(
   readFileSync(resolve(root, "supabase/repository-migrations.json"), "utf8"),
 ) as Manifest;
+const migrationProvenance = JSON.parse(
+  readFileSync(resolve(root, "supabase/deployment-parity/migration-provenance.json"), "utf8"),
+) as MigrationProvenance;
 
 const recoveredPinterestMigrations = [
   ["20260803204636", "pinterest_oauth_control"],
@@ -85,7 +106,9 @@ describe("repository migration manifest static contract", () => {
 
   it("locks recovered Pinterest live history to verified-present statement evidence", () => {
     const recoveredVersions = new Set(recoveredPinterestMigrations.map(([version]) => version));
-    const recoveredEntries = manifest.migrations.filter((entry) => recoveredVersions.has(entry.version as typeof recoveredPinterestMigrations[number][0]));
+    const recoveredEntries = manifest.migrations.filter((entry) =>
+      recoveredVersions.has(entry.version as typeof recoveredPinterestMigrations[number][0]),
+    );
     expect(recoveredEntries).toHaveLength(recoveredPinterestMigrations.length);
 
     for (const [version, name] of recoveredPinterestMigrations) {
@@ -102,6 +125,25 @@ describe("repository migration manifest static contract", () => {
       expect(entry?.verification_query).toContain(`name = '${name}'`);
       expect(entry?.verification_query).toContain("extensions.digest");
       expect(entry?.verification_query).toMatch(/[0-9a-f]{64}/);
+    }
+  });
+
+  it("classifies every recovered Pinterest migration as exact P1 repository provenance", () => {
+    for (const [version, name] of recoveredPinterestMigrations) {
+      const manifestEntry = manifest.migrations.find((entry) => entry.version === version);
+      const provenanceEntry = migrationProvenance.payload.records.find((entry) => entry.version === version);
+
+      expect(provenanceEntry).toMatchObject({
+        version,
+        name,
+        class: "P1",
+        exact_repository_source: {
+          application_state: "verified_present",
+          execution_mode: "manual_supabase_verified_existing",
+          git_blob_sha1: manifestEntry?.git_blob_sha,
+          repository_path: manifestEntry?.path,
+        },
+      });
     }
   });
 });
