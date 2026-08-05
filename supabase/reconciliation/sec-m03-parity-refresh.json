@@ -35,11 +35,11 @@
       "name": "public-lead-gateway",
       "registry": "supabase/deployment-parity/functions-f1.json",
       "repository_source": "supabase/functions/public-lead-gateway/index.ts",
-      "exact_version": 8,
+      "minimum_version": 8,
       "exact_hash": "717a53d6c63bcd92485fc2a18e460aab98ec6f5cf6eae0f3b0ef68da1e011471",
       "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "Repository RFQ runtime release commit 939fa017afc73215573b1ffc9b2400ed9cd166d7; parity-only, never deployed by this execution"
+      "provenance": "Repository RFQ runtime release commit 939fa017afc73215573b1ffc9b2400ed9cd166d7; exact bundle/source locked with monotonic version floor so identical safe redeploys do not create false parity failures"
     },
     {
       "name": "site-visitor",

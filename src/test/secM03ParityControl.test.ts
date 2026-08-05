@@ -98,11 +98,13 @@ describe("SEC-M03 canonical parity control", () => {
       exact_hash: "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c",
     });
     expect(notificationParity).not.toHaveProperty("exact_version");
-    expect(parityPlan.functions.find((entry: { name: string }) => entry.name === "public-lead-gateway")).toMatchObject({
+    const publicLeadParity = parityPlan.functions.find((entry: { name: string }) => entry.name === "public-lead-gateway");
+    expect(publicLeadParity).toMatchObject({
       registry: "supabase/deployment-parity/functions-f1.json",
-      exact_version: 8,
+      minimum_version: 8,
       exact_hash: "717a53d6c63bcd92485fc2a18e460aab98ec6f5cf6eae0f3b0ef68da1e011471",
     });
+    expect(publicLeadParity).not.toHaveProperty("exact_version");
     expect(generator).toContain("const dispatcherVersion = 10");
     expect(generator).toContain("d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c");
     expect(generator).toContain('dispatcher.version !== 8 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48"');
