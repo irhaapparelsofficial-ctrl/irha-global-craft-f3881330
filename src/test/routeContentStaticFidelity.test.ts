@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { SCCI_PROVISIONAL_MEMBERSHIP } from "@/lib/publicBusinessEvidence.mjs";
 import { CORE_ROUTE_CONTENT, CORE_ROUTE_PATHS, MAIN_CATEGORY_LINKS } from "@/lib/routeContent.mjs";
 
 const read = (path: string) => readFileSync(resolve(path), "utf8");
@@ -38,6 +39,18 @@ describe("route-specific static content architecture", () => {
       expect(content.sourceFile).toMatch(/^src\/pages\/.+\.tsx$/);
       expect(content.parityTokens.length).toBeGreaterThanOrEqual(4);
     }
+  });
+
+  it("keeps SCCI evidence provisional, specific and crawlable", () => {
+    const trust = CORE_ROUTE_CONTENT["/buyer-trust"];
+    const serialized = JSON.stringify(trust);
+    expect(SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber).toBe("A-101267");
+    expect(SCCI_PROVISIONAL_MEMBERSHIP.status).toBe("Provisional");
+    expect(serialized).toContain("SCCI provisional membership");
+    expect(serialized).toContain(SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber);
+    expect(serialized).toContain("Executive Committee");
+    expect(serialized).toContain(SCCI_PROVISIONAL_MEMBERSHIP.officialDirectoryUrl);
+    expect(serialized).not.toMatch(/registered company|certified manufacturer|final membership certificate issued/i);
   });
 
   it("links the products hub directly to the five canonical main categories", () => {

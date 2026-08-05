@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, FileCheck2, MessageCircle, ShieldCheck, Video } from "lucide-react";
+import { ArrowRight, CheckCircle2, ExternalLink, FileBadge2, FileCheck2, MessageCircle, ShieldCheck, Video } from "lucide-react";
 import SEO from "@/components/SEO";
 import { whatsappLink } from "@/lib/constants";
+import { SCCI_PROVISIONAL_MEMBERSHIP } from "@/lib/publicBusinessEvidence.mjs";
 import { ORGANIZATION_ID, SITE_URL, WEBSITE_ID, breadcrumbSchema } from "@/lib/seoSchema";
 
 const TRUST_POINTS = [
@@ -43,7 +44,7 @@ export default function BuyerTrust() {
       "@id": `${pageUrl}#webpage`,
       url: pageUrl,
       name: "Buyer Trust Center — Irha Apparels",
-      description: "How B2B buyers can verify Irha Apparels through direct contact, requirement review, live-call requests and documented approvals.",
+      description: `Review Irha Apparels' ${SCCI_PROVISIONAL_MEMBERSHIP.shortIssuer} provisional membership evidence plus direct-contact, quotation, sample and factory-call verification paths.`,
       isPartOf: { "@id": WEBSITE_ID },
       about: { "@id": ORGANIZATION_ID },
       inLanguage: "en",
@@ -54,8 +55,8 @@ export default function BuyerTrust() {
   return (
     <>
       <SEO
-        title="Buyer Trust Center — Verify Irha Apparels Before Ordering"
-        description="Verify Irha Apparels through direct contact, a requirement-led quotation, sample discussion, an appointment-based factory-call request and documented approvals."
+        title="Buyer Trust Center — SCCI Membership & Supplier Verification"
+        description="Review Irha Apparels' SCCI provisional membership evidence, Membership No. A-101267, plus direct-contact, quotation, sample and factory-call verification paths."
         path="/buyer-trust"
         jsonLd={jsonLd}
       />
@@ -73,11 +74,76 @@ export default function BuyerTrust() {
             </p>
           </div>
           <aside className="border border-amber-500/30 bg-amber-500/[0.04] p-6 lg:col-span-4">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-amber-300">Media status</p>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-amber-300">Evidence status</p>
             <p className="mt-3 text-sm leading-7 text-foreground/70">
-              Genuine factory and sample photography is pending. No concept image is presented on this page as production proof.
+              The SCCI document below is published as business-membership evidence. It is a provisional certificate, not a product certification, final membership certificate or production-capacity claim.
             </p>
           </aside>
+        </div>
+      </section>
+
+      <section id="scci-membership" className="border-b border-border/60 bg-card/20 py-16 md:py-24 scroll-mt-28">
+        <div className="container-luxe grid gap-8 lg:grid-cols-12 lg:gap-12">
+          <div className="lg:col-span-5">
+            <p className="eyebrow mb-4">Independent business evidence</p>
+            <h2 className="font-display text-3xl leading-[1.05] md:text-5xl">SCCI provisional membership</h2>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-foreground/68 md:text-base">
+              Irha Apparels holds a {SCCI_PROVISIONAL_MEMBERSHIP.documentType} issued by {SCCI_PROVISIONAL_MEMBERSHIP.issuer} ({SCCI_PROVISIONAL_MEMBERSHIP.shortIssuer}).
+            </p>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-foreground/62">
+              {SCCI_PROVISIONAL_MEMBERSHIP.qualification}
+            </p>
+            <a
+              href={SCCI_PROVISIONAL_MEMBERSHIP.officialDirectoryUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 border border-gold/50 px-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold hover:bg-gold/5"
+            >
+              Open official SCCI member directory <ExternalLink size={13} />
+            </a>
+            <p className="mt-3 text-xs leading-5 text-foreground/50">
+              On the chamber website, search the membership number or business name to perform an independent directory check where the current SCCI directory record is available.
+            </p>
+          </div>
+
+          <article aria-label="SCCI provisional membership credential summary" className="border border-gold/35 bg-background p-6 shadow-[0_20px_60px_hsl(var(--background)/0.35)] md:p-9 lg:col-span-7">
+            <div className="flex flex-col gap-6 border-b border-border/60 pb-6 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-4">
+                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center border border-gold/40 bg-gold/[0.06] text-gold">
+                  <FileBadge2 size={22} strokeWidth={1.6} />
+                </span>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold">Credential summary</p>
+                  <h3 className="mt-2 font-display text-2xl md:text-3xl">{SCCI_PROVISIONAL_MEMBERSHIP.documentType}</h3>
+                  <p className="mt-2 text-sm text-foreground/58">{SCCI_PROVISIONAL_MEMBERSHIP.issuer}</p>
+                </div>
+              </div>
+              <span className="w-fit border border-amber-400/40 bg-amber-400/[0.07] px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-300">
+                {SCCI_PROVISIONAL_MEMBERSHIP.status}
+              </span>
+            </div>
+
+            <dl className="mt-6 grid gap-px border border-border/60 bg-border/60 sm:grid-cols-3">
+              <div className="bg-background p-4">
+                <dt className="text-[9px] uppercase tracking-[0.2em] text-foreground/45">Business</dt>
+                <dd className="mt-2 text-sm font-semibold text-foreground">Irha Apparels</dd>
+              </div>
+              <div className="bg-background p-4">
+                <dt className="text-[9px] uppercase tracking-[0.2em] text-foreground/45">Membership No.</dt>
+                <dd className="mt-2 font-mono text-sm font-semibold text-gold">{SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber}</dd>
+              </div>
+              <div className="bg-background p-4">
+                <dt className="text-[9px] uppercase tracking-[0.2em] text-foreground/45">Certificate issued</dt>
+                <dd className="mt-2 text-sm font-semibold text-foreground">{SCCI_PROVISIONAL_MEMBERSHIP.issuedDateLabel}</dd>
+              </div>
+            </dl>
+
+            <div className="mt-6 border-l-2 border-gold/45 pl-4">
+              <p className="text-xs leading-6 text-foreground/58">
+                {SCCI_PROVISIONAL_MEMBERSHIP.sourceNote} This summary deliberately avoids converting provisional membership evidence into a broader legal, certification or manufacturing claim.
+              </p>
+            </div>
+          </article>
         </div>
       </section>
 
