@@ -1,5 +1,5 @@
 {
-  "canonical_payload_sha256": "b24e7b17ba5be510c0a5033371feb659c8dc7b64bf2e0f1a05ae3310c1e16d18",
+  "canonical_payload_sha256": "5e8e1b32aeca1763c3ebc66d183fb3b67c662d18f74e6cb64c876c56b7f066e5",
   "payload": {
     "classification_policy": {
       "P1": "Exact repository source recovered and linked to the exact live version and name.",
@@ -8704,18 +8704,306 @@
         ],
         "superseding_baseline": null,
         "version": "20260731151915"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803204636",
+          "private.irha_repository_migration_ledger:20260803204636",
+          "supabase/migrations/20260803204636_pinterest_oauth_control.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "1d10aee6df2777b99c57d32cdbd58db8bfd4525bb9e7ee78b9a55bcfe04a3e77",
+          "git_blob_sha1": "b443277f828b2b5c14cd78e33bed5355506e32d4",
+          "repository_path": "supabase/migrations/20260803204636_pinterest_oauth_control.sql",
+          "source_commit": "684915bf8d7926e0b07ed50706b6f49af155b034"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "1d72b403e375e75f1eca5f8b3e46121ad112d66a78a7cfb4bf3bce318ba73cec",
+        "name": "pinterest_oauth_control",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "CREATE"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803204636"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803204702",
+          "private.irha_repository_migration_ledger:20260803204702",
+          "supabase/migrations/20260803204702_pinterest_oauth_control_verify.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "7cf65ebe83c61c3c5664fae2adbec6f5907553915448d3994f27c37d2e01cdef",
+          "git_blob_sha1": "8bbac611ae9be4075f4a8252a5a0c350f2e92c16",
+          "repository_path": "supabase/migrations/20260803204702_pinterest_oauth_control_verify.sql",
+          "source_commit": "684915bf8d7926e0b07ed50706b6f49af155b034"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "eae3f7748011bec4607a5658ab908ae4bc9135b8faa69f97faf05c9da43246c0",
+        "name": "pinterest_oauth_control_verify",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "DO"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803204702"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803204750",
+          "private.irha_repository_migration_ledger:20260803204750",
+          "supabase/migrations/20260803204750_pinterest_bootstrap_guard_indexes.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "234f85980bc9d96160cf7b3f01c92be4c0b15517ca133f372b637760419cc5c5",
+          "git_blob_sha1": "9e2690e64859d1996d89b01dd1a0307949cf30bc",
+          "repository_path": "supabase/migrations/20260803204750_pinterest_bootstrap_guard_indexes.sql",
+          "source_commit": "684915bf8d7926e0b07ed50706b6f49af155b034"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "fafb4979bfd685a60283d9aea27f6aba2d33e4c44f17f1f6be935186ecff4229",
+        "name": "pinterest_bootstrap_guard_indexes",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "CREATE"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803204750"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803210743",
+          "private.irha_repository_migration_ledger:20260803210743",
+          "supabase/migrations/20260803210743_pinterest_operator_jobs.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "1aacce8b7db1c0ae4f38baf610840d02dd1fce108015efa78a5d4f5cd0d39a82",
+          "git_blob_sha1": "239480ecde7cef6b93d22e97559a55d6224acf54",
+          "repository_path": "supabase/migrations/20260803210743_pinterest_operator_jobs.sql",
+          "source_commit": "684915bf8d7926e0b07ed50706b6f49af155b034"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "c6cc6dc96593968da024d52dbd66870e51a46a98bf67411235d4389a3165de80",
+        "name": "pinterest_operator_jobs",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "CREATE"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803210743"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803215802",
+          "private.irha_repository_migration_ledger:20260803215802",
+          "supabase/migrations/20260803215802_pinterest_bootstrap_multiuse.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "995f93f66d1d0b79c7a755d365d27c83d9d364b7994b155f9b23bfcff6dcdc6b",
+          "git_blob_sha1": "7ec9c313b0362621e97598e230f06e0b6be371b7",
+          "repository_path": "supabase/migrations/20260803215802_pinterest_bootstrap_multiuse.sql",
+          "source_commit": "684915bf8d7926e0b07ed50706b6f49af155b034"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "6b34a938cf6ba32f4504478d947cda57fccabec817480cea9b2885f2ab72615e",
+        "name": "pinterest_bootstrap_multiuse",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "ALTER"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803215802"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803215854",
+          "private.irha_repository_migration_ledger:20260803215854",
+          "supabase/migrations/20260803215854_pinterest_bootstrap_multiuse_noop_check.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "4a45092ccf992ea92250053a80b931b787924ba61648f420555511b84f10ab6c",
+          "git_blob_sha1": "ab290eb4c1f6e10ef89c4d95c1ede4471c4cad69",
+          "repository_path": "supabase/migrations/20260803215854_pinterest_bootstrap_multiuse_noop_check.sql",
+          "source_commit": "684915bf8d7926e0b07ed50706b6f49af155b034"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "354b7196c9ba5fb4b21cf615bb6ec4cd5c07503c34229feef033fc081a8c03f4",
+        "name": "pinterest_bootstrap_multiuse_noop_check",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "SELECT"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803215854"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803215906",
+          "private.irha_repository_migration_ledger:20260803215906",
+          "supabase/migrations/20260803215906_pinterest_bootstrap_multiuse_cleanup_noop.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "4a45092ccf992ea92250053a80b931b787924ba61648f420555511b84f10ab6c",
+          "git_blob_sha1": "ab290eb4c1f6e10ef89c4d95c1ede4471c4cad69",
+          "repository_path": "supabase/migrations/20260803215906_pinterest_bootstrap_multiuse_cleanup_noop.sql",
+          "source_commit": "684915bf8d7926e0b07ed50706b6f49af155b034"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "354b7196c9ba5fb4b21cf615bb6ec4cd5c07503c34229feef033fc081a8c03f4",
+        "name": "pinterest_bootstrap_multiuse_cleanup_noop",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "SELECT"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803215906"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803215920",
+          "private.irha_repository_migration_ledger:20260803215920",
+          "supabase/migrations/20260803215920_pinterest_bootstrap_multiuse_runtime_marker.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "dc976598fbd6c5722d0ab2033255f5c9eb9a8999baaa9842e986623ab2a37527",
+          "git_blob_sha1": "292af34c653c09ab0119965b268abd5560c3e495",
+          "repository_path": "supabase/migrations/20260803215920_pinterest_bootstrap_multiuse_runtime_marker.sql",
+          "source_commit": "684915bf8d7926e0b07ed50706b6f49af155b034"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "c4bab7b9ee6de9a3bf91fb2c197690c926bcb0c9223539db98a00d293e7a1fc0",
+        "name": "pinterest_bootstrap_multiuse_runtime_marker",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "SELECT"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803215920"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260803234500",
+          "private.irha_repository_migration_ledger:20260803234500",
+          "supabase/migrations/20260803234500_harden_crm_duplicate_quotation_integrity.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "applied",
+          "execution_mode": "chatgpt_supabase_apply_migration_after_green_pr",
+          "file_sha256": "a383aa6cc4190ef4e9b77ece430363083d72d25ebe08fc4c109ac5bb1bd12d9b",
+          "git_blob_sha1": "8fd0935f79a60145353056ddc628eb684b43d927",
+          "repository_path": "supabase/migrations/20260803234500_harden_crm_duplicate_quotation_integrity.sql",
+          "source_commit": "cc0369a3ebfb4b0bc5d8429969cb404b2a1f2891"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "30fe955e63dc1a003a4f54af6a8c229131814219c82781644113430d88858266",
+        "name": "harden_crm_duplicate_quotation_integrity",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "OTHER"
+        ],
+        "superseding_baseline": null,
+        "version": "20260803234500"
       }
     ],
     "schema_version": 2,
     "totals": {
-      "P1": 5,
+      "P1": 14,
       "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 376
+      "live": 385
     }
   }
 }
