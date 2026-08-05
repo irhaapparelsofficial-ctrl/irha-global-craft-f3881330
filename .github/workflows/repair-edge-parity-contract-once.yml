@@ -1,0 +1,228 @@
+name: Repair Edge Parity Contract Once
+
+on:
+  push:
+    branches: [fix/supabase-types-parity-final]
+    paths:
+      - .github/workflows/repair-edge-parity-contract-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: irha-edge-parity-contract-once
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Checkout exact focused branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/supabase-types-parity-final
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Repair monotonic version-floor contract and approved registry hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const replaceOnce = (source, oldText, newText, label) => {
+            const first = source.indexOf(oldText);
+            if (first < 0 || source.indexOf(oldText, first + oldText.length) >= 0) {
+              throw new Error(`${label}: expected exactly one replacement target`);
+            }
+            return source.replace(oldText, newText);
+          };
+
+          const manifestPath = 'scripts/ci/generate-supabase-manifest.mjs';
+          let manifest = readFileSync(manifestPath, 'utf8');
+          manifest = replaceOnce(
+            manifest,
+            'for (const [name, version, verifyJwt, sourceHash] of registries[classification].parsed.functions) {\n      if (expected.has(name)) throw new ManifestError("DUPLICATE_FUNCTION", `Duplicate function ${name}`);\n      expected.set(name, { classification, version, verify_jwt: verifyJwt, source_sha256: sourceHash });\n    }',
+            'for (const [name, minimumVersion, verifyJwt, sourceHash] of registries[classification].parsed.functions) {\n      if (expected.has(name)) throw new ManifestError("DUPLICATE_FUNCTION", `Duplicate function ${name}`);\n      if (!Number.isInteger(minimumVersion) || minimumVersion < 1) throw new ManifestError("INVALID_REGISTRY", `Invalid minimum version floor for ${name}`);\n      expected.set(name, { classification, minimum_version: minimumVersion, verify_jwt: verifyJwt, source_sha256: sourceHash });\n    }',
+            'registry minimum-version semantics',
+          );
+          manifest = replaceOnce(
+            manifest,
+            'if (deployed.version !== representation.version) throw new ManifestError("EDGE_VERSION_DRIFT", `Version mismatch: ${name}`);',
+            'if (deployed.version < representation.minimum_version) throw new ManifestError("EDGE_VERSION_DRIFT", `Live version ${deployed.version} is below approved minimum ${representation.minimum_version}: ${name}`);',
+            'monotonic live-version comparison',
+          );
+          manifest = replaceOnce(
+            manifest,
+            '  const dispatcher = liveFunctions.find((fn) => fn.name === "notification-dispatcher");\n  if (!dispatcher || dispatcher.version !== 8 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48") throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");',
+            '  const dispatcher = liveFunctions.find((fn) => fn.name === "notification-dispatcher");\n  const dispatcherRepresentation = expectedFunctions.get("notification-dispatcher");\n  if (!dispatcher || !dispatcherRepresentation || dispatcher.version < dispatcherRepresentation.minimum_version || dispatcher.verify_jwt !== false || dispatcher.verify_jwt !== dispatcherRepresentation.verify_jwt || dispatcher.source_sha256 !== dispatcherRepresentation.source_sha256) throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");',
+            'registry-driven dispatcher invariant',
+          );
+          writeFileSync(manifestPath, manifest, 'utf8');
+
+          const runPath = 'scripts/ci/run-sec-m03-parity-generation.mjs';
+          writeFileSync(runPath, `import { execFileSync } from "node:child_process";
+          import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+          import { tmpdir } from "node:os";
+          import { join, resolve } from "node:path";
+
+          const root = process.cwd();
+          const projectId = "pvzjiozismyxqrzmtfbi";
+
+          function requireDynamicMigrationParity(source, label) {
+            if (!source.includes("assertExactMigrationParity")) {
+              throw new Error(\`\${label} must enforce dynamic exact migration version-set parity\`);
+            }
+            if (source.includes("liveMigrationCount")) {
+              throw new Error(\`\${label} must not depend on a fixed live migration count\`);
+            }
+            if (source.includes("Expected 376 live migrations") || source.includes("!== 376")) {
+              throw new Error(\`\${label} contains a stale fixed migration-count invariant\`);
+            }
+            return source;
+          }
+
+          function requireMonotonicEdgeVersionParity(source, label) {
+            if (!source.includes("deployed.version < representation.minimum_version")) {
+              throw new Error(\`\${label} must treat Supabase numeric versions as monotonic minimum floors\`);
+            }
+            if (source.includes("deployed.version !== representation.version")) {
+              throw new Error(\`\${label} must not exact-pin monotonic Supabase numeric versions\`);
+            }
+            if (!source.includes('expectedFunctions.get("notification-dispatcher")')) {
+              throw new Error(\`\${label} must derive notification-dispatcher source/auth invariants from the approved registry\`);
+            }
+            return source;
+          }
+
+          function currentProvenanceSource() {
+            const path = resolve(root, "scripts/ci/generate-migration-provenance.mjs");
+            return requireDynamicMigrationParity(readFileSync(path, "utf8"), "migration provenance generator");
+          }
+
+          function currentManifestSource() {
+            const path = resolve(root, "scripts/ci/generate-supabase-manifest.mjs");
+            const source = requireDynamicMigrationParity(readFileSync(path, "utf8"), "Supabase manifest generator");
+            return requireMonotonicEdgeVersionParity(source, "Supabase manifest generator");
+          }
+
+          function run(scriptPath, extraEnv) {
+            execFileSync(process.execPath, [scriptPath], {
+              cwd: root,
+              env: {
+                ...process.env,
+                SUPABASE_PROJECT_ID: projectId,
+                ...extraEnv,
+              },
+              stdio: "inherit",
+            });
+          }
+
+          const directory = mkdtempSync(join(tmpdir(), "irha-sec-m03-parity-"));
+          try {
+            const provenancePath = join(directory, "generate-migration-provenance.mjs");
+            const manifestPath = join(directory, "generate-supabase-manifest.mjs");
+            const parityHelperPath = join(directory, "migration-production-parity.mjs");
+            writeFileSync(provenancePath, currentProvenanceSource(), "utf8");
+            writeFileSync(manifestPath, currentManifestSource(), "utf8");
+            writeFileSync(
+              parityHelperPath,
+              readFileSync(resolve(root, "scripts/ci/migration-production-parity.mjs"), "utf8"),
+              "utf8",
+            );
+
+            run(provenancePath, { MIGRATION_PROVENANCE_MODE: "write" });
+            run(manifestPath, { SUPABASE_MANIFEST_MODE: "write" });
+          } finally {
+            rmSync(directory, { recursive: true, force: true });
+          }
+          `, 'utf8');
+
+          const f2Path = 'supabase/deployment-parity/functions-f2.json';
+          const f2 = JSON.parse(readFileSync(f2Path, 'utf8'));
+          const approved = new Map([
+            ['gsc-analytics', { hash: '5ba5644a5997a52218d73b3922682e30e7d45b24518dfe2da474627a2786e162' }],
+            ['gsc-inspect', { hash: 'ba53fc63432be26b2053d4e258946bc7cc87139382170d4547a2909c8fe73198' }],
+            ['notification-dispatcher', { floor: 10, hash: 'd032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c' }],
+            ['operations-orchestrator', { hash: 'bc3fb03d5fea365e29ebeeaefc86ef00d188654cff6671b695bfe5bef1fc440b' }],
+            ['sitemap-ping', { hash: '1c7df6ebe6ed27f2bdf0815080ef880951e68299ba9d7ff733834727761a32d8' }],
+          ]);
+          for (const row of f2.functions) {
+            const update = approved.get(row[0]);
+            if (!update) continue;
+            if (update.floor) row[1] = update.floor;
+            row[3] = update.hash;
+          }
+          if ([...approved.keys()].some((name) => !f2.functions.some((row) => row[0] === name))) {
+            throw new Error('F2 approved refresh target missing');
+          }
+          writeFileSync(f2Path, `${JSON.stringify(f2)}\n`, 'utf8');
+
+          const serializationPath = 'supabase/deployment-parity/SERIALIZATION.md';
+          let serialization = readFileSync(serializationPath, 'utf8');
+          serialization = replaceOnce(serialization, 'Version: 1  ', 'Version: 2  ', 'serialization contract version');
+          serialization = replaceOnce(
+            serialization,
+            '8. Source hashes are supplied by the Supabase Edge Function control plane. They are not recomputed from reconstructed or reformatted source.',
+            '8. Source hashes are supplied by the Supabase Edge Function control plane. They are not recomputed from reconstructed or reformatted source. Registry numeric version values are approved minimum floors: a higher live version is valid only when the exact approved source hash and `verify_jwt` contract still match.',
+            'serialization Edge version semantics',
+          );
+          serialization = replaceOnce(
+            serialization,
+            '- `notification-dispatcher` remains version 7 with custom mandatory authorization and single-use scheduler tokens.',
+            '- `notification-dispatcher` must remain at or above its approved minimum version floor with the exact approved source hash, custom mandatory authorization, and single-use scheduler tokens.',
+            'dispatcher serialization invariant',
+          );
+          serialization = serialization.replace(/\nSerialization contract SHA-256: `[^`]+`\n?$/, '\nContract revision: `2`\n');
+          writeFileSync(serializationPath, serialization, 'utf8');
+
+          const testPath = 'src/test/secM03ParityControl.test.ts';
+          let test = readFileSync(testPath, 'utf8');
+          test = replaceOnce(
+            test,
+            '    expect(generator).toContain("const dispatcherVersion = 10");\n    expect(generator).toContain("d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c");\n    expect(generator).toContain(\'dispatcher.version !== 8 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48"\');',
+            '    expect(manifestGenerator).toContain("deployed.version < representation.minimum_version");\n    expect(manifestGenerator).not.toContain("deployed.version !== representation.version");\n    expect(manifestGenerator).toContain(\'expectedFunctions.get("notification-dispatcher")\');\n    expect(generator).toContain("requireMonotonicEdgeVersionParity");',
+            'SEC-M03 dispatcher regression expectations',
+          );
+          test = replaceOnce(
+            test,
+            '    expect(generator).toContain("replaceLegacyOrRequireCurrent");\n    expect(generator).toContain("legacyCount === 1 && currentCount === 0");\n    expect(generator).toContain("legacyCount === 0 && currentCount === 1");\n    expect(generator).toContain("expected exactly one canonical replacement target or one already-current target");',
+            '    expect(generator).toContain("requireMonotonicEdgeVersionParity");\n    expect(generator).not.toContain("replaceLegacyOrRequireCurrent");\n    expect(manifestGenerator).toContain("minimum_version: minimumVersion");\n    expect(manifestGenerator).toContain("dispatcherRepresentation.minimum_version");',
+            'SEC-M03 generator architecture expectations',
+          );
+          writeFileSync(testPath, test, 'utf8');
+          NODE
+
+      - name: Regenerate and verify canonical deployment manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          echo "::add-mask::$token"
+          SUPABASE_ACCESS_TOKEN="$token" SUPABASE_PROJECT_ID="$SUPABASE_PROJECT_ID" SUPABASE_MANIFEST_MODE=write node scripts/ci/generate-supabase-manifest.mjs
+          SUPABASE_ACCESS_TOKEN="$token" SUPABASE_PROJECT_ID="$SUPABASE_PROJECT_ID" SUPABASE_MANIFEST_MODE=verify node scripts/ci/generate-supabase-manifest.mjs
+          node scripts/verify-supabase-parity.mjs
+
+      - name: Commit repaired parity contract and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/repair-edge-parity-contract-once.yml
+          git add scripts/ci/generate-supabase-manifest.mjs scripts/ci/run-sec-m03-parity-generation.mjs src/test/secM03ParityControl.test.ts supabase/deployment-parity/functions-f2.json supabase/deployment-parity/SERIALIZATION.md supabase/deployment-parity/manifest.json
+          git config user.name "irhaapparelsofficial-ctrl"
+          git config user.email "294838484+irhaapparelsofficial-ctrl@users.noreply.github.com"
+          git commit -m "fix(parity): use monotonic Edge version floors"
+          git push origin HEAD:fix/supabase-types-parity-final
