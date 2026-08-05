@@ -6,6 +6,14 @@ function irhaLovableRuntimeKey(): string | undefined {
   return Deno.env.get("LOVABLE_API_KEY") || undefined;
 }
 
+function gscOAuthConfigured(): boolean {
+  return Boolean(
+    Deno.env.get("GSC_OAUTH_CLIENT_ID")?.trim() &&
+    Deno.env.get("GSC_OAUTH_CLIENT_SECRET")?.trim() &&
+    Deno.env.get("GSC_OAUTH_REFRESH_TOKEN")?.trim(),
+  );
+}
+
 const PROJECT_SITE = "https://irhaapparels.com";
 const ALLOWED_ACTIONS = new Set(["health", "heartbeat", "daily", "email_queue", "cleanup", "manual_test"]);
 type Json = Record<string, unknown>;
@@ -191,7 +199,7 @@ async function heartbeat(service: any, runId: string, control: any, recover: boo
   const connectedSocial = accounts.filter((row: any) => row.enabled && row.verification_status === "verified").length;
   const providerConfig = {
     ai_gateway: Boolean(irhaLovableRuntimeKey()),
-    gsc: Boolean(irhaLovableRuntimeKey()),
+    gsc: gscOAuthConfigured(),
     social_renderer: Boolean(Deno.env.get("SOCIAL_RENDER_PROVIDER") && Deno.env.get("SOCIAL_RENDER_API_URL") && Deno.env.get("SOCIAL_RENDER_API_KEY")),
     whatsapp: Boolean(Deno.env.get("WHATSAPP_ACCESS_TOKEN") && Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")),
   };
