@@ -1,0 +1,104 @@
+name: Repair Edge Parity V2 Once
+
+on:
+  push:
+    branches: [fix/supabase-types-parity-final]
+    paths:
+      - .github/workflows/repair-edge-parity-v2-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: irha-edge-parity-contract-v2-once
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Checkout exact focused branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/supabase-types-parity-final
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Replay approved repair and remove fixed-count assumption
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const workflow = readFileSync('.github/workflows/repair-edge-parity-contract-once.yml', 'utf8');
+          const startMarker = "          node <<'NODE'\n";
+          const endMarker = "          NODE\n";
+          const start = workflow.indexOf(startMarker);
+          const end = workflow.indexOf(endMarker, start + startMarker.length);
+          if (start < 0 || end < 0) throw new Error('Approved repair script could not be extracted');
+          const body = workflow.slice(start + startMarker.length, end)
+            .split('\n')
+            .map((line) => line.startsWith('          ') ? line.slice(10) : line)
+            .join('\n');
+          writeFileSync('/tmp/approved-edge-repair.mjs', body, 'utf8');
+          execFileSync(process.execPath, ['/tmp/approved-edge-repair.mjs'], { stdio: 'inherit' });
+
+          const manifestPath = 'scripts/ci/generate-supabase-manifest.mjs';
+          let manifest = readFileSync(manifestPath, 'utf8');
+          const oldCount = '  if (live.length !== 87 || expected.size !== 87) {\n    throw new ManifestError("EDGE_COUNT_DRIFT", `Expected 87 live and represented functions; found live=${live.length}, represented=${expected.size}`);\n  }';
+          const newCount = '  if (live.length !== expected.size) {\n    throw new ManifestError("EDGE_COUNT_DRIFT", `Live/represented function count mismatch: live=${live.length}, represented=${expected.size}`);\n  }\n  if (live.length < 1) throw new ManifestError("EDGE_COUNT_DRIFT", "No active Edge Functions were returned");';
+          if (!manifest.includes(oldCount)) throw new Error('Fixed Edge count target missing');
+          manifest = manifest.replace(oldCount, newCount);
+          writeFileSync(manifestPath, manifest, 'utf8');
+
+          const configPath = 'supabase/config.toml';
+          let config = readFileSync(configPath, 'utf8').replace(/\s+$/, '');
+          const pinterestConfig = [
+            ['pinterest-admin', true],
+            ['pinterest-oauth-callback', false],
+            ['pinterest-oauth-start', false],
+            ['pinterest-operator', false],
+            ['pinterest-operator-get', false],
+          ];
+          for (const [name, verifyJwt] of pinterestConfig) {
+            const section = `[functions.${name}]`;
+            if (config.includes(section)) throw new Error(`Unexpected pre-existing config section: ${name}`);
+            config += `\n\n${section}\nverify_jwt = ${verifyJwt}`;
+          }
+          writeFileSync(configPath, `${config}\n`, 'utf8');
+          NODE
+
+      - name: Regenerate and verify exact canonical parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          test -n "$token"
+          echo "::add-mask::$token"
+          SUPABASE_ACCESS_TOKEN="$token" SUPABASE_PROJECT_ID="$SUPABASE_PROJECT_ID" SUPABASE_MANIFEST_MODE=write node scripts/ci/generate-supabase-manifest.mjs
+          SUPABASE_ACCESS_TOKEN="$token" SUPABASE_PROJECT_ID="$SUPABASE_PROJECT_ID" SUPABASE_MANIFEST_MODE=verify node scripts/ci/generate-supabase-manifest.mjs
+          node scripts/verify-supabase-parity.mjs
+
+      - name: Commit repaired control plane and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/repair-edge-parity-contract-once.yml .github/workflows/repair-edge-parity-v2-once.yml
+          git add scripts/ci/generate-supabase-manifest.mjs scripts/ci/run-sec-m03-parity-generation.mjs src/test/secM03ParityControl.test.ts supabase/config.toml supabase/deployment-parity/functions-f1.json supabase/deployment-parity/functions-f2.json supabase/deployment-parity/SERIALIZATION.md supabase/deployment-parity/manifest.json
+          git config user.name "irhaapparelsofficial-ctrl"
+          git config user.email "294838484+irhaapparelsofficial-ctrl@users.noreply.github.com"
+          git commit -m "fix(parity): adopt live Pinterest runtime with dynamic version floors"
+          git push origin HEAD:fix/supabase-types-parity-final
