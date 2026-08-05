@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: 24
 
-      - name: Replay approved repair and remove fixed-count assumption
+      - name: Replay approved repair and remove fixed-count assumptions
         shell: bash
         run: |
           set -euo pipefail
@@ -63,6 +63,18 @@ jobs:
           if (!manifest.includes(oldCount)) throw new Error('Fixed Edge count target missing');
           manifest = manifest.replace(oldCount, newCount);
           writeFileSync(manifestPath, manifest, 'utf8');
+
+          const verifierPath = 'scripts/verify-supabase-parity.mjs';
+          let verifier = readFileSync(verifierPath, 'utf8');
+          const oldRegistryCounts = 'assert.deepEqual(\n  Object.fromEntries(Object.entries(manifest.edge_functions.registries).map(([key, value]) => [key, value.count])),\n  { F1: 33, F2: 14, F3: 9, F4: 1, F5: 0, F6: 31 },\n);';
+          const newRegistryCounts = 'const manifestRegistryCounts = Object.fromEntries(\n  Object.entries(manifest.edge_functions.registries).map(([key, value]) => [key, value.count]),\n);\nfor (const classification of registryOrder) {\n  assert.equal(manifestRegistryCounts[classification], registries.get(classification).functions.length, `${classification} manifest registry count drift`);\n}\nassert.equal(manifestRegistryCounts.F5, 0, "F5 must remain empty");';
+          if (!verifier.includes(oldRegistryCounts)) throw new Error('Fixed registry count assertion missing');
+          verifier = verifier.replace(oldRegistryCounts, newRegistryCounts);
+          const oldDeployedCounts = 'assert.equal(deployed.length, 87);\nassert.equal(manifest.edge_functions.deployed_count, 87);\nassert.equal(new Set(deployed.map(({ row }) => row[0])).size, 87);';
+          const newDeployedCounts = 'const uniqueDeployedNames = new Set(deployed.map(({ row }) => row[0]));\nassert.ok(deployed.length > 0, "deployed registry set must not be empty");\nassert.equal(manifest.edge_functions.deployed_count, deployed.length, "manifest deployed count drift");\nassert.equal(uniqueDeployedNames.size, deployed.length, "duplicate deployed function registry entry");';
+          if (!verifier.includes(oldDeployedCounts)) throw new Error('Fixed deployed count assertion missing');
+          verifier = verifier.replace(oldDeployedCounts, newDeployedCounts);
+          writeFileSync(verifierPath, verifier, 'utf8');
 
           const configPath = 'supabase/config.toml';
           let config = readFileSync(configPath, 'utf8').replace(/\s+$/, '');
@@ -97,7 +109,7 @@ jobs:
         run: |
           set -euo pipefail
           git rm .github/workflows/repair-edge-parity-contract-once.yml .github/workflows/repair-edge-parity-v2-once.yml
-          git add scripts/ci/generate-supabase-manifest.mjs scripts/ci/run-sec-m03-parity-generation.mjs src/test/secM03ParityControl.test.ts supabase/config.toml supabase/deployment-parity/functions-f1.json supabase/deployment-parity/functions-f2.json supabase/deployment-parity/SERIALIZATION.md supabase/deployment-parity/manifest.json
+          git add scripts/ci/generate-supabase-manifest.mjs scripts/ci/run-sec-m03-parity-generation.mjs scripts/verify-supabase-parity.mjs src/test/secM03ParityControl.test.ts supabase/config.toml supabase/deployment-parity/functions-f1.json supabase/deployment-parity/functions-f2.json supabase/deployment-parity/SERIALIZATION.md supabase/deployment-parity/manifest.json
           git config user.name "irhaapparelsofficial-ctrl"
           git config user.email "294838484+irhaapparelsofficial-ctrl@users.noreply.github.com"
           git commit -m "fix(parity): adopt live Pinterest runtime with dynamic version floors"
