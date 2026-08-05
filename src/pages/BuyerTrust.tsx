@@ -91,7 +91,7 @@ export default function BuyerTrust() {
               Irha Apparels holds a {SCCI_PROVISIONAL_MEMBERSHIP.documentType} issued by {SCCI_PROVISIONAL_MEMBERSHIP.issuer} ({SCCI_PROVISIONAL_MEMBERSHIP.shortIssuer}).
             </p>
             <p className="mt-4 max-w-xl text-sm leading-7 text-foreground/62">
-              {SCCI_PROVISIONAL_MEMBERSHIP.qualification}
+              {SCCI_PROVISIONAL_MEMBERSHIP.qualification} The current evidence therefore remains provisional pending the stated Executive Committee step.
             </p>
             <a
               href={SCCI_PROVISIONAL_MEMBERSHIP.officialDirectoryUrl}
