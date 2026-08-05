@@ -5403,6 +5403,147 @@ export type Database = {
         }
         Relationships: []
       }
+      pinterest_oauth_bootstrap_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          max_uses: number
+          token_hash: string
+          use_count: number
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          max_uses?: number
+          token_hash: string
+          use_count?: number
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          max_uses?: number
+          token_hash?: string
+          use_count?: number
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      pinterest_oauth_credentials: {
+        Row: {
+          access_token_cipher: string
+          access_token_expires_at: string | null
+          access_token_iv: string
+          connected_at: string
+          connected_by: string | null
+          id: string
+          refresh_token_cipher: string | null
+          refresh_token_expires_at: string | null
+          refresh_token_iv: string | null
+          scope: string | null
+          token_type: string
+          updated_at: string
+        }
+        Insert: {
+          access_token_cipher: string
+          access_token_expires_at?: string | null
+          access_token_iv: string
+          connected_at?: string
+          connected_by?: string | null
+          id?: string
+          refresh_token_cipher?: string | null
+          refresh_token_expires_at?: string | null
+          refresh_token_iv?: string | null
+          scope?: string | null
+          token_type?: string
+          updated_at?: string
+        }
+        Update: {
+          access_token_cipher?: string
+          access_token_expires_at?: string | null
+          access_token_iv?: string
+          connected_at?: string
+          connected_by?: string | null
+          id?: string
+          refresh_token_cipher?: string | null
+          refresh_token_expires_at?: string | null
+          refresh_token_iv?: string | null
+          scope?: string | null
+          token_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pinterest_oauth_states: {
+        Row: {
+          created_at: string
+          expires_at: string
+          requested_by: string | null
+          state_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          requested_by?: string | null
+          state_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          requested_by?: string | null
+          state_hash?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      pinterest_operator_jobs: {
+        Row: {
+          action: string
+          created_at: string
+          error_code: string | null
+          expires_at: string
+          finished_at: string | null
+          id: string
+          payload: Json
+          result: Json | null
+          started_at: string | null
+          status: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_code?: string | null
+          expires_at: string
+          finished_at?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_code?: string | null
+          expires_at?: string
+          finished_at?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       product_image_migration_assets: {
         Row: {
           attempt_count: number

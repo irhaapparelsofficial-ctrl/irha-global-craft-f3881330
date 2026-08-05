@@ -352,3 +352,18 @@ verify_jwt = false
 # Do not deploy without explicit owner approval and verified Meta HMAC contract.
 [functions.meta-webhook]
 verify_jwt = false
+
+[functions.pinterest-admin]
+verify_jwt = true
+
+[functions.pinterest-oauth-callback]
+verify_jwt = false
+
+[functions.pinterest-oauth-start]
+verify_jwt = false
+
+[functions.pinterest-operator]
+verify_jwt = false
+
+[functions.pinterest-operator-get]
+verify_jwt = false

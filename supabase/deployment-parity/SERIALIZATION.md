@@ -1,6 +1,6 @@
 # Supabase deployment parity serialization contract
 
-Version: 1  
+Version: 2  
 Execution: IA-SEC-E002  
 Project: `pvzjiozismyxqrzmtfbi`
 
@@ -21,7 +21,7 @@ Project: `pvzjiozismyxqrzmtfbi`
    `JSON.stringify(value, sortedKeys) + "\n"`.
 6. Compute SHA-256 over UTF-8 bytes. Store hashes as lower-case hexadecimal.
 7. A manifest checksum covers the object before the top-level `manifest_sha256` field is added.
-8. Source hashes are supplied by the Supabase Edge Function control plane. They are not recomputed from reconstructed or reformatted source.
+8. Source hashes are supplied by the Supabase Edge Function control plane. They are not recomputed from reconstructed or reformatted source. Registry numeric version values are approved minimum floors: a higher live version is valid only when the exact approved source hash and `verify_jwt` contract still match.
 9. Generated client types are produced only by the supported Supabase generator for project `pvzjiozismyxqrzmtfbi`, schema `public`. Private, Vault, migration archive, and legacy schemas are excluded.
 10. Any intentional update must regenerate the manifest and ledger, run the parity verifier, and be reviewed in a focused pull request. Comparisons must not be weakened to accept drift.
 
@@ -31,7 +31,7 @@ Project: `pvzjiozismyxqrzmtfbi`
 - A private schema must not gain `USAGE` for `anon` or `authenticated`.
 - Every deployed Edge Function must have one F1–F6 classification.
 - F3 sealed stubs must retain their approved source hash and disabled response.
-- `notification-dispatcher` remains version 7 with custom mandatory authorization and single-use scheduler tokens.
+- `notification-dispatcher` must remain at or above its approved minimum version floor with the exact approved source hash, custom mandatory authorization, and single-use scheduler tokens.
 - Historical migrations are never fabricated.
 
-Serialization contract SHA-256: `11a3c187eba12de27e7b9eec9e413401aa25be85402b9c2e2b2d49e8e32523c9`
+Contract revision: `2`

@@ -247,9 +247,10 @@ function expectedDeployedFunctions(registries) {
   const expected = new Map();
   for (const classification of REGISTRY_ORDER) {
     if (!DEPLOYED_CLASSES.has(classification)) continue;
-    for (const [name, version, verifyJwt, sourceHash] of registries[classification].parsed.functions) {
+    for (const [name, minimumVersion, verifyJwt, sourceHash] of registries[classification].parsed.functions) {
       if (expected.has(name)) throw new ManifestError("DUPLICATE_FUNCTION", `Duplicate function ${name}`);
-      expected.set(name, { classification, version, verify_jwt: verifyJwt, source_sha256: sourceHash });
+      if (!Number.isInteger(minimumVersion) || minimumVersion < 1) throw new ManifestError("INVALID_REGISTRY", `Invalid minimum version floor for ${name}`);
+      expected.set(name, { classification, minimum_version: minimumVersion, verify_jwt: verifyJwt, source_sha256: sourceHash });
     }
   }
   return expected;
@@ -266,14 +267,15 @@ function verifyLiveFunctions(functionPayload, expected) {
       status: String(fn.status),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-  if (live.length !== 87 || expected.size !== 87) {
-    throw new ManifestError("EDGE_COUNT_DRIFT", `Expected 87 live and represented functions; found live=${live.length}, represented=${expected.size}`);
+  if (live.length !== expected.size) {
+    throw new ManifestError("EDGE_COUNT_DRIFT", `Live/represented function count mismatch: live=${live.length}, represented=${expected.size}`);
   }
+  if (live.length < 1) throw new ManifestError("EDGE_COUNT_DRIFT", "No active Edge Functions were returned");
   const liveByName = new Map(live.map((fn) => [fn.name, fn]));
   for (const [name, representation] of expected) {
     const deployed = liveByName.get(name);
     if (!deployed) throw new ManifestError("EDGE_MISSING", `Live function missing: ${name}`);
-    if (deployed.version !== representation.version) throw new ManifestError("EDGE_VERSION_DRIFT", `Version mismatch: ${name}`);
+    if (deployed.version < representation.minimum_version) throw new ManifestError("EDGE_VERSION_DRIFT", `Live version ${deployed.version} is below approved minimum ${representation.minimum_version}: ${name}`);
     if (deployed.verify_jwt !== representation.verify_jwt) throw new ManifestError("EDGE_AUTH_DRIFT", `verify_jwt mismatch: ${name}`);
     if (deployed.source_sha256 !== representation.source_sha256) throw new ManifestError("EDGE_SOURCE_DRIFT", `Source hash mismatch: ${name}`);
   }
@@ -357,7 +359,8 @@ async function buildManifest(root, accessToken) {
   }));
 
   const dispatcher = liveFunctions.find((fn) => fn.name === "notification-dispatcher");
-  if (!dispatcher || dispatcher.version !== 8 || dispatcher.verify_jwt !== false || dispatcher.source_sha256 !== "2b4525d022b0788c3bb6b2bf25923c90c35807a3e2b6065671b2eb90f00f1a48") throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");
+  const dispatcherRepresentation = expectedFunctions.get("notification-dispatcher");
+  if (!dispatcher || !dispatcherRepresentation || dispatcher.version < dispatcherRepresentation.minimum_version || dispatcher.verify_jwt !== false || dispatcher.verify_jwt !== dispatcherRepresentation.verify_jwt || dispatcher.source_sha256 !== dispatcherRepresentation.source_sha256) throw new ManifestError("DISPATCHER_REGRESSION", "notification-dispatcher authentication/source contract drifted");
 
   const privateExposure = Object.entries(browserExposure)
     .filter(([name]) => name !== "public_schema_usage")

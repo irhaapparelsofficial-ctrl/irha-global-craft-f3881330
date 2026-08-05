@@ -96,17 +96,21 @@ for (const classification of registryOrder) {
   registryBytes += raw;
 }
 assert.equal(sha256(registryBytes), manifest.edge_functions.classification_sha256, "classification checksum mismatch");
-assert.deepEqual(
-  Object.fromEntries(Object.entries(manifest.edge_functions.registries).map(([key, value]) => [key, value.count])),
-  { F1: 33, F2: 14, F3: 9, F4: 1, F5: 0, F6: 31 },
+const manifestRegistryCounts = Object.fromEntries(
+  Object.entries(manifest.edge_functions.registries).map(([key, value]) => [key, value.count]),
 );
+for (const classification of registryOrder) {
+  assert.equal(manifestRegistryCounts[classification], registries.get(classification).functions.length, `${classification} manifest registry count drift`);
+}
+assert.equal(manifestRegistryCounts.F5, 0, "F5 must remain empty");
 
 const deployed = ["F1", "F2", "F3", "F6"].flatMap((classification) =>
   registries.get(classification).functions.map((row) => ({ classification, row })),
 );
-assert.equal(deployed.length, 87);
-assert.equal(manifest.edge_functions.deployed_count, 87);
-assert.equal(new Set(deployed.map(({ row }) => row[0])).size, 87);
+const uniqueDeployedNames = new Set(deployed.map(({ row }) => row[0]));
+assert.ok(deployed.length > 0, "deployed registry set must not be empty");
+assert.equal(manifest.edge_functions.deployed_count, deployed.length, "manifest deployed count drift");
+assert.equal(uniqueDeployedNames.size, deployed.length, "duplicate deployed function registry entry");
 assert.equal(manifest.edge_functions.registries.F5.count, 0);
 assert.equal(manifest.security_invariants.unexplained_f5_count, 0);
 
