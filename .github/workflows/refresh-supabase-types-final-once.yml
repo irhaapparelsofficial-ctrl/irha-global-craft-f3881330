@@ -53,8 +53,8 @@ jobs:
             > /tmp/supabase-types.ts
           test -s /tmp/supabase-types.ts
           ! grep -E '(sb_secret_|service_role[^A-Za-z0-9]|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,})' /tmp/supabase-types.ts
-          node scripts/ci/verify-supabase-type-supplement.mjs /tmp/supabase-types.ts
           cp /tmp/supabase-types.ts src/integrations/supabase/types.ts
+          node scripts/ci/verify-supabase-type-supplement.mjs /tmp/supabase-types.ts
 
       - name: Commit only canonical generated types and self-remove
         shell: bash
