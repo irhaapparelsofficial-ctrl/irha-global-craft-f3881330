@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, FileCheck2, MessageSquareText, ShieldCheck, Video } from "lucide-react";
+import { ArrowRight, FileBadge2, FileCheck2, MessageSquareText, ShieldCheck, Video } from "lucide-react";
+import { SCCI_PROVISIONAL_MEMBERSHIP } from "@/lib/publicBusinessEvidence.mjs";
 
 const TRUST = [
+  {
+    Icon: FileBadge2,
+    title: SCCI_PROVISIONAL_MEMBERSHIP.statusLabel,
+    text: `Membership No. ${SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber} · Provisional certificate issued ${SCCI_PROVISIONAL_MEMBERSHIP.issuedDateLabel}.`,
+  },
   {
     Icon: FileCheck2,
     title: "Requirement-based quotation",
@@ -76,8 +82,8 @@ export default function BuyerDecisionSection() {
               <button type="button" onClick={openLiveChat} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-gradient-gold px-5 text-[9px] font-semibold uppercase tracking-[0.17em] text-primary-foreground">
                 <MessageSquareText size={14} /> Ask the team
               </button>
-              <Link to="/buyer-trust" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border/70 px-5 text-[9px] font-semibold uppercase tracking-[0.17em] text-foreground/75 hover:border-primary hover:text-primary">
-                Buyer trust center <ArrowRight size={13} />
+              <Link to="/buyer-trust#scci-membership" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border/70 px-5 text-[9px] font-semibold uppercase tracking-[0.17em] text-foreground/75 hover:border-primary hover:text-primary">
+                Buyer trust center · SCCI evidence <ArrowRight size={13} />
               </Link>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { PUBLIC_IDENTITY } from "./publicIdentity.mjs";
+import { SCCI_PROVISIONAL_MEMBERSHIP } from "./publicBusinessEvidence.mjs";
 
 const categoryLinks = Object.freeze([
   Object.freeze({ href: "/products/bavarian-trachten-wear", label: "Bavarian & Trachten Wear" }),
@@ -139,12 +140,25 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
   "/buyer-trust": route({
     route: "/buyer-trust",
     breadcrumbLabel: "Buyer Trust",
-    title: "Buyer Trust Center — Verify Irha Apparels Before Ordering",
-    metaDescription: "How B2B buyers can verify Irha Apparels through public contact identity, requirement review, sample discussion, factory video-call requests and written program details.",
+    title: "Buyer Trust Center — SCCI Membership & Supplier Verification",
+    metaDescription: `Review Irha Apparels' SCCI provisional membership evidence, Membership No. ${SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber}, plus direct-contact, quotation, sample and factory-call verification paths.`,
     eyebrow: "Buyer Trust Center",
     h1: "Verify the supplier before the order.",
     intro: "Use direct contact, relevant evidence, clear specifications and documented approvals to evaluate a proposed program before making a commercial commitment.",
     sections: [
+      {
+        heading: "SCCI provisional membership",
+        body: `Irha Apparels holds a ${SCCI_PROVISIONAL_MEMBERSHIP.documentType} issued by ${SCCI_PROVISIONAL_MEMBERSHIP.issuer} (${SCCI_PROVISIONAL_MEMBERSHIP.shortIssuer}). This is business-membership evidence, not a product certification or final membership certificate.`,
+        items: [
+          `Membership No.: ${SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber}`,
+          `Certificate issued: ${SCCI_PROVISIONAL_MEMBERSHIP.issuedDateLabel}`,
+          `Status: ${SCCI_PROVISIONAL_MEMBERSHIP.status}`,
+          SCCI_PROVISIONAL_MEMBERSHIP.qualification,
+        ],
+        links: [
+          { href: SCCI_PROVISIONAL_MEMBERSHIP.officialDirectoryUrl, label: "Open the official SCCI member directory" },
+        ],
+      },
       {
         heading: "Verification paths",
         body: "The available verification path depends on the buyer requirement and the evidence relevant to that program.",
@@ -168,7 +182,7 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
     primaryCta: { href: "/factory-video-call", label: "Request a factory video call" },
     secondaryCta: { href: "/inquiry?intent=rfq", label: "Submit a requirement" },
     sourceFile: "src/pages/BuyerTrust.tsx",
-    parityTokens: ["Verify the supplier", "before the order", "Requirement-led quotation", "Approval before bulk", "Program-specific documentation"],
+    parityTokens: ["Verify the supplier", "before the order", "SCCI provisional membership", SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber, "Executive Committee", "Requirement-led quotation", "Approval before bulk", "Program-specific documentation"],
   }),
   "/factory-video-call": route({
     route: "/factory-video-call",
