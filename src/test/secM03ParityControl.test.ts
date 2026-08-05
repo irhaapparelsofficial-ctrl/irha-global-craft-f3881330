@@ -12,8 +12,10 @@ const migrationParity = read("scripts/ci/migration-production-parity.mjs");
 const parityVerifier = read("scripts/verify-supabase-parity.mjs");
 const sourceVerifier = read("scripts/ci/verify-sec-m03-deployed-sources.mjs");
 const registryRefresh = read("scripts/ci/refresh-sec-m03-live-parity.mjs");
+const supabaseConfig = read("supabase/config.toml");
 const deploymentPlan = JSON.parse(read("supabase/reconciliation/sec-m03-function-reconciliation.json"));
 const parityPlan = JSON.parse(read("supabase/reconciliation/sec-m03-parity-refresh.json"));
+const f1Registry = JSON.parse(read("supabase/deployment-parity/functions-f1.json"));
 
 describe("SEC-M03 canonical parity control", () => {
   it("runs from main and requires the successful exact-SHA Quality Gate before mutation", () => {
@@ -109,6 +111,30 @@ describe("SEC-M03 canonical parity control", () => {
     expect(manifestGenerator).not.toContain("deployed.version !== representation.version");
     expect(manifestGenerator).toContain('expectedFunctions.get("notification-dispatcher")');
     expect(generator).toContain("requireMonotonicEdgeVersionParity");
+  });
+
+  it("locks current Pinterest production functions to exact source/auth with monotonic version floors", () => {
+    const expectedPinterest = [
+      ["pinterest-admin", 11, true, "55879127fc063426c426c171f855ca6e4412afc79f8f784c9752aa7d557a8bb9"],
+      ["pinterest-oauth-callback", 11, false, "685d1db0ab0a0bea5477c325092502cd62f02f89a613899b903318e587a0dbec"],
+      ["pinterest-oauth-start", 12, false, "4628cbd14b72e24a38b782c20d69f3c4d6be49486a118de460709744719c2c37"],
+      ["pinterest-operator", 11, false, "b5a2cda54a14207897c967dfe3ad98b94bbdb156bcde04bc8d2526e78489c45a"],
+      ["pinterest-operator-get", 11, false, "54f556d003a740f7759634484e7acb28faa7ec309383516b4c87919022eac1ae"],
+    ] as const;
+
+    for (const [name, minimumVersion, verifyJwt, sourceHash] of expectedPinterest) {
+      const row = f1Registry.functions.find((entry: unknown[]) => entry[0] === name);
+      expect(row?.slice(0, 4)).toEqual([name, minimumVersion, verifyJwt, sourceHash]);
+      expect(supabaseConfig).toContain(`[functions.${name}]\nverify_jwt = ${verifyJwt}`);
+    }
+
+    expect(manifestGenerator).toContain("live.length !== expected.size");
+    expect(manifestGenerator).not.toContain("live.length !== 87");
+    expect(manifestGenerator).not.toContain("Expected 87 live and represented functions");
+    expect(parityVerifier).not.toContain("deployed.length, 87");
+    expect(parityVerifier).not.toContain("F1: 33");
+    expect(parityVerifier).toContain("manifest.edge_functions.deployed_count, deployed.length");
+    expect(parityVerifier).toContain("uniqueDeployedNames.size, deployed.length");
   });
 
   it("derives exact production migration parity without a fixed migration count", () => {
