@@ -84,8 +84,12 @@ describe("repository migration manifest static contract", () => {
   });
 
   it("locks recovered Pinterest live history to verified-present statement evidence", () => {
+    const recoveredVersions = new Set(recoveredPinterestMigrations.map(([version]) => version));
+    const recoveredEntries = manifest.migrations.filter((entry) => recoveredVersions.has(entry.version as typeof recoveredPinterestMigrations[number][0]));
+    expect(recoveredEntries).toHaveLength(recoveredPinterestMigrations.length);
+
     for (const [version, name] of recoveredPinterestMigrations) {
-      const entry = manifest.migrations.find((candidate) => candidate.version === version);
+      const entry = recoveredEntries.find((candidate) => candidate.version === version);
       expect(entry).toMatchObject({
         version,
         name,
