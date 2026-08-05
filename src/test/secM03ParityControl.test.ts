@@ -12,6 +12,7 @@ const migrationParity = read("scripts/ci/migration-production-parity.mjs");
 const parityVerifier = read("scripts/verify-supabase-parity.mjs");
 const sourceVerifier = read("scripts/ci/verify-sec-m03-deployed-sources.mjs");
 const registryRefresh = read("scripts/ci/refresh-sec-m03-live-parity.mjs");
+const deploymentPlan = JSON.parse(read("supabase/reconciliation/sec-m03-function-reconciliation.json"));
 const parityPlan = JSON.parse(read("supabase/reconciliation/sec-m03-parity-refresh.json"));
 
 describe("SEC-M03 canonical parity control", () => {
@@ -53,7 +54,11 @@ describe("SEC-M03 canonical parity control", () => {
     expect(workflow).toContain("/tmp/blocked-f3.txt");
     expect(workflow).toContain("/tmp/blocked-f6.txt");
     expect(workflow).not.toContain("supabase functions deploy _shared");
-    expect(parityPlan.functions.filter((entry: { minimum_version?: number }) => entry.minimum_version)).toHaveLength(3);
+    expect(deploymentPlan.functions.map((entry: { name: string }) => entry.name).sort()).toEqual([
+      "generate-mockup",
+      "live-chat",
+      "site-visitor",
+    ]);
   });
 
   it("accepts only five explicitly proven parity refresh rows", () => {
@@ -86,11 +91,13 @@ describe("SEC-M03 canonical parity control", () => {
 
   it("source-verifies protected pre-existing functions without broad deployment", () => {
     expect(workflow).toContain("Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8");
-    expect(parityPlan.functions.find((entry: { name: string }) => entry.name === "notification-dispatcher")).toMatchObject({
+    const notificationParity = parityPlan.functions.find((entry: { name: string }) => entry.name === "notification-dispatcher");
+    expect(notificationParity).toMatchObject({
       registry: "supabase/deployment-parity/functions-f2.json",
-      exact_version: 10,
+      minimum_version: 10,
       exact_hash: "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c",
     });
+    expect(notificationParity).not.toHaveProperty("exact_version");
     expect(parityPlan.functions.find((entry: { name: string }) => entry.name === "public-lead-gateway")).toMatchObject({
       registry: "supabase/deployment-parity/functions-f1.json",
       exact_version: 8,

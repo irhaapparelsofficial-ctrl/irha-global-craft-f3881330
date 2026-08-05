@@ -25,11 +25,11 @@
       "name": "notification-dispatcher",
       "registry": "supabase/deployment-parity/functions-f2.json",
       "repository_source": "supabase/functions/notification-dispatcher/index.ts",
-      "exact_version": 10,
+      "minimum_version": 10,
       "exact_hash": "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c",
       "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "IA-SEC-E001 exact-main scheduler-token least-privilege release; parity-only reconciliation after controlled production deploy"
+      "provenance": "IA-SEC-E001 scheduler-token least-privilege release; exact bundle/source locked with monotonic version floor so identical safe redeploys do not create false parity failures"
     },
     {
       "name": "public-lead-gateway",
