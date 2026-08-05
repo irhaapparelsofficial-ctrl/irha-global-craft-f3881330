@@ -26,8 +26,13 @@ describe("daily Google Search Console sitemap automation", () => {
     expect(source).toContain('error: ok ? null : "daily_operations_degraded"');
   });
 
-  it("checks GSC readiness against the gateway credential actually used by the functions", () => {
-    expect(source).toContain('gsc: Boolean(irhaLovableRuntimeKey())');
+  it("checks GSC readiness against the direct OAuth credentials used by sitemap-ping", () => {
+    expect(source).toContain("function gscOAuthConfigured(): boolean");
+    expect(source).toContain('Deno.env.get("GSC_OAUTH_CLIENT_ID")?.trim()');
+    expect(source).toContain('Deno.env.get("GSC_OAUTH_CLIENT_SECRET")?.trim()');
+    expect(source).toContain('Deno.env.get("GSC_OAUTH_REFRESH_TOKEN")?.trim()');
+    expect(source).toContain("gsc: gscOAuthConfigured()");
+    expect(source).not.toContain('gsc: Boolean(irhaLovableRuntimeKey())');
     expect(source).not.toContain('gsc: Boolean(Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY"))');
   });
 });
