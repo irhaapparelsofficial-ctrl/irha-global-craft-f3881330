@@ -23,6 +23,7 @@ export const BREVO_PROVIDER = "brevo-api";
 export const BREVO_SECRET_NAME = "brevo_api_key";
 export const CHATGPT_OUTBOUND_TEMPLATE = "chatgpt_outbound";
 export const BREVO_CHATGPT_DAILY_CAP = 200;
+export const BREVO_BRIDGE_VERSION = "2026-08-07-v1";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const DEFAULT_SENDER = "info@irhaapparels.com";
@@ -170,6 +171,7 @@ export async function sendBrevoEmail(
       "Idempotency-Key": row.id,
       "X-Irha-Outbox-ID": row.id,
       "X-Irha-Source": source,
+      "X-Irha-Bridge-Version": BREVO_BRIDGE_VERSION,
     },
     tags: [source === CHATGPT_OUTBOUND_TEMPLATE ? "irha-chatgpt-outbound" : "irha-notification"],
   };
@@ -191,6 +193,7 @@ export async function sendBrevoEmail(
     try { result = JSON.parse(raw) as Json; } catch { result = { raw: raw.slice(0, 1000) }; }
     const evidence: Json = {
       source,
+      bridge_version: BREVO_BRIDGE_VERSION,
       provider_message_id: text(result.messageId, 500) || null,
       from_address: sender.address,
       response_status: response.status,
@@ -210,7 +213,7 @@ export async function sendBrevoEmail(
     return { status: "retry", error: message, evidence };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Brevo API request failed";
-    const evidence: Json = { source, from_address: sender.address };
+    const evidence: Json = { source, bridge_version: BREVO_BRIDGE_VERSION, from_address: sender.address };
     if (row.attempt_count >= MAX_ATTEMPTS) return { status: "failed", error: message, evidence };
     return { status: "retry", error: message, evidence };
   }
