@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import webpush from "npm:web-push@3.6.7";
 import { authorizeSchedulerRequest } from "./auth.ts";
+import { enrichOwnerEmailPayload } from "./owner-email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -260,21 +261,23 @@ async function processEmail(service: ServiceClient, row: OutboxRow) {
     await finish(service, row, "blocked", "resend", "Email provider is not configured");
     return;
   }
-  const rendered = renderEmail(row.payload);
+  const emailPayload = await enrichOwnerEmailPayload(service, row);
+  const rendered = renderEmail(emailPayload);
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json", "idempotency-key": row.id },
-    body: JSON.stringify({ from, to: [row.recipient], reply_to: text(row.payload.reply_to, 254) || "info@irhaapparels.com", subject: rendered.subject, html: rendered.html, text: rendered.text }),
+    body: JSON.stringify({ from, to: [row.recipient], reply_to: text(emailPayload.reply_to, 254) || "info@irhaapparels.com", subject: rendered.subject, html: rendered.html, text: rendered.text }),
   });
   const raw = await response.text();
   let result: Json = {};
   try { result = JSON.parse(raw) as Json; } catch { result = { raw: raw.slice(0, 1000) }; }
-  if (response.ok) await finish(service, row, "sent", "resend", null, { provider_id: result.id || null });
+  const evidence = { provider_id: result.id || null, notification_kind: text(emailPayload.kind, 80) || "owner_alert" };
+  if (response.ok) await finish(service, row, "sent", "resend", null, evidence);
   else {
     const message = `Resend returned ${response.status}: ${raw.slice(0, 1500)}`;
-    if ([401, 403, 422].includes(response.status)) await finish(service, row, "blocked", "resend", message, { status: response.status });
-    else if (row.attempt_count >= MAX_ATTEMPTS) await finish(service, row, "failed", "resend", message, { status: response.status });
-    else await finish(service, row, "retry", "resend", message, { status: response.status });
+    if ([401, 403, 422].includes(response.status)) await finish(service, row, "blocked", "resend", message, { ...evidence, status: response.status });
+    else if (row.attempt_count >= MAX_ATTEMPTS) await finish(service, row, "failed", "resend", message, { ...evidence, status: response.status });
+    else await finish(service, row, "retry", "resend", message, { ...evidence, status: response.status });
   }
 }
 

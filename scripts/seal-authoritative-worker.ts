@@ -112,6 +112,36 @@ function main() {
 
   worker = replaceRequired(
     worker,
+    /headers\.set\("Cache-Control", "no-store, max-age=0, must-revalidate"\);\n(\s*)headers\.set\("X-Irha-Noindex-Reason", reason\);/,
+    `headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");\n$1headers.set("CDN-Cache-Control", "no-store");\n$1headers.set("X-Irha-Noindex-Reason", reason);`,
+    "private HTML CDN freshness",
+  );
+  worker = replaceRequired(
+    worker,
+    /\nasync function staticBuyerResponse\(request, env, pathname\) \{/,
+    `
+function withHtmlFreshnessHeaders(response) {
+  const headers = new Headers(response.headers);
+  const contentType = (headers.get("Content-Type") || "").toLowerCase();
+  if (!contentType.includes("text/html")) return response;
+
+  headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+  headers.set("CDN-Cache-Control", "no-store");
+  headers.set("Pragma", "no-cache");
+  headers.set("X-Irha-Html-Freshness", "worker-no-store");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+async function staticBuyerResponse(request, env, pathname) {`,
+    "HTML freshness helper",
+  );
+
+  worker = replaceRequired(
+    worker,
     /(const pathname = normalizePath\(url\.pathname\);\n)/,
     `$1    const isPreviewHost = url.hostname.endsWith(".pages.dev");\n`,
     "preview host flag",
@@ -137,9 +167,15 @@ function main() {
     `$1    if (isPreviewHost) {\n      return withNoIndexHeaders(assetResponse, "preview-host");\n    }\n`,
     "preview asset response policy",
   );
+  worker = replaceRequired(
+    worker,
+    /(if \(shouldNoIndexCategoryQuery\(pathname, url\.searchParams\)\) \{\n\s*return withNoIndexHeaders\(assetResponse, "functional-category-query"\);\n\s*\}\n)\s*return assetResponse;/,
+    `$1    return withHtmlFreshnessHeaders(assetResponse);`,
+    "public HTML freshness response",
+  );
 
   writeFileSync(WORKER_PATH, worker);
-  console.log(`Sealed worker with ${knownPaths.length} exact HTML routes; pages.dev HTML and robots are noindex`);
+  console.log(`Sealed worker with ${knownPaths.length} exact HTML routes; pages.dev HTML and robots are noindex; public HTML is no-store`);
 }
 
 main();

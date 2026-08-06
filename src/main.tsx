@@ -1,11 +1,16 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import {
+  claimOneTimeAssetRecovery,
+  isRecoverableAssetError,
+} from "@/lib/appRuntimeIncident";
 import "./index.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
-const CACHE_HEAL_VERSION = "2026-07-29-v3";
+const CACHE_HEAL_VERSION = "2026-08-07-v4";
 const INITIAL_ROUTE_PRELOAD_TIMEOUT_MS = 1_800;
+const OWNER_PUSH_WORKER_PATH = "/irha-owner-sw.js";
 const CRITICAL_BUYER_INTENT_PATHS = new Set([
   "/de/bekleidungshersteller-deutschland",
   "/custom-sportswear-manufacturer-germany",
@@ -24,9 +29,35 @@ const CRITICAL_BUYER_INTENT_PATHS = new Set([
   "/nl/private-label-kleding",
 ]);
 
-type IdleWindow = Window & {
-  requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-};
+function isOwnerPushRegistration(registration: ServiceWorkerRegistration) {
+  const scriptUrl =
+    registration.active?.scriptURL ??
+    registration.waiting?.scriptURL ??
+    registration.installing?.scriptURL ??
+    "";
+
+  try {
+    return new URL(scriptUrl).pathname === OWNER_PUSH_WORKER_PATH;
+  } catch {
+    return scriptUrl.includes(OWNER_PUSH_WORKER_PATH);
+  }
+}
+
+async function clearLegacyClientCaches() {
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      registrations
+        .filter((registration) => !isOwnerPushRegistration(registration))
+        .map((registration) => registration.unregister()),
+    );
+  }
+
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+}
 
 async function healLegacyClientCacheOnce() {
   let alreadyHealed = false;
@@ -40,15 +71,7 @@ async function healLegacyClientCacheOnce() {
   if (alreadyHealed) return;
 
   try {
-    if ("serviceWorker" in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((registration) => registration.unregister()));
-    }
-
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((key) => caches.delete(key)));
-    }
+    await clearLegacyClientCaches();
   } finally {
     try {
       localStorage.setItem(CACHE_HEAL_KEY, CACHE_HEAL_VERSION);
@@ -56,16 +79,6 @@ async function healLegacyClientCacheOnce() {
       // Buyer rendering must not depend on storage availability.
     }
   }
-}
-
-function scheduleLegacyClientCacheHeal() {
-  const run = () => void healLegacyClientCacheOnce();
-  const idleWindow = window as IdleWindow;
-  if (typeof idleWindow.requestIdleCallback === "function") {
-    idleWindow.requestIdleCallback(run, { timeout: 5_000 });
-    return;
-  }
-  window.setTimeout(run, 3_000);
 }
 
 function normalizedPathname() {
@@ -87,9 +100,32 @@ function delay(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 }
 
+function installVitePreloadRecovery() {
+  window.addEventListener("vite:preloadError", (event) => {
+    const preloadEvent = event as Event & { payload?: unknown };
+    const payload = preloadEvent.payload;
+    const error = payload instanceof Error
+      ? payload
+      : new Error(typeof payload === "string" ? payload : "Failed to preload application asset");
+    const route = window.location.pathname || "/";
+
+    if (!isRecoverableAssetError(error) || !claimOneTimeAssetRecovery(route)) return;
+
+    preloadEvent.preventDefault();
+    void clearLegacyClientCaches().finally(() => {
+      window.location.reload();
+    });
+  });
+}
+
 async function bootstrap() {
   const rootElement = document.getElementById("root");
   if (!rootElement) throw new Error("Irha application root is missing");
+
+  // Legacy service workers and Cache Storage must be retired before any route
+  // chunk is requested. Otherwise an old client can request a hashed chunk from
+  // a release that Cloudflare Pages has already replaced.
+  await healLegacyClientCacheOnce();
 
   // The static route shell remains available to no-script clients and crawlers,
   // but critical CSS hides it as soon as JavaScript is detected. While the first
@@ -108,7 +144,7 @@ async function bootstrap() {
       <App />
     </AppErrorBoundary>,
   );
-  scheduleLegacyClientCacheHeal();
 }
 
+installVitePreloadRecovery();
 void bootstrap();
