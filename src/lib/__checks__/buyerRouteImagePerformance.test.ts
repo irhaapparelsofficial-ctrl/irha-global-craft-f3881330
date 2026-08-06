@@ -34,11 +34,14 @@ describe("buyer route image performance contracts", () => {
     expect(slideshow).toContain("document.hidden");
   });
 
-  it("moves legacy browser cache cleanup out of the first-paint bootstrap path", () => {
+  it("retires legacy browser cache state before route preloads can request stale hashed chunks", () => {
     const bootstrap = main.match(/async function bootstrap\(\) \{([\s\S]*?)\n\}/)?.[1] ?? "";
-    expect(main).toContain("function scheduleLegacyClientCacheHeal()");
-    expect(main).toContain("requestIdleCallback");
-    expect(bootstrap).toContain("scheduleLegacyClientCacheHeal();");
-    expect(bootstrap).not.toContain("void healLegacyClientCacheOnce();");
+    expect(main).not.toContain("function scheduleLegacyClientCacheHeal()");
+    expect(main).not.toContain("requestIdleCallback");
+    expect(bootstrap).toContain("await healLegacyClientCacheOnce();");
+    expect(bootstrap.indexOf("await healLegacyClientCacheOnce();")).toBeLessThan(
+      bootstrap.indexOf("preloadInitialRoute(normalizedPathname())"),
+    );
+    expect(main).toContain('new URL(scriptUrl).pathname === OWNER_PUSH_WORKER_PATH');
   });
 });
