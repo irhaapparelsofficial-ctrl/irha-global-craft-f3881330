@@ -38,6 +38,11 @@ export function isRecoverableAssetError(error: Pick<Error, "name" | "message">):
     "error loading dynamically imported module",
     "importing a module script failed",
     "failed to load module script",
+    "is not a valid javascript mime type",
+    "expected a javascript-or-wasm module script",
+    "mime type of \"text/html\"",
+    "mime type: text/html",
+    "disallowed mime type",
   ].some((needle) => text.includes(needle));
 }
 
