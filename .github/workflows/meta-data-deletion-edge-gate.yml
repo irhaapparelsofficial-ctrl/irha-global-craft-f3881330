@@ -59,9 +59,9 @@ jobs:
           test -s dist/_worker.js
           test -s dist/_routes.json
           test -s dist/_headers
-          grep -Fq '"/docs/*.md"' dist/_routes.json
-          if grep -Fxq '    "/docs/*",' dist/_routes.json; then
-            echo "Broad /docs/* Worker exclusion would bypass the compliance handler"
+          if grep -Eq '"/docs/' dist/_routes.json; then
+            echo "Any /docs exclusion can bypass the Worker-owned compliance namespace"
+            grep -n '"/docs/' dist/_routes.json || true
             exit 1
           fi
           grep -Fxq '/docs/*.md' dist/_headers
@@ -119,30 +119,37 @@ jobs:
           done
           test "$ready" = "1" || { echo "Compliance preview did not converge to this commit"; exit 1; }
 
-          nonce="${GITHUB_SHA::12}-final"
-          curl -fsS --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
-            "$PREVIEW_URL/docs/data-deletion?meta_edge=$nonce" \
-            -o /tmp/data-deletion.html -D /tmp/data-deletion.headers
-
-          grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/data-deletion.headers
-          grep -Eiq '^content-type:[[:space:]]*text/html([[:space:]]*;|[[:space:]]*$)' /tmp/data-deletion.headers || {
-            echo "FAIL: data-deletion is not text/html"
-            cat /tmp/data-deletion.headers
+          route_ready=0
+          for attempt in $(seq 1 20); do
+            nonce="${GITHUB_SHA::12}-html-$attempt"
+            curl -sS --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
+              "$PREVIEW_URL/docs/data-deletion?meta_edge=$nonce" \
+              -o /tmp/data-deletion.html -D /tmp/data-deletion.headers || true
+            if grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/data-deletion.headers \
+              && grep -Eiq '^content-type:[[:space:]]*text/html([[:space:]]*;|[[:space:]]*$)' /tmp/data-deletion.headers \
+              && grep -Eiq '^x-irha-data-deletion-source:[[:space:]]*worker-direct-html' /tmp/data-deletion.headers; then
+              route_ready=1
+              break
+            fi
+            echo "Compliance route has not converged yet ($attempt/20)"
+            cat /tmp/data-deletion.headers || true
+            sleep 5
+          done
+          test "$route_ready" = "1" || {
+            echo "FAIL: compliance route did not become a Worker-served HTML response"
+            cat /tmp/data-deletion.headers || true
             exit 1
           }
+
           if grep -Eiq '^content-type:.*text/markdown' /tmp/data-deletion.headers; then
             echo "FAIL: Markdown MIME leaked onto HTML compliance route"
             cat /tmp/data-deletion.headers
             exit 1
           fi
-          grep -Eiq '^x-irha-data-deletion-source:[[:space:]]*worker-direct-html' /tmp/data-deletion.headers || {
-            echo "FAIL: request bypassed the Worker compliance handler"
-            cat /tmp/data-deletion.headers
-            exit 1
-          }
           grep -Fq '<title>User Data Deletion — Irha Apparels</title>' /tmp/data-deletion.html
           grep -Fq '<h1>User Data Deletion</h1>' /tmp/data-deletion.html
 
+          nonce="${GITHUB_SHA::12}-markdown"
           curl -fsS --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
             "$PREVIEW_URL/docs/mcp.md?meta_edge=$nonce" \
             -o /tmp/mcp.md -D /tmp/mcp.headers
@@ -153,6 +160,7 @@ jobs:
             exit 1
           }
 
+          nonce="${GITHUB_SHA::12}-legacy"
           curl -sS --connect-timeout 10 --max-time 30 --max-redirs 0 -H 'Cache-Control: no-cache' \
             "$PREVIEW_URL/docs/data-deletion.html?meta_edge=$nonce" \
             -o /dev/null -D /tmp/legacy.headers || true
