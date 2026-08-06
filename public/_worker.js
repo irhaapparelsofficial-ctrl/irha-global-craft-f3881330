@@ -67,6 +67,10 @@ const STATIC_BUYER_ASSETS = new Map([
     "/de/lederbekleidung-hersteller",
     "/_seo-static/de--lederbekleidung-hersteller.irha",
   ],
+  [
+    "/docs/data-deletion",
+    "/_seo-static/meta-data-deletion.irha",
+  ],
 ]);
 
 const EXACT_PUBLIC_PATHS = new Set([
