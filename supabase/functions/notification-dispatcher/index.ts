@@ -1,6 +1,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import webpush from "npm:web-push@3.6.7";
 import { authorizeSchedulerRequest } from "./auth.ts";
+import {
+  BREVO_PROVIDER,
+  CHATGPT_OUTBOUND_TEMPLATE,
+  getBrevoApiKey,
+  isChatgptOutbound,
+  sendBrevoEmail,
+} from "./brevo-email.ts";
 import { enrichOwnerEmailPayload } from "./owner-email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -150,6 +157,16 @@ function buyerItemsHtml(items: BuyerItem[]) {
 function renderEmail(payload: Json) {
   const template = text(payload.template, 80);
   const subject = text(payload.subject, 300) || "Irha Apparels notification";
+  if (template === CHATGPT_OUTBOUND_TEMPLATE) {
+    const bodyText = text(payload.text_body ?? payload.body, 20000);
+    const providedHtml = text(payload.html_body, 50000);
+    const safeBody = escapeHtml(bodyText).replaceAll("\n", "<br>");
+    return {
+      subject,
+      text: bodyText,
+      html: providedHtml || `<!doctype html><html><body style="margin:0;background:#ffffff;font-family:Arial,sans-serif;color:#111827"><div style="max-width:720px;margin:0 auto;padding:24px;line-height:1.6">${safeBody}</div></body></html>`,
+    };
+  }
   if (template === "buyer_confirmation") {
     const name = escapeHtml(payload.name) || "Buyer";
     const reference = escapeHtml(payload.reference);
@@ -255,14 +272,39 @@ async function processPush(service: ServiceClient, row: OutboxRow) {
 }
 
 async function processEmail(service: ServiceClient, row: OutboxRow) {
+  const directOutbound = isChatgptOutbound(row.payload);
+  if (directOutbound) {
+    const hasSubject = Boolean(text(row.payload.subject, 300));
+    const hasBody = Boolean(text(row.payload.text_body ?? row.payload.body, 20000) || text(row.payload.html_body, 50000));
+    if (!hasSubject || !hasBody) {
+      await finish(service, row, "failed", BREVO_PROVIDER, "ChatGPT outbound email requires a subject and body", { source: CHATGPT_OUTBOUND_TEMPLATE });
+      return;
+    }
+  }
+
+  const emailPayload = directOutbound ? row.payload : await enrichOwnerEmailPayload(service, row);
+  const rendered = renderEmail(emailPayload);
+  const brevoKey = await getBrevoApiKey(service);
+  if (brevoKey) {
+    const outcome = await sendBrevoEmail(service, row, emailPayload, rendered, brevoKey);
+    await finish(service, row, outcome.status, BREVO_PROVIDER, outcome.error, {
+      ...outcome.evidence,
+      notification_kind: text(emailPayload.kind, 80) || (directOutbound ? CHATGPT_OUTBOUND_TEMPLATE : "owner_alert"),
+    });
+    return;
+  }
+
+  if (directOutbound) {
+    await finish(service, row, "blocked", BREVO_PROVIDER, "Brevo API provider is not configured", { source: CHATGPT_OUTBOUND_TEMPLATE });
+    return;
+  }
+
   const apiKey = text(Deno.env.get("RESEND_API_KEY"), 1000);
   const from = text(Deno.env.get("IRHA_EMAIL_FROM"), 300);
   if (!apiKey || !from) {
     await finish(service, row, "blocked", "resend", "Email provider is not configured");
     return;
   }
-  const emailPayload = await enrichOwnerEmailPayload(service, row);
-  const rendered = renderEmail(emailPayload);
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json", "idempotency-key": row.id },
@@ -304,11 +346,13 @@ async function adminAction(service: ServiceClient, user: { id: string }, req: Re
   const action = text(body.action, 80);
   if (action === "config" || action === "health") {
     const publicKey = text(Deno.env.get("VAPID_PUBLIC_KEY"), 500);
+    const brevoKey = await getBrevoApiKey(service);
     const resendKey = text(Deno.env.get("RESEND_API_KEY"), 1000);
     const emailFrom = text(Deno.env.get("IRHA_EMAIL_FROM"), 300);
+    const emailProvider = brevoKey ? BREVO_PROVIDER : resendKey && emailFrom ? "resend" : null;
     const { count } = await service.from("owner_push_subscriptions").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("enabled", true);
     const { data: health } = await service.rpc("notification_delivery_health");
-    return json({ ok: true, vapid_public_key: publicKey || null, push_supported: Boolean(publicKey), active_subscriptions: count || 0, email_provider_configured: Boolean(resendKey && emailFrom), health: health || {} }, 200, origin);
+    return json({ ok: true, vapid_public_key: publicKey || null, push_supported: Boolean(publicKey), active_subscriptions: count || 0, email_provider_configured: Boolean(emailProvider), email_provider: emailProvider, health: health || {} }, 200, origin);
   }
   if (action === "subscribe") {
     const subscription = validSubscription(body.subscription);
