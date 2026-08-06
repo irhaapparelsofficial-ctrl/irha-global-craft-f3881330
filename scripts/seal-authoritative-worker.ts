@@ -4,6 +4,7 @@ import type { SeoRouteEntry } from "./finalize-seo-route-manifest";
 
 const WORKER_PATH = resolve("dist/_worker.js");
 const MANIFEST_PATH = resolve("dist/seo-route-manifest.json");
+const ROUTES_PATH = resolve("dist/_routes.json");
 
 const UTILITY_ROUTES = [
   "/admin",
@@ -55,6 +56,60 @@ const SAFE_PUBLIC_PREFIXES = [
 ];
 
 type Manifest = { routes: SeoRouteEntry[] };
+type CloudflareRoutes = { version: number; include: string[]; exclude: string[] };
+
+const RELEASE_BOUNDARY_HELPERS = `function isReleaseBuildAssetPath(pathname) {
+  return normalizePath(pathname).startsWith("/assets/");
+}
+
+function withDeploymentSafeHtmlHeaders(response) {
+  const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
+  if (!contentType.includes("text/html")) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "no-store, no-transform, max-age=0, must-revalidate");
+  headers.set("CDN-Cache-Control", "no-store, no-transform");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-Irha-Release-HTML", "deployment-safe");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+async function releaseBuildAssetResponse(request, env, pathname) {
+  const assetResponse = await env.ASSETS.fetch(request);
+  const contentType = (assetResponse.headers.get("Content-Type") || "").toLowerCase();
+  const invalidAsset = !assetResponse.ok || contentType.includes("text/html");
+
+  if (invalidAsset) {
+    return new Response(request.method === "HEAD" ? null : "Build asset not found", {
+      status: 404,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store, no-transform, max-age=0, must-revalidate",
+        "CDN-Cache-Control": "no-store, no-transform",
+        "X-Content-Type-Options": "nosniff",
+        "X-Robots-Tag": "noindex, nofollow, noarchive",
+        "X-Irha-Asset-Status": "missing-release-asset",
+        "X-Irha-Requested-Asset": pathname.slice(0, 500),
+      },
+    });
+  }
+
+  const headers = new Headers(assetResponse.headers);
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  headers.set("CDN-Cache-Control", "public, max-age=31536000, immutable");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-Irha-Asset-Status", "current-release-asset");
+  return new Response(request.method === "HEAD" ? null : assetResponse.body, {
+    status: assetResponse.status,
+    statusText: assetResponse.statusText,
+    headers,
+  });
+}
+`;
 
 function arrayLiteral(values: string[]): string {
   return values.slice().sort().map((value) => `  ${JSON.stringify(value)},`).join("\n");
@@ -72,6 +127,14 @@ function replaceRequired(input: string, pattern: RegExp, replacement: string, la
 
 function main() {
   const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as Manifest;
+  const routes = JSON.parse(readFileSync(ROUTES_PATH, "utf8")) as CloudflareRoutes;
+  if (routes.version !== 1 || !Array.isArray(routes.include) || !Array.isArray(routes.exclude)) {
+    throw new Error("Cloudflare routes manifest is invalid");
+  }
+  if (routes.exclude.includes("/assets/*")) {
+    throw new Error("Cloudflare release assets must pass through the Worker release-boundary guard");
+  }
+
   const canonicalPaths = manifest.routes
     .filter((route) => route.indexable && route.sitemap)
     .map((route) => workerLookupPath(route.path));
@@ -112,6 +175,12 @@ function main() {
 
   worker = replaceRequired(
     worker,
+    /\nexport default \{/,
+    `\n${RELEASE_BOUNDARY_HELPERS}\nexport default {`,
+    "release-boundary helpers",
+  );
+  worker = replaceRequired(
+    worker,
     /(const pathname = normalizePath\(url\.pathname\);\n)/,
     `$1    const isPreviewHost = url.hostname.endsWith(".pages.dev");\n`,
     "preview host flag",
@@ -133,13 +202,28 @@ function main() {
   );
   worker = replaceRequired(
     worker,
+    /(\s+const explicitAssetPath = explicitRouteAssetPath\(pathname\);\n)/,
+    `    if ((request.method === "GET" || request.method === "HEAD") && isReleaseBuildAssetPath(pathname)) {\n      return releaseBuildAssetResponse(request, env, pathname);\n    }\n\n$1`,
+    "release build asset guard",
+  );
+  worker = replaceRequired(
+    worker,
     /(const assetResponse = explicitAssetPath\n\s*\? await routeShellAssetResponse\(request, env, pathname, explicitAssetPath\)\n\s*: await env\.ASSETS\.fetch\(request\);\n)/,
     `$1    if (isPreviewHost) {\n      return withNoIndexHeaders(assetResponse, "preview-host");\n    }\n`,
     "preview asset response policy",
   );
+  worker = replaceRequired(
+    worker,
+    /if \(shouldNoIndexCategoryQuery\(pathname, url\.searchParams\)\) \{\n\s*return withNoIndexHeaders\(assetResponse, "functional-category-query"\);\n\s*\}\n\s*return assetResponse;/,
+    `if (shouldNoIndexCategoryQuery(pathname, url.searchParams)) {
+      return withNoIndexHeaders(assetResponse, "functional-category-query");
+    }
+    return withDeploymentSafeHtmlHeaders(assetResponse);`,
+    "deployment-safe HTML response",
+  );
 
   writeFileSync(WORKER_PATH, worker);
-  console.log(`Sealed worker with ${knownPaths.length} exact HTML routes; pages.dev HTML and robots are noindex`);
+  console.log(`Sealed worker with ${knownPaths.length} exact HTML routes; pages.dev HTML and robots are noindex; release assets are guarded`);
 }
 
 main();
