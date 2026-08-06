@@ -33,12 +33,18 @@ describe("IA-UX-E001 first-render architecture", () => {
     expect(index).toContain("@media(prefers-reduced-motion:reduce)");
   });
 
-  it("does not delay React for a deliberate static-shell paint or force a reload", () => {
+  it("does not delay React for a deliberate static-shell paint and limits reload to one-time stale-asset recovery", () => {
+    const bootstrap = main.match(/async function bootstrap\(\) \{([\s\S]*?)\n\}/)?.[1] ?? "";
+    const recovery = main.match(/function installVitePreloadRecovery\(\) \{([\s\S]*?)\n\}/)?.[1] ?? "";
+
     expect(main).not.toContain("allowStaticShellPaint");
     expect(main).not.toContain("replaceChildren()");
-    expect(main).not.toContain("window.location.reload");
-    expect(main).not.toContain("location.reload");
-    expect(main).toContain("2026-07-29-v3");
+    expect(main).toContain('const CACHE_HEAL_VERSION = "2026-08-07-v4"');
+    expect(main).toContain('window.addEventListener("vite:preloadError"');
+    expect(recovery).toContain("claimOneTimeAssetRecovery(route)");
+    expect(recovery).toContain("preloadEvent.preventDefault()");
+    expect(recovery).toContain("window.location.reload()");
+    expect(bootstrap).not.toContain("window.location.reload()");
     expect(main).toContain("createRoot(rootElement).render");
   });
 
