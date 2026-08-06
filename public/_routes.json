@@ -28,7 +28,6 @@
     "/.well-known/*",
     "/openapi/*",
     "/skills/*",
-    "/docs/*.md",
     "/auth.md"
   ]
 }
