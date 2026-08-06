@@ -1,6 +1,10 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import {
+  claimOneTimeAssetRecovery,
+  isRecoverableAssetError,
+} from "@/lib/appRuntimeIncident";
 import "./index.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
@@ -27,6 +31,8 @@ const CRITICAL_BUYER_INTENT_PATHS = new Set([
 type IdleWindow = Window & {
   requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
 };
+
+type VitePreloadErrorEvent = Event & { payload?: unknown };
 
 async function healLegacyClientCacheOnce() {
   let alreadyHealed = false;
@@ -75,6 +81,36 @@ function normalizedPathname() {
   return trimmed === "/fr" || trimmed === "/nl" || trimmed === "/de" ? `${trimmed}/` : trimmed;
 }
 
+function errorFromUnknown(value: unknown): Error {
+  if (value instanceof Error) return value;
+  if (typeof value === "string") return new Error(value);
+  if (value && typeof value === "object" && "message" in value) {
+    return new Error(String((value as { message?: unknown }).message ?? "Asset preload failed"));
+  }
+  return new Error("Asset preload failed");
+}
+
+function recoverStaleReleaseOnce(event: Event, error?: Error) {
+  const route = normalizedPathname();
+  if (error && !isRecoverableAssetError(error)) return false;
+  if (!claimOneTimeAssetRecovery(route)) return false;
+
+  event.preventDefault();
+  window.location.reload();
+  return true;
+}
+
+function installReleaseBoundaryRecovery() {
+  window.addEventListener("vite:preloadError", (rawEvent) => {
+    const event = rawEvent as VitePreloadErrorEvent;
+    recoverStaleReleaseOnce(event, event.payload ? errorFromUnknown(event.payload) : undefined);
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    recoverStaleReleaseOnce(event, errorFromUnknown(event.reason));
+  });
+}
+
 function preloadInitialRoute(pathname: string): Promise<unknown> | null {
   if (pathname === "/") return import("./pages/Home");
   if (CRITICAL_BUYER_INTENT_PATHS.has(pathname)) {
@@ -111,4 +147,5 @@ async function bootstrap() {
   scheduleLegacyClientCacheHeal();
 }
 
+installReleaseBoundaryRecovery();
 void bootstrap();
