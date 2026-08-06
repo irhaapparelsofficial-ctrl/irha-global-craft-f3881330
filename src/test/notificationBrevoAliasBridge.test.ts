@@ -42,4 +42,10 @@ describe("Brevo alias email bridge", () => {
     expect(dispatcher).toContain('fetch("https://api.resend.com/emails"');
     expect(dispatcher).toContain("email_provider: emailProvider");
   });
+
+  it("does not introduce the control-character regex lint debt that the quality gate rejects", () => {
+    const helper = read("supabase/functions/notification-dispatcher/brevo-email.ts");
+    expect(helper).toContain('value.split("\\u0000").join("")');
+    expect(helper).not.toContain('replace(/\\u0000/g');
+  });
 });
