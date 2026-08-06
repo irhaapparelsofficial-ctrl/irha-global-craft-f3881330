@@ -37,7 +37,7 @@ const ALLOWED_SENDERS: Record<string, string> = {
 };
 
 function text(value: unknown, max = 4000) {
-  return typeof value === "string" ? value.replace(/\u0000/g, "").trim().slice(0, max) : "";
+  return typeof value === "string" ? value.split("\u0000").join("").trim().slice(0, max) : "";
 }
 
 function validEmail(value: unknown) {
