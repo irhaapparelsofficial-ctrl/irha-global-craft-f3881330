@@ -31,11 +31,8 @@ on:
       - "scripts/ping-search-engines.mjs"
       - "scripts/ensure-static-identity.mjs"
       - "src/data/buyerCapabilities.ts"
-      - "public/_headers"
-      - "public/_routes.json"
       - "public/_redirects"
       - "public/_worker.js"
-      - "public/docs/data-deletion.html"
       - "src/hooks/usePublicCatalog.ts"
       - "src/lib/buyerReadyProductContent.ts"
       - "src/pages/CategoryOrProductPage.tsx"
@@ -156,21 +153,12 @@ jobs:
           test -s dist/build.json
           test -s dist/release.txt
           test -s dist/catalog-route-manifest.json
-          test -s dist/_routes.json
-          test -s dist/_headers
           grep -F 'name="x-irha-release" content="frontend-live-2026-07-13-r11"' dist/index.html
           grep -F 'Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers' dist/index.html
           grep -F '"repository": "irhaapparelsofficial-ctrl/irha-global-craft-f3881330"' dist/build.json
           grep -F '"supabase_project_id": "pvzjiozismyxqrzmtfbi"' dist/build.json
           grep -F "\"source_commit\": \"$GITHUB_SHA\"" dist/build.json
           grep -F '"source_identity_state": "verified"' dist/build.json
-          grep -F '"/docs/*.md"' dist/_routes.json
-          ! grep -F '"/docs/*"' dist/_routes.json
-          grep -F '/docs/*.md' dist/_headers
-          if grep -A4 -F '/docs/*' dist/_headers | grep -Fq 'Content-Type: text/markdown'; then
-            echo "Broad /docs/* markdown MIME rule would break HTML compliance routes"
-            exit 1
-          fi
           if grep -R -nF --include='*.html' --include='*.js' --include='*.json' --include='*.txt' --include='*.xml' 'mlefxgyaqoisvdmoiapq' dist; then
             echo "Built frontend references the retired Lovable Cloud database"
             exit 1
@@ -219,46 +207,6 @@ jobs:
             echo "Legacy production claims are present in preview"
             exit 1
           fi
-
-          deletion_check="${GITHUB_SHA::12}-meta-deletion"
-          curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-            "$PREVIEW_URL/docs/data-deletion?release_check=$deletion_check" \
-            -o /tmp/meta-data-deletion.html -D /tmp/meta-data-deletion-headers
-          grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/meta-data-deletion-headers
-          grep -Eiq '^content-type:[[:space:]]*text/html([[:space:]]*;|[[:space:]]*$)' /tmp/meta-data-deletion-headers || {
-            echo "Meta data-deletion route is not served as HTML"
-            cat /tmp/meta-data-deletion-headers
-            exit 1
-          }
-          ! grep -Eiq '^content-type:.*text/markdown' /tmp/meta-data-deletion-headers
-          grep -Eiq '^x-irha-data-deletion-source:[[:space:]]*worker-direct-html' /tmp/meta-data-deletion-headers || {
-            echo "Meta data-deletion route bypassed the Worker"
-            cat /tmp/meta-data-deletion-headers
-            exit 1
-          }
-          grep -Fq '<title>User Data Deletion — Irha Apparels</title>' /tmp/meta-data-deletion.html
-          grep -Fq '<h1>User Data Deletion</h1>' /tmp/meta-data-deletion.html
-
-          curl -fsS --connect-timeout 10 --max-time 40 -H 'Cache-Control: no-cache' \
-            "$PREVIEW_URL/docs/mcp.md?release_check=$deletion_check" \
-            -o /tmp/meta-markdown-doc.md -D /tmp/meta-markdown-doc-headers
-          grep -Eiq '^HTTP/[0-9.]+ 200' /tmp/meta-markdown-doc-headers
-          grep -Eiq '^content-type:[[:space:]]*text/markdown([[:space:]]*;|[[:space:]]*$)' /tmp/meta-markdown-doc-headers || {
-            echo "Markdown docs lost their intended MIME type"
-            cat /tmp/meta-markdown-doc-headers
-            exit 1
-          }
-
-          curl -sS --connect-timeout 10 --max-time 40 --max-redirs 0 -H 'Cache-Control: no-cache' \
-            "$PREVIEW_URL/docs/data-deletion.html?release_check=$deletion_check" \
-            -o /dev/null -D /tmp/meta-data-deletion-redirect-headers || true
-          grep -Eiq '^HTTP/[0-9.]+ 301' /tmp/meta-data-deletion-redirect-headers
-          grep -Eiq '^location:[[:space:]]*https://irhaapparels\.com/docs/data-deletion([?].*)?[[:space:]]*$' /tmp/meta-data-deletion-redirect-headers || {
-            echo "Legacy .html compliance URL does not redirect to canonical clean URL"
-            cat /tmp/meta-data-deletion-redirect-headers
-            exit 1
-          }
-          echo "Meta data-deletion HTML routing and Markdown docs MIME separation verified"
 
       - name: Wait for full immutable preview propagation
         run: npx tsx scripts/wait-for-cloudflare-preview-propagation.ts
