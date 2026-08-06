@@ -19,12 +19,14 @@ env:
 
 jobs:
   bootstrap:
-    name: Generate push keys and deploy dispatcher
+    name: Verify notification secrets and deploy dispatcher
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: production
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      RESEND_API_KEY_CANDIDATE: ${{ secrets.RESEND_API_KEY }}
+      IRHA_EMAIL_FROM_CANDIDATE: ${{ secrets.IRHA_EMAIL_FROM }}
 
     steps:
       - name: Checkout exact main
@@ -43,10 +45,19 @@ jobs:
             exit 1
           }
 
-      - name: Generate masked VAPID keypair
+      - name: Reuse existing push credentials or bootstrap once
         shell: bash
         run: |
           set -euo pipefail
+          secrets_json="$(npx --yes supabase@latest secrets list --project-ref "$SUPABASE_PROJECT_REF" --output json)"
+          has_public="$(printf '%s' "$secrets_json" | jq -r '[.[].name] | index("VAPID_PUBLIC_KEY") != null')"
+          has_private="$(printf '%s' "$secrets_json" | jq -r '[.[].name] | index("VAPID_PRIVATE_KEY") != null')"
+
+          if [ "$has_public" = "true" ] && [ "$has_private" = "true" ]; then
+            echo "Existing VAPID keypair retained; subscriptions will not be invalidated."
+            exit 0
+          fi
+
           keys_file="$(mktemp)"
           npx --yes web-push@3.6.7 generate-vapid-keys --json > "$keys_file"
           public_key="$(jq -r '.publicKey // empty' "$keys_file")"
@@ -64,19 +75,45 @@ jobs:
 
           echo "::add-mask::$public_key"
           echo "::add-mask::$private_key"
-          {
-            echo "VAPID_PUBLIC_KEY=$public_key"
-            echo "VAPID_PRIVATE_KEY=$private_key"
-          } >> "$GITHUB_ENV"
+          npx --yes supabase@latest secrets set \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            VAPID_PUBLIC_KEY="$public_key" \
+            VAPID_PRIVATE_KEY="$private_key"
 
-      - name: Store push credentials in Supabase runtime
+      - name: Reconcile transactional email credentials without exposing values
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes supabase@latest secrets set \
-            --project-ref "$SUPABASE_PROJECT_REF" \
-            VAPID_PUBLIC_KEY="$VAPID_PUBLIC_KEY" \
-            VAPID_PRIVATE_KEY="$VAPID_PRIVATE_KEY"
+          secrets_json="$(npx --yes supabase@latest secrets list --project-ref "$SUPABASE_PROJECT_REF" --output json)"
+          has_resend="$(printf '%s' "$secrets_json" | jq -r '[.[].name] | index("RESEND_API_KEY") != null')"
+          has_from="$(printf '%s' "$secrets_json" | jq -r '[.[].name] | index("IRHA_EMAIL_FROM") != null')"
+
+          declare -a secret_args=()
+          if [ "$has_resend" != "true" ] && [ -n "${RESEND_API_KEY_CANDIDATE:-}" ]; then
+            echo "::add-mask::$RESEND_API_KEY_CANDIDATE"
+            secret_args+=("RESEND_API_KEY=$RESEND_API_KEY_CANDIDATE")
+          fi
+          if [ "$has_from" != "true" ] && [ -n "${IRHA_EMAIL_FROM_CANDIDATE:-}" ]; then
+            echo "::add-mask::$IRHA_EMAIL_FROM_CANDIDATE"
+            secret_args+=("IRHA_EMAIL_FROM=$IRHA_EMAIL_FROM_CANDIDATE")
+          fi
+
+          if [ "${#secret_args[@]}" -gt 0 ]; then
+            npx --yes supabase@latest secrets set --project-ref "$SUPABASE_PROJECT_REF" "${secret_args[@]}"
+          fi
+
+          secrets_json="$(npx --yes supabase@latest secrets list --project-ref "$SUPABASE_PROJECT_REF" --output json)"
+          missing=()
+          printf '%s' "$secrets_json" | jq -e '[.[].name] | index("RESEND_API_KEY") != null' >/dev/null || missing+=("RESEND_API_KEY")
+          printf '%s' "$secrets_json" | jq -e '[.[].name] | index("IRHA_EMAIL_FROM") != null' >/dev/null || missing+=("IRHA_EMAIL_FROM")
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf 'EMAIL_RUNTIME_MISSING=%s\n' "$(IFS=,; echo "${missing[*]}")" >> "$GITHUB_ENV"
+            echo "Transactional email remains blocked by missing production secret name(s): $(IFS=,; echo "${missing[*]}")"
+          else
+            echo "EMAIL_RUNTIME_MISSING=" >> "$GITHUB_ENV"
+            echo "Transactional email secret names are present in Supabase."
+          fi
 
       - name: Deploy notification dispatcher
         shell: bash
@@ -94,4 +131,11 @@ jobs:
           printf '%s' "$secrets_json" | jq -e '[.[].name] | index("VAPID_PUBLIC_KEY") != null and index("VAPID_PRIVATE_KEY") != null' >/dev/null
           functions_json="$(npx --yes supabase@latest functions list --project-ref "$SUPABASE_PROJECT_REF" --output json)"
           printf '%s' "$functions_json" | jq -e '.[] | select(.slug == "notification-dispatcher" and .status == "ACTIVE")' >/dev/null
-          echo "Owner notification runtime bootstrap verified without printing secret values."
+
+          if [ -n "${EMAIL_RUNTIME_MISSING:-}" ]; then
+            echo "::error::Owner email delivery cannot start until these production secret names exist: $EMAIL_RUNTIME_MISSING"
+            exit 1
+          fi
+
+          printf '%s' "$secrets_json" | jq -e '[.[].name] | index("RESEND_API_KEY") != null and index("IRHA_EMAIL_FROM") != null' >/dev/null
+          echo "Owner notification runtime verified without printing secret values."
