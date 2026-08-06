@@ -33,6 +33,60 @@ const STATIC_BUYER_CSP = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+const DATA_DELETION_HTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Data Deletion — Irha Apparels</title>
+  <meta name="description" content="Instructions for requesting deletion of personal data controlled by Irha Apparels for website, Facebook, Instagram and WhatsApp business interactions." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://irhaapparels.com/docs/data-deletion" />
+  <style>
+    :root { color-scheme: light dark; font-family: Arial, Helvetica, sans-serif; }
+    body { margin: 0; background: #0d1117; color: #f0f3f6; }
+    main { max-width: 780px; margin: 0 auto; padding: 64px 24px 80px; }
+    a { color: #f0f3f6; text-decoration: underline; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 12px; opacity: .7; }
+    h1 { font-size: clamp(36px, 7vw, 64px); line-height: 1.05; margin: 14px 0 24px; }
+    h2 { margin-top: 36px; font-size: 24px; }
+    p, li { line-height: 1.7; color: #c8d1dc; }
+    section { border-top: 1px solid #30363d; margin-top: 32px; padding-top: 24px; }
+    .note { padding: 16px 18px; border: 1px solid #30363d; border-radius: 10px; background: #161b22; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Irha Apparels · Privacy</p>
+    <h1>User Data Deletion</h1>
+    <p>This page explains how to request deletion of personal data that Irha Apparels controls in connection with website inquiries, live-chat conversations, or business interactions through Facebook, Instagram or WhatsApp.</p>
+    <section>
+      <h2>How to request deletion</h2>
+      <p>Email <a href="mailto:info@irhaapparels.com?subject=Data%20Deletion%20Request">info@irhaapparels.com</a> with the subject <strong>Data Deletion Request</strong>.</p>
+      <p>Please include enough information for us to locate the correct records:</p>
+      <ul>
+        <li>Your name.</li>
+        <li>The email address or phone number you used to contact Irha Apparels.</li>
+        <li>The relevant channel, such as the website, Facebook, Instagram or WhatsApp.</li>
+      </ul>
+      <p class="note">Do not send passwords, access tokens, verification codes or other account secrets.</p>
+    </section>
+    <section>
+      <h2>Verification and processing</h2>
+      <p>We may ask for reasonable information to verify that the request relates to you. After verification, we will delete or anonymize personal data we control that is covered by the request, except where retention is required by law or is reasonably necessary for security, fraud prevention, dispute handling or legitimate business recordkeeping.</p>
+    </section>
+    <section>
+      <h2>Browser-stored data</h2>
+      <p>Inquiry drafts and local preferences stored only in your browser can be removed by clearing site data or browser storage for irhaapparels.com on your device.</p>
+    </section>
+    <section>
+      <h2>Privacy policy</h2>
+      <p>For more information about how Irha Apparels handles data, read the <a href="https://irhaapparels.com/privacy-policy">Privacy Policy</a>.</p>
+    </section>
+  </main>
+</body>
+</html>`;
+
 const MARKET_PATHS = new Set([
   "/markets",
   "/markets/germany",
@@ -118,6 +172,7 @@ const LEGACY_ALIASES = new Map([
   ["/shipping-returns", "/resources"],
   ["/privacy", "/privacy-policy"],
   ["/terms", "/terms-of-service"],
+  ["/docs/data-deletion.html", "/docs/data-deletion"],
   [
     "/products/d22ac15e-d657-4a4c-804c-fb8697ceb050/plush-bathrobe-sleep-robe",
     "/products/leisure-nightwear/plush-bathrobe-sleep-robe",
@@ -307,6 +362,21 @@ function visitorContextResponse(request) {
   });
 }
 
+function dataDeletionResponse(request) {
+  return new Response(request.method === "HEAD" ? null : DATA_DELETION_HTML, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Location": `${APEX_ORIGIN}/docs/data-deletion`,
+      "Content-Security-Policy": STATIC_BUYER_CSP,
+      "Cache-Control": "no-store, no-transform, max-age=0, must-revalidate",
+      "CDN-Cache-Control": "no-store, no-transform",
+      "X-Content-Type-Options": "nosniff",
+      "X-Irha-Data-Deletion-Source": "worker-direct-html",
+    },
+  });
+}
+
 function notFoundResponse(request, pathname) {
   const safePath = pathname.replace(/[&<>"']/g, "");
   const body = request.method === "HEAD" ? null : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page Not Found — Irha Apparels</title></head><body style="margin:0;background:#0a0a0a;color:#f5f1e8;font-family:Arial,sans-serif"><main style="max-width:760px;margin:0 auto;padding:96px 24px"><p style="color:#c9a45c;text-transform:uppercase;letter-spacing:.18em">404 — Page not found</p><h1 style="font-size:48px;line-height:1.05">This page does not exist.</h1><p style="color:#c9c1b5;line-height:1.7">The requested path <code>${safePath}</code> is not a published Irha Apparels page.</p><p><a href="/products" style="color:#e8c477">Browse products</a> · <a href="/markets" style="color:#e8c477">International markets</a> · <a href="/inquiry" style="color:#e8c477">Request a quote</a></p></main></body></html>`;
@@ -394,6 +464,10 @@ export default {
 
     const aliasTarget = legacyAliasTarget(pathname);
     if (aliasTarget) return aliasRedirect(request, url, aliasTarget);
+
+    if ((request.method === "GET" || request.method === "HEAD") && pathname === "/docs/data-deletion") {
+      return dataDeletionResponse(request);
+    }
 
     if (isStaticBuyerPath(pathname) && url.pathname !== pathname) {
       return canonicalPathRedirect(request, url, pathname);
