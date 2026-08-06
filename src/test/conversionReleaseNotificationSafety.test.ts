@@ -27,27 +27,34 @@ describe("production release-boundary safety", () => {
 });
 
 describe("owner conversion email quality", () => {
-  it("uses the existing durable CRM/outbox path with intent-specific mobile-first alerts", () => {
-    const migration = read("supabase/migrations/20260807090000_conversion_owner_email_quality.sql");
-    expect(migration).toContain("New Website RFQ — ");
-    expect(migration).toContain("Sample Request — ");
-    expect(migration).toContain("Factory Video Call Request — ");
-    expect(migration).toContain("Catalogue Request — ");
-    expect(migration).toContain("Live Chat Opened — ");
-    expect(migration).toContain("Live Chat Message — ");
-    expect(migration).toContain("Buyer: ");
-    expect(migration).toContain("Company: ");
-    expect(migration).toContain("Country: ");
-    expect(migration).toContain("WhatsApp: ");
-    expect(migration).toContain("Email: ");
-    expect(migration).toContain("Source page: ");
-    expect(migration).toContain("on conflict(dedupe_key) do nothing");
+  it("enriches the existing durable outbox server-side with intent-specific mobile-first alerts", () => {
+    const helper = read("supabase/functions/notification-dispatcher/owner-email.ts");
+    const dispatcher = read("supabase/functions/notification-dispatcher/index.ts");
+    expect(helper).toContain("New Website RFQ — ");
+    expect(helper).toContain("Sample Request — ");
+    expect(helper).toContain("Factory Video Call Request — ");
+    expect(helper).toContain("Catalogue Request — ");
+    expect(helper).toContain("Live Chat Opened — ");
+    expect(helper).toContain("Live Chat Message — ");
+    expect(helper).toContain("Buyer: ");
+    expect(helper).toContain("Company: ");
+    expect(helper).toContain("Country: ");
+    expect(helper).toContain("WhatsApp: ");
+    expect(helper).toContain("Email: ");
+    expect(helper).toContain("Source page: ");
+    expect(dispatcher).toContain("await enrichOwnerEmailPayload(service, row)");
+    expect(dispatcher).toContain('"idempotency-key": row.id');
+    expect(dispatcher).toContain("notification_kind");
   });
 
-  it("keeps admin chat replies out of new visitor-message notifications", () => {
-    const migration = read("supabase/migrations/20260807090000_conversion_owner_email_quality.sql");
-    expect(migration).toContain("if new.role = 'user' then");
-    expect(migration).toContain("elsif new.role = 'admin' then");
-    expect(migration).toContain("and status = 'unread'");
+  it("does not create a second notification architecture or weaken database controls", () => {
+    const helper = read("supabase/functions/notification-dispatcher/owner-email.ts");
+    expect(helper).toContain('.from("crm_notifications")');
+    expect(helper).toContain('.from("inquiries")');
+    expect(helper).toContain('.from("catalogue_leads")');
+    expect(helper).toContain('.from("chat_sessions")');
+    expect(helper).toContain('.from("chat_messages")');
+    expect(helper).not.toContain("service_role");
+    expect(helper).not.toContain("insert(");
   });
 });
