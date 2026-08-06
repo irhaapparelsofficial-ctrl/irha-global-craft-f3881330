@@ -111,7 +111,7 @@
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
   Access-Control-Allow-Origin: *
-/docs/*
+/docs/*.md
   Content-Type: text/markdown; charset=utf-8
   Cache-Control: no-store, max-age=0, must-revalidate
   CDN-Cache-Control: no-store
