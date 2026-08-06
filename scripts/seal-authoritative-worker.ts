@@ -78,7 +78,7 @@ function withDeploymentSafeHtmlHeaders(response) {
   });
 }
 
-async function releaseBuildAssetResponse(request, env, pathname) {
+async function releaseBuildAssetResponse(request, env) {
   const assetResponse = await env.ASSETS.fetch(request);
   const contentType = (assetResponse.headers.get("Content-Type") || "").toLowerCase();
   const invalidAsset = !assetResponse.ok || contentType.includes("text/html");
@@ -93,7 +93,6 @@ async function releaseBuildAssetResponse(request, env, pathname) {
         "X-Content-Type-Options": "nosniff",
         "X-Robots-Tag": "noindex, nofollow, noarchive",
         "X-Irha-Asset-Status": "missing-release-asset",
-        "X-Irha-Requested-Asset": pathname.slice(0, 500),
       },
     });
   }
@@ -131,8 +130,9 @@ function main() {
   if (routes.version !== 1 || !Array.isArray(routes.include) || !Array.isArray(routes.exclude)) {
     throw new Error("Cloudflare routes manifest is invalid");
   }
-  if (routes.exclude.includes("/assets/*")) {
-    throw new Error("Cloudflare release assets must pass through the Worker release-boundary guard");
+  const codeAssetBypasses = routes.exclude.filter((rule) => rule.includes(".js") || rule.includes(".css") || rule.startsWith("/assets"));
+  if (codeAssetBypasses.length > 0) {
+    throw new Error(`Cloudflare release JS/CSS must pass through the Worker release-boundary guard: ${codeAssetBypasses.join(", ")}`);
   }
 
   const canonicalPaths = manifest.routes
@@ -203,7 +203,7 @@ function main() {
   worker = replaceRequired(
     worker,
     /(\s+const explicitAssetPath = explicitRouteAssetPath\(pathname\);\n)/,
-    `    if ((request.method === "GET" || request.method === "HEAD") && isReleaseBuildAssetPath(pathname)) {\n      return releaseBuildAssetResponse(request, env, pathname);\n    }\n\n$1`,
+    `    if ((request.method === "GET" || request.method === "HEAD") && isReleaseBuildAssetPath(pathname)) {\n      return releaseBuildAssetResponse(request, env);\n    }\n\n$1`,
     "release build asset guard",
   );
   worker = replaceRequired(
