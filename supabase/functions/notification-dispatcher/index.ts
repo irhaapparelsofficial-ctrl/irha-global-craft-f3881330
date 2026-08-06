@@ -4,7 +4,7 @@ import { authorizeSchedulerRequest } from "./auth.ts";
 import {
   BREVO_PROVIDER,
   CHATGPT_OUTBOUND_TEMPLATE,
-  getBrevoSmtpKey,
+  getBrevoApiKey,
   isChatgptOutbound,
   sendBrevoEmail,
 } from "./brevo-email.ts";
@@ -284,9 +284,9 @@ async function processEmail(service: ServiceClient, row: OutboxRow) {
 
   const emailPayload = directOutbound ? row.payload : await enrichOwnerEmailPayload(service, row);
   const rendered = renderEmail(emailPayload);
-  const brevoKey = await getBrevoSmtpKey(service);
+  const brevoKey = await getBrevoApiKey(service);
   if (brevoKey) {
-    const outcome = await sendBrevoEmail(service, row, emailPayload, rendered);
+    const outcome = await sendBrevoEmail(service, row, emailPayload, rendered, brevoKey);
     await finish(service, row, outcome.status, BREVO_PROVIDER, outcome.error, {
       ...outcome.evidence,
       notification_kind: text(emailPayload.kind, 80) || (directOutbound ? CHATGPT_OUTBOUND_TEMPLATE : "owner_alert"),
@@ -295,7 +295,7 @@ async function processEmail(service: ServiceClient, row: OutboxRow) {
   }
 
   if (directOutbound) {
-    await finish(service, row, "blocked", BREVO_PROVIDER, "Brevo SMTP provider is not configured", { source: CHATGPT_OUTBOUND_TEMPLATE });
+    await finish(service, row, "blocked", BREVO_PROVIDER, "Brevo API provider is not configured", { source: CHATGPT_OUTBOUND_TEMPLATE });
     return;
   }
 
@@ -346,7 +346,7 @@ async function adminAction(service: ServiceClient, user: { id: string }, req: Re
   const action = text(body.action, 80);
   if (action === "config" || action === "health") {
     const publicKey = text(Deno.env.get("VAPID_PUBLIC_KEY"), 500);
-    const brevoKey = await getBrevoSmtpKey(service);
+    const brevoKey = await getBrevoApiKey(service);
     const resendKey = text(Deno.env.get("RESEND_API_KEY"), 1000);
     const emailFrom = text(Deno.env.get("IRHA_EMAIL_FROM"), 300);
     const emailProvider = brevoKey ? BREVO_PROVIDER : resendKey && emailFrom ? "resend" : null;

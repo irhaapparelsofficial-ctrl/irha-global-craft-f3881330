@@ -1,4 +1,3 @@
-import nodemailer from "npm:nodemailer@7.0.5";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2.49.4";
 
 type Json = Record<string, unknown>;
@@ -20,14 +19,12 @@ export type BrevoSendOutcome =
   | { status: "sent"; error: null; evidence: Json }
   | { status: "blocked" | "retry" | "failed"; error: string; evidence: Json };
 
-export const BREVO_PROVIDER = "brevo-smtp";
-export const BREVO_SECRET_NAME = "brevo_smtp_key";
+export const BREVO_PROVIDER = "brevo-api";
+export const BREVO_SECRET_NAME = "brevo_api_key";
 export const CHATGPT_OUTBOUND_TEMPLATE = "chatgpt_outbound";
 export const BREVO_CHATGPT_DAILY_CAP = 200;
 
-const BREVO_SMTP_HOST = "smtp-relay.brevo.com";
-const BREVO_SMTP_PORT = 587;
-const BREVO_SMTP_LOGIN = "b4af30001@smtp-brevo.com";
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const DEFAULT_SENDER = "info@irhaapparels.com";
 const MAX_ATTEMPTS = 5;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -75,23 +72,10 @@ function replyToForPayload(payload: Json, senderAddress: string) {
   return validEmail(payload.reply_to) || DEFAULT_SENDER;
 }
 
-function threadHeaders(payload: Json) {
-  const inReplyTo = text(payload.in_reply_to, 1000);
-  const rawReferences = Array.isArray(payload.references)
-    ? payload.references.map((item) => text(item, 1000)).filter(Boolean).slice(0, 20)
-    : text(payload.references, 4000);
-  return {
-    inReplyTo: inReplyTo || undefined,
-    references: Array.isArray(rawReferences)
-      ? rawReferences.length > 0 ? rawReferences : undefined
-      : rawReferences || undefined,
-  };
-}
-
-export async function getBrevoSmtpKey(service: SupabaseClient) {
+export async function getBrevoApiKey(service: SupabaseClient) {
   const { data, error } = await service.rpc("notification_get_secret", { _name: BREVO_SECRET_NAME });
   if (error) {
-    console.error("Brevo SMTP secret lookup failed");
+    console.error("Brevo API secret lookup failed");
     return "";
   }
   return text(data, 4000);
@@ -111,15 +95,14 @@ async function chatgptSentInLast24Hours(service: SupabaseClient) {
   return count || 0;
 }
 
-function errorDetails(error: unknown) {
-  const source = error && typeof error === "object" ? error as Record<string, unknown> : {};
-  const message = error instanceof Error ? error.message : text(error, 1000) || "SMTP delivery failed";
-  return {
-    message: message.slice(0, 1500),
-    code: text(source.code, 100),
-    responseCode: Number(source.responseCode || 0),
-    response: text(source.response, 1000),
-  };
+function apiErrorMessage(status: number, raw: string) {
+  if (!raw) return `Brevo API returned ${status}`;
+  try {
+    const parsed = JSON.parse(raw) as Json;
+    return text(parsed.message, 1200) || text(parsed.code, 200) || `Brevo API returned ${status}`;
+  } catch {
+    return `Brevo API returned ${status}: ${raw.slice(0, 1000)}`;
+  }
 }
 
 export async function sendBrevoEmail(
@@ -127,6 +110,7 @@ export async function sendBrevoEmail(
   row: OutboxEmailRow,
   payload: Json,
   rendered: RenderedEmail,
+  apiKey: string,
 ): Promise<BrevoSendOutcome> {
   const sender = senderForPayload(payload);
   if (!sender) {
@@ -165,80 +149,69 @@ export async function sendBrevoEmail(
     }
   }
 
-  const smtpKey = await getBrevoSmtpKey(service);
-  if (!smtpKey) {
+  if (!apiKey) {
     return {
       status: "blocked",
-      error: "Brevo SMTP provider is not configured",
+      error: "Brevo API provider is not configured",
       evidence: { source: isChatgptOutbound(payload) ? CHATGPT_OUTBOUND_TEMPLATE : "notification" },
     };
   }
 
-  const transporter = nodemailer.createTransport({
-    host: BREVO_SMTP_HOST,
-    port: BREVO_SMTP_PORT,
-    secure: false,
-    requireTLS: true,
-    auth: { user: BREVO_SMTP_LOGIN, pass: smtpKey },
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 20_000,
-    tls: { minVersion: "TLSv1.2" },
-  });
-
   const source = isChatgptOutbound(payload) ? CHATGPT_OUTBOUND_TEMPLATE : "notification";
   const cc = isChatgptOutbound(payload) ? emailList(payload.cc) : [];
   const bcc = isChatgptOutbound(payload) ? emailList(payload.bcc) : [];
-  const threading = threadHeaders(payload);
+  const requestBody: Json = {
+    sender: { name: sender.name, email: sender.address },
+    to: [{ email: recipient }],
+    replyTo: { email: replyToForPayload(payload, sender.address) },
+    subject: rendered.subject,
+    htmlContent: rendered.html,
+    headers: {
+      "Idempotency-Key": row.id,
+      "X-Irha-Outbox-ID": row.id,
+      "X-Irha-Source": source,
+    },
+    tags: [source === CHATGPT_OUTBOUND_TEMPLATE ? "irha-chatgpt-outbound" : "irha-notification"],
+  };
+  if (cc.length) requestBody.cc = cc.map((email) => ({ email }));
+  if (bcc.length) requestBody.bcc = bcc.map((email) => ({ email }));
 
   try {
-    const info = await transporter.sendMail({
-      from: { name: sender.name, address: sender.address },
-      to: [recipient],
-      cc: cc.length ? cc : undefined,
-      bcc: bcc.length ? bcc : undefined,
-      replyTo: replyToForPayload(payload, sender.address),
-      subject: rendered.subject,
-      text: rendered.text,
-      html: rendered.html,
-      inReplyTo: threading.inReplyTo,
-      references: threading.references,
+    const response = await fetch(BREVO_API_URL, {
+      method: "POST",
       headers: {
-        "X-Irha-Outbox-ID": row.id,
-        "X-Irha-Source": source,
+        accept: "application/json",
+        "api-key": apiKey,
+        "content-type": "application/json",
       },
+      body: JSON.stringify(requestBody),
     });
-    return {
-      status: "sent",
-      error: null,
-      evidence: {
-        source,
-        provider_message_id: text(info.messageId, 500) || null,
-        accepted: Array.isArray(info.accepted) ? info.accepted.map((item) => text(String(item), 300)).filter(Boolean).slice(0, 20) : [],
-        rejected: Array.isArray(info.rejected) ? info.rejected.map((item) => text(String(item), 300)).filter(Boolean).slice(0, 20) : [],
-        from_address: sender.address,
-      },
-    };
-  } catch (error) {
-    const details = errorDetails(error);
+    const raw = await response.text();
+    let result: Json = {};
+    try { result = JSON.parse(raw) as Json; } catch { result = { raw: raw.slice(0, 1000) }; }
     const evidence: Json = {
       source,
-      code: details.code || null,
-      response_code: details.responseCode || null,
+      provider_message_id: text(result.messageId, 500) || null,
       from_address: sender.address,
+      response_status: response.status,
     };
-    const failure = [details.message, details.response].filter(Boolean).join(" — ").slice(0, 1800);
-    if (details.code === "EAUTH" || details.responseCode === 535) {
-      return { status: "blocked", error: failure || "Brevo SMTP authentication failed", evidence };
+    if (response.ok) return { status: "sent", error: null, evidence };
+
+    const message = apiErrorMessage(response.status, raw);
+    if ([401, 403, 402].includes(response.status)) {
+      return { status: "blocked", error: message, evidence };
     }
-    if (details.responseCode >= 500 && details.responseCode < 600) {
-      return { status: "failed", error: failure || "Brevo SMTP rejected the message", evidence };
+    if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+      return { status: "failed", error: message, evidence };
     }
     if (row.attempt_count >= MAX_ATTEMPTS) {
-      return { status: "failed", error: failure || "Brevo SMTP delivery failed", evidence };
+      return { status: "failed", error: message, evidence };
     }
-    return { status: "retry", error: failure || "Brevo SMTP delivery failed", evidence };
-  } finally {
-    transporter.close();
+    return { status: "retry", error: message, evidence };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Brevo API request failed";
+    const evidence: Json = { source, from_address: sender.address };
+    if (row.attempt_count >= MAX_ATTEMPTS) return { status: "failed", error: message, evidence };
+    return { status: "retry", error: message, evidence };
   }
 }
