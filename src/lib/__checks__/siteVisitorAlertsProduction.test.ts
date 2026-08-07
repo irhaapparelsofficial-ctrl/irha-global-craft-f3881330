@@ -30,7 +30,8 @@ describe("realtime website visitor country alerts", () => {
     expect(visitorFunction).toContain('"cf-ipcountry"');
     expect(visitorFunction).toContain("isLikelyBot");
     expect(visitorFunction).toContain('geo_source');
-    expect(visitorFunction).toContain('notification-dispatcher');
+    expect(visitorFunction).toContain('service.rpc("notification_dispatch_tick")');
+    expect(visitorFunction).not.toContain('/functions/v1/notification-dispatcher');
     expect(visitorFunction).not.toMatch(/(ip_address|raw_ip|visitor_ip)\s*:/);
     expect(migration).not.toMatch(/\b(ip_address|raw_ip|visitor_ip)\b/i);
   });
