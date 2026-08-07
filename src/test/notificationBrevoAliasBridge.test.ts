@@ -34,6 +34,16 @@ describe("Brevo alias email bridge", () => {
     expect(helper).toContain('.contains("metadata", { source: CHATGPT_OUTBOUND_TEMPLATE })');
   });
 
+  it("archives external ChatGPT outbound mail back into the owner Gmail account", () => {
+    const helper = read("supabase/functions/notification-dispatcher/brevo-email.ts");
+    expect(helper).toContain('OWNER_GMAIL_ARCHIVE = "irhaapparelsofficial@gmail.com"');
+    expect(helper).toContain("shouldArchiveInGmail(payload, recipient)");
+    expect(helper).toContain("Array.from(new Set([OWNER_GMAIL_ARCHIVE, ...requested])).slice(0, 20)");
+    expect(helper).toContain('"X-Irha-Gmail-Archive": archiveInGmail ? "bcc" : "not-required"');
+    expect(helper).toContain("gmail_archive_bcc: archiveInGmail");
+    expect(helper).toContain("requestBody.bcc = bcc.map((email) => ({ email }))");
+  });
+
   it("adds idempotency evidence and preserves the existing Resend fallback", () => {
     const dispatcher = read("supabase/functions/notification-dispatcher/index.ts");
     const helper = read("supabase/functions/notification-dispatcher/brevo-email.ts");
