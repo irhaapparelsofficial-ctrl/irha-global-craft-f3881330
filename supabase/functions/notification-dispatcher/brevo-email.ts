@@ -21,9 +21,10 @@ export type BrevoSendOutcome =
 
 export const BREVO_PROVIDER = "brevo-api";
 export const BREVO_SECRET_NAME = "brevo_api_key";
+export const BREVO_ENV_SECRET_NAME = "BREVO_API_KEY";
 export const CHATGPT_OUTBOUND_TEMPLATE = "chatgpt_outbound";
 export const BREVO_CHATGPT_DAILY_CAP = 200;
-export const BREVO_BRIDGE_VERSION = "2026-08-07-v1";
+export const BREVO_BRIDGE_VERSION = "2026-08-07-v2";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const DEFAULT_SENDER = "info@irhaapparels.com";
@@ -75,11 +76,15 @@ function replyToForPayload(payload: Json, senderAddress: string) {
 
 export async function getBrevoApiKey(service: SupabaseClient) {
   const { data, error } = await service.rpc("notification_get_secret", { _name: BREVO_SECRET_NAME });
-  if (error) {
-    console.error("Brevo API secret lookup failed");
-    return "";
-  }
-  return text(data, 4000);
+  const vaultKey = error ? "" : text(data, 4000);
+  if (vaultKey) return vaultKey;
+
+  const runtimeKey = text(Deno.env.get(BREVO_ENV_SECRET_NAME), 4000)
+    || text(Deno.env.get(BREVO_SECRET_NAME), 4000);
+  if (runtimeKey) return runtimeKey;
+
+  if (error) console.error("Brevo Vault secret lookup failed");
+  return "";
 }
 
 async function chatgptSentInLast24Hours(service: SupabaseClient) {
