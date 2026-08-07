@@ -52,6 +52,43 @@ function platformLabel() {
   return browserNavigator.userAgentData?.platform || browserNavigator.platform || "web";
 }
 
+async function registerOwnerServiceWorker() {
+  const registration = await navigator.serviceWorker.register("/irha-owner-sw.js", {
+    scope: "/",
+    updateViaCache: "none",
+  });
+  try {
+    await registration.update();
+  } catch {
+    // A failed update check must not discard an already-active worker.
+  }
+  return navigator.serviceWorker.ready;
+}
+
+async function syncBackendSubscription(subscription: PushSubscription) {
+  const { data, error } = await supabase.functions.invoke("notification-dispatcher", {
+    body: {
+      action: "subscribe",
+      subscription: subscription.toJSON(),
+      platform: platformLabel(),
+    },
+  });
+  if (error || !data?.ok) {
+    throw new Error(data?.error || error?.message || "Subscription failed");
+  }
+}
+
+async function readBackendSubscription(userId: string, endpoint: string) {
+  const { data, error } = await supabase
+    .from("owner_push_subscriptions")
+    .select("enabled,last_success_at,last_error")
+    .eq("user_id", userId)
+    .eq("endpoint", endpoint)
+    .maybeSingle();
+  if (error) throw error;
+  return (data ?? null) as BackendSubscription | null;
+}
+
 export default function AdminPushNotificationSetup() {
   const [config, setConfig] = useState<NotificationConfig | null>(null);
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
@@ -77,8 +114,8 @@ export default function AdminPushNotificationSetup() {
       const { data, error } = await supabase.functions.invoke("notification-dispatcher", {
         body: { action: "config" },
       });
-      if (!error && data?.ok) setConfig(data as NotificationConfig);
-      else setConfig(null);
+      const nextConfig = !error && data?.ok ? data as NotificationConfig : null;
+      setConfig(nextConfig);
 
       if (!supported) {
         setSubscription(null);
@@ -87,32 +124,54 @@ export default function AdminPushNotificationSetup() {
         return;
       }
 
-      const registration = await navigator.serviceWorker.register("/irha-owner-sw.js", {
-        scope: "/",
-        updateViaCache: "none",
-      });
-      try {
-        await registration.update();
-      } catch {
-        // A failed update check must not discard an already-active worker.
-      }
-      const ready = await navigator.serviceWorker.ready;
+      const ready = await registerOwnerServiceWorker();
       setServiceWorkerActive(Boolean(ready.active));
 
-      const localSubscription = await ready.pushManager.getSubscription();
+      let localSubscription = await ready.pushManager.getSubscription();
+
+      // A previous release retired every service worker while healing stale Vite
+      // caches. The backend can keep accepting an old Apple endpoint even though
+      // this Home Screen app no longer has a local PushSubscription to receive it.
+      // If the owner already granted notification permission, repair that broken
+      // local state silently; never prompt for permission outside a user gesture.
+      if (
+        !localSubscription &&
+        nextConfig?.vapid_public_key &&
+        Notification.permission === "granted" &&
+        (!isIos() || isStandalone())
+      ) {
+        try {
+          localSubscription = await ready.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: base64UrlToUint8Array(nextConfig.vapid_public_key),
+          });
+          await syncBackendSubscription(localSubscription);
+        } catch {
+          // Some browsers may still require a direct gesture to create a new
+          // subscription. Keep the visible reconnect control as the safe fallback.
+        }
+      }
+
       setSubscription(localSubscription);
       if (!localSubscription) {
         setBackendSubscription(null);
         return;
       }
 
-      const { data: storedSubscription } = await supabase
-        .from("owner_push_subscriptions")
-        .select("enabled,last_success_at,last_error")
-        .eq("user_id", userId)
-        .eq("endpoint", localSubscription.endpoint)
-        .maybeSingle();
-      setBackendSubscription((storedSubscription ?? null) as BackendSubscription | null);
+      let storedSubscription = await readBackendSubscription(userId, localSubscription.endpoint);
+
+      // Repair the inverse drift too: the browser can retain a valid local
+      // subscription while the server-side row is missing or disabled.
+      if (!storedSubscription?.enabled && Notification.permission === "granted") {
+        try {
+          await syncBackendSubscription(localSubscription);
+          storedSubscription = await readBackendSubscription(userId, localSubscription.endpoint);
+        } catch {
+          // Surface NEEDS SETUP below rather than hiding a failed backend sync.
+        }
+      }
+
+      setBackendSubscription(storedSubscription);
     } finally {
       setChecked(true);
     }
@@ -165,30 +224,14 @@ export default function AdminPushNotificationSetup() {
         : await Notification.requestPermission();
       if (permission !== "granted") throw new Error("Notification permission was not granted");
 
-      const registration = await navigator.serviceWorker.register("/irha-owner-sw.js", {
-        scope: "/",
-        updateViaCache: "none",
-      });
-      try {
-        await registration.update();
-      } catch {
-        // Existing active worker remains usable when an update check fails.
-      }
-      const ready = await navigator.serviceWorker.ready;
+      const ready = await registerOwnerServiceWorker();
       const existing = await ready.pushManager.getSubscription();
       const next = existing || await ready.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: base64UrlToUint8Array(config.vapid_public_key),
       });
 
-      const { data, error } = await supabase.functions.invoke("notification-dispatcher", {
-        body: {
-          action: "subscribe",
-          subscription: next.toJSON(),
-          platform: platformLabel(),
-        },
-      });
-      if (error || !data?.ok) throw new Error(data?.error || error?.message || "Subscription failed");
+      await syncBackendSubscription(next);
 
       await load();
       toast({

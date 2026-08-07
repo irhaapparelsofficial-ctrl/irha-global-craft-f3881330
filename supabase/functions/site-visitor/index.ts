@@ -116,15 +116,10 @@ function isLikelyBot(userAgent: string) {
 
 async function dispatchNow() {
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/notification-dispatcher`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-        apikey: SERVICE_ROLE_KEY,
-      },
-      body: JSON.stringify({ action: "process", source: "site-visitor", limit: 25 }),
-    });
+    const { error } = await service.rpc("notification_dispatch_tick");
+    if (error) {
+      console.error("site-visitor immediate dispatch failed", error.message);
+    }
   } catch (error) {
     console.error("site-visitor immediate dispatch failed", error);
   }
