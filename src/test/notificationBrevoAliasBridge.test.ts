@@ -7,7 +7,10 @@ describe("Brevo alias email bridge", () => {
   it("keeps the API credential server-side and restricts From identities to approved Irha aliases", () => {
     const helper = read("supabase/functions/notification-dispatcher/brevo-email.ts");
     expect(helper).toContain('BREVO_SECRET_NAME = "brevo_api_key"');
+    expect(helper).toContain('BREVO_ENV_SECRET_NAME = "BREVO_API_KEY"');
     expect(helper).toContain('service.rpc("notification_get_secret"');
+    expect(helper).toContain("Deno.env.get(BREVO_ENV_SECRET_NAME)");
+    expect(helper).toContain("Deno.env.get(BREVO_SECRET_NAME)");
     expect(helper).toContain('BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"');
     expect(helper).toContain('"api-key": apiKey');
     expect(helper).toContain('"info@irhaapparels.com": "Irha Apparels"');
