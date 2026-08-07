@@ -24,10 +24,11 @@ export const BREVO_SECRET_NAME = "brevo_api_key";
 export const BREVO_ENV_SECRET_NAME = "BREVO_API_KEY";
 export const CHATGPT_OUTBOUND_TEMPLATE = "chatgpt_outbound";
 export const BREVO_CHATGPT_DAILY_CAP = 200;
-export const BREVO_BRIDGE_VERSION = "2026-08-07-v2";
+export const BREVO_BRIDGE_VERSION = "2026-08-07-v3";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const DEFAULT_SENDER = "info@irhaapparels.com";
+const OWNER_GMAIL_ARCHIVE = "irhaapparelsofficial@gmail.com";
 const MAX_ATTEMPTS = 5;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -72,6 +73,19 @@ function senderForPayload(payload: Json) {
 function replyToForPayload(payload: Json, senderAddress: string) {
   if (isChatgptOutbound(payload)) return senderAddress;
   return validEmail(payload.reply_to) || DEFAULT_SENDER;
+}
+
+function shouldArchiveInGmail(payload: Json, recipient: string) {
+  return isChatgptOutbound(payload)
+    && recipient !== OWNER_GMAIL_ARCHIVE
+    && !Object.prototype.hasOwnProperty.call(ALLOWED_SENDERS, recipient);
+}
+
+function bccForPayload(payload: Json, recipient: string) {
+  if (!isChatgptOutbound(payload)) return [];
+  const requested = emailList(payload.bcc);
+  if (!shouldArchiveInGmail(payload, recipient)) return requested;
+  return Array.from(new Set([OWNER_GMAIL_ARCHIVE, ...requested])).slice(0, 20);
 }
 
 export async function getBrevoApiKey(service: SupabaseClient) {
@@ -165,7 +179,8 @@ export async function sendBrevoEmail(
 
   const source = isChatgptOutbound(payload) ? CHATGPT_OUTBOUND_TEMPLATE : "notification";
   const cc = isChatgptOutbound(payload) ? emailList(payload.cc) : [];
-  const bcc = isChatgptOutbound(payload) ? emailList(payload.bcc) : [];
+  const archiveInGmail = shouldArchiveInGmail(payload, recipient);
+  const bcc = bccForPayload(payload, recipient);
   const requestBody: Json = {
     sender: { name: sender.name, email: sender.address },
     to: [{ email: recipient }],
@@ -177,6 +192,7 @@ export async function sendBrevoEmail(
       "X-Irha-Outbox-ID": row.id,
       "X-Irha-Source": source,
       "X-Irha-Bridge-Version": BREVO_BRIDGE_VERSION,
+      "X-Irha-Gmail-Archive": archiveInGmail ? "bcc" : "not-required",
     },
     tags: [source === CHATGPT_OUTBOUND_TEMPLATE ? "irha-chatgpt-outbound" : "irha-notification"],
   };
@@ -202,6 +218,7 @@ export async function sendBrevoEmail(
       provider_message_id: text(result.messageId, 500) || null,
       from_address: sender.address,
       response_status: response.status,
+      gmail_archive_bcc: archiveInGmail,
     };
     if (response.ok) return { status: "sent", error: null, evidence };
 
@@ -218,7 +235,12 @@ export async function sendBrevoEmail(
     return { status: "retry", error: message, evidence };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Brevo API request failed";
-    const evidence: Json = { source, bridge_version: BREVO_BRIDGE_VERSION, from_address: sender.address };
+    const evidence: Json = {
+      source,
+      bridge_version: BREVO_BRIDGE_VERSION,
+      from_address: sender.address,
+      gmail_archive_bcc: archiveInGmail,
+    };
     if (row.attempt_count >= MAX_ATTEMPTS) return { status: "failed", error: message, evidence };
     return { status: "retry", error: message, evidence };
   }
