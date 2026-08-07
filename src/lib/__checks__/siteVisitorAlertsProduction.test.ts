@@ -74,7 +74,8 @@ describe("realtime website visitor country alerts", () => {
 
   it("verifies the exact current device before declaring background alerts active", () => {
     expect(pushSetup).toContain('from("owner_push_subscriptions")');
-    expect(pushSetup).toContain('.eq("endpoint", localSubscription.endpoint)');
+    expect(pushSetup).toContain('readBackendSubscription(userId, localSubscription.endpoint)');
+    expect(pushSetup).toContain('.eq("endpoint", endpoint)');
     expect(pushSetup).toContain('updateViaCache: "none"');
     expect(pushSetup).toContain('"ACTIVE"');
     expect(pushSetup).toContain('"NEEDS SETUP"');
