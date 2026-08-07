@@ -26,7 +26,7 @@
       "registry": "supabase/deployment-parity/functions-f2.json",
       "repository_source": "supabase/functions/notification-dispatcher/index.ts",
       "minimum_version": 10,
-      "exact_hash": "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c",
+      "exact_hash": "de14ab8afea431d56ba0878ab1f7be63d5f11d9a63277a7d2e0e218428bfcd8d",
       "verify_jwt": false,
       "require_shared_limiter": false,
       "provenance": "IA-SEC-E001 scheduler-token least-privilege release; exact bundle/source locked with monotonic version floor so identical safe redeploys do not create false parity failures"

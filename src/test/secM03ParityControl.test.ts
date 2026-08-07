@@ -97,7 +97,7 @@ describe("SEC-M03 canonical parity control", () => {
     expect(notificationParity).toMatchObject({
       registry: "supabase/deployment-parity/functions-f2.json",
       minimum_version: 10,
-      exact_hash: "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c",
+      exact_hash: "de14ab8afea431d56ba0878ab1f7be63d5f11d9a63277a7d2e0e218428bfcd8d",
     });
     expect(notificationParity).not.toHaveProperty("exact_version");
     const publicLeadParity = parityPlan.functions.find((entry: { name: string }) => entry.name === "public-lead-gateway");
