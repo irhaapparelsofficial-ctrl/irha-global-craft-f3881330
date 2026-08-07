@@ -515,6 +515,15 @@
       "git_blob_sha": "8fd0935f79a60145353056ddc628eb684b43d927",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260806201358",
+      "name": "operational_owner_conversion_notifications",
+      "path": "supabase/migrations/20260806201358_operational_owner_conversion_notifications.sql",
+      "git_blob_sha": "364561f88e6578a87bcb92e0e589d23f3e18ffb5",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260806201358' and name = 'operational_owner_conversion_notifications' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = '871cc29cec5413968ee0b24e129ba3fd988768c27cc83a563303a70f7cd35bdd') as verified"
     }
   ]
 }
