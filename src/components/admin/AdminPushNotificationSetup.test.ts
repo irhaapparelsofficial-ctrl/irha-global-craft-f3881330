@@ -23,4 +23,19 @@ describe("owner push notification recovery", () => {
     expect(source).toContain("if (!storedSubscription?.enabled");
     expect(source).not.toContain(".delete()");
   });
+
+  it("keeps the iPhone setup control touchable above fixed admin overlays", () => {
+    expect(source).toContain('data-owner-alert-setup-action="true"');
+    expect(source).toContain("onTouchEnd=");
+    expect(source).toContain("pointer-events-auto");
+    expect(source).toContain("touch-manipulation");
+    expect(source).toContain("z-[110]");
+  });
+
+  it("never silently ignores a missing push configuration after a tap", () => {
+    expect(source).toContain("Push configuration unavailable");
+    expect(source).toContain("Tap received. Connecting this iPhone to owner alerts");
+    expect(source).toContain('role="status"');
+    expect(source).toContain('aria-live="polite"');
+  });
 });
