@@ -79,7 +79,7 @@
   },
   "database": {
     "canonical_digests_sha256": {
-      "columns": "d7ea91c61b05308e2a30cc0aa9b0bc5f738be4fe3eae98f97cc9b1f1352a3cba",
+      "columns": "d0f0e2db8104f4a4ed7d23e0fe284b717da01f9b3d8673a9f90f8ec67767aac6",
       "constraints": "a388ab7abdfff1eac47d42523fa4bfeb9190148eaa63ebd9765a0573950e2193",
       "functions": "c85abc2480ba63a8869c3ed62144b74dc05dd4c0eba028a96f04ccf93a5142bc",
       "indexes": "39bfca272621a2dcdd156faf9f0394b519016b3055e927dea9de13814e873921",
@@ -167,7 +167,7 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "64722b3eabec386b1fd9c261c1c71cdcb42470e0df773100296754a8b5f12cf3",
+  "manifest_sha256": "5f4f1a5600b6c53455baf4e8ae61c1927fcbc06d8b05f208df7bae88ebadea7e",
   "migration_provenance": {
     "canonical_payload_sha256": "c1af5cd8bd4a150f5e0cb83c2b5217e615525b7e5d2d393582a5de76657dfc6c",
     "file_sha256": "829604f9f888e40385dba5a3760f473da303a27fbeab453eeaf4dfe2df3a4266",
