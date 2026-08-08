@@ -1,5 +1,5 @@
 {
-  "canonical_payload_sha256": "5e8e1b32aeca1763c3ebc66d183fb3b67c662d18f74e6cb64c876c56b7f066e5",
+  "canonical_payload_sha256": "c1af5cd8bd4a150f5e0cb83c2b5217e615525b7e5d2d393582a5de76657dfc6c",
   "payload": {
     "classification_policy": {
       "P1": "Exact repository source recovered and linked to the exact live version and name.",
@@ -8992,18 +8992,82 @@
         ],
         "superseding_baseline": null,
         "version": "20260803234500"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260806201358",
+          "private.irha_repository_migration_ledger:20260806201358",
+          "supabase/migrations/20260806201358_operational_owner_conversion_notifications.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "github_management_api_verified_existing",
+          "file_sha256": "871cc29cec5413968ee0b24e129ba3fd988768c27cc83a563303a70f7cd35bdd",
+          "git_blob_sha1": "364561f88e6578a87bcb92e0e589d23f3e18ffb5",
+          "repository_path": "supabase/migrations/20260806201358_operational_owner_conversion_notifications.sql",
+          "source_commit": "b2afde94dd7cfb934bf24743da4ded25142a8b25"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "871cc29cec5413968ee0b24e129ba3fd988768c27cc83a563303a70f7cd35bdd",
+        "name": "operational_owner_conversion_notifications",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "OTHER"
+        ],
+        "superseding_baseline": null,
+        "version": "20260806201358"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260808084350",
+          "private.irha_repository_migration_ledger:20260808084350",
+          "supabase/migrations/20260808084350_normalize_chatgpt_outbound_email_linebreaks.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "manual_supabase_verified_existing",
+          "file_sha256": "83494cab5af48061e1fe6989a735dcb969c28f2be0e5cb1faffa35e38ffbb100",
+          "git_blob_sha1": "4b379f1b372bc1d7c22b1e58297955b34c14dffc",
+          "repository_path": "supabase/migrations/20260808084350_normalize_chatgpt_outbound_email_linebreaks.sql",
+          "source_commit": "2c3dd41ebfadec950c3f4c246c3dd25c7f9236d4"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "4b49bf8487fe225decbab9147506b221792e7a5b2d7f640a3b64cc3975c453ee",
+        "name": "normalize_chatgpt_outbound_email_linebreaks",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "CREATE"
+        ],
+        "superseding_baseline": null,
+        "version": "20260808084350"
       }
     ],
     "schema_version": 2,
     "totals": {
-      "P1": 14,
+      "P1": 16,
       "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 385
+      "live": 387
     }
   }
 }

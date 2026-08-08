@@ -118,7 +118,7 @@ describe("SEC-M03 canonical parity control", () => {
       ["pinterest-admin", 11, true, "55879127fc063426c426c171f855ca6e4412afc79f8f784c9752aa7d557a8bb9"],
       ["pinterest-oauth-callback", 11, false, "685d1db0ab0a0bea5477c325092502cd62f02f89a613899b903318e587a0dbec"],
       ["pinterest-oauth-start", 12, false, "4628cbd14b72e24a38b782c20d69f3c4d6be49486a118de460709744719c2c37"],
-      ["pinterest-operator", 11, false, "b5a2cda54a14207897c967dfe3ad98b94bbdb156bcde04bc8d2526e78489c45a"],
+      ["pinterest-operator", 15, false, "94fa23341351b1a38c7b1e1f1a27d02c9915be772c0f31c25f47ff631789a463"],
       ["pinterest-operator-get", 11, false, "54f556d003a740f7759634484e7acb28faa7ec309383516b4c87919022eac1ae"],
     ] as const;
 

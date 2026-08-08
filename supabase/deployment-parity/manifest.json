@@ -81,45 +81,45 @@
     "canonical_digests_sha256": {
       "columns": "d0f0e2db8104f4a4ed7d23e0fe284b717da01f9b3d8673a9f90f8ec67767aac6",
       "constraints": "a388ab7abdfff1eac47d42523fa4bfeb9190148eaa63ebd9765a0573950e2193",
-      "functions": "917acacc015bb8697dc497b7590fdeae1b4e363c37aa6ed2349ce66f7f2baee7",
+      "functions": "c85abc2480ba63a8869c3ed62144b74dc05dd4c0eba028a96f04ccf93a5142bc",
       "indexes": "39bfca272621a2dcdd156faf9f0394b519016b3055e927dea9de13814e873921",
-      "migrations": "98f4aa80870f1fc27bec2cb1d8d05cd9247d62e5aff785abd10cd86dc753b4d7",
+      "migrations": "31320f64f396369b48e9c0a15ed2343c103c11215a0ca6de4ece8701be417318",
       "policies": "e80cb14c36cd41042f7598b7004a1c102781e95d3f484474bfbd9870ca13fee5",
-      "triggers": "a973ab9cfdb51d215c0c6533c1e973cca60712877b61d6ac37dc687fbcc7c05b"
+      "triggers": "c902547aaafa2409dcf15d1f0c7a97a6ee1e0c792cb56e4e445816bd75f99365"
     },
     "live_migrations": {
-      "count": 385,
-      "max_version": "20260803234500",
+      "count": 387,
+      "max_version": "20260808084350",
       "min_version": "20260712185505"
     },
     "public": {
       "constraints": 955,
-      "distinct_function_names": 203,
+      "distinct_function_names": 205,
       "enums": 4,
-      "function_signatures": 204,
+      "function_signatures": 206,
       "indexes": 674,
       "policies": 223,
       "rls_enabled_tables": 162,
       "tables": 162,
-      "triggers": 140,
+      "triggers": 141,
       "views": 13
     }
   },
   "edge_functions": {
-    "classification_sha256": "9ea41f3e46903176a1fcb81415bdcecfe3c0f9bdc6a1ed182899d463692371ed",
+    "classification_sha256": "26dd8f11f0f05af8f5396f03168e87daca43bdbb2ab735b92e3ab79e65784091",
     "config_parity": true,
     "config_toml_sha256": "0158fd155c6fab874e13e87a2878b313d7505fd537f3b312dcf3e945273e537f",
     "deployed_count": 92,
-    "live_inventory_sha256": "394551e0801d9599d1b57ccddc2a3e1fb33f6a3f4ecc085aa43da7032bab0c33",
+    "live_inventory_sha256": "d2548f9c34519ef27b24fa78ae53fffdd8c4bfd32689a227783d2ead843c6a0d",
     "registries": {
       "F1": {
         "count": 38,
-        "file_sha256": "b0ca6873fbc81f1b9ac43012a2e668773e453d9ebd7b3199f7363b12be575e0d",
+        "file_sha256": "75e365509782bb92410e917cb168547895e0bdd9ddf75ada595a0070765dd008",
         "path": "supabase/deployment-parity/functions-f1.json"
       },
       "F2": {
         "count": 14,
-        "file_sha256": "fb2633b4737d6fedd9fe2c99204add63982d77136143751afb46c00b3dce495c",
+        "file_sha256": "2b92234ef34c8d3b1a18beaf5621c4963d08505b526d8d594139666e26ee7f0f",
         "path": "supabase/deployment-parity/functions-f2.json"
       },
       "F3": {
@@ -150,10 +150,10 @@
     "committed_file": "src/integrations/supabase/types.ts",
     "freshness_gate": "official Supabase CLI public-schema generation and byte-for-byte comparison",
     "private_schemas_excluded": true,
-    "sha256": "2bb2d2a7d21c35fcfd9d46c37e2ed578dbe7e48f7eaf6919ad2caf64234def06",
+    "sha256": "a1aa66ef65ccd4f77e3ce39b4d621aebfe8a98079ddfea016a5e287b4064dea0",
     "totals": {
       "enums": 4,
-      "function_signatures": 204,
+      "function_signatures": 206,
       "tables": 162,
       "views": 13
     }
@@ -167,20 +167,20 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "0481c790adbb510b2562024f15ddf75c215ef53e4253c9054ab0ca0789a71776",
+  "manifest_sha256": "5f4f1a5600b6c53455baf4e8ae61c1927fcbc06d8b05f208df7bae88ebadea7e",
   "migration_provenance": {
-    "canonical_payload_sha256": "5e8e1b32aeca1763c3ebc66d183fb3b67c662d18f74e6cb64c876c56b7f066e5",
-    "file_sha256": "b78386075cddb91de5adebbe0dc92237d5b6f02c9b2b4b023dcf9874619a6b54",
+    "canonical_payload_sha256": "c1af5cd8bd4a150f5e0cb83c2b5217e615525b7e5d2d393582a5de76657dfc6c",
+    "file_sha256": "829604f9f888e40385dba5a3760f473da303a27fbeab453eeaf4dfe2df3a4266",
     "path": "supabase/deployment-parity/migration-provenance.json",
     "totals": {
-      "P1": 14,
+      "P1": 16,
       "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 385
+      "live": 387
     }
   },
   "schema_version": 2,
@@ -188,9 +188,9 @@
     "notification_dispatcher": {
       "custom_auth_required": true,
       "single_use_scheduler_authorization": true,
-      "source_sha256": "d032934e62a8d5e490806d0bf6ee381dd4ee89c311a97b306a2aaec0e50a954c",
+      "source_sha256": "b83bd58933cf2744bb173458498a8bb85d3d4ce6030d7496b28af2e0b4d1c683",
       "verify_jwt": false,
-      "version": 21
+      "version": 28
     },
     "sealed_stub_count": 9,
     "secret_values_in_manifest": false,
