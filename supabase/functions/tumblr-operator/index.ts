@@ -47,9 +47,16 @@ function config() {
   };
 }
 
-function authorizationUrl(clientId: string, redirectUri: string, state: string) {
+function authorizationUrl(clientId: string, redirectUri: string, state: string, includeRedirect = true) {
   const auth = new URL(TUMBLR_AUTH_URL);
-  auth.search = new URLSearchParams({ client_id: clientId, response_type: "code", scope: "basic write offline_access", state, redirect_uri: redirectUri }).toString();
+  const params: Record<string, string> = {
+    client_id: clientId,
+    response_type: "code",
+    scope: "basic write offline_access",
+    state,
+  };
+  if (includeRedirect) params.redirect_uri = redirectUri;
+  auth.search = new URLSearchParams(params).toString();
   return auth.toString();
 }
 
@@ -121,13 +128,13 @@ Deno.serve(async (req: Request) => {
     const tokenHash = await sha256Hex(token);
     const { data: bootstrap } = await adminClient().from("tumblr_oauth_bootstrap_tokens").select("token_hash,expires_at,used_at").eq("token_hash", tokenHash).maybeSingle();
     if (!bootstrap || bootstrap.used_at || new Date(bootstrap.expires_at).getTime() < Date.now()) return json({ error: "Bootstrap link is invalid, expired, or already used" }, 403);
-    const state = crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().replaceAll("-", "");
+    const state = `nr_${crypto.randomUUID().replaceAll("-", "")}${crypto.randomUUID().replaceAll("-", "")}`;
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const { error: stateError } = await adminClient().from("tumblr_oauth_states").insert({ state, expires_at: expiresAt });
     if (stateError) return json({ error: "Unable to start Tumblr authorization" }, 500);
     const { error: usedError } = await adminClient().from("tumblr_oauth_bootstrap_tokens").update({ used_at: new Date().toISOString() }).eq("token_hash", tokenHash).is("used_at", null);
     if (usedError) return json({ error: "Unable to consume authorization link" }, 500);
-    return Response.redirect(authorizationUrl(cfg.clientId, cfg.redirectUri, state), 302);
+    return Response.redirect(authorizationUrl(cfg.clientId, cfg.redirectUri, state, false), 302);
   }
 
   if (action === "callback") {
@@ -135,7 +142,9 @@ Deno.serve(async (req: Request) => {
     const state = url.searchParams.get("state") || "";
     const { data: stateRow } = await adminClient().from("tumblr_oauth_states").select("state,expires_at,used_at").eq("state", state).maybeSingle();
     if (!code || !stateRow || stateRow.used_at || new Date(stateRow.expires_at).getTime() < Date.now()) return json({ error: "Invalid or expired OAuth state" }, 400);
-    const tokens = await tokenRequest({ grant_type: "authorization_code", code, redirect_uri: cfg.redirectUri });
+    const params: Record<string, string> = { grant_type: "authorization_code", code };
+    if (!state.startsWith("nr_")) params.redirect_uri = cfg.redirectUri;
+    const tokens = await tokenRequest(params);
     await saveCredential(tokens);
     await adminClient().from("tumblr_oauth_states").update({ used_at: new Date().toISOString() }).eq("state", state);
     return new Response("Tumblr connected to Irha Apparels. You may close this tab.", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
@@ -150,7 +159,7 @@ Deno.serve(async (req: Request) => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const { error } = await adminClient().from("tumblr_oauth_states").insert({ state, expires_at: expiresAt, created_by: admin.id });
     if (error) return json({ error: error.message }, 500);
-    return json({ authorize_url: authorizationUrl(cfg.clientId, cfg.redirectUri, state), expires_at: expiresAt, redirect_uri: cfg.redirectUri });
+    return json({ authorize_url: authorizationUrl(cfg.clientId, cfg.redirectUri, state, true), expires_at: expiresAt, redirect_uri: cfg.redirectUri });
   }
 
   if (action === "health") {
