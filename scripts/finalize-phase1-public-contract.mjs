@@ -308,7 +308,7 @@ async function writePhase1Inventory(redirects, manifestPaths) {
       const targetPath = resolveOneHopTarget(target);
       state = targetPath && manifestPaths.has(targetPath) ? "canonical-200" : "functional-or-external";
       chain = targetPath && redirects.has(targetPath) ? "yes" : "no";
-    } else if (hadLegacyAction) {
+    } else if (hadLegacyAction && !manifestPaths.has(path)) {
       action = "INVESTIGATE";
       investigate += 1;
     } else {
