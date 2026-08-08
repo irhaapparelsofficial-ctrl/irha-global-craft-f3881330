@@ -4,7 +4,8 @@
 **Evidence collection window:** 2026-08-08T10:43Z–2026-08-08T13:35Z  
 **Production origin:** `https://irhaapparels.com`  
 **Production repository:** `irhaapparelsofficial-ctrl/irha-global-craft-f3881330`  
-**Baseline GitHub `main` SHA:** `5ac3f5309617cb6f8533a54d0987a0602340bc7e`  
+**Audited live baseline GitHub `main` SHA:** `5ac3f5309617cb6f8533a54d0987a0602340bc7e`  
+**Post-audit recovery/current `main` SHA:** `081e84e3888b0dd242ac8b5ce44bbcbcb45b2025`  
 **Production Supabase project:** `pvzjiozismyxqrzmtfbi`  
 **Companion inventory:** `docs/phase-0/2026-08-08-legacy-route-inventory.csv`
 
@@ -18,7 +19,7 @@ The audit excludes confidential buyer/customer contents. Only public-content rec
 
 ### GitHub and deployed revision
 
-GitHub `main` resolved to `5ac3f5309617cb6f8533a54d0987a0602340bc7e` (`fix(parity): lock deployed notification-dispatcher v28 bundle`, committed 2026-08-08T10:43:08Z).
+During evidence collection, GitHub `main` resolved to `5ac3f5309617cb6f8533a54d0987a0602340bc7e` (`fix(parity): lock deployed notification-dispatcher v28 bundle`, committed 2026-08-08T10:43:08Z).
 
 The live `/build.json` independently reported:
 
@@ -34,7 +35,7 @@ The live `/build.json` independently reported:
 | `runtime_fingerprint` | `d315def9d8f56656c339facd88a1cadabbb9b99f1647946bf4c0a04ed0d0a524` |
 | `application_fingerprint` | `451201534a0a6a36053e8ce1a3dab06e69f3026b755eceb39eebec43cb10e6b7` |
 
-This is a direct Git-commit-to-live-artifact identity tie. A Cloudflare deployment UUID and an exact immutable `*.pages.dev` deployment alias were not available through the connected interfaces, so the Cloudflare deployment cannot additionally be tied to a Pages deployment UUID. The exact live Git SHA, build identity, immutable asset hashes and Cloudflare headers are the strongest available deployment evidence.
+This is a direct Git-commit-to-live-artifact identity tie for the audit window. A Cloudflare deployment UUID and an exact immutable `*.pages.dev` deployment alias were not available through the connected interfaces during that window, so the original audit could not additionally tie the deployment to a Pages UUID. After the audit, PR #886 merged as `081e84e3888b0dd242ac8b5ce44bbcbcb45b2025`; the repository's guarded Cloudflare release proof subsequently verified that exact SHA on the production Pages origin. This post-audit release-boundary update does not replace or invalidate the forensic observations tied to `5ac3f5309617cb6f8533a54d0987a0602340bc7e`.
 
 ### Delivery architecture
 
@@ -70,6 +71,23 @@ Exact SQL counts at audit time:
 The table-listing API returned an approximate `products` row estimate of 499, but exact SQL returned 399; exact SQL is used in this report.
 
 Public RLS policies restrict anonymous reads to published products/categories/FAQs/blogs, published taxonomy nodes and approved assignments connected to published products. The localized-page policy also requires published status, `noindex = false` and approved/not-required native review. Draft products, archived/draft taxonomy and all 1,788 localized rows are therefore excluded by the reviewed public gates. CMS documents are not directly anonymously readable; public CMS content is exposed through the scoped `cms_get_published_document` projection.
+
+### Post-audit Supabase release-boundary recovery
+
+PR #886 merged as `081e84e3888b0dd242ac8b5ce44bbcbcb45b2025` after exact-head Supabase Deployment Parity run `31262883220` and Quality Gate run `31262883213` passed. The recovery records production truth without rewriting live history:
+
+| Recovery evidence | Verified state |
+|---|---|
+| Live migration history | 387 rows; maximum/live version `20260808084350_normalize_chatgpt_outbound_email_linebreaks` |
+| Live 084350 statement | One 1,441-byte statement; SHA-256 `4b49bf8487fe225decbab9147506b221792e7a5b2d7f640a3b64cc3975c453ee` |
+| Repository SQL provenance | Git blob `4b379f1b372bc1d7c22b1e58297955b34c14dffc`; `verified_present` / `manual_supabase_verified_existing` |
+| Related 084600 history | Preserved as genuine repository/ledger history; it is not a second live `schema_migrations` row and is not replayed |
+| Migration provenance | 387 represented: P1 16, P2 371, P3-P5 0; canonical SHA-256 `c1af5cd8bd4a150f5e0cb83c2b5217e615525b7e5d2d393582a5de76657dfc6c` |
+| Generated public types | Official production output byte-matched; SHA-256 `a1aa66ef65ccd4f77e3ce39b4d621aebfe8a98079ddfea016a5e287b4064dea0`; includes `notification_normalize_outbound_payload(jsonb)` |
+| Edge Functions | 92 live and 92 represented; five approved repository-owned bundles exact-source verified; verified newer Pinterest operator v15 evidence retained |
+| Remaining release drift | None in migration, generated-type or Edge registry/source parity |
+
+Post-merge main validation was non-mutating: Quality Gate run `31263240417` passed; database-sync run `31263693361` reported `0 pending`, `0 applied or verified`, and ledger parity verified; Function Reconciliation run `31263240394` reported deployment count `0`, skipped the deploy step, verified exact sources for five approved functions, and regenerated exact type/parity evidence. Cloudflare Production run `31263756316` verified the exact merged SHA and public-artifact audit. No SQL, Edge Function, RLS/Auth, customer/product or website-content mutation was performed by the parity recovery itself.
 
 ## Verified public facts
 
@@ -338,7 +356,7 @@ No confidential CRM/order row content was selected. No public-content policy rev
 - About metadata says “serving global B2B buyers.” Phase 0 records it but leaves the manifest/search-state pair unchanged for Phase 1.
 - Dormant CategoryPage “Exports …” copy is not in the sitemap and the tested route is a noindex 404; route repair/content consolidation is Phase 1.
 - Redirect conflicts, localized-source duplication, runtime/static title/H1 drift, missing runtime footers, language/description mismatches, two-hop host redirect and malformed API-catalog response are not immediate RFQ-security blockers and remain Phase 1 input.
-- Current main has a pre-existing failing **Irha Supabase Function Reconciliation** status while Quality Gate, Cloudflare Production, Search Discovery and Cache Consistency are green. PR #886 is the separate concurrent recovery path; Phase 0 must not absorb or bypass it.
+- **Post-audit release boundary:** the pre-existing Function Reconciliation and repository/Supabase parity blockers were resolved by PR #886. Exact-main Quality Gate, database migration parity, Function Reconciliation and Cloudflare Production are green on `081e84e3888b0dd242ac8b5ce44bbcbcb45b2025`; the Phase 0 findings remain otherwise unchanged.
 
 ## Recommended input for Phase 1
 
@@ -353,8 +371,9 @@ No confidential CRM/order row content was selected. No public-content policy rev
 ## Validation record
 
 - Refreshed GitHub repository identity, permissions, default branch, recent commits and open PRs.
-- Re-fetched current main; it remained `5ac3f5309617cb6f8533a54d0987a0602340bc7e` during evidence collection.
-- Matched live `/build.json` source repository/branch/commit/Supabase identity to GitHub main.
+- Re-fetched main during evidence collection; it remained `5ac3f5309617cb6f8533a54d0987a0602340bc7e` throughout the audit window.
+- Matched the audited live `/build.json` source repository/branch/commit/Supabase identity to that audited main.
+- After PR #886, re-fetched main as `081e84e3888b0dd242ac8b5ce44bbcbcb45b2025` and verified exact-main Quality Gate, zero-pending/zero-applied database reconciliation, zero-deploy Function Reconciliation and exact-SHA Cloudflare production proof.
 - Fetched all 436 sitemap routes and compared them with the live SEO manifest.
 - Loaded 30 representative browser routes across divisions, products, policies, inquiry and German content.
 - Queried exact production public-content counts and the relevant RLS policies.
@@ -369,6 +388,6 @@ No confidential CRM/order row content was selected. No public-content policy rev
 
 ## Phase 0 conclusion
 
-The live artifact is exactly tied to current GitHub main and the intended Supabase project. Catalogue count and crawler title/canonical/H1 parity are strong. The official `+923204110066` phone is already correct across production and must remain the only number. Public-email authority remains an explicit-decision blocker, while the largest evidence risk is the provisional-certificate detail that cannot be checked against its source document. Redirect, localization and runtime/static duplication remain structural Phase 1 work.
+The live artifact observed during the audit was exactly tied to audited GitHub main `5ac3f5309617cb6f8533a54d0987a0602340bc7e` and the intended Supabase project; the post-audit release boundary is now green on current main `081e84e3888b0dd242ac8b5ce44bbcbcb45b2025`. Catalogue count and crawler title/canonical/H1 parity are strong. The official `+923204110066` phone is already correct across production and must remain the only number. Public-email authority remains an explicit-decision blocker, while the largest evidence risk is the provisional-certificate detail that cannot be checked against its source document. Redirect, localization and runtime/static duplication remain structural Phase 1 work.
 
 Phase 0 stops here. It does not authorize the broader cleanup or Phase 2 trust architecture.
