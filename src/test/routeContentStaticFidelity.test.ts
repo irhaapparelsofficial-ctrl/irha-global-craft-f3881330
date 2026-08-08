@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { SCCI_PROVISIONAL_MEMBERSHIP } from "@/lib/publicBusinessEvidence.mjs";
+import { SCCI_BUSINESS_REFERENCE } from "@/lib/publicBusinessEvidence.mjs";
 import { CORE_ROUTE_CONTENT, CORE_ROUTE_PATHS, MAIN_CATEGORY_LINKS } from "@/lib/routeContent.mjs";
 
 const read = (path: string) => readFileSync(resolve(path), "utf8");
@@ -41,16 +41,17 @@ describe("route-specific static content architecture", () => {
     }
   });
 
-  it("keeps SCCI evidence provisional, specific and crawlable", () => {
+  it("keeps SCCI directory evidence specific, qualified and crawlable", () => {
     const trust = CORE_ROUTE_CONTENT["/buyer-trust"];
     const serialized = JSON.stringify(trust);
-    expect(SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber).toBe("A-101267");
-    expect(SCCI_PROVISIONAL_MEMBERSHIP.status).toBe("Provisional");
-    expect(serialized).toContain("SCCI provisional membership");
-    expect(serialized).toContain(SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber);
-    expect(serialized).toContain("Executive Committee");
-    expect(serialized).toContain(SCCI_PROVISIONAL_MEMBERSHIP.officialDirectoryUrl);
-    expect(serialized).not.toMatch(/registered company|certified manufacturer|final membership certificate issued/i);
+    expect(SCCI_BUSINESS_REFERENCE.membershipNumber).toBe("A-101267");
+    expect(SCCI_BUSINESS_REFERENCE.status).toBe("Directory reference only");
+    expect(SCCI_BUSINESS_REFERENCE.issuedDateLabel).toBe("not asserted");
+    expect(serialized).toContain("SCCI member directory");
+    expect(serialized).toContain(SCCI_BUSINESS_REFERENCE.membershipNumber);
+    expect(serialized).toContain(SCCI_BUSINESS_REFERENCE.officialDirectoryUrl);
+    expect(serialized).toMatch(/does not establish|does not prove/i);
+    expect(serialized).not.toMatch(/provisional membership|Executive Committee|registered company|certified manufacturer|final membership certificate issued/i);
   });
 
   it("links the products hub directly to the five canonical main categories", () => {
