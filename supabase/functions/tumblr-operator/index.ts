@@ -55,21 +55,19 @@ async function tokenRequest(params: Record<string, string>) {
 }
 
 async function getCredential() {
-  const { data, error } = await adminClient().from("tumblr_oauth_credentials").select("*").eq("id", 1).maybeSingle();
+  const { data, error } = await adminClient().rpc("tumblr_get_tokens");
   if (error) throw error;
-  return data;
+  return Array.isArray(data) ? data[0] ?? null : data;
 }
 
 async function saveCredential(tokens: any) {
   const expiresAt = tokens.expires_in ? new Date(Date.now() + Number(tokens.expires_in) * 1000).toISOString() : null;
-  const { error } = await adminClient().from("tumblr_oauth_credentials").upsert({
-    id: 1,
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token,
-    token_type: tokens.token_type || "bearer",
-    scope: tokens.scope || "write offline_access basic",
-    expires_at: expiresAt,
-    updated_at: new Date().toISOString(),
+  const { error } = await adminClient().rpc("tumblr_store_tokens", {
+    p_access_token: tokens.access_token,
+    p_refresh_token: tokens.refresh_token || "",
+    p_token_type: tokens.token_type || "bearer",
+    p_scope: tokens.scope || "write offline_access basic",
+    p_expires_at: expiresAt,
   });
   if (error) throw error;
 }
@@ -96,8 +94,14 @@ async function tumblrFetch(path: string, init: RequestInit = {}) {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const url = new URL(req.url);
-  const action = url.searchParams.get("action") || "health";
+  const action = url.searchParams.get("action") || "probe";
   const cfg = config();
+
+  if (action === "probe") {
+    let connected = false;
+    try { connected = Boolean(await getCredential()); } catch { connected = false; }
+    return json({ configured: Boolean(cfg.clientId && cfg.clientSecret), connected, redirect_uri: cfg.redirectUri });
+  }
 
   if (action === "callback") {
     const code = url.searchParams.get("code") || "";
@@ -107,18 +111,7 @@ Deno.serve(async (req: Request) => {
     const tokens = await tokenRequest({ grant_type: "authorization_code", code, redirect_uri: cfg.redirectUri });
     await saveCredential(tokens);
     await adminClient().from("tumblr_oauth_states").update({ used_at: new Date().toISOString() }).eq("state", state);
-    try {
-      const me = await tumblrFetch("/user/info");
-      const blog = me?.response?.user?.blogs?.find((b: any) => b.primary) || me?.response?.user?.blogs?.[0];
-      await adminClient().from("social_platform_accounts").upsert({
-        platform: "tumblr", display_name: blog?.title || blog?.name || "Tumblr", external_account_id: blog?.uuid || blog?.name || null,
-        enabled: true, verification_status: "verified", capabilities: { text: true, image: true, video: true, link: true },
-        last_verified_at: new Date().toISOString(), last_health: { ok: true, blog: blog?.name || null }, updated_at: new Date().toISOString(),
-      }, { onConflict: "platform" });
-      return new Response("Tumblr connected to Irha Apparels. You may close this tab.", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
-    } catch {
-      return new Response("Tumblr authorization saved. Profile verification will run on next health check.", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
-    }
+    return new Response("Tumblr connected to Irha Apparels. You may close this tab.", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   }
 
   const admin = await requireAdmin(req);
@@ -136,15 +129,12 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === "health") {
-    const configured = Boolean(cfg.clientId && cfg.clientSecret);
-    const credential = await getCredential();
-    if (!configured || !credential) return json({ configured, connected: Boolean(credential), redirect_uri: cfg.redirectUri });
     try {
       const me = await tumblrFetch("/user/info");
       const blog = me?.response?.user?.blogs?.find((b: any) => b.primary) || me?.response?.user?.blogs?.[0];
       return json({ configured: true, connected: true, verified: true, blog: blog ? { name: blog.name, title: blog.title, uuid: blog.uuid, url: blog.url } : null, redirect_uri: cfg.redirectUri });
     } catch (e) {
-      return json({ configured: true, connected: true, verified: false, error: (e as Error).message, redirect_uri: cfg.redirectUri }, 502);
+      return json({ configured: Boolean(cfg.clientId && cfg.clientSecret), connected: Boolean(await getCredential().catch(() => null)), verified: false, error: (e as Error).message, redirect_uri: cfg.redirectUri }, 502);
     }
   }
 
