@@ -24,9 +24,17 @@ describe("Cloudflare generated-directory redirect contract", () => {
     }
   });
 
-  it("documents why reverse trailing-slash redirects are forbidden", () => {
-    expect(redirects).toContain("infinite");
-    expect(redirects).toContain("Pages asset layer owns directory canonicalization");
+  it("keeps directory canonicalization one-way without a reverse loop", () => {
+    const permanent = redirects
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"))
+      .map((line) => line.split(/\s+/))
+      .filter((parts) => parts[2] === "301" || parts[2] === "308");
+    const direct = new Map(permanent.map(([from, to]) => [from, to]));
+    for (const [from, to] of direct) {
+      expect(direct.get(to)).not.toBe(from);
+    }
   });
 
   it("confirms route shells are emitted as directory index files", () => {
