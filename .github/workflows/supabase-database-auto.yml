@@ -12,7 +12,7 @@ permissions:
   statuses: write
 
 concurrency:
-  group: irha-production-mutation
+  group: irha-production-database
   cancel-in-progress: false
 
 env:
@@ -197,6 +197,7 @@ jobs:
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Project: \`$SUPABASE_PROJECT_ID\`"
             echo "- Ledger: \`private.irha_repository_migration_ledger\`"
+            echo "- Concurrency lane: \`irha-production-database\`"
             echo "- Runs only when database-related files changed"
             echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
             if [ -s "$REPO_MIGRATION_RUNTIME_LOG" ]; then
