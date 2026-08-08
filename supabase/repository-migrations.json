@@ -227,7 +227,7 @@
       "version": "20260717235000",
       "name": "catalog_taxonomy_owner_release_controls",
       "path": "supabase/migrations/20260717235000_catalog_taxonomy_owner_release_controls.sql",
-      "git_blob_sha": "beadb515c6888cd7b8aba5b4bf4aed437e99d3b",
+      "git_blob_sha": "beadb515c6888cd77b8aba5b4bf4aed437e99d3b",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     },
