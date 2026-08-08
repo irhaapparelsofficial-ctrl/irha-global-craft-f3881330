@@ -227,7 +227,7 @@
       "version": "20260717235000",
       "name": "catalog_taxonomy_owner_release_controls",
       "path": "supabase/migrations/20260717235000_catalog_taxonomy_owner_release_controls.sql",
-      "git_blob_sha": "beadb515c6888cd77b8aba5b4bf4aed437e99d3b",
+      "git_blob_sha": "beadb515c6888cd7b8aba5b4bf4aed437e99d3b",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     },
@@ -539,6 +539,14 @@
       "name": "normalize_chatgpt_outbound_email_linebreaks",
       "path": "supabase/migrations/20260808084600_normalize_chatgpt_outbound_email_linebreaks.sql",
       "git_blob_sha": "4b379f1b372bc1d7c22b1e58297955b34c14dffc",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260808193000",
+      "name": "phase1_resolve_catalog_legacy_redirect",
+      "path": "supabase/migrations/20260808193000_phase1_resolve_catalog_legacy_redirect.sql",
+      "git_blob_sha": "4ab5401889b7f97bf3ae88b37b954dbea88c01fb",
       "execution_mode": "transactional",
       "transactional_dry_run": true
     }
