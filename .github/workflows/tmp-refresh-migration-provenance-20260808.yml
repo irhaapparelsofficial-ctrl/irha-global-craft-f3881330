@@ -1,0 +1,63 @@
+name: Temporary Migration Provenance Refresh 20260808
+
+on:
+  push:
+    branches: [fix/public-types-parity-20260808]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temporary-migration-provenance-refresh-20260808
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout recovery branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/public-types-parity-20260808
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Generate exact authenticated migration provenance
+        env:
+          MIGRATION_PROVENANCE_MODE: write
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}"
+          node scripts/ci/generate-migration-provenance.mjs
+
+      - name: Reverify generated migration provenance
+        env:
+          MIGRATION_PROVENANCE_MODE: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci/generate-migration-provenance.mjs
+
+      - name: Commit exact generated provenance to recovery branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- supabase/deployment-parity/migration-provenance.json; then
+            echo "Migration provenance is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/deployment-parity/migration-provenance.json
+          git commit -m "fix(parity): refresh exact migration provenance"
+          git push origin HEAD:fix/public-types-parity-20260808
