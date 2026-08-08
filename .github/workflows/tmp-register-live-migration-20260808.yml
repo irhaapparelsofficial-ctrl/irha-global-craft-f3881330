@@ -1,0 +1,67 @@
+name: Temporary Register Live Migration 20260808
+
+on:
+  push:
+    branches: [fix/public-types-parity-20260808]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temporary-register-live-migration-20260808
+  cancel-in-progress: false
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout recovery branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/public-types-parity-20260808
+          fetch-depth: 0
+
+      - name: Register exact already-live migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+          const path = "supabase/repository-migrations.json";
+          const manifest = JSON.parse(readFileSync(path, "utf8"));
+          const version = "20260808084350";
+          const entry = {
+            version,
+            name: "normalize_chatgpt_outbound_email_linebreaks",
+            path: "supabase/migrations/20260808084350_normalize_chatgpt_outbound_email_linebreaks.sql",
+            git_blob_sha: "4b379f1b372bc1d7c22b1e58297955b34c14dffc",
+            execution_mode: "verified_present",
+            transactional_dry_run: false,
+            verification_query: "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260808084350' and name = 'normalize_chatgpt_outbound_email_linebreaks' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = '4b49bf8487fe225decbab9147506b221792e7a5b2d7f640a3b64cc3975c453ee') as verified",
+          };
+          const existing = manifest.migrations.find((item) => item.version === version);
+          if (existing) {
+            if (JSON.stringify(existing) !== JSON.stringify(entry)) {
+              throw new Error(`Migration ${version} already exists with different authorization`);
+            }
+          } else {
+            manifest.migrations.push(entry);
+            manifest.migrations.sort((a, b) => a.version.localeCompare(b.version));
+            writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+          }
+          NODE
+
+      - name: Commit exact manifest authorization to recovery branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- supabase/repository-migrations.json; then
+            echo "Recovered live migration is already registered."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/repository-migrations.json
+          git commit -m "fix(migrations): authorize recovered live normalization migration"
+          git push origin HEAD:fix/public-types-parity-20260808
