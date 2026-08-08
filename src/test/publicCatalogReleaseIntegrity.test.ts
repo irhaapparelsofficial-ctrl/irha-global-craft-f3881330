@@ -257,7 +257,7 @@ describe("public catalogue release integrity", () => {
 });
 
 describe("legacy catalogue redirect contract", () => {
-  it("keeps every specific permanent alias ahead of the wildcard fallback", () => {
+  it("uses explicit semantic aliases and never requires a blanket catalogue wildcard", () => {
     const redirects = readFileSync(resolve("public/_redirects"), "utf8");
     const expected = new Map([
       ["/catalogue/bavarian-garments", "/products/bavarian-trachten-wear"],
@@ -272,15 +272,25 @@ describe("legacy catalogue redirect contract", () => {
       ["/catalogue/leisurewear", "/products/leisure-nightwear"],
       ["/catalogue/nightwear", "/products/leisure-nightwear"],
     ]);
-    const wildcard = redirects.indexOf("/catalogue/* /products 301");
-    expect(wildcard).toBeGreaterThan(-1);
+
+    expect(redirects).toContain("/catalog /products 301");
+    expect(redirects).toContain("/catalogue /products 301");
+    expect(redirects).not.toMatch(/^\/catalogue\/\*\s+/m);
     for (const [source, target] of expected) {
-      const line = `${source} ${target} 301`;
-      const position = redirects.indexOf(line);
-      expect(position).toBeGreaterThan(-1);
-      expect(position).toBeLessThan(wildcard);
+      expect(redirects).toContain(`${source} ${target} 301`);
       expect(target).not.toBe("/");
       expect(target).not.toBe(source);
+    }
+
+    const permanent = redirects
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"))
+      .map((line) => line.split(/\s+/))
+      .filter((parts) => parts[2] === "301");
+    const direct = new Map(permanent.map(([source, target]) => [source, target]));
+    for (const [source, target] of direct) {
+      expect(direct.get(target)).not.toBe(source);
     }
   });
 });
