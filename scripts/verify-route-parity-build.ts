@@ -13,6 +13,7 @@ const DIST = resolve("dist");
 const SITE = "https://irhaapparels.com";
 const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
+const ALLOWED_FUNCTIONAL_REDIRECT_TARGETS = new Set(["/auth", "/admin", "/blog"]);
 
 type Manifest = { schemaVersion: number; productCount: number; products: BuyerReadyCatalogRoute[] };
 type RouteNames = {
@@ -161,7 +162,7 @@ async function main() {
     if (fromPaths.has(from)) throw new Error(`Duplicate final redirect source: ${from}`);
     fromPaths.add(from);
     if (to.startsWith("/intl/")) throw new Error(`Unreviewed localized redirect target leaked: ${from} -> ${to}`);
-    if (!validTargets.has(to)) throw new Error(`Final redirect target is not canonical: ${from} -> ${to}`);
+    if (!validTargets.has(to) && !ALLOWED_FUNCTIONAL_REDIRECT_TARGETS.has(to)) throw new Error(`Final redirect target is not canonical or an approved functional route: ${from} -> ${to}`);
     if (to === "/" && from.startsWith("/products/")) throw new Error(`Product alias redirects to homepage: ${from}`);
   }
 
