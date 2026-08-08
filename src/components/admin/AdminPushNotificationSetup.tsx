@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BellRing, CheckCircle2, Loader2, Smartphone, TriangleAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -96,6 +96,8 @@ export default function AdminPushNotificationSetup() {
   const [serviceWorkerActive, setServiceWorkerActive] = useState(false);
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [interactionMessage, setInteractionMessage] = useState<string | null>(null);
+  const activationInFlight = useRef(false);
   const supported = useMemo(() =>
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
@@ -200,30 +202,59 @@ export default function AdminPushNotificationSetup() {
   }, [backendSubscription, config, serviceWorkerActive, subscription, supported]);
 
   const enable = useCallback(async () => {
+    if (activationInFlight.current) return;
+
     if (isIos() && !isStandalone()) {
+      setInteractionMessage("Open the installed Irha Admin Home Screen app to enable background alerts.");
       toast({
         title: "Install Irha Admin on this iPhone",
         description: "Safari Share button → Add to Home Screen → open Irha Admin from the new Home Screen icon → enable alerts there.",
       });
       return;
     }
-    if (!supported || !config?.vapid_public_key) return;
+    if (!supported) {
+      setInteractionMessage("This browser does not expose the Web Push APIs required for owner alerts.");
+      toast({
+        title: "Push alerts are unavailable",
+        description: "This browser does not expose the Web Push APIs required for owner alerts.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!config?.vapid_public_key) {
+      setInteractionMessage("Push configuration is unavailable. Rechecking the alert connection.");
+      toast({
+        title: "Push configuration unavailable",
+        description: "The server push configuration could not be loaded. The alert connection is being checked again.",
+        variant: "destructive",
+      });
+      await load();
+      return;
+    }
     if (Notification.permission === "denied") {
+      setInteractionMessage("Notifications are blocked in iPhone settings for Irha Admin.");
       toast({
         title: "Notifications are blocked",
-        description: "Allow notifications for the installed Irha Admin app in browser or iPhone notification settings, then reopen Admin.",
+        description: "Allow notifications for the installed Irha Admin app in iPhone notification settings, then reopen Admin.",
         variant: "destructive",
       });
       return;
     }
 
+    activationInFlight.current = true;
     setBusy(true);
+    setInteractionMessage("Tap received. Connecting this iPhone to owner alerts…");
     try {
       const permission = Notification.permission === "granted"
         ? "granted"
         : await Notification.requestPermission();
-      if (permission !== "granted") throw new Error("Notification permission was not granted");
+      if (permission !== "granted") {
+        throw new Error(permission === "denied"
+          ? "Notifications were blocked by iPhone settings."
+          : "Notification permission was not granted.");
+      }
 
+      setInteractionMessage("Notification permission granted. Creating the Apple push subscription…");
       const ready = await registerOwnerServiceWorker();
       const existing = await ready.pushManager.getSubscription();
       const next = existing || await ready.pushManager.subscribe({
@@ -231,20 +262,26 @@ export default function AdminPushNotificationSetup() {
         applicationServerKey: base64UrlToUint8Array(config.vapid_public_key),
       });
 
+      setInteractionMessage("Apple push subscription created. Saving this device…");
       await syncBackendSubscription(next);
 
+      setInteractionMessage("Device saved. Verifying the exact iPhone subscription…");
       await load();
+      setInteractionMessage("Owner alerts are connected on this iPhone.");
       toast({
         title: "Owner alerts are active",
         description: "This device is connected for visitor, inquiry and live-chat background alerts.",
       });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Reconnect alerts from the installed Irha Admin app.";
+      setInteractionMessage(message);
       toast({
         title: "Push alerts could not be enabled",
-        description: error instanceof Error ? error.message : "Reconnect alerts from the installed Irha Admin app.",
+        description: message,
         variant: "destructive",
       });
     } finally {
+      activationInFlight.current = false;
       setBusy(false);
     }
   }, [config, load, supported]);
@@ -266,7 +303,7 @@ export default function AdminPushNotificationSetup() {
           : "This device's background-alert connection could not be verified. Check again or reconnect alerts.";
 
   return (
-    <aside className={`fixed inset-x-3 z-[69] mx-auto w-auto max-w-sm rounded-2xl border p-3 text-white shadow-2xl backdrop-blur-xl md:inset-x-auto md:right-5 md:w-[22rem] ${active ? "bottom-[calc(9.25rem+env(safe-area-inset-bottom))] border-emerald-400/25 bg-[#07111f]/94 md:bottom-5" : "bottom-[calc(9.25rem+env(safe-area-inset-bottom))] border-gold/35 bg-[#0a0d12]/97 md:bottom-5"}`}>
+    <aside className={`pointer-events-auto fixed inset-x-3 z-[110] mx-auto w-auto max-w-sm rounded-2xl border p-3 text-white shadow-2xl backdrop-blur-xl md:inset-x-auto md:right-5 md:w-[22rem] ${active ? "bottom-[calc(9.25rem+env(safe-area-inset-bottom))] border-emerald-400/25 bg-[#07111f]/94 md:bottom-5" : "bottom-[calc(9.25rem+env(safe-area-inset-bottom))] border-gold/35 bg-[#0a0d12]/97 md:bottom-5"}`}>
       <div className="flex items-start gap-3">
         <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${active ? "bg-emerald-400/12 text-emerald-300" : "bg-gold/12 text-gold"}`}>
           {active ? <CheckCircle2 size={18} /> : installRequired ? <Smartphone size={18} /> : blocked ? <TriangleAlert size={18} /> : <BellRing size={18} />}
@@ -278,15 +315,26 @@ export default function AdminPushNotificationSetup() {
           {anotherDeviceConnected && (
             <p className="mt-2 text-[10px] leading-relaxed text-emerald-300">Another owner device is connected; this device still needs setup.</p>
           )}
+          {interactionMessage && (
+            <p className="mt-2 text-[10px] leading-relaxed text-white/70" role="status" aria-live="polite">
+              {interactionMessage}
+            </p>
+          )}
         </div>
       </div>
 
       {!active && (
         <button
           type="button"
+          data-owner-alert-setup-action="true"
+          onTouchEnd={(event) => {
+            event.preventDefault();
+            void (config ? enable() : load());
+          }}
           onClick={() => void (config ? enable() : load())}
           disabled={busy || (blocked && supported && Notification.permission === "denied")}
-          className="mt-3 min-h-11 w-full rounded-xl bg-gold px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#07111f] disabled:cursor-not-allowed disabled:opacity-50"
+          className="pointer-events-auto relative z-[1] mt-3 min-h-11 w-full touch-manipulation select-none rounded-xl bg-gold px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#07111f] disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ WebkitTapHighlightColor: "rgba(213, 173, 77, 0.22)" }}
         >
           {busy
             ? <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Connecting</span>
