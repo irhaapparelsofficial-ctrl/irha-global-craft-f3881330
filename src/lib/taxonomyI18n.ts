@@ -399,10 +399,15 @@ export function localizedTaxonomySeo(args: {
   }
   if (collectionName) {
     const buyerGroup = audienceName ?? "B2B Buyers";
+    const description = collectionName === "Team Uniforms"
+      && buyerGroup === "Teams & Clubs"
+      && topName === "Custom Sportswear & Teamwear"
+      ? "Custom team uniform manufacturing for clubs and organisations, with private-label branding, materials and construction confirmed against the approved specification."
+      : `Custom ${collectionName} manufacturing for ${buyerGroup} within ${topName}, supporting wholesalers, importers and private-label programs after requirement review.`;
     return {
       title: `${collectionName} for ${buyerGroup} | ${topName} Manufacturer | Irha Apparels`,
       h1: `${buyerGroup} ${collectionName} Manufacturer for ${topName}`,
-      description: `Custom ${collectionName} manufacturing for ${buyerGroup} within ${topName}, supporting wholesalers, importers and private-label programs after requirement review.`,
+      description,
       intro: `Develop ${collectionName} for ${buyerGroup} within ${topName}, with custom materials, branding and packaging confirmed against an approved buyer brief.`,
     };
   }
