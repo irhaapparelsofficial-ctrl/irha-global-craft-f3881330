@@ -1,137 +1,134 @@
 import { createHash } from "node:crypto";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
+import { verifyRouteContentFidelity } from "./verify-route-content-fidelity.mjs";
 
 const DIST = resolve("dist");
-const canonical = "https://irhaapparels.com";
-const alternateHost = "https://www.irhaapparels.com";
+const read = (name) => readFile(join(DIST, name), "utf8");
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
 async function walk(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await walk(path));
-    else files.push(path);
+    const target = join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await walk(target));
+    else if (entry.isFile() && entry.name === "index.html") files.push(target);
   }
   return files;
 }
 
-const allFiles = await walk(DIST);
-const htmlFiles = allFiles.filter((file) => file.endsWith(".html"));
-const sitemap = await readFile(join(DIST, "sitemap.xml"), "utf8");
-const robots = await readFile(join(DIST, "robots.txt"), "utf8");
-const llms = await readFile(join(DIST, "llms.txt"), "utf8");
-const llmsFull = await readFile(join(DIST, "llms-full.txt"), "utf8");
-const seoManifest = JSON.parse(await readFile(join(DIST, "seo-route-manifest.json"), "utf8"));
+function schemaNodes(value, nodes = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item) => schemaNodes(item, nodes));
+    return nodes;
+  }
+  if (!value || typeof value !== "object") return nodes;
+  if (value["@type"] || value["@id"]) nodes.push(value);
+  if (Array.isArray(value["@graph"])) value["@graph"].forEach((item) => schemaNodes(item, nodes));
+  for (const [key, child] of Object.entries(value)) {
+    if (key === "@graph") continue;
+    if (child && typeof child === "object") schemaNodes(child, nodes);
+  }
+  return nodes;
+}
 
-const expectedUrls = new Set(
-  seoManifest.routes
-    .filter((route) => route.indexable && route.sitemap)
-    .map((route) => route.canonicalUrl),
-);
-assert(expectedUrls.size === seoManifest.sitemapCount, "SEO manifest sitemapCount drift");
+function parseSchemas(html, file) {
+  return [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map((match) => {
+    try { return JSON.parse(match[1]); }
+    catch (error) { throw new Error(`${file} contains invalid JSON-LD: ${error.message}`); }
+  });
+}
 
-function decodeEntities(value) {
+function decodeXml(value) {
   return value
-    .replaceAll("&amp;", "&")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">");
+    .replace(/&amp;/g, "&")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
 }
 
-function extractJsonLd(html) {
-  const nodes = [];
-  for (const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
-    try {
-      nodes.push(JSON.parse(decodeEntities(match[1].trim())));
-    } catch {
-      // Other build verifiers surface malformed JSON-LD with route-specific context.
-    }
-  }
-  return nodes.flatMap((node) => Array.isArray(node) ? node : [node]);
+function verifySitemapAgainstManifest(sitemap, manifest) {
+  assert(manifest.schemaVersion === 1 && Array.isArray(manifest.routes), "Authoritative SEO manifest is missing or invalid");
+  const expectedUrls = manifest.routes
+    .filter((route) => route.indexable && route.sitemap)
+    .map((route) => route.canonicalUrl);
+  const expectedSet = new Set(expectedUrls);
+  assert(expectedSet.size === manifest.sitemapCount, `SEO manifest sitemap count drift: ${manifest.sitemapCount} vs ${expectedSet.size}`);
+
+  const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => decodeXml(match[1]));
+  const sitemapSet = new Set(sitemapUrls);
+  assert(sitemapUrls.length === sitemapSet.size, `Sitemap contains ${sitemapUrls.length - sitemapSet.size} duplicate URLs`);
+  assert(sitemapSet.size === expectedSet.size, `Expected ${expectedSet.size} sitemap URLs, found ${sitemapSet.size}`);
+  for (const url of expectedSet) assert(sitemapSet.has(url), `Sitemap is missing authoritative URL: ${url}`);
+  for (const url of sitemapSet) assert(expectedSet.has(url), `Sitemap contains non-authoritative URL: ${url}`);
+  return expectedSet;
 }
 
-function extractCanonical(html) {
-  const match = html.match(/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i)
-    ?? html.match(/<link\b[^>]*href=["']([^"']+)["'][^>]*rel=["']canonical["'][^>]*>/i);
-  return match?.[1] ? decodeEntities(match[1]) : null;
-}
+const [html, robots, sitemap, llms, llmsFull, seoManifestText] = await Promise.all([
+  read("index.html"),
+  read("robots.txt"),
+  read("sitemap.xml"),
+  read("llms.txt"),
+  read("llms-full.txt"),
+  read("seo-route-manifest.json"),
+]);
+const canonical = "https://irhaapparels.com";
+const alternateHost = "https://www.irhaapparels.com";
+const forbiddenClaims = ["Since 2014", "MOQ 50", "45-day delivery", "45-Day Production", "reply within 12 hours", "BSCI Audited", "ISO 9001:2015", "SEDEX Member"];
 
-function extractMeta(html, name) {
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const byName = new RegExp(`<meta\\b[^>]*name=["']${escaped}["'][^>]*content=["']([^"']*)["'][^>]*>`, "i");
-  const reversed = new RegExp(`<meta\\b[^>]*content=["']([^"']*)["'][^>]*name=["']${escaped}["'][^>]*>`, "i");
-  const match = html.match(byName) ?? html.match(reversed);
-  return match?.[1] ? decodeEntities(match[1]) : null;
-}
+assert(html.includes('id="root"'), "Built HTML is missing the React root");
+assert(html.includes('id="irha-static-crawler-shell"'), "Built HTML is missing the progressive crawler shell");
+assert(html.includes("Custom Apparel Manufacturer for Global B2B Buyers"), "Built crawler shell is missing the current homepage H1");
+assert(html.includes("info@irhaapparels.com") && html.includes("+92 320 4110066"), "Built crawler shell is missing public contact details");
+assert(html.includes('href="/inquiry"') && html.includes('href="/buyer-trust"') && html.includes('href="/manufacturing"'), "Built crawler shell is missing primary conversion and trust links");
+assert(html.includes(`<link rel="canonical" href="${canonical}/"`), "Built HTML canonical does not use the live apex host");
+assert(html.includes(`property="og:url" content="${canonical}/"`), "Built Open Graph URL does not use the live apex host");
+assert(html.includes('name="robots" content="index,follow,max-image-preview:large"'), "Built HTML is missing the static robots meta tag");
+for (const term of forbiddenClaims) assert(!html.toLowerCase().includes(term.toLowerCase()), `Built crawler HTML contains unverified legacy claim: ${term}`);
 
-const canonicalByHtml = new Map();
-const organizationNodes = [];
-const websiteNodes = [];
-const homepageNodes = [];
+const htmlFiles = await walk(DIST);
+const expectedUrls = verifySitemapAgainstManifest(sitemap, JSON.parse(seoManifestText));
+assert(htmlFiles.length >= expectedUrls.size, `Expected at least ${expectedUrls.size} rendered HTML files, found ${htmlFiles.length}`);
 
+await verifyRouteContentFidelity();
+
+const forbiddenProperties = ["legalName", "taxID", "vatID", "foundingDate", "numberOfEmployees", "award", "aggregateRating", "review", "streetAddress", "postalCode", "geo", "openingHoursSpecification", "areaServed"];
 for (const file of htmlFiles) {
-  const html = await readFile(file, "utf8");
-  const relativePath = relative(DIST, file).replaceAll("\\", "/");
-  const canonicalUrl = extractCanonical(html);
-  if (canonicalUrl) {
-    assert(canonicalUrl.startsWith(`${canonical}/`) || canonicalUrl === `${canonical}/`, `${relativePath} canonical host drift: ${canonicalUrl}`);
-    assert(!canonicalUrl.startsWith(`${alternateHost}/`), `${relativePath} canonical uses www`);
-    const existing = canonicalByHtml.get(canonicalUrl) ?? [];
-    existing.push(relativePath);
-    canonicalByHtml.set(canonicalUrl, existing);
+  const relativePath = relative(DIST, file);
+  const page = await readFile(file, "utf8");
+  const nodes = parseSchemas(page, relativePath).flatMap((schema) => schemaNodes(schema));
+  const organizations = nodes.filter((node) => node["@type"] === "Organization" && (node["@id"] === PUBLIC_IDENTITY.organizationId || node.name === PUBLIC_IDENTITY.name));
+  assert(organizations.length === 1, `${relativePath} must contain exactly one Irha Apparels Organization node; found ${organizations.length}`);
+  const organization = organizations[0];
+  assert(organization["@id"] === PUBLIC_IDENTITY.organizationId, `${relativePath} Organization @id drift`);
+  assert(organization.name === PUBLIC_IDENTITY.name, `${relativePath} Organization name drift`);
+  assert(organization.url === PUBLIC_IDENTITY.url, `${relativePath} Organization URL drift`);
+  assert(organization.logo === PUBLIC_IDENTITY.logoUrl, `${relativePath} Organization logo drift`);
+  assert(organization.telephone === PUBLIC_IDENTITY.telephone, `${relativePath} Organization telephone drift`);
+  assert(organization.email === PUBLIC_IDENTITY.email, `${relativePath} Organization email drift`);
+  assert(organization.address?.addressLocality === PUBLIC_IDENTITY.address.locality, `${relativePath} locality drift`);
+  assert(organization.address?.addressRegion === PUBLIC_IDENTITY.address.region, `${relativePath} region drift`);
+  assert(organization.address?.addressCountry === PUBLIC_IDENTITY.address.country, `${relativePath} country drift`);
+  assert(JSON.stringify(organization.sameAs) === JSON.stringify(PUBLIC_IDENTITY.sameAs), `${relativePath} sameAs drift`);
+  for (const property of forbiddenProperties) assert(!(property in organization), `${relativePath} emits forbidden Organization property ${property}`);
+  assert(!nodes.some((node) => node["@type"] === "LocalBusiness" || (Array.isArray(node["@type"]) && node["@type"].includes("LocalBusiness"))), `${relativePath} emits LocalBusiness`);
+  const websites = nodes.filter((node) => node["@type"] === "WebSite" && node["@id"] === PUBLIC_IDENTITY.websiteId);
+  assert(websites.length === 1, `${relativePath} must contain exactly one canonical WebSite node`);
+  assert(websites[0].publisher?.["@id"] === PUBLIC_IDENTITY.organizationId, `${relativePath} WebSite publisher drift`);
+  const homepages = nodes.filter((node) => node["@type"] === "WebPage" && node["@id"] === PUBLIC_IDENTITY.homepageId);
+  const expectedHomepageCount = relativePath === "index.html" ? 1 : 0;
+  assert(homepages.length === expectedHomepageCount, `${relativePath} must contain ${expectedHomepageCount} canonical homepage WebPage node; found ${homepages.length}`);
+  if (expectedHomepageCount === 1) {
+    const homepage = homepages[0];
+    assert(homepage.url === PUBLIC_IDENTITY.url, "Homepage WebPage URL drift");
+    assert(homepage.name === PUBLIC_IDENTITY.homepage.title, "Homepage WebPage name drift");
+    assert(homepage.isPartOf?.["@id"] === PUBLIC_IDENTITY.websiteId, "Homepage WebPage WebSite reference drift");
+    assert(homepage.about?.["@id"] === PUBLIC_IDENTITY.organizationId, "Homepage WebPage about reference drift");
+    assert(homepage.publisher?.["@id"] === PUBLIC_IDENTITY.organizationId, "Homepage WebPage publisher drift");
   }
-
-  const sourceCommit = extractMeta(html, "x-irha-source-commit");
-  if (sourceCommit) assert(/^[0-9a-f]{40}$/.test(sourceCommit), `${relativePath} source commit marker is invalid`);
-
-  for (const node of extractJsonLd(html)) {
-    if (node?.["@type"] === "Organization") organizationNodes.push({ node, relativePath });
-    if (node?.["@type"] === "WebSite") websiteNodes.push({ node, relativePath });
-    if (node?.["@type"] === "WebPage" && node?.url === PUBLIC_IDENTITY.url) homepageNodes.push({ node, relativePath });
-  }
-}
-
-for (const [url, files] of canonicalByHtml) {
-  assert(files.length === 1 || !expectedUrls.has(url), `Authoritative canonical has competing HTML shells: ${url} -> ${files.join(", ")}`);
-}
-
-assert(organizationNodes.length > 0, "Built site has no canonical Organization JSON-LD");
-assert(websiteNodes.length > 0, "Built site has no canonical WebSite JSON-LD");
-const organizationIdentity = new Map(organizationNodes.map(({ node }) => [node["@id"], JSON.stringify(node)]));
-const websiteIdentity = new Map(websiteNodes.map(({ node }) => [node["@id"], JSON.stringify(node)]));
-assert(organizationIdentity.size === 1 && organizationIdentity.has(PUBLIC_IDENTITY.organizationId), "Built site has competing Organization identities");
-assert(websiteIdentity.size === 1 && websiteIdentity.has(PUBLIC_IDENTITY.websiteId), "Built site has competing WebSite identities");
-
-for (const { node, relativePath } of organizationNodes) {
-  assert(node.url === PUBLIC_IDENTITY.url, `${relativePath} Organization URL drift`);
-  assert(node.name === PUBLIC_IDENTITY.name, `${relativePath} Organization name drift`);
-  assert(node.email === PUBLIC_IDENTITY.email, `${relativePath} Organization email drift`);
-  assert(node.telephone === PUBLIC_IDENTITY.telephone, `${relativePath} Organization telephone drift`);
-}
-for (const { node, relativePath } of websiteNodes) {
-  assert(node.url === PUBLIC_IDENTITY.url, `${relativePath} WebSite URL drift`);
-  assert(node.name === PUBLIC_IDENTITY.name, `${relativePath} WebSite name drift`);
-  assert(node.publisher?.["@id"] === PUBLIC_IDENTITY.organizationId, `${relativePath} WebSite publisher drift`);
-}
-
-const homepageGraphs = homepageNodes.filter(({ node }) => node["@id"] === PUBLIC_IDENTITY.homepageId);
-assert(homepageGraphs.length === 1, `Expected one homepage WebPage, found ${homepageGraphs.length}`);
-for (const { node: homepage } of homepageGraphs) {
-  assert(homepage.url === PUBLIC_IDENTITY.url, "Homepage WebPage URL drift");
-  assert(homepage.name === PUBLIC_IDENTITY.homepage.title, "Homepage WebPage name drift");
-  assert(homepage.isPartOf?.["@id"] === PUBLIC_IDENTITY.websiteId, "Homepage WebPage WebSite reference drift");
-  assert(homepage.about?.["@id"] === PUBLIC_IDENTITY.organizationId, "Homepage WebPage about reference drift");
-  assert(homepage.publisher?.["@id"] === PUBLIC_IDENTITY.organizationId, "Homepage WebPage publisher drift");
-}
-for (const file of htmlFiles) {
-  const html = await readFile(file, "utf8");
-  const relativePath = relative(DIST, file).replaceAll("\\", "/");
-  const nodes = extractJsonLd(html);
   for (const product of nodes.filter((node) => node["@type"] === "Product")) {
     assert(product.manufacturer?.["@id"] === PUBLIC_IDENTITY.organizationId, `${relativePath} Product manufacturer drift`);
   }
