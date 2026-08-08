@@ -131,7 +131,7 @@ export default function BuyerTrust() {
                 <li className="border-l border-gold/50 pl-4">The SCCI directory reference is business-identity evidence; it is not presented as a product or factory certification.</li>
                 <li className="border-l border-gold/50 pl-4">No certificate issue date, renewal date or committee status is stated without separate current evidence.</li>
                 <li className="border-l border-gold/50 pl-4">Target markets and international enquiry availability are not presented as proof of historical exports or customers.</li>
-                <li className="border-l border-gold/50 pl-4">Program-specific evidence, documentation or third-party requirements are confirmed only when applicable evidence is available.</li>
+                <li className="border-l border-gold/50 pl-4">Third-party requirements and program-specific evidence are confirmed only when applicable evidence is available.</li>
               </ul>
             </div>
           </div>
