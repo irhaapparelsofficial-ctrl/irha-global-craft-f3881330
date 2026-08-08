@@ -25,6 +25,7 @@ export const BREVO_ENV_SECRET_NAME = "BREVO_API_KEY";
 export const CHATGPT_OUTBOUND_TEMPLATE = "chatgpt_outbound";
 export const BREVO_CHATGPT_DAILY_CAP = 200;
 export const BREVO_BRIDGE_VERSION = "2026-08-08-v4";
+// Release marker: ensure the already-reviewed v4 formatter is picked up by the exact-green-main function sync.
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const DEFAULT_SENDER = "info@irhaapparels.com";
