@@ -26,10 +26,10 @@
       "registry": "supabase/deployment-parity/functions-f2.json",
       "repository_source": "supabase/functions/notification-dispatcher/index.ts",
       "minimum_version": 10,
-      "exact_hash": "de14ab8afea431d56ba0878ab1f7be63d5f11d9a63277a7d2e0e218428bfcd8d",
+      "exact_hash": "b83bd58933cf2744bb173458498a8bb85d3d4ce6030d7496b28af2e0b4d1c683",
       "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "IA-SEC-E001 scheduler-token least-privilege release; exact bundle/source locked with monotonic version floor so identical safe redeploys do not create false parity failures"
+      "provenance": "Authenticated production version 28 from exact green main 32357bd601922ba3d028129460247997f8175121 with reviewed 2026-08-08-v4 outbound formatter; exact bundle/source locked with monotonic version floor"
     },
     {
       "name": "public-lead-gateway",
