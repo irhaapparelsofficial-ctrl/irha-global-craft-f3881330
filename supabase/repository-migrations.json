@@ -526,6 +526,15 @@
       "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260806201358' and name = 'operational_owner_conversion_notifications' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = '871cc29cec5413968ee0b24e129ba3fd988768c27cc83a563303a70f7cd35bdd') as verified"
     },
     {
+      "version": "20260808084350",
+      "name": "normalize_chatgpt_outbound_email_linebreaks",
+      "path": "supabase/migrations/20260808084350_normalize_chatgpt_outbound_email_linebreaks.sql",
+      "git_blob_sha": "4b379f1b372bc1d7c22b1e58297955b34c14dffc",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260808084350' and name = 'normalize_chatgpt_outbound_email_linebreaks' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = '4b49bf8487fe225decbab9147506b221792e7a5b2d7f640a3b64cc3975c453ee') as verified"
+    },
+    {
       "version": "20260808084600",
       "name": "normalize_chatgpt_outbound_email_linebreaks",
       "path": "supabase/migrations/20260808084600_normalize_chatgpt_outbound_email_linebreaks.sql",
