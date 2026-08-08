@@ -21,7 +21,7 @@ const STATIC_META: Record<string, { title: string; heading: string; description:
   "/about": {
     title: "About Irha Apparels | Sialkot Manufacturer",
     heading: "About Irha Apparels",
-    description: "Learn about Irha Apparels, an experienced custom apparel manufacturer in Sialkot serving global B2B buyers.",
+    description: "Learn about Irha Apparels, an experienced custom apparel manufacturer in Sialkot for global B2B buyers.",
   },
   "/manufacturing": {
     title: "Custom Apparel Manufacturing | Irha Apparels",
