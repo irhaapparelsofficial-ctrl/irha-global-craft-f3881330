@@ -22,13 +22,13 @@ const verificationCards = [
   },
   {
     Icon: FileCheck2,
-    title: "Requirement-led confirmation",
+    title: "Requirement-led quotation review",
     text: "Materials, construction, branding, quantity, packaging, timing, shipping and documentation are confirmed against the actual buyer requirement rather than a blanket website promise.",
   },
   {
     Icon: Video,
     title: "Factory verification by appointment",
-    text: "A buyer may request a live factory-view video call. Availability, viewing scope and time are confirmed after the request is reviewed.",
+    text: "An appointment-based factory video-call request can be reviewed for an available time and viewing scope before any call is confirmed.",
   },
 ] as const;
 
@@ -131,7 +131,7 @@ export default function BuyerTrust() {
                 <li className="border-l border-gold/50 pl-4">The SCCI directory reference is business-identity evidence; it is not presented as a product or factory certification.</li>
                 <li className="border-l border-gold/50 pl-4">No certificate issue date, renewal date or committee status is stated without separate current evidence.</li>
                 <li className="border-l border-gold/50 pl-4">Target markets and international enquiry availability are not presented as proof of historical exports or customers.</li>
-                <li className="border-l border-gold/50 pl-4">Programme-specific documentation or third-party requirements are confirmed only when applicable evidence is available.</li>
+                <li className="border-l border-gold/50 pl-4">Program-specific evidence, documentation or third-party requirements are confirmed only when applicable evidence is available.</li>
               </ul>
             </div>
           </div>
