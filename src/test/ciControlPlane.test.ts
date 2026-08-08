@@ -32,16 +32,20 @@ describe("Irha CI control plane", () => {
     expect(quality).not.toContain("wrangler@4 pages deploy");
   });
 
-  it("keeps Supabase production mutations single-flight", () => {
+  it("keeps database and shared function production mutations independently single-flight", () => {
     for (const path of [
       ".github/workflows/supabase-functions-auto.yml",
-      ".github/workflows/supabase-database-auto.yml",
       ".github/workflows/supabase-owner-release.yml",
       ".github/workflows/deploy-chat-current-main.yml",
     ]) {
       expect(read(path)).toContain("group: irha-production-mutation");
       expect(read(path)).toContain("cancel-in-progress: false");
     }
+
+    const database = read(".github/workflows/supabase-database-auto.yml");
+    expect(database).toContain("group: irha-production-database");
+    expect(database).not.toContain("group: irha-production-mutation");
+    expect(database).toContain("cancel-in-progress: false");
   });
 
   it("reconciles Cloudflare independently per exact source SHA", () => {
