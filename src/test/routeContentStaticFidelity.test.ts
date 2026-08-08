@@ -50,7 +50,7 @@ describe("route-specific static content architecture", () => {
     expect(serialized).toContain("SCCI member directory");
     expect(serialized).toContain(SCCI_BUSINESS_REFERENCE.membershipNumber);
     expect(serialized).toContain(SCCI_BUSINESS_REFERENCE.officialDirectoryUrl);
-    expect(serialized).toMatch(/does not establish|does not prove/i);
+    expect(serialized).toMatch(/does not establish|does not prove|not presented as/i);
     expect(serialized).not.toMatch(/provisional membership|Executive Committee|registered company|certified manufacturer|final membership certificate issued/i);
   });
 
