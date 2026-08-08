@@ -2,28 +2,33 @@
 
 ## Company positioning
 
-Irha Apparels is an experienced B2B custom apparel manufacturer based in Sialkot, Pakistan. The company serves brands, wholesalers, importers, retailers, clubs and private-label buyers through OEM, ODM and made-to-requirement apparel programs.
+Irha Apparels provides B2B custom apparel manufacturing services from Sialkot, Pakistan for brands, wholesalers, importers, retailers, clubs and private-label buyers through OEM, ODM and made-to-requirement apparel programs.
 
 The website is for business inquiries rather than consumer retail. Fixed prices are not published. Commercial details are confirmed after the buyer shares product type, quantity, materials, construction, branding, packaging, destination and target schedule.
 
-Irha Apparels does not claim factories or offices in Germany, Austria, Switzerland, the Netherlands, the United Kingdom, the United States, Canada, Australia or New Zealand. Manufacturing takes place in Sialkot, Pakistan. Qualified buyers may request a live factory video call.
+Irha Apparels does not claim factories or offices in Germany, Austria, Switzerland, the Netherlands, the United Kingdom, the United States, Canada, Australia or New Zealand. Manufacturing is based in Sialkot, Pakistan. Buyers may request an appointment-based live factory-view video call; availability and viewing scope must be confirmed.
 
-## Two production hubs
+Target-market pages describe sourcing requirements and commercial intent. They are not proof of historic exports, prior customers or an established client base in those markets.
 
-The public website groups the manufacturing offer into two production hubs so buyers can navigate the range without implying that separate factories or legal entities exist.
+## Public business verification
 
-1. Bavarian & Leather
-   - Bavarian and Trachten wear
-   - Lederhosen and Dirndl programs
-   - Premium leather apparel
+The official Sialkot Chamber of Commerce & Industry member directory associates IRHA APPARELS with reference/member identifier A-101267. This is presented as business-identity evidence only. The website does not use that directory reference to claim a certificate issue date, renewal date, committee status, product certification, factory certification, export history or production capacity.
 
-2. Sportswear, Streetwear & Leisure
-   - Teamwear and club kits
-   - Performance sportswear and activewear
-   - Heavyweight streetwear
-   - Leisurewear and nightwear
+Current public contact authority:
 
-## Manufacturing categories
+- Email: info@irhaapparels.com
+- Telephone / WhatsApp: +92 320 411 0066
+- Location: Sialkot, Pakistan
+
+## Product divisions
+
+1. Bavarian & Trachten Wear
+2. Premium Leather Apparel
+3. Custom Sportswear
+4. Streetwear & Activewear
+5. Leisurewear & Nightwear
+
+The public catalogue is organised by main category, relevant audience or buyer group, product type and individual product page.
 
 ### Bavarian and Trachten wear
 
@@ -37,13 +42,13 @@ The public website groups the manufacturing offer into two production hubs so bu
 - Biker and motorcycle-inspired jackets
 - Bomber and fashion leather jackets
 - Leather vests and waistcoats
-- Custom lining, hardware, labels, patches and packaging
+- Custom lining, hardware, labels, patches and packaging options subject to the product brief
 
 ### Sportswear
 
 - Football, rugby, basketball, cricket and hockey uniforms
 - Tracksuits, warm-up sets and training wear
-- Club, school and distributor programs
+- Club, school and distributor program options
 - Team artwork, names, numbers and repeat-order references where agreed
 
 ### Streetwear and activewear
@@ -60,7 +65,7 @@ The public website groups the manufacturing offer into two production hubs so bu
 
 ## Private-label capabilities
 
-Publicly described capabilities include custom cut and sew, embroidery, printing, sublimation where appropriate, woven labels, care labels, size labels, hang tags, buyer-specified packaging and export support. Exact capability and suitability depend on the product brief and are confirmed during requirement review.
+Publicly described capabilities can include custom cut and sew, embroidery, printing, sublimation where appropriate, woven labels, care labels, size labels, hang tags, buyer-specified packaging and shipment preparation. Exact capability, process location and suitability depend on the product brief and are confirmed during requirement review.
 
 A private-label order may include:
 
@@ -74,17 +79,16 @@ A private-label order may include:
 
 The public website does not treat sample copy, concept images or automated calculations as binding quotations. Materials, MOQ, pricing, production timing, shipping method, documentation and compliance evidence are confirmed for each buyer requirement.
 
-Do not infer that every product uses the same MOQ, production time, material or certification. Do not infer certification status from educational content. Evidence is provided before a claim is made to a buyer.
+Do not infer that every product uses the same MOQ, production time, material or certification. Do not infer certification status from educational content. Standards such as ISO, OEKO-TEX, SEDEX, WRAP, BSCI, GOTS, GRS, REACH, SGS, Intertek or CE may be discussed only in an order-specific or educational context unless current documentary evidence proves an applicable credential.
 
 ## Buyer trust
 
-Buyer verification should focus on the relevant team, program scope, written quotation and program-specific evidence. An appointment-based live factory call may be requested as a verification step, subject to availability and viewing scope.
+Buyer verification should focus on the published business identity, SCCI directory/member reference A-101267, current contact channels, written quotation, approved specification and program-specific evidence. An appointment-based live factory call may be requested as a verification step, subject to availability and viewing scope.
 
 ## Canonical public URLs
 
 - Home: https://irhaapparels.com/
 - Collections: https://irhaapparels.com/products
-- Catalogue: https://irhaapparels.com/catalogue
 - About: https://irhaapparels.com/about
 - Manufacturing: https://irhaapparels.com/manufacturing
 - Buyer Trust: https://irhaapparels.com/buyer-trust
@@ -97,7 +101,11 @@ Buyer verification should focus on the relevant team, program scope, written quo
 - Privacy Policy: https://irhaapparels.com/privacy-policy
 - Terms of Service: https://irhaapparels.com/terms-of-service
 
+Legacy catalogue aliases resolve to current canonical product/category routes and are not separate indexable catalogue authorities.
+
 ## Country sourcing pages
+
+These pages describe buyer requirements and target-market sourcing context; they do not assert historic customers or exports in the named country.
 
 - Germany: https://irhaapparels.com/germany-apparel-manufacturer
 - Austria: https://irhaapparels.com/austria-apparel-manufacturer
@@ -119,10 +127,11 @@ Buyer verification should focus on the relevant team, program scope, written quo
 
 ## German-language sourcing pages
 
+- German gateway: https://irhaapparels.com/de/
 - Lederhosen Hersteller: https://irhaapparels.com/de/lederhosen-hersteller
 - Dirndl Großhandel: https://irhaapparels.com/de/dirndl-grosshandel
 - Trachten Private Label: https://irhaapparels.com/de/trachten-private-label
 
 ## Contact context
 
-Official contact details should be taken from the current Contact page. The website supports business inquiries by email, WhatsApp and inquiry forms. Buyers should provide product type, quantity, materials, artwork, labels, packaging, destination and desired delivery window for an initial feasibility review.
+Use the current public contact authority above or the Contact page. Buyers should provide product type, quantity, materials, artwork, labels, packaging, destination and desired delivery window for an initial feasibility review.

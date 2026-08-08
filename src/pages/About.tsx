@@ -40,7 +40,7 @@ export default function About() {
             Built for serious <span className="text-gold italic">B2B programs</span>.
           </h1>
           <p className="mt-9 max-w-3xl text-base leading-relaxed text-foreground/72 md:text-lg">
-            Irha Apparels is a Sialkot-based custom apparel manufacturer working with brands, wholesalers, importers and private-label buyers who need requirement-led production.
+            Irha Apparels is a Sialkot-based custom apparel manufacturer for brands, wholesalers, importers and private-label buyers seeking requirement-led production.
           </p>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-foreground/58">
             Genuine factory and sample media is pending and is not replaced here with concept imagery. Buyers can request direct discussion and an appointment-based live factory call.

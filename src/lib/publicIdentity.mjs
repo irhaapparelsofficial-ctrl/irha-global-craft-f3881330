@@ -25,7 +25,7 @@ export const PUBLIC_IDENTITY = Object.freeze({
   homepage: Object.freeze({
     title: "Irha Apparels | B2B Apparel Manufacturer in Sialkot, Pakistan",
     heading: "Irha Apparels — Custom Apparel Manufacturer for Global B2B Buyers",
-    description: "Irha Apparels is a B2B apparel manufacturer in Sialkot, Pakistan, supplying custom Lederhosen, Dirndl, leather apparel, sportswear, streetwear and private-label clothing programs.",
+    description: "Irha Apparels is a B2B apparel manufacturer in Sialkot, Pakistan offering made-to-requirement Lederhosen, Dirndl, leather apparel, sportswear, streetwear and private-label clothing programs for international sourcing enquiries.",
   }),
   responsiblePerson: Object.freeze({
     name: "Daim Ali",

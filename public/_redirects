@@ -1,16 +1,14 @@
 # Cloudflare Pages favicon and legacy buyer-route redirects.
 # Serve the owner-supplied Irha crest directly on the conventional favicon path.
-# A 200 rewrite avoids retaining the old Lovable redirect/icon in crawler caches.
 /favicon.ico /favicon.svg 200
 
-# Canonical catalogue entry point. These must redirect at the edge before the SPA.
+# Canonical catalogue entry point. Keep aliases one-hop to the final indexable page.
 /catalogue /products 301
 /catalog /products 301
 /de/katalog /products 301
 
-# Legacy deep /catalogue/:slug links (still indexed and linked from landing pages).
-# Must redirect at the edge because the worker returns 404 before the SPA route
-# `/catalogue/:slug` (LegacyCatalogueRedirect) can run.
+# Proven legacy deep catalogue aliases. Unknown /catalogue/* paths are not
+# blanket-redirected to /products; they must have a semantic replacement.
 /catalogue/bavarian-garments /products/bavarian-trachten-wear 301
 /catalogue/lederhosen /products/bavarian-trachten-wear/men/lederhosen 301
 /catalogue/dirndl-dresses /products/bavarian-trachten-wear/women/dirndl-dresses 301
@@ -22,10 +20,8 @@
 /catalogue/streetwear /products/streetwear-activewear 301
 /catalogue/leisurewear /products/leisure-nightwear 301
 /catalogue/nightwear /products/leisure-nightwear 301
-/catalogue/* /products 301
 
-# SPA fallback is intentionally omitted because Pages handles React SPA routes
-# automatically when no top-level 404.html exists.
+# Buyer-information aliases.
 /buyer-trust-center /buyer-trust 301
 /buyer-trust-centre /buyer-trust 301
 /buyer-resources /resources 301
@@ -34,23 +30,18 @@
 /privacy /privacy-policy 301
 /terms /terms-of-service 301
 
-# Consolidate legacy category and product URLs into the current public taxonomy.
+# Consolidate verified legacy category and product URLs into current taxonomy.
 /products/bavarian-garments /products/bavarian-trachten-wear 301
 /products/leather-garments /products/premium-leather-apparel 301
 /products/streetwear /products/streetwear-activewear 301
 /products/activewear /products/streetwear-activewear 301
 /products/streetwear/oversized-hoodie /products/streetwear-activewear/unisex/tops/oversized-pullover-hoodie 301
 
-# Retire unsupported legacy editorial pages while preserving the buyer-safe Custom Lab.
+# Retire legacy editorial URLs to the closest useful current page.
 /blog/dirndl-manufacturer-moq-50 /products/bavarian-trachten-wear/women/dirndl-dresses 301
 /blog/streetwear-oem-pakistan /products/streetwear-activewear 301
 /blog/leather-grades-explained /products/premium-leather-apparel 301
 /blog/fob-sialkot-vs-cif-pricing-explained /resources 301
-
-# Do not add "/route/ -> /route" redirects for generated route shells.
-# The build writes those pages as dist/<route>/index.html and Cloudflare Pages
-# may canonicalize /route to /route/. A reverse redirect creates an infinite
-# /route <-> /route/ loop. The Pages asset layer owns directory canonicalization.
 
 # Country sourcing-guide aliases.
 /germany /markets/germany 301
@@ -65,36 +56,6 @@
 /australia /markets/australia 301
 /new-zealand /markets/new-zealand 301
 
-# BEGIN GENERATED TAXONOMY REDIRECTS
-# Owner-reviewed Main Category → Audience/Buyer Group → Product Type → Product canonicals.
-/products/bavarian-men /products/bavarian-trachten-wear/men 301
-/products/bavarian-women /products/bavarian-trachten-wear/women 301
-/products/bavarian-kids /products/bavarian-trachten-wear/kids 301
-/products/bavarian-accessories /products/bavarian-trachten-wear/accessories 301
-/products/leather-jackets /products/premium-leather-apparel/men 301
-/products/leather-vests /products/premium-leather-apparel/men/leather-vests 301
-/products/leather-bottoms /products/premium-leather-apparel/men/leather-trousers 301
-/products/leather-accessories /products/premium-leather-apparel/accessories 301
-/products/sportswear-soccer /products/sportswear/team-club/football-kits 301
-/products/sportswear-cricket /products/sportswear/team-club/cricket-uniforms 301
-/products/sportswear-baseball /products/sportswear/team-club/baseball-uniforms 301
-/products/sportswear-basketball /products/sportswear/team-club/basketball-uniforms 301
-/products/sportswear-rugby /products/sportswear/team-club/rugby-kits 301
-/products/sportswear-gym /products/sportswear 301
-/products/streetwear-tops /products/streetwear-activewear/unisex 301
-/products/streetwear-bottoms /products/streetwear-activewear/unisex 301
-/products/leisurewear-tops /products/leisure-nightwear/unisex 301
-/products/leisurewear-bottoms /products/leisure-nightwear/unisex 301
-/products/leisure-nightwear-men /products/leisure-nightwear/men 301
-/products/leisure-nightwear-women /products/leisure-nightwear/women 301
-/products/nightwear-archived /products/leisure-nightwear 301
-/products/nightwear /products/leisure-nightwear 301
-/products/bavarian-trachten-wear/alpine-trachten-hat /products/bavarian-trachten-wear/accessories/alpine-hats/alpine-trachten-hat 301
-/products/sportswear/athletic-onesie /products/sportswear/unisex/athletic-bodysuits/athletic-onesie 301
-/products/sportswear/baseball-jersey /products/sportswear/team-club/baseball-uniforms/baseball-jersey 301
-/products/sportswear/baseball-uniform-kit /products/sportswear/team-club/baseball-uniforms/baseball-uniform-kit 301
-/products/sportswear/basketball-mesh-jersey /products/sportswear/team-club/basketball-uniforms/basketball-mesh-jersey 301
-/products/sportswear/basketball-uniform-kit /products/sportswear/team-club/basketball-uniforms/basketball-uniform-kit 301
-/products/bavarian-trachten-wear/bavarian-checkered-shirt /products/bavarian-trachten-wear/men/trachten-shirts/bavarian-checkered-shirt 301
-/products/bavarian-trachten-wear/bavarian-embroidered-vest /products/bavarian-trachten-wear/men/trachten-vests/bavarian-embroidered-vest 301
-# END GENERATED TAXONOMY REDIRECTS
+# The buyer-ready redirect generator appends current DB-backed aliases from the
+# production redirect authority after validating each target against the built
+# SEO manifest. Do not reintroduce a second hand-maintained taxonomy block here.

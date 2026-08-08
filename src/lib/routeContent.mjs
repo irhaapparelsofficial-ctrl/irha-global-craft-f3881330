@@ -1,5 +1,5 @@
 import { PUBLIC_IDENTITY } from "./publicIdentity.mjs";
-import { SCCI_PROVISIONAL_MEMBERSHIP } from "./publicBusinessEvidence.mjs";
+import { SCCI_BUSINESS_REFERENCE } from "./publicBusinessEvidence.mjs";
 
 const categoryLinks = Object.freeze([
   Object.freeze({ href: "/products/bavarian-trachten-wear", label: "Bavarian & Trachten Wear" }),
@@ -38,7 +38,7 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
     metaDescription: "Irha Apparels is a Sialkot-based B2B custom apparel manufacturer for brands, wholesalers and importers. Buyers can verify the public business identity and request direct contact.",
     eyebrow: "About Irha Apparels",
     h1: "Built for serious B2B programs.",
-    intro: "Irha Apparels is a Sialkot-based custom apparel manufacturer working with brands, wholesalers, importers and private-label buyers who need requirement-led production.",
+    intro: "Irha Apparels is a Sialkot-based custom apparel manufacturer for brands, wholesalers, importers and private-label buyers seeking requirement-led production.",
     sections: [
       {
         heading: "Public accountability",
@@ -140,23 +140,23 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
   "/buyer-trust": route({
     route: "/buyer-trust",
     breadcrumbLabel: "Buyer Trust",
-    title: "Buyer Trust Center — SCCI Membership & Supplier Verification",
-    metaDescription: `Review Irha Apparels' SCCI provisional membership evidence, Membership No. ${SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber}, plus direct-contact, quotation, sample and factory-call verification paths.`,
+    title: "Buyer Trust Center — Business Reference & Supplier Verification",
+    metaDescription: `Verify Irha Apparels through its published business identity, SCCI directory/member reference ${SCCI_BUSINESS_REFERENCE.membershipNumber}, direct contact channels, written requirements and an appointment-based factory video call.`,
     eyebrow: "Buyer Trust Center",
     h1: "Verify the supplier before the order.",
     intro: "Use direct contact, relevant evidence, clear specifications and documented approvals to evaluate a proposed program before making a commercial commitment.",
     sections: [
       {
-        heading: "SCCI provisional membership",
-        body: `Irha Apparels holds a ${SCCI_PROVISIONAL_MEMBERSHIP.documentType} issued by ${SCCI_PROVISIONAL_MEMBERSHIP.issuer} (${SCCI_PROVISIONAL_MEMBERSHIP.shortIssuer}). This is business-membership evidence, not a product certification or final membership certificate.`,
+        heading: "SCCI member-directory reference",
+        body: `${SCCI_BUSINESS_REFERENCE.issuer} (${SCCI_BUSINESS_REFERENCE.shortIssuer}) associates IRHA APPARELS with reference/member identifier ${SCCI_BUSINESS_REFERENCE.membershipNumber} in its public member directory. This is business-identity evidence only and is not presented as a certificate-status, product-certification, factory-certification, capacity or export-history claim.`,
         items: [
-          `Membership No.: ${SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber}`,
-          `Certificate issued: ${SCCI_PROVISIONAL_MEMBERSHIP.issuedDateLabel}`,
-          `Status: ${SCCI_PROVISIONAL_MEMBERSHIP.status}`,
-          SCCI_PROVISIONAL_MEMBERSHIP.qualification,
+          `Reference/member identifier: ${SCCI_BUSINESS_REFERENCE.membershipNumber}`,
+          "No certificate issue or renewal date is asserted without separate current evidence",
+          "No pending-committee or certificate-status wording is asserted without separate current evidence",
+          "Target markets are not presented as proof of historic exports or customers",
         ],
         links: [
-          { href: SCCI_PROVISIONAL_MEMBERSHIP.officialDirectoryUrl, label: "Open the official SCCI member directory" },
+          { href: SCCI_BUSINESS_REFERENCE.officialDirectoryUrl, label: "Open the official SCCI member directory" },
         ],
       },
       {
@@ -182,7 +182,7 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
     primaryCta: { href: "/factory-video-call", label: "Request a factory video call" },
     secondaryCta: { href: "/inquiry?intent=rfq", label: "Submit a requirement" },
     sourceFile: "src/pages/BuyerTrust.tsx",
-    parityTokens: ["Verify the supplier", "before the order", "SCCI provisional membership", SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber, "Executive Committee", "Requirement-led quotation", "Approval before bulk", "Program-specific documentation"],
+    parityTokens: ["Verify the supplier", "before the order", "SCCI member-directory reference", SCCI_BUSINESS_REFERENCE.membershipNumber, "Requirement-led quotation", "factory video-call", "program-specific evidence"],
   }),
   "/factory-video-call": route({
     route: "/factory-video-call",

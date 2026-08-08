@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, FileBadge2, FileCheck2, MessageSquareText, ShieldCheck, Video } from "lucide-react";
-import { SCCI_PROVISIONAL_MEMBERSHIP } from "@/lib/publicBusinessEvidence.mjs";
+import { ArrowRight, Building2, FileCheck2, MessageSquareText, ShieldCheck, Video } from "lucide-react";
+import { SCCI_BUSINESS_REFERENCE } from "@/lib/publicBusinessEvidence.mjs";
 
 const TRUST = [
   {
-    Icon: FileBadge2,
-    title: SCCI_PROVISIONAL_MEMBERSHIP.statusLabel,
-    text: `Membership No. ${SCCI_PROVISIONAL_MEMBERSHIP.membershipNumber} · Provisional certificate issued ${SCCI_PROVISIONAL_MEMBERSHIP.issuedDateLabel}.`,
+    Icon: Building2,
+    title: "SCCI directory reference",
+    text: `IRHA APPARELS is listed in the official SCCI member directory with reference/member identifier ${SCCI_BUSINESS_REFERENCE.membershipNumber}.`,
   },
   {
     Icon: FileCheck2,
@@ -39,8 +39,8 @@ const FAQ = [
     answer: "Private-label requirements can include embroidery, printing, woven labels, care labels, hangtags and packaging. Availability and cost are confirmed per product.",
   },
   {
-    question: "Do you ship internationally?",
-    answer: "The destination, packing, documentation and preferred shipping arrangement are reviewed with each order. Final shipping terms are confirmed before commitment.",
+    question: "Can international shipping be arranged?",
+    answer: "Destination, packing, documentation and the preferred shipping arrangement are reviewed with each order. Final shipping terms are confirmed before commitment.",
   },
   {
     question: "What should a buyer send first?",
