@@ -299,10 +299,18 @@ async function writePhase1Inventory(redirects, manifestPaths) {
     const rows = groups.get(path);
     const hadLegacyAction = rows.some((row) => row.classification === "301" || row.classification === "INVESTIGATE" || row.target);
     const target = redirects.get(path) || "";
+    const retiredNonConcreteRule = path === "/catalogue/*";
+    const retainedAssetRewrite = path === "/favicon.ico";
     let action = "KEEP";
     let state = manifestPaths.has(path) ? "canonical-200" : "not-in-manifest";
     let chain = "no";
-    if (target) {
+    if (retiredNonConcreteRule) {
+      keep += 1;
+      state = "retired-non-concrete-wildcard";
+    } else if (retainedAssetRewrite) {
+      keep += 1;
+      state = "asset-rewrite-200";
+    } else if (target) {
       action = "301";
       redirects301 += 1;
       const targetPath = resolveOneHopTarget(target);
