@@ -164,6 +164,9 @@ export function checkSearchRouteState({
     throw new Error(`Committed material search route state is missing at ${outputPath}: ${String(error)}`);
   }
   if (committed !== expected) {
+    console.error("SEARCH_ROUTE_STATE_EXPECTED_BEGIN");
+    console.error(expected);
+    console.error("SEARCH_ROUTE_STATE_EXPECTED_END");
     throw new Error(
       "Committed material search route state is stale. Run node scripts/generate-search-route-state.mjs --write before merging.",
     );
