@@ -23,6 +23,11 @@ function adminClient() {
   return createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"));
 }
 
+async function sha256Hex(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 async function requireAdmin(req: Request) {
   const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (!token) return null;
@@ -40,6 +45,12 @@ function config() {
     clientSecret: env("TUMBLR_CLIENT_SECRET") || env("TUMBLR_CONSUMER_SECRET"),
     redirectUri: env("TUMBLR_REDIRECT_URI") || `${env("SUPABASE_URL")}/functions/v1/tumblr-operator?action=callback`,
   };
+}
+
+function authorizationUrl(clientId: string, redirectUri: string, state: string) {
+  const auth = new URL(TUMBLR_AUTH_URL);
+  auth.search = new URLSearchParams({ client_id: clientId, response_type: "code", scope: "basic write offline_access", state, redirect_uri: redirectUri }).toString();
+  return auth.toString();
 }
 
 async function tokenRequest(params: Record<string, string>) {
@@ -103,6 +114,22 @@ Deno.serve(async (req: Request) => {
     return json({ configured: Boolean(cfg.clientId && cfg.clientSecret), connected, redirect_uri: cfg.redirectUri });
   }
 
+  if (action === "bootstrap") {
+    if (!cfg.clientId || !cfg.clientSecret) return json({ error: "Tumblr client credentials are not configured" }, 503);
+    const token = url.searchParams.get("token") || "";
+    if (token.length < 32) return json({ error: "Invalid bootstrap token" }, 403);
+    const tokenHash = await sha256Hex(token);
+    const { data: bootstrap } = await adminClient().from("tumblr_oauth_bootstrap_tokens").select("token_hash,expires_at,used_at").eq("token_hash", tokenHash).maybeSingle();
+    if (!bootstrap || bootstrap.used_at || new Date(bootstrap.expires_at).getTime() < Date.now()) return json({ error: "Bootstrap link is invalid, expired, or already used" }, 403);
+    const state = crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().replaceAll("-", "");
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const { error: stateError } = await adminClient().from("tumblr_oauth_states").insert({ state, expires_at: expiresAt });
+    if (stateError) return json({ error: "Unable to start Tumblr authorization" }, 500);
+    const { error: usedError } = await adminClient().from("tumblr_oauth_bootstrap_tokens").update({ used_at: new Date().toISOString() }).eq("token_hash", tokenHash).is("used_at", null);
+    if (usedError) return json({ error: "Unable to consume authorization link" }, 500);
+    return Response.redirect(authorizationUrl(cfg.clientId, cfg.redirectUri, state), 302);
+  }
+
   if (action === "callback") {
     const code = url.searchParams.get("code") || "";
     const state = url.searchParams.get("state") || "";
@@ -123,9 +150,7 @@ Deno.serve(async (req: Request) => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const { error } = await adminClient().from("tumblr_oauth_states").insert({ state, expires_at: expiresAt, created_by: admin.id });
     if (error) return json({ error: error.message }, 500);
-    const auth = new URL(TUMBLR_AUTH_URL);
-    auth.search = new URLSearchParams({ client_id: cfg.clientId, response_type: "code", scope: "basic write offline_access", state, redirect_uri: cfg.redirectUri }).toString();
-    return json({ authorize_url: auth.toString(), expires_at: expiresAt, redirect_uri: cfg.redirectUri });
+    return json({ authorize_url: authorizationUrl(cfg.clientId, cfg.redirectUri, state), expires_at: expiresAt, redirect_uri: cfg.redirectUri });
   }
 
   if (action === "health") {
