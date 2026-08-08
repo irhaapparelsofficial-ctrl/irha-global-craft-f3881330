@@ -24,7 +24,7 @@ export const BREVO_SECRET_NAME = "brevo_api_key";
 export const BREVO_ENV_SECRET_NAME = "BREVO_API_KEY";
 export const CHATGPT_OUTBOUND_TEMPLATE = "chatgpt_outbound";
 export const BREVO_CHATGPT_DAILY_CAP = 200;
-export const BREVO_BRIDGE_VERSION = "2026-08-07-v3";
+export const BREVO_BRIDGE_VERSION = "2026-08-08-v4";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const DEFAULT_SENDER = "info@irhaapparels.com";
@@ -41,6 +41,54 @@ const ALLOWED_SENDERS: Record<string, string> = {
 
 function text(value: unknown, max = 4000) {
   return typeof value === "string" ? value.split("\u0000").join("").trim().slice(0, max) : "";
+}
+
+function normalizeOutboundPlainText(value: string) {
+  let normalized = value;
+  for (let i = 0; i < 3; i += 1) {
+    const next = normalized
+      .replace(/\\r\\n/g, "\n")
+      .replace(/\\n/g, "\n");
+    if (next === normalized) break;
+    normalized = next;
+  }
+  return normalized
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function escapeHtmlFragment(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function renderProfessionalOutboundHtml(value: string) {
+  const blocks = normalizeOutboundPlainText(value)
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p style="margin:0 0 16px 0">${block.split("\n").map(escapeHtmlFragment).join("<br>")}</p>`)
+    .join("");
+
+  return `<!doctype html><html><body style="margin:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111827"><div style="max-width:680px;margin:0 auto;padding:24px;font-size:15px;line-height:1.65">${blocks}</div></body></html>`;
+}
+
+function normalizeProvidedOutboundHtml(value: string) {
+  let normalized = value;
+  for (let i = 0; i < 3; i += 1) {
+    const next = normalized
+      .replace(/\\r\\n/g, "<br>")
+      .replace(/\\n/g, "<br>");
+    if (next === normalized) break;
+    normalized = next;
+  }
+  return normalized.replace(/(?:<br>\s*){3,}/gi, "<br><br>");
 }
 
 function validEmail(value: unknown) {
@@ -150,7 +198,9 @@ export async function sendBrevoEmail(
     };
   }
 
-  if (isChatgptOutbound(payload)) {
+  const directOutbound = isChatgptOutbound(payload);
+
+  if (directOutbound) {
     try {
       const sent = await chatgptSentInLast24Hours(service);
       if (sent >= BREVO_CHATGPT_DAILY_CAP) {
@@ -173,20 +223,28 @@ export async function sendBrevoEmail(
     return {
       status: "blocked",
       error: "Brevo API provider is not configured",
-      evidence: { source: isChatgptOutbound(payload) ? CHATGPT_OUTBOUND_TEMPLATE : "notification" },
+      evidence: { source: directOutbound ? CHATGPT_OUTBOUND_TEMPLATE : "notification" },
     };
   }
 
-  const source = isChatgptOutbound(payload) ? CHATGPT_OUTBOUND_TEMPLATE : "notification";
-  const cc = isChatgptOutbound(payload) ? emailList(payload.cc) : [];
+  const source = directOutbound ? CHATGPT_OUTBOUND_TEMPLATE : "notification";
+  const cc = directOutbound ? emailList(payload.cc) : [];
   const archiveInGmail = shouldArchiveInGmail(payload, recipient);
   const bcc = bccForPayload(payload, recipient);
+  const normalizedText = directOutbound ? normalizeOutboundPlainText(rendered.text) : rendered.text;
+  const normalizedHtml = directOutbound
+    ? (text(payload.html_body, 50000)
+      ? normalizeProvidedOutboundHtml(rendered.html)
+      : renderProfessionalOutboundHtml(normalizedText))
+    : rendered.html;
+
   const requestBody: Json = {
     sender: { name: sender.name, email: sender.address },
     to: [{ email: recipient }],
     replyTo: { email: replyToForPayload(payload, sender.address) },
     subject: rendered.subject,
-    htmlContent: rendered.html,
+    htmlContent: normalizedHtml,
+    textContent: normalizedText,
     headers: {
       "Idempotency-Key": row.id,
       "X-Irha-Outbox-ID": row.id,
@@ -219,6 +277,7 @@ export async function sendBrevoEmail(
       from_address: sender.address,
       response_status: response.status,
       gmail_archive_bcc: archiveInGmail,
+      outbound_format_normalized: directOutbound,
     };
     if (response.ok) return { status: "sent", error: null, evidence };
 
@@ -240,6 +299,7 @@ export async function sendBrevoEmail(
       bridge_version: BREVO_BRIDGE_VERSION,
       from_address: sender.address,
       gmail_archive_bcc: archiveInGmail,
+      outbound_format_normalized: directOutbound,
     };
     if (row.attempt_count >= MAX_ATTEMPTS) return { status: "failed", error: message, evidence };
     return { status: "retry", error: message, evidence };
