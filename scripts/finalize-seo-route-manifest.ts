@@ -126,7 +126,7 @@ const STATIC_ROUTES: StaticRouteSeed[] = [
     path: "/about",
     routeType: "about",
     title: "About Irha Apparels | Sialkot Manufacturer",
-    description: "Learn about Irha Apparels, an experienced custom apparel manufacturer in Sialkot for global B2B buyers.",
+    description: "Learn about Irha Apparels, an experienced custom apparel manufacturer in Sialkot serving global B2B buyers.",
     h1: "About Irha Apparels",
     clientComponent: "About",
     structuredDataType: "AboutPage+Organization+BreadcrumbList",

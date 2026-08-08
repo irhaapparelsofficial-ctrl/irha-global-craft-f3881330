@@ -131,7 +131,7 @@ The current compliance/buyer-information wording generally states these dependen
 | Claim | Location | Classification and evidence gap |
 |---|---|---|
 | Provisional Certificate of Membership, status `Provisional`, issue date **27 July 2026**, and a pending Executive Committee step. | Live `/buyer-trust`; `src/lib/publicBusinessEvidence.mjs`; `src/pages/BuyerTrust.tsx`; generated crawler HTML. | **UNSUPPORTED in connected evidence.** The official SCCI directory verifies IRHA APPARELS and A-101267, but the underlying provisional certificate is absent from GitHub and production Storage. Directory evidence does not verify the certificate's issue date, provisional status or quoted qualification. The statement is not proven false, so it is flagged rather than emergency-removed. |
-| “Learn about … serving global B2B buyers.” | Live `/about` crawler description; `scripts/finalize-seo-route-manifest.ts`; `scripts/generate-static-route-shells.ts`. | **RISKY customer-history implication.** Global buyers are the target audience, but no customer/export history was supplied. Phase 0 candidate wording changes “serving” to “for.” |
+| “Learn about … serving global B2B buyers.” | Live `/about` crawler description; `scripts/finalize-seo-route-manifest.ts`; `scripts/generate-static-route-shells.ts`. | **RISKY customer-history implication.** Global buyers are the target audience, but no customer/export history was supplied. The wording is recorded for Phase 1 because changing the authoritative manifest requires its generated search-state artifact to be regenerated and reviewed together. |
 | “Experienced export-focused …” | Live `/llms.txt`. | **RISKY export-history implication.** “Experienced” is approved; export/customer history is not evidenced. Phase 0 candidate removes “export-focused.” |
 | “Exports [market list]”. | Dormant `src/pages/CategoryPage.tsx` line 298. | **UNSUPPORTED source wording, not active public output.** The only registered route using this component, `/products/:categorySlug/all-products`, currently passes `categorySlug` while the component reads `slug`; the tested canonical route returns a noindex 404 and no sitemap route contains `all-products`. Record for Phase 1; no Phase 0 redesign/fix. |
 | A single, current owner-approved public email. | Production code/CMS/crawler output use `info@irhaapparels.com`; the supplied knowledge snapshot, SCCI directory and CMS versions 1–3 use `irhaapparelsofficial@gmail.com`. | **UNRESOLVED identity authority.** `scripts/enforce-public-index-policy.mjs` deliberately treats the Gmail address as an owner address that must not leak into public HTML, while notification delivery uses the domain address as sender and Gmail as an archive destination. Reversing that design without an explicit current owner decision could expose a private mailbox or disturb delivery. Phase 0 records the conflict and makes no email mutation. |
@@ -328,13 +328,14 @@ No confidential CRM/order row content was selected. No public-content policy rev
 
 ### Confirmed emergency correction
 
-1. **Unsupported customer/export implications:** the candidate changes “serving global B2B buyers” to “for global B2B buyers” in the About crawler sources and removes “export-focused” from `llms.txt`.
+1. **Unsupported export implication:** the candidate removes “export-focused” from `llms.txt`. The About metadata implication is documented but not changed in Phase 0 because its authoritative generated search-state must be handled as one reviewed Phase 1 unit.
 2. **Phone guard:** no phone source is changed because GitHub, CMS and all crawler pages already use only `+923204110066` (allowing display spacing without changing its digits).
 
 ### Flagged, not emergency-mutated
 
 - SCCI A-101267 is directory-verified, but the provisional certificate date/status/qualification lacks the underlying document in connected evidence.
 - Public-email authority is contradictory. Phase 0 does not replace the deliberate public/domain-email policy with the supplied Gmail address without a fresh explicit owner decision covering public contact and notification-delivery roles.
+- About metadata says “serving global B2B buyers.” Phase 0 records it but leaves the manifest/search-state pair unchanged for Phase 1.
 - Dormant CategoryPage “Exports …” copy is not in the sitemap and the tested route is a noindex 404; route repair/content consolidation is Phase 1.
 - Redirect conflicts, localized-source duplication, runtime/static title/H1 drift, missing runtime footers, language/description mismatches, two-hop host redirect and malformed API-catalog response are not immediate RFQ-security blockers and remain Phase 1 input.
 - Current main has a pre-existing failing **Irha Supabase Function Reconciliation** status while Quality Gate, Cloudflare Production, Search Discovery and Cache Consistency are green. PR #886 is the separate concurrent recovery path; Phase 0 must not absorb or bypass it.
