@@ -33,6 +33,7 @@ on:
       - "src/data/buyerCapabilities.ts"
       - "public/_redirects"
       - "public/_worker.js"
+      - "public/llms.txt"
       - "src/hooks/usePublicCatalog.ts"
       - "src/lib/buyerReadyProductContent.ts"
       - "src/pages/CategoryOrProductPage.tsx"
