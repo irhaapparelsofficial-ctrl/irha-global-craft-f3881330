@@ -11145,6 +11145,10 @@ export type Database = {
       notification_delivery_health: { Args: never; Returns: Json }
       notification_dispatch_tick: { Args: never; Returns: number }
       notification_get_secret: { Args: { _name: string }; Returns: string }
+      notification_normalize_outbound_payload: {
+        Args: { _payload: Json }
+        Returns: Json
+      }
       notification_owner_email: { Args: never; Returns: string }
       notification_requeue_blocked: {
         Args: { _channel: string }
