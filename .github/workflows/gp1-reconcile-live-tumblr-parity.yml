@@ -1,0 +1,269 @@
+name: GP1 reconcile already-live Tumblr parity
+
+on:
+  push:
+    branches:
+      - production-parity-tumblr-phase1-20260809
+    paths:
+      - .github/workflows/gp1-reconcile-live-tumblr-parity.yml
+
+permissions:
+  contents: write
+
+env:
+  SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+  EXPECTED_MAIN_SHA: 19d019b3b41881102eabbe25ce55c5c02a53f2b4
+
+concurrency:
+  group: gp1-reconcile-live-tumblr-parity
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Checkout exact recovery head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Guard current main and exact recovery inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="${GITHUB_REF_NAME}"
+          remote_head="$(git ls-remote origin "refs/heads/$branch" | awk '{print $1}')"
+          current_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$remote_head" = "$GITHUB_SHA"
+          test "$current_main" = "$EXPECTED_MAIN_SHA" || {
+            echo "Main advanced concurrently: expected $EXPECTED_MAIN_SHA got $current_main"
+            exit 1
+          }
+          test -n "${SUPABASE_ACCESS_TOKEN:-}"
+          for path in \
+            supabase/functions/tumblr-oauth-callback/index.ts \
+            supabase/functions/tumblr-operator-get/index.ts \
+            supabase/functions/tumblr-operator/index.ts \
+            supabase/migrations/20260808223304_tumblr_oauth2_integration.sql \
+            supabase/migrations/20260808223629_tumblr_oauth_bootstrap.sql \
+            supabase/migrations/20260808230346_tumblr_bootstrap_multi_use.sql \
+            supabase/migrations/20260808230846_tumblr_oauth1_temp_tokens.sql \
+            supabase/migrations/20260808232335_tumblr_operator_jobs.sql \
+            src/integrations/supabase/types.ts; do
+            test -s "$path"
+          done
+
+      - name: Build exact repository representation from live state
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const projectId = process.env.SUPABASE_PROJECT_ID;
+          const token = String(process.env.SUPABASE_ACCESS_TOKEN || '').trim();
+          if (!token) throw new Error('SUPABASE_ACCESS_TOKEN missing');
+          const boundary = '\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\n';
+          const sha256 = value => createHash('sha256').update(value).digest('hex');
+          const gitBlobSha = buffer => createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${buffer.length}\0`), buffer])).digest('hex');
+          const migrationDefs = [
+            ['20260808223304','tumblr_oauth2_integration','supabase/migrations/20260808223304_tumblr_oauth2_integration.sql','1782bc55a42354f2d6e126024dd8a19de13fbf2c'],
+            ['20260808223629','tumblr_oauth_bootstrap','supabase/migrations/20260808223629_tumblr_oauth_bootstrap.sql','1266be1ec19d9ef78546a4a4579690638e0c509b'],
+            ['20260808230346','tumblr_bootstrap_multi_use','supabase/migrations/20260808230346_tumblr_bootstrap_multi_use.sql','7fb8e7ca462f519e283acaff8d10885e44e342c2'],
+            ['20260808230846','tumblr_oauth1_temp_tokens','supabase/migrations/20260808230846_tumblr_oauth1_temp_tokens.sql','81952df87c6ce14a9f7674c46df9cc35628c8398'],
+            ['20260808232335','tumblr_operator_jobs','supabase/migrations/20260808232335_tumblr_operator_jobs.sql','7aec8a0756022a135446ded7c89104b9acef3897'],
+          ];
+          const functionDefs = [
+            ['tumblr-oauth-callback',1,false,'fc9e2d1afb7d09ac74fb59dff185261b4ffc366211b68303a96c9e16b168eb34','supabase/functions/tumblr-oauth-callback/index.ts','202183fb15bd07554291a46881624bc49de4e398','Tumblr OAuth redirect with OAuth token/verifier validation'],
+            ['tumblr-operator',14,false,'65ccf52be639bbf35bbb29d270de91a54dd2c31dd49fd27a4c05188a76f8fc36','supabase/functions/tumblr-operator/index.ts','9adc4f219d436cd69bab320345f9f596877fc431','admin/bootstrap or single-use operator job token'],
+            ['tumblr-operator-get',1,false,'7b35dea5bd1cb3f74c5a759194b7443cc9f72d86f31c3ce9c467dd5812e67683','supabase/functions/tumblr-operator-get/index.ts','3f4e6e1350c493160f8727051d0b6368547d6d56','single-use operator job token proxy'],
+          ];
+          async function api(path, options={}) {
+            const r = await fetch(`https://api.supabase.com${path}`, { ...options, headers: { authorization:`Bearer ${token}`, 'content-type':'application/json', ...(options.headers||{}) } });
+            const text = await r.text();
+            const body = text ? JSON.parse(text) : {};
+            if (!r.ok) throw new Error(`Supabase API ${path} failed (${r.status})`);
+            return body;
+          }
+          const rowsOf = p => Array.isArray(p) ? p : Array.isArray(p?.result) ? p.result : Array.isArray(p?.data) ? p.data : Array.isArray(p?.rows) ? p.rows : Array.isArray(p?.result?.rows) ? p.result.rows : [];
+          const project = await api(`/v1/projects/${projectId}`);
+          if (project.id !== projectId || project.status !== 'ACTIVE_HEALTHY') throw new Error('Unexpected Supabase project identity/health');
+          const versions = migrationDefs.map(x=>`'${x[0]}'`).join(',');
+          const migrationPayload = await api(`/v1/projects/${projectId}/database/query`, { method:'POST', body:JSON.stringify({ read_only:true, query:`select version,name,statements from supabase_migrations.schema_migrations where version in (${versions}) order by version` }) });
+          const liveMigrations = rowsOf(migrationPayload);
+          if (liveMigrations.length !== migrationDefs.length) throw new Error(`Expected ${migrationDefs.length} Tumblr live migrations, found ${liveMigrations.length}`);
+          const liveByVersion = new Map(liveMigrations.map(row=>[String(row.version),row]));
+
+          const manifestPath = 'supabase/repository-migrations.json';
+          const manifest = JSON.parse(readFileSync(manifestPath,'utf8'));
+          const targetVersions = new Set(migrationDefs.map(x=>x[0]));
+          manifest.migrations = manifest.migrations.filter(entry=>!targetVersions.has(String(entry.version)));
+          for (const [version,name,path,expectedBlob] of migrationDefs) {
+            const actualBlob = gitBlobSha(readFileSync(path));
+            if (actualBlob !== expectedBlob) throw new Error(`Unexpected repository blob for ${path}: ${actualBlob}`);
+            const live = liveByVersion.get(version);
+            if (!live || String(live.name) !== name || !Array.isArray(live.statements) || live.statements.length < 1) throw new Error(`Live migration identity mismatch for ${version}`);
+            const digest = sha256(Buffer.from(live.statements.join(boundary),'utf8'));
+            const verificationQuery = `select exists (select 1 from supabase_migrations.schema_migrations where version = '${version}' and name = '${name}' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = '${digest}') as verified`;
+            manifest.migrations.push({ version, name, path, git_blob_sha:actualBlob, execution_mode:'verified_present', transactional_dry_run:false, verification_query:verificationQuery });
+          }
+          manifest.migrations.sort((a,b)=>String(a.version).localeCompare(String(b.version)));
+          writeFileSync(manifestPath, `${JSON.stringify(manifest,null,2)}\n`);
+
+          const functionsPayload = await api(`/v1/projects/${projectId}/functions`);
+          const liveFunctions = rowsOf(functionsPayload.functions || functionsPayload);
+          const liveFnByName = new Map(liveFunctions.filter(fn=>fn.status==='ACTIVE').map(fn=>[String(fn.slug||fn.name),fn]));
+          const f1Path = 'supabase/deployment-parity/functions-f1.json';
+          const f1 = JSON.parse(readFileSync(f1Path,'utf8'));
+          const targetFns = new Set(functionDefs.map(x=>x[0]));
+          f1.functions = f1.functions.filter(row=>!targetFns.has(String(row[0])));
+          for (const [name,minimumVersion,verifyJwt,sourceHash,sourcePath,expectedBlob,caller] of functionDefs) {
+            const actualBlob = gitBlobSha(readFileSync(sourcePath));
+            if (actualBlob !== expectedBlob) throw new Error(`Unexpected repository source blob for ${name}: ${actualBlob}`);
+            const live = liveFnByName.get(name);
+            if (!live) throw new Error(`Live Tumblr function missing: ${name}`);
+            if (Number(live.version) < minimumVersion || Boolean(live.verify_jwt) !== verifyJwt || String(live.ezbr_sha256||live.source_sha256||'') !== sourceHash) throw new Error(`Live Tumblr function parity mismatch: ${name}`);
+            f1.functions.push([name,minimumVersion,verifyJwt,sourceHash,sourcePath,'Irha Apparels production',caller,null,true,'retain','live-hash+repository-owner']);
+          }
+          f1.functions.sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
+          writeFileSync(f1Path, `${JSON.stringify(f1)}\n`);
+
+          const configPath='supabase/config.toml';
+          let config=readFileSync(configPath,'utf8').trimEnd();
+          for (const [name,,verifyJwt] of functionDefs) {
+            const marker=`[functions.${name}]`;
+            if (config.includes(marker)) throw new Error(`Unexpected pre-existing Tumblr config section: ${name}`);
+            config += `\n\n# F1 — retain\n${marker}\nverify_jwt = ${verifyJwt}`;
+          }
+          writeFileSync(configPath, `${config}\n`);
+          NODE
+          node scripts/verify-migration-order.mjs
+          git diff --name-only | sort > /tmp/changed.txt
+          printf '%s\n' \
+            supabase/config.toml \
+            supabase/deployment-parity/functions-f1.json \
+            supabase/repository-migrations.json | sort > /tmp/expected.txt
+          cmp -s /tmp/changed.txt /tmp/expected.txt || { echo 'Unexpected representation diff'; cat /tmp/changed.txt; exit 1; }
+
+      - name: Commit exact repository authorization layer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/config.toml supabase/deployment-parity/functions-f1.json supabase/repository-migrations.json
+          git commit -m "chore(parity): register already-live Tumblr state"
+          source_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | awk '{print $1}')"
+          current_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$remote_head" = "$source_sha"
+          test "$current_main" = "$EXPECTED_MAIN_SHA"
+          echo "PARITY_SOURCE_SHA=$source_sha" >> "$GITHUB_ENV"
+
+      - name: Prove five migrations are verified-present without replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          export REPO_MIGRATION_MODE=plan
+          export SOURCE_SHA="$PARITY_SOURCE_SHA"
+          export REPO_MIGRATION_PLAN_PATH=/tmp/tumblr-parity-plan.json
+          export REPO_MIGRATION_EVIDENCE_PATH=/tmp/tumblr-parity-plan-evidence.json
+          node scripts/ci/reconcile-repository-migrations.mjs
+          jq -e '.pending | length == 5' /tmp/tumblr-parity-plan.json >/dev/null
+          jq -e '.transactional_dry_runs | length == 0' /tmp/tumblr-parity-plan.json >/dev/null
+          jq -e '.verified_existing | length == 5' /tmp/tumblr-parity-plan.json >/dev/null
+          jq -e '[.pending[].execution_mode] | all(. == "verified_present")' /tmp/tumblr-parity-plan.json >/dev/null
+
+      - name: Register only verified-present ledger evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | awk '{print $1}')"
+          test "$current_main" = "$EXPECTED_MAIN_SHA"
+          test "$remote_head" = "$PARITY_SOURCE_SHA"
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync } from 'node:fs';
+          const token=String(process.env.SUPABASE_ACCESS_TOKEN||'').trim();
+          const projectId=process.env.SUPABASE_PROJECT_ID;
+          const sourceSha=process.env.PARITY_SOURCE_SHA;
+          const target=new Set(['20260808223304','20260808223629','20260808230346','20260808230846','20260808232335']);
+          const manifest=JSON.parse(readFileSync('supabase/repository-migrations.json','utf8'));
+          const entries=manifest.migrations.filter(e=>target.has(String(e.version)));
+          if(entries.length!==5||entries.some(e=>e.execution_mode!=='verified_present'))throw new Error('Unexpected verified-present manifest set');
+          const sqlLiteral=v=>`'${String(v).replaceAll("'","''")}'`;
+          const rowsOf=p=>Array.isArray(p)?p:Array.isArray(p?.result)?p.result:Array.isArray(p?.data)?p.data:Array.isArray(p?.rows)?p.rows:Array.isArray(p?.result?.rows)?p.result.rows:[];
+          async function query(query,read_only){const r=await fetch(`https://api.supabase.com/v1/projects/${projectId}/database/query`,{method:'POST',headers:{authorization:`Bearer ${token}`,'content-type':'application/json'},body:JSON.stringify({query,read_only})});const text=await r.text();const body=text?JSON.parse(text):{};if(!r.ok)throw new Error(`database query failed (${r.status})`);return rowsOf(body)}
+          const existing=await query(`select version,name,repository_path,git_blob_sha,source_commit,application_state,execution_mode from private.irha_repository_migration_ledger where version in (${entries.map(e=>sqlLiteral(e.version)).join(',')}) order by version`,true);
+          const existingByVersion=new Map(existing.map(r=>[String(r.version),r]));
+          const inserts=[];
+          for(const entry of entries){
+            const verified=await query(entry.verification_query,true);
+            if(verified.length!==1||verified[0]?.verified!==true)throw new Error(`Verification query failed for ${entry.version}`);
+            const verificationQuerySha=createHash('sha256').update(entry.verification_query).digest('hex');
+            const old=existingByVersion.get(entry.version);
+            if(old){
+              if(old.git_blob_sha!==entry.git_blob_sha||!['applied','verified_present'].includes(old.application_state))throw new Error(`Conflicting ledger row for ${entry.version}`);
+              continue;
+            }
+            const verification=JSON.stringify({source_sha:sourceSha,manifest_schema_version:manifest.schema_version,execution_mode:'verified_present',transactional_dry_run:false,verification_query_sha256:verificationQuerySha,existing_objects_verified:true,concurrency_recovery:'phase1_tumblr_parallel_release'});
+            inserts.push(`insert into private.irha_repository_migration_ledger (version,name,repository_path,git_blob_sha,source_commit,application_state,execution_mode,verification,applied_at,recorded_at) values (${sqlLiteral(entry.version)},${sqlLiteral(entry.name)},${sqlLiteral(entry.path)},${sqlLiteral(entry.git_blob_sha)},${sqlLiteral(sourceSha)},'verified_present','github_management_api_verified_existing',${sqlLiteral(verification)}::jsonb,now(),now()) on conflict (version) do nothing;`);
+          }
+          if(inserts.length)await query(`begin;\n${inserts.join('\n')}\ncommit;`,false);
+          const after=await query(`select version,name,repository_path,git_blob_sha,source_commit,application_state,execution_mode from private.irha_repository_migration_ledger where version in (${entries.map(e=>sqlLiteral(e.version)).join(',')}) order by version`,true);
+          if(after.length!==5)throw new Error(`Expected 5 Tumblr ledger rows, found ${after.length}`);
+          for(const entry of entries){const row=after.find(r=>String(r.version)===entry.version);if(!row||row.name!==entry.name||row.repository_path!==entry.path||row.git_blob_sha!==entry.git_blob_sha||!['applied','verified_present'].includes(row.application_state))throw new Error(`Ledger verification failed for ${entry.version}`)}
+          console.log('Verified-present Tumblr migration ledger parity: 5/5');
+          NODE
+
+      - name: Regenerate exact Supabase parity evidence and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes supabase@2.39.2 gen types typescript --project-id "$SUPABASE_PROJECT_ID" --schema public > /tmp/supabase-types.ts
+          diff -u src/integrations/supabase/types.ts /tmp/supabase-types.ts
+          node scripts/ci/verify-supabase-type-supplement.mjs /tmp/supabase-types.ts
+          node scripts/ci/run-sec-m03-parity-generation.mjs
+          node scripts/verify-supabase-parity.mjs
+          MIGRATION_PROVENANCE_MODE=verify node scripts/ci/generate-migration-provenance.mjs
+          SUPABASE_MANIFEST_MODE=verify node scripts/ci/generate-supabase-manifest.mjs
+
+      - name: Commit only generated parity evidence and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | awk '{print $1}')"
+          test "$current_main" = "$EXPECTED_MAIN_SHA"
+          test "$remote_head" = "$PARITY_SOURCE_SHA"
+          git diff --name-only | sort > /tmp/generated-changed.txt
+          printf '%s\n' \
+            supabase/deployment-parity/manifest.json \
+            supabase/deployment-parity/migration-provenance.json | sort > /tmp/generated-expected.txt
+          cmp -s /tmp/generated-changed.txt /tmp/generated-expected.txt || { echo 'Unexpected generated parity diff'; cat /tmp/generated-changed.txt; exit 1; }
+          rm .github/workflows/gp1-reconcile-live-tumblr-parity.yml
+          git add supabase/deployment-parity/manifest.json supabase/deployment-parity/migration-provenance.json .github/workflows/gp1-reconcile-live-tumblr-parity.yml
+          git diff --cached --name-only | sort > /tmp/staged.txt
+          printf '%s\n' \
+            .github/workflows/gp1-reconcile-live-tumblr-parity.yml \
+            supabase/deployment-parity/manifest.json \
+            supabase/deployment-parity/migration-provenance.json | sort > /tmp/staged-expected.txt
+          cmp -s /tmp/staged.txt /tmp/staged-expected.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(parity): refresh exact production Supabase evidence"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
