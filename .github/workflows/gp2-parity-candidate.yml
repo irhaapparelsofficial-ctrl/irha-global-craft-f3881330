@@ -5,30 +5,29 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
     paths:
-      - "supabase/config.toml"
-      - "supabase/deployment-parity/**"
       - ".github/workflows/gp2-parity-candidate.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     env:
       SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -40,19 +39,24 @@ jobs:
         with:
           version: 2.39.2
 
-      - name: Guard and repair proven site-visitor bundle drift
+      - name: Guard exact GP-2 branch and preserve accepted function sources
         shell: bash
         run: |
           set -euo pipefail
+          test "$HEAD_BRANCH" = "gp2/gsc-internal-auth-boundary-20260809"
           test -n "$SUPABASE_ACCESS_TOKEN"
           echo "::add-mask::$SUPABASE_ACCESS_TOKEN"
           grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
-
-          # The one-time repair may only deploy source already accepted on exact main.
           git diff --quiet "$BASE_SHA" "$CANDIDATE_SHA" -- \
             supabase/functions/site-visitor/index.ts \
-            supabase/functions/_shared/durable-rate-limit.ts
+            supabase/functions/_shared/durable-rate-limit.ts \
+            supabase/functions/operations-orchestrator/index.ts \
+            supabase/functions/gsc-analytics/index.ts
 
+      - name: Verify and refresh exact site-visitor evidence
+        shell: bash
+        run: |
+          set -euo pipefail
           cat > /tmp/site-visitor-parity-plan.json <<'JSON'
           {
             "schema_version": 1,
@@ -63,7 +67,7 @@ jobs:
                 "name": "site-visitor",
                 "registry": "supabase/deployment-parity/functions-f1.json",
                 "repository_source": "supabase/functions/site-visitor/index.ts",
-                "minimum_version": 0,
+                "minimum_version": 22,
                 "verify_jwt": false,
                 "require_shared_limiter": true,
                 "provenance": "GP-2 exact-main source rebundled after proven out-of-band shared-helper byte drift"
@@ -71,63 +75,20 @@ jobs:
             ]
           }
           JSON
-
           rm -rf /tmp/sec-m03-live-functions
-          SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
-            node scripts/ci/fetch-supabase-edge-sources.mjs
-
-          if SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
-            node scripts/ci/verify-sec-m03-deployed-sources.mjs; then
-            echo "site-visitor already matches exact repository bytes; no redeploy needed"
-          else
-            before="$(curl -fsS \
-              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-              -H 'Content-Type: application/json' \
-              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/site-visitor")"
-            before_version="$(jq -r '.version' <<<"$before")"
-            before_hash="$(jq -r '.ezbr_sha256' <<<"$before")"
-            before_verify="$(jq -r '.verify_jwt' <<<"$before")"
-
-            test "$before_version" = "21"
-            test "$before_hash" = "e50cc0c6657f917b01bd1967c1bba60b586dc6faafbd02093a97ec2e50fb0b46"
-            test "$before_verify" = "false"
-
-            supabase functions deploy site-visitor --project-ref "$SUPABASE_PROJECT_ID"
-
-            after="$(curl -fsS \
-              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-              -H 'Content-Type: application/json' \
-              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/site-visitor")"
-            after_version="$(jq -r '.version' <<<"$after")"
-            test "$after_version" -gt "$before_version"
-            test "$(jq -r '.verify_jwt' <<<"$after")" = "false"
-
-            rm -rf /tmp/sec-m03-live-functions
-            SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
-              node scripts/ci/fetch-supabase-edge-sources.mjs
-            SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
-              node scripts/ci/verify-sec-m03-deployed-sources.mjs
-          fi
-
-          curl -fsS \
-            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-            -H 'Content-Type: application/json' \
-            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" \
-            > /tmp/functions-after.json
-
+          SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json node scripts/ci/fetch-supabase-edge-sources.mjs
+          SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json node scripts/ci/verify-sec-m03-deployed-sources.mjs
+          curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" > /tmp/functions-after.json
           SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
             SEC_M03_LIVE_INVENTORY=/tmp/functions-after.json \
             SEC_M03_REGISTRY_EVIDENCE=/tmp/site-visitor-registry-refresh-evidence.json \
-            SOURCE_SHA="$CANDIDATE_SHA" \
-            node scripts/ci/refresh-sec-m03-live-parity.mjs
+            SOURCE_SHA="$CANDIDATE_SHA" node scripts/ci/refresh-sec-m03-live-parity.mjs
 
-      - name: Refresh exact operations-orchestrator registry evidence
+      - name: Verify and refresh exact operations-orchestrator evidence
         shell: bash
         run: |
           set -euo pipefail
-          git diff --quiet "$BASE_SHA" "$CANDIDATE_SHA" -- \
-            supabase/functions/operations-orchestrator/index.ts
-
           cat > /tmp/operations-orchestrator-parity-plan.json <<'JSON'
           {
             "schema_version": 1,
@@ -146,37 +107,89 @@ jobs:
             ]
           }
           JSON
-
           rm -rf /tmp/sec-m03-live-functions
-          SEC_M03_PARITY_REFRESH_PLAN=/tmp/operations-orchestrator-parity-plan.json \
-            node scripts/ci/fetch-supabase-edge-sources.mjs
+          SEC_M03_PARITY_REFRESH_PLAN=/tmp/operations-orchestrator-parity-plan.json node scripts/ci/fetch-supabase-edge-sources.mjs
           SEC_M03_PARITY_REFRESH_PLAN=/tmp/operations-orchestrator-parity-plan.json \
             SEC_M03_SOURCE_EVIDENCE=/tmp/operations-orchestrator-source-evidence.json \
             node scripts/ci/verify-sec-m03-deployed-sources.mjs
-
-          curl -fsS \
-            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-            -H 'Content-Type: application/json' \
-            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" \
-            > /tmp/functions-after.json
-
+          curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" > /tmp/functions-after.json
           SEC_M03_PARITY_REFRESH_PLAN=/tmp/operations-orchestrator-parity-plan.json \
             SEC_M03_LIVE_INVENTORY=/tmp/functions-after.json \
             SEC_M03_REGISTRY_EVIDENCE=/tmp/operations-orchestrator-registry-refresh-evidence.json \
-            SOURCE_SHA="$CANDIDATE_SHA" \
-            node scripts/ci/refresh-sec-m03-live-parity.mjs
+            SOURCE_SHA="$CANDIDATE_SHA" node scripts/ci/refresh-sec-m03-live-parity.mjs
+
+      - name: Align permanent GP-2 reconciliation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const planPath = 'supabase/reconciliation/sec-m03-parity-refresh.json';
+          const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+          const updates = {
+            'gsc-analytics': { minimum_version: 33, verify_jwt: false, provenance: 'GP-2 Search Console measurement source; v33 exact deployed source and custom internal admin/service authorization accepted with gateway verify_jwt=false' },
+            'operations-orchestrator': { minimum_version: 23, verify_jwt: false, provenance: 'GP-2 daily search-measurement monitoring source; v23 exact deployed source verified before parity refresh' },
+            'site-visitor': { minimum_version: 22, verify_jwt: false, provenance: 'GP-2 accepted exact source rebundle after shared-helper byte drift repair; v22 source verified' },
+          };
+          for (const entry of plan.functions) {
+            if (updates[entry.name]) Object.assign(entry, updates[entry.name]);
+          }
+          fs.writeFileSync(planPath, `${JSON.stringify(plan, null, 2)}\n`);
+
+          const testPath = 'src/test/secM03ParityControl.test.ts';
+          let test = fs.readFileSync(testPath, 'utf8');
+          const before = 'repository_source: "supabase/functions/gsc-analytics/index.ts",\n      verify_jwt: true,';
+          const after = 'repository_source: "supabase/functions/gsc-analytics/index.ts",\n      verify_jwt: false,';
+          if (!test.includes(before)) throw new Error('Expected stale gsc parity assertion not found');
+          test = test.replace(before, after);
+          fs.writeFileSync(testPath, test);
+          NODE
 
       - name: Generate exact production parity candidate
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes supabase@2.39.2 gen types typescript \
-            --project-id "$SUPABASE_PROJECT_ID" \
-            --schema public > src/integrations/supabase/types.ts
+          npx --yes supabase@2.39.2 gen types typescript --project-id "$SUPABASE_PROJECT_ID" --schema public > src/integrations/supabase/types.ts
           test -s src/integrations/supabase/types.ts
           MIGRATION_PROVENANCE_MODE=write node scripts/ci/generate-migration-provenance.mjs
           SUPABASE_MANIFEST_MODE=write node scripts/ci/generate-supabase-manifest.mjs
           node scripts/verify-supabase-parity.mjs
+          sha256sum \
+            src/integrations/supabase/types.ts \
+            supabase/deployment-parity/functions-f1.json \
+            supabase/deployment-parity/functions-f2.json \
+            supabase/deployment-parity/migration-provenance.json \
+            supabase/deployment-parity/manifest.json > /tmp/gp2-first-generation.sha256
+
+      - name: Prove deterministic second generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes supabase@2.39.2 gen types typescript --project-id "$SUPABASE_PROJECT_ID" --schema public > src/integrations/supabase/types.ts
+          MIGRATION_PROVENANCE_MODE=write node scripts/ci/generate-migration-provenance.mjs
+          SUPABASE_MANIFEST_MODE=write node scripts/ci/generate-supabase-manifest.mjs
+          node scripts/verify-supabase-parity.mjs
+          sha256sum -c /tmp/gp2-first-generation.sha256
+
+      - name: Commit exact canonical GP-2 evidence to existing PR
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/integrations/supabase/types.ts \
+            src/test/secM03ParityControl.test.ts \
+            supabase/deployment-parity/functions-f1.json \
+            supabase/deployment-parity/functions-f2.json \
+            supabase/deployment-parity/migration-provenance.json \
+            supabase/deployment-parity/manifest.json \
+            supabase/reconciliation/sec-m03-parity-refresh.json
+          git diff --cached --check
+          git diff --cached --quiet && { echo "Canonical evidence already committed"; exit 0; }
+          git commit -m "chore(gp2): commit canonical production parity evidence"
+          git push origin "HEAD:$HEAD_BRANCH"
 
       - name: Upload exact candidate evidence
         if: always()
@@ -189,10 +202,12 @@ jobs:
             supabase/deployment-parity/functions-f2.json
             supabase/deployment-parity/migration-provenance.json
             supabase/deployment-parity/manifest.json
+            supabase/reconciliation/sec-m03-parity-refresh.json
             /tmp/site-visitor-registry-refresh-evidence.json
             /tmp/operations-orchestrator-registry-refresh-evidence.json
             /tmp/operations-orchestrator-source-evidence.json
             /tmp/sec-m03-deployed-source-evidence.json
             /tmp/functions-after.json
+            /tmp/gp2-first-generation.sha256
           if-no-files-found: warn
           retention-days: 2
