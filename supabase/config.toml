@@ -96,9 +96,9 @@ verify_jwt = true
 [functions.generate-mockup]
 verify_jwt = false
 
-# F2 — retain
+# F2 — custom admin/service auth inside function; gateway JWT disabled for internal service-key calls
 [functions.gsc-analytics]
-verify_jwt = true
+verify_jwt = false
 
 # F2 — retain
 [functions.gsc-inspect]
