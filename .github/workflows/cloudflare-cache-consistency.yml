@@ -24,7 +24,10 @@ env:
 
 jobs:
   reconcile-cache:
-    if: github.event.workflow_run.head_repository.full_name == github.repository
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -49,20 +52,17 @@ jobs:
             exit 0
           fi
 
-          lineage_marker=/tmp/cache-release-lineage.json
-          lineage_status="$(curl -sS -L --connect-timeout 10 --max-time 40 \
-            -H 'Cache-Control: no-cache' \
-            -o "$lineage_marker" -w '%{http_code}' \
-            "$PAGES_URL/cloudflare-deployment.json?release_check=${SOURCE_SHA::12}-$RANDOM" || true)"
-          test "$lineage_status" = "200"
-          jq -e --arg sha "$SOURCE_SHA" '
-            .source_sha == $sha
-            and .branch == "main"
-            and (.build_fingerprint | type == "string" and test("^[0-9a-f]{64}$"))
-            and (.quality_run_id | type == "string" and test("^[0-9]+$"))
-          ' "$lineage_marker" >/dev/null
+          status_json="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/status")"
+          quality_target="$(printf '%s' "$status_json" | jq -r '[.statuses[] | select(.context == "Irha Quality Gate" and .state == "success")][0].target_url // empty')"
+          test -n "$quality_target"
+          quality_target="${quality_target%/}"
+          case "$quality_target" in
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/"*) ;;
+            *) echo "Unexpected Quality Gate target URL: $quality_target"; exit 1 ;;
+          esac
+          quality_run_id="${quality_target##*/}"
+          [[ "$quality_run_id" =~ ^[0-9]+$ ]]
 
-          quality_run_id="$(jq -r '.quality_run_id' "$lineage_marker")"
           quality_run="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$quality_run_id")"
           printf '%s' "$quality_run" | jq -e --arg sha "$SOURCE_SHA" '
             .name == "Quality Gate"
@@ -72,9 +72,15 @@ jobs:
             and .conclusion == "success"
           ' >/dev/null
 
+          expected_artifact="production-dist-$SOURCE_SHA"
+          artifact_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$quality_run_id/artifacts")"
+          printf '%s' "$artifact_json" | jq -e --arg name "$expected_artifact" '
+            any(.artifacts[]; .name == $name and .expired == false)
+          ' >/dev/null
+
           echo "eligible=true" >> "$GITHUB_OUTPUT"
           echo "quality_run_id=$quality_run_id" >> "$GITHUB_OUTPUT"
-          echo "Exact current main frozen: $SOURCE_SHA; deployed Quality lineage: $quality_run_id"
+          echo "Exact current main frozen: $SOURCE_SHA; exact successful Quality artifact: $quality_run_id"
 
       - name: Record superseded no-op
         if: steps.freeze.outputs.eligible != 'true'
@@ -116,7 +122,6 @@ jobs:
           set -euo pipefail
           test -s dist/index.html
           test -s dist/build.json
-
           jq -e --arg sha "$SOURCE_SHA" \
             '.source_commit == $sha and .source_identity_state == "verified" and (.build_fingerprint | test("^[0-9a-f]{64}$"))' \
             dist/build.json >/dev/null
@@ -136,7 +141,6 @@ jobs:
           fi
           [[ "$account_id" =~ ^[0-9a-fA-F]{32}$ ]]
           echo "::add-mask::$account_id"
-
           echo "CLOUDFLARE_API_TOKEN=$token" >> "$GITHUB_ENV"
           echo "CLOUDFLARE_ACCOUNT_ID=$account_id" >> "$GITHUB_ENV"
           echo "CLOUDFLARE_PROJECT_NAME=$project_name" >> "$GITHUB_ENV"
@@ -233,19 +237,22 @@ jobs:
         run: |
           set -euo pipefail
           matrix=/tmp/cache-consistency-matrix.tsv
-          printf 'origin\tuser_agent\trequest\tstatus\tidentity\tchallenge\tcf_cache_status\tage\tcache_control\tcdn_cache_control\tcf_ray\n' > "$matrix"
+          printf 'origin\tuser_agent\trequest\tstatus\tidentity\tchallenge\n' > "$matrix"
           verification_failed=false
           echo "apex_build_direct=false" >> "$GITHUB_OUTPUT"
           echo "apex_home_direct=false" >> "$GITHUB_OUTPUT"
           echo "apex_challenge_seen=false" >> "$GITHUB_OUTPUT"
           echo "www_challenge_seen=false" >> "$GITHUB_OUTPUT"
 
+          is_challenge() {
+            status="$1"
+            headers="$2"
+            body="$3"
+            [ "$status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null || { grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; }; }
+          }
+
           verify_build() {
-            origin="$1"
-            label="$2"
-            suffix="$3"
-            tag="$4"
-            ua_mode="$5"
+            origin="$1"; label="$2"; suffix="$3"; tag="$4"; ua_mode="$5"
             body="/tmp/${label}-${ua_mode}-${tag}-build.json"
             headers="/tmp/${label}-${ua_mode}-${tag}-build.headers"
             curl_args=(-sS -L --connect-timeout 10 --max-time 40 -H 'Accept: application/json,text/plain,*/*' -H 'Cache-Control: no-cache')
@@ -253,91 +260,49 @@ jobs:
               curl_args+=(-A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36')
             fi
             status="$(curl "${curl_args[@]}" -D "$headers" -o "$body" -w '%{http_code}' "$origin/build.json$suffix" || true)"
-
-            challenge=false
             identity=false
-            if [ "$status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null || { grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; }; }; then
-              challenge=true
-            fi
-            if [ "$status" = 200 ] && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$EXPECTED_FINGERPRINT" \
-              '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' \
-              "$body" >/dev/null 2>&1; then
+            challenge=false
+            if is_challenge "$status" "$headers" "$body"; then challenge=true; fi
+            if [ "$status" = "200" ] && jq -e --arg sha "$SOURCE_SHA" --arg fingerprint "$EXPECTED_FINGERPRINT" \
+              '.source_commit == $sha and .source_identity_state == "verified" and .build_fingerprint == $fingerprint' "$body" >/dev/null 2>&1; then
               identity=true
             fi
-
-            header_value() {
-              key="$1"
-              awk -v k="$key" 'BEGIN{IGNORECASE=1} $0 ~ "^" k ":" {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$headers"
-            }
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-              "$label" "$ua_mode" "/build.json$suffix" "$status" "$identity" "$challenge" \
-              "$(header_value cf-cache-status)" "$(header_value age)" "$(header_value cache-control)" \
-              "$(header_value cdn-cache-control)" "$(header_value cf-ray)" >> "$matrix"
-
-            BUILD_STATUS="$status"
-            BUILD_IDENTITY="$identity"
-            BUILD_CHALLENGE="$challenge"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$label" "$ua_mode" "/build.json$suffix" "$status" "$identity" "$challenge" >> "$matrix"
+            BUILD_IDENTITY="$identity"; BUILD_CHALLENGE="$challenge"
           }
 
           verify_home() {
-            origin="$1"
-            label="$2"
-            suffix="$3"
-            tag="$4"
+            origin="$1"; label="$2"; suffix="$3"; tag="$4"
             body="/tmp/${label}-${tag}-home.html"
             headers="/tmp/${label}-${tag}-home.headers"
             status="$(curl -sS -L --connect-timeout 10 --max-time 40 \
               -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36' \
-              -H 'Accept: text/html,application/xhtml+xml' \
-              -H 'Cache-Control: no-cache' \
-              -D "$headers" -o "$body" -w '%{http_code}' \
-              "$origin/$suffix" || true)"
-            challenge=false
+              -H 'Accept: text/html,application/xhtml+xml' -H 'Cache-Control: no-cache' \
+              -D "$headers" -o "$body" -w '%{http_code}' "$origin/$suffix" || true)"
             identity=false
-            if [ "$status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers" 2>/dev/null || { grep -Fqi 'server: cloudflare' "$headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$body" 2>/dev/null; }; }; then
-              challenge=true
-            fi
-            if [ "$status" = 200 ]; then
+            challenge=false
+            if is_challenge "$status" "$headers" "$body"; then challenge=true; fi
+            if [ "$status" = "200" ]; then
               source_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const q="[\\\""+String.fromCharCode(39)+"]"; const m=s.match(new RegExp("<meta[^>]+name="+q+"x-irha-source-commit"+q+"[^>]+content="+q+"([^\\\""+String.fromCharCode(39)+"]+)","i")); process.stdout.write(m?.[1]||"")' "$body")"
               fingerprint_meta="$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8"); const q="[\\\""+String.fromCharCode(39)+"]"; const m=s.match(new RegExp("<meta[^>]+name="+q+"x-irha-build-fingerprint"+q+"[^>]+content="+q+"([^\\\""+String.fromCharCode(39)+"]+)","i")); process.stdout.write(m?.[1]||"")' "$body")"
-              if [ "$source_meta" = "$SOURCE_SHA" ] && [ "$fingerprint_meta" = "$EXPECTED_FINGERPRINT" ]; then
-                identity=true
-              fi
+              if [ "$source_meta" = "$SOURCE_SHA" ] && [ "$fingerprint_meta" = "$EXPECTED_FINGERPRINT" ]; then identity=true; fi
               if grep -Fq 'Two macro hubs.' "$body"; then
                 echo "Historical macro-hubs homepage detected at $origin/$suffix"
                 verification_failed=true
               fi
             fi
-
-            header_value() {
-              key="$1"
-              awk -v k="$key" 'BEGIN{IGNORECASE=1} $0 ~ "^" k ":" {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$headers"
-            }
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-              "$label" "browser" "/$suffix" "$status" "$identity" "$challenge" \
-              "$(header_value cf-cache-status)" "$(header_value age)" "$(header_value cache-control)" \
-              "$(header_value cdn-cache-control)" "$(header_value cf-ray)" >> "$matrix"
-
-            HOME_STATUS="$status"
-            HOME_IDENTITY="$identity"
-            HOME_CHALLENGE="$challenge"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$label" "browser" "/$suffix" "$status" "$identity" "$challenge" >> "$matrix"
+            HOME_IDENTITY="$identity"; HOME_CHALLENGE="$challenge"
           }
 
           for origin_spec in "$PAGES_URL|pages" "$CANONICAL_ORIGIN|apex"; do
-            origin="${origin_spec%%|*}"
-            label="${origin_spec##*|}"
-
-            build_direct=true
-            home_direct=true
-            challenge_seen=false
-            non_challenge_mismatch=false
-
+            origin="${origin_spec%%|*}"; label="${origin_spec##*|}"
+            build_direct=true; home_direct=true; challenge_seen=false; non_challenge_mismatch=false
             for ua_mode in default browser; do
               verify_build "$origin" "$label" "" "unbusted" "$ua_mode"
               [ "$BUILD_IDENTITY" = true ] || build_direct=false
               [ "$BUILD_CHALLENGE" = true ] && challenge_seen=true
               if [ "$BUILD_IDENTITY" != true ] && [ "$BUILD_CHALLENGE" != true ]; then non_challenge_mismatch=true; fi
-
               verify_build "$origin" "$label" "?release_check=${SOURCE_SHA::12}-$RANDOM" "busted" "$ua_mode"
               [ "$BUILD_IDENTITY" = true ] || build_direct=false
               [ "$BUILD_CHALLENGE" = true ] && challenge_seen=true
@@ -354,22 +319,22 @@ jobs:
 
             if [ "$label" = pages ]; then
               if [ "$build_direct" != true ] || [ "$home_direct" != true ]; then
-                verification_failed=true
                 echo "Pages returned a non-exact release response; stale/challenged Pages responses are not accepted."
+                verification_failed=true
               fi
             else
               echo "apex_build_direct=$build_direct" >> "$GITHUB_OUTPUT"
               echo "apex_home_direct=$home_direct" >> "$GITHUB_OUTPUT"
               echo "apex_challenge_seen=$challenge_seen" >> "$GITHUB_OUTPUT"
               if [ "$non_challenge_mismatch" = true ]; then
-                verification_failed=true
                 echo "Apex returned a non-challenge release mismatch."
+                verification_failed=true
               elif [ "$build_direct" != true ] || [ "$home_direct" != true ]; then
                 if [ "$challenge_seen" = true ]; then
                   echo "::warning::GitHub-hosted direct apex observation is challenged; control-plane and independent public-browser verification remain required."
                 else
-                  verification_failed=true
                   echo "Apex release consistency could not be proven."
+                  verification_failed=true
                 fi
               fi
             fi
@@ -377,16 +342,11 @@ jobs:
 
           www_headers=/tmp/www-cache-consistency.headers
           www_body=/tmp/www-cache-consistency.body
-          www_status="$(curl -sS --connect-timeout 10 --max-time 40 --max-redirs 0 \
-            -D "$www_headers" -o "$www_body" -w '%{http_code}' \
-            "$WWW_ORIGIN/?utm_source=google" || true)"
+          www_status="$(curl -sS --connect-timeout 10 --max-time 40 --max-redirs 0 -D "$www_headers" -o "$www_body" -w '%{http_code}' "$WWW_ORIGIN/?utm_source=google" || true)"
           www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$www_headers")"
           www_challenge=false
-          if [ "$www_status" = "403" ] && { grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$www_headers" 2>/dev/null || { grep -Fqi 'server: cloudflare' "$www_headers" 2>/dev/null && grep -Fqi 'Just a moment...' "$www_body" 2>/dev/null; }; }; then
-            www_challenge=true
-          fi
+          if is_challenge "$www_status" "$www_headers" "$www_body"; then www_challenge=true; fi
           echo "www_challenge_seen=$www_challenge" >> "$GITHUB_OUTPUT"
-
           if [ "$www_challenge" = "true" ]; then
             echo "::warning::GitHub-hosted direct www observation is challenged; independent public-browser verification remains required for canonical redirect."
           else
@@ -426,14 +386,12 @@ jobs:
               description="Cache policy and Pages identity verified"
             fi
           fi
-
           gh api --method POST \
             "repos/$GITHUB_REPOSITORY/statuses/$SOURCE_SHA" \
             -f state="$state" \
             -f context="Irha Cache Consistency" \
             -f description="$description" \
-            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
-            >/dev/null
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >/dev/null
           test "$state" = success
 
       - name: Upload cache-consistency evidence
