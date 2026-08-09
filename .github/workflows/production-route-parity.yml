@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CRAWL_ORIGIN: https://irhaapparels.com
+  CRAWL_ORIGIN: https://irha-apparels.pages.dev
   CANONICAL_ORIGIN: https://irhaapparels.com
   CRAWL_OUTPUT_DIR: artifacts/production-route-parity
   SOURCE_SHA: ${{ github.sha }}
