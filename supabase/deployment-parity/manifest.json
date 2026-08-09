@@ -79,13 +79,13 @@
   },
   "database": {
     "canonical_digests_sha256": {
-      "columns": "9413e06775d7511dd883be159cfcf5dfd7562196c86dfe5afef7560272e24e5d",
-      "constraints": "55a7e9c3ef3102de84818babaa538576045a1baa19b77693ab9b04606db91488",
-      "functions": "6d427fb9030d30fb11a8b69a03662d16ea2bfd62967ad095df50a1d16c5b052f",
-      "indexes": "5cdfa834fae3cdc6c6b6cb3080b1abeb000e67e3a1aac172a5bd547f44c93649",
+      "columns": "9a5ed37feaa1bf1092e08e69fcd01314c2218b729598d30dbf26646c0a3d63e9",
+      "constraints": "0c43d92230aae975b6b48c66bfa11043eac472894e8a67c9cc4b398220186ee5",
+      "functions": "91bf83f33842dbe9d47eb665f25f8268fe17cb0b75281cf78843239a050a4596",
+      "indexes": "09693a1f973d36956cf5ee35c26ac00ec58174c173aa87cd29060e4c857304c5",
       "migrations": "02cc2f95690b591a587f69aff513b311ff33b387295f5388c373ac8c1d232ad8",
       "policies": "e80cb14c36cd41042f7598b7004a1c102781e95d3f484474bfbd9870ca13fee5",
-      "triggers": "c902547aaafa2409dcf15d1f0c7a97a6ee1e0c792cb56e4e445816bd75f99365"
+      "triggers": "1ed40ca02256c67dffd2259d06d3a64d353e8a5515a88998e30b36e12a4878ec"
     },
     "live_migrations": {
       "count": 392,
@@ -93,33 +93,33 @@
       "min_version": "20260712185505"
     },
     "public": {
-      "constraints": 967,
-      "distinct_function_names": 207,
+      "constraints": 986,
+      "distinct_function_names": 211,
       "enums": 4,
-      "function_signatures": 208,
-      "indexes": 682,
+      "function_signatures": 212,
+      "indexes": 693,
       "policies": 223,
-      "rls_enabled_tables": 167,
-      "tables": 167,
-      "triggers": 141,
-      "views": 13
+      "rls_enabled_tables": 170,
+      "tables": 170,
+      "triggers": 143,
+      "views": 15
     }
   },
   "edge_functions": {
-    "classification_sha256": "d3753f069b8567841bfb092e950d089abf9c02d71488ef90055736076f91b203",
+    "classification_sha256": "192b813b4bc4b2b5e7bf69cec607355a9c7e4e84d784a9aac0947347609a96ea",
     "config_parity": true,
-    "config_toml_sha256": "fe5e4d21af656b4e3fee9d4e0c08c0416e7da14b28b80144f3797da472cda75c",
+    "config_toml_sha256": "5722985577a84f12aa0bff836bf0f3b9c4573cf9d4ebd12b274c3b30c792d388",
     "deployed_count": 95,
-    "live_inventory_sha256": "7af3625e72b934734998316482415113976758680e610c9aaddbf3dad398443f",
+    "live_inventory_sha256": "fb2feb70dd25fedc5b5e9a17a2e4a16ddde17b5a2825c8e4fac18c08bda6f59f",
     "registries": {
       "F1": {
         "count": 41,
-        "file_sha256": "b5bcedc9a90bd1463bb8135adeef85de55cdad84a06f91f52f5927c4001c6878",
+        "file_sha256": "a04c64e53d660a76f86dc8728032adc05bffcef96f0575eb9fda6cafc68f0987",
         "path": "supabase/deployment-parity/functions-f1.json"
       },
       "F2": {
         "count": 14,
-        "file_sha256": "2b92234ef34c8d3b1a18beaf5621c4963d08505b526d8d594139666e26ee7f0f",
+        "file_sha256": "5a01b6092c22fb2cbee9e0fb667e25d94961d252d0e205c16fd2b30604c6716c",
         "path": "supabase/deployment-parity/functions-f2.json"
       },
       "F3": {
@@ -150,12 +150,12 @@
     "committed_file": "src/integrations/supabase/types.ts",
     "freshness_gate": "official Supabase CLI public-schema generation and byte-for-byte comparison",
     "private_schemas_excluded": true,
-    "sha256": "5f315a4b0d016b4b400d4e40e7f40df7f5463b9623f44014af6b566a060b8bf2",
+    "sha256": "f4df705b9c86f5c52f85a35294d2ff074cb4d11f009779f87dc422db901ab2f4",
     "totals": {
       "enums": 4,
-      "function_signatures": 208,
-      "tables": 167,
-      "views": 13
+      "function_signatures": 212,
+      "tables": 170,
+      "views": 15
     }
   },
   "goal_lock": "IRHA-PRODUCTION-SECURITY-01",
@@ -167,7 +167,7 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "a1282c4f2797e21687395c7eb967c04a960f959315ce742829e37de8a85f3f43",
+  "manifest_sha256": "0bec019b81668e135b799bc0241e14d2fb5d21c263972e07affe7b40f5ad8f9b",
   "migration_provenance": {
     "canonical_payload_sha256": "601e9f12205057aeab76281bb34a21e19945b1949796d21e4eb47fd2849ee0e9",
     "file_sha256": "ffe856e6f212b299973a73cb81a0aba920d86b92aa20465fc8ff37bb5bf9d94a",
