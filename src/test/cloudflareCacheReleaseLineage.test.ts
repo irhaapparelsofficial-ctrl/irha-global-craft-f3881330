@@ -24,23 +24,28 @@ const extractRunBlock = (workflow: string, stepName: string) => {
 };
 
 describe("Cloudflare cache release lineage", () => {
-  it("uses the Quality artifact recorded by the deployed Cloudflare release instead of a later same-SHA build", () => {
+  it("uses exact successful GitHub Actions lineage instead of the optional public deployment marker", () => {
     const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
     const script = extractRunBlock(
       workflow,
       "Freeze exact current main and resolve immutable Quality artifact",
     );
 
-    expect(script).toContain("cloudflare-deployment.json?release_check=");
-    expect(script).toContain(".source_sha == $sha");
-    expect(script).toContain(".quality_run_id");
-    expect(script).toContain("quality_run_id=\"$(jq -r '.quality_run_id' \"$lineage_marker\")\"");
-    expect(script).toContain('gh api "repos/$GITHUB_REPOSITORY/actions/runs/$quality_run_id"');
-    expect(script).toContain('.name == "Quality Gate"');
+    expect(workflow).toContain("actions: read");
+    expect(script).toContain('gh api "repos/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID"');
+    expect(script).toContain('.name == "Cloudflare Current Main Reconcile"');
     expect(script).toContain(".head_sha == $sha");
+    expect(script).toContain('.head_branch == "main"');
     expect(script).toContain('.conclusion == "success"');
+    expect(script).toContain('actions/runs?head_sha=$SOURCE_SHA&per_page=100');
+    expect(script).toContain('.name == "Quality Gate"');
+    expect(script).toContain('(.event == "push" or .event == "workflow_dispatch")');
+    expect(script).toContain("sort_by(.run_number)");
+    expect(script).toContain("| last");
+    expect(script).toContain('gh api "repos/$GITHUB_REPOSITORY/actions/runs/$quality_run_id"');
+    expect(script).toContain("authoritative Quality lineage resolved from GitHub Actions");
+    expect(script).not.toContain("cloudflare-deployment.json?release_check=");
     expect(script).not.toContain("actions/workflows/quality.yml/runs?branch=main");
-    expect(script).not.toContain("sort_by(.run_number, .run_attempt)");
   });
 
   it("keeps the lineage resolver valid bash", () => {
