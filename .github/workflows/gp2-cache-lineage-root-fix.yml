@@ -94,7 +94,8 @@ jobs:
 
           test_path = Path('src/test/cloudflareCacheReleaseLineage.test.ts')
           test = test_path.read_text()
-          first = test.index('  it("uses the Quality artifact recorded by the deployed Cloudflare release instead of a later same-SHA build", () => {')
+          suite = test.index('describe("Cloudflare cache release lineage", () => {')
+          first = test.index('  it("', suite)
           second = test.index('  it("keeps the lineage resolver valid bash", () => {', first)
           new_test = '''  it("resolves the exact successful Quality artifact without depending on a mutable deployment marker", () => {
             const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
