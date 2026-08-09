@@ -24,6 +24,8 @@ on:
       - "scripts/supabase/export-deployment-manifest.sql"
       - "src/integrations/supabase/types.ts"
       - ".github/workflows/supabase-parity.yml"
+  # Keep a manual exact-head verification lane for release closures whose final
+  # follow-up commit does not otherwise touch canonical Supabase parity inputs.
   workflow_dispatch:
 
 permissions:

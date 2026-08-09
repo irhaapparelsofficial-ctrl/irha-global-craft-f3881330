@@ -28,9 +28,9 @@ const forbiddenLegacyFragments = [
 ];
 
 describe("direct Google Search Console OAuth runtime", () => {
-  it("keeps both functions JWT verified and admin authorized", () => {
+  it("keeps the intended gateway boundary and both functions admin authorized", () => {
     expect(config).toMatch(/\[functions\.gsc-inspect\]\s+verify_jwt\s*=\s*true/);
-    expect(config).toMatch(/\[functions\.gsc-analytics\]\s+verify_jwt\s*=\s*true/);
+    expect(config).toMatch(/\[functions\.gsc-analytics\]\s+verify_jwt\s*=\s*false/);
     for (const source of functions) {
       expect(source).toContain("auth.getUser()");
       expect(source).toContain('.from("user_roles")');

@@ -119,7 +119,7 @@ describe("SEC-M03 canonical parity control", () => {
     expect(gscParity).toMatchObject({
       registry: "supabase/deployment-parity/functions-f2.json",
       repository_source: "supabase/functions/gsc-analytics/index.ts",
-      verify_jwt: true,
+      verify_jwt: false,
     });
     expect(gscParity).not.toHaveProperty("exact_hash");
     const operationsParity = parityPlan.functions.find((entry: { name: string }) => entry.name === "operations-orchestrator");

@@ -1082,6 +1082,13 @@ export type Database = {
             foreignKeyName: "catalog_drive_folders_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "gp2_product_search_observability"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "catalog_drive_folders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "product_quality_audit"
             referencedColumns: ["product_id"]
           },
@@ -1315,6 +1322,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "catalog_priority_audit"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "catalog_taxonomy_migration_map_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "gp2_product_search_observability"
             referencedColumns: ["product_id"]
           },
           {
@@ -1829,6 +1843,113 @@ export type Database = {
           version?: number
         }
         Relationships: []
+      }
+      commercial_measurement_events: {
+        Row: {
+          anonymous_session_hash: string | null
+          audience_group: string | null
+          campaign: string | null
+          canonical_path: string
+          content: string | null
+          country_code: string | null
+          created_at: string
+          device_type: string | null
+          event_name: string
+          evidence: Json
+          id: number
+          landing_path: string | null
+          lead_kind: string | null
+          lead_reference: string | null
+          main_category: string | null
+          medium: string | null
+          occurred_at: string
+          product_id: string | null
+          product_type: string | null
+          reference_code: string | null
+          referrer_host: string | null
+          source: string | null
+          term: string | null
+        }
+        Insert: {
+          anonymous_session_hash?: string | null
+          audience_group?: string | null
+          campaign?: string | null
+          canonical_path?: string
+          content?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_name: string
+          evidence?: Json
+          id?: number
+          landing_path?: string | null
+          lead_kind?: string | null
+          lead_reference?: string | null
+          main_category?: string | null
+          medium?: string | null
+          occurred_at?: string
+          product_id?: string | null
+          product_type?: string | null
+          reference_code?: string | null
+          referrer_host?: string | null
+          source?: string | null
+          term?: string | null
+        }
+        Update: {
+          anonymous_session_hash?: string | null
+          audience_group?: string | null
+          campaign?: string | null
+          canonical_path?: string
+          content?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_name?: string
+          evidence?: Json
+          id?: number
+          landing_path?: string | null
+          lead_kind?: string | null
+          lead_reference?: string | null
+          main_category?: string | null
+          medium?: string | null
+          occurred_at?: string
+          product_id?: string | null
+          product_type?: string | null
+          reference_code?: string | null
+          referrer_host?: string | null
+          source?: string | null
+          term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_measurement_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_priority_audit"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "commercial_measurement_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "gp2_product_search_observability"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "commercial_measurement_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_quality_audit"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "commercial_measurement_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_change_log: {
         Row: {
@@ -3142,6 +3263,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "catalog_priority_audit"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "inquiry_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "gp2_product_search_observability"
             referencedColumns: ["product_id"]
           },
           {
@@ -5761,6 +5889,13 @@ export type Database = {
             foreignKeyName: "product_quality_reviews_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: true
+            referencedRelation: "gp2_product_search_observability"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_quality_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
             referencedRelation: "product_quality_audit"
             referencedColumns: ["product_id"]
           },
@@ -5878,6 +6013,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: true
             referencedRelation: "catalog_priority_audit"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_taxonomy_assignments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "gp2_product_search_observability"
             referencedColumns: ["product_id"]
           },
           {
@@ -8023,6 +8165,107 @@ export type Database = {
         }
         Relationships: []
       }
+      search_console_observations: {
+        Row: {
+          canonical_path: string | null
+          clicks: number
+          ctr: number
+          dimension_type: string
+          id: number
+          impressions: number
+          key_1: string
+          key_2: string
+          observed_at: string
+          period: string
+          position: number
+          run_id: string
+        }
+        Insert: {
+          canonical_path?: string | null
+          clicks?: number
+          ctr?: number
+          dimension_type: string
+          id?: number
+          impressions?: number
+          key_1: string
+          key_2?: string
+          observed_at?: string
+          period: string
+          position?: number
+          run_id: string
+        }
+        Update: {
+          canonical_path?: string | null
+          clicks?: number
+          ctr?: number
+          dimension_type?: string
+          id?: number
+          impressions?: number
+          key_1?: string
+          key_2?: string
+          observed_at?: string
+          period?: string
+          position?: number
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_console_observations_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "search_measurement_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      search_measurement_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_rows: number
+          data_end_date: string | null
+          data_start_date: string | null
+          failure_code: string | null
+          id: string
+          permission_level: string | null
+          previous_rows: number
+          property: string
+          started_at: string
+          status: string
+          summary: Json
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_rows?: number
+          data_end_date?: string | null
+          data_start_date?: string | null
+          failure_code?: string | null
+          id?: string
+          permission_level?: string | null
+          previous_rows?: number
+          property?: string
+          started_at?: string
+          status?: string
+          summary?: Json
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_rows?: number
+          data_end_date?: string | null
+          data_start_date?: string | null
+          failure_code?: string | null
+          id?: string
+          permission_level?: string | null
+          previous_rows?: number
+          property?: string
+          started_at?: string
+          status?: string
+          summary?: Json
+        }
+        Relationships: []
+      }
       seo_keyword_clusters: {
         Row: {
           approved_at: string | null
@@ -8879,6 +9122,13 @@ export type Database = {
             foreignKeyName: "social_calendar_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "gp2_product_search_observability"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "social_calendar_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "product_quality_audit"
             referencedColumns: ["product_id"]
           },
@@ -8972,6 +9222,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "catalog_priority_audit"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "social_campaigns_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "gp2_product_search_observability"
             referencedColumns: ["product_id"]
           },
           {
@@ -10212,6 +10469,13 @@ export type Database = {
             foreignKeyName: "catalog_drive_folders_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "gp2_product_search_observability"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "catalog_drive_folders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "product_quality_audit"
             referencedColumns: ["product_id"]
           },
@@ -10253,6 +10517,43 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      gp2_category_observability: {
+        Row: {
+          intent_events: number | null
+          main_category: string | null
+          observed_clicks: number | null
+          observed_impressions: number | null
+          product_views: number | null
+          products_with_search_data: number | null
+          published_products: number | null
+          search_last_observed_at: string | null
+          submit_events: number | null
+        }
+        Relationships: []
+      }
+      gp2_product_search_observability: {
+        Row: {
+          audience_group: string | null
+          average_position: number | null
+          canonical_path: string | null
+          clicks: number | null
+          ctr: number | null
+          impressions: number | null
+          intent_events: number | null
+          last_intent_observed_at: string | null
+          main_category: string | null
+          name: string | null
+          product_id: string | null
+          product_type: string | null
+          product_views: number | null
+          reference_code: string | null
+          search_data_state: string | null
+          search_last_observed_at: string | null
+          sku: string | null
+          submit_events: number | null
+        }
+        Relationships: []
       }
       product_quality_audit: {
         Row: {
@@ -11228,6 +11529,14 @@ export type Database = {
           _priority?: string
         }
         Returns: Json
+      }
+      gp2_measurement_path: {
+        Args: { p_context: Json; p_fallback: string }
+        Returns: string
+      }
+      gp2_safe_dimension: {
+        Args: { p_max?: number; p_value: string }
+        Returns: string
       }
       has_role: {
         Args: {

@@ -38,7 +38,7 @@ describe("admin connected-health contracts", () => {
     const health = sourceSection(source, "async function readHealth", "function formatDate");
     const queryHelper = sourceSection(source, "async function querySearchAnalytics", "function safeNumber");
 
-    expect(config).toContain("[functions.gsc-analytics]\nverify_jwt = true");
+    expect(config).toContain("[functions.gsc-analytics]\nverify_jwt = false");
     expect(source).toContain("auth.getUser()");
     expect(source).toContain('.eq("role", "admin")');
     expect(source).toContain('action === "health"');

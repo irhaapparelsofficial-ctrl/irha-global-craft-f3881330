@@ -16,10 +16,10 @@
       "name": "gsc-analytics",
       "registry": "supabase/deployment-parity/functions-f2.json",
       "repository_source": "supabase/functions/gsc-analytics/index.ts",
-      "minimum_version": 16,
-      "verify_jwt": true,
+      "minimum_version": 33,
+      "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "GP-2 Search Console measurement source; exact deployed source verified before parity refresh"
+      "provenance": "GP-2 Search Console measurement source; v33 exact deployed source and custom internal admin/service authorization accepted with gateway verify_jwt=false"
     },
     {
       "name": "live-chat",
@@ -44,10 +44,10 @@
       "name": "operations-orchestrator",
       "registry": "supabase/deployment-parity/functions-f2.json",
       "repository_source": "supabase/functions/operations-orchestrator/index.ts",
-      "minimum_version": 7,
+      "minimum_version": 23,
       "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "GP-2 daily search-measurement monitoring source; exact deployed source verified before parity refresh"
+      "provenance": "GP-2 daily search-measurement monitoring source; v23 exact deployed source verified before parity refresh"
     },
     {
       "name": "public-lead-gateway",
@@ -63,10 +63,10 @@
       "name": "site-visitor",
       "registry": "supabase/deployment-parity/functions-f1.json",
       "repository_source": "supabase/functions/site-visitor/index.ts",
-      "minimum_version": 5,
+      "minimum_version": 22,
       "verify_jwt": false,
       "require_shared_limiter": true,
-      "provenance": "SEC-M03 reviewed source on exact main"
+      "provenance": "GP-2 accepted exact source rebundle after shared-helper byte drift repair; v22 source verified"
     },
     {
       "name": "tumblr-oauth-callback",
