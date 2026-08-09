@@ -79,42 +79,42 @@
   },
   "database": {
     "canonical_digests_sha256": {
-      "columns": "d0f0e2db8104f4a4ed7d23e0fe284b717da01f9b3d8673a9f90f8ec67767aac6",
-      "constraints": "a388ab7abdfff1eac47d42523fa4bfeb9190148eaa63ebd9765a0573950e2193",
-      "functions": "c85abc2480ba63a8869c3ed62144b74dc05dd4c0eba028a96f04ccf93a5142bc",
-      "indexes": "39bfca272621a2dcdd156faf9f0394b519016b3055e927dea9de13814e873921",
-      "migrations": "31320f64f396369b48e9c0a15ed2343c103c11215a0ca6de4ece8701be417318",
+      "columns": "9413e06775d7511dd883be159cfcf5dfd7562196c86dfe5afef7560272e24e5d",
+      "constraints": "55a7e9c3ef3102de84818babaa538576045a1baa19b77693ab9b04606db91488",
+      "functions": "6d427fb9030d30fb11a8b69a03662d16ea2bfd62967ad095df50a1d16c5b052f",
+      "indexes": "5cdfa834fae3cdc6c6b6cb3080b1abeb000e67e3a1aac172a5bd547f44c93649",
+      "migrations": "02cc2f95690b591a587f69aff513b311ff33b387295f5388c373ac8c1d232ad8",
       "policies": "e80cb14c36cd41042f7598b7004a1c102781e95d3f484474bfbd9870ca13fee5",
       "triggers": "c902547aaafa2409dcf15d1f0c7a97a6ee1e0c792cb56e4e445816bd75f99365"
     },
     "live_migrations": {
-      "count": 387,
-      "max_version": "20260808084350",
+      "count": 392,
+      "max_version": "20260808232335",
       "min_version": "20260712185505"
     },
     "public": {
-      "constraints": 955,
-      "distinct_function_names": 205,
+      "constraints": 967,
+      "distinct_function_names": 207,
       "enums": 4,
-      "function_signatures": 206,
-      "indexes": 674,
+      "function_signatures": 208,
+      "indexes": 682,
       "policies": 223,
-      "rls_enabled_tables": 162,
-      "tables": 162,
+      "rls_enabled_tables": 167,
+      "tables": 167,
       "triggers": 141,
       "views": 13
     }
   },
   "edge_functions": {
-    "classification_sha256": "26dd8f11f0f05af8f5396f03168e87daca43bdbb2ab735b92e3ab79e65784091",
+    "classification_sha256": "c0b3c977efd0a9271e1c248472993ebeada23408e0f617c22ea1e12e5ae06fae",
     "config_parity": true,
-    "config_toml_sha256": "0158fd155c6fab874e13e87a2878b313d7505fd537f3b312dcf3e945273e537f",
-    "deployed_count": 92,
-    "live_inventory_sha256": "d2548f9c34519ef27b24fa78ae53fffdd8c4bfd32689a227783d2ead843c6a0d",
+    "config_toml_sha256": "fe5e4d21af656b4e3fee9d4e0c08c0416e7da14b28b80144f3797da472cda75c",
+    "deployed_count": 95,
+    "live_inventory_sha256": "fae4ebef23574d37d7bed1f690b8f560613975722c34e2c1f0531aeec393036f",
     "registries": {
       "F1": {
-        "count": 38,
-        "file_sha256": "75e365509782bb92410e917cb168547895e0bdd9ddf75ada595a0070765dd008",
+        "count": 41,
+        "file_sha256": "6391f65c74c5f0f704182251e309acfdaf36bee363a50d850ddc6b30710f5112",
         "path": "supabase/deployment-parity/functions-f1.json"
       },
       "F2": {
@@ -150,11 +150,11 @@
     "committed_file": "src/integrations/supabase/types.ts",
     "freshness_gate": "official Supabase CLI public-schema generation and byte-for-byte comparison",
     "private_schemas_excluded": true,
-    "sha256": "a1aa66ef65ccd4f77e3ce39b4d621aebfe8a98079ddfea016a5e287b4064dea0",
+    "sha256": "5f315a4b0d016b4b400d4e40e7f40df7f5463b9623f44014af6b566a060b8bf2",
     "totals": {
       "enums": 4,
-      "function_signatures": 206,
-      "tables": 162,
+      "function_signatures": 208,
+      "tables": 167,
       "views": 13
     }
   },
@@ -167,20 +167,20 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "5f4f1a5600b6c53455baf4e8ae61c1927fcbc06d8b05f208df7bae88ebadea7e",
+  "manifest_sha256": "ed7e8c1ae145ecfedf718e507494fbb4fa813fe895605c62cc686556b9d8b221",
   "migration_provenance": {
-    "canonical_payload_sha256": "c1af5cd8bd4a150f5e0cb83c2b5217e615525b7e5d2d393582a5de76657dfc6c",
-    "file_sha256": "829604f9f888e40385dba5a3760f473da303a27fbeab453eeaf4dfe2df3a4266",
+    "canonical_payload_sha256": "601e9f12205057aeab76281bb34a21e19945b1949796d21e4eb47fd2849ee0e9",
+    "file_sha256": "ffe856e6f212b299973a73cb81a0aba920d86b92aa20465fc8ff37bb5bf9d94a",
     "path": "supabase/deployment-parity/migration-provenance.json",
     "totals": {
-      "P1": 16,
+      "P1": 21,
       "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 387
+      "live": 392
     }
   },
   "schema_version": 2,

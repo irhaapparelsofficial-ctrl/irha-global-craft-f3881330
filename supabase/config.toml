@@ -367,3 +367,15 @@ verify_jwt = false
 
 [functions.pinterest-operator-get]
 verify_jwt = false
+
+# F1 — retain
+[functions.tumblr-oauth-callback]
+verify_jwt = false
+
+# F1 — retain
+[functions.tumblr-operator]
+verify_jwt = false
+
+# F1 — retain
+[functions.tumblr-operator-get]
+verify_jwt = false

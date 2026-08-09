@@ -9599,6 +9599,156 @@ export type Database = {
         }
         Relationships: []
       }
+      tumblr_oauth_bootstrap_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          max_uses: number
+          token_hash: string
+          use_count: number
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          max_uses?: number
+          token_hash: string
+          use_count?: number
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          max_uses?: number
+          token_hash?: string
+          use_count?: number
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      tumblr_oauth_credentials: {
+        Row: {
+          access_secret_id: string
+          expires_at: string | null
+          id: number
+          refresh_secret_id: string | null
+          scope: string | null
+          token_type: string
+          updated_at: string
+        }
+        Insert: {
+          access_secret_id: string
+          expires_at?: string | null
+          id: number
+          refresh_secret_id?: string | null
+          scope?: string | null
+          token_type?: string
+          updated_at?: string
+        }
+        Update: {
+          access_secret_id?: string
+          expires_at?: string | null
+          id?: number
+          refresh_secret_id?: string | null
+          scope?: string | null
+          token_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tumblr_oauth_states: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          state: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          state: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          state?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      tumblr_oauth1_temp_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          oauth_token: string
+          token_secret: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          oauth_token: string
+          token_secret: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          oauth_token?: string
+          token_secret?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      tumblr_operator_jobs: {
+        Row: {
+          action: string
+          created_at: string
+          error_code: string | null
+          expires_at: string
+          finished_at: string | null
+          id: string
+          payload: Json
+          result: Json | null
+          started_at: string | null
+          status: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_code?: string | null
+          expires_at: string
+          finished_at?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_code?: string | null
+          expires_at?: string
+          finished_at?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -12664,6 +12814,26 @@ export type Database = {
           inquiry_id: string
           inquiry_ref: string
         }[]
+      }
+      tumblr_get_tokens: {
+        Args: never
+        Returns: {
+          access_token: string
+          expires_at: string
+          refresh_token: string
+          scope: string
+          token_type: string
+        }[]
+      }
+      tumblr_store_tokens: {
+        Args: {
+          p_access_token: string
+          p_expires_at: string
+          p_refresh_token: string
+          p_scope: string
+          p_token_type: string
+        }
+        Returns: undefined
       }
       unpublish_slot_ref: {
         Args: { _reason: string; _reference_code: string }
