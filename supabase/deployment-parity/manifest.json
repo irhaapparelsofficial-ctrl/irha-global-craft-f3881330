@@ -106,15 +106,15 @@
     }
   },
   "edge_functions": {
-    "classification_sha256": "c0b3c977efd0a9271e1c248472993ebeada23408e0f617c22ea1e12e5ae06fae",
+    "classification_sha256": "d3753f069b8567841bfb092e950d089abf9c02d71488ef90055736076f91b203",
     "config_parity": true,
     "config_toml_sha256": "fe5e4d21af656b4e3fee9d4e0c08c0416e7da14b28b80144f3797da472cda75c",
     "deployed_count": 95,
-    "live_inventory_sha256": "fae4ebef23574d37d7bed1f690b8f560613975722c34e2c1f0531aeec393036f",
+    "live_inventory_sha256": "7af3625e72b934734998316482415113976758680e610c9aaddbf3dad398443f",
     "registries": {
       "F1": {
         "count": 41,
-        "file_sha256": "6391f65c74c5f0f704182251e309acfdaf36bee363a50d850ddc6b30710f5112",
+        "file_sha256": "b5bcedc9a90bd1463bb8135adeef85de55cdad84a06f91f52f5927c4001c6878",
         "path": "supabase/deployment-parity/functions-f1.json"
       },
       "F2": {
@@ -167,7 +167,7 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "ed7e8c1ae145ecfedf718e507494fbb4fa813fe895605c62cc686556b9d8b221",
+  "manifest_sha256": "a1282c4f2797e21687395c7eb967c04a960f959315ce742829e37de8a85f3f43",
   "migration_provenance": {
     "canonical_payload_sha256": "601e9f12205057aeab76281bb34a21e19945b1949796d21e4eb47fd2849ee0e9",
     "file_sha256": "ffe856e6f212b299973a73cb81a0aba920d86b92aa20465fc8ff37bb5bf9d94a",
