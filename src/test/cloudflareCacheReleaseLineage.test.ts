@@ -24,23 +24,25 @@ const extractRunBlock = (workflow: string, stepName: string) => {
 };
 
 describe("Cloudflare cache release lineage", () => {
-  it("uses the Quality artifact recorded by the deployed Cloudflare release instead of a later same-SHA build", () => {
+  it("resolves an exact successful Quality artifact without depending on a mutable deployment marker", () => {
     const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
     const script = extractRunBlock(
       workflow,
       "Freeze exact current main and resolve immutable Quality artifact",
     );
 
-    expect(script).toContain("cloudflare-deployment.json?release_check=");
-    expect(script).toContain(".source_sha == $sha");
-    expect(script).toContain(".quality_run_id");
-    expect(script).toContain("quality_run_id=\"$(jq -r '.quality_run_id' \"$lineage_marker\")\"");
-    expect(script).toContain('gh api "repos/$GITHUB_REPOSITORY/actions/runs/$quality_run_id"');
+    expect(script).toContain('commits/$SOURCE_SHA/status');
+    expect(script).toContain('.context == "Irha Quality Gate"');
+    expect(script).toContain('.state == "success"');
+    expect(script).toContain('quality_run_id="${quality_target##*/}"');
+    expect(script).toContain('actions/runs/$quality_run_id/artifacts');
+    expect(script).toContain('.name == $name and .expired == false');
     expect(script).toContain('.name == "Quality Gate"');
     expect(script).toContain(".head_sha == $sha");
     expect(script).toContain('.conclusion == "success"');
+    expect(script).not.toContain("cloudflare-deployment.json?release_check=");
+    expect(script).not.toContain("lineage_marker");
     expect(script).not.toContain("actions/workflows/quality.yml/runs?branch=main");
-    expect(script).not.toContain("sort_by(.run_number, .run_attempt)");
   });
 
   it("keeps the lineage resolver valid bash", () => {
@@ -55,5 +57,18 @@ describe("Cloudflare cache release lineage", () => {
     });
 
     expect(result.status, result.stderr).toBe(0);
+  });
+
+  it("re-proves the selected artifact fingerprint against live Pages before any cache mutation", () => {
+    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
+    const artifactVerify = workflow.indexOf("Verify exact artifact identity and normalize Cloudflare credentials");
+    const liveVerify = workflow.indexOf("Prove current Pages deployment before any cache mutation");
+    const cacheInspect = workflow.indexOf("Inspect Cloudflare routing and cache state before mutation");
+
+    expect(artifactVerify).toBeGreaterThan(-1);
+    expect(liveVerify).toBeGreaterThan(artifactVerify);
+    expect(cacheInspect).toBeGreaterThan(liveVerify);
+    expect(workflow).toContain("EXPECTED_FINGERPRINT=$expected_fingerprint");
+    expect(workflow).toContain(".build_fingerprint == $fingerprint");
   });
 });
