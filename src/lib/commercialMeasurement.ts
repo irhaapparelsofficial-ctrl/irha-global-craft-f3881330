@@ -38,8 +38,15 @@ export function normalizeCanonicalPath(value: string): string {
   return normalized.startsWith("/") ? normalized : `/${normalized}`;
 }
 
+function stripControlCharacters(value: string) {
+  return Array.from(value, (character) => {
+    const code = character.charCodeAt(0);
+    return code <= 31 || code === 127 ? " " : character;
+  }).join("");
+}
+
 export function sanitizeAttributionValue(value: string | null | undefined, max = 160): string | null {
-  const cleaned = (value || "").replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+  const cleaned = stripControlCharacters(value || "").replace(/\s+/g, " ").trim().slice(0, max);
   if (!cleaned) return null;
   if (/@/.test(cleaned)) return null;
   if (/(?:\+?\d[\d\s().-]{6,}\d)/.test(cleaned)) return null;
