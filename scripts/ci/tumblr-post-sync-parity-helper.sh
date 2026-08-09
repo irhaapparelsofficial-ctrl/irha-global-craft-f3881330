@@ -6,6 +6,7 @@ EXPECTED_MAIN_SHA='77555db961edcb621ed921a3e0d333a12cb7addb'
 PARITY_REFRESH_FILE='supabase/reconciliation/sec-m03-parity-refresh.json'
 HELPER_WORKFLOW='.github/workflows/tumblr-post-sync-parity-helper.yml'
 HELPER_SCRIPT='scripts/ci/tumblr-post-sync-parity-helper.sh'
+export SUPABASE_PROJECT_ID="$PROJECT_ID"
 
 token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
 test -n "$token"
