@@ -49,6 +49,33 @@
       "verify_jwt": false,
       "require_shared_limiter": true,
       "provenance": "SEC-M03 reviewed source on exact main"
+    },
+    {
+      "name": "tumblr-oauth-callback",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/tumblr-oauth-callback/index.ts",
+      "minimum_version": 1,
+      "verify_jwt": false,
+      "require_shared_limiter": false,
+      "provenance": "Repository-adopted Tumblr OAuth callback from production parity merge #891; exact deployed source verified before registry refresh"
+    },
+    {
+      "name": "tumblr-operator",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/tumblr-operator/index.ts",
+      "minimum_version": 14,
+      "verify_jwt": false,
+      "require_shared_limiter": false,
+      "provenance": "Repository-adopted Tumblr operator from production parity merge #891; exact deployed source verified before registry refresh"
+    },
+    {
+      "name": "tumblr-operator-get",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/tumblr-operator-get/index.ts",
+      "minimum_version": 1,
+      "verify_jwt": false,
+      "require_shared_limiter": false,
+      "provenance": "Repository-adopted Tumblr operator result proxy from production parity merge #891; exact deployed source verified before registry refresh"
     }
   ]
 }

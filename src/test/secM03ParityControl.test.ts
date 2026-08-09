@@ -63,18 +63,24 @@ describe("SEC-M03 canonical parity control", () => {
     ]);
   });
 
-  it("accepts only five explicitly proven parity refresh rows", () => {
+  it("accepts only reviewed parity refresh rows including repository-adopted Tumblr functions", () => {
     expect(parityPlan.functions.map((entry: { name: string }) => entry.name).sort()).toEqual([
       "generate-mockup",
       "live-chat",
       "notification-dispatcher",
       "public-lead-gateway",
       "site-visitor",
+      "tumblr-oauth-callback",
+      "tumblr-operator",
+      "tumblr-operator-get",
     ]);
     expect(sourceVerifier).toContain("Exact deployed source mismatch");
     expect(sourceVerifier).toContain("Durable limiter helper mismatch");
     expect(registryRefresh).toContain("Registry row missing");
     expect(registryRefresh).toContain("Exact hash mismatch");
+    expect(workflow).toContain("Unsupported parity refresh registry");
+    expect(workflow).toContain('test "$source_path" = "supabase/functions/$function_name/index.ts"');
+    expect(workflow).not.toContain("approved-parity-refresh");
   });
 
   it("bounds Management API source transport tolerance to one trailing LF only", () => {
@@ -92,7 +98,7 @@ describe("SEC-M03 canonical parity control", () => {
   });
 
   it("source-verifies protected pre-existing functions without broad deployment", () => {
-    expect(workflow).toContain("Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8");
+    expect(workflow).toContain("Parity refresh: reviewed F1/F2 repository sources, including adopted Tumblr functions");
     const notificationParity = parityPlan.functions.find((entry: { name: string }) => entry.name === "notification-dispatcher");
     expect(notificationParity).toMatchObject({
       registry: "supabase/deployment-parity/functions-f2.json",
@@ -135,6 +141,28 @@ describe("SEC-M03 canonical parity control", () => {
     expect(parityVerifier).not.toContain("F1: 33");
     expect(parityVerifier).toContain("manifest.edge_functions.deployed_count, deployed.length");
     expect(parityVerifier).toContain("uniqueDeployedNames.size, deployed.length");
+  });
+
+  it("locks current Tumblr production functions to source-matched F1 parity while keeping refresh version-monotonic", () => {
+    const expectedTumblr = [
+      ["tumblr-oauth-callback", 2, false, "bb6792fce1a9499245e250148ccfc724e2375dbbd07476ad90caa29ab74e90c7"],
+      ["tumblr-operator", 15, false, "4eb790dcaf1dc596443a9991ff0f30d41364eb6eb0c80939d73a606cdd84da1b"],
+      ["tumblr-operator-get", 2, false, "82d3e61455d022123345c628caeb1ac61aa64f6da766970703e8b00909a9637c"],
+    ] as const;
+
+    for (const [name, liveVersion, verifyJwt, sourceHash] of expectedTumblr) {
+      const row = f1Registry.functions.find((entry: unknown[]) => entry[0] === name);
+      expect(row?.slice(0, 4)).toEqual([name, liveVersion, verifyJwt, sourceHash]);
+      expect(supabaseConfig).toContain(`[functions.${name}]\nverify_jwt = ${verifyJwt}`);
+      const refresh = parityPlan.functions.find((entry: { name: string }) => entry.name === name);
+      expect(refresh).toMatchObject({
+        registry: "supabase/deployment-parity/functions-f1.json",
+        repository_source: `supabase/functions/${name}/index.ts`,
+        verify_jwt: false,
+      });
+      expect(refresh).not.toHaveProperty("exact_version");
+      expect(refresh).not.toHaveProperty("exact_hash");
+    }
   });
 
   it("derives exact production migration parity without a fixed migration count", () => {

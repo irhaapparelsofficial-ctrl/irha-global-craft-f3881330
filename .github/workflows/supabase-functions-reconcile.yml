@@ -86,13 +86,13 @@ jobs:
           test "$(jq -r '.schema_version' "$PARITY_REFRESH_FILE")" = "1"
           test "$(jq -r '.project_id' "$PARITY_REFRESH_FILE")" = "$SUPABASE_PROJECT_ID"
           test "$(jq -r '.execution_id' "$PARITY_REFRESH_FILE")" = "IA-CTRL-E001R"
-          test "$(jq '.functions | length' "$PARITY_REFRESH_FILE")" = "5"
+          parity_refresh_count="$(jq '.functions | length' "$PARITY_REFRESH_FILE")"
+          test "$parity_refresh_count" -ge 1
 
           jq -r '.functions[].name' "$PLAN_FILE" | sort -u > /tmp/planned-functions.txt
           test "$(wc -l < /tmp/planned-functions.txt | tr -d ' ')" = "3"
-          printf '%s\n' generate-mockup live-chat notification-dispatcher public-lead-gateway site-visitor | sort > /tmp/approved-parity-refresh.txt
           jq -r '.functions[].name' "$PARITY_REFRESH_FILE" | sort -u > /tmp/planned-parity-refresh.txt
-          cmp -s /tmp/approved-parity-refresh.txt /tmp/planned-parity-refresh.txt
+          test "$(wc -l < /tmp/planned-parity-refresh.txt | tr -d ' ')" = "$parity_refresh_count"
 
           jq -r '.functions[][0]' supabase/deployment-parity/functions-f3.json | sort -u > /tmp/blocked-f3.txt
           jq -r '.functions[][0]' supabase/deployment-parity/functions-f6.json | sort -u > /tmp/blocked-f6.txt
@@ -108,8 +108,17 @@ jobs:
 
           while IFS=$'\t' read -r function_name registry source_path; do
             test -n "$function_name"
+            case "$registry" in
+              supabase/deployment-parity/functions-f1.json|supabase/deployment-parity/functions-f2.json) ;;
+              *)
+                echo "::error title=Unsupported parity refresh registry::$function_name requested $registry"
+                exit 1
+                ;;
+            esac
+            test "$source_path" = "supabase/functions/$function_name/index.ts"
             test -f "$registry"
             test -f "$source_path"
+            grep -Fqx "[functions.$function_name]" supabase/config.toml
             ! grep -Fqx "$function_name" /tmp/blocked-functions.txt
           done < <(jq -r '.functions[] | [.name, .registry, .repository_source] | @tsv' "$PARITY_REFRESH_FILE")
 
@@ -287,9 +296,9 @@ jobs:
             echo "- Project: \`$SUPABASE_PROJECT_ID\`"
             echo "- Plan: \`$PLAN_FILE\`"
             echo "- Deployment count: \`${{ steps.plan.outputs.deploy_count || 'not-reached' }}\`"
-            echo "- Scope: generate-mockup, live-chat, site-visitor only"
+            echo "- Deployment scope: generate-mockup, live-chat, site-visitor only"
             echo "- Shared helper: bundled dependency, never deployed as a function"
-            echo "- Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8"
+            echo "- Parity refresh: reviewed F1/F2 repository sources, including adopted Tumblr functions"
             echo "- Exact-SHA Quality Gate: required before mutation"
             echo "- Inventory and source: authenticated Supabase Management API metadata plus multipart body"
             echo "- Post-deploy canonical parity export: required"
