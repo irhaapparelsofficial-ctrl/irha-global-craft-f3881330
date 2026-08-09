@@ -4,8 +4,6 @@ set -euo pipefail
 PROJECT_ID='pvzjiozismyxqrzmtfbi'
 EXPECTED_MAIN_SHA='77555db961edcb621ed921a3e0d333a12cb7addb'
 PARITY_REFRESH_FILE='supabase/reconciliation/sec-m03-parity-refresh.json'
-HELPER_WORKFLOW='.github/workflows/tumblr-post-sync-parity-helper.yml'
-HELPER_SCRIPT='scripts/ci/tumblr-post-sync-parity-helper.sh'
 export SUPABASE_PROJECT_ID="$PROJECT_ID"
 
 token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
@@ -105,19 +103,12 @@ diff -u src/integrations/supabase/types.ts /tmp/supabase-types.ts
 SUPABASE_ACCESS_TOKEN="$token" node scripts/ci/run-sec-m03-parity-generation.mjs
 SUPABASE_ACCESS_TOKEN="$token" node scripts/verify-supabase-parity.mjs
 
-rm "$HELPER_WORKFLOW" "$HELPER_SCRIPT"
-git diff --check
-
-allowed='^(.github/workflows/supabase-functions-reconcile\.yml|supabase/reconciliation/sec-m03-parity-refresh\.json|supabase/deployment-parity/functions-f1\.json|supabase/deployment-parity/functions-f2\.json|supabase/deployment-parity/manifest\.json|supabase/deployment-parity/migration-provenance\.json|.github/workflows/tumblr-post-sync-parity-helper\.yml|scripts/ci/tumblr-post-sync-parity-helper\.sh)$'
-unexpected="$(git diff --name-only | grep -Ev "$allowed" || true)"
-test -z "$unexpected" || { printf 'Unexpected generated files:\n%s\n' "$unexpected"; exit 1; }
-
-latest_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
-test "$latest_main" = "$EXPECTED_MAIN_SHA"
-
-git config user.name 'github-actions[bot]'
-git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-git add -A
-test -n "$(git diff --cached --name-only)"
-git commit -m 'fix(parity): refresh post-sync Tumblr bundle evidence'
-git push origin "HEAD:${GITHUB_REF_NAME}"
+rm -rf supabase/.temp
+mkdir -p /tmp/tumblr-parity-output
+cp .github/workflows/supabase-functions-reconcile.yml /tmp/tumblr-parity-output/supabase-functions-reconcile.yml
+cp supabase/reconciliation/sec-m03-parity-refresh.json /tmp/tumblr-parity-output/sec-m03-parity-refresh.json
+cp supabase/deployment-parity/functions-f1.json /tmp/tumblr-parity-output/functions-f1.json
+cp supabase/deployment-parity/functions-f2.json /tmp/tumblr-parity-output/functions-f2.json
+cp supabase/deployment-parity/manifest.json /tmp/tumblr-parity-output/manifest.json
+cp supabase/deployment-parity/migration-provenance.json /tmp/tumblr-parity-output/migration-provenance.json
+sha256sum /tmp/tumblr-parity-output/* > /tmp/tumblr-parity-output/SHA256SUMS.txt
