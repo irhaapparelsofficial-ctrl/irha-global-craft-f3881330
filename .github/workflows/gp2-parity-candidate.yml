@@ -121,6 +121,51 @@ jobs:
             SOURCE_SHA="$CANDIDATE_SHA" \
             node scripts/ci/refresh-sec-m03-live-parity.mjs
 
+      - name: Refresh exact operations-orchestrator registry evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --quiet "$BASE_SHA" "$CANDIDATE_SHA" -- \
+            supabase/functions/operations-orchestrator/index.ts
+
+          cat > /tmp/operations-orchestrator-parity-plan.json <<'JSON'
+          {
+            "schema_version": 1,
+            "execution_id": "IRHA-GP2-OPERATIONS-PARITY-REFRESH-20260809",
+            "project_id": "pvzjiozismyxqrzmtfbi",
+            "functions": [
+              {
+                "name": "operations-orchestrator",
+                "registry": "supabase/deployment-parity/functions-f2.json",
+                "repository_source": "supabase/functions/operations-orchestrator/index.ts",
+                "minimum_version": 23,
+                "verify_jwt": false,
+                "require_shared_limiter": false,
+                "provenance": "GP-2 exact live source verified byte-equivalent to accepted repository source; stale F2 bundle evidence refreshed without redeploy"
+              }
+            ]
+          }
+          JSON
+
+          rm -rf /tmp/sec-m03-live-functions
+          SEC_M03_PARITY_REFRESH_PLAN=/tmp/operations-orchestrator-parity-plan.json \
+            node scripts/ci/fetch-supabase-edge-sources.mjs
+          SEC_M03_PARITY_REFRESH_PLAN=/tmp/operations-orchestrator-parity-plan.json \
+            SEC_M03_SOURCE_EVIDENCE=/tmp/operations-orchestrator-source-evidence.json \
+            node scripts/ci/verify-sec-m03-deployed-sources.mjs
+
+          curl -fsS \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" \
+            > /tmp/functions-after.json
+
+          SEC_M03_PARITY_REFRESH_PLAN=/tmp/operations-orchestrator-parity-plan.json \
+            SEC_M03_LIVE_INVENTORY=/tmp/functions-after.json \
+            SEC_M03_REGISTRY_EVIDENCE=/tmp/operations-orchestrator-registry-refresh-evidence.json \
+            SOURCE_SHA="$CANDIDATE_SHA" \
+            node scripts/ci/refresh-sec-m03-live-parity.mjs
+
       - name: Generate exact production parity candidate
         shell: bash
         run: |
@@ -145,6 +190,8 @@ jobs:
             supabase/deployment-parity/migration-provenance.json
             supabase/deployment-parity/manifest.json
             /tmp/site-visitor-registry-refresh-evidence.json
+            /tmp/operations-orchestrator-registry-refresh-evidence.json
+            /tmp/operations-orchestrator-source-evidence.json
             /tmp/sec-m03-deployed-source-evidence.json
             /tmp/functions-after.json
           if-no-files-found: warn
