@@ -31,6 +31,8 @@ jobs:
       source_sha: ${{ steps.ready.outputs.source_sha }}
       secrets_ready: ${{ steps.ready.outputs.secrets_ready }}
       database_changed: ${{ steps.changes.outputs.database_changed }}
+      pending_repository_migrations: ${{ steps.pending.outputs.pending_repository_migrations }}
+      pending_count: ${{ steps.pending.outputs.pending_count }}
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -64,11 +66,80 @@ jobs:
           echo "Repository database changes detected: $database_changed"
           cat "$changed_files"
 
+      - name: Detect pending repository migration ledger work
+        id: pending
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${SUPABASE_ACCESS_TOKEN:-}" | tr -d '[:space:]')"
+          if [ -z "$token" ]; then
+            echo "pending_repository_migrations=unknown" >> "$GITHUB_OUTPUT"
+            echo "pending_count=unknown" >> "$GITHUB_OUTPUT"
+            echo "Management API token unavailable; pending-ledger detection deferred without mutation."
+            exit 0
+          fi
+          echo "::add-mask::$token"
+
+          ledger_json="$(bash scripts/ci/retry.sh 3 5 -- curl -fsS \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -X POST \
+            -d '{"query":"select version, git_blob_sha, application_state from private.irha_repository_migration_ledger order by version","read_only":true}' \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/database/query")"
+          printf '%s' "$ledger_json" > /tmp/repository-migration-ledger.json
+
+          node <<'NODE' > /tmp/pending-migration-result.txt
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('supabase/repository-migrations.json', 'utf8'));
+          const payload = JSON.parse(fs.readFileSync('/tmp/repository-migration-ledger.json', 'utf8'));
+          const rows = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload.result)
+              ? payload.result
+              : Array.isArray(payload.data)
+                ? payload.data
+                : Array.isArray(payload.rows)
+                  ? payload.rows
+                  : Array.isArray(payload.result?.rows)
+                    ? payload.result.rows
+                    : [];
+          const ledger = new Map(rows.map((row) => [String(row.version), row]));
+          const pending = [];
+          const drift = [];
+          for (const entry of manifest.migrations) {
+            const row = ledger.get(entry.version);
+            if (!row) {
+              pending.push(entry.version);
+              continue;
+            }
+            if (row.git_blob_sha !== entry.git_blob_sha || !['applied', 'verified_present'].includes(row.application_state)) {
+              drift.push({
+                version: entry.version,
+                expected_sha: entry.git_blob_sha,
+                actual_sha: row.git_blob_sha || null,
+                state: row.application_state || null,
+              });
+            }
+          }
+          if (drift.length) {
+            console.error(`Repository migration ledger drift: ${JSON.stringify(drift)}`);
+            process.exit(2);
+          }
+          console.log(`pending_repository_migrations=${pending.length > 0 ? 'true' : 'false'}`);
+          console.log(`pending_count=${pending.length}`);
+          if (pending.length) console.log(`pending_versions=${pending.join(',')}`);
+          NODE
+
+          cat /tmp/pending-migration-result.txt
+          grep '^pending_repository_migrations=' /tmp/pending-migration-result.txt >> "$GITHUB_OUTPUT"
+          grep '^pending_count=' /tmp/pending-migration-result.txt >> "$GITHUB_OUTPUT"
+
       - name: Confirm exact current main and Management API readiness
         id: ready
         env:
           GH_TOKEN: ${{ github.token }}
           DATABASE_CHANGED: ${{ steps.changes.outputs.database_changed }}
+          PENDING_REPOSITORY_MIGRATIONS: ${{ steps.pending.outputs.pending_repository_migrations }}
         shell: bash
         run: |
           set -euo pipefail
@@ -83,15 +154,15 @@ jobs:
           if [ "$latest_main" != "$SOURCE_SHA" ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
             echo "Superseded green run skipped safely: $SOURCE_SHA; current main is $latest_main"
-          elif [ "$DATABASE_CHANGED" != "true" ]; then
-            echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "No repository database change in $SOURCE_SHA; database sync skipped without failure."
           elif [ "$secrets_ready" != "true" ]; then
             echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "Exact current main changed database sources, but SUPABASE_ACCESS_TOKEN is unavailable. Waiting without failure."
+            echo "Exact current main is green, but SUPABASE_ACCESS_TOKEN is unavailable. Waiting without failure."
+          elif [ "$DATABASE_CHANGED" != "true" ] && [ "$PENDING_REPOSITORY_MIGRATIONS" != "true" ]; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "No database-related source change and repository migration ledger is already current."
           else
             echo "should_sync=true" >> "$GITHUB_OUTPUT"
-            echo "Exact current main, database change and Management API readiness verified: $SOURCE_SHA"
+            echo "Exact current main has database source changes or pending repository-led migration work: $SOURCE_SHA"
           fi
 
       - name: Record clean non-sync state
@@ -103,6 +174,8 @@ jobs:
             echo "- Quality Gate: green"
             echo "- Source: \`${{ steps.ready.outputs.source_sha }}\`"
             echo "- Database-related source changed: \`${{ steps.changes.outputs.database_changed }}\`"
+            echo "- Pending repository migrations: \`${{ steps.pending.outputs.pending_repository_migrations }}\`"
+            echo "- Pending count: \`${{ steps.pending.outputs.pending_count }}\`"
             echo "- Secrets ready: \`${{ steps.ready.outputs.secrets_ready }}\`"
             echo "- Result: no database mutation attempted and no red failure raised"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -198,7 +271,7 @@ jobs:
             echo "- Project: \`$SUPABASE_PROJECT_ID\`"
             echo "- Ledger: \`private.irha_repository_migration_ledger\`"
             echo "- Concurrency lane: \`irha-production-database\`"
-            echo "- Runs only when database-related files changed"
+            echo "- Runs when database sources change or the repository ledger has pending migrations"
             echo "- Fresh at mutation time: \`${{ steps.freshness.outputs.fresh || 'not-reached' }}\`"
             if [ -s "$REPO_MIGRATION_RUNTIME_LOG" ]; then
               echo "- Runtime result: \`$(tail -n 1 "$REPO_MIGRATION_RUNTIME_LOG" | tr '\r\n' ' ' | cut -c1-180)\`"
