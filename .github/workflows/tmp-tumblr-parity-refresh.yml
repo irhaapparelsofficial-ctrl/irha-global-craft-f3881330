@@ -17,7 +17,6 @@ env:
   SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
   PARITY_REFRESH_FILE: supabase/reconciliation/sec-m03-parity-refresh.json
   HEAD_BRANCH: fix/tumblr-post-sync-parity-closure-20260809
-  HELPER_FILE: .github/workflows/tmp-tumblr-parity-refresh.yml
 
 jobs:
   refresh:
@@ -43,7 +42,7 @@ jobs:
         with:
           version: 2.39.2
 
-      - name: Patch stale parity-refresh contract deterministically
+      - name: Extend reviewed parity-refresh metadata deterministically
         shell: bash
         run: |
           set -euo pipefail
@@ -96,43 +95,10 @@ jobs:
           plan_path.write_text(json.dumps(plan, indent=2) + '\n')
 
           def replace_once(text: str, old: str, new: str, label: str) -> str:
-              if text.count(old) != 1:
-                  raise SystemExit(f'{label}: expected exactly one match, found {text.count(old)}')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
               return text.replace(old, new, 1)
-
-          workflow_path = Path('.github/workflows/supabase-functions-reconcile.yml')
-          workflow = workflow_path.read_text()
-          workflow = replace_once(
-              workflow,
-              '''          test "$(jq '.functions | length' "$PARITY_REFRESH_FILE")" = "5"\n''',
-              '''          parity_refresh_count="$(jq '.functions | length' "$PARITY_REFRESH_FILE")"\n          test "$parity_refresh_count" -ge 1\n''',
-              'dynamic parity-refresh count',
-          )
-          workflow = replace_once(
-              workflow,
-              '''          printf '%s\\n' generate-mockup live-chat notification-dispatcher public-lead-gateway site-visitor | sort > /tmp/approved-parity-refresh.txt\n          jq -r '.functions[].name' "$PARITY_REFRESH_FILE" | sort -u > /tmp/planned-parity-refresh.txt\n          cmp -s /tmp/approved-parity-refresh.txt /tmp/planned-parity-refresh.txt\n''',
-              '''          jq -r '.functions[].name' "$PARITY_REFRESH_FILE" | sort -u > /tmp/planned-parity-refresh.txt\n          test "$(wc -l < /tmp/planned-parity-refresh.txt | tr -d ' ')" = "$parity_refresh_count"\n''',
-              'remove stale secondary allowlist',
-          )
-          workflow = replace_once(
-              workflow,
-              '''          while IFS=$'\\t' read -r function_name registry source_path; do\n            test -n "$function_name"\n            test -f "$registry"\n            test -f "$source_path"\n            ! grep -Fqx "$function_name" /tmp/blocked-functions.txt\n          done < <(jq -r '.functions[] | [.name, .registry, .repository_source] | @tsv' "$PARITY_REFRESH_FILE")\n''',
-              '''          while IFS=$'\\t' read -r function_name registry source_path; do\n            test -n "$function_name"\n            case "$registry" in\n              supabase/deployment-parity/functions-f1.json|supabase/deployment-parity/functions-f2.json) ;;\n              *)\n                echo "::error title=Unsupported parity refresh registry::$function_name requested $registry"\n                exit 1\n                ;;\n            esac\n            test "$source_path" = "supabase/functions/$function_name/index.ts"\n            test -f "$registry"\n            test -f "$source_path"\n            grep -Fqx "[functions.$function_name]" supabase/config.toml\n            ! grep -Fqx "$function_name" /tmp/blocked-functions.txt\n          done < <(jq -r '.functions[] | [.name, .registry, .repository_source] | @tsv' "$PARITY_REFRESH_FILE")\n''',
-              'harden parity-refresh row validation',
-          )
-          workflow = replace_once(
-              workflow,
-              '            echo "- Scope: generate-mockup, live-chat, site-visitor only"\n',
-              '            echo "- Deployment scope: generate-mockup, live-chat, site-visitor only"\n',
-              'deployment summary',
-          )
-          workflow = replace_once(
-              workflow,
-              '            echo "- Pre-existing source-matched parity: notification-dispatcher v8 and public-lead-gateway v8"\n',
-              '            echo "- Parity refresh: reviewed F1/F2 repository sources, including adopted Tumblr functions"\n',
-              'parity summary',
-          )
-          workflow_path.write_text(workflow)
 
           test_path = Path('src/test/secM03ParityControl.test.ts')
           test = test_path.read_text()
@@ -148,9 +114,9 @@ jobs:
               '    expect(workflow).toContain("Parity refresh: reviewed F1/F2 repository sources, including adopted Tumblr functions");\n',
               'summary contract test',
           )
-          pinterest_anchor = '''  it("derives exact production migration parity without a fixed migration count", () => {\n'''
+          anchor = '''  it("derives exact production migration parity without a fixed migration count", () => {\n'''
           tumblr_test = '''  it("locks current Tumblr production functions to source-matched F1 parity while keeping refresh version-monotonic", () => {\n    const expectedTumblr = [\n      ["tumblr-oauth-callback", 2, false, "bb6792fce1a9499245e250148ccfc724e2375dbbd07476ad90caa29ab74e90c7"],\n      ["tumblr-operator", 15, false, "4eb790dcaf1dc596443a9991ff0f30d41364eb6eb0c80939d73a606cdd84da1b"],\n      ["tumblr-operator-get", 2, false, "82d3e61455d022123345c628caeb1ac61aa64f6da766970703e8b00909a9637c"],\n    ] as const;\n\n    for (const [name, liveVersion, verifyJwt, sourceHash] of expectedTumblr) {\n      const row = f1Registry.functions.find((entry: unknown[]) => entry[0] === name);\n      expect(row?.slice(0, 4)).toEqual([name, liveVersion, verifyJwt, sourceHash]);\n      expect(supabaseConfig).toContain(`[functions.${name}]\\nverify_jwt = ${verifyJwt}`);\n      const refresh = parityPlan.functions.find((entry: { name: string }) => entry.name === name);\n      expect(refresh).toMatchObject({\n        registry: "supabase/deployment-parity/functions-f1.json",\n        repository_source: `supabase/functions/${name}/index.ts`,\n        verify_jwt: false,\n      });\n      expect(refresh).not.toHaveProperty("exact_version");\n      expect(refresh).not.toHaveProperty("exact_hash");\n    }\n  });\n\n'''
-          test = replace_once(test, pinterest_anchor, tumblr_test + pinterest_anchor, 'Tumblr live parity contract test')
+          test = replace_once(test, anchor, tumblr_test + anchor, 'Tumblr live parity contract test')
           test_path.write_text(test)
           PY
 
@@ -202,17 +168,19 @@ jobs:
           cp /tmp/supabase-types.ts src/integrations/supabase/types.ts
 
           SUPABASE_ACCESS_TOKEN="$token" node scripts/ci/run-sec-m03-parity-generation.mjs
+          rm -rf supabase/.temp
           git diff --check
 
-      - name: Enforce bounded metadata diff, remove helper, and seal branch
+      - name: Enforce bounded non-workflow diff and seal generated files
         shell: bash
         run: |
           set -euo pipefail
-          git rm "$HELPER_FILE"
-          git diff --name-only | sort -u > /tmp/changed-files.txt
+          {
+            git diff --name-only
+            git ls-files --others --exclude-standard
+          } | sort -u > /tmp/changed-files.txt
+
           cat > /tmp/allowed-files.txt <<'EOF'
-          .github/workflows/supabase-functions-reconcile.yml
-          .github/workflows/tmp-tumblr-parity-refresh.yml
           src/integrations/supabase/types.ts
           src/test/secM03ParityControl.test.ts
           supabase/deployment-parity/functions-f1.json
@@ -227,7 +195,7 @@ jobs:
             printf 'Unexpected generated file(s):\n%s\n' "$unexpected" >&2
             exit 1
           fi
-          grep -Fxq '.github/workflows/supabase-functions-reconcile.yml' /tmp/changed-files.txt
+
           grep -Fxq 'src/test/secM03ParityControl.test.ts' /tmp/changed-files.txt
           grep -Fxq 'supabase/deployment-parity/functions-f1.json' /tmp/changed-files.txt
           grep -Fxq 'supabase/deployment-parity/manifest.json' /tmp/changed-files.txt
@@ -235,6 +203,13 @@ jobs:
 
           git config user.name 'irhaapparelsofficial-ctrl'
           git config user.email '294838484+irhaapparelsofficial-ctrl@users.noreply.github.com'
-          git add -A
-          git commit -m 'fix(parity): close post-sync Tumblr registry drift'
+          git add \
+            src/integrations/supabase/types.ts \
+            src/test/secM03ParityControl.test.ts \
+            supabase/deployment-parity/functions-f1.json \
+            supabase/deployment-parity/functions-f2.json \
+            supabase/deployment-parity/manifest.json \
+            supabase/deployment-parity/migration-provenance.json \
+            supabase/reconciliation/sec-m03-parity-refresh.json
+          git commit -m 'fix(parity): refresh post-sync Tumblr registry metadata'
           git push origin HEAD:"$HEAD_BRANCH"
