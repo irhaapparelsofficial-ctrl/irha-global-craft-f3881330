@@ -1,5 +1,5 @@
 {
-  "canonical_payload_sha256": "c1af5cd8bd4a150f5e0cb83c2b5217e615525b7e5d2d393582a5de76657dfc6c",
+  "canonical_payload_sha256": "601e9f12205057aeab76281bb34a21e19945b1949796d21e4eb47fd2849ee0e9",
   "payload": {
     "classification_policy": {
       "P1": "Exact repository source recovered and linked to the exact live version and name.",
@@ -9056,18 +9056,178 @@
         ],
         "superseding_baseline": null,
         "version": "20260808084350"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260808223304",
+          "private.irha_repository_migration_ledger:20260808223304",
+          "supabase/migrations/20260808223304_tumblr_oauth2_integration.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "github_management_api_verified_existing",
+          "file_sha256": "94b7e813bc98b42047c0f0d9869a99b0d88d3cb2227a30576d7b73e0f0c650b4",
+          "git_blob_sha1": "1782bc55a42354f2d6e126024dd8a19de13fbf2c",
+          "repository_path": "supabase/migrations/20260808223304_tumblr_oauth2_integration.sql",
+          "source_commit": "6d93c8672c94aa7f8e427aa1b6be7d3320129ced"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "cf75819c41a7a1d83e1cf137ccc4fe07d34d817a75bb2b5cce6082da1fa46164",
+        "name": "tumblr_oauth2_integration",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "BEGIN"
+        ],
+        "superseding_baseline": null,
+        "version": "20260808223304"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260808223629",
+          "private.irha_repository_migration_ledger:20260808223629",
+          "supabase/migrations/20260808223629_tumblr_oauth_bootstrap.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "github_management_api_verified_existing",
+          "file_sha256": "e05a9b41f12d6d0071642fe3e0c3e4e97b0b4d36e9753465918b4809c4923af2",
+          "git_blob_sha1": "1266be1ec19d9ef78546a4a4579690638e0c509b",
+          "repository_path": "supabase/migrations/20260808223629_tumblr_oauth_bootstrap.sql",
+          "source_commit": "6d93c8672c94aa7f8e427aa1b6be7d3320129ced"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "23fde47f301fc47f5a02793246e125815f116bbc944510b447c23396bb2068df",
+        "name": "tumblr_oauth_bootstrap",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "BEGIN"
+        ],
+        "superseding_baseline": null,
+        "version": "20260808223629"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260808230346",
+          "private.irha_repository_migration_ledger:20260808230346",
+          "supabase/migrations/20260808230346_tumblr_bootstrap_multi_use.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "github_management_api_verified_existing",
+          "file_sha256": "2760eda84790f58bd15985658d4fbdf7e5dc6b32eaac675fb332d86bdce4b67a",
+          "git_blob_sha1": "7fb8e7ca462f519e283acaff8d10885e44e342c2",
+          "repository_path": "supabase/migrations/20260808230346_tumblr_bootstrap_multi_use.sql",
+          "source_commit": "6d93c8672c94aa7f8e427aa1b6be7d3320129ced"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "76a3b62fa53ebcfd3c328779c45ed2304fd70ddd869b6b6756bce6412b41852a",
+        "name": "tumblr_bootstrap_multi_use",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "ALTER"
+        ],
+        "superseding_baseline": null,
+        "version": "20260808230346"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260808230846",
+          "private.irha_repository_migration_ledger:20260808230846",
+          "supabase/migrations/20260808230846_tumblr_oauth1_temp_tokens.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "github_management_api_verified_existing",
+          "file_sha256": "08258f0936a1be2dd8e35acab049b2d8c347b362b6c479588dfa251a6e06eb4b",
+          "git_blob_sha1": "81952df87c6ce14a9f7674c46df9cc35628c8398",
+          "repository_path": "supabase/migrations/20260808230846_tumblr_oauth1_temp_tokens.sql",
+          "source_commit": "6d93c8672c94aa7f8e427aa1b6be7d3320129ced"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "9ab55e0830756aa8a28bb3ae6da0d183e9283ea00dd0d8ab6192361a1e68e762",
+        "name": "tumblr_oauth1_temp_tokens",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "CREATE"
+        ],
+        "superseding_baseline": null,
+        "version": "20260808230846"
+      },
+      {
+        "authenticated_creator_present": true,
+        "class": "P1",
+        "current_repository_representation": "exact migration file",
+        "evidence_refs": [
+          "supabase_migrations.schema_migrations:20260808232335",
+          "private.irha_repository_migration_ledger:20260808232335",
+          "supabase/migrations/20260808232335_tumblr_operator_jobs.sql"
+        ],
+        "exact_repository_source": {
+          "application_state": "verified_present",
+          "execution_mode": "github_management_api_verified_existing",
+          "file_sha256": "7e62acd42bf41f95c2c8b9d8e66c6513b35ccd3284927aa6439c18b990f718bc",
+          "git_blob_sha1": "7aec8a0756022a135446ded7c89104b9acef3897",
+          "repository_path": "supabase/migrations/20260808232335_tumblr_operator_jobs.sql",
+          "source_commit": "6d93c8672c94aa7f8e427aa1b6be7d3320129ced"
+        },
+        "execution_origin": "supabase_migrations.schema_migrations",
+        "idempotency_key_present": false,
+        "live_rollback_sha256": null,
+        "live_statement_sha256": "b6fa765899e3e237341e8b0c5229a3917d24f855f4410ce114f8a61c6348b52e",
+        "name": "tumblr_operator_jobs",
+        "reason": "Exact repository version and name are linked to an immutable verified Git blob.",
+        "rollback_statement_count": 0,
+        "security_review_result": "covered by current schema, RLS, private-schema, Edge Function and cron parity snapshots",
+        "statement_count": 1,
+        "statement_kinds": [
+          "BEGIN"
+        ],
+        "superseding_baseline": null,
+        "version": "20260808232335"
       }
     ],
     "schema_version": 2,
     "totals": {
-      "P1": 16,
+      "P1": 21,
       "P2": 371,
       "P3": 0,
       "P4": 0,
       "P5": 0,
       "all_creators_present": true,
       "all_statements_recovered": true,
-      "live": 387
+      "live": 392
     }
   }
 }
