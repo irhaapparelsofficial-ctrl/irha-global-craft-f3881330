@@ -20,11 +20,14 @@ jobs:
     env:
       SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup Node
@@ -32,11 +35,96 @@ jobs:
         with:
           node-version: 24
 
-      - name: Generate exact production parity candidate
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.39.2
+
+      - name: Guard and repair proven site-visitor bundle drift
         shell: bash
         run: |
           set -euo pipefail
           test -n "$SUPABASE_ACCESS_TOKEN"
+          echo "::add-mask::$SUPABASE_ACCESS_TOKEN"
+          grep -Fx 'project_id = "pvzjiozismyxqrzmtfbi"' supabase/config.toml
+
+          # The one-time repair may only deploy source already accepted on exact main.
+          git diff --quiet "$BASE_SHA" "$CANDIDATE_SHA" -- \
+            supabase/functions/site-visitor/index.ts \
+            supabase/functions/_shared/durable-rate-limit.ts
+
+          cat > /tmp/site-visitor-parity-plan.json <<'JSON'
+          {
+            "schema_version": 1,
+            "execution_id": "IRHA-GP2-SITE-VISITOR-PARITY-REPAIR-20260809",
+            "project_id": "pvzjiozismyxqrzmtfbi",
+            "functions": [
+              {
+                "name": "site-visitor",
+                "registry": "supabase/deployment-parity/functions-f1.json",
+                "repository_source": "supabase/functions/site-visitor/index.ts",
+                "minimum_version": 0,
+                "verify_jwt": false,
+                "require_shared_limiter": true,
+                "provenance": "GP-2 exact-main source rebundled after proven out-of-band shared-helper byte drift"
+              }
+            ]
+          }
+          JSON
+
+          rm -rf /tmp/sec-m03-live-functions
+          SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
+            node scripts/ci/fetch-supabase-edge-sources.mjs
+
+          if SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
+            node scripts/ci/verify-sec-m03-deployed-sources.mjs; then
+            echo "site-visitor already matches exact repository bytes; no redeploy needed"
+          else
+            before="$(curl -fsS \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              -H 'Content-Type: application/json' \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/site-visitor")"
+            before_version="$(jq -r '.version' <<<"$before")"
+            before_hash="$(jq -r '.ezbr_sha256' <<<"$before")"
+            before_verify="$(jq -r '.verify_jwt' <<<"$before")"
+
+            test "$before_version" = "21"
+            test "$before_hash" = "e50cc0c6657f917b01bd1967c1bba60b586dc6faafbd02093a97ec2e50fb0b46"
+            test "$before_verify" = "false"
+
+            supabase functions deploy site-visitor --project-ref "$SUPABASE_PROJECT_ID"
+
+            after="$(curl -fsS \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              -H 'Content-Type: application/json' \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions/site-visitor")"
+            after_version="$(jq -r '.version' <<<"$after")"
+            test "$after_version" -gt "$before_version"
+            test "$(jq -r '.verify_jwt' <<<"$after")" = "false"
+
+            rm -rf /tmp/sec-m03-live-functions
+            SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
+              node scripts/ci/fetch-supabase-edge-sources.mjs
+            SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
+              node scripts/ci/verify-sec-m03-deployed-sources.mjs
+          fi
+
+          curl -fsS \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/functions" \
+            > /tmp/functions-after.json
+
+          SEC_M03_PARITY_REFRESH_PLAN=/tmp/site-visitor-parity-plan.json \
+            SEC_M03_LIVE_INVENTORY=/tmp/functions-after.json \
+            SEC_M03_REGISTRY_EVIDENCE=/tmp/site-visitor-registry-refresh-evidence.json \
+            SOURCE_SHA="$CANDIDATE_SHA" \
+            node scripts/ci/refresh-sec-m03-live-parity.mjs
+
+      - name: Generate exact production parity candidate
+        shell: bash
+        run: |
+          set -euo pipefail
           npx --yes supabase@2.39.2 gen types typescript \
             --project-id "$SUPABASE_PROJECT_ID" \
             --schema public > src/integrations/supabase/types.ts
@@ -46,12 +134,18 @@ jobs:
           node scripts/verify-supabase-parity.mjs
 
       - name: Upload exact candidate evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gp2-parity-candidate-${{ github.event.pull_request.head.sha }}
           path: |
             src/integrations/supabase/types.ts
+            supabase/deployment-parity/functions-f1.json
+            supabase/deployment-parity/functions-f2.json
             supabase/deployment-parity/migration-provenance.json
             supabase/deployment-parity/manifest.json
-          if-no-files-found: error
+            /tmp/site-visitor-registry-refresh-evidence.json
+            /tmp/sec-m03-deployed-source-evidence.json
+            /tmp/functions-after.json
+          if-no-files-found: warn
           retention-days: 2
