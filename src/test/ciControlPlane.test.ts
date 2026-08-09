@@ -22,6 +22,9 @@ describe("Irha CI control plane", () => {
     expect(quality).toContain("quality-${{ steps.failure-label.outputs.label }}-${{ github.sha }}");
     expect(quality).toContain("Publish exact commit Quality Gate status");
     expect(quality).toContain('context="Irha Quality Gate"');
+    expect(quality).toContain("QUALITY_STATUS_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}");
+    expect(quality).toContain('"repos/$GITHUB_REPOSITORY/statuses/$QUALITY_STATUS_SHA"');
+    expect(quality).not.toContain('"repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA"');
     expect(quality).not.toContain("issues: write");
     expect(quality).not.toContain("Publish sanitized PR test diagnostic");
     expect(quality).not.toContain("Detect full-verification readiness");
