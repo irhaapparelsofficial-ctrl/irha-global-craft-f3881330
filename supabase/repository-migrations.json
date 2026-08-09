@@ -549,6 +549,51 @@
       "git_blob_sha": "4ab5401889b7f97bf3ae88b37b954dbea88c01fb",
       "execution_mode": "transactional",
       "transactional_dry_run": true
+    },
+    {
+      "version": "20260808223304",
+      "name": "tumblr_oauth2_integration",
+      "path": "supabase/migrations/20260808223304_tumblr_oauth2_integration.sql",
+      "git_blob_sha": "1782bc55a42354f2d6e126024dd8a19de13fbf2c",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260808223304' and name = 'tumblr_oauth2_integration' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = 'cf75819c41a7a1d83e1cf137ccc4fe07d34d817a75bb2b5cce6082da1fa46164') as verified"
+    },
+    {
+      "version": "20260808223629",
+      "name": "tumblr_oauth_bootstrap",
+      "path": "supabase/migrations/20260808223629_tumblr_oauth_bootstrap.sql",
+      "git_blob_sha": "1266be1ec19d9ef78546a4a4579690638e0c509b",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260808223629' and name = 'tumblr_oauth_bootstrap' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = '23fde47f301fc47f5a02793246e125815f116bbc944510b447c23396bb2068df') as verified"
+    },
+    {
+      "version": "20260808230346",
+      "name": "tumblr_bootstrap_multi_use",
+      "path": "supabase/migrations/20260808230346_tumblr_bootstrap_multi_use.sql",
+      "git_blob_sha": "7fb8e7ca462f519e283acaff8d10885e44e342c2",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260808230346' and name = 'tumblr_bootstrap_multi_use' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = '76a3b62fa53ebcfd3c328779c45ed2304fd70ddd869b6b6756bce6412b41852a') as verified"
+    },
+    {
+      "version": "20260808230846",
+      "name": "tumblr_oauth1_temp_tokens",
+      "path": "supabase/migrations/20260808230846_tumblr_oauth1_temp_tokens.sql",
+      "git_blob_sha": "81952df87c6ce14a9f7674c46df9cc35628c8398",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260808230846' and name = 'tumblr_oauth1_temp_tokens' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = '9ab55e0830756aa8a28bb3ae6da0d183e9283ea00dd0d8ab6192361a1e68e762') as verified"
+    },
+    {
+      "version": "20260808232335",
+      "name": "tumblr_operator_jobs",
+      "path": "supabase/migrations/20260808232335_tumblr_operator_jobs.sql",
+      "git_blob_sha": "7aec8a0756022a135446ded7c89104b9acef3897",
+      "execution_mode": "verified_present",
+      "transactional_dry_run": false,
+      "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260808232335' and name = 'tumblr_operator_jobs' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = 'b6fa765899e3e237341e8b0c5229a3917d24f855f4410ce114f8a61c6348b52e') as verified"
     }
   ]
 }
