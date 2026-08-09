@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: write
+  statuses: read
+  pull-requests: read
 
 jobs:
   repair:
