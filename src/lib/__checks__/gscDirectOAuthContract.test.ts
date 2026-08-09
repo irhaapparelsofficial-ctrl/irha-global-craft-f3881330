@@ -134,10 +134,10 @@ describe("owner-controlled direct Google OAuth GSC contract", () => {
     for (const fragment of forbiddenMutations) expect(runtime).not.toContain(fragment);
   });
 
-  it("enforces exact property, JWT, admin role, strict hosts and maximum sequential batch", () => {
+  it("enforces exact property, intended gateway boundary, admin role, strict hosts and maximum sequential batch", () => {
     expect(analytics).toContain(`GSC_SITE_PROPERTY = "${exactProperty}"`);
     expect(inspection).toContain(`GSC_SITE_PROPERTY = "${exactProperty}"`);
-    expect(config).toMatch(/\[functions\.gsc-analytics\]\s+verify_jwt\s*=\s*true/);
+    expect(config).toMatch(/\[functions\.gsc-analytics\]\s+verify_jwt\s*=\s*false/);
     expect(config).toMatch(/\[functions\.gsc-inspect\]\s+verify_jwt\s*=\s*true/);
     for (const source of [analytics, inspection]) {
       expect(source).toContain("auth.getUser()");
