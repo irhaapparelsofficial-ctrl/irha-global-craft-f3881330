@@ -63,11 +63,13 @@ describe("SEC-M03 canonical parity control", () => {
     ]);
   });
 
-  it("accepts only reviewed parity refresh rows including repository-adopted Tumblr functions", () => {
+  it("accepts only reviewed parity refresh rows including GP-2 measurement and repository-adopted Tumblr functions", () => {
     expect(parityPlan.functions.map((entry: { name: string }) => entry.name).sort()).toEqual([
       "generate-mockup",
+      "gsc-analytics",
       "live-chat",
       "notification-dispatcher",
+      "operations-orchestrator",
       "public-lead-gateway",
       "site-visitor",
       "tumblr-oauth-callback",
@@ -113,6 +115,20 @@ describe("SEC-M03 canonical parity control", () => {
       exact_hash: "717a53d6c63bcd92485fc2a18e460aab98ec6f5cf6eae0f3b0ef68da1e011471",
     });
     expect(publicLeadParity).not.toHaveProperty("exact_version");
+    const gscParity = parityPlan.functions.find((entry: { name: string }) => entry.name === "gsc-analytics");
+    expect(gscParity).toMatchObject({
+      registry: "supabase/deployment-parity/functions-f2.json",
+      repository_source: "supabase/functions/gsc-analytics/index.ts",
+      verify_jwt: true,
+    });
+    expect(gscParity).not.toHaveProperty("exact_hash");
+    const operationsParity = parityPlan.functions.find((entry: { name: string }) => entry.name === "operations-orchestrator");
+    expect(operationsParity).toMatchObject({
+      registry: "supabase/deployment-parity/functions-f2.json",
+      repository_source: "supabase/functions/operations-orchestrator/index.ts",
+      verify_jwt: false,
+    });
+    expect(operationsParity).not.toHaveProperty("exact_hash");
     expect(manifestGenerator).toContain("deployed.version < representation.minimum_version");
     expect(manifestGenerator).not.toContain("deployed.version !== representation.version");
     expect(manifestGenerator).toContain('expectedFunctions.get("notification-dispatcher")');

@@ -17,6 +17,14 @@ type ChartContextProps = {
   config: ChartConfig;
 };
 
+type ChartPayloadItem = {
+  dataKey?: string | number;
+  name?: string | number;
+  value?: string | number;
+  color?: string;
+  payload: Record<string, unknown> & { fill?: string };
+};
+
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
 function useChart() {
@@ -93,10 +101,16 @@ const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     active?: boolean;
-    payload?: any[];
-    label?: any;
-    labelFormatter?: (value: any, payload: any) => React.ReactNode;
-    formatter?: (value: any, name: any, item: any, index: number, payload: any) => React.ReactNode;
+    payload?: ChartPayloadItem[];
+    label?: React.ReactNode;
+    labelFormatter?: (value: React.ReactNode, payload: ChartPayloadItem[]) => React.ReactNode;
+    formatter?: (
+      value: string | number,
+      name: string | number,
+      item: ChartPayloadItem,
+      index: number,
+      payload: ChartPayloadItem["payload"],
+    ) => React.ReactNode;
     color?: string;
   } & {
       hideLabel?: boolean;
@@ -180,7 +194,7 @@ const ChartTooltipContent = React.forwardRef<
                   indicator === "dot" && "items-center",
                 )}
               >
-                {formatter && item?.value !== undefined && item.name ? (
+                {formatter && item.value !== undefined && item.name !== undefined ? (
                   formatter(item.value, item.name, item, index, item.payload)
                 ) : (
                   <>
@@ -214,7 +228,7 @@ const ChartTooltipContent = React.forwardRef<
                         {nestLabel ? tooltipLabel : null}
                         <span className="text-muted-foreground">{itemConfig?.label || item.name}</span>
                       </div>
-                      {item.value && (
+                      {item.value !== undefined && item.value !== null && (
                         <span className="font-mono font-medium tabular-nums text-foreground">
                           {item.value.toLocaleString()}
                         </span>
@@ -237,7 +251,7 @@ const ChartLegend = RechartsPrimitive.Legend;
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    payload?: any[];
+    payload?: ChartPayloadItem[];
     verticalAlign?: "top" | "middle" | "bottom";
   } & {
       hideIcon?: boolean;

@@ -35,7 +35,8 @@ describe("admin connected-health contracts", () => {
   it("keeps Google Search analytics private and aligned to direct OAuth health", () => {
     const source = read("supabase/functions/gsc-analytics/index.ts");
     const config = read("supabase/config.toml");
-    const health = sourceSection(source, "async function healthResponse", "Deno.serve");
+    const health = sourceSection(source, "async function readHealth", "function formatDate");
+    const queryHelper = sourceSection(source, "async function querySearchAnalytics", "function safeNumber");
 
     expect(config).toContain("[functions.gsc-analytics]\nverify_jwt = true");
     expect(source).toContain("auth.getUser()");
@@ -47,21 +48,23 @@ describe("admin connected-health contracts", () => {
     expect(source).toContain("Days must be 28 or 90");
     expect(source).toContain(".irha-apparels.pages.dev");
 
-    expect(health).toContain("ok: true");
-    expect(health).toContain("ready,");
+    expect(health).toContain("ready: Boolean(ready)");
     expect(health).toContain('state: ready ? "ready" : "blocked"');
     expect(health).toContain("auth_mode: AUTH_MODE");
     expect(health).toContain("configuration: state.configuration");
     expect(health).toContain("failure_code: ready ? null : failureCode");
-    expect(health).toContain("}, 200, headers)");
+    expect(source).toContain('if (action === "health") return json({ ok: true, ...(await readHealth()) }, 200, headers)');
 
     const actionBranch = source.indexOf('if (action === "health")');
     const queryState = source.indexOf("const state = configurationState();", actionBranch);
     const oauthGuard = source.indexOf("if (!state.oauthConfigured)", queryState);
-    const endpoint = source.indexOf("const endpoint =", queryState);
+    const queryCall = source.indexOf("const rows = await querySearchAnalytics", oauthGuard);
     expect(queryState).toBeGreaterThan(actionBranch);
     expect(oauthGuard).toBeGreaterThan(queryState);
-    expect(endpoint).toBeGreaterThan(oauthGuard);
+    expect(queryCall).toBeGreaterThan(oauthGuard);
+    expect(queryHelper).toContain("const endpoint =");
+    expect(queryHelper).toContain("googleSearchConsoleFetch<SearchAnalyticsPayload>");
+    expect(queryHelper).toContain("if (!upstream.ok) throw new Error(upstream.code)");
     expect(source).not.toContain("connector_gateway_key");
     expect(source).not.toContain("search_console_connection_key");
     expect(source).not.toContain("X-Connection-Api-Key");
