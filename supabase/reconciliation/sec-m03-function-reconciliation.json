@@ -6,21 +6,21 @@
   "functions": [
     {
       "name": "generate-mockup",
-      "minimum_version": 10,
+      "minimum_version": 24,
       "verify_jwt": false,
-      "reason": "Deploy durable distributed rate limiting before expensive mockup rendering."
+      "reason": "Force one exact-main rebundle after post-merge verification proved live v23 contains the stale durable limiter helper bytes."
     },
     {
       "name": "live-chat",
-      "minimum_version": 11,
+      "minimum_version": 25,
       "verify_jwt": false,
-      "reason": "Deploy durable distributed rate limiting before protected chat writes."
+      "reason": "Force one exact-main rebundle after post-merge verification proved live v24 contains the same stale durable limiter helper bytes."
     },
     {
       "name": "site-visitor",
-      "minimum_version": 5,
+      "minimum_version": 22,
       "verify_jwt": false,
-      "reason": "Deploy durable duplicate suppression and safe analytics drop behavior."
+      "reason": "Preserve the already repaired exact GP-2 site-visitor bundle; do not redeploy while live v22 remains source-equivalent."
     }
   ]
 }
