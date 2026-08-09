@@ -89,7 +89,7 @@ jobs:
           npm run verify:secrets
           npm run verify:migrations
           npx tsc --noEmit
-          npx vitest run src/test/routeContentStaticFidelity.test.ts src/test/cloudflareRouteShellAssets.test.ts src/test/productionConvergenceBarrier.test.ts src/test/productionRouteParityCrawler.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
+          npx vitest run src/test/routeContentStaticFidelity.test.ts src/test/cloudflareRouteShellAssets.test.ts src/test/productionConvergenceBarrier.test.ts src/test/productionRouteParityCrawler.test.ts src/test/trustedOriginRouteParityReconciliation.test.ts src/test/relatedProductRouteParity.test.ts src/test/supabaseRpcPaginationGuard.test.ts --reporter=verbose
 
       - name: Wait for exact production convergence
         shell: bash
@@ -135,6 +135,18 @@ jobs:
           echo "reconciliation_code=$reconciliation_code" >> "$GITHUB_OUTPUT"
           exit 0
 
+      - name: Reconcile trusted request-origin evidence
+        id: trusted_origin
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          npx tsx scripts/reconcile-trusted-origin-route-findings.ts 2>&1 | tee "$CRAWL_OUTPUT_DIR/trusted-origin-reconciliation.log"
+          trusted_origin_code="${PIPESTATUS[0]}"
+          echo "$trusted_origin_code" > /tmp/production-route-parity-trusted-origin-exit-code
+          echo "trusted_origin_code=$trusted_origin_code" >> "$GITHUB_OUTPUT"
+          exit 0
+
       - name: Calculate authoritative production crawl result
         if: always()
         shell: bash
@@ -142,6 +154,7 @@ jobs:
           set -euo pipefail
           test -s "$CRAWL_OUTPUT_DIR/production-route-parity.json" || { echo "Production route report is missing"; exit 1; }
           test "$(cat /tmp/production-route-parity-reconciliation-exit-code 2>/dev/null || printf '1')" = "0" || { echo "Related-product evidence could not be reconciled safely"; exit 1; }
+          test "$(cat /tmp/production-route-parity-trusted-origin-exit-code 2>/dev/null || printf '1')" = "0" || { echo "Trusted request-origin evidence could not be reconciled safely"; exit 1; }
           node - <<'NODE'
           const fs = require('node:fs');
           const report = JSON.parse(fs.readFileSync(`${process.env.CRAWL_OUTPUT_DIR}/production-route-parity.json`, 'utf8'));
@@ -160,9 +173,11 @@ jobs:
             echo "## Production Route Parity"
             echo "- Source: \`$SOURCE_SHA\`"
             echo "- Origin: \`$CRAWL_ORIGIN\`"
+            echo "- Canonical origin: \`$CANONICAL_ORIGIN\`"
             echo "- Run ID: \`$GITHUB_RUN_ID\`"
             echo "- Raw crawl exit: \`${{ steps.crawl.outputs.crawl_code || 'not-run' }}\`"
-            echo "- Reconciliation exit: \`${{ steps.reconciliation.outputs.reconciliation_code || 'not-run' }}\`"
+            echo "- Related reconciliation exit: \`${{ steps.reconciliation.outputs.reconciliation_code || 'not-run' }}\`"
+            echo "- Trusted-origin reconciliation exit: \`${{ steps.trusted_origin.outputs.trusted_origin_code || 'not-run' }}\`"
             echo
             if [ -s "$CRAWL_OUTPUT_DIR/summary.md" ]; then cat "$CRAWL_OUTPUT_DIR/summary.md"; else echo "No crawl summary was generated."; fi
           } >> "$GITHUB_STEP_SUMMARY"
