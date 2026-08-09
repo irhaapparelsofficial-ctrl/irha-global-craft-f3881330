@@ -6,7 +6,7 @@ on:
       - fix/post-sync-tumblr-parity-20260809
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   generate:
@@ -24,3 +24,9 @@ jobs:
         with:
           node-version: 24
       - run: bash scripts/ci/tumblr-post-sync-parity-helper.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tumblr-post-sync-parity-output
+          path: /tmp/tumblr-parity-output
+          if-no-files-found: error
+          retention-days: 1
