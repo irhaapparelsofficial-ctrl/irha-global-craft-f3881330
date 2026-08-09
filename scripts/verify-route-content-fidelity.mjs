@@ -2,6 +2,7 @@ import { access, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CORE_ROUTE_CONTENT, CORE_ROUTE_PATHS, MAIN_CATEGORY_LINKS } from "../src/lib/routeContent.mjs";
+import { SCCI_BUSINESS_REFERENCE } from "../src/lib/publicBusinessEvidence.mjs";
 import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
 
 const DIST = resolve(process.env.IRHA_DIST_DIR || "dist");
@@ -291,13 +292,27 @@ function verifyAboutReactParity(source, content) {
   assert(!source.includes(PUBLIC_IDENTITY.responsiblePerson.title), "/about must not duplicate the responsible-person title outside publicIdentity.mjs");
 }
 
+function verifyBuyerTrustReactParity(source, content) {
+  assert(/import\s*\{\s*SCCI_BUSINESS_REFERENCE\s*\}\s*from\s*["']@\/lib\/publicBusinessEvidence\.mjs["'];?/.test(source), "/buyer-trust React source must import SCCI_BUSINESS_REFERENCE from the canonical evidence source");
+  assert(source.includes("SCCI_BUSINESS_REFERENCE.membershipNumber"), "/buyer-trust must visibly render the canonical SCCI reference identifier");
+  assert(source.includes("SCCI_BUSINESS_REFERENCE.verificationNote"), "/buyer-trust must visibly render the canonical SCCI qualification note");
+  assert(source.includes("SCCI_BUSINESS_REFERENCE.officialDirectoryUrl"), "/buyer-trust must link to the canonical SCCI directory URL");
+  assert(reactH1Of(source) === content.h1, `/buyer-trust React H1 differs from the approved static H1: ${reactH1Of(source)}`);
+  assert(!source.includes(SCCI_BUSINESS_REFERENCE.membershipNumber), "/buyer-trust must not duplicate the SCCI identifier outside publicBusinessEvidence.mjs");
+}
+
 async function verifyStaticIdentitySource() {
   const sourcePath = join(SOURCE_ROOT, "src/lib/routeContent.mjs");
   const source = await readFile(sourcePath, "utf8");
   assert(/import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']\.\/publicIdentity\.mjs["'];?/.test(source), "routeContent.mjs must import PUBLIC_IDENTITY from publicIdentity.mjs");
+  assert(/import\s*\{\s*SCCI_BUSINESS_REFERENCE\s*\}\s*from\s*["']\.\/publicBusinessEvidence\.mjs["'];?/.test(source), "routeContent.mjs must import SCCI_BUSINESS_REFERENCE from publicBusinessEvidence.mjs");
   const aboutDefinition = source.match(/"\/about":\s*route\(\{([\s\S]*?)\n\s*\}\),\n\s*"\/contact":/)?.[1] ?? "";
   assert(aboutDefinition, "routeContent.mjs is missing the controlled /about definition");
   assert(aboutDefinition.includes("PUBLIC_IDENTITY.responsiblePerson.display"), "Static /about content must derive the responsible-person identity from PUBLIC_IDENTITY");
+  const buyerTrustDefinition = source.match(/"\/buyer-trust":\s*route\(\{([\s\S]*?)\n\s*\}\),\n\s*"\/factory-video-call":/)?.[1] ?? "";
+  assert(buyerTrustDefinition, "routeContent.mjs is missing the controlled /buyer-trust definition");
+  assert(buyerTrustDefinition.includes("SCCI_BUSINESS_REFERENCE.membershipNumber"), "Static /buyer-trust content must derive the SCCI identifier from SCCI_BUSINESS_REFERENCE");
+  assert(!source.includes(SCCI_BUSINESS_REFERENCE.membershipNumber), "routeContent.mjs must not duplicate the SCCI identifier outside publicBusinessEvidence.mjs");
 }
 
 function verifyAboutStaticParity(html) {
@@ -317,6 +332,13 @@ function verifyAboutStaticParity(html) {
   ]) assert(main.includes(escapeHtml(token)), `/about is missing approved identity value: ${token}`);
 }
 
+function verifyBuyerTrustStaticParity(html) {
+  const main = primaryMain(html);
+  assert(main.includes(escapeHtml(SCCI_BUSINESS_REFERENCE.membershipNumber)), "/buyer-trust static output is missing the verified SCCI directory identifier");
+  assert(main.includes("SCCI member-directory reference"), "/buyer-trust static output is missing the SCCI directory-reference label");
+  assert(main.includes("business-identity evidence only"), "/buyer-trust static output is missing the SCCI scope qualification");
+}
+
 async function verifyReactParity() {
   let checked = 0;
   await verifyStaticIdentitySource();
@@ -329,6 +351,10 @@ async function verifyReactParity() {
       const importedIdentityValues = new Set([PUBLIC_IDENTITY.responsiblePerson.name, PUBLIC_IDENTITY.responsiblePerson.title]);
       for (const token of content.parityTokens) if (!importedIdentityValues.has(token)) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
       verifyAboutReactParity(source, content);
+    } else if (pathname === "/buyer-trust") {
+      const importedEvidenceValues = new Set([SCCI_BUSINESS_REFERENCE.membershipNumber]);
+      for (const token of content.parityTokens) if (!importedEvidenceValues.has(token)) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
+      verifyBuyerTrustReactParity(source, content);
     } else {
       for (const token of content.parityTokens) assert(source.includes(token), `${pathname} React source no longer contains parity token: ${token}`);
     }
@@ -420,6 +446,7 @@ export async function verifyRouteContentFidelity() {
   assert(new Set(mainCategoryBodies).size === MAIN_CATEGORY_LINKS.length, "Two main-category routes expose identical primary static content");
 
   verifyAboutStaticParity(await readRoute("/about"));
+  verifyBuyerTrustStaticParity(await readRoute("/buyer-trust"));
   const manufacturing = stripHtml(primaryMain(await readRoute("/manufacturing")));
   for (const token of ["Requirement review", "sample discussion", "Material and construction alignment", "Quality review", "Packing and dispatch planning"]) assert(manufacturing.includes(token), `/manufacturing is missing process content: ${token}`);
   const buyerTrust = stripHtml(primaryMain(await readRoute("/buyer-trust")));

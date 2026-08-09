@@ -2,14 +2,13 @@
 //
 // Two sources feed the resolver:
 //   1. `STATIC_LEGACY_REDIRECTS` — hand-curated, high-confidence 301s.
-//   2. `catalog_taxonomy_migration_map` (source_kind='route') — DB-managed
-//      mappings written by the taxonomy release workflow.
+//   2. `legacy_route_redirects` / public redirect RPC — DB-managed mappings
+//      used by the buyer-ready redirect generator.
 //
 // Rules:
-//   - No guessing: entries with `confidence !== 'auto'` are routed to the
-//     admin queue view (`admin_legacy_redirect_queue`) instead of applied.
-//   - Every target must resolve to a currently-approved public route.
-//   - Loops and self-redirects are rejected at build time by tests.
+//   - No guessing: entries with `confidence !== 'auto'` require review.
+//   - Every public SEO target must resolve to a currently-approved route.
+//   - Loops, self-redirects and avoidable chains are rejected by tests/build.
 
 export type LegacyRedirectConfidence = "auto" | "review";
 
@@ -21,15 +20,12 @@ export type LegacyRedirectRule = {
 };
 
 /**
- * Curated 301 map. Kept in-sync with `LEGACY_REDIRECTS` in `src/App.tsx`
- * so both the React router and future edge/redirect resolvers agree.
- *
- * Add entries here only when we can PROVE the target from a current route
- * or taxonomy manifest. Anything speculative belongs in the admin queue.
+ * Curated 301 map. Keep aliases pointed directly at final authorities so the
+ * browser router, static redirect file and generated DB-backed layer converge.
  */
 export const STATIC_LEGACY_REDIRECTS: readonly LegacyRedirectRule[] = [
-  { from: "/catalog", to: "/catalogue", confidence: "auto", reason: "spelling alias" },
-  { from: "/catalogs/master-catalogue-2026.pdf", to: "/catalogue", confidence: "auto", reason: "retired PDF" },
+  { from: "/catalog", to: "/products", confidence: "auto", reason: "direct canonical catalogue entry" },
+  { from: "/catalogs/master-catalogue-2026.pdf", to: "/products", confidence: "auto", reason: "retired PDF to current catalogue entry" },
   { from: "/privacy", to: "/privacy-policy", confidence: "auto" },
   { from: "/privacy/", to: "/privacy-policy", confidence: "auto" },
   { from: "/terms", to: "/terms-of-service", confidence: "auto" },
@@ -65,17 +61,12 @@ export const STATIC_LEGACY_REDIRECTS: readonly LegacyRedirectRule[] = [
 
 export type ResolvedRedirect = { to: string; source: "static" | "db" };
 
-/** Look up a path in the static list; returns null when nothing matches. */
 export function resolveStaticRedirect(pathname: string): ResolvedRedirect | null {
   const rule = STATIC_LEGACY_REDIRECTS.find((r) => r.from === pathname);
   if (!rule) return null;
   return { to: rule.to, source: "static" };
 }
 
-/**
- * Detect loops and self-redirects in a candidate rule set. Callers should
- * fail closed (skip the rule) when this returns `true`.
- */
 export function hasLoopOrSelfRedirect(rules: readonly LegacyRedirectRule[]): boolean {
   const map = new Map(rules.map((r) => [r.from, r.to]));
   for (const [from] of map) {

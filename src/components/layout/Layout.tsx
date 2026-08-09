@@ -4,7 +4,6 @@ import Navbar from "./Navbar";
 import OccasionBanner from "@/components/OccasionBanner";
 import GermanLanguageSuggestion from "@/components/GermanLanguageSuggestion";
 import StickyMobileCTA from "@/components/sections/StickyMobileCTA";
-import ViewportDeferred from "@/components/performance/ViewportDeferred";
 import TaxonomyIndexingGuard from "@/components/TaxonomyIndexingGuard";
 import { getRouteLocale, SHARED_UI_COPY } from "@/lib/i18nFoundation";
 
@@ -61,14 +60,12 @@ function DeferredSupportRuntime() {
   return <Suspense fallback={null}><LiveChat /><HumanLiveChat /></Suspense>;
 }
 
-function DeferredFooterChrome() {
+function FooterChrome() {
   return (
-    <ViewportDeferred minHeight={520} rootMargin="600px 0px" fallbackDelayMs={30_000}>
-      <Suspense fallback={<div aria-hidden className="min-h-[420px]" />}>
-        <InternalLinksBlock />
-        <Footer />
-      </Suspense>
-    </ViewportDeferred>
+    <Suspense fallback={<div aria-hidden className="min-h-[420px]" />}>
+      <InternalLinksBlock />
+      <Footer />
+    </Suspense>
   );
 }
 
@@ -89,7 +86,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         {children}
       </main>
       <TaxonomyIndexingGuard />
-      <DeferredFooterChrome />
+      <FooterChrome />
       <StickyMobileCTA />
       <DeferredSupportRuntime />
     </div>

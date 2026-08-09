@@ -155,6 +155,8 @@ export function checkSearchRouteState({
   inputPath = DEFAULT_ROUTE_MANIFEST_PATH,
   outputPath = DEFAULT_ROUTE_STATE_PATH,
 } = {}) {
+  // Keep this gate fail-closed so every accepted head proves its committed material
+  // search state was generated from that exact head rather than from a stale CI artifact.
   const state = buildStateFromManifest(inputPath);
   const expected = renderSearchRouteState(state);
   let committed;
@@ -164,6 +166,9 @@ export function checkSearchRouteState({
     throw new Error(`Committed material search route state is missing at ${outputPath}: ${String(error)}`);
   }
   if (committed !== expected) {
+    console.error("SEARCH_ROUTE_STATE_EXPECTED_BEGIN");
+    console.error(expected);
+    console.error("SEARCH_ROUTE_STATE_EXPECTED_END");
     throw new Error(
       "Committed material search route state is stale. Run node scripts/generate-search-route-state.mjs --write before merging.",
     );

@@ -7,12 +7,12 @@ const NOINDEX_PREFIXES = ["/intl/"];
 
 const PAGE_SUMMARIES = {
   "/": { title: "Irha Apparels", summary: "B2B custom apparel manufacturer in Sialkot, Pakistan for brands, wholesalers, importers, retailers and private-label buyers." },
-  "/about": { title: "About Irha Apparels", summary: "Company overview for a requirement-led custom apparel manufacturer serving global B2B buyers." },
+  "/about": { title: "About Irha Apparels", summary: "Company overview for a requirement-led custom apparel manufacturer available for international B2B enquiries." },
   "/products": { title: "Irha Apparels Products", summary: "Public overview of Bavarian and Trachten wear, leather apparel, sportswear, activewear, streetwear, leisurewear and nightwear manufacturing programs." },
-  "/manufacturing": { title: "Manufacturing", summary: "Requirement-led OEM, ODM and private-label apparel workflow covering development, sampling, customization, production review and export support." },
+  "/manufacturing": { title: "Manufacturing", summary: "Requirement-led OEM, ODM and private-label apparel workflow covering development, sampling, customization, production review and order-specific shipment planning." },
   "/compliance": { title: "Compliance", summary: "Public compliance and buyer due-diligence information. Product-specific documentation is confirmed after requirements are reviewed." },
-  "/buyer-trust": { title: "Buyer Trust", summary: "Buyer verification, communication and confidence information, including the option to view the factory on a live video call." },
-  "/factory-video-call": { title: "Factory Video Call", summary: "Information for arranging a live factory-view video call as part of buyer verification." },
+  "/buyer-trust": { title: "Buyer Trust", summary: "Buyer verification, communication and confidence information, including the option to request a live factory-view video call." },
+  "/factory-video-call": { title: "Factory Video Call", summary: "Information for requesting a live factory-view video call as part of buyer verification." },
   "/resources": { title: "Buyer Resources", summary: "Public guidance for requirements, samples, quotations, shipping questions and buyer preparation." },
   "/faq": { title: "Buyer FAQ", summary: "Frequently asked questions for B2B apparel buyers. MOQ, price, timing and shipping remain subject to requirement review." },
   "/catalogue": { title: "Product Catalogue", summary: "Buyer-oriented public catalogue groups. Fixed pricing is not published; use the inquiry page for a quotation." },
@@ -49,6 +49,28 @@ const DISCOVERY_LINKS = [
   `<${SITE_ORIGIN}/.well-known/agent-skills/index.json>; rel="service-meta"`,
   `<${SITE_ORIGIN}/auth.md>; rel="authorization"`,
 ].join(", ");
+
+const API_CATALOG = {
+  linkset: [
+    {
+      anchor: `${SITE_ORIGIN}/.well-known/api-catalog`,
+      item: [
+        { href: "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/public-lead-gateway" },
+        { href: `${SITE_ORIGIN}/mcp` },
+      ],
+    },
+    {
+      anchor: "https://pvzjiozismyxqrzmtfbi.supabase.co/functions/v1/public-lead-gateway",
+      "service-desc": [{ href: `${SITE_ORIGIN}/openapi/public-lead-gateway.json`, type: "application/vnd.oai.openapi+json;version=3.1" }],
+      "service-doc": [{ href: `${SITE_ORIGIN}/docs/public-lead-gateway.md`, type: "text/markdown" }],
+    },
+    {
+      anchor: `${SITE_ORIGIN}/mcp`,
+      "service-desc": [{ href: `${SITE_ORIGIN}/.well-known/mcp/server-card.json`, type: "application/json" }],
+      "service-doc": [{ href: `${SITE_ORIGIN}/docs/mcp.md`, type: "text/markdown" }],
+    },
+  ],
+};
 
 function canonicalPath(pathname) {
   if (pathname === "/") return "/";
@@ -127,6 +149,22 @@ function markdownResponse(request, pathname, page, status = 200) {
   });
 }
 
+function apiCatalogResponse(request) {
+  const body = request.method === "HEAD" ? null : `${JSON.stringify(API_CATALOG, null, 2)}\n`;
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/linkset+json; charset=utf-8",
+      "Cache-Control": "public, max-age=300, must-revalidate",
+      "Access-Control-Allow-Origin": "*",
+      "Link": DISCOVERY_LINKS,
+      "X-Content-Type-Options": "nosniff",
+      "X-Robots-Tag": "noindex, follow",
+      "X-Irha-Api-Catalog": "linkset-json",
+    },
+  });
+}
+
 function withDiscoveryHeaders(response) {
   const headers = new Headers(response.headers);
   const vary = headers.get("Vary");
@@ -142,6 +180,10 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const pathname = canonicalPath(url.pathname);
   const accept = request.headers.get("accept") || "";
+
+  if ((method === "GET" || method === "HEAD") && pathname === "/.well-known/api-catalog") {
+    return apiCatalogResponse(request);
+  }
 
   if ((method === "GET" || method === "HEAD") && accept.toLowerCase().includes("text/markdown") && !isPrivateOrMachinePath(pathname) && !looksLikeFile(pathname)) {
     const page = pageSummaryFor(pathname);

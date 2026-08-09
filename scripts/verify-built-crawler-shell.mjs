@@ -139,7 +139,11 @@ assert(robots.includes(`Sitemap: ${canonical}/sitemap.xml`), "robots.txt sitemap
 assert(!sitemap.includes(`<loc>${alternateHost}`), "sitemap still contains www URLs");
 assert(sitemap.includes(`<loc>${canonical}/</loc>`), "sitemap is missing the canonical homepage");
 assert(llms.includes(`${canonical}/`), "llms.txt is missing absolute canonical URLs");
-assert(llmsFull.toLowerCase().includes("two production hubs"), "llms-full.txt is missing the current homepage structure");
+const llmsFullLower = llmsFull.toLowerCase();
+assert(llmsFull.includes("## Product divisions"), "llms-full.txt is missing the current homepage product-division structure");
+assert(llmsFullLower.includes("main category, relevant audience or buyer group, product type and individual product page"), "llms-full.txt is missing the current catalogue hierarchy");
+assert(llmsFullLower.includes("appointment-based live factory-view video call"), "llms-full.txt is missing the current request-based factory verification path");
+assert(!llmsFullLower.includes("two production hubs"), "llms-full.txt still contains the retired production-hub claim");
 const builtBrandMaster = await readFile(join(DIST, "brand/irha-apparels-official-master.png"));
 assert(createHash("sha256").update(builtBrandMaster).digest("hex") === "32eee79bc7038c53cff36bab46193c77e78702d7eef7883e8f94b145999a1b87", "Built official brand master SHA-256 drift");
 assert((await stat(join(DIST, "brand/irha-apparels-official-runtime-512.png"))).size > 0, "Built official runtime crest is missing");

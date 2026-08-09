@@ -34,12 +34,16 @@ describe("homepage critical-path performance contract", () => {
     expect(resolverSource).toContain("useHomepageMedia");
   });
 
-  it("gates footer and both support channels by interaction or a bounded fallback", () => {
+  it("keeps crawl-critical footer chrome in public markup while deferring interactive support", () => {
     expect(layoutSource).toContain('const Footer = lazy(() => import("./Footer"))');
     expect(layoutSource).toContain('const loadGuide = () => import("@/components/LiveChat")');
     expect(layoutSource).toContain('const loadHumanLiveChat = () => import("@/components/HumanLiveChat")');
     expect(layoutSource).toContain('const InternalLinksBlock = lazy(() => import("@/components/content/InternalLinksBlock")');
-    expect(layoutSource).toContain('<ViewportDeferred minHeight={520} rootMargin="600px 0px" fallbackDelayMs={30_000}>');
+    expect(layoutSource).toContain("function FooterChrome()");
+    expect(layoutSource).toContain("<FooterChrome />");
+    expect(layoutSource).toContain("<InternalLinksBlock />");
+    expect(layoutSource).toContain("<Footer />");
+    expect(layoutSource).not.toContain('<ViewportDeferred minHeight={520} rootMargin="600px 0px" fallbackDelayMs={30_000}>');
     expect(layoutSource).toContain('window.addEventListener("pointerdown", activate');
     expect(layoutSource).toContain("window.setTimeout(activate, 8_000)");
     expect(layoutSource).toContain("guideModuleReadyRef");

@@ -46,3 +46,8 @@ manifest.icons = manifest.icons.map((icon) => ({
 await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 console.log(`Versioned official brand assets in ${htmlFiles.length} built HTML files`);
+
+// Phase 1 is deliberately the final public-contract step. It runs after all
+// static/SEO/worker writers so a late generator cannot reintroduce stale trust,
+// language, redirect or API-catalog output after the earlier sanitizers pass.
+await import("./finalize-phase1-public-contract.mjs");

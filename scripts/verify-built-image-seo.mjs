@@ -374,22 +374,43 @@ async function verifyRedirects() {
     const [source, , status] = line.split(/\s+/);
     return status === "301" && !source.includes("*");
   });
-  const wildcard301 = lines.filter((line) => {
+  const catalogueWildcards = lines.filter((line) => {
     const [source, , status] = line.split(/\s+/);
-    return status === "301" && source.includes("*");
+    return status === "301" && /^\/catalogue\/\*/.test(source);
   });
-  if (wildcard301.length !== 1) {
-    throw new Error(`Redirect wildcard drift: ${wildcard301.length}`);
+  if (catalogueWildcards.length !== 0) {
+    throw new Error(`Obsolete catalogue wildcard redirect present: ${catalogueWildcards.join(", ")}`);
   }
-  const sources = new Set();
+
+  const redirects = new Map();
   for (const line of exact301) {
     const [source, target] = line.split(/\s+/);
     if (!source || !target) throw new Error(`Malformed exact redirect: ${line}`);
-    if (sources.has(source)) throw new Error(`Duplicate exact redirect source: ${source}`);
+    if (redirects.has(source)) throw new Error(`Duplicate exact redirect source: ${source}`);
     if (source === target) throw new Error(`Self redirect: ${source}`);
-    sources.add(source);
+    redirects.set(source, target);
   }
   if (exact301.length === 0) throw new Error("Exact redirect inventory is empty");
+
+  const expected = new Map([
+    ["/catalog", "/products"],
+    ["/catalogue", "/products"],
+    ["/catalogue/bavarian-garments", "/products/bavarian-trachten-wear"],
+    ["/catalogue/lederhosen", "/products/bavarian-trachten-wear/men/lederhosen"],
+    ["/catalogue/activewear", "/products/sportswear/fitness-activewear/performance-activewear"],
+    ["/catalogue/nightwear", "/products/leisure-nightwear"],
+  ]);
+  for (const [source, target] of expected) {
+    if (redirects.get(source) !== target) {
+      throw new Error(`Semantic legacy redirect drift: ${source} -> ${redirects.get(source) || "<missing>"}; expected ${target}`);
+    }
+  }
+
+  for (const [source, target] of redirects) {
+    if (redirects.get(target)) {
+      throw new Error(`Redirect chain detected: ${source} -> ${target} -> ${redirects.get(target)}`);
+    }
+  }
   return exact301.length;
 }
 
