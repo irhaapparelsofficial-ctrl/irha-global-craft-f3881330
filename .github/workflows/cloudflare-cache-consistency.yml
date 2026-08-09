@@ -24,7 +24,9 @@ env:
 
 jobs:
   reconcile-cache:
-    if: github.event.workflow_run.head_repository.full_name == github.repository
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -49,20 +51,30 @@ jobs:
             exit 0
           fi
 
-          lineage_marker=/tmp/cache-release-lineage.json
-          lineage_status="$(curl -sS -L --connect-timeout 10 --max-time 40 \
-            -H 'Cache-Control: no-cache' \
-            -o "$lineage_marker" -w '%{http_code}' \
-            "$PAGES_URL/cloudflare-deployment.json?release_check=${SOURCE_SHA::12}-$RANDOM" || true)"
-          test "$lineage_status" = "200"
-          jq -e --arg sha "$SOURCE_SHA" '
-            .source_sha == $sha
-            and .branch == "main"
-            and (.build_fingerprint | type == "string" and test("^[0-9a-f]{64}$"))
-            and (.quality_run_id | type == "string" and test("^[0-9]+$"))
-          ' "$lineage_marker" >/dev/null
+          upstream_run="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$UPSTREAM_RUN_ID")"
+          printf '%s' "$upstream_run" | jq -e --arg sha "$SOURCE_SHA" '
+            .name == "Cloudflare Current Main Reconcile"
+            and .head_sha == $sha
+            and .head_branch == "main"
+            and .conclusion == "success"
+          ' >/dev/null
 
-          quality_run_id="$(jq -r '.quality_run_id' "$lineage_marker")"
+          quality_runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SOURCE_SHA&per_page=100")"
+          quality_run_id="$(printf '%s' "$quality_runs" | jq -r '
+            [.workflow_runs[]
+              | select(
+                  .name == "Quality Gate"
+                  and .head_sha == env.SOURCE_SHA
+                  and .head_branch == "main"
+                  and (.event == "push" or .event == "workflow_dispatch")
+                  and .conclusion == "success"
+                )]
+            | sort_by(.run_number)
+            | last
+            | .id // empty
+          ')"
+          test -n "$quality_run_id"
+
           quality_run="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$quality_run_id")"
           printf '%s' "$quality_run" | jq -e --arg sha "$SOURCE_SHA" '
             .name == "Quality Gate"
@@ -74,7 +86,7 @@ jobs:
 
           echo "eligible=true" >> "$GITHUB_OUTPUT"
           echo "quality_run_id=$quality_run_id" >> "$GITHUB_OUTPUT"
-          echo "Exact current main frozen: $SOURCE_SHA; deployed Quality lineage: $quality_run_id"
+          echo "Exact current main frozen: $SOURCE_SHA; authoritative Quality lineage resolved from GitHub Actions: $quality_run_id"
 
       - name: Record superseded no-op
         if: steps.freeze.outputs.eligible != 'true'
