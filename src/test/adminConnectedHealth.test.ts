@@ -35,7 +35,7 @@ describe("admin connected-health contracts", () => {
   it("keeps Google Search analytics private and aligned to direct OAuth health", () => {
     const source = read("supabase/functions/gsc-analytics/index.ts");
     const config = read("supabase/config.toml");
-    const health = sourceSection(source, "async function healthResponse", "Deno.serve");
+    const health = sourceSection(source, "async function readHealth", "function formatDate");
 
     expect(config).toContain("[functions.gsc-analytics]\nverify_jwt = true");
     expect(source).toContain("auth.getUser()");
@@ -47,13 +47,12 @@ describe("admin connected-health contracts", () => {
     expect(source).toContain("Days must be 28 or 90");
     expect(source).toContain(".irha-apparels.pages.dev");
 
-    expect(health).toContain("ok: true");
-    expect(health).toContain("ready,");
+    expect(health).toContain("ready: Boolean(ready)");
     expect(health).toContain('state: ready ? "ready" : "blocked"');
     expect(health).toContain("auth_mode: AUTH_MODE");
     expect(health).toContain("configuration: state.configuration");
     expect(health).toContain("failure_code: ready ? null : failureCode");
-    expect(health).toContain("}, 200, headers)");
+    expect(source).toContain('if (action === "health") return json({ ok: true, ...(await readHealth()) }, 200, headers)');
 
     const actionBranch = source.indexOf('if (action === "health")');
     const queryState = source.indexOf("const state = configurationState();", actionBranch);
