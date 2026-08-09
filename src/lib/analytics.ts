@@ -98,7 +98,7 @@ export function trackLeadGenerated({
   const parameters = {
     lead_type: leadType,
     form_name: formName,
-    source_page: sourcePage ?? currentPagePath(),
+    source_page: sourcePage ? normalizePagePath(sourcePage) : currentPagePath(),
     destination_country: country,
     product_category: category,
     product_slug: productSlug,
@@ -110,15 +110,22 @@ export function trackLeadGenerated({
   if (adsSendTo) trackAdsConversion(adsSendTo, { lead_type: leadType });
 }
 
+export function normalizePagePath(value: string): string {
+  const raw = (value || "/").split("?")[0].split("#")[0];
+  if (!raw || raw === "/") return "/";
+  const normalized = raw.replace(/\/{2,}/g, "/").replace(/\/$/, "");
+  return (normalized.startsWith("/") ? normalized : `/${normalized}`).slice(0, 200);
+}
+
 export function currentPagePath(): string {
   if (typeof window === "undefined") return "/";
-  return `${window.location.pathname}${window.location.search}`.slice(0, 200);
+  return normalizePagePath(window.location.pathname);
 }
 
 export function trackDownload(params: DownloadEvent): void {
   trackAnalyticsEvent("download_catalog", {
-    page: params.page || currentPagePath(),
-    cta_location: params.cta_location,
+    page: normalizePagePath(params.page || currentPagePath()),
+    cta_location: normalizePagePath(params.cta_location),
     catalog: params.catalog,
   });
 }

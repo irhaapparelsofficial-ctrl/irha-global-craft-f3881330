@@ -53,6 +53,7 @@ const ALLOWED_POLICIES = new Set([
   "site-visitor.arrive",
   "site-visitor.heartbeat",
   "site-visitor.chat_open",
+  "site-visitor.event",
   "live-chat.presence",
   "live-chat.connect",
   "live-chat.send",
@@ -257,7 +258,7 @@ function normalizeRpcRow(data: unknown) {
 }
 
 export function policyForSiteVisitorAction(action: string) {
-  if (action === "arrive" || action === "heartbeat" || action === "chat_open") return `site-visitor.${action}`;
+  if (action === "arrive" || action === "heartbeat" || action === "chat_open" || action === "event") return `site-visitor.${action}`;
   return null;
 }
 

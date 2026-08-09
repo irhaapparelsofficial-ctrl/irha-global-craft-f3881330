@@ -101,17 +101,19 @@ Deno.serve(async (req: Request) => {
 
 async function daily(service: any, runId: string, control: any, url: string, serviceKey: string): Promise<Json> {
   const { data: planningId, error: planningError } = await service.rpc("create_automation_planning_cycle", { _trigger_source: "system" });
-  const [health, sitemapSubmission] = await Promise.all([
+  const [health, sitemapSubmission, searchMeasurement] = await Promise.all([
     heartbeat(service, runId, control, true),
     submitCanonicalSitemap(url, serviceKey),
+    syncSearchMeasurement(url, serviceKey),
   ]);
-  const ok = !planningError && health.ok !== false && sitemapSubmission.ok !== false;
+  const ok = !planningError && health.ok !== false && sitemapSubmission.ok !== false && searchMeasurement.ok !== false;
   return {
     ok,
     error: ok ? null : "daily_operations_degraded",
     planning_run_id: planningId || null,
     planning_error: planningError?.message || null,
     sitemap_submission: sitemapSubmission,
+    search_measurement: searchMeasurement,
     health,
     external_messages_sent: false,
     external_posts_published: false,
@@ -135,28 +137,33 @@ async function submitCanonicalSitemap(url: string, serviceKey: string): Promise<
     let payload: unknown = text;
     try { payload = JSON.parse(text); } catch { payload = text.slice(0, 2000); }
     const result = payload && typeof payload === "object" ? payload as Json : {};
-    if (!response.ok || result.ok !== true) {
-      return {
-        ok: false,
-        status: response.status,
-        error: "sitemap_submission_failed",
-        response: payload,
-      };
-    }
-    return {
-      ok: true,
-      status: response.status,
-      site_property: result.site_property || "sc-domain:irhaapparels.com",
-      sitemap: result.sitemap || `${PROJECT_SITE}/sitemap.xml`,
-      submitted_at: new Date().toISOString(),
-    };
+    if (!response.ok || result.ok !== true) return { ok: false, status: response.status, error: "sitemap_submission_failed", response: payload };
+    return { ok: true, status: response.status, site_property: result.site_property || "sc-domain:irhaapparels.com", sitemap: result.sitemap || `${PROJECT_SITE}/sitemap.xml`, submitted_at: new Date().toISOString() };
   } catch (error) {
-    return {
-      ok: false,
-      status: 0,
-      error: "sitemap_submission_request_failed",
-      detail: error instanceof Error ? error.message : String(error),
-    };
+    return { ok: false, status: 0, error: "sitemap_submission_request_failed", detail: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+async function syncSearchMeasurement(url: string, serviceKey: string): Promise<Json> {
+  try {
+    const response = await fetch(`${url}/functions/v1/gsc-analytics`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${serviceKey}`,
+        apikey: serviceKey,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ action: "sync" }),
+      signal: AbortSignal.timeout(110_000),
+    });
+    const text = await response.text();
+    let payload: unknown = text;
+    try { payload = JSON.parse(text); } catch { payload = text.slice(0, 2000); }
+    const result = payload && typeof payload === "object" ? payload as Json : {};
+    if (!response.ok || result.ok !== true) return { ok: false, status: response.status, error: "search_measurement_sync_failed", response: payload };
+    return { ok: true, status: response.status, response: result, synced_at: new Date().toISOString() };
+  } catch (error) {
+    return { ok: false, status: 0, error: "search_measurement_sync_request_failed", detail: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -180,7 +187,7 @@ async function heartbeat(service: any, runId: string, control: any, recover: boo
     recovered.ai_actions = actions.data?.length || 0;
   }
 
-  const [products, categories, leads, tasks, inquiries, outreachDrafts, seoDrafts, mediaVerified, socialAccounts, recentFailures] = await Promise.all([
+  const [products, categories, leads, tasks, inquiries, outreachDrafts, seoDrafts, mediaVerified, socialAccounts, recentFailures, latestSearch] = await Promise.all([
     count(service, "products", { column: "is_published", value: true }),
     count(service, "categories", { column: "is_published", value: true }),
     count(service, "b2b_leads"),
@@ -191,6 +198,7 @@ async function heartbeat(service: any, runId: string, control: any, recover: boo
     count(service, "media_assets", { column: "verification_status", value: "verified" }),
     service.from("social_platform_accounts").select("platform,enabled,verification_status,last_verified_at,last_health"),
     service.from("operations_runs").select("id,action,status,error,started_at").eq("status", "failed").gte("started_at", new Date(Date.now() - 24 * 60 * 60_000).toISOString()).limit(20),
+    service.from("search_measurement_runs").select("status,completed_at,failure_code,current_rows,previous_rows").order("started_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
 
   const smokeEnabled = control?.public_smoke_tests_enabled !== false;
@@ -210,6 +218,10 @@ async function heartbeat(service: any, runId: string, control: any, recover: boo
   if (!providerConfig.whatsapp) blockers.push("whatsapp_cloud_api_not_connected");
   if (!providerConfig.social_renderer) blockers.push("social_renderer_not_connected");
 
+  const searchMeasurement = latestSearch.data
+    ? { ready: latestSearch.data.status === "complete", status: latestSearch.data.status, completed_at: latestSearch.data.completed_at, failure_code: latestSearch.data.failure_code, current_rows: latestSearch.data.current_rows, previous_rows: latestSearch.data.previous_rows }
+    : { ready: false, status: "NOT YET OBSERVED", completed_at: null, failure_code: null, current_rows: 0, previous_rows: 0 };
+
   const components = {
     database: { ready: true },
     catalog: { ready: products >= 1 && categories >= 1, published_products: products, published_categories: categories },
@@ -218,19 +230,13 @@ async function heartbeat(service: any, runId: string, control: any, recover: boo
     seo: { ready: true, review_queue: seoDrafts, automatic_publishing: false },
     media: { ready: mediaVerified >= 1, verified_assets: mediaVerified },
     public_site: smoke,
+    search_measurement: searchMeasurement,
     providers: { ...providerConfig, connected_social_accounts: connectedSocial },
   };
   const overall = !smoke.ok ? "failed" : blockers.length ? "degraded" : "healthy";
   const metrics = { products, categories, leads, tasks, inquiries, outreach_drafts: outreachDrafts, seo_review_queue: seoDrafts, media_verified: mediaVerified, recent_operation_failures: recentFailures.data?.length || 0, recovered };
 
-  await service.from("operations_health_snapshots").insert({
-    run_id: runId,
-    overall_status: overall,
-    components,
-    metrics,
-    blockers,
-  });
-
+  await service.from("operations_health_snapshots").insert({ run_id: runId, overall_status: overall, components, metrics, blockers });
   return { ok: overall !== "failed", overall_status: overall, components, metrics, blockers, checked_at: new Date().toISOString() };
 }
 

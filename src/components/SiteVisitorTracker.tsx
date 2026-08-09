@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { supabasePublishableKey, supabaseRuntimeUrl } from "@/integrations/supabase/client";
+import {
+  normalizeCanonicalPath,
+  trackCommercialEvent,
+  VISITOR_RATE_TOKEN_KEY,
+  VISITOR_SESSION_KEY,
+} from "@/lib/commercialMeasurement";
 
 type VisitorContext = {
   countryCode: string | null;
@@ -10,8 +16,6 @@ type VisitorContext = {
   timezone: string | null;
 };
 
-const SESSION_KEY = "irha:site-visitor-session";
-const RATE_TOKEN_KEY = "irha:site-visitor-rate-token";
 const ARRIVAL_KEY_PREFIX = "irha:site-visitor-arrived:";
 const CHAT_OPEN_EVENT = "irha:human-chat-opened";
 const PROGRAMMATIC_CHAT_OPEN_EVENT = "irha:open-human-chat";
@@ -19,10 +23,10 @@ const HEARTBEAT_INTERVAL_MS = 45_000;
 
 function readSessionId() {
   try {
-    const existing = sessionStorage.getItem(SESSION_KEY);
+    const existing = sessionStorage.getItem(VISITOR_SESSION_KEY);
     if (existing) return existing;
     const created = `site-${crypto.randomUUID()}`;
-    sessionStorage.setItem(SESSION_KEY, created);
+    sessionStorage.setItem(VISITOR_SESSION_KEY, created);
     return created;
   } catch {
     return `site-${crypto.randomUUID()}`;
@@ -30,45 +34,25 @@ function readSessionId() {
 }
 
 function readRateToken() {
-  try {
-    return sessionStorage.getItem(RATE_TOKEN_KEY);
-  } catch {
-    return null;
-  }
+  try { return sessionStorage.getItem(VISITOR_RATE_TOKEN_KEY); } catch { return null; }
 }
 
 function writeRateToken(value: unknown) {
   if (typeof value !== "string" || value.length > 2_000) return;
-  try {
-    sessionStorage.setItem(RATE_TOKEN_KEY, value);
-  } catch {
-    // A bootstrap identity remains available when storage is blocked.
-  }
+  try { sessionStorage.setItem(VISITOR_RATE_TOKEN_KEY, value); } catch { /* non-fatal */ }
 }
 
 function arrivalWasSent(sessionId: string) {
-  try {
-    return sessionStorage.getItem(`${ARRIVAL_KEY_PREFIX}${sessionId}`) === "1";
-  } catch {
-    return false;
-  }
+  try { return sessionStorage.getItem(`${ARRIVAL_KEY_PREFIX}${sessionId}`) === "1"; } catch { return false; }
 }
 
 function markArrivalSent(sessionId: string) {
-  try {
-    sessionStorage.setItem(`${ARRIVAL_KEY_PREFIX}${sessionId}`, "1");
-  } catch {
-    // Server-side dedupe still prevents duplicate owner alerts.
-  }
+  try { sessionStorage.setItem(`${ARRIVAL_KEY_PREFIX}${sessionId}`, "1"); } catch { /* server dedupe remains authoritative */ }
 }
 
 function referrerHost() {
   if (!document.referrer) return null;
-  try {
-    return new URL(document.referrer).hostname || null;
-  } catch {
-    return null;
-  }
+  try { return new URL(document.referrer).hostname || null; } catch { return null; }
 }
 
 function deviceType() {
@@ -86,7 +70,6 @@ async function readEdgeContext(): Promise<VisitorContext> {
     city: null,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
   };
-
   try {
     const response = await fetch("/api/visitor-context", {
       cache: "no-store",
@@ -108,17 +91,41 @@ async function readEdgeContext(): Promise<VisitorContext> {
 }
 
 function shouldTrack(pathname: string) {
-  return !pathname.startsWith("/admin") &&
-    !pathname.startsWith("/auth") &&
-    !pathname.startsWith("/seo-indexing");
+  return !pathname.startsWith("/admin") && !pathname.startsWith("/auth") && !pathname.startsWith("/seo-indexing");
+}
+
+function controlLabel(control: HTMLElement) {
+  return `${control.getAttribute("aria-label") || ""} ${control.getAttribute("title") || ""} ${control.textContent || ""}`
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
 function isLiveChatLauncher(target: EventTarget | null) {
   if (!(target instanceof Element)) return false;
   const control = target.closest<HTMLElement>("button,a");
   if (!control) return false;
-  const label = `${control.getAttribute("aria-label") || ""} ${control.textContent || ""}`.toLowerCase();
+  const label = controlLabel(control);
   return label.includes("live chat") && (label.includes("open") || label.includes("chat with"));
+}
+
+function classifyCommercialClick(target: EventTarget | null) {
+  if (!(target instanceof Element)) return null;
+  const control = target.closest<HTMLElement>("a,button");
+  if (!control) return null;
+  const label = controlLabel(control);
+  const href = control instanceof HTMLAnchorElement ? control.href : "";
+  let host: string | null = null;
+  try { host = href ? new URL(href, window.location.origin).hostname : null; } catch { host = null; }
+
+  if (/wa\.me|whatsapp\.com/i.test(href)) return { event: "whatsapp_click" as const, kind: "whatsapp", host };
+  if (/^mailto:/i.test(href)) return { event: "email_click" as const, kind: "email", host: null };
+  if (label.includes("sample")) return { event: "sample_cta_click" as const, kind: "sample", host };
+  if (label.includes("quote") || label.includes("rfq")) return { event: "quote_cta_click" as const, kind: "quote", host };
+  if (label.includes("inquir") || label.includes("contact us") || label.includes("get in touch")) {
+    return { event: "inquiry_cta_click" as const, kind: "inquiry", host };
+  }
+  return null;
 }
 
 export default function SiteVisitorTracker() {
@@ -127,6 +134,7 @@ export default function SiteVisitorTracker() {
   const contextRef = useRef<VisitorContext | null>(null);
   const lastHeartbeatRef = useRef(0);
   const inFlightRef = useRef<Promise<void> | null>(null);
+  const formStartPathsRef = useRef(new Set<string>());
 
   const report = useCallback(async (action: "arrive" | "heartbeat" | "chat_open", force = false) => {
     if (!shouldTrack(window.location.pathname)) return;
@@ -136,7 +144,7 @@ export default function SiteVisitorTracker() {
     const operation = (async () => {
       const context = contextRef.current ?? await readEdgeContext();
       contextRef.current = context;
-      const currentPath = `${window.location.pathname}${window.location.search}`.slice(0, 500);
+      const currentPath = normalizeCanonicalPath(window.location.pathname);
       const payload = {
         action,
         visitorSessionId: sessionIdRef.current,
@@ -166,34 +174,23 @@ export default function SiteVisitorTracker() {
       });
 
       if (!response.ok) return;
-      const responseBody = await response.json().catch(() => ({})) as {
-        rateLimitToken?: unknown;
-        dropped?: unknown;
-      };
+      const responseBody = await response.json().catch(() => ({})) as { rateLimitToken?: unknown; dropped?: unknown };
       writeRateToken(responseBody.rateLimitToken);
-      if (action === "arrive" && responseBody.dropped !== "limiter_unavailable") {
-        markArrivalSent(sessionIdRef.current);
-      }
+      if (action === "arrive" && responseBody.dropped !== "limiter_unavailable") markArrivalSent(sessionIdRef.current);
       lastHeartbeatRef.current = Date.now();
     })().catch(() => {
-      // Visitor tracking must never interrupt the buyer experience.
+      // Presence tracking must never interrupt the buyer experience.
     });
 
     inFlightRef.current = operation;
-    try {
-      await operation;
-    } finally {
-      inFlightRef.current = null;
-    }
+    try { await operation; } finally { inFlightRef.current = null; }
   }, []);
 
   useEffect(() => {
     if (!shouldTrack(pathname)) return;
-    if (!arrivalWasSent(sessionIdRef.current)) {
-      void report("arrive", true);
-      return;
-    }
-    void report("heartbeat", true);
+    if (!arrivalWasSent(sessionIdRef.current)) void report("arrive", true);
+    else void report("heartbeat", true);
+    void trackCommercialEvent("page_view");
   }, [pathname, search, report]);
 
   useEffect(() => {
@@ -203,6 +200,21 @@ export default function SiteVisitorTracker() {
     const onChatOpen = () => void report("chat_open", true);
     const onDocumentClick = (event: MouseEvent) => {
       if (isLiveChatLauncher(event.target)) void report("chat_open", true);
+      const commercial = classifyCommercialClick(event.target);
+      if (commercial) {
+        void trackCommercialEvent(commercial.event, {
+          cta_location: normalizeCanonicalPath(window.location.pathname),
+          link_kind: commercial.kind,
+          link_host: commercial.host,
+        });
+      }
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      if (!(event.target instanceof Element) || !event.target.closest("form")) return;
+      const path = normalizeCanonicalPath(window.location.pathname);
+      if (formStartPathsRef.current.has(path)) return;
+      formStartPathsRef.current.add(path);
+      void trackCommercialEvent("rfq_start", { cta_location: path, link_kind: "form_focus" });
     };
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void report("heartbeat");
@@ -210,12 +222,14 @@ export default function SiteVisitorTracker() {
 
     document.addEventListener("visibilitychange", onVisibility);
     document.addEventListener("click", onDocumentClick, true);
+    document.addEventListener("focusin", onFocusIn, true);
     window.addEventListener(CHAT_OPEN_EVENT, onChatOpen);
     window.addEventListener(PROGRAMMATIC_CHAT_OPEN_EVENT, onChatOpen);
     return () => {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
       document.removeEventListener("click", onDocumentClick, true);
+      document.removeEventListener("focusin", onFocusIn, true);
       window.removeEventListener(CHAT_OPEN_EVENT, onChatOpen);
       window.removeEventListener(PROGRAMMATIC_CHAT_OPEN_EVENT, onChatOpen);
     };

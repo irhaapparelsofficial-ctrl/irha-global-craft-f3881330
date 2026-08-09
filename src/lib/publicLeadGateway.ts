@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { measurementContext } from "@/lib/commercialMeasurement";
 import type { UploadedFileRef } from "@/lib/inquiryDraft";
 
 type JsonRecord = Record<string, unknown>;
@@ -28,6 +29,10 @@ class GatewayNotDeployedError extends Error {
 
 function text(value: unknown, max: number) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function isRecord(value: unknown): value is JsonRecord {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function isGatewayMissing(error: FunctionErrorLike | null | undefined) {
@@ -66,9 +71,31 @@ function gatewayUnavailable(surface: "inquiry" | "catalogue" | "upload") {
   return new Error("Secure inquiry service is temporarily unavailable. Please retry or share your requirements through WhatsApp.");
 }
 
+function withMeasurementContext(payload: JsonRecord) {
+  const measurement = measurementContext();
+  if (!measurement) return payload;
+  const existing = isRecord(payload.lead_context) ? payload.lead_context : {};
+  return {
+    ...payload,
+    lead_context: {
+      ...existing,
+      measurement: {
+        current_path: measurement.current_path,
+        landing_path: measurement.landing_path,
+        source: measurement.source,
+        medium: measurement.medium,
+        campaign: measurement.campaign,
+        content: measurement.content,
+        term: measurement.term,
+        referrer_host: measurement.referrer_host,
+      },
+    },
+  };
+}
+
 export async function submitPublicInquiry(payload: JsonRecord) {
   const reference = createPublicInquiryReference(payload.inquiry_ref);
-  const normalized = { ...payload, inquiry_ref: reference };
+  const normalized = withMeasurementContext({ ...payload, inquiry_ref: reference });
   try {
     const data = await invokeGateway("submit_inquiry", normalized);
     return { reference: data.reference || reference };
@@ -79,8 +106,15 @@ export async function submitPublicInquiry(payload: JsonRecord) {
 }
 
 export async function submitPublicCatalogueLead(payload: JsonRecord) {
+  const measurement = measurementContext();
+  const normalized = measurement ? {
+    ...payload,
+    utm_source: payload.utm_source || measurement.source,
+    utm_medium: payload.utm_medium || measurement.medium,
+    utm_campaign: payload.utm_campaign || measurement.campaign,
+  } : payload;
   try {
-    const data = await invokeGateway("submit_catalogue", payload);
+    const data = await invokeGateway("submit_catalogue", normalized);
     return { reference: data.reference || "received" };
   } catch (error) {
     if (error instanceof GatewayNotDeployedError) throw gatewayUnavailable("catalogue");
