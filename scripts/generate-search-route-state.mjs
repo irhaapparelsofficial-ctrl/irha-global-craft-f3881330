@@ -155,6 +155,8 @@ export function checkSearchRouteState({
   inputPath = DEFAULT_ROUTE_MANIFEST_PATH,
   outputPath = DEFAULT_ROUTE_STATE_PATH,
 } = {}) {
+  // Keep this gate fail-closed so every accepted head proves its committed material
+  // search state was generated from that exact head rather than from a stale CI artifact.
   const state = buildStateFromManifest(inputPath);
   const expected = renderSearchRouteState(state);
   let committed;
