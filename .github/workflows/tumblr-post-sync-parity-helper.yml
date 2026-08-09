@@ -18,7 +18,6 @@ env:
 
 jobs:
   generate:
-    if: github.event.head_commit.message == 'chore: seed Tumblr post-sync parity closure'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
