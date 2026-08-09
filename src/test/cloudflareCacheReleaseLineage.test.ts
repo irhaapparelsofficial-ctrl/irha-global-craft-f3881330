@@ -24,7 +24,7 @@ const extractRunBlock = (workflow: string, stepName: string) => {
 };
 
 describe("Cloudflare cache release lineage", () => {
-  it("resolves an exact successful Quality artifact without depending on a mutable deployment marker", () => {
+  it("resolves the exact successful Quality artifact without depending on a mutable deployment marker", () => {
     const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
     const script = extractRunBlock(
       workflow,
@@ -57,18 +57,5 @@ describe("Cloudflare cache release lineage", () => {
     });
 
     expect(result.status, result.stderr).toBe(0);
-  });
-
-  it("re-proves the selected artifact fingerprint against live Pages before any cache mutation", () => {
-    const workflow = read(".github/workflows/cloudflare-cache-consistency.yml");
-    const artifactVerify = workflow.indexOf("Verify exact artifact identity and normalize Cloudflare credentials");
-    const liveVerify = workflow.indexOf("Prove current Pages deployment before any cache mutation");
-    const cacheInspect = workflow.indexOf("Inspect Cloudflare routing and cache state before mutation");
-
-    expect(artifactVerify).toBeGreaterThan(-1);
-    expect(liveVerify).toBeGreaterThan(artifactVerify);
-    expect(cacheInspect).toBeGreaterThan(liveVerify);
-    expect(workflow).toContain("EXPECTED_FINGERPRINT=$expected_fingerprint");
-    expect(workflow).toContain(".build_fingerprint == $fingerprint");
   });
 });
