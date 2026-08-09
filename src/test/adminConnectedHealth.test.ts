@@ -36,6 +36,7 @@ describe("admin connected-health contracts", () => {
     const source = read("supabase/functions/gsc-analytics/index.ts");
     const config = read("supabase/config.toml");
     const health = sourceSection(source, "async function readHealth", "function formatDate");
+    const queryHelper = sourceSection(source, "async function querySearchAnalytics", "function safeNumber");
 
     expect(config).toContain("[functions.gsc-analytics]\nverify_jwt = true");
     expect(source).toContain("auth.getUser()");
@@ -57,10 +58,13 @@ describe("admin connected-health contracts", () => {
     const actionBranch = source.indexOf('if (action === "health")');
     const queryState = source.indexOf("const state = configurationState();", actionBranch);
     const oauthGuard = source.indexOf("if (!state.oauthConfigured)", queryState);
-    const endpoint = source.indexOf("const endpoint =", queryState);
+    const queryCall = source.indexOf("const rows = await querySearchAnalytics", oauthGuard);
     expect(queryState).toBeGreaterThan(actionBranch);
     expect(oauthGuard).toBeGreaterThan(queryState);
-    expect(endpoint).toBeGreaterThan(oauthGuard);
+    expect(queryCall).toBeGreaterThan(oauthGuard);
+    expect(queryHelper).toContain("const endpoint =");
+    expect(queryHelper).toContain("googleSearchConsoleFetch<SearchAnalyticsPayload>");
+    expect(queryHelper).toContain("if (!upstream.ok) throw new Error(upstream.code)");
     expect(source).not.toContain("connector_gateway_key");
     expect(source).not.toContain("search_console_connection_key");
     expect(source).not.toContain("X-Connection-Api-Key");
