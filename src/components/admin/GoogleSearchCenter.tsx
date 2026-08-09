@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Copy, Loader2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import GrowthControlPlane from "@/components/admin/GrowthControlPlane";
 
 const SITE = "https://irhaapparels.com";
 const HOME_URL = `${SITE}/`;
@@ -243,51 +244,54 @@ export default function GoogleSearchCenter() {
   };
 
   return (
-    <section className="space-y-5" aria-labelledby="gsc-proof-heading">
-      <div className="border border-gold/40 bg-card/30 p-6">
-        <p className="eyebrow mb-2">Google Search Center</p>
-        <h2 id="gsc-proof-heading" className="font-display text-3xl">Authenticated, read-only GSC evidence.</h2>
-        <p className="mt-3 text-sm text-foreground/65">
-          Owner-controlled direct Google OAuth for {GSC_PROPERTY}. Approved Inspection hosts: {[...ALLOWED_HOSTNAMES].join(" and ")}.
-          Google credentials and access tokens never enter the browser.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" onClick={() => void runProof()} disabled={running} className="min-h-11 bg-gradient-gold px-5 text-[10px] uppercase tracking-[0.18em] disabled:opacity-50">
-            {running ? <Loader2 className="inline animate-spin" size={14} /> : <ShieldCheck className="inline" size={14} />} Run read-only GSC proof
-          </button>
-          <button type="button" onClick={() => void copySafeReport()} disabled={!proof || copying} className="min-h-11 border border-border/60 px-5 text-[10px] uppercase tracking-[0.18em] disabled:opacity-40">
-            {copying ? <Loader2 className="inline animate-spin" size={14} /> : <Copy className="inline" size={14} />} Copy safe proof report
-          </button>
+    <section className="space-y-8" aria-labelledby="gsc-proof-heading">
+      <div className="space-y-5">
+        <div className="border border-gold/40 bg-card/30 p-6">
+          <p className="eyebrow mb-2">Google Search Center</p>
+          <h2 id="gsc-proof-heading" className="font-display text-3xl">Authenticated, read-only GSC evidence.</h2>
+          <p className="mt-3 text-sm text-foreground/65">
+            Owner-controlled direct Google OAuth for {GSC_PROPERTY}. Approved Inspection hosts: {[...ALLOWED_HOSTNAMES].join(" and ")}.
+            Google credentials and access tokens never enter the browser.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button type="button" onClick={() => void runProof()} disabled={running} className="min-h-11 bg-gradient-gold px-5 text-[10px] uppercase tracking-[0.18em] disabled:opacity-50">
+              {running ? <Loader2 className="inline animate-spin" size={14} /> : <ShieldCheck className="inline" size={14} />} Run read-only GSC proof
+            </button>
+            <button type="button" onClick={() => void copySafeReport()} disabled={!proof || copying} className="min-h-11 border border-border/60 px-5 text-[10px] uppercase tracking-[0.18em] disabled:opacity-40">
+              {copying ? <Loader2 className="inline animate-spin" size={14} /> : <Copy className="inline" size={14} />} Copy safe proof report
+            </button>
+          </div>
         </div>
-      </div>
 
-      {proof && <div className="space-y-4">
-        <Card title="Health" pass={proof.health.pass} values={[
-          ["Function", String(proof.health.functionSuccess)], ["Ready", String(proof.health.ready)],
-          ["State", proof.health.state], ["Auth mode", proof.health.authMode],
-          ["OAuth Client ID configured", String(proof.health.oauthClientIdConfigured)],
-          ["OAuth Client Secret configured", String(proof.health.oauthClientSecretConfigured)],
-          ["OAuth Refresh Token configured", String(proof.health.oauthRefreshTokenConfigured)],
-          ["Token exchange verified", String(proof.health.tokenExchangeVerified)],
-          ["Property access verified", String(proof.health.propertyAccessVerified)],
-          ["Permission level", proof.health.permissionLevel],
-          ["Effective property", proof.health.effectiveProperty],
-          ["Production SHA", proof.productionBuildSha || "Unavailable"],
-        ]} error={proof.health.error} />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <AnalyticsCard title="28-day query Analytics" proof={proof.queryAnalytics} />
-          <AnalyticsCard title="28-day page Analytics" proof={proof.pageAnalytics} />
-        </div>
-        <Card title="Homepage Inspection" pass={proof.homepageInspection.pass} values={[
-          ["URL", proof.homepageInspection.url], ["Property", proof.homepageInspection.property],
-          ["Verdict", proof.homepageInspection.verdict], ["Coverage", proof.homepageInspection.coverageState],
-          ["Robots", proof.homepageInspection.robotsTxtState], ["Fetch", proof.homepageInspection.pageFetchState],
-          ["Indexing", proof.homepageInspection.indexingState], ["Last crawl", proof.homepageInspection.lastCrawlTime],
-          ["User canonical", proof.homepageInspection.userCanonical], ["Google canonical", proof.homepageInspection.googleCanonical],
-          ["Sitemap", proof.homepageInspection.sitemapAssociation.join(", ") || "—"],
-          ["Inspection link", proof.homepageInspection.inspectionLink],
-        ]} error={proof.homepageInspection.error} />
-      </div>}
+        {proof && <div className="space-y-4">
+          <Card title="Health" pass={proof.health.pass} values={[
+            ["Function", String(proof.health.functionSuccess)], ["Ready", String(proof.health.ready)],
+            ["State", proof.health.state], ["Auth mode", proof.health.authMode],
+            ["OAuth Client ID configured", String(proof.health.oauthClientIdConfigured)],
+            ["OAuth Client Secret configured", String(proof.health.oauthClientSecretConfigured)],
+            ["OAuth Refresh Token configured", String(proof.health.oauthRefreshTokenConfigured)],
+            ["Token exchange verified", String(proof.health.tokenExchangeVerified)],
+            ["Property access verified", String(proof.health.propertyAccessVerified)],
+            ["Permission level", proof.health.permissionLevel],
+            ["Effective property", proof.health.effectiveProperty],
+            ["Production SHA", proof.productionBuildSha || "Unavailable"],
+          ]} error={proof.health.error} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <AnalyticsCard title="28-day query Analytics" proof={proof.queryAnalytics} />
+            <AnalyticsCard title="28-day page Analytics" proof={proof.pageAnalytics} />
+          </div>
+          <Card title="Homepage Inspection" pass={proof.homepageInspection.pass} values={[
+            ["URL", proof.homepageInspection.url], ["Property", proof.homepageInspection.property],
+            ["Verdict", proof.homepageInspection.verdict], ["Coverage", proof.homepageInspection.coverageState],
+            ["Robots", proof.homepageInspection.robotsTxtState], ["Fetch", proof.homepageInspection.pageFetchState],
+            ["Indexing", proof.homepageInspection.indexingState], ["Last crawl", proof.homepageInspection.lastCrawlTime],
+            ["User canonical", proof.homepageInspection.userCanonical], ["Google canonical", proof.homepageInspection.googleCanonical],
+            ["Sitemap", proof.homepageInspection.sitemapAssociation.join(", ") || "—"],
+            ["Inspection link", proof.homepageInspection.inspectionLink],
+          ]} error={proof.homepageInspection.error} />
+        </div>}
+      </div>
+      <GrowthControlPlane />
     </section>
   );
 }

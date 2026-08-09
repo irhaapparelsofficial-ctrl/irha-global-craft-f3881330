@@ -594,6 +594,22 @@
       "execution_mode": "verified_present",
       "transactional_dry_run": false,
       "verification_query": "select exists (select 1 from supabase_migrations.schema_migrations where version = '20260808232335' and name = 'tumblr_operator_jobs' and encode(extensions.digest(array_to_string(statements, E'\\n-- IRHA-MIGRATION-STATEMENT-BOUNDARY --\\n'), 'sha256'), 'hex') = 'b6fa765899e3e237341e8b0c5229a3917d24f855f4410ce114f8a61c6348b52e') as verified"
+    },
+    {
+      "version": "20260809122000",
+      "name": "gp2_search_measurement_control_plane",
+      "path": "supabase/migrations/20260809122000_gp2_search_measurement_control_plane.sql",
+      "git_blob_sha": "364eaf762aa397a097ba974f0c7f0e8691f63136",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
+    },
+    {
+      "version": "20260809123000",
+      "name": "gp2_measurement_conversion_observers",
+      "path": "supabase/migrations/20260809123000_gp2_measurement_conversion_observers.sql",
+      "git_blob_sha": "e85bbc040f55cd242802cdf097557e3e0bba73ce",
+      "execution_mode": "transactional",
+      "transactional_dry_run": true
     }
   ]
 }

@@ -53,6 +53,7 @@ const ALLOWED_POLICIES = new Set([
   "site-visitor.arrive",
   "site-visitor.heartbeat",
   "site-visitor.chat_open",
+  "site-visitor.event",
   "live-chat.presence",
   "live-chat.connect",
   "live-chat.send",
@@ -140,18 +141,13 @@ export function isRejectedIdentityHeader(headerName: string) {
 }
 
 export function trustedIdentityHeaders(_request: Request): string[] {
-  // No network forwarding header is authoritative in the Supabase Edge runtime.
   return [];
 }
 
 function decodeJwtPayload(accessToken: string): Record<string, unknown> | null {
   const parts = accessToken.split(".");
   if (parts.length !== 3) return null;
-  try {
-    return JSON.parse(new TextDecoder().decode(base64UrlToBytes(parts[1]))) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(new TextDecoder().decode(base64UrlToBytes(parts[1]))) as Record<string, unknown>; } catch { return null; }
 }
 
 export function bearerToken(request: Request) {
@@ -180,12 +176,7 @@ export async function resolveValidatedUserId(
   }
 }
 
-type AnonymousTokenPayload = {
-  v: 1;
-  endpoint: string;
-  session: string;
-  exp: number;
-};
+type AnonymousTokenPayload = { v: 1; endpoint: string; session: string; exp: number };
 
 async function sessionBinding(secret: string, endpoint: string, clientSessionId: string) {
   return hashRateLimitValue(secret, `session-binding:${endpoint}`, clientSessionId);
@@ -244,9 +235,7 @@ function normalizeRpcRow(data: unknown) {
   if (!candidate || typeof candidate !== "object") throw new DurableRateLimitUnavailableError();
   const row = candidate as Record<string, unknown>;
   const decision = row.decision;
-  if (decision !== "ALLOW" && decision !== "THROTTLE" && decision !== "TEMPORARY_BLOCK") {
-    throw new DurableRateLimitUnavailableError();
-  }
+  if (decision !== "ALLOW" && decision !== "THROTTLE" && decision !== "TEMPORARY_BLOCK") throw new DurableRateLimitUnavailableError();
   return {
     decision,
     retryAfterSeconds: decision === "ALLOW" ? 0 : clampRetryAfter(row.retry_after_seconds),
@@ -257,7 +246,7 @@ function normalizeRpcRow(data: unknown) {
 }
 
 export function policyForSiteVisitorAction(action: string) {
-  if (action === "arrive" || action === "heartbeat" || action === "chat_open") return `site-visitor.${action}`;
+  if (action === "arrive" || action === "heartbeat" || action === "chat_open" || action === "event") return `site-visitor.${action}`;
   return null;
 }
 
@@ -271,15 +260,7 @@ export async function authorizeDurableRateLimit(input: AuthorizeRateLimitInput):
   if (!isValidClientSessionId(input.clientSessionId)) throw new Error("invalid_client_session_id");
   const now = input.now ?? new Date();
   const userId = await resolveValidatedUserId(input.request, input.client, input.resolveUserId);
-  const anonymousTokenValid = userId
-    ? false
-    : await validateAnonymousRateLimitToken(
-      input.secret,
-      input.rateLimitToken,
-      input.endpoint,
-      input.clientSessionId,
-      now,
-    );
+  const anonymousTokenValid = userId ? false : await validateAnonymousRateLimitToken(input.secret, input.rateLimitToken, input.endpoint, input.clientSessionId, now);
 
   let subjectKind: RateLimitResult["subjectKind"];
   let subjectMaterial: string;
@@ -291,8 +272,6 @@ export async function authorizeDurableRateLimit(input: AuthorizeRateLimitInput):
     subjectMaterial = `session:${input.clientSessionId}`;
   } else {
     subjectKind = "bootstrap";
-    // The first request and the subsequently signed anonymous session consume
-    // the same subject bucket, so token issuance cannot reset allowance.
     subjectMaterial = `session:${input.clientSessionId}`;
   }
   if (input.secondarySubjectValue) subjectMaterial += `:${input.secondarySubjectValue}`;
@@ -303,13 +282,7 @@ export async function authorizeDurableRateLimit(input: AuthorizeRateLimitInput):
     input.duplicateValue === undefined || input.duplicateValue === null
       ? Promise.resolve(null)
       : hashRateLimitValue(input.secret, `duplicate:${input.policyKey}`, input.duplicateValue),
-    issueAnonymousRateLimitToken(
-      input.secret,
-      input.endpoint,
-      input.clientSessionId,
-      now,
-      input.tokenTtlSeconds,
-    ),
+    issueAnonymousRateLimitToken(input.secret, input.endpoint, input.clientSessionId, now, input.tokenTtlSeconds),
   ]);
 
   let response: Awaited<ReturnType<RateLimitRpcClient["rpc"]>>;
@@ -327,12 +300,7 @@ export async function authorizeDurableRateLimit(input: AuthorizeRateLimitInput):
   }
   if (response.error) throw new DurableRateLimitUnavailableError();
   const result = normalizeRpcRow(response.data);
-  return {
-    ...result,
-    allowed: result.decision === "ALLOW",
-    rateLimitToken: refreshedToken,
-    subjectKind,
-  };
+  return { ...result, allowed: result.decision === "ALLOW", rateLimitToken: refreshedToken, subjectKind };
 }
 
 export function rateLimitResponseHeaders(retryAfterSeconds: number, extra: HeadersInit = {}) {
