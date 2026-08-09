@@ -49,6 +49,33 @@
       "verify_jwt": false,
       "require_shared_limiter": true,
       "provenance": "SEC-M03 reviewed source on exact main"
+    },
+    {
+      "name": "tumblr-oauth-callback",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/tumblr-oauth-callback/index.ts",
+      "minimum_version": 2,
+      "verify_jwt": false,
+      "require_shared_limiter": false,
+      "provenance": "Post-Phase-1 guarded Tumblr deployment; authenticated production source must match repository before registry refresh"
+    },
+    {
+      "name": "tumblr-operator",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/tumblr-operator/index.ts",
+      "minimum_version": 15,
+      "verify_jwt": false,
+      "require_shared_limiter": false,
+      "provenance": "Post-Phase-1 guarded Tumblr deployment; authenticated production source must match repository before registry refresh"
+    },
+    {
+      "name": "tumblr-operator-get",
+      "registry": "supabase/deployment-parity/functions-f1.json",
+      "repository_source": "supabase/functions/tumblr-operator-get/index.ts",
+      "minimum_version": 2,
+      "verify_jwt": false,
+      "require_shared_limiter": false,
+      "provenance": "Post-Phase-1 guarded Tumblr deployment; authenticated production source must match repository before registry refresh"
     }
   ]
 }
