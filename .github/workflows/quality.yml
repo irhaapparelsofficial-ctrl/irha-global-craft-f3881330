@@ -183,9 +183,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           QUALITY_JOB_STATUS: ${{ job.status }}
+          QUALITY_STATUS_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         shell: bash
         run: |
           set -euo pipefail
+          test -n "$QUALITY_STATUS_SHA"
           state=error
           description="Buyer-ready Quality Gate did not complete"
           case "$QUALITY_JOB_STATUS" in
@@ -208,7 +210,7 @@ jobs:
           esac
           bash scripts/ci/retry.sh 2 2 -- gh api \
             --method POST \
-            "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            "repos/$GITHUB_REPOSITORY/statuses/$QUALITY_STATUS_SHA" \
             -f state="$state" \
             -f context="Irha Quality Gate" \
             -f description="$description" \
