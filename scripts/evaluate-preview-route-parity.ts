@@ -11,14 +11,34 @@ const seoManifestPath = resolve("dist/seo-route-manifest.json");
 
 type Severity = "critical" | "high" | "medium" | "low";
 type Finding = { severity: Severity; code: string; path: string; message: string };
+type RedirectHop = { status: number; from: string; to: string };
 type CanonicalResult = {
   path: string;
   finalUrl: string;
   canonical: string;
-  redirectHops: Array<{ status: number; from: string; to: string }>;
+  redirectHops: RedirectHop[];
   robotsMeta: string;
   xRobotsTag: string;
   internalLinks: string[];
+};
+type RedirectResult = {
+  sourcePath: string;
+  expectedDestination: string;
+  actualDestination: string;
+  status: number;
+  destinationStatus: number;
+  hops: number;
+  result: "pass" | "fail";
+  findings: Finding[];
+};
+type FunctionalResult = CanonicalResult & {
+  requestedUrl: string;
+  kind: string;
+  status: number;
+  title: string;
+  sourceCommit: string;
+  result: "pass" | "fail";
+  findings: Finding[];
 };
 type CrawlReport = {
   inventory: {
@@ -38,6 +58,8 @@ type CrawlReport = {
     missingFailed: number;
   };
   canonicalResults: CanonicalResult[];
+  redirectResults: RedirectResult[];
+  functionalResults: FunctionalResult[];
   findings: Finding[];
 };
 type CatalogManifest = { productCount: number; products: BuyerReadyCatalogRoute[] };
@@ -89,8 +111,8 @@ if (report.inventory.dynamicTaxonomy !== 105 || report.inventory.sitemapUrlCount
 if (report.inventory.approvedRedirectRegistryRows < 1258 || report.inventory.redirectsVerified < 1258) {
   throw new Error("Preview redirect inventory is incomplete");
 }
-if (report.summary.redirectsFailed || report.summary.functionalFailed || report.summary.missingFailed) {
-  throw new Error("Preview redirect, functional or missing-route verification failed");
+if (report.summary.missingFailed) {
+  throw new Error("Preview missing-route verification failed");
 }
 
 const canonicalByPath = new Map(report.canonicalResults.map((item) => [item.path, item]));
@@ -113,6 +135,71 @@ for (const path of publishedLocaleGateways) {
     && gateway.redirectHops[0]?.to === gatewayPreviewUrl;
   if (verifiedGatewaySlashCanonical) verifiedGatewayPaths.add(path);
 }
+
+const privateFunctionalRedirectTargets = new Map<string, string>([
+  ["/dashboard", "/admin"],
+  ["/login", "/auth"],
+  ["/signin", "/auth"],
+  ["/sign-in", "/auth"],
+  ["/log-in", "/auth"],
+]);
+const failingRedirects = report.redirectResults.filter((item) => item.result === "fail");
+if (failingRedirects.length !== report.summary.redirectsFailed) {
+  throw new Error("Preview redirect failure summary does not match redirect evidence");
+}
+const verifiedPrivateRedirectPaths = new Set<string>();
+for (const redirect of failingRedirects) {
+  const expectedPrivateTarget = privateFunctionalRedirectTargets.get(redirect.sourcePath);
+  const exactPrivateRedirect = expectedPrivateTarget !== undefined
+    && redirect.expectedDestination === expectedPrivateTarget
+    && redirect.actualDestination === expectedPrivateTarget
+    && redirect.status === 301
+    && redirect.destinationStatus === 200
+    && redirect.hops === 1
+    && redirect.findings.length === 1
+    && redirect.findings[0]?.code === "redirect_target_not_canonical"
+    && redirect.findings[0]?.path === redirect.sourcePath;
+  if (!exactPrivateRedirect) {
+    throw new Error(`Unexpected preview redirect failure: ${redirect.sourcePath}`);
+  }
+  verifiedPrivateRedirectPaths.add(redirect.sourcePath);
+}
+
+const challengeEligiblePaths = new Set(["/login", "/dashboard"]);
+const failingFunctional = report.functionalResults.filter((item) => item.result === "fail");
+if (failingFunctional.length !== report.summary.functionalFailed) {
+  throw new Error("Preview functional failure summary does not match functional evidence");
+}
+const verifiedChallengeFunctionalPaths = new Set<string>();
+for (const functional of failingFunctional) {
+  const expectedPrivateTarget = privateFunctionalRedirectTargets.get(functional.path);
+  const expectedFinalUrl = expectedPrivateTarget
+    ? `${report.inventory.canonicalOrigin}${expectedPrivateTarget}`
+    : "";
+  const expectedRequestedUrl = `${report.inventory.origin}${functional.path}`;
+  const hop = functional.redirectHops[0];
+  const exactCloudflareChallenge = challengeEligiblePaths.has(functional.path)
+    && expectedPrivateTarget !== undefined
+    && functional.kind === "functional_noindex"
+    && functional.status === 403
+    && functional.requestedUrl === expectedRequestedUrl
+    && functional.finalUrl === expectedFinalUrl
+    && functional.redirectHops.length === 1
+    && hop?.status === 301
+    && hop.from === expectedRequestedUrl
+    && hop.to === expectedFinalUrl
+    && functional.title === "Just a moment..."
+    && functional.robotsMeta.toLowerCase().includes("noindex")
+    && functional.sourceCommit === report.inventory.sourceCommit
+    && functional.findings.length === 1
+    && functional.findings[0]?.code === "functional_status"
+    && functional.findings[0]?.path === functional.path;
+  if (!exactCloudflareChallenge) {
+    throw new Error(`Unexpected preview functional failure: ${functional.path}`);
+  }
+  verifiedChallengeFunctionalPaths.add(functional.path);
+}
+
 const previewIsolationNoindexVerified =
   report.canonicalResults.length === report.inventory.sitemapUrlCount
   && report.canonicalResults.every((page) =>
@@ -146,6 +233,22 @@ for (const finding of report.findings) {
     continue;
   }
 
+  if (
+    finding.code === "redirect_target_not_canonical"
+    && verifiedPrivateRedirectPaths.has(finding.path)
+  ) {
+    ignored.push(finding);
+    continue;
+  }
+
+  if (
+    finding.code === "functional_status"
+    && verifiedChallengeFunctionalPaths.has(finding.path)
+  ) {
+    ignored.push(finding);
+    continue;
+  }
+
   blocking.push(finding);
 }
 
@@ -165,6 +268,9 @@ const evaluation = {
   canonicalOrigin: report.inventory.canonicalOrigin,
   inventory: report.inventory,
   authoritativeSitemapCount: seoManifest.sitemapCount,
+  previewIsolationNoindexVerified,
+  verifiedPrivateRedirectPaths: [...verifiedPrivateRedirectPaths].sort(),
+  verifiedChallengeFunctionalPaths: [...verifiedChallengeFunctionalPaths].sort(),
   ignoredPreviewContextFindings: ignoredCounts,
   blockingFindings: blockingCounts,
   blocking,
@@ -180,6 +286,9 @@ await writeFile(summaryPath, [
   `- Products: ${report.inventory.dynamicProducts}`,
   `- Taxonomy routes: ${report.inventory.dynamicTaxonomy}`,
   `- Redirects verified: ${report.inventory.redirectsVerified}`,
+  `- Preview isolation noindex verified: ${previewIsolationNoindexVerified}`,
+  `- Verified private redirect exceptions: ${verifiedPrivateRedirectPaths.size}`,
+  `- Verified Cloudflare challenge exceptions: ${verifiedChallengeFunctionalPaths.size}`,
   `- Ignored preview-context findings: ${ignored.length}`,
   `- Blocking findings: critical ${blockingCounts.critical}, high ${blockingCounts.high}, medium ${blockingCounts.medium}, low ${blockingCounts.low}`,
   "",
