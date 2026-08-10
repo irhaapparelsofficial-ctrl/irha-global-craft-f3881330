@@ -409,7 +409,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men",
-      "digest": "sha256:427bafd32f1ffadda99e83e9457ca98652192cf243257978bdfa3977c0f5dc38"
+      "digest": "sha256:f185ea7ce4561690cdc1e16455ad619409fded28aa4e85841de0316d63db9ac1"
     },
     {
       "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/jackets-outerwear",
@@ -425,7 +425,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen",
-      "digest": "sha256:3e029cd9c1122e7184345f7e01206ad8585eafa175b785a2c0ae33df27491656"
+      "digest": "sha256:7bb14e179ba6ac1be5a6a1f1829dcb39b3b44bc10196220585e0dcb030b53965"
     },
     {
       "url": "https://irhaapparels.com/products/bavarian-trachten-wear/men/lederhosen/deer-suede-lederhosen",
@@ -533,7 +533,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses",
-      "digest": "sha256:0a537131865fdaddace37fc95f175d3cb1abc8d69797adccde689cd0ce24af24"
+      "digest": "sha256:bff5896ba2a3ca514b2a5e53e797de3af3e631e0e0b7067b11a1dfeaf108e59b"
     },
     {
       "url": "https://irhaapparels.com/products/bavarian-trachten-wear/women/dirndl-dresses/cotton-dirndl",
@@ -577,7 +577,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/leisure-nightwear",
-      "digest": "sha256:80bf6e1f31ce0fca3fba3a694cd3bdb4e31955b23fd1a8e2fc150fb2ae3e9995"
+      "digest": "sha256:7468063c4391793070a7936539f49f23e8d796bf873b87acb3bea6af8c7679af"
     },
     {
       "url": "https://irhaapparels.com/products/leisure-nightwear/hospitality",
@@ -1045,7 +1045,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories",
-      "digest": "sha256:971d328543134cd84ec4f8909b8bee8bb20890a31fdcefe45edfcce0d52b6c06"
+      "digest": "sha256:526a4ed7e14b6c8649295552e6c36c80f7dab6cf1cabaa10672c40bddfac1441"
     },
     {
       "url": "https://irhaapparels.com/products/premium-leather-apparel/accessories/accessories",
@@ -1125,7 +1125,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear",
-      "digest": "sha256:2e54968d31a9bc1b68fcabc73d6d3d980c6ce354d843b2f1b56981911bd00781"
+      "digest": "sha256:1c68a1aa7341686639b6c61555df8cea2d8b23c246b2ca0f4eae5b22578ed04f"
     },
     {
       "url": "https://irhaapparels.com/products/premium-leather-apparel/men/jackets-outerwear/cafe-racer-leather-jacket",
@@ -1285,7 +1285,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/sportswear",
-      "digest": "sha256:70d5ef47a7eddf6ea85d03ec6f3d5c77b699091eeeabf1f76e7d9b9a6895f9f7"
+      "digest": "sha256:584ed5a76fdd9fe2ff05cc93790a3aa5043ed1b91c94cb427d1ab9a2e9daf742"
     },
     {
       "url": "https://irhaapparels.com/products/sportswear/combat-sports",
@@ -1329,7 +1329,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear",
-      "digest": "sha256:4758658057247f40df0c0dd884de8983d5ccdb459489be02632cd64f047ed950"
+      "digest": "sha256:e245deb8289c68eff337f0dceeae99824ccbab37d06efdbecdbdceeb26f2b4c3"
     },
     {
       "url": "https://irhaapparels.com/products/sportswear/fitness-activewear/performance-activewear/compression-set",
@@ -1385,7 +1385,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms",
-      "digest": "sha256:6b230d2dc8843a44b358d31a61e055146e2de1fc361a1e373c707f7b19a6442c"
+      "digest": "sha256:b4241a2743faec169b6ef4a56761867c0311dfa684bb7eba147b67dcefa21cbd"
     },
     {
       "url": "https://irhaapparels.com/products/sportswear/team-club/team-uniforms/american-football-uniform",
@@ -1497,7 +1497,7 @@
     },
     {
       "url": "https://irhaapparels.com/products/streetwear-activewear",
-      "digest": "sha256:b25b323f4f843661922e5eada8f4365aff453b8701aa2136529fe35bdc99757b"
+      "digest": "sha256:3a818431fb8deec2babf504663dc57474025a0a6dc5542a3ab388ffde8d293f6"
     },
     {
       "url": "https://irhaapparels.com/products/streetwear-activewear/unisex",
@@ -1748,5 +1748,5 @@
       "digest": "sha256:09df4ccce2a607b067a6e5b184348c6e4becd37cd1c11526f3c1e980ef7ffbb7"
     }
   ],
-  "contentDigest": "sha256:0ffc7e172a8793f054dcb4fc9548b5ba554b4ee41371088e322a6595d9e06898"
+  "contentDigest": "sha256:9aecf09f445db5659da2bf42efa08661af08e7a556c305ae2a11d0a0d88ad1ca"
 }
