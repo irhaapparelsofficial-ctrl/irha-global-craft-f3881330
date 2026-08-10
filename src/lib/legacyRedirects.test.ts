@@ -15,6 +15,10 @@ describe("legacyRedirects", () => {
       to: "/admin",
       source: "static",
     });
+    expect(resolveStaticRedirect("/sportswear-manufacturer-sialkot")).toEqual({
+      to: "/products/sportswear",
+      source: "static",
+    });
     expect(resolveStaticRedirect("/nonexistent-path")).toBeNull();
   });
 

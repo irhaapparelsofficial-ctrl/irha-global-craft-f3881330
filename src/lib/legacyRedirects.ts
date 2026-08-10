@@ -47,6 +47,7 @@ export const STATIC_LEGACY_REDIRECTS: readonly LegacyRedirectRule[] = [
   { from: "/australia", to: "/markets/australia", confidence: "auto" },
   { from: "/new-zealand", to: "/markets/new-zealand", confidence: "auto" },
   { from: "/sportswear-manufacturer-pakistan", to: "/products/sportswear", confidence: "auto" },
+  { from: "/sportswear-manufacturer-sialkot", to: "/products/sportswear", confidence: "auto", reason: "GP-4: consolidate overlapping broad sportswear manufacturer intent into the GP-3 authority" },
   { from: "/leatherwear-manufacturer-pakistan", to: "/products/premium-leather-apparel", confidence: "auto" },
   { from: "/lederhosen-manufacturer", to: "/products/bavarian-trachten-wear", confidence: "auto" },
   { from: "/trachten-manufacturer", to: "/products/bavarian-trachten-wear", confidence: "auto" },
