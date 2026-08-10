@@ -337,6 +337,86 @@ export function localizedCollectionName(locale: TaxonomyLocale, slug: string, fa
   return COLLECTION_NAMES[locale][slug] ?? fallback;
 }
 
+type TaxonomySeoCopy = {
+  title: string;
+  h1: string;
+  description: string;
+  intro: string;
+};
+
+const GP4_ENGLISH_COMMERCIAL_SEO: Record<string, TaxonomySeoCopy> = {
+  "Custom Sportswear & Teamwear|Teams & Clubs|Team Uniforms": {
+    title: "Custom Football Kit Manufacturer | Private Label Teamwear | Irha Apparels",
+    h1: "Custom Football Kit & Teamwear Manufacturer",
+    description: "Custom football kits and teamwear for clubs, academies, distributors and private-label buyers. Materials, artwork, names, numbers, sizing, labels and packaging are confirmed to the approved brief.",
+    intro: "Develop football kits and broader teamwear with buyer-approved materials and construction, club or brand artwork, names and numbers, size runs, labels and packaging. Sampling, quotation and bulk production are confirmed after the specification and order scope are reviewed.",
+  },
+  "Bavarian & Trachten Wear|Men|Men's Lederhosen": {
+    title: "Lederhosen Manufacturer | Wholesale & Private Label | Irha Apparels",
+    h1: "Lederhosen Manufacturer for Wholesale & Private Label",
+    description: "Wholesale and private-label Lederhosen for brands, retailers and importers, with leather or material selection, embroidery, sizing, trims, labels and packaging confirmed to the buyer brief.",
+    intro: "Source short, knee-length, long, vintage and embroidered Lederhosen through one B2B manufacturing program. Leather or material choice, embroidery, fit, sizing, trims, private labels and packaging are developed and quoted against the approved specification.",
+  },
+  "Bavarian & Trachten Wear|Men|Lederhosen": {
+    title: "Lederhosen Manufacturer | Wholesale & Private Label | Irha Apparels",
+    h1: "Lederhosen Manufacturer for Wholesale & Private Label",
+    description: "Wholesale and private-label Lederhosen for brands, retailers and importers, with leather or material selection, embroidery, sizing, trims, labels and packaging confirmed to the buyer brief.",
+    intro: "Source short, knee-length, long, vintage and embroidered Lederhosen through one B2B manufacturing program. Leather or material choice, embroidery, fit, sizing, trims, private labels and packaging are developed and quoted against the approved specification.",
+  },
+  "Custom Sportswear & Teamwear||": {
+    title: "Private Label Sportswear Manufacturer | Custom Teamwear | Irha Apparels",
+    h1: "Private Label Sportswear Manufacturer for B2B Buyers",
+    description: "Private-label sportswear and custom teamwear for brands, clubs, wholesalers and distributors. Team uniforms, performance activewear, combat and training programs are developed to an approved buyer brief.",
+    intro: "Build private-label sportswear across team uniforms, performance activewear, combat sportswear and training wear. OEM/ODM development, materials, sizing, branding, labels and packaging are confirmed against the buyer specification before sampling and bulk production.",
+  },
+  "Premium Leather Apparel|Men|Men's Jackets & Outerwear": {
+    title: "Private Label Leather Jacket Manufacturer | Irha Apparels",
+    h1: "Private Label Leather Jacket & Outerwear Manufacturer",
+    description: "Private-label leather jackets and outerwear for brands, wholesalers and importers, with materials, construction, fit, branding, labels and packaging developed to buyer specifications.",
+    intro: "Develop men's leather jackets and outerwear for private-label and wholesale programs. Material selection, construction, fit and sizing, branding, labels, trims and packaging are reviewed against the buyer brief before quotation, sampling and bulk production.",
+  },
+  "Streetwear & Activewear||": {
+    title: "Private Label Streetwear Manufacturer | Heavyweight Hoodies | Irha Apparels",
+    h1: "Private Label Streetwear & Hoodie Manufacturer",
+    description: "Private-label streetwear for brands and wholesalers, including oversized hoodies, T-shirts, outerwear, bottoms and matching sets. Materials, fit, branding, labels and packaging are made to the approved brief.",
+    intro: "Develop streetwear collections covering oversized hoodies, T-shirts, outerwear, bottoms and matching sets. Where a heavyweight garment is required, target fabric weight and construction are confirmed in the buyer specification before sampling.",
+  },
+  "Bavarian & Trachten Wear|Women|Women's Dirndl Dresses": {
+    title: "Private Label Dirndl Manufacturer | Wholesale Trachten | Irha Apparels",
+    h1: "Private Label Dirndl Manufacturer for Wholesale Buyers",
+    description: "Private-label Dirndl dresses for brands, retailers and importers, with fabric, bodice and apron details, trims, embroidery, sizing, labels and packaging developed to the approved buyer brief.",
+    intro: "Source traditional, modern and material-led Dirndl styles through a wholesale and private-label program. Fabric selection, bodice and apron details, trims, embroidery, sizing, private labels and packaging are confirmed against the approved specification before quotation and sampling.",
+  },
+  "Leisurewear & Nightwear||": {
+    title: "Private Label Pajama & Nightwear Manufacturer | Irha Apparels",
+    h1: "Private Label Pajama & Nightwear Manufacturer",
+    description: "Private-label pajamas, sleep sets, robes and leisure/nightwear for brands and wholesale buyers. Fabrics, sizing, labels, branding and packaging are confirmed to the approved buyer brief.",
+    intro: "Develop pajama sets, sleepwear, robes and related leisure/nightwear for brands, wholesalers and other qualified B2B buyers. Fabrics, construction, sizing, branding, labels and packaging are agreed from the buyer specification before sampling and bulk production.",
+  },
+  "Custom Sportswear & Teamwear|Fitness & Activewear|Performance & Activewear": {
+    title: "Private Label Activewear Manufacturer | Performance Apparel | Irha Apparels",
+    h1: "Private Label Activewear & Performance Apparel Manufacturer",
+    description: "Private-label activewear and performance apparel for brands, distributors and wholesale buyers, with materials, fit, sizing, branding, labels and packaging developed to buyer specifications.",
+    intro: "Develop performance and activewear across the published fitness collection for private-label programs. Materials, construction, fit, sizing, branding, labels and packaging are confirmed to the buyer brief before quotation, sampling and bulk production.",
+  },
+  "Premium Leather Apparel|Accessories|": {
+    title: "Private Label Leather Accessories Manufacturer | Irha Apparels",
+    h1: "Private Label Leather Accessories Manufacturer",
+    description: "Private-label leather accessories for brands, retailers and importers, including bags and other published accessory lines. Materials, construction, branding, labels and packaging are confirmed to buyer specifications.",
+    intro: "Develop private-label leather accessory programs from the published bags, accessories and related lines. Material choice, construction, branding, labels and packaging are reviewed against the buyer specification before quotation and sampling.",
+  },
+  "Bavarian & Trachten Wear|Men|": {
+    title: "Trachten Shirt & Vest Manufacturer | Wholesale & Private Label | Irha Apparels",
+    h1: "Trachten Shirt & Vest Manufacturer for B2B Buyers",
+    description: "Wholesale and private-label Trachten shirts, vests and men's Bavarian apparel for retailers, importers and brands, with materials, embroidery, sizing, labels and packaging made to buyer specifications.",
+    intro: "Source men's Trachten shirts, vests and related Bavarian apparel within one B2B manufacturing category. Material choice, embroidery or other branding where applicable, sizing, trims, private labels and packaging are confirmed against the buyer brief.",
+  },
+};
+
+function gp4EnglishCommercialSeo(topName: string, audienceName?: string, collectionName?: string) {
+  return GP4_ENGLISH_COMMERCIAL_SEO[`${topName}|${audienceName ?? ""}|${collectionName ?? ""}`];
+}
+
 export function localizedTaxonomySeo(args: {
   locale: TaxonomyLocale;
   topName: string;
@@ -397,6 +477,10 @@ export function localizedTaxonomySeo(args: {
       intro: `Programas de ${audienceSubject} para compradores B2B con desarrollo, branding y embalaje según el briefing aprobado.`,
     };
   }
+
+  const gp4Seo = gp4EnglishCommercialSeo(topName, audienceName, collectionName);
+  if (gp4Seo) return gp4Seo;
+
   if (collectionName) {
     const buyerGroup = audienceName ?? "B2B Buyers";
     const description = collectionName === "Team Uniforms"
