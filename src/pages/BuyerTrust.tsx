@@ -83,7 +83,7 @@ export default function BuyerTrust() {
             <h2 id="buyer-trust-factory-proof-title" className="mt-3 font-display text-4xl leading-tight md:text-5xl">Real recorded footage. Separate live verification.</h2>
             <p className="mt-5 text-sm leading-7 text-foreground/68">The recorded capability overview shows actual Irha Apparels manufacturing activity. Qualified buyers can separately request an appointment-based live factory video call when real-time discussion or verification is needed.</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/manufacturing#factory-video" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold hover:underline">Watch factory video <ArrowRight size={13} /></Link>
+              <Link to="/factory-capability-video" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold hover:underline">Watch factory video <ArrowRight size={13} /></Link>
               <Link to="/factory-video-call" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/70 hover:text-gold">Request live call <Video size={13} /></Link>
             </div>
           </div>
