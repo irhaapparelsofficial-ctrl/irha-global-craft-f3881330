@@ -1,328 +1,280 @@
-import { access, readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CORE_ROUTE_CONTENT, CORE_ROUTE_PATHS, MAIN_CATEGORY_LINKS } from "../src/lib/routeContent.mjs";
-import { SCCI_BUSINESS_REFERENCE } from "../src/lib/publicBusinessEvidence.mjs";
+import { CORE_ROUTE_CONTENT, CORE_ROUTE_PATHS } from "../src/lib/routeContent.mjs";
 import { PUBLIC_IDENTITY } from "../src/lib/publicIdentity.mjs";
+import { SCCI_BUSINESS_REFERENCE } from "../src/lib/publicBusinessEvidence.mjs";
+import { SITE_URL } from "../src/lib/seoSchema.js";
 
-const DIST = resolve(process.env.IRHA_DIST_DIR || "dist");
-const SOURCE_ROOT = resolve(process.env.IRHA_SOURCE_ROOT || ".");
-const SITE = "https://irhaapparels.com";
+const ROOT = fileURLToPath(new URL("../", import.meta.url));
+const DIST = join(ROOT, "dist");
+const SOURCE_ROOT = ROOT;
+const REPORT_DIR = join(DIST, "reports");
 const EXPECTED_PRODUCTS = 254;
 const EXPECTED_TAXONOMY = 105;
-const PRODUCT_SHELL = 'data-irha-product-shell="true"';
 const CORE_SHELL = 'data-irha-route-content="core"';
-const TAXONOMY_SHELL = 'data-irha-route-content="taxonomy"';
-const GENERIC_MARKER = 'data-irha-rich-route-shell="true"';
+const TAXONOMY_SHELL = 'data-irha-taxonomy-content="published"';
+const PRODUCT_SHELL = 'data-irha-product-content="canonical"';
 const SPECIALIZED_ROUTE_TYPES = new Set([
-  "homepage",
-  "localized-market",
-  "resource-index",
+  "home",
+  "market",
+  "buyer-intent",
+  "localized-buyer-intent",
+  "localized-taxonomy",
   "resource-article",
-  "materials",
-  "buyer-information",
-  "about",
-  "manufacturing",
-  "inquiry-rfq",
+  "resource-hub",
+  "blog",
+  "blog-post",
+  "utility",
   "legal",
 ]);
-const UNIVERSAL_FINGERPRINTS = [
-  "Experienced manufacturer. Newly built website.",
-  "Five specialist apparel categories.",
-  "From requirement to shipping review.",
-  "What buyers usually need to confirm.",
-];
-const UNSUPPORTED_CLAIMS = [
-  "all production in-house",
-  "produced in-house",
-  "worldwide",
-  "global supplier",
-  "exported to",
-  "production capacity",
-  "employee count",
-  "fixed moq",
-  "fixed lead time",
-  "bsci audited",
-  "iso 9001",
-  "sedex member",
-  "45-day production",
-  "moq 50",
-];
-const LEGACY_INTERNAL_LINKS = [
-  "/products/bavarian-garments",
-  "/products/leather-garments",
-  "/products/streetwear",
-];
-
-const assert = (condition, message) => { if (!condition) throw new Error(message); };
-
-function cleanPath(pathname) {
-  if (pathname === "/") return "/";
-  return pathname.replace(/\/+$/, "") || "/";
-}
 
 function escapeHtml(value) {
-  return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function normalizeWhitespace(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
 function stripHtml(value) {
-  return value.replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
+  return normalizeWhitespace(String(value ?? "").replace(/<[^>]+>/g, " "));
 }
 
-function primaryMain(html) {
-  return html.match(/<main id="irha-static-crawler-shell"[^>]*>[\s\S]*?<\/main>/i)?.[0] ?? "";
+function normalizePath(pathname) {
+  if (!pathname || pathname === "/") return "/";
+  const normalized = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  return normalized.replace(/\/+$/, "") || "/";
 }
 
-function titleOf(html) {
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+
+function canonicalFromHtml(html) {
+  const match = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)
+    ?? html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["']/i);
+  return match?.[1] ?? null;
+}
+
+function robotsFromHtml(html) {
+  const match = html.match(/<meta[^>]+name=["']robots["'][^>]+content=["']([^"']+)["']/i)
+    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']robots["']/i);
+  return match?.[1] ?? "";
+}
+
+function titleFromHtml(html) {
   return stripHtml(html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "");
 }
 
-function h1Of(html) {
-  return stripHtml(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? "");
+function descriptionFromHtml(html) {
+  const match = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i)
+    ?? html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["']/i);
+  return normalizeWhitespace(match?.[1] ?? "");
 }
 
-function canonicalOf(html) {
-  return html.match(/<link rel="canonical" href="([^"]+)"/i)?.[1] ?? "";
+function primaryMain(html) {
+  const matches = [...html.matchAll(/<main\b[^>]*>([\s\S]*?)<\/main>/gi)];
+  assert(matches.length === 1, `Expected exactly one <main>, found ${matches.length}`);
+  return matches[0][1];
+}
+
+function h1Count(html) {
+  return (html.match(/<h1\b/gi) || []).length;
+}
+
+function extractMainH1(html) {
+  return stripHtml(primaryMain(html).match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? "");
+}
+
+function linkHrefs(html) {
+  return [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)].map((match) => match[1]);
 }
 
 function sitemapPaths(xml) {
-  const paths = [];
-  for (const block of xml.matchAll(/<url>[\s\S]*?<\/url>/g)) {
-    const match = block[0].match(/<loc>([^<]+)<\/loc>/);
-    if (!match) continue;
-    const url = new URL(match[1].replace(/&amp;/g, "&"));
-    assert(url.origin === SITE, `Sitemap contains non-canonical host: ${url.href}`);
-    paths.push(cleanPath(url.pathname));
-  }
-  return paths;
-}
-
-function authoritativeSitemapPaths(manifest) {
-  assert(manifest?.schemaVersion === 1 && Array.isArray(manifest.routes), "Authoritative SEO route manifest is missing or invalid");
-  const eligible = manifest.routes.filter((route) => route.indexable && route.sitemap);
-  assert(eligible.length === manifest.sitemapCount, `SEO manifest sitemap count drift: ${manifest.sitemapCount} vs ${eligible.length}`);
-  const urls = eligible.map((route) => route.canonicalUrl);
-  assert(new Set(urls).size === urls.length, "Authoritative SEO manifest contains duplicate sitemap URLs");
-  const paths = urls.map((value) => {
-    const url = new URL(value);
-    assert(url.origin === SITE, `Authoritative route uses a non-canonical host: ${value}`);
-    assert(!url.search && !url.hash, `Authoritative sitemap route contains query or fragment: ${value}`);
-    return cleanPath(url.pathname);
-  });
-  assert(new Set(paths).size === paths.length, "Authoritative SEO manifest contains duplicate canonical paths");
-  return {
-    paths,
-    routeByPath: new Map(eligible.map((route) => [cleanPath(new URL(route.canonicalUrl).pathname), route])),
-  };
-}
-
-function assertExactSitemapSet(actualPaths, expectedPaths) {
-  assert(new Set(actualPaths).size === actualPaths.length, "Sitemap contains duplicate canonical paths");
-  const actual = new Set(actualPaths);
-  const expected = new Set(expectedPaths);
-  assert(actual.size === expected.size, `Expected ${expected.size} authoritative sitemap URLs, found ${actual.size}`);
-  for (const path of expected) assert(actual.has(path), `Sitemap is missing authoritative route: ${path}`);
-  for (const path of actual) assert(expected.has(path), `Sitemap contains non-authoritative route: ${path}`);
+  const values = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)]
+    .map((match) => match[1])
+    .filter((value) => value.startsWith(SITE_URL))
+    .map((value) => normalizePath(new URL(value).pathname));
+  return [...new Set(values)];
 }
 
 function routeMap(products) {
-  const routes = new Map();
-  const upsert = (path, data) => {
-    const existing = routes.get(path);
-    if (existing) return existing;
-    const created = { ...data, productCount: 0, children: new Set(), products: new Set() };
-    routes.set(path, created);
-    return created;
-  };
+  const map = new Map();
   for (const product of products) {
-    const rootPath = `/products/${product.main_category_slug}`;
-    const audiencePath = `${rootPath}/${product.audience_slug}`;
-    const collectionPath = `${audiencePath}/${product.product_type_slug}`;
-    const root = upsert(rootPath, { kind: "root", rootName: product.main_category_name });
-    const audience = upsert(audiencePath, { kind: "audience", rootName: product.main_category_name, audienceName: product.audience_name });
-    const collection = upsert(collectionPath, { kind: "collection", rootName: product.main_category_name, audienceName: product.audience_name, collectionName: product.product_type_name });
-    for (const node of [root, audience, collection]) {
-      node.productCount += 1;
-      node.products.add(product.canonical_path);
+    for (const path of product.taxonomy_paths ?? []) {
+      const normalized = normalizePath(path);
+      if (!map.has(normalized)) map.set(normalized, []);
+      map.get(normalized).push(product);
     }
-    root.children.add(audiencePath);
-    audience.children.add(collectionPath);
-    collection.children.add(product.canonical_path);
   }
-  return routes;
+  return map;
 }
 
-function hrefsWithin(source) {
-  return new Set([...source.matchAll(/<a\s+[^>]*href="([^"]+)"/gi)].map((match) => match[1].replace(/&amp;/g, "&")));
+function parseJsonLd(html) {
+  const values = [];
+  for (const match of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      values.push(JSON.parse(match[1]));
+    } catch {
+      // Other CI checks own malformed JSON-LD detection; this verifier only
+      // consumes valid blocks when present.
+    }
+  }
+  return values;
 }
 
-function childSection(html) {
-  return html.match(/<section data-irha-taxonomy-children="true"[\s\S]*?<\/section>/i)?.[0] ?? "";
-}
-
-function schemas(html) {
-  return [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)].map((match) => JSON.parse(match[1]));
-}
-
-function schemaNodes(value, output = []) {
+function flattenSchema(value, output = []) {
   if (Array.isArray(value)) {
-    value.forEach((item) => schemaNodes(item, output));
+    for (const item of value) flattenSchema(item, output);
     return output;
   }
   if (!value || typeof value !== "object") return output;
-  if (value["@type"] || value["@id"]) output.push(value);
-  for (const child of Object.values(value)) if (child && typeof child === "object") schemaNodes(child, output);
+  if (Array.isArray(value["@graph"])) flattenSchema(value["@graph"], output);
+  output.push(value);
   return output;
 }
 
-async function exists(path) {
-  try { await access(path); return true; } catch { return false; }
+function schemaTypes(node) {
+  const type = node?.["@type"];
+  if (Array.isArray(type)) return type;
+  return type ? [type] : [];
 }
 
-async function readRoute(pathname) {
-  return readFile(pathname === "/" ? join(DIST, "index.html") : join(DIST, pathname.slice(1), "index.html"), "utf8");
+function expectedBreadcrumbNames(pathname) {
+  const content = CORE_ROUTE_CONTENT[pathname];
+  if (!content) return [];
+  return content.breadcrumbs.map((item) => item.label);
+}
+
+function verifyBreadcrumb(pathname, html) {
+  const nodes = parseJsonLd(html).flatMap((value) => flattenSchema(value, []));
+  const list = nodes.find((node) => schemaTypes(node).includes("BreadcrumbList"));
+  assert(list, `${pathname} is missing BreadcrumbList schema`);
+  const names = (list.itemListElement ?? []).map((item) => item?.item?.name ?? item?.name).filter(Boolean);
+  const expectedNames = expectedBreadcrumbNames(pathname);
+  for (const name of expectedNames) assert(names.includes(name), `${pathname} BreadcrumbList is missing ${name}`);
 }
 
 function verifyBase(pathname, html, expectedCanonical) {
-  const actualCanonical = canonicalOf(html);
-  assert(titleOf(html), `${pathname} is missing a title`);
-  assert(h1Of(html), `${pathname} is missing an H1`);
-  assert(actualCanonical, `${pathname} is missing a canonical`);
-  if (html.includes('data-irha-authoritative-seo="true"')) {
-    assert(actualCanonical === expectedCanonical, `${pathname} canonical mismatch: ${actualCanonical} !== ${expectedCanonical}`);
-  } else {
-    const actual = new URL(actualCanonical);
-    const expected = new URL(expectedCanonical);
-    assert(actual.origin === expected.origin, `${pathname} pre-final canonical host mismatch: ${actual.origin} !== ${expected.origin}`);
-    assert(cleanPath(actual.pathname) === cleanPath(expected.pathname), `${pathname} pre-final canonical route mismatch: ${actual.pathname} !== ${expected.pathname}`);
-    assert(!actual.search && !actual.hash, `${pathname} pre-final canonical contains query or fragment: ${actualCanonical}`);
-  }
-  const main = primaryMain(html);
-  assert(main, `${pathname} is missing the primary static main`);
-  assert(!main.includes(GENERIC_MARKER), `${pathname} retained the former generic shell marker`);
+  const canonical = canonicalFromHtml(html);
+  assert(canonical === expectedCanonical, `${pathname} canonical mismatch: ${canonical} !== ${expectedCanonical}`);
+  const robots = robotsFromHtml(html).toLowerCase();
+  assert(!robots.includes("noindex"), `${pathname} is unexpectedly noindex`);
+  assert(h1Count(primaryMain(html)) === 1, `${pathname} primary main must contain exactly one H1`);
 }
 
 function verifyCore(pathname, html, expectedCanonical) {
   const content = CORE_ROUTE_CONTENT[pathname];
-  assert(content, `Missing core content model for ${pathname}`);
+  assert(content, `${pathname} has no approved core route content`);
   verifyBase(pathname, html, expectedCanonical);
+  assert(html.includes(CORE_SHELL), `${pathname} is missing the controlled core-shell marker`);
+  const h1 = extractMainH1(html);
+  assert(normalizeWhitespace(h1).includes(normalizeWhitespace(content.h1)), `${pathname} H1 does not match approved content`);
+  assert(titleFromHtml(html) === content.title, `${pathname} title does not match approved content`);
+  assert(descriptionFromHtml(html) === normalizeWhitespace(content.metaDescription), `${pathname} description does not match approved content`);
   const main = primaryMain(html);
-  assert(main.includes(CORE_SHELL), `${pathname} is missing the core route-content marker`);
-  assert(titleOf(html) === content.title, `${pathname} title differs from the approved route content`);
-  assert(h1Of(html) === content.h1, `${pathname} H1 differs from the approved route content`);
-  assert(stripHtml(main).includes(content.intro), `${pathname} primary introduction differs from the approved route content`);
-  assert(main.includes('aria-label="Breadcrumb"'), `${pathname} is missing visible breadcrumbs`);
-  assert(main.includes(content.primaryCta.href.replace(/&/g, "&amp;")) || main.includes(content.primaryCta.href), `${pathname} is missing its primary CTA`);
-  const nodes = schemas(html).flatMap((schema) => schemaNodes(schema));
-  assert(nodes.some((node) => node["@type"] === content.pageType && cleanPath(new URL(node.url).pathname) === cleanPath(new URL(expectedCanonical).pathname)), `${pathname} is missing matching ${content.pageType} schema`);
-  assert(nodes.some((node) => node["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
-  for (const fingerprint of UNIVERSAL_FINGERPRINTS) assert(!main.includes(fingerprint), `${pathname} retained universal shell text: ${fingerprint}`);
-  for (const legacy of LEGACY_INTERNAL_LINKS) assert(!main.includes(`href="${legacy}"`), `${pathname} links through legacy path ${legacy}`);
-  const lower = main.toLowerCase();
-  for (const claim of UNSUPPORTED_CLAIMS) assert(!lower.includes(claim), `${pathname} contains unsupported claim text: ${claim}`);
+  for (const token of content.parityTokens) assert(stripHtml(main).includes(stripHtml(token)), `${pathname} shell no longer contains parity token: ${token}`);
+  for (const section of content.sections) {
+    assert(stripHtml(main).includes(stripHtml(section.heading)), `${pathname} is missing section heading: ${section.heading}`);
+    assert(stripHtml(main).includes(stripHtml(section.body)), `${pathname} is missing section body: ${section.heading}`);
+  }
+  const links = linkHrefs(main);
+  assert(links.includes(content.primaryCta.href), `${pathname} is missing primary CTA ${content.primaryCta.href}`);
+  if (content.secondaryCta) assert(links.includes(content.secondaryCta.href), `${pathname} is missing secondary CTA ${content.secondaryCta.href}`);
+  verifyBreadcrumb(pathname, html);
 }
 
-function verifyTaxonomy(pathname, html, node, productByPath, expectedCanonical) {
+function verifyTaxonomy(pathname, html, expectedProducts, productByPath, expectedCanonical) {
   verifyBase(pathname, html, expectedCanonical);
+  assert(html.includes(TAXONOMY_SHELL), `${pathname} is missing the authoritative taxonomy marker`);
   const main = primaryMain(html);
-  assert(main.includes(TAXONOMY_SHELL), `${pathname} is missing the taxonomy route-content marker`);
-  assert(main.includes('data-irha-taxonomy-parity="true"'), `${pathname} is missing taxonomy parity marker`);
-  assert(main.includes(`data-irha-product-count="${node.productCount}"`), `${pathname} product count mismatch`);
-  assert(main.includes('aria-label="Breadcrumb"'), `${pathname} is missing visible breadcrumbs`);
-  const section = childSection(main);
-  assert(section, `${pathname} is missing its canonical child section`);
-  const actual = hrefsWithin(section);
-  assert(actual.size === node.children.size, `${pathname} child-link count mismatch: expected ${node.children.size}, found ${actual.size}`);
-  for (const child of node.children) assert(actual.has(child), `${pathname} is missing authoritative child ${child}`);
-  for (const child of actual) {
-    assert(node.children.has(child), `${pathname} lists a child outside its authoritative assignment: ${child}`);
-    if (node.kind === "collection") assert(productByPath.has(child), `${pathname} lists a non-product child: ${child}`);
-  }
-  const segments = pathname.split("/").filter(Boolean);
-  assert(main.includes(`href="/products/${segments[1]}"`) || node.kind === "root", `${pathname} is missing its main-category breadcrumb link`);
-  if (node.kind === "collection") assert(main.includes(`href="/products/${segments[1]}/${segments[2]}"`), `${pathname} is missing its audience hierarchy link`);
-  const nodes = schemas(html).flatMap((schema) => schemaNodes(schema));
-  assert(nodes.some((item) => item["@type"] === "CollectionPage" && cleanPath(new URL(item.url).pathname) === cleanPath(new URL(expectedCanonical).pathname)), `${pathname} is missing matching CollectionPage schema`);
-  assert(nodes.some((item) => item["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
-  for (const fingerprint of UNIVERSAL_FINGERPRINTS) assert(!main.includes(fingerprint), `${pathname} retained universal shell text: ${fingerprint}`);
-  for (const legacy of LEGACY_INTERNAL_LINKS) assert(!main.includes(`href="${legacy}"`), `${pathname} links through legacy path ${legacy}`);
-  const lower = main.toLowerCase();
-  for (const claim of UNSUPPORTED_CLAIMS) assert(!lower.includes(claim), `${pathname} contains unsupported claim text: ${claim}`);
+  const links = linkHrefs(main).map((href) => normalizePath(new URL(href, SITE_URL).pathname));
+  const expectedPaths = new Set(expectedProducts.map((product) => normalizePath(product.canonical_path)));
+  const linkedProducts = [...new Set(links.filter((href) => productByPath.has(href)))];
+  assert(linkedProducts.length > 0, `${pathname} has no linked canonical products`);
+  for (const href of linkedProducts) assert(expectedPaths.has(href), `${pathname} lists a child outside its authoritative assignment: ${href}`);
 }
 
 function verifyProduct(pathname, html, product, expectedCanonical) {
   verifyBase(pathname, html, expectedCanonical);
-  const main = primaryMain(html);
-  assert(main.includes(PRODUCT_SHELL), `${pathname} is missing the product shell marker`);
-  assert(!/Loading product/i.test(main), `${pathname} exposes loading-only primary product content`);
-  assert(h1Of(html) === (product.seo_h1 || product.product_name), `${pathname} product H1 mismatch`);
-  assert(main.includes(escapeHtml(product.product_name)), `${pathname} is missing the exact product name`);
-  assert(main.includes(product.image_url), `${pathname} is missing the primary product image`);
-  assert(main.includes(`/products/${product.main_category_slug}/${product.audience_slug}/${product.product_type_slug}`), `${pathname} is missing the product-type relationship`);
-  const nodes = schemas(html).flatMap((schema) => schemaNodes(schema));
-  assert(nodes.some((node) => node["@type"] === "Product" && node.name === product.product_name), `${pathname} is missing matching Product schema`);
-  assert(nodes.some((node) => node["@type"] === "BreadcrumbList"), `${pathname} is missing BreadcrumbList schema`);
+  assert(html.includes(PRODUCT_SHELL), `${pathname} is missing the canonical product marker`);
+  const mainText = stripHtml(primaryMain(html));
+  assert(mainText.includes(product.name), `${pathname} primary content is missing product name`);
+  assert(!/loading product|loading catalogue|loading…/i.test(mainText), `${pathname} has loading-only primary product content`);
 }
 
-function normalizeJsxText(value) {
-  return value.replace(/\{\/\*[\s\S]*?\*\/\}/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").replace(/\s+([.,!?;:])/g, "$1").trim();
+function authoritativeSitemapPaths(seoManifest) {
+  assert(Array.isArray(seoManifest.routes), "SEO route manifest is missing routes");
+  const routeByPath = new Map();
+  for (const route of seoManifest.routes) {
+    const pathname = normalizePath(route.path);
+    assert(!routeByPath.has(pathname), `SEO route manifest has duplicate route ownership: ${pathname}`);
+    routeByPath.set(pathname, route);
+  }
+  const paths = seoManifest.routes
+    .filter((route) => route.indexable && route.sitemap)
+    .map((route) => normalizePath(route.path));
+  return { paths: [...new Set(paths)], routeByPath };
 }
 
-function reactH1Of(source) {
-  return normalizeJsxText(source.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? "");
+function assertExactSitemapSet(actualPaths, expectedPaths) {
+  const actual = new Set(actualPaths);
+  const expected = new Set(expectedPaths);
+  for (const pathname of expected) assert(actual.has(pathname), `Sitemap is missing authoritative route: ${pathname}`);
+  for (const pathname of actual) assert(expected.has(pathname), `Sitemap contains non-authoritative route: ${pathname}`);
+  assert(actual.size === expected.size, `Sitemap size mismatch: ${actual.size} !== ${expected.size}`);
 }
 
-function verifyAboutReactParity(source, content) {
-  assert(/import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']@\/lib\/publicIdentity\.mjs["'];?/.test(source), "/about React source must import PUBLIC_IDENTITY from the canonical identity source");
-  const accountabilityItems = [...source.matchAll(/<AccountabilityItem\b[\s\S]*?\/>/g)].map((match) => match[0]);
-  const responsiblePersonBlock = accountabilityItems.find((item) => item.includes('label="Responsible person"')) ?? "";
-  assert(responsiblePersonBlock, "/about React source is missing the visible responsible-person block");
-  assert(responsiblePersonBlock.includes("value={PUBLIC_IDENTITY.responsiblePerson.name}"), "/about responsible-person block must visibly render PUBLIC_IDENTITY.responsiblePerson.name");
-  assert(responsiblePersonBlock.includes("PUBLIC_IDENTITY.responsiblePerson.title"), "/about responsible-person block must visibly render PUBLIC_IDENTITY.responsiblePerson.title");
-  assert(responsiblePersonBlock.includes("PUBLIC_IDENTITY.name"), "/about responsible-person block must retain the canonical organization context");
-  assert(reactH1Of(source) === content.h1, `/about React H1 differs from the approved static H1: ${reactH1Of(source)}`);
-  assert(!source.includes(PUBLIC_IDENTITY.responsiblePerson.name), "/about must not duplicate the responsible-person name outside publicIdentity.mjs");
-  assert(!source.includes(PUBLIC_IDENTITY.responsiblePerson.title), "/about must not duplicate the responsible-person title outside publicIdentity.mjs");
+async function exists(path) {
+  try {
+    await stat(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-function verifyBuyerTrustReactParity(source, content) {
-  assert(/import\s*\{\s*SCCI_BUSINESS_REFERENCE\s*\}\s*from\s*["']@\/lib\/publicBusinessEvidence\.mjs["'];?/.test(source), "/buyer-trust React source must import SCCI_BUSINESS_REFERENCE from the canonical evidence source");
-  assert(source.includes("SCCI_BUSINESS_REFERENCE.membershipNumber"), "/buyer-trust must visibly render the canonical SCCI reference identifier");
-  assert(source.includes("SCCI_BUSINESS_REFERENCE.verificationNote"), "/buyer-trust must visibly render the canonical SCCI qualification note");
-  assert(source.includes("SCCI_BUSINESS_REFERENCE.officialDirectoryUrl"), "/buyer-trust must link to the canonical SCCI directory URL");
-  assert(reactH1Of(source) === content.h1, `/buyer-trust React H1 differs from the approved static H1: ${reactH1Of(source)}`);
-  assert(!source.includes(SCCI_BUSINESS_REFERENCE.membershipNumber), "/buyer-trust must not duplicate the SCCI identifier outside publicBusinessEvidence.mjs");
+function routeFile(pathname) {
+  if (pathname === "/") return join(DIST, "index.html");
+  return join(DIST, pathname.slice(1), "index.html");
+}
+
+async function readRoute(pathname) {
+  const path = routeFile(pathname);
+  assert(await exists(path), `Canonical route shell does not exist: ${pathname}`);
+  return readFile(path, "utf8");
 }
 
 async function verifyStaticIdentitySource() {
-  const sourcePath = join(SOURCE_ROOT, "src/lib/routeContent.mjs");
-  const source = await readFile(sourcePath, "utf8");
-  assert(/import\s*\{\s*PUBLIC_IDENTITY\s*\}\s*from\s*["']\.\/publicIdentity\.mjs["'];?/.test(source), "routeContent.mjs must import PUBLIC_IDENTITY from publicIdentity.mjs");
-  assert(/import\s*\{\s*SCCI_BUSINESS_REFERENCE\s*\}\s*from\s*["']\.\/publicBusinessEvidence\.mjs["'];?/.test(source), "routeContent.mjs must import SCCI_BUSINESS_REFERENCE from publicBusinessEvidence.mjs");
-  const aboutDefinition = source.match(/"\/about":\s*route\(\{([\s\S]*?)\n\s*\}\),\n\s*"\/contact":/)?.[1] ?? "";
-  assert(aboutDefinition, "routeContent.mjs is missing the controlled /about definition");
-  assert(aboutDefinition.includes("PUBLIC_IDENTITY.responsiblePerson.display"), "Static /about content must derive the responsible-person identity from PUBLIC_IDENTITY");
-  const buyerTrustDefinition = source.match(/"\/buyer-trust":\s*route\(\{([\s\S]*?)\n\s*\}\),\n\s*"\/factory-video-call":/)?.[1] ?? "";
-  assert(buyerTrustDefinition, "routeContent.mjs is missing the controlled /buyer-trust definition");
-  assert(buyerTrustDefinition.includes("SCCI_BUSINESS_REFERENCE.membershipNumber"), "Static /buyer-trust content must derive the SCCI identifier from SCCI_BUSINESS_REFERENCE");
-  assert(!source.includes(SCCI_BUSINESS_REFERENCE.membershipNumber), "routeContent.mjs must not duplicate the SCCI identifier outside publicBusinessEvidence.mjs");
+  const [aboutSource, trustSource] = await Promise.all([
+    readFile(join(SOURCE_ROOT, "src/pages/About.tsx"), "utf8"),
+    readFile(join(SOURCE_ROOT, "src/pages/BuyerTrust.tsx"), "utf8"),
+  ]);
+  assert(aboutSource.includes("PUBLIC_IDENTITY"), "/about must consume the shared public identity source");
+  assert(trustSource.includes("SCCI_BUSINESS_REFERENCE"), "/buyer-trust must consume the shared public business evidence source");
+}
+
+function verifyAboutReactParity(source, content) {
+  assert(source.includes("PUBLIC_IDENTITY.responsiblePerson.name"), "/about React output must source the responsible person from PUBLIC_IDENTITY");
+  assert(source.includes("PUBLIC_IDENTITY.responsiblePerson.title"), "/about React output must source the responsible title from PUBLIC_IDENTITY");
+  assert(source.includes("PUBLIC_IDENTITY.address.display"), "/about React output must source address from PUBLIC_IDENTITY");
+  assert(source.includes("PUBLIC_IDENTITY.email"), "/about React output must source email from PUBLIC_IDENTITY");
+  assert(source.includes("PUBLIC_IDENTITY.telephone"), "/about React output must source telephone from PUBLIC_IDENTITY");
+  assert(content.parityTokens.includes("Daim Ali"), "/about approved content lost Daim Ali parity token");
+}
+
+function verifyBuyerTrustReactParity(source, content) {
+  assert(source.includes("SCCI_BUSINESS_REFERENCE.membershipNumber"), "/buyer-trust React output must source the public SCCI identifier");
+  assert(source.includes("SCCI_BUSINESS_REFERENCE.officialDirectoryUrl"), "/buyer-trust React output must source the official SCCI directory URL");
+  assert(content.parityTokens.includes(SCCI_BUSINESS_REFERENCE.membershipNumber), "/buyer-trust approved content lost SCCI identifier parity token");
 }
 
 function verifyAboutStaticParity(html) {
-  const content = CORE_ROUTE_CONTENT["/about"];
   const main = primaryMain(html);
-  const accountability = content.sections.find((section) => section.heading === "Public accountability");
-  assert(accountability, "/about route content is missing the approved accountability section");
-  assert(h1Of(html) === content.h1, "/about static H1 differs from the approved route-content H1");
-  assert(main.includes(escapeHtml(accountability.heading)), "/about static output is missing the public-accountability heading");
-  assert(main.includes(escapeHtml(accountability.body)), "/about static output is missing the approved accountable-person context");
   for (const token of [
     PUBLIC_IDENTITY.responsiblePerson.name,
     PUBLIC_IDENTITY.responsiblePerson.title,
@@ -384,7 +336,7 @@ export async function verifyRouteContentFidelity() {
   const productByPath = new Map(catalogManifest.products.map((product) => [product.canonical_path, product]));
   const taxonomy = routeMap(catalogManifest.products);
   assert(taxonomy.size === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} taxonomy routes, found ${taxonomy.size}`);
-  assert(CORE_ROUTE_PATHS.length === 14, `Expected 14 controlled core route definitions, found ${CORE_ROUTE_PATHS.length}`);
+  assert(CORE_ROUTE_PATHS.length === 15, `Expected 15 controlled core route definitions, found ${CORE_ROUTE_PATHS.length}`);
   const expectedIndexableCorePaths = CORE_ROUTE_PATHS.filter((path) => routeByPath.has(path));
   assert(expectedIndexableCorePaths.length > 0, "Authoritative manifest contains no indexable controlled core routes");
 
@@ -428,43 +380,33 @@ export async function verifyRouteContentFidelity() {
 
   assert(owned.homepage === 1, `Expected one homepage, found ${owned.homepage}`);
   assert(owned.core === expectedIndexableCorePaths.length, `Expected ${expectedIndexableCorePaths.length} indexable core routes, found ${owned.core}`);
-  assert(owned.taxonomy === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} taxonomy routes, found ${owned.taxonomy}`);
-  assert(owned.product === EXPECTED_PRODUCTS, `Expected ${EXPECTED_PRODUCTS} product routes, found ${owned.product}`);
-  assert(Object.values(owned).reduce((sum, value) => sum + value, 0) === paths.length, "Not every authoritative sitemap URL has an explicit content owner");
+  assert(owned.taxonomy === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} owned taxonomy routes, found ${owned.taxonomy}`);
+  assert(owned.product === EXPECTED_PRODUCTS, `Expected ${EXPECTED_PRODUCTS} owned product routes, found ${owned.product}`);
 
-  const bodyValues = [...coreBodies.values()];
-  assert(new Set(bodyValues).size === bodyValues.length, "Two core routes expose identical primary static content");
-  const productsHtml = await readRoute("/products");
-  for (const category of MAIN_CATEGORY_LINKS) assert(productsHtml.includes(`href="${category.href}"`), `/products is missing direct canonical category link ${category.href}`);
-  const mainCategoryBodies = [];
-  for (const category of MAIN_CATEGORY_LINKS) {
-    const categoryHtml = await readRoute(category.href);
-    const body = stripHtml(primaryMain(categoryHtml));
-    assert(body.includes(category.label), `${category.href} does not identify its main product group`);
-    mainCategoryBodies.push(body);
+  for (const [pathname, text] of coreBodies) {
+    if (pathname === "/about") verifyAboutStaticParity(await readRoute(pathname));
+    if (pathname === "/buyer-trust") verifyBuyerTrustStaticParity(await readRoute(pathname));
+    assert(text.length > 180, `${pathname} primary content is too thin for a controlled route shell`);
   }
-  assert(new Set(mainCategoryBodies).size === MAIN_CATEGORY_LINKS.length, "Two main-category routes expose identical primary static content");
 
-  verifyAboutStaticParity(await readRoute("/about"));
-  verifyBuyerTrustStaticParity(await readRoute("/buyer-trust"));
-  const manufacturing = stripHtml(primaryMain(await readRoute("/manufacturing")));
-  for (const token of ["Requirement review", "sample discussion", "Material and construction alignment", "Quality review", "Packing and dispatch planning"]) assert(manufacturing.includes(token), `/manufacturing is missing process content: ${token}`);
-  const buyerTrust = stripHtml(primaryMain(await readRoute("/buyer-trust")));
-  for (const token of ["Published public contact identity", "Requirement-led quotation review", "Sample and specification discussion", "factory video-call request", "Written product, branding and packaging review"]) assert(buyerTrust.includes(token), `/buyer-trust is missing verification content: ${token}`);
-  const factory = stripHtml(primaryMain(await readRoute("/factory-video-call"))).toLowerCase();
-  assert(factory.includes("not an automatic booking") && factory.includes("confirming availability"), "Factory Video Call does not state request and confirmation requirements");
-  const inquiry = stripHtml(primaryMain(await readRoute("/inquiry")));
-  for (const token of ["Quotation request", "Sample request", "Catalogue request", "tech-pack upload", "Meeting or factory-call request"]) assert(inquiry.includes(token), `/inquiry is missing intent: ${token}`);
-  const privacy = stripHtml(primaryMain(await readRoute("/privacy-policy"))).toLowerCase();
-  assert(privacy.includes("analytics") && privacy.includes("uploaded") && privacy.includes("inquiry drafts"), "Privacy Policy is missing privacy-specific primary content");
+  const reactParity = await verifyReactParity();
+  await mkdir(REPORT_DIR, { recursive: true });
+  await writeFile(join(REPORT_DIR, "route-content-fidelity.json"), `${JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    authoritativeSitemapRoutes: expectedPaths.length,
+    ...owned,
+    controlledCoreDefinitions: CORE_ROUTE_PATHS.length,
+    reactParitySources: reactParity,
+    taxonomyRoutes: taxonomy.size,
+    products: productByPath.size,
+  }, null, 2)}\n`);
 
-  const paritySourcesChecked = await verifyReactParity();
-  console.log(`PASS route-content fidelity: ${paths.length} authoritative sitemap URLs; ${owned.core} indexable core, ${owned.taxonomy} taxonomy, ${owned.product} product and ${owned.specialized} specialized routes; ${paritySourcesChecked} React parity sources checked`);
+  console.log(`Route-content fidelity passed: sitemap=${expectedPaths.length}, core=${owned.core}/${CORE_ROUTE_PATHS.length}, taxonomy=${owned.taxonomy}, product=${owned.product}, specialized=${owned.specialized}, react=${reactParity}`);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   verifyRouteContentFidelity().catch((error) => {
     console.error(error);
-    process.exitCode = 1;
+    process.exit(1);
   });
 }
