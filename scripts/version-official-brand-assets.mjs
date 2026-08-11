@@ -47,7 +47,8 @@ await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 console.log(`Versioned official brand assets in ${htmlFiles.length} built HTML files`);
 
-// Phase 1 is deliberately the final public-contract step. It runs after all
-// static/SEO/worker writers so a late generator cannot reintroduce stale trust,
-// language, redirect or API-catalog output after the earlier sanitizers pass.
+// Phase 1 remains the final broad public-contract normalizer. GP-4V-R2 then
+// seals the narrower SPA SEO ownership invariant after Phase 1 so no later
+// HTML normalizer can strip the static fallback canonical ownership marker.
 await import("./finalize-phase1-public-contract.mjs");
+await import("./finalize-spa-seo-ownership.mjs");

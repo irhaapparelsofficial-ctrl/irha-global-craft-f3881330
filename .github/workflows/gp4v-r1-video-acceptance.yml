@@ -15,13 +15,19 @@ on:
       - "src/App.tsx"
       - "src/lib/routeContent.mjs"
       - "src/test/factoryVideoIntegration.test.ts"
+      - "src/test/gp4vR2SeoOwnership.test.ts"
       - "scripts/generate-static-route-shells.ts"
       - "scripts/apply-authoritative-seo-manifest.ts"
+      - "scripts/finalize-phase1-public-contract.mjs"
+      - "scripts/finalize-spa-seo-ownership.mjs"
+      - "scripts/version-official-brand-assets.mjs"
+      - "scripts/patch-cloudflare-route-shell-assets.mjs"
       - "scripts/generate-sitemap.ts"
       - "scripts/ci/gp4v-r1-*.mjs"
       - "scripts/ci/gp4v-r2-*.mjs"
       - ".github/workflows/gp4v-r1-video-acceptance.yml"
       - ".github/workflows/cloudflare-pages-preview.yml"
+      - "package.json"
   workflow_run:
     workflows: ["Cloudflare Production Status"]
     types: [completed]
@@ -48,12 +54,12 @@ jobs:
       - name: Verify public MP4 type, length and byte ranges
         run: node scripts/ci/gp4v-r1-media-http-check.mjs
 
-  production-canonical-diagnostic:
+  candidate-browser:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 50
     steps:
-      - name: Checkout diagnostic PR head
+      - name: Checkout exact PR head
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -63,18 +69,52 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
 
-      - name: Install canonical diagnostic runtime
+      - name: Install exact dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Build exact candidate with verified source identity
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npm run build
+
+      - name: Install browser acceptance runtime
         run: |
           npm install --no-save --ignore-scripts playwright@1.58.2
+          npx playwright install --with-deps webkit
           google-chrome --version
 
-      - name: Diagnose exact deployed base canonical ownership
+      - name: Serve exact Cloudflare Pages candidate locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 pages dev dist --port 8788 > /tmp/gp4v-r2-wrangler.log 2>&1 &
+          echo $! > /tmp/gp4v-r2-wrangler.pid
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl -fsS --connect-timeout 2 --max-time 5 http://127.0.0.1:8788/build.json >/tmp/gp4v-r2-build.json; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then
+            cat /tmp/gp4v-r2-wrangler.log
+            exit 1
+          fi
+          jq -e --arg source "${{ github.event.pull_request.head.sha }}" '.source_commit == $source and .source_identity_state == "verified"' /tmp/gp4v-r2-build.json >/dev/null
+
+      - name: Run exact candidate browser journey
         env:
-          BROWSER_ORIGIN: https://irha-apparels.pages.dev
+          BROWSER_ORIGIN: http://127.0.0.1:8788
           CANONICAL_ORIGIN: https://irhaapparels.com
-          EXPECTED_SHA: ${{ github.event.pull_request.base.sha }}
-        run: node scripts/ci/gp4v-r2-canonical-diagnostic.mjs
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci/gp4v-r2-browser-acceptance.mjs
+
+      - name: Print local Pages log on failure
+        if: failure()
+        run: cat /tmp/gp4v-r2-wrangler.log || true
 
   live-production-browser:
     if: >-
@@ -83,7 +123,7 @@ jobs:
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout exact production workflow head
         uses: actions/checkout@v4
@@ -105,9 +145,9 @@ jobs:
           npx playwright install --with-deps webkit
           google-chrome --version
 
-      - name: Verify exact live playback, seeking, enlarge, exit and mobile layout
+      - name: Verify exact live canonical, playback, seeking, real enlargement, exit and WebKit layouts
         env:
           BROWSER_ORIGIN: https://irha-apparels.pages.dev
           CANONICAL_ORIGIN: https://irhaapparels.com
           EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: node scripts/ci/gp4v-r1-browser-acceptance.mjs
+        run: node scripts/ci/gp4v-r2-browser-acceptance.mjs
