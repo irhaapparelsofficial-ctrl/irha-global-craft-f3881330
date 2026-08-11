@@ -66,18 +66,32 @@ async function sealStaticHtml(manifest) {
   return sealedCount;
 }
 
-function publishedCorePaths() {
-  return [...new Set(
+async function publishedCoreShellPaths() {
+  const candidates = [...new Set(
     Object.values(CORE_ROUTE_CONTENT)
       .filter((route) => route && route.indexable !== false && typeof route.route === "string")
       .map((route) => normalizePath(route.route)),
   )].sort();
+  const builtShells = [];
+  for (const route of candidates) {
+    if (route === "/") {
+      builtShells.push(route);
+      continue;
+    }
+    try {
+      await access(routeHtmlPath(route));
+      builtShells.push(route);
+    } catch (error) {
+      if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) throw error;
+    }
+  }
+  return builtShells;
 }
 
-async function sealWorkerCoreRoutes(corePaths) {
+async function sealWorkerCoreRoutes(coreShellPaths) {
   let worker = await readFile(WORKER_PATH, "utf8");
   const setName = "GP4V_PUBLISHED_CORE_PATHS";
-  const declaration = `const ${setName} = new Set(${JSON.stringify(corePaths, null, 2)});\n`;
+  const declaration = `const ${setName} = new Set(${JSON.stringify(coreShellPaths, null, 2)});\n`;
 
   if (!worker.includes(`const ${setName} = new Set(`)) {
     const anchor = "const PUBLISHED_CATALOG_PATHS = new Set(";
@@ -93,13 +107,8 @@ async function sealWorkerCoreRoutes(corePaths) {
     worker = worker.replace(functionAnchor, ownedFunctionAnchor);
   }
 
-  for (const route of corePaths) {
-    if (route === "/") continue;
-    await access(routeHtmlPath(route));
-  }
-
-  if (!worker.includes('"/factory-capability-video"')) {
-    throw new Error("Cloudflare worker core-route authority does not include /factory-capability-video");
+  if (!coreShellPaths.includes("/factory-capability-video") || !worker.includes('"/factory-capability-video"')) {
+    throw new Error("Cloudflare worker core-shell authority does not include /factory-capability-video");
   }
   if (!worker.includes(`if (${setName}.has(normalized)) return true;`)) {
     throw new Error("Cloudflare worker core-route authority dispatch was not sealed");
@@ -113,15 +122,15 @@ async function main() {
     throw new Error("SPA SEO ownership seal requires a non-empty SEO route manifest");
   }
   const sealedCount = await sealStaticHtml(manifest);
-  const corePaths = publishedCorePaths();
-  await sealWorkerCoreRoutes(corePaths);
+  const coreShellPaths = await publishedCoreShellPaths();
+  await sealWorkerCoreRoutes(coreShellPaths);
   console.log(JSON.stringify({
     phase: "gp4v-r2-spa-seo-ownership",
     staticCanonicalOwner: "marked-build-shell-before-react",
     runtimeCanonicalOwner: "react-helmet-after-mount",
     sealedStaticRoutes: sealedCount,
-    publishedCoreRoutes: corePaths.length,
-    watchRoutePublished: corePaths.includes("/factory-capability-video"),
+    publishedCoreShellRoutes: coreShellPaths.length,
+    watchRoutePublished: coreShellPaths.includes("/factory-capability-video"),
   }, null, 2));
 }
 
