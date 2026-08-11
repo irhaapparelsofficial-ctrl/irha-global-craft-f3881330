@@ -31,7 +31,7 @@ describe("GP-4V-R2 canonical ownership closure", () => {
 
   it("keeps React cleanup central and marker-based rather than route-specific", () => {
     const seo = read("src/components/SEO.tsx");
-    expect(seo).toContain("document.querySelectorAll('[data-irha-fallback-seo=\"true\"]')");
+    expect(seo).toContain(`document.querySelectorAll('[data-irha-fallback-seo="true"]')`);
     expect(seo).not.toContain('pathname === "/factory-capability-video"');
   });
 
