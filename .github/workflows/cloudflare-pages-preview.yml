@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/cloudflare-pages-preview.yml"
+      - ".github/workflows/gp4v-r1-video-acceptance.yml"
       - ".github/workflows/production-route-parity.yml"
       - "scripts/crawl-production-route-parity.ts"
       - "scripts/evaluate-preview-route-parity.ts"
@@ -30,6 +31,7 @@ on:
       - "scripts/finalize-seo-route-manifest.ts"
       - "scripts/ping-search-engines.mjs"
       - "scripts/ensure-static-identity.mjs"
+      - "scripts/ci/gp4v-r1-*.mjs"
       - "src/data/buyerCapabilities.ts"
       - "public/_redirects"
       - "public/_worker.js"
@@ -39,6 +41,7 @@ on:
       - "src/pages/CategoryOrProductPage.tsx"
       - "src/pages/Home.tsx"
       - "src/components/HeroCarousel.tsx"
+      - "src/test/factoryVideoIntegration.test.ts"
       - "src/test/productionRouteParityCrawler.test.ts"
       - "src/test/relatedProductRouteParity.test.ts"
       - "src/test/supabaseRpcPaginationGuard.test.ts"
