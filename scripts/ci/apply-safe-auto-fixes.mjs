@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { dirname, extname, resolve } from "node:path";
+import { extname } from "node:path";
 
 const logPath = process.argv[2];
 const changedFilesPath = process.argv[3];
@@ -59,33 +59,23 @@ if (lintSignal && lintableFiles.length > 0) {
 
 const searchRouteStateSignal = /Committed material search route state is stale\. Run node scripts\/generate-search-route-state\.mjs --write before merging\./i.test(logs);
 if (searchRouteStateSignal) {
-  const match = logs.match(/SEARCH_ROUTE_STATE_EXPECTED_BEGIN\s*\n([\s\S]*?)\nSEARCH_ROUTE_STATE_EXPECTED_END/);
-  let ok = false;
-  let reason = "expected-state block missing from exact failed build log";
-  if (match) {
-    try {
-      const expectedText = `${match[1].trim()}\n`;
-      const expected = JSON.parse(expectedText);
-      const valid = expected?.schemaVersion === 1
-        && expected?.canonicalOrigin === "https://irhaapparels.com"
-        && Number.isInteger(expected?.routeCount)
-        && expected.routeCount > 0
-        && Array.isArray(expected?.routes)
-        && expected.routes.length === expected.routeCount
-        && typeof expected?.contentDigest === "string"
-        && /^sha256:[0-9a-f]{64}$/.test(expected.contentDigest)
-        && expected.routes.every((route) => typeof route?.url === "string" && typeof route?.digest === "string");
-      if (!valid) throw new Error("exact failed build emitted an invalid search-route state payload");
-      const target = resolve("seo/search-route-state.json");
-      mkdirSync(dirname(target), { recursive: true });
-      writeFileSync(target, expectedText, "utf8");
-      ok = true;
-      reason = `restored exact-head generated state routes=${expected.routeCount} digest=${expected.contentDigest}`;
-    } catch (error) {
-      reason = error instanceof Error ? error.message : String(error);
-    }
-  }
-  actions.push({ type: "search-route-state", attempted: true, ok, file: "seo/search-route-state.json", reason });
+  const prepared = run("npm", ["run", "prepare:public-assets"]);
+  const generated = prepared && run("node", [
+    "scripts/generate-search-route-state.mjs",
+    "--input",
+    "public/seo-route-manifest.json",
+    "--output",
+    "seo/search-route-state.json",
+    "--write",
+  ]);
+  actions.push({
+    type: "search-route-state",
+    attempted: true,
+    ok: prepared && generated,
+    prerequisite: "npm run prepare:public-assets",
+    input: "public/seo-route-manifest.json",
+    output: "seo/search-route-state.json",
+  });
 }
 
 const gitStatus = spawnSync("git", ["status", "--porcelain"], {
@@ -99,7 +89,7 @@ const result = {
   changed,
   actions,
   commands,
-  policy: "Only deterministic mechanical dependency-lock, lint and exact-head generated search-route-state repairs are permitted. Search-route state may only be restored from the explicit expected payload emitted by the failed authoritative build for that exact PR head; the fixer never invents or independently regenerates SEO state. SQL, release contracts, business logic, secrets, deployment identity and production data are never rewritten automatically.",
+  policy: "Only deterministic mechanical dependency-lock, lint and material search-route-state repairs are permitted. Search-route state regeneration first materializes the repository's authoritative public SEO manifest through prepare:public-assets, then invokes the supported generator with explicit input/output paths. The existing workflow must pass full TypeScript, tests and production build validation before any repair commit is pushed. SQL, release contracts, business logic, secrets, deployment identity and production data are never rewritten automatically.",
 };
 
 writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
