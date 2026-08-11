@@ -20,6 +20,13 @@ describe("GP-4V-R2 canonical ownership closure", () => {
     expect(seal).toContain("route.canonicalUrl");
   });
 
+  it("publishes the recorded factory watch page through the authoritative SEO route manifest", () => {
+    const manifestBuilder = read("scripts/finalize-seo-route-manifest.ts");
+    expect(manifestBuilder).toContain('path: "/factory-capability-video"');
+    expect(manifestBuilder).toContain('clientComponent: "FactoryCapabilityVideo"');
+    expect(manifestBuilder).toContain('parentPath: "/buyer-trust"');
+  });
+
   it("derives published core Cloudflare routes from the authoritative runtime route-content map", () => {
     const seal = read("scripts/finalize-spa-seo-ownership.mjs");
     const routeContent = read("src/lib/routeContent.mjs");
