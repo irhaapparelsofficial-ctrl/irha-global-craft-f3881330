@@ -39,7 +39,7 @@ describe("IA-UX-E001 first-render architecture", () => {
 
     expect(main).not.toContain("allowStaticShellPaint");
     expect(main).not.toContain("replaceChildren()");
-    expect(main).toContain('const CACHE_HEAL_VERSION = "2026-08-07-v4"');
+    expect(main).toContain('const CACHE_HEAL_VERSION = "2026-08-11-v5"');
     expect(main).toContain('window.addEventListener("vite:preloadError"');
     expect(recovery).toContain("claimOneTimeAssetRecovery(route)");
     expect(recovery).toContain("preloadEvent.preventDefault()");
