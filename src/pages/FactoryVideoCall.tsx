@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, CheckCircle2, ClipboardList, MessageCircle, Video } from "lucide-react";
 import SEO from "@/components/SEO";
+import { FactoryCapabilityPosterLink } from "@/components/factory/FactoryCapabilityMedia";
 import { whatsappLink } from "@/lib/constants";
 import { ORGANIZATION_ID, SITE_URL, WEBSITE_ID, breadcrumbSchema } from "@/lib/seoSchema";
 
@@ -30,7 +31,7 @@ export default function FactoryVideoCall() {
       "@id": `${pageUrl}#webpage`,
       url: pageUrl,
       name: "Request a Live Factory Video Call — Irha Apparels",
-      description: "Request an appointment-based live call with Irha Apparels to discuss a B2B apparel program and relevant verification questions.",
+      description: "Watch the real recorded Irha Apparels factory capability overview, then separately request an appointment-based live factory call for B2B verification questions.",
       isPartOf: { "@id": WEBSITE_ID },
       about: { "@id": ORGANIZATION_ID },
       inLanguage: "en",
@@ -42,7 +43,7 @@ export default function FactoryVideoCall() {
     <>
       <SEO
         title="Request a Live Factory Video Call | Irha Apparels"
-        description="Request an appointment-based live factory call with Irha Apparels. The category, preferred time and viewing scope are reviewed before availability is confirmed."
+        description="Watch the real recorded Irha Apparels factory overview or request a separate appointment-based live factory call. Live availability and viewing scope are confirmed after review."
         path="/factory-video-call"
         jsonLd={jsonLd}
       />
@@ -73,8 +74,20 @@ export default function FactoryVideoCall() {
               <li className="flex gap-3"><span className="font-mono text-gold">03</span><span>A confirmed time and communication channel are provided before the call.</span></li>
             </ol>
             <p className="mt-6 text-xs leading-5 text-foreground/55">A requested time is not automatically booked. Availability is confirmed after review.</p>
-            <p className="mt-3 text-xs leading-5 text-foreground/55">No prerecorded or concept factory media is presented here as proof while genuine media is pending.</p>
+            <p className="mt-3 text-xs leading-5 text-foreground/55">Recorded factory overview and live factory verification are separate. The prerecorded capability video can be watched at any time; a live call is appointment-based and confirmed after review.</p>
           </aside>
+        </div>
+      </section>
+
+      <section className="border-b border-border/60 py-16 md:py-24" aria-labelledby="recorded-factory-overview-title">
+        <div className="container-luxe grid gap-8 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+          <FactoryCapabilityPosterLink label="Watch real factory overview" />
+          <div>
+            <p className="eyebrow">Recorded factory overview</p>
+            <h2 id="recorded-factory-overview-title" className="mt-3 font-display text-4xl leading-tight md:text-5xl">Watch actual factory activity before requesting a live call.</h2>
+            <p className="mt-5 text-sm leading-7 text-foreground/68">The real prerecorded capability overview shows actual Irha Apparels manufacturing activity in Sialkot. It provides recorded factory evidence; it does not replace real-time discussion or verification.</p>
+            <Link to="/manufacturing#factory-video" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold hover:underline">Watch recorded factory overview <ArrowRight size={13} /></Link>
+          </div>
         </div>
       </section>
 
@@ -100,7 +113,7 @@ export default function FactoryVideoCall() {
             <p className="border border-border/60 bg-background/50 p-6">Relevant areas may be shown where active operations, privacy and safety allow.</p>
             <p className="border border-border/60 bg-background/50 p-6">Documents, samples, customer work and commercial commitments remain subject to separate written review.</p>
           </div>
-          <Link to="/inquiry?intent=meeting" className="mt-9 inline-flex items-center gap-2 bg-gradient-gold px-8 py-4 text-[10px] uppercase tracking-[0.24em] text-primary-foreground">Request factory video call <ArrowRight size={13} /></Link>
+          <Link to="/inquiry?intent=meeting" className="mt-9 inline-flex items-center gap-2 bg-gradient-gold px-8 py-4 text-[10px] uppercase tracking-[0.24em] text-primary-foreground">Request live factory video call <ArrowRight size={13} /></Link>
         </div>
       </section>
     </>

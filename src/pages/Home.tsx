@@ -50,7 +50,7 @@ export default function Home() {
           </div>
         </Suspense>
       </ViewportDeferred>
-      <ViewportDeferred minHeight={620} rootMargin="220px 0px">
+      <ViewportDeferred minHeight={620} rootMargin="120px 0px">
         <Suspense fallback={<div aria-hidden className="min-h-[280px]" />}>
           <div className="[content-visibility:auto] [contain-intrinsic-size:620px]">
             <HomeManufacturingEditorial />

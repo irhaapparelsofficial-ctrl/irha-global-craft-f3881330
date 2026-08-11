@@ -106,11 +106,11 @@
     }
   },
   "edge_functions": {
-    "classification_sha256": "ff5c6b8fd9c6f51adb9a7671f6069f8a8d0dd8248f477c46f36c26eee371abb2",
+    "classification_sha256": "7866963dee5f8066d9496d37c392b2ec30a2391bca056b26b86916ccdf46e6d5",
     "config_parity": true,
     "config_toml_sha256": "5722985577a84f12aa0bff836bf0f3b9c4573cf9d4ebd12b274c3b30c792d388",
     "deployed_count": 95,
-    "live_inventory_sha256": "a459cf0c0f82809d928d89b4d673b0e5d1d758d17c3665c51fd8b4b7ecd50ddf",
+    "live_inventory_sha256": "932b10ac1e3b065153fb98d086c3340bf2ef2c2553e6824877bf3e043fe26d91",
     "registries": {
       "F1": {
         "count": 41,
@@ -139,7 +139,7 @@
       },
       "F6": {
         "count": 31,
-        "file_sha256": "ed0010b651d1039a85a63a215ffd238ce9a34c311252fbfa5d99d35e14eb57ed",
+        "file_sha256": "edffa85bca75b9caf3be0636cfff430750e1006c5d00522c5c7461a1183ce39c",
         "path": "supabase/deployment-parity/functions-f6.json"
       }
     }
@@ -167,7 +167,7 @@
     "supabase_region": "ap-southeast-1",
     "supabase_status": "ACTIVE_HEALTHY"
   },
-  "manifest_sha256": "262457d7a1c84442bcb5116e21a6b620037515f117e179956933aa2146170986",
+  "manifest_sha256": "c90f2ed6fd7003d889671301e469cea3f828d5ce7d9b8ecf652854ba2c7ee2a9",
   "migration_provenance": {
     "canonical_payload_sha256": "601e9f12205057aeab76281bb34a21e19945b1949796d21e4eb47fd2849ee0e9",
     "file_sha256": "ffe856e6f212b299973a73cb81a0aba920d86b92aa20465fc8ff37bb5bf9d94a",

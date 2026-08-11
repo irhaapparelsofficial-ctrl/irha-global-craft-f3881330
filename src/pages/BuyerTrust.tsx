@@ -1,13 +1,14 @@
 import { ArrowRight, BadgeCheck, Building2, FileCheck2, Mail, MapPin, Phone, ShieldCheck, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
+import { FactoryCapabilityPosterLink } from "@/components/factory/FactoryCapabilityMedia";
 import { SCCI_BUSINESS_REFERENCE } from "@/lib/publicBusinessEvidence.mjs";
 import { PUBLIC_IDENTITY } from "@/lib/publicIdentity.mjs";
 import { breadcrumbSchema, ORGANIZATION_ID, SITE_URL, WEBSITE_ID } from "@/lib/seoSchema";
 
 const pagePath = "/buyer-trust";
 const pageTitle = "Buyer Trust Center — Business Reference & Supplier Verification";
-const pageDescription = `Verify Irha Apparels through its published business identity, SCCI directory/member reference ${SCCI_BUSINESS_REFERENCE.membershipNumber}, direct contact channels, written requirements and an appointment-based factory video call.`;
+const pageDescription = `Verify Irha Apparels through its published business identity, SCCI directory/member reference ${SCCI_BUSINESS_REFERENCE.membershipNumber}, real recorded factory footage, direct contact channels and an appointment-based live factory video call.`;
 
 const verificationCards = [
   {
@@ -27,8 +28,8 @@ const verificationCards = [
   },
   {
     Icon: Video,
-    title: "Factory verification by appointment",
-    text: "An appointment-based factory video-call request can be reviewed for an available time and viewing scope before any call is confirmed.",
+    title: "Recorded proof + live verification",
+    text: "Buyers can watch the real prerecorded factory capability overview and separately make an appointment-based factory video-call request for real-time discussion and verification.",
   },
 ] as const;
 
@@ -68,8 +69,23 @@ export default function BuyerTrust() {
               Submit a requirement <ArrowRight size={14} />
             </Link>
             <Link to="/factory-video-call" className="inline-flex min-h-12 items-center gap-2 border border-border px-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-foreground/78 hover:border-gold hover:text-gold">
-              Request factory video call <Video size={14} />
+              Request live factory call <Video size={14} />
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border/60 py-14 md:py-20" aria-labelledby="buyer-trust-factory-proof-title">
+        <div className="container-luxe grid max-w-6xl gap-8 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+          <FactoryCapabilityPosterLink label="Watch recorded factory overview" />
+          <div>
+            <p className="eyebrow">Factory evidence</p>
+            <h2 id="buyer-trust-factory-proof-title" className="mt-3 font-display text-4xl leading-tight md:text-5xl">Real recorded footage. Separate live verification.</h2>
+            <p className="mt-5 text-sm leading-7 text-foreground/68">The recorded capability overview shows actual Irha Apparels manufacturing activity. Qualified buyers can separately request an appointment-based live factory video call when real-time discussion or verification is needed.</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link to="/manufacturing#factory-video" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold hover:underline">Watch factory video <ArrowRight size={13} /></Link>
+              <Link to="/factory-video-call" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/70 hover:text-gold">Request live call <Video size={13} /></Link>
+            </div>
           </div>
         </div>
       </section>

@@ -43,7 +43,7 @@ export default function About() {
             Irha Apparels is a Sialkot-based custom apparel manufacturer for brands, wholesalers, importers and private-label buyers seeking requirement-led production.
           </p>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-foreground/58">
-            Genuine factory and sample media is pending and is not replaced here with concept imagery. Buyers can request direct discussion and an appointment-based live factory call.
+            Buyers can watch the real recorded factory capability overview and separately request an appointment-based live factory video call for real-time discussion and verification.
           </p>
         </div>
       </section>
@@ -54,7 +54,10 @@ export default function About() {
             <p className="eyebrow mb-5">What buyers can verify</p>
             <h2 className="font-display text-4xl leading-[1.05] md:text-5xl">Start with the requirement, then document the approved scope.</h2>
             <p className="mt-7 leading-relaxed text-foreground/75">MOQ, samples, price, production timing, documentation and shipping are confirmed against the actual program before a final commitment.</p>
-            <Link to="/inquiry?intent=meeting" className="mt-7 inline-flex min-h-12 items-center gap-2 border border-gold/50 px-5 text-[10px] uppercase tracking-[0.22em] text-gold hover:bg-gold hover:text-background"><MessageCircle size={14} /> Request a live video call</Link>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link to="/manufacturing#factory-video" className="inline-flex min-h-12 items-center gap-2 border border-gold/50 px-5 text-[10px] uppercase tracking-[0.22em] text-gold hover:bg-gold hover:text-background"><Factory size={14} /> Watch factory overview</Link>
+              <Link to="/inquiry?intent=meeting" className="inline-flex min-h-12 items-center gap-2 border border-border px-5 text-[10px] uppercase tracking-[0.22em] text-foreground hover:border-gold hover:text-gold"><MessageCircle size={14} /> Request live video call</Link>
+            </div>
           </div>
           <div className="grid gap-px border border-border/60 bg-border/60 sm:grid-cols-2">
             {principles.map(({ Icon, title, body }) => (

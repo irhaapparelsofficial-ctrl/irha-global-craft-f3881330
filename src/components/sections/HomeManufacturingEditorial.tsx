@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Eye, FileCheck2, PackageCheck, Scissors, Tags, Video } from "lucide-react";
+import { FactoryCapabilityPosterLink } from "@/components/factory/FactoryCapabilityMedia";
 
 const VERIFY = [
   { Icon: Eye, title: "Live factory view by request", text: "A buyer can request an appointment-based live call. Availability and viewing scope are confirmed after the requirement is reviewed." },
@@ -23,11 +24,12 @@ export default function HomeManufacturingEditorial() {
             A professional B2B order should move forward on a reviewed brief, written specification and documented approvals—not broad website claims.
           </p>
           <p className="mt-3 text-xs leading-5 text-white/50">
-            Genuine factory and sample photography is not presented on this page while business-approved media is pending.
+            A real prerecorded factory capability overview is available. Appointment-based live factory verification remains a separate option for qualified buyers.
           </p>
         </div>
 
         <div className="lg:col-span-8">
+          <FactoryCapabilityPosterLink className="mb-5 border-white/12" label="Play real factory video" />
           <div className="grid gap-px overflow-hidden rounded-xl border border-white/12 bg-white/12 sm:grid-cols-2 sm:rounded-none">
             {VERIFY.map(({ Icon, title, text }) => (
               <article key={title} className="bg-[#0c0c0c] p-5 sm:p-6">
