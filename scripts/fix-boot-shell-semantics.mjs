@@ -7,13 +7,6 @@ const sourceFallbackCanonical = '<link rel="canonical" href="https://irhaapparel
 const markedFallbackCanonical = '<link data-irha-fallback-seo="true" rel="canonical" href="https://irhaapparels.com/" />';
 
 let html = await readFile(indexPath, "utf8");
-const openingIndex = html.indexOf(openingMarker);
-if (openingIndex < 0) {
-  throw new Error("Boot-shell main landmark is missing from dist/index.html");
-}
-if (html.indexOf(openingMarker, openingIndex + openingMarker.length) >= 0) {
-  throw new Error("Boot-shell main landmark is duplicated in dist/index.html");
-}
 
 const fallbackCanonicalCount = html.split(sourceFallbackCanonical).length - 1;
 const markedFallbackCanonicalCount = html.split(markedFallbackCanonical).length - 1;
@@ -21,6 +14,14 @@ if (fallbackCanonicalCount !== 1 || markedFallbackCanonicalCount !== 0) {
   throw new Error(`Expected exactly one unmarked static homepage fallback canonical before SPA ownership; found unmarked=${fallbackCanonicalCount}, marked=${markedFallbackCanonicalCount}`);
 }
 html = html.replace(sourceFallbackCanonical, markedFallbackCanonical);
+
+const openingIndex = html.indexOf(openingMarker);
+if (openingIndex < 0) {
+  throw new Error("Boot-shell main landmark is missing from dist/index.html");
+}
+if (html.indexOf(openingMarker, openingIndex + openingMarker.length) >= 0) {
+  throw new Error("Boot-shell main landmark is duplicated in dist/index.html");
+}
 
 const openingEnd = html.indexOf(">", openingIndex);
 const closingIndex = html.indexOf("</main>", openingEnd);
