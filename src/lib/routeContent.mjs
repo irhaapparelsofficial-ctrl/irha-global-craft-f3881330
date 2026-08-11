@@ -137,6 +137,33 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
     sourceFile: "src/pages/Manufacturing.tsx",
     parityTokens: ["From requirement to a", "reviewed production path", "Requirement Review", "Quality Review", "Dispatch Preparation"],
   }),
+  "/factory-capability-video": route({
+    route: "/factory-capability-video",
+    breadcrumbLabel: "Factory Capability Video",
+    title: "Factory Capability Video | Irha Apparels",
+    metaDescription: "Watch the real Irha Apparels factory capability video showing actual manufacturing activity in Sialkot, then request a manufacturing quote or a separate live factory video call.",
+    eyebrow: "Recorded factory overview",
+    h1: "Inside the Irha Apparels Factory",
+    intro: "Watch a real prerecorded capability overview showing actual Irha Apparels manufacturing activity in Sialkot. Recorded proof and appointment-based live verification are separate buyer options.",
+    sections: [
+      {
+        heading: "Recorded factory capability overview",
+        body: "The video is the primary content on this watch page and shows actual Irha Apparels manufacturing activity. The documented process includes pattern preparation, fabric marking, cutting-table support, industrial lockstitch and overlock sewing, finishing support and buyer communication.",
+      },
+      {
+        heading: "Recorded proof and live verification are separate",
+        body: "The prerecorded overview supports buyer review. A live factory video call remains appointment-based and is requested separately for real-time discussion or verification.",
+        links: [
+          { href: "/factory-video-call", label: "Request a live factory video call" },
+          { href: "/manufacturing", label: "Review manufacturing process" },
+        ],
+      },
+    ],
+    primaryCta: { href: "/inquiry?intent=rfq", label: "Request manufacturing quote" },
+    secondaryCta: { href: "/factory-video-call", label: "Request live factory call" },
+    sourceFile: "src/pages/FactoryCapabilityVideo.tsx",
+    parityTokens: ["Inside the", "Irha Apparels Factory", "Recorded factory overview", "Factory capability overview", "Live verification"],
+  }),
   "/buyer-trust": route({
     route: "/buyer-trust",
     breadcrumbLabel: "Buyer Trust",

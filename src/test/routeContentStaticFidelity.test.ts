@@ -10,6 +10,7 @@ const requiredCoreRoutes = [
   "/about",
   "/contact",
   "/manufacturing",
+  "/factory-capability-video",
   "/buyer-trust",
   "/factory-video-call",
   "/inquiry",

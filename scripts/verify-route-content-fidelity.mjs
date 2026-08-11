@@ -384,7 +384,7 @@ export async function verifyRouteContentFidelity() {
   const productByPath = new Map(catalogManifest.products.map((product) => [product.canonical_path, product]));
   const taxonomy = routeMap(catalogManifest.products);
   assert(taxonomy.size === EXPECTED_TAXONOMY, `Expected ${EXPECTED_TAXONOMY} taxonomy routes, found ${taxonomy.size}`);
-  assert(CORE_ROUTE_PATHS.length === 14, `Expected 14 controlled core route definitions, found ${CORE_ROUTE_PATHS.length}`);
+  assert(CORE_ROUTE_PATHS.length === 15, `Expected 15 controlled core route definitions, found ${CORE_ROUTE_PATHS.length}`);
   const expectedIndexableCorePaths = CORE_ROUTE_PATHS.filter((path) => routeByPath.has(path));
   assert(expectedIndexableCorePaths.length > 0, "Authoritative manifest contains no indexable controlled core routes");
 

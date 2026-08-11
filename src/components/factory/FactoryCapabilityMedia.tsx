@@ -1,35 +1,214 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Play } from "lucide-react";
+import { Maximize2, Minimize2, MonitorUp, Pause, Play } from "lucide-react";
 
 export const FACTORY_CAPABILITY_VIDEO_URL =
   "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/factory/irha-apparels-factory-capability-2026.mp4";
 export const FACTORY_CAPABILITY_POSTER_URL =
   "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/factory/irha-apparels-factory-capability-poster.webp";
+export const FACTORY_CAPABILITY_WATCH_PATH = "/factory-capability-video";
+export const FACTORY_CAPABILITY_WATCH_URL = `https://irhaapparels.com${FACTORY_CAPABILITY_WATCH_PATH}`;
+export const FACTORY_CAPABILITY_PUBLICATION_DATE = "2026-08-11";
+export const FACTORY_CAPABILITY_DURATION = "PT1M15S";
 
 export const FACTORY_CAPABILITY_TITLE = "Inside Irha Apparels — real factory capability overview";
 export const FACTORY_CAPABILITY_DESCRIPTION =
   "A real prerecorded capability overview showing Irha Apparels manufacturing activity in Sialkot, including pattern preparation, fabric marking, cutting-table support, industrial lockstitch and overlock sewing, finishing support and buyer communication.";
 
-export function FactoryCapabilityPlayer({ className = "" }: { className?: string }) {
+type PlayerPreload = "none" | "metadata" | "auto";
+type WebKitVideoElement = HTMLVideoElement & {
+  webkitEnterFullscreen?: () => void;
+  webkitSupportsFullscreen?: boolean;
+  webkitDisplayingFullscreen?: boolean;
+};
+
+function waitForFullscreenActivation(video: WebKitVideoElement, timeoutMs = 600) {
+  return new Promise<boolean>((resolve) => {
+    const isActive = () => Boolean(document.fullscreenElement || video.webkitDisplayingFullscreen);
+    if (isActive()) {
+      resolve(true);
+      return;
+    }
+
+    let settled = false;
+    let timeoutId = 0;
+    const finish = (value: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      video.removeEventListener("webkitbeginfullscreen", onWebKitBeginFullscreen);
+      resolve(value);
+    };
+    const onFullscreenChange = () => finish(isActive());
+    const onWebKitBeginFullscreen = () => finish(true);
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    video.addEventListener("webkitbeginfullscreen", onWebKitBeginFullscreen);
+    timeoutId = window.setTimeout(() => finish(isActive()), timeoutMs);
+  });
+}
+
+export function FactoryCapabilityPlayer({
+  className = "",
+  preload = "none",
+}: {
+  className?: string;
+  preload?: PlayerPreload;
+}) {
+  const shellRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [theaterMode, setTheaterMode] = useState(false);
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    if (!theaterMode) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setTheaterMode(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [theaterMode]);
+
+  const handlePlayPause = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (!video.paused) {
+      video.pause();
+      return;
+    }
+
+    try {
+      if (video.readyState === HTMLMediaElement.HAVE_NOTHING) video.load();
+      await video.play();
+      setStatus("Factory video is playing.");
+    } catch {
+      setStatus("Playback could not start automatically. Use the native video Play control and try again.");
+    }
+  };
+
+  const enterTheaterMode = () => {
+    setTheaterMode(true);
+    setStatus("Large theater view opened.");
+  };
+
+  const handleFullScreen = async () => {
+    const shell = shellRef.current;
+    const video = videoRef.current as WebKitVideoElement | null;
+    if (!shell || !video) return;
+
+    // iPhone/iOS Safari exposes a video-specific fullscreen API on versions
+    // where element.requestFullscreen is unavailable or restricted.
+    if (video.webkitSupportsFullscreen && typeof video.webkitEnterFullscreen === "function" && !document.fullscreenEnabled) {
+      try {
+        video.webkitEnterFullscreen();
+        if (await waitForFullscreenActivation(video)) {
+          setStatus("Native iOS video fullscreen opened.");
+          return;
+        }
+      } catch {
+        // Continue to standards fullscreen/theater fallback below.
+      }
+    }
+
+    if (typeof shell.requestFullscreen === "function") {
+      try {
+        await shell.requestFullscreen();
+        if (await waitForFullscreenActivation(video)) {
+          setStatus("Full screen opened.");
+          return;
+        }
+      } catch {
+        // Continue to WebKit/theater fallback.
+      }
+    }
+
+    if (typeof video.webkitEnterFullscreen === "function") {
+      try {
+        video.webkitEnterFullscreen();
+        if (await waitForFullscreenActivation(video)) {
+          setStatus("Native WebKit video fullscreen opened.");
+          return;
+        }
+      } catch {
+        // Continue to guaranteed in-page theater fallback.
+      }
+    }
+
+    enterTheaterMode();
+  };
+
   return (
-    <div className={className}>
+    <div
+      ref={shellRef}
+      className={theaterMode ? "fixed inset-0 z-[120] flex flex-col justify-center overflow-y-auto bg-black/95 p-3 sm:p-6" : className}
+      data-testid="factory-video-shell"
+      data-theater={theaterMode ? "true" : "false"}
+      role={theaterMode ? "dialog" : undefined}
+      aria-modal={theaterMode ? "true" : undefined}
+      aria-label={theaterMode ? "Factory capability video theater view" : undefined}
+    >
       <div className="overflow-hidden rounded-xl border border-border/70 bg-black shadow-2xl shadow-black/10">
         <video
-          className="aspect-[910/512] h-auto w-full bg-black object-contain"
+          ref={videoRef}
+          data-testid="factory-video"
+          className={theaterMode ? "mx-auto max-h-[calc(100dvh-8rem)] h-auto w-full bg-black object-contain" : "aspect-[910/512] h-auto w-full bg-black object-contain"}
           controls
           playsInline
-          preload="none"
+          preload={preload}
           poster={FACTORY_CAPABILITY_POSTER_URL}
           width={910}
           height={512}
           aria-describedby="factory-capability-video-description"
           title={FACTORY_CAPABILITY_TITLE}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+          onError={() => setStatus("The factory video could not be loaded. Please retry or request a live factory call.")}
         >
           <source src={FACTORY_CAPABILITY_VIDEO_URL} type="video/mp4" />
           Your browser does not support HTML video. You can request a live factory video call instead.
         </video>
       </div>
-      <p id="factory-capability-video-description" className="mt-3 text-xs leading-5 text-foreground/58">
+
+      <div className="mt-3 flex flex-wrap gap-2" aria-label="Factory video controls">
+        <button
+          type="button"
+          data-testid="factory-video-play"
+          onClick={handlePlayPause}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-background px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground hover:border-gold hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        >
+          {isPlaying ? <Pause size={15} aria-hidden="true" /> : <Play size={15} fill="currentColor" aria-hidden="true" />}
+          {isPlaying ? "Pause" : "Play"}
+        </button>
+        <button
+          type="button"
+          data-testid="factory-video-fullscreen"
+          onClick={handleFullScreen}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-background px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground hover:border-gold hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        >
+          <Maximize2 size={15} aria-hidden="true" /> Full Screen
+        </button>
+        <button
+          type="button"
+          data-testid="factory-video-theater"
+          onClick={() => setTheaterMode((current) => !current)}
+          aria-pressed={theaterMode}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-background px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground hover:border-gold hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        >
+          {theaterMode ? <Minimize2 size={15} aria-hidden="true" /> : <MonitorUp size={15} aria-hidden="true" />}
+          {theaterMode ? "Exit Theater" : "Theater Mode"}
+        </button>
+      </div>
+
+      <p className="sr-only" aria-live="polite">{status}</p>
+      <p id="factory-capability-video-description" className={theaterMode ? "mt-3 text-xs leading-5 text-white/70" : "mt-3 text-xs leading-5 text-foreground/58"}>
         Visual overview: pattern preparation, fabric marking, cutting-table support, industrial lockstitch and overlock sewing, finishing support and buyer communication. The approved source video includes burned-in subtitles; a separate exact transcript is not currently available.
       </p>
     </div>
@@ -45,7 +224,7 @@ export function FactoryCapabilityPosterLink({
 }) {
   return (
     <Link
-      to="/manufacturing#factory-video"
+      to={FACTORY_CAPABILITY_WATCH_PATH}
       className={`group relative block overflow-hidden rounded-xl border border-border/70 bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${className}`}
       aria-label="Watch the real Irha Apparels factory capability video"
     >
