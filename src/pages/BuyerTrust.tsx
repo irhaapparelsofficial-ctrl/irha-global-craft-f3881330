@@ -29,7 +29,7 @@ const verificationCards = [
   {
     Icon: Video,
     title: "Recorded proof + live verification",
-    text: "Buyers can watch the real prerecorded factory capability overview and separately request an appointment-based live factory call for real-time discussion and verification.",
+    text: "Buyers can watch the real prerecorded factory capability overview and separately make an appointment-based factory video-call request for real-time discussion and verification.",
   },
 ] as const;
 
