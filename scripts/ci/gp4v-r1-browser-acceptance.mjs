@@ -5,6 +5,9 @@ const CANONICAL_ORIGIN = (process.env.CANONICAL_ORIGIN || "https://irhaapparels.
 const EXPECTED_SHA = process.env.EXPECTED_SHA || "";
 const WATCH_PATH = "/factory-capability-video";
 const CALL_PATH = "/factory-video-call";
+const MANUFACTURING_PATH = "/manufacturing";
+const BUYER_TRUST_PATH = "/buyer-trust";
+const CATEGORY_PATH = "/products/sportswear";
 const MEDIA_MARKER = "irha-apparels-factory-capability-2026.mp4";
 
 function assert(condition, message) {
@@ -35,6 +38,20 @@ async function verifyExactProductionArtifact() {
   }));
 }
 
+async function assertSingleCanonical(page, expectedHref, label) {
+  await page.waitForFunction((href) => {
+    const nodes = Array.from(document.querySelectorAll('link[rel="canonical"]'));
+    return nodes.length === 1 && nodes[0]?.getAttribute("href") === href;
+  }, expectedHref, { timeout: 20_000 });
+
+  const canonicals = page.locator('link[rel="canonical"]');
+  const count = await canonicals.count();
+  const href = count === 1 ? await canonicals.first().getAttribute("href") : null;
+  assert(count === 1, `${label}: expected exactly one canonical, found ${count}`);
+  assert(href === expectedHref, `${label}: canonical was ${href}; expected ${expectedHref}`);
+  return { count, href };
+}
+
 async function findBuyerLink(page, href, label) {
   const link = page.locator(`a[href="${href}"]`).first();
   for (let attempt = 0; attempt < 14; attempt += 1) {
@@ -49,14 +66,24 @@ async function findBuyerLink(page, href, label) {
   throw new Error(`${label}: buyer link ${href} did not render after progressive homepage scroll`);
 }
 
+async function navigateSpaRoute(page, path, label) {
+  await page.evaluate((nextPath) => {
+    window.history.pushState({}, "", nextPath);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, path);
+  await page.waitForURL((url) => url.pathname === path, { timeout: 20_000 });
+  const canonical = await assertSingleCanonical(page, `${CANONICAL_ORIGIN}${path}`, `${label}: ${path}`);
+  console.log(`${label}: representative SPA canonical ${path} -> ${canonical.href}`);
+  return canonical;
+}
+
 async function enterWatchPageFromHomepage(page, label, mediaRequests) {
   const response = await page.goto(`${BROWSER_ORIGIN}/`, { waitUntil: "domcontentloaded", timeout: 45_000 });
   assert(response && response.status() < 400, `${label}: homepage HTTP ${response?.status()}`);
 
-  const homeCanonical = await page.locator('link[rel="canonical"]').getAttribute("href");
-  assert(homeCanonical === `${CANONICAL_ORIGIN}/`, `${label}: homepage canonical was ${homeCanonical}`);
-
   await page.waitForTimeout(1_500);
+  const homeCanonical = await assertSingleCanonical(page, `${CANONICAL_ORIGIN}/`, `${label}: homepage`);
+  assert(homeCanonical.count === 1, `${label}: homepage canonical count was ${homeCanonical.count}`);
   assert(mediaRequests.length === 0, `${label}: homepage requested full MP4 before buyer watch intent: ${mediaRequests.join(", ")}`);
 
   const watchLink = await findBuyerLink(page, WATCH_PATH, label);
@@ -82,8 +109,7 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
   await enterWatchPageFromHomepage(page, label, mediaRequests);
 
   await page.getByRole("heading", { level: 1, name: /Inside the Irha Apparels Factory/i }).waitFor({ state: "visible", timeout: 20_000 });
-  const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
-  assert(canonical === `${CANONICAL_ORIGIN}${WATCH_PATH}`, `${label}: canonical was ${canonical}`);
+  const watchCanonical = await assertSingleCanonical(page, `${CANONICAL_ORIGIN}${WATCH_PATH}`, `${label}: watch page`);
 
   const video = page.getByTestId("factory-video");
   await video.waitFor({ state: "visible", timeout: 20_000 });
@@ -159,8 +185,13 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
     callLink.click(),
   ]);
   await page.getByRole("heading", { level: 1, name: /view the factory live/i }).waitFor({ state: "visible", timeout: 20_000 });
-  const callCanonical = await page.locator('link[rel="canonical"]').getAttribute("href");
-  assert(callCanonical === `${CANONICAL_ORIGIN}${CALL_PATH}`, `${label}: factory-call canonical was ${callCanonical}`);
+  const callCanonical = await assertSingleCanonical(page, `${CANONICAL_ORIGIN}${CALL_PATH}`, `${label}: factory call`);
+
+  const representativeCanonicals = {
+    manufacturing: await navigateSpaRoute(page, MANUFACTURING_PATH, label),
+    buyerTrust: await navigateSpaRoute(page, BUYER_TRUST_PATH, label),
+    category: await navigateSpaRoute(page, CATEGORY_PATH, label),
+  };
 
   await context.close();
   console.log(JSON.stringify({
@@ -168,6 +199,9 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
     browserOrigin: BROWSER_ORIGIN,
     canonicalOrigin: CANONICAL_ORIGIN,
     navigationMode: "homepage-client-route",
+    watchCanonical,
+    callCanonical,
+    representativeCanonicals,
     playback,
     seekTarget,
     enlargeState,
@@ -186,9 +220,9 @@ async function verifyHomepageDoesNotLoadVideo(browser) {
   });
   const response = await page.goto(`${BROWSER_ORIGIN}/`, { waitUntil: "domcontentloaded", timeout: 45_000 });
   assert(response && response.status() < 400, `homepage HTTP ${response?.status()}`);
-  const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
-  assert(canonical === `${CANONICAL_ORIGIN}/`, `homepage canonical was ${canonical}`);
-  await page.waitForTimeout(3_000);
+  await page.waitForTimeout(1_500);
+  await assertSingleCanonical(page, `${CANONICAL_ORIGIN}/`, "homepage no-MP4 check");
+  await page.waitForTimeout(1_500);
   assert(mediaRequests.length === 0, `homepage requested full MP4 before buyer intent: ${mediaRequests.join(", ")}`);
   await context.close();
   console.log(`Homepage initial MP4 request on exact production artifact (${BROWSER_ORIGIN}): NONE`);

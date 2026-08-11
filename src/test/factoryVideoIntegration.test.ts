@@ -13,6 +13,19 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(homeSection).not.toContain("autoPlay");
   });
 
+  it("preserves the crawler fallback canonical and marks final static canonicals for deterministic SPA cleanup", () => {
+    const sourceIndex = read("index.html");
+    const buildNormalizer = read("scripts/fix-boot-shell-semantics.mjs");
+    const authoritativeSeo = read("scripts/apply-authoritative-seo-manifest.ts");
+    const seo = read("src/components/SEO.tsx");
+
+    expect(sourceIndex).toContain('<link rel="canonical" href="https://irhaapparels.com/" />');
+    expect(buildNormalizer).not.toContain("markedFallbackCanonical");
+    expect(authoritativeSeo).toContain('<link data-irha-fallback-seo="true" rel="canonical" href="${canonical}" />');
+    expect(seo).toContain("document.querySelectorAll('[data-irha-fallback-seo=\"true\"]')");
+    expect(seo).not.toContain("document.querySelectorAll('meta[data-irha-fallback-seo=\"true\"]')");
+  });
+
   it("registers one clean dedicated watch route before the generic buyer-intent catchall", () => {
     const app = read("src/App.tsx");
     expect(app).toContain('const FactoryCapabilityVideo = lazy(() => import("./pages/FactoryCapabilityVideo"))');
@@ -121,11 +134,13 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(acceptance).toContain("build?.source_commit === EXPECTED_SHA");
     expect(acceptance).toContain("build?.source_identity_state === \"verified\"");
     expect(acceptance).toContain("build?.build_fingerprint");
+    expect(acceptance).toContain("assertSingleCanonical");
+    expect(acceptance).toContain("nodes.length === 1");
     expect(acceptance).toContain("`${CANONICAL_ORIGIN}${WATCH_PATH}`");
     expect(acceptance).toContain("`${CANONICAL_ORIGIN}${CALL_PATH}`");
   });
 
-  it("enters deep SPA routes through real buyer links on the exact production artifact", () => {
+  it("enters deep SPA routes through buyer navigation and checks representative canonical ownership", () => {
     const acceptance = read("scripts/ci/gp4v-r1-browser-acceptance.mjs");
     expect(acceptance).toContain("enterWatchPageFromHomepage");
     expect(acceptance).toContain('page.goto(`${BROWSER_ORIGIN}/`');
@@ -133,6 +148,13 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(acceptance).toContain("watchLink.click()");
     expect(acceptance).toContain("const callLink = await findBuyerLink(page, CALL_PATH, label)");
     expect(acceptance).toContain("callLink.click()");
+    expect(acceptance).toContain('const MANUFACTURING_PATH = "/manufacturing"');
+    expect(acceptance).toContain('const BUYER_TRUST_PATH = "/buyer-trust"');
+    expect(acceptance).toContain('const CATEGORY_PATH = "/products/sportswear"');
+    expect(acceptance).toContain("representativeCanonicals");
+    expect(acceptance).toContain("navigateSpaRoute(page, MANUFACTURING_PATH, label)");
+    expect(acceptance).toContain("navigateSpaRoute(page, BUYER_TRUST_PATH, label)");
+    expect(acceptance).toContain("navigateSpaRoute(page, CATEGORY_PATH, label)");
     expect(acceptance).toContain('navigationMode: "homepage-client-route"');
     expect(acceptance).toContain("webkitExitFullscreen");
     expect(acceptance).not.toContain('page.goto(`${BROWSER_ORIGIN}${WATCH_PATH}`');
