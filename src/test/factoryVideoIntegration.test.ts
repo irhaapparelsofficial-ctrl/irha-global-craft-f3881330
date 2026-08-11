@@ -125,6 +125,20 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(acceptance).toContain("`${CANONICAL_ORIGIN}${CALL_PATH}`");
   });
 
+  it("enters deep SPA routes through real buyer links on the exact production artifact", () => {
+    const acceptance = read("scripts/ci/gp4v-r1-browser-acceptance.mjs");
+    expect(acceptance).toContain("enterWatchPageFromHomepage");
+    expect(acceptance).toContain('page.goto(`${BROWSER_ORIGIN}/`');
+    expect(acceptance).toContain("const watchLink = await findBuyerLink(page, WATCH_PATH, label)");
+    expect(acceptance).toContain("watchLink.click()");
+    expect(acceptance).toContain("const callLink = await findBuyerLink(page, CALL_PATH, label)");
+    expect(acceptance).toContain("callLink.click()");
+    expect(acceptance).toContain('navigationMode: "homepage-client-route"');
+    expect(acceptance).toContain("webkitExitFullscreen");
+    expect(acceptance).not.toContain('page.goto(`${BROWSER_ORIGIN}${WATCH_PATH}`');
+    expect(acceptance).not.toContain('page.goto(`${BROWSER_ORIGIN}${CALL_PATH}`');
+  });
+
   it("preserves the manufacturing authority route and canonical product route patterns", () => {
     const app = read("src/App.tsx");
     expect(app).toContain('<Route path="/manufacturing" element={<Manufacturing />} />');
