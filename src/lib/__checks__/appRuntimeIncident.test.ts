@@ -44,6 +44,14 @@ describe("runtime incident safety", () => {
       message: "Failed to fetch dynamically imported module",
     })).toBe(true);
     expect(isRecoverableAssetError({
+      name: "SyntaxError",
+      message: "Importing binding name 'r' is not found.",
+    })).toBe(true);
+    expect(isRecoverableAssetError({
+      name: "SyntaxError",
+      message: "The requested module does not provide an export named 'r'",
+    })).toBe(true);
+    expect(isRecoverableAssetError({
       name: "TypeError",
       message: "Cannot read properties of undefined",
     })).toBe(false);
