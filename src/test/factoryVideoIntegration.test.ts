@@ -2,32 +2,111 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(path, "utf8");
+const WATCH_PATH = "/factory-capability-video";
 
-describe("GP-4V real factory video integration", () => {
-  it("keeps the homepage poster-first without embedding or preloading the full video", () => {
+describe("GP-4V-R1 factory video user-acceptance repair", () => {
+  it("keeps the homepage poster-first without embedding or preloading the full MP4", () => {
     const homeSection = read("src/components/sections/HomeManufacturingEditorial.tsx");
     expect(homeSection).toContain("FactoryCapabilityPosterLink");
     expect(homeSection).not.toContain("<video");
     expect(homeSection).not.toContain("factory/irha-apparels-factory-capability-2026.mp4");
+    expect(homeSection).not.toContain("autoPlay");
   });
 
-  it("uses a conservative, accessible full player contract", () => {
+  it("registers one clean dedicated watch route before the generic buyer-intent catchall", () => {
+    const app = read("src/App.tsx");
+    expect(app).toContain('const FactoryCapabilityVideo = lazy(() => import("./pages/FactoryCapabilityVideo"))');
+    expect(app).toContain(`<Route path="${WATCH_PATH}" element={<FactoryCapabilityVideo />} />`);
+    expect(app.indexOf(`path="${WATCH_PATH}"`)).toBeLessThan(app.indexOf('path="/:buyerIntentSlug"'));
+  });
+
+  it("publishes an indexable canonical watch-page content contract", () => {
+    const page = read("src/pages/FactoryCapabilityVideo.tsx");
+    const routeContent = read("src/lib/routeContent.mjs");
+    expect(page).toContain('title="Factory Capability Video | Irha Apparels"');
+    expect(page).toContain(`path={WATCH_PATH}`);
+    expect(page).toContain(`canonical={WATCH_PATH}`);
+    expect(page).toContain("Inside the Irha Apparels Factory");
+    expect(page).toContain('<FactoryCapabilityPlayer preload="metadata" />');
+    expect(routeContent).toContain(`"${WATCH_PATH}": route({`);
+    expect(routeContent).toContain(`route: "${WATCH_PATH}"`);
+    expect(routeContent).toContain('indexable: true');
+  });
+
+  it("moves buyer-facing watch navigation off the old manufacturing hash", () => {
+    const buyerFacingSources = [
+      read("src/components/factory/FactoryCapabilityMedia.tsx"),
+      read("src/components/sections/HomeManufacturingEditorial.tsx"),
+      read("src/pages/BuyerTrust.tsx"),
+      read("src/pages/FactoryVideoCall.tsx"),
+      read("src/pages/Manufacturing.tsx"),
+      read("src/pages/FactoryCapabilityVideo.tsx"),
+    ].join("\n");
+    expect(buyerFacingSources).not.toContain("/manufacturing#factory-video");
+    expect(buyerFacingSources).toContain(WATCH_PATH);
+  });
+
+  it("keeps recorded proof and live factory-call intent distinct", () => {
+    const watchPage = read("src/pages/FactoryCapabilityVideo.tsx");
+    const factoryCall = read("src/pages/FactoryVideoCall.tsx");
+    expect(watchPage).toContain("Recorded proof");
+    expect(watchPage).toContain("Live verification");
+    expect(watchPage).toContain('to="/factory-video-call"');
+    expect(factoryCall).toContain("Recorded factory overview and live factory verification are separate");
+    expect(factoryCall).not.toContain("No prerecorded or concept factory media is presented here as proof while genuine media is pending");
+  });
+
+  it("keeps native media controls while adding explicit play, fullscreen and theater fallbacks", () => {
     const media = read("src/components/factory/FactoryCapabilityMedia.tsx");
     expect(media).toContain("controls");
     expect(media).toContain("playsInline");
-    expect(media).toContain('preload="none"');
+    expect(media).toContain("preload={preload}");
     expect(media).toContain("poster={FACTORY_CAPABILITY_POSTER_URL}");
     expect(media).toContain("width={910}");
     expect(media).toContain("height={512}");
+    expect(media).toContain("await video.play()");
+    expect(media).toContain("requestFullscreen");
+    expect(media).toContain("webkitEnterFullscreen");
+    expect(media).toContain("enterTheaterMode");
+    expect(media).toContain('data-testid="factory-video-fullscreen"');
+    expect(media).toContain('data-testid="factory-video-theater"');
+    expect(media).toContain("Exit Theater");
     expect(media).not.toContain("autoPlay");
   });
 
-  it("places the full player on manufacturing and keeps the live call distinct", () => {
-    const manufacturing = read("src/pages/Manufacturing.tsx");
-    const factoryCall = read("src/pages/FactoryVideoCall.tsx");
-    expect(manufacturing).toContain("<FactoryCapabilityPlayer");
-    expect(manufacturing).toContain('id="factory-video"');
-    expect(factoryCall).toContain("Recorded factory overview and live factory verification are separate");
-    expect(factoryCall).not.toContain("No prerecorded or concept factory media is presented here as proof while genuine media is pending");
+  it("uses a stable public MP4 and poster contract", () => {
+    const media = read("src/components/factory/FactoryCapabilityMedia.tsx");
+    expect(media).toContain("storage/v1/object/public/site-media/factory/irha-apparels-factory-capability-2026.mp4");
+    expect(media).toContain("storage/v1/object/public/site-media/factory/irha-apparels-factory-capability-poster.webp");
+    expect(media).toContain('<source src={FACTORY_CAPABILITY_VIDEO_URL} type="video/mp4" />');
+    expect(media).toContain('FACTORY_CAPABILITY_DURATION = "PT1M15S"');
+    expect(media).toContain('FACTORY_CAPABILITY_PUBLICATION_DATE = "2026-08-11"');
+  });
+
+  it("adds truthful VideoObject data to the dedicated watch page", () => {
+    const page = read("src/pages/FactoryCapabilityVideo.tsx");
+    expect(page).toContain('"@type": "VideoObject"');
+    expect(page).toContain("thumbnailUrl: [FACTORY_CAPABILITY_POSTER_URL]");
+    expect(page).toContain("uploadDate: FACTORY_CAPABILITY_PUBLICATION_DATE");
+    expect(page).toContain("duration: FACTORY_CAPABILITY_DURATION");
+    expect(page).toContain("contentUrl: FACTORY_CAPABILITY_VIDEO_URL");
+    expect(page).not.toContain("embedUrl:");
+  });
+
+  it("includes the watch page and video metadata in the regular XML sitemap", () => {
+    const sitemap = read("scripts/generate-sitemap.ts");
+    expect(sitemap).toContain(`path: "${WATCH_PATH}"`);
+    expect(sitemap).toContain('xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"');
+    expect(sitemap).toContain("<video:thumbnail_loc>");
+    expect(sitemap).toContain("<video:content_loc>");
+    expect(sitemap).toContain("<video:duration>");
+  });
+
+  it("preserves the manufacturing authority route and canonical product route patterns", () => {
+    const app = read("src/App.tsx");
+    expect(app).toContain('<Route path="/manufacturing" element={<Manufacturing />} />');
+    expect(app).toContain('<Route path="/products/:categorySlug/:audienceSlug/:collectionSlug/:productSlug" element={<CanonicalProductRoute />} />');
+    expect(app).toContain('<Route path="/products/:categorySlug/:audienceSlug/:collectionSlug" element={<CategoryTaxonomyPage />} />');
+    expect(app).toContain('<Route path="/products/:categorySlug/:productSlug" element={<CategoryOrProductPage />} />');
   });
 });
