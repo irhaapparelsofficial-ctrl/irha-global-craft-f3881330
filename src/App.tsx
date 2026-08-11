@@ -59,6 +59,7 @@ const Compare = lazy(() => import("./pages/Compare"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const BuyerTrust = lazy(() => import("./pages/BuyerTrust"));
 const BuyerResources = lazy(() => import("./pages/BuyerResources"));
+const FactoryCapabilityVideo = lazy(() => import("./pages/FactoryCapabilityVideo"));
 const FactoryVideoCall = lazy(() => import("./pages/FactoryVideoCall"));
 const BuyerConfidence = lazy(() => import("./pages/BuyerConfidence"));
 const Blog = lazy(() => import("./pages/Blog"));
@@ -188,6 +189,7 @@ const App = () => (
                 <Route path="/confidentiality" element={<Navigate to="/buyer-information#confidentiality" replace />} />
                 <Route path="/compliance" element={<Compliance />} />
                 <Route path="/buyer-trust" element={<BuyerTrust />} />
+                <Route path="/factory-capability-video" element={<FactoryCapabilityVideo />} />
                 <Route path="/factory-video-call" element={<FactoryVideoCall />} />
                 <Route path="/resources" element={<BuyerResources />} />
                 <Route path="/faq" element={<FAQ />} />
