@@ -17,6 +17,7 @@
     "verify:migrations": "node scripts/verify-migration-order.mjs",
     "verify:release-identity": "npx tsx scripts/verify-built-release-identity.ts",
     "verify:route-content": "node scripts/verify-route-content-fidelity.mjs",
+    "verify:gp4v-r1-browser": "node scripts/ci/gp4v-r1-browser-acceptance.mjs",
     "verify:image-seo": "node scripts/verify-wave2-image-seo.mjs",
     "verify:seo-manifest": "npx tsx scripts/apply-authoritative-seo-manifest.ts && npx tsx scripts/enrich-authoritative-article-dates.ts && npx tsx scripts/seal-authoritative-worker.ts",
     "generate:thumbnails": "node scripts/generate-image-thumbnails.mjs",

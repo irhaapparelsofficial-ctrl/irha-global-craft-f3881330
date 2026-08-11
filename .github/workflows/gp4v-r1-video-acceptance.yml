@@ -72,7 +72,9 @@ jobs:
           npx playwright install --with-deps webkit
           google-chrome --version
 
-      - name: Verify live playback, seeking, enlarge, exit and mobile layout
+      - name: Verify exact live playback, seeking, enlarge, exit and mobile layout
         env:
-          TARGET_ORIGIN: https://irhaapparels.com
+          BROWSER_ORIGIN: https://irha-apparels.pages.dev
+          CANONICAL_ORIGIN: https://irhaapparels.com
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: node scripts/ci/gp4v-r1-browser-acceptance.mjs
