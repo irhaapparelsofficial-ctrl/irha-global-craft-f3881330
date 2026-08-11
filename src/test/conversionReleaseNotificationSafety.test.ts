@@ -6,7 +6,7 @@ const read = (path: string) => readFileSync(path, "utf8");
 describe("production release-boundary safety", () => {
   it("retires legacy client caches before route preloads and recovers Vite preload failures once", () => {
     const main = read("src/main.tsx");
-    expect(main).toContain('const CACHE_HEAL_VERSION = "2026-08-07-v4"');
+    expect(main).toContain('const CACHE_HEAL_VERSION = "2026-08-11-v5"');
     expect(main).toContain('window.addEventListener("vite:preloadError"');
     expect(main).toContain("claimOneTimeAssetRecovery(route)");
     expect(main).toContain("await healLegacyClientCacheOnce();");
