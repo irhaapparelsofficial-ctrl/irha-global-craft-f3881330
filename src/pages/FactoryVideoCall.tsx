@@ -86,7 +86,7 @@ export default function FactoryVideoCall() {
             <p className="eyebrow">Recorded factory overview</p>
             <h2 id="recorded-factory-overview-title" className="mt-3 font-display text-4xl leading-tight md:text-5xl">Watch actual factory activity before requesting a live call.</h2>
             <p className="mt-5 text-sm leading-7 text-foreground/68">The real prerecorded capability overview shows actual Irha Apparels manufacturing activity in Sialkot. It provides recorded factory evidence; it does not replace real-time discussion or verification.</p>
-            <Link to="/manufacturing#factory-video" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold hover:underline">Watch recorded factory overview <ArrowRight size={13} /></Link>
+            <Link to="/factory-capability-video" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold hover:underline">Watch recorded factory overview <ArrowRight size={13} /></Link>
           </div>
         </div>
       </section>
