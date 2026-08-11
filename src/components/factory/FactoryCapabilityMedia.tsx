@@ -22,6 +22,33 @@ type WebKitVideoElement = HTMLVideoElement & {
   webkitDisplayingFullscreen?: boolean;
 };
 
+function waitForFullscreenActivation(video: WebKitVideoElement, timeoutMs = 600) {
+  return new Promise<boolean>((resolve) => {
+    const isActive = () => Boolean(document.fullscreenElement || video.webkitDisplayingFullscreen);
+    if (isActive()) {
+      resolve(true);
+      return;
+    }
+
+    let settled = false;
+    let timeoutId = 0;
+    const finish = (value: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      video.removeEventListener("webkitbeginfullscreen", onWebKitBeginFullscreen);
+      resolve(value);
+    };
+    const onFullscreenChange = () => finish(isActive());
+    const onWebKitBeginFullscreen = () => finish(true);
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    video.addEventListener("webkitbeginfullscreen", onWebKitBeginFullscreen);
+    timeoutId = window.setTimeout(() => finish(isActive()), timeoutMs);
+  });
+}
+
 export function FactoryCapabilityPlayer({
   className = "",
   preload = "none",
@@ -81,8 +108,10 @@ export function FactoryCapabilityPlayer({
     if (video.webkitSupportsFullscreen && typeof video.webkitEnterFullscreen === "function" && !document.fullscreenEnabled) {
       try {
         video.webkitEnterFullscreen();
-        setStatus("Native iOS video fullscreen opened.");
-        return;
+        if (await waitForFullscreenActivation(video)) {
+          setStatus("Native iOS video fullscreen opened.");
+          return;
+        }
       } catch {
         // Continue to standards fullscreen/theater fallback below.
       }
@@ -91,8 +120,10 @@ export function FactoryCapabilityPlayer({
     if (typeof shell.requestFullscreen === "function") {
       try {
         await shell.requestFullscreen();
-        setStatus("Full screen opened.");
-        return;
+        if (await waitForFullscreenActivation(video)) {
+          setStatus("Full screen opened.");
+          return;
+        }
       } catch {
         // Continue to WebKit/theater fallback.
       }
@@ -101,8 +132,10 @@ export function FactoryCapabilityPlayer({
     if (typeof video.webkitEnterFullscreen === "function") {
       try {
         video.webkitEnterFullscreen();
-        setStatus("Native WebKit video fullscreen opened.");
-        return;
+        if (await waitForFullscreenActivation(video)) {
+          setStatus("Native WebKit video fullscreen opened.");
+          return;
+        }
       } catch {
         // Continue to guaranteed in-page theater fallback.
       }
