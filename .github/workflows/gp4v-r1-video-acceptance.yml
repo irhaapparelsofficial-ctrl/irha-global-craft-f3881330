@@ -25,6 +25,7 @@ on:
       - "scripts/generate-sitemap.ts"
       - "scripts/ci/gp4v-r1-*.mjs"
       - "scripts/ci/gp4v-r2-*.mjs"
+      - "scripts/ci/apply-safe-auto-fixes.mjs"
       - ".github/workflows/gp4v-r1-video-acceptance.yml"
       - ".github/workflows/cloudflare-pages-preview.yml"
       - "package.json"
@@ -33,11 +34,12 @@ on:
     types: [completed]
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
-  group: gp4v-r2-video-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.id }}
-  cancel-in-progress: false
+  group: gp4v-r2-video-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
 
 jobs:
   media-delivery-contract:
@@ -125,27 +127,55 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Reject duplicate completed acceptance for the same exact production SHA
+        id: relevance
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          prior_count="$(gh api --method GET \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/gp4v-r1-video-acceptance.yml/runs" \
+            -f event=workflow_run \
+            -f head_sha="$SOURCE_SHA" \
+            -f per_page=100 \
+            --jq "[.workflow_runs[] | select(.id != ($CURRENT_RUN_ID | tonumber)) | select(.status == \"completed\")] | length")"
+          if [ "$prior_count" -gt 0 ]; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Exact SHA $SOURCE_SHA already has a completed GP-4V-R2 live acceptance run; expensive duplicate execution skipped."
+          else
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "Exact SHA $SOURCE_SHA has no prior completed GP-4V-R2 live acceptance; executing authoritative journey."
+          fi
+
       - name: Checkout exact production workflow head
+        if: steps.relevance.outputs.should_run == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
       - name: Setup Node 24
+        if: steps.relevance.outputs.should_run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
       - name: Verify public MP4 type, length and byte ranges
+        if: steps.relevance.outputs.should_run == 'true'
         run: node scripts/ci/gp4v-r1-media-http-check.mjs
 
       - name: Install browser acceptance runtime
+        if: steps.relevance.outputs.should_run == 'true'
         run: |
           npm install --no-save --ignore-scripts playwright@1.58.2
           npx playwright install --with-deps webkit
           google-chrome --version
 
       - name: Verify exact live canonical, playback, seeking, real enlargement, exit and WebKit layouts
+        if: steps.relevance.outputs.should_run == 'true'
         env:
           BROWSER_ORIGIN: https://irha-apparels.pages.dev
           CANONICAL_ORIGIN: https://irhaapparels.com

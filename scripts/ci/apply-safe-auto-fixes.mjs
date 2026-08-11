@@ -57,6 +57,12 @@ if (lintSignal && lintableFiles.length > 0) {
   actions.push({ type: "eslint-fix", attempted: true, ok, files: lintableFiles });
 }
 
+const searchRouteStateSignal = /Committed material search route state is stale\. Run node scripts\/generate-search-route-state\.mjs --write before merging\./i.test(logs);
+if (searchRouteStateSignal) {
+  const ok = run("node", ["scripts/generate-search-route-state.mjs", "--write"]);
+  actions.push({ type: "search-route-state", attempted: true, ok, file: "seo/search-route-state.json" });
+}
+
 const gitStatus = spawnSync("git", ["status", "--porcelain"], {
   cwd: process.cwd(),
   encoding: "utf8",
@@ -68,7 +74,7 @@ const result = {
   changed,
   actions,
   commands,
-  policy: "Only mechanical dependency-lock and lint fixes are permitted. SQL, release contracts, business logic, secrets, deployment identity and production data are never rewritten automatically.",
+  policy: "Only deterministic mechanical dependency-lock, lint and material search-route-state regeneration fixes are permitted. SQL, release contracts, business logic, secrets, deployment identity and production data are never rewritten automatically.",
 };
 
 writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
