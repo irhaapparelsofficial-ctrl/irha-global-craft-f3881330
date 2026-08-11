@@ -54,7 +54,7 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
   }, seekTarget, { timeout: 20_000 });
 
   await page.getByTestId("factory-video-fullscreen").click();
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(900);
   const enlargeState = await page.evaluate(() => {
     const shell = document.querySelector('[data-testid="factory-video-shell"]');
     const node = document.querySelector('[data-testid="factory-video"]');
@@ -113,6 +113,8 @@ async function verifyHomepageDoesNotLoadVideo(browser) {
   console.log("Homepage initial MP4 request: NONE");
 }
 
+const iPhoneUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+
 async function main() {
   const chrome = await chromium.launch({ channel: "chrome", headless: true });
   try {
@@ -124,13 +126,21 @@ async function main() {
 
   const webkitBrowser = await webkit.launch({ headless: true });
   try {
-    await verifyWatchPage(webkitBrowser, "WebKit mobile emulation", {
+    await verifyWatchPage(webkitBrowser, "WebKit phone portrait emulation", {
       viewport: { width: 390, height: 844 },
       screen: { width: 390, height: 844 },
       isMobile: true,
       hasTouch: true,
       deviceScaleFactor: 3,
-      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      userAgent: iPhoneUserAgent,
+    });
+    await verifyWatchPage(webkitBrowser, "WebKit phone landscape emulation", {
+      viewport: { width: 844, height: 390 },
+      screen: { width: 844, height: 390 },
+      isMobile: true,
+      hasTouch: true,
+      deviceScaleFactor: 3,
+      userAgent: iPhoneUserAgent,
     });
   } finally {
     await webkitBrowser.close();
