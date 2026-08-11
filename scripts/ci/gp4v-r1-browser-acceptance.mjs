@@ -35,6 +35,42 @@ async function verifyExactProductionArtifact() {
   }));
 }
 
+async function findBuyerLink(page, href, label) {
+  const link = page.locator(`a[href="${href}"]`).first();
+  for (let attempt = 0; attempt < 14; attempt += 1) {
+    if (await link.count()) {
+      await link.scrollIntoViewIfNeeded();
+      await link.waitFor({ state: "visible", timeout: 10_000 });
+      return link;
+    }
+    await page.evaluate(() => window.scrollBy(0, Math.max(window.innerHeight * 0.8, 520)));
+    await page.waitForTimeout(250);
+  }
+  throw new Error(`${label}: buyer link ${href} did not render after progressive homepage scroll`);
+}
+
+async function enterWatchPageFromHomepage(page, label, mediaRequests) {
+  const response = await page.goto(`${BROWSER_ORIGIN}/`, { waitUntil: "domcontentloaded", timeout: 45_000 });
+  assert(response && response.status() < 400, `${label}: homepage HTTP ${response?.status()}`);
+
+  const homeCanonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+  assert(homeCanonical === `${CANONICAL_ORIGIN}/`, `${label}: homepage canonical was ${homeCanonical}`);
+
+  await page.waitForTimeout(1_500);
+  assert(mediaRequests.length === 0, `${label}: homepage requested full MP4 before buyer watch intent: ${mediaRequests.join(", ")}`);
+
+  const watchLink = await findBuyerLink(page, WATCH_PATH, label);
+  assert(mediaRequests.length === 0, `${label}: revealing the poster section requested full MP4 before buyer watch intent`);
+
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === WATCH_PATH, { timeout: 20_000 }),
+    watchLink.click(),
+  ]);
+
+  assert(new URL(page.url()).origin === BROWSER_ORIGIN, `${label}: client-side watch navigation left exact production artifact origin`);
+  console.log(`${label}: exact production SPA watch navigation: homepage buyer link -> ${WATCH_PATH}`);
+}
+
 async function verifyWatchPage(browser, label, contextOptions = {}) {
   const context = await browser.newContext(contextOptions);
   const page = await context.newPage();
@@ -43,8 +79,7 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
     if (request.url().includes(MEDIA_MARKER)) mediaRequests.push(request.url());
   });
 
-  const response = await page.goto(`${BROWSER_ORIGIN}${WATCH_PATH}`, { waitUntil: "domcontentloaded", timeout: 45_000 });
-  assert(response && response.status() < 400, `${label}: watch page HTTP ${response?.status()}`);
+  await enterWatchPageFromHomepage(page, label, mediaRequests);
 
   await page.getByRole("heading", { level: 1, name: /Inside the Irha Apparels Factory/i }).waitFor({ state: "visible", timeout: 20_000 });
   const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
@@ -84,11 +119,10 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
   const enlargeState = await page.evaluate(() => {
     const shell = document.querySelector('[data-testid="factory-video-shell"]');
     const node = document.querySelector('[data-testid="factory-video"]');
-    const webkitVideo = node;
     return {
       fullscreen: Boolean(document.fullscreenElement),
       theater: shell?.getAttribute("data-theater") === "true",
-      webkitFullscreen: Boolean(webkitVideo && webkitVideo.webkitDisplayingFullscreen),
+      webkitFullscreen: Boolean(node && node.webkitDisplayingFullscreen),
     };
   });
   assert(enlargeState.fullscreen || enlargeState.theater || enlargeState.webkitFullscreen, `${label}: explicit Full Screen did not enlarge the player`);
@@ -97,13 +131,18 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
     await page.evaluate(async () => {
       if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
     });
+  } else if (enlargeState.webkitFullscreen) {
+    await video.evaluate((node) => {
+      if (typeof node.webkitExitFullscreen === "function") node.webkitExitFullscreen();
+    });
   } else if (enlargeState.theater) {
     await page.getByTestId("factory-video-theater").click();
   }
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
   const exited = await page.evaluate(() => {
     const shell = document.querySelector('[data-testid="factory-video-shell"]');
-    return !document.fullscreenElement && shell?.getAttribute("data-theater") !== "true";
+    const node = document.querySelector('[data-testid="factory-video"]');
+    return !document.fullscreenElement && !node?.webkitDisplayingFullscreen && shell?.getAttribute("data-theater") !== "true";
   });
   assert(exited, `${label}: enlarged mode did not exit cleanly`);
 
@@ -114,8 +153,11 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
   assert(overflow.scrollWidth <= overflow.clientWidth + 2, `${label}: horizontal overflow ${overflow.scrollWidth} > ${overflow.clientWidth}`);
   assert(mediaRequests.length > 0, `${label}: user Play did not request the MP4`);
 
-  const callResponse = await page.goto(`${BROWSER_ORIGIN}${CALL_PATH}`, { waitUntil: "domcontentloaded", timeout: 45_000 });
-  assert(callResponse && callResponse.status() < 400, `${label}: factory call page HTTP ${callResponse?.status()}`);
+  const callLink = await findBuyerLink(page, CALL_PATH, label);
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === CALL_PATH, { timeout: 20_000 }),
+    callLink.click(),
+  ]);
   await page.getByRole("heading", { level: 1, name: /view the factory live/i }).waitFor({ state: "visible", timeout: 20_000 });
   const callCanonical = await page.locator('link[rel="canonical"]').getAttribute("href");
   assert(callCanonical === `${CANONICAL_ORIGIN}${CALL_PATH}`, `${label}: factory-call canonical was ${callCanonical}`);
@@ -125,9 +167,11 @@ async function verifyWatchPage(browser, label, contextOptions = {}) {
     label,
     browserOrigin: BROWSER_ORIGIN,
     canonicalOrigin: CANONICAL_ORIGIN,
+    navigationMode: "homepage-client-route",
     playback,
     seekTarget,
     enlargeState,
+    exited,
     overflow,
     mediaRequests: mediaRequests.length,
   }));

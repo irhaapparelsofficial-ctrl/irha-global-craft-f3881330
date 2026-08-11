@@ -17,6 +17,7 @@ on:
       - "scripts/generate-sitemap.ts"
       - "scripts/ci/gp4v-r1-*.mjs"
       - ".github/workflows/gp4v-r1-video-acceptance.yml"
+      - ".github/workflows/cloudflare-pages-preview.yml"
   workflow_run:
     workflows: ["Cloudflare Production Status"]
     types: [completed]
