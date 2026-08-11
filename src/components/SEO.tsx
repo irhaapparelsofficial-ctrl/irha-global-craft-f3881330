@@ -133,7 +133,7 @@ export default function SEO({
   const normalizedAlternates = allowedAlternates.length > 0 ? allowedAlternates : [{ locale: LOCALE_REGISTRY[routeLocale].hreflangCode, href: effectivePath }];
   const xDefault = canonicalUrl(registeredRoute ? getXDefaultPath(effectivePath) : (xDefaultPath || effectivePath));
 
-  useEffect(() => { document.querySelectorAll('meta[data-irha-fallback-seo="true"]').forEach((element) => element.remove()); }, []);
+  useEffect(() => { document.querySelectorAll('[data-irha-fallback-seo="true"]').forEach((element) => element.remove()); }, []);
 
   return (
     <Helmet htmlAttributes={{ lang: routeLocale, dir: effectiveDirection }}>
