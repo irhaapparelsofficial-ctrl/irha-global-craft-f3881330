@@ -26,10 +26,11 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(page).toContain('title="Factory Capability Video | Irha Apparels"');
     expect(page).toContain(`path={WATCH_PATH}`);
     expect(page).toContain(`canonical={WATCH_PATH}`);
-    expect(page).toContain("Inside the Irha Apparels Factory");
+    expect(page).toContain('>Inside the <span className="text-gold italic">Irha Apparels Factory</span></h1>');
     expect(page).toContain('<FactoryCapabilityPlayer preload="metadata" />');
     expect(routeContent).toContain(`"${WATCH_PATH}": route({`);
     expect(routeContent).toContain(`route: "${WATCH_PATH}"`);
+    expect(routeContent).toContain('h1: "Inside the Irha Apparels Factory"');
     expect(routeContent).toContain('indexable: true');
   });
 
@@ -53,6 +54,7 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(watchPage).toContain("Live verification");
     expect(watchPage).toContain('to="/factory-video-call"');
     expect(factoryCall).toContain("Recorded factory overview and live factory verification are separate");
+    expect(factoryCall).toContain('to="/factory-capability-video"');
     expect(factoryCall).not.toContain("No prerecorded or concept factory media is presented here as proof while genuine media is pending");
   });
 
@@ -67,6 +69,7 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(media).toContain("await video.play()");
     expect(media).toContain("requestFullscreen");
     expect(media).toContain("webkitEnterFullscreen");
+    expect(media).toContain("waitForFullscreenActivation");
     expect(media).toContain("enterTheaterMode");
     expect(media).toContain('data-testid="factory-video-fullscreen"');
     expect(media).toContain('data-testid="factory-video-theater"');
