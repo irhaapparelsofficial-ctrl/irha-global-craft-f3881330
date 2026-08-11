@@ -1,10 +1,11 @@
-name: GP-4V-R1 Video Acceptance
+name: GP-4V-R2 Video Acceptance
 
-run-name: GP-4V-R1 video acceptance · ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+run-name: GP-4V-R2 video acceptance · ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
 
 on:
   pull_request:
     paths:
+      - "src/components/SEO.tsx"
       - "src/components/factory/FactoryCapabilityMedia.tsx"
       - "src/components/sections/HomeManufacturingEditorial.tsx"
       - "src/pages/FactoryCapabilityVideo.tsx"
@@ -14,8 +15,11 @@ on:
       - "src/App.tsx"
       - "src/lib/routeContent.mjs"
       - "src/test/factoryVideoIntegration.test.ts"
+      - "scripts/generate-static-route-shells.ts"
+      - "scripts/apply-authoritative-seo-manifest.ts"
       - "scripts/generate-sitemap.ts"
       - "scripts/ci/gp4v-r1-*.mjs"
+      - "scripts/ci/gp4v-r2-*.mjs"
       - ".github/workflows/gp4v-r1-video-acceptance.yml"
       - ".github/workflows/cloudflare-pages-preview.yml"
   workflow_run:
@@ -26,7 +30,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: gp4v-r1-video-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.id }}
+  group: gp4v-r2-video-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.id }}
   cancel-in-progress: false
 
 jobs:
@@ -43,6 +47,34 @@ jobs:
 
       - name: Verify public MP4 type, length and byte ranges
         run: node scripts/ci/gp4v-r1-media-http-check.mjs
+
+  production-canonical-diagnostic:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout diagnostic PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install canonical diagnostic runtime
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.58.2
+          google-chrome --version
+
+      - name: Diagnose exact deployed base canonical ownership
+        env:
+          BROWSER_ORIGIN: https://irha-apparels.pages.dev
+          CANONICAL_ORIGIN: https://irhaapparels.com
+          EXPECTED_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/ci/gp4v-r2-canonical-diagnostic.mjs
 
   live-production-browser:
     if: >-
