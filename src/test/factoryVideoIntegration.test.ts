@@ -13,15 +13,15 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(homeSection).not.toContain("autoPlay");
   });
 
-  it("preserves the crawler fallback canonical and marks it for deterministic SPA cleanup", () => {
+  it("preserves the crawler fallback canonical and marks final static canonicals for deterministic SPA cleanup", () => {
     const sourceIndex = read("index.html");
     const buildNormalizer = read("scripts/fix-boot-shell-semantics.mjs");
+    const authoritativeSeo = read("scripts/apply-authoritative-seo-manifest.ts");
     const seo = read("src/components/SEO.tsx");
 
     expect(sourceIndex).toContain('<link rel="canonical" href="https://irhaapparels.com/" />');
-    expect(buildNormalizer).toContain('const sourceFallbackCanonical = \'<link rel="canonical" href="https://irhaapparels.com/" />\'');
-    expect(buildNormalizer).toContain('const markedFallbackCanonical = \'<link data-irha-fallback-seo="true" rel="canonical" href="https://irhaapparels.com/" />\'');
-    expect(buildNormalizer).toContain("Static homepage fallback canonical was not marked exactly once for SPA cleanup");
+    expect(buildNormalizer).not.toContain("markedFallbackCanonical");
+    expect(authoritativeSeo).toContain('<link data-irha-fallback-seo="true" rel="canonical" href="${canonical}" />');
     expect(seo).toContain("document.querySelectorAll('[data-irha-fallback-seo=\"true\"]')");
     expect(seo).not.toContain("document.querySelectorAll('meta[data-irha-fallback-seo=\"true\"]')");
   });

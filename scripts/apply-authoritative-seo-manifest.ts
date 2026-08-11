@@ -77,7 +77,7 @@ function setMeta(html: string, route: SeoRouteEntry): string {
     .replace(/<html\b[^>]*\blang="[^"]*"[^>]*>/i, (tag) => tag.replace(/\blang="[^"]*"/i, `lang="${htmlLang(route.locale)}"`))
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`)
     .replace(/<meta\b[^>]*\bname="description"[^>]*>/i, `<meta name="description" content="${description}" />`)
-    .replace(/<link\b[^>]*\brel="canonical"[^>]*>/i, `<link rel="canonical" href="${canonical}" />`)
+    .replace(/<link\b[^>]*\brel="canonical"[^>]*>/i, `<link data-irha-fallback-seo="true" rel="canonical" href="${canonical}" />`)
     .replace(/<meta\b[^>]*\bproperty="og:title"[^>]*>/i, `<meta property="og:title" content="${title}" />`)
     .replace(/<meta\b[^>]*\bproperty="og:description"[^>]*>/i, `<meta property="og:description" content="${description}" />`)
     .replace(/<meta\b[^>]*\bproperty="og:url"[^>]*>/i, `<meta property="og:url" content="${canonical}" />`)
@@ -85,7 +85,7 @@ function setMeta(html: string, route: SeoRouteEntry): string {
     .replace(/<meta\b[^>]*\bname="twitter:description"[^>]*>/i, `<meta name="twitter:description" content="${description}" />`);
 
   if (!/<meta\b[^>]*\bname="description"/i.test(output)) output = output.replace("</head>", `  <meta name="description" content="${description}" />\n</head>`);
-  if (!/<link\b[^>]*\brel="canonical"/i.test(output)) output = output.replace("</head>", `  <link rel="canonical" href="${canonical}" />\n</head>`);
+  if (!/<link\b[^>]*\brel="canonical"/i.test(output)) output = output.replace("</head>", `  <link data-irha-fallback-seo="true" rel="canonical" href="${canonical}" />\n</head>`);
   if (!/<meta\b[^>]*\bproperty="og:url"/i.test(output)) output = output.replace("</head>", `  <meta property="og:url" content="${canonical}" />\n</head>`);
 
   output = output.replace(/\s*<link\b[^>]*\brel="alternate"[^>]*\bhreflang="[^"]+"[^>]*>/gi, "");
