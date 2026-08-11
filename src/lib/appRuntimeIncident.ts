@@ -38,6 +38,8 @@ export function isRecoverableAssetError(error: Pick<Error, "name" | "message">):
     "error loading dynamically imported module",
     "importing a module script failed",
     "failed to load module script",
+    "importing binding name",
+    "does not provide an export named",
   ].some((needle) => text.includes(needle));
 }
 

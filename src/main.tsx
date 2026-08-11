@@ -8,7 +8,7 @@ import {
 import "./index.css";
 
 const CACHE_HEAL_KEY = "irha:cache-heal-version";
-const CACHE_HEAL_VERSION = "2026-08-07-v4";
+const CACHE_HEAL_VERSION = "2026-08-11-v5";
 const INITIAL_ROUTE_PRELOAD_TIMEOUT_MS = 1_800;
 const OWNER_PUSH_WORKER_PATH = "/irha-owner-sw.js";
 const CRITICAL_BUYER_INTENT_PATHS = new Set([
