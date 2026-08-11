@@ -46,7 +46,7 @@ jobs:
           s = p.read_text()
           replacements = {
             'ca6fed79716ddb35d274872432e7de176e86e3cf472d16e38bbeeb93a97ca313': 'b13e59c8d3e2dae2a1684739b0ccffef36d5673234c54fa4f7fa274be2e9ac5b',
-            'c802775305251ceac91a2308a6d70eb7643ae5acb3f74396d5375c8ff199ee35': '9e7d96c1cdc75c6aa809f3f30496e41e399a83e8af92fc655741b38a4c7f4303',
+            'c802775305251ceac91a2308a6d70eb7643ae5acb3f74396d5375c8ff199ee35': '9dc970c46e0625426d587fd42f4bac9836fd7904faa89f2c5d4a073bd26bbb08',
           }
           for old, new in replacements.items():
             if s.count(old) != 1:
