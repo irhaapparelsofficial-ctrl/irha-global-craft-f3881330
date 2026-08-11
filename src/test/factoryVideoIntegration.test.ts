@@ -105,6 +105,26 @@ describe("GP-4V-R1 factory video user-acceptance repair", () => {
     expect(sitemap).toContain("<video:duration>");
   });
 
+  it("runs live browser acceptance against the exact Pages production artifact while preserving apex canonicals", () => {
+    const workflow = read(".github/workflows/gp4v-r1-video-acceptance.yml");
+    const acceptance = read("scripts/ci/gp4v-r1-browser-acceptance.mjs");
+
+    expect(workflow).toContain("BROWSER_ORIGIN: https://irha-apparels.pages.dev");
+    expect(workflow).toContain("CANONICAL_ORIGIN: https://irhaapparels.com");
+    expect(workflow).toContain("EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}");
+    expect(workflow).not.toContain("TARGET_ORIGIN: https://irhaapparels.com");
+
+    expect(acceptance).toContain('const BROWSER_ORIGIN = (process.env.BROWSER_ORIGIN || "https://irha-apparels.pages.dev")');
+    expect(acceptance).toContain('const CANONICAL_ORIGIN = (process.env.CANONICAL_ORIGIN || "https://irhaapparels.com")');
+    expect(acceptance).toContain("verifyExactProductionArtifact");
+    expect(acceptance).toContain("/build.json?gp4v_r1_acceptance=");
+    expect(acceptance).toContain("build?.source_commit === EXPECTED_SHA");
+    expect(acceptance).toContain("build?.source_identity_state === \"verified\"");
+    expect(acceptance).toContain("build?.build_fingerprint");
+    expect(acceptance).toContain("`${CANONICAL_ORIGIN}${WATCH_PATH}`");
+    expect(acceptance).toContain("`${CANONICAL_ORIGIN}${CALL_PATH}`");
+  });
+
   it("preserves the manufacturing authority route and canonical product route patterns", () => {
     const app = read("src/App.tsx");
     expect(app).toContain('<Route path="/manufacturing" element={<Manufacturing />} />');
