@@ -24,8 +24,8 @@ describe("GP-4V-R2 canonical ownership closure", () => {
     const seal = read("scripts/finalize-spa-seo-ownership.mjs");
     const routeContent = read("src/lib/routeContent.mjs");
     expect(seal).toContain("CORE_ROUTE_CONTENT");
-    expect(seal).toContain("GP4V_PUBLISHED_CORE_PATHS");
-    expect(seal).toContain("if (GP4V_PUBLISHED_CORE_PATHS.has(normalized)) return true;");
+    expect(seal).toContain('const setName = "GP4V_PUBLISHED_CORE_PATHS";');
+    expect(seal).toContain("if (${setName}.has(normalized)) return true;");
     expect(routeContent).toContain('"/factory-capability-video": route({');
   });
 
