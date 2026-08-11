@@ -125,6 +125,14 @@ describe("production route parity completion", () => {
     expect(verifier).toContain("Final redirect target is not canonical");
   });
 
+  it("keeps the dedicated factory watch page in the controlled production route inventory", () => {
+    const routeContent = read("src/lib/routeContent.mjs");
+    const app = read("src/App.tsx");
+    expect(routeContent).toContain('"/factory-capability-video": route({');
+    expect(routeContent).toContain('breadcrumbLabel: "Factory Capability Video"');
+    expect(app).toContain('<Route path="/factory-capability-video" element={<FactoryCapabilityVideo />} />');
+  });
+
   it("aligns browser homepage with approved crawler-visible signals", () => {
     const home = read("src/pages/Home.tsx");
     const hero = read("src/components/HeroCarousel.tsx");
@@ -172,7 +180,7 @@ describe("production route parity completion", () => {
     expect(workflow).toContain("on:\n  workflow_dispatch:");
     expect(workflow).not.toContain("\n  push:\n");
     expect(workflow).toContain("Confirm exact current main and release statuses");
-    expect(workflow).toContain('latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq \'.sha\')"');
+    expect(workflow).toContain('latest_main="$(bash scripts/ci/retry.sh 3 3 -- gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq \' .sha\')"'.replace("' .sha", "'.sha"));
     for (const context of [
       "Irha Quality Gate",
       "Irha Cloudflare Production",
