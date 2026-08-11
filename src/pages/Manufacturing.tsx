@@ -1,7 +1,7 @@
 import SEO from "@/components/SEO";
 import { FactoryCapabilityPlayer } from "@/components/factory/FactoryCapabilityMedia";
 import { Link } from "react-router-dom";
-import { Check, FileText, MessageCircle, ShieldCheck } from "lucide-react";
+import { Check, ExternalLink, FileText, MessageCircle, ShieldCheck } from "lucide-react";
 import { ORGANIZATION_ID, SITE_URL, WEBSITE_ID, breadcrumbSchema } from "@/lib/seoSchema";
 
 const STEPS = [
@@ -58,12 +58,15 @@ export default function Manufacturing() {
 
       <section id="factory-video" className="scroll-mt-28 border-t border-border/60 bg-card/15 py-20 md:py-28" aria-labelledby="factory-video-title">
         <div className="container-luxe grid gap-10 lg:grid-cols-[1.15fr_.85fr] lg:items-start">
-          <FactoryCapabilityPlayer />
+          <FactoryCapabilityPlayer preload="none" />
           <div>
             <p className="eyebrow mb-4">Recorded factory overview</p>
             <h2 id="factory-video-title" className="font-display text-4xl leading-[1.05] md:text-5xl">Inside <span className="text-gold italic">Irha Apparels</span>.</h2>
             <p className="mt-6 text-sm leading-7 text-foreground/70">This real prerecorded capability video shows actual Irha Apparels manufacturing activity in Sialkot. It supports buyer review of the working process; it does not replace a separately requested live factory call.</p>
             <p className="mt-4 text-sm leading-7 text-foreground/60">The documented workflow includes pattern preparation, fabric marking, cutting-table support, industrial lockstitch and overlock sewing, finishing support and buyer communication.</p>
+            <Link to="/factory-capability-video" className="mt-5 inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-gold underline decoration-gold/40 underline-offset-4 hover:decoration-gold">
+              <ExternalLink size={14} aria-hidden="true" /> Open dedicated factory video page
+            </Link>
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <Link to="/inquiry?intent=rfq" className="inline-flex min-h-12 items-center justify-center gap-2 bg-gradient-gold px-5 text-[9px] font-semibold uppercase tracking-[0.18em] text-primary-foreground hover:shadow-gold"><FileText size={14} /> Request manufacturing quote</Link>
               <Link to="/factory-video-call" className="inline-flex min-h-12 items-center justify-center gap-2 border border-border px-5 text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground hover:border-gold hover:text-gold"><MessageCircle size={14} /> Request live factory call</Link>
