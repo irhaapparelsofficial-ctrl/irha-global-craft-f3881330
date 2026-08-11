@@ -175,6 +175,16 @@ const STATIC_ROUTES: StaticRouteSeed[] = [
     parentPath: "/",
   },
   {
+    path: "/factory-capability-video",
+    routeType: "buyer-information",
+    title: "Factory Capability Video | Irha Apparels",
+    description: "Watch the real Irha Apparels factory capability video showing actual manufacturing activity in Sialkot, then request a manufacturing quote or a separate live factory video call.",
+    h1: "Inside the Irha Apparels Factory",
+    clientComponent: "FactoryCapabilityVideo",
+    structuredDataType: "WebPage+BreadcrumbList",
+    parentPath: "/buyer-trust",
+  },
+  {
     path: "/factory-video-call",
     routeType: "buyer-information",
     title: "Book a Live Factory Video Call | Irha Apparels",
