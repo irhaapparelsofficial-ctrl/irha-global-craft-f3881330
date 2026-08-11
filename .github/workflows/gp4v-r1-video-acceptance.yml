@@ -1,0 +1,78 @@
+name: GP-4V-R1 Video Acceptance
+
+run-name: GP-4V-R1 video acceptance · ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+
+on:
+  pull_request:
+    paths:
+      - "src/components/factory/FactoryCapabilityMedia.tsx"
+      - "src/components/sections/HomeManufacturingEditorial.tsx"
+      - "src/pages/FactoryCapabilityVideo.tsx"
+      - "src/pages/Manufacturing.tsx"
+      - "src/pages/BuyerTrust.tsx"
+      - "src/pages/FactoryVideoCall.tsx"
+      - "src/App.tsx"
+      - "src/lib/routeContent.mjs"
+      - "src/test/factoryVideoIntegration.test.ts"
+      - "scripts/generate-sitemap.ts"
+      - "scripts/ci/gp4v-r1-*.mjs"
+      - ".github/workflows/gp4v-r1-video-acceptance.yml"
+  workflow_run:
+    workflows: ["Cloudflare Production Status"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gp4v-r1-video-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  media-delivery-contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Verify public MP4 type, length and byte ranges
+        run: node scripts/ci/gp4v-r1-media-http-check.mjs
+
+  live-production-browser:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact production workflow head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify public MP4 type, length and byte ranges
+        run: node scripts/ci/gp4v-r1-media-http-check.mjs
+
+      - name: Install browser acceptance runtime
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.58.2
+          npx playwright install --with-deps webkit
+          google-chrome --version
+
+      - name: Verify live playback, seeking, enlarge, exit and mobile layout
+        env:
+          TARGET_ORIGIN: https://irhaapparels.com
+        run: node scripts/ci/gp4v-r1-browser-acceptance.mjs
