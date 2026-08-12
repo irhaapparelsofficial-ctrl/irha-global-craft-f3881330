@@ -110,6 +110,10 @@ jobs:
           node scripts/ci/apply-safe-auto-fixes.mjs /tmp/failed.log /tmp/changed-files.txt /tmp/auto-fix-result.json
           changed="$(jq -r '.changed' /tmp/auto-fix-result.json)"
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          if [ "$changed" = "true" ]; then
+            git diff --name-only -z > /tmp/auto-fix-paths.z
+            git ls-files --others --exclude-standard -z >> /tmp/auto-fix-paths.z
+          fi
 
       - name: Validate repaired branch completely
         id: validate
@@ -132,7 +136,16 @@ jobs:
           set -euo pipefail
           git config user.name "irha-ci-auto-fixer[bot]"
           git config user.email "irha-ci-auto-fixer[bot]@users.noreply.github.com"
-          git add -A
+          test -s /tmp/auto-fix-paths.z
+          git reset
+          while IFS= read -r -d '' path; do
+            git add -A -- "$path"
+          done < /tmp/auto-fix-paths.z
+          if git diff --cached --quiet; then
+            echo "No bounded fixer changes remained after validation."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           git commit -m "fix(ci): apply validated mechanical auto-remediation"
           git push origin "HEAD:$HEAD_REF"
           echo "pushed=true" >> "$GITHUB_OUTPUT"
