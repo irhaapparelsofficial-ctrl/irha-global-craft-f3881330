@@ -310,7 +310,7 @@ async function collectPagePlaybackEvidence(page, video) {
 }
 
 async function isolatedPlaybackProbe(page) {
-  await page.evaluate((mediaUrl, eventNames) => {
+  await page.evaluate(({ mediaUrl, eventNames }) => {
     document.querySelector("#gp4v-isolated-probe")?.remove();
     const wrap = document.createElement("div");
     wrap.id = "gp4v-isolated-probe";
@@ -356,7 +356,7 @@ async function isolatedPlaybackProbe(page) {
     });
     wrap.append(video, button);
     document.body.appendChild(wrap);
-  }, MEDIA_URL, MEDIA_EVENTS);
+  }, { mediaUrl: MEDIA_URL, eventNames: MEDIA_EVENTS });
 
   const isolatedVideo = page.locator("#gp4v-isolated-video");
   await page.locator("#gp4v-isolated-play").click();
