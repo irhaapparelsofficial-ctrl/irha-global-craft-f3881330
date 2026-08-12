@@ -30,6 +30,10 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function clonePlain(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
 function writeDiagnostic() {
   try {
     diagnostic.updatedAt = new Date().toISOString();
@@ -74,7 +78,7 @@ async function verifyRawStaticCanonicals() {
     const expected = expectedCanonical(pathname);
     assert(tags.length === 1, `raw ${pathname}: expected exactly one canonical, found ${tags.length}: ${JSON.stringify(tags)}`);
     assert(tags[0].href === expected, `raw ${pathname}: canonical ${tags[0].href}; expected ${expected}`);
-    assert(tags[0].fallback, `raw ${pathname}: canonical missing data-irha-fallback-seo=\"true\": ${tags[0].outerHTML}`);
+    assert(tags[0].fallback, `raw ${pathname}: canonical missing data-irha-fallback-seo="true": ${tags[0].outerHTML}`);
     results.push({ pathname, count: tags.length, href: tags[0].href, fallback: tags[0].fallback });
   }
   console.log(JSON.stringify({ check: "raw-static-canonicals", results }));
@@ -297,8 +301,13 @@ async function mediaState(video) {
   });
 }
 
-async function collectPagePlaybackEvidence(page, video) {
-  const state = await mediaState(video);
+async function collectPagePlaybackEvidence(page, video, persistedWatchPageEvidence = null) {
+  const currentRoute = await page.evaluate(() => ({ url: location.href, pathname: location.pathname }));
+  const currentVideo = video || page.getByTestId("factory-video");
+  const videoElementPresentOnCurrentRoute = (await page.locator('[data-testid="factory-video"]').count()) > 0;
+  const state = videoElementPresentOnCurrentRoute
+    ? await mediaState(currentVideo)
+    : clonePlain(persistedWatchPageEvidence?.state ?? null);
   const pageEvidence = await page.evaluate(() => ({
     playCalls: window.__irhaGp4vPlayCalls || [],
     mediaEvents: window.__irhaGp4vMediaEvents || [],
@@ -306,7 +315,13 @@ async function collectPagePlaybackEvidence(page, video) {
     unhandledRejections: window.__irhaGp4vUnhandledRejections || [],
     statusText: Array.from(document.querySelectorAll('[aria-live="polite"]')).map((node) => node.textContent || "").filter(Boolean),
   }));
-  return { state, ...pageEvidence };
+  return {
+    videoElementPresentOnCurrentRoute,
+    currentRoute,
+    state,
+    persistedWatchPageEvidence: videoElementPresentOnCurrentRoute ? null : clonePlain(persistedWatchPageEvidence),
+    ...pageEvidence,
+  };
 }
 
 async function isolatedPlaybackProbe(page) {
@@ -523,34 +538,18 @@ async function verifyWatchJourney(browser, label, contextOptions = {}) {
     assert(afterExit.scrollWidth <= afterExit.clientWidth + 2, `${label}: horizontal overflow after exit`);
     assert(mediaRequests.length > 0, `${label}: Play did not request the MP4`);
 
-    const callLink = await findBuyerLink(page, CALL_PATH, label);
-    await Promise.all([
-      page.waitForURL((url) => url.pathname === CALL_PATH, { timeout: 20_000 }),
-      callLink.click(),
-    ]);
-    await canonicalState(page, `${label}:factory-call-immediately-after-spa-navigation`);
-    await page.getByRole("heading", { level: 1, name: /view the factory live/i }).waitFor({ state: "visible", timeout: 20_000 });
-    const callCanonical = await assertSingleCanonical(page, CALL_PATH, `${label}:factory-call`);
-
-    const representative = {};
-    for (const path of REPRESENTATIVE_PATHS) {
-      await page.evaluate((nextPath) => {
-        history.pushState({}, "", nextPath);
-        dispatchEvent(new PopStateEvent("popstate"));
-      }, path);
-      await page.waitForURL((url) => url.pathname === path, { timeout: 20_000 });
-      await canonicalState(page, `${label}:${path}:immediately-after-spa-navigation`);
-      representative[path] = await assertSingleCanonical(page, path, `${label}:${path}`);
-    }
-
+    const finalWatchPageEvidence = await collectPagePlaybackEvidence(page, video);
     const result = {
       label,
       homeCanonical,
       watchCanonical,
-      callCanonical,
-      representative,
       playback,
-      seek: { target: seekTarget, continuedTo: afterSeekB.currentTime },
+      seek: {
+        target: seekTarget,
+        reached: afterSeekA,
+        continuedPlayback: clonePlain(afterSeekB),
+        continuedTo: afterSeekB.currentTime,
+      },
       enlargement: {
         standardFullscreen: afterEnlarge.fullscreen,
         webkitFullscreen: afterEnlarge.webkitFullscreen,
@@ -563,12 +562,59 @@ async function verifyWatchJourney(browser, label, contextOptions = {}) {
       mediaRequestsAfterPlay: mediaRequests.length,
     };
     journey.result = result;
-    journey.afterSuccessEvidence = await collectPagePlaybackEvidence(page, video);
+    journey.watchPageEvidence = {
+      beforePlay: clonePlain(journey.beforePlay),
+      playback: clonePlain(playback),
+      seek: clonePlain(result.seek),
+      enlargement: clonePlain(result.enlargement),
+      exitState: clonePlain(afterExit),
+      final: clonePlain(finalWatchPageEvidence),
+      mediaRequests: clonePlain(mediaRequests),
+      mediaResponses: clonePlain(mediaResponses),
+      mediaFailures: clonePlain(mediaFailures),
+      consoleErrors: clonePlain(consoleErrors),
+      pageErrors: clonePlain(pageErrors),
+    };
+    writeDiagnostic();
+
+    const callLink = await findBuyerLink(page, CALL_PATH, label);
+    await Promise.all([
+      page.waitForURL((url) => url.pathname === CALL_PATH, { timeout: 20_000 }),
+      callLink.click(),
+    ]);
+    await canonicalState(page, `${label}:factory-call-immediately-after-spa-navigation`);
+    await page.getByRole("heading", { level: 1, name: /view the factory live/i }).waitFor({ state: "visible", timeout: 20_000 });
+    const callCanonical = await assertSingleCanonical(page, CALL_PATH, `${label}:factory-call`);
+    result.callCanonical = callCanonical;
+
+    const representative = {};
+    for (const path of REPRESENTATIVE_PATHS) {
+      await page.evaluate((nextPath) => {
+        history.pushState({}, "", nextPath);
+        dispatchEvent(new PopStateEvent("popstate"));
+      }, path);
+      await page.waitForURL((url) => url.pathname === path, { timeout: 20_000 });
+      await canonicalState(page, `${label}:${path}:immediately-after-spa-navigation`);
+      representative[path] = await assertSingleCanonical(page, path, `${label}:${path}`);
+    }
+    result.representative = representative;
+
+    journey.afterSuccessEvidence = await collectPagePlaybackEvidence(page, video, journey.watchPageEvidence.final);
     writeDiagnostic();
     console.log(JSON.stringify(result));
     return result;
   } catch (error) {
     journey.failure = { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack || null : null };
+    try {
+      const persisted = journey.watchPageEvidence?.final || journey.playbackFailure?.evidence || journey.beforePlay || null;
+      journey.failureEvidence = await collectPagePlaybackEvidence(page, page.getByTestId("factory-video"), persisted);
+    } catch (diagnosticError) {
+      journey.failureEvidence = {
+        videoElementPresentOnCurrentRoute: false,
+        diagnosticCollectionError: diagnosticError instanceof Error ? diagnosticError.message : String(diagnosticError),
+        persistedWatchPageEvidence: clonePlain(journey.watchPageEvidence?.final || journey.playbackFailure?.evidence || journey.beforePlay || null),
+      };
+    }
     writeDiagnostic();
     throw error;
   } finally {
