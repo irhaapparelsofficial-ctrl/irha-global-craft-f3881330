@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { chromium, webkit } from "playwright";
 
 const BROWSER_ORIGIN = (process.env.BROWSER_ORIGIN || "https://irha-apparels.pages.dev").replace(/\/$/, "");
@@ -8,9 +9,34 @@ const CALL_PATH = "/factory-video-call";
 const REPRESENTATIVE_PATHS = ["/manufacturing", "/buyer-trust", "/products/sportswear"];
 const RAW_PATHS = ["/", WATCH_PATH, CALL_PATH, ...REPRESENTATIVE_PATHS];
 const MEDIA_MARKER = "irha-apparels-factory-capability-2026.mp4";
+const MEDIA_URL = "https://pvzjiozismyxqrzmtfbi.supabase.co/storage/v1/object/public/site-media/factory/irha-apparels-factory-capability-2026.mp4";
+const DIAGNOSTIC_PATH = process.env.GP4V_DIAGNOSTIC_PATH || "/tmp/gp4v-r2-playback-diagnostic.json";
+const MEDIA_EVENTS = [
+  "loadstart", "loadedmetadata", "durationchange", "loadeddata", "canplay", "canplaythrough",
+  "play", "playing", "timeupdate", "waiting", "stalled", "suspend", "abort", "emptied",
+  "pause", "ended", "error",
+];
+
+const diagnostic = {
+  version: 1,
+  startedAt: new Date().toISOString(),
+  browserOrigin: BROWSER_ORIGIN,
+  canonicalOrigin: CANONICAL_ORIGIN,
+  expectedSha: EXPECTED_SHA,
+  journeys: [],
+};
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function writeDiagnostic() {
+  try {
+    diagnostic.updatedAt = new Date().toISOString();
+    fs.writeFileSync(DIAGNOSTIC_PATH, `${JSON.stringify(diagnostic, null, 2)}\n`, "utf8");
+  } catch (error) {
+    console.error(`GP-4V-R2 diagnostic write failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 function expectedCanonical(pathname) {
@@ -121,7 +147,7 @@ async function enterWatchFromHomepage(page, label, mediaRequests) {
   await canonicalState(page, `${label}:homepage-domcontentloaded`);
   await page.waitForTimeout(1_200);
   const homeCanonical = await assertSingleCanonical(page, "/", `${label}:homepage`);
-  assert(mediaRequests.length === 0, `${label}: homepage requested MP4 before intent: ${mediaRequests.join(", ")}`);
+  assert(mediaRequests.length === 0, `${label}: homepage requested MP4 before intent: ${mediaRequests.map((entry) => entry.url).join(", ")}`);
   const watchLink = await findBuyerLink(page, WATCH_PATH, label);
   assert(mediaRequests.length === 0, `${label}: scrolling to watch link requested MP4 before intent`);
   await Promise.all([
@@ -161,12 +187,262 @@ function assertMeasuredEnlargement(before, after, label) {
   assert(areaRatio >= 1.25 && dimensionGrowth, `${label}: theater did not enlarge meaningfully; before=${JSON.stringify(before.shell)} after=${JSON.stringify(after.shell)} ratio=${areaRatio.toFixed(2)}`);
 }
 
+async function installPlaybackInstrumentation(page) {
+  await page.addInitScript(() => {
+    const toError = (error) => ({
+      name: error?.name || null,
+      message: error?.message || String(error || ""),
+      code: typeof error?.code === "number" ? error.code : null,
+    });
+    const originalPlay = HTMLMediaElement.prototype.play;
+    window.__irhaGp4vPlayCalls = [];
+    window.__irhaGp4vPageErrors = [];
+    window.__irhaGp4vUnhandledRejections = [];
+    HTMLMediaElement.prototype.play = function (...args) {
+      const record = {
+        at: performance.now(),
+        tagName: this.tagName,
+        currentSrc: this.currentSrc || null,
+        src: this.getAttribute("src"),
+        pausedBefore: this.paused,
+        readyStateBefore: this.readyState,
+        networkStateBefore: this.networkState,
+        outcome: "pending",
+        error: null,
+      };
+      window.__irhaGp4vPlayCalls.push(record);
+      try {
+        const result = originalPlay.apply(this, args);
+        Promise.resolve(result).then(
+          () => {
+            record.outcome = "resolved";
+            record.resolvedAt = performance.now();
+            record.pausedAfter = this.paused;
+            record.readyStateAfter = this.readyState;
+            record.networkStateAfter = this.networkState;
+          },
+          (error) => {
+            record.outcome = "rejected";
+            record.rejectedAt = performance.now();
+            record.error = toError(error);
+            record.pausedAfter = this.paused;
+            record.readyStateAfter = this.readyState;
+            record.networkStateAfter = this.networkState;
+          },
+        );
+        return result;
+      } catch (error) {
+        record.outcome = "threw";
+        record.threwAt = performance.now();
+        record.error = toError(error);
+        throw error;
+      }
+    };
+    window.addEventListener("error", (event) => {
+      window.__irhaGp4vPageErrors.push({ at: performance.now(), message: event.message || null, error: toError(event.error) });
+    });
+    window.addEventListener("unhandledrejection", (event) => {
+      window.__irhaGp4vUnhandledRejections.push({ at: performance.now(), reason: toError(event.reason) });
+    });
+  });
+}
+
+async function attachMediaEventTimeline(video) {
+  await video.evaluate((node, eventNames) => {
+    window.__irhaGp4vMediaEvents = [];
+    const snapshot = (eventName) => ({
+      event: eventName,
+      at: performance.now(),
+      paused: node.paused,
+      ended: node.ended,
+      currentTime: node.currentTime,
+      duration: Number.isFinite(node.duration) ? node.duration : null,
+      readyState: node.readyState,
+      networkState: node.networkState,
+      videoWidth: node.videoWidth,
+      videoHeight: node.videoHeight,
+      mediaError: node.error ? { code: node.error.code, message: node.error.message || null } : null,
+    });
+    for (const eventName of eventNames) {
+      node.addEventListener(eventName, () => window.__irhaGp4vMediaEvents.push(snapshot(eventName)));
+    }
+  }, MEDIA_EVENTS);
+}
+
+async function mediaState(video) {
+  return video.evaluate((node) => {
+    const ranges = (list) => Array.from({ length: list.length }, (_, index) => ({ start: list.start(index), end: list.end(index) }));
+    return {
+      canPlayTypeMp4: node.canPlayType("video/mp4"),
+      currentSrc: node.currentSrc || null,
+      sourceUrl: node.querySelector("source")?.getAttribute("src") || node.getAttribute("src") || null,
+      paused: node.paused,
+      ended: node.ended,
+      muted: node.muted,
+      volume: node.volume,
+      autoplay: node.autoplay,
+      playsInline: node.playsInline,
+      controls: node.controls,
+      readyState: node.readyState,
+      networkState: node.networkState,
+      currentTime: node.currentTime,
+      duration: Number.isFinite(node.duration) ? node.duration : null,
+      videoWidth: node.videoWidth,
+      videoHeight: node.videoHeight,
+      buffered: ranges(node.buffered),
+      seekable: ranges(node.seekable),
+      played: ranges(node.played),
+      error: node.error ? { code: node.error.code, message: node.error.message || null } : null,
+    };
+  });
+}
+
+async function collectPagePlaybackEvidence(page, video) {
+  const state = await mediaState(video);
+  const pageEvidence = await page.evaluate(() => ({
+    playCalls: window.__irhaGp4vPlayCalls || [],
+    mediaEvents: window.__irhaGp4vMediaEvents || [],
+    windowErrors: window.__irhaGp4vPageErrors || [],
+    unhandledRejections: window.__irhaGp4vUnhandledRejections || [],
+    statusText: Array.from(document.querySelectorAll('[aria-live="polite"]')).map((node) => node.textContent || "").filter(Boolean),
+  }));
+  return { state, ...pageEvidence };
+}
+
+async function isolatedPlaybackProbe(page) {
+  await page.evaluate((mediaUrl, eventNames) => {
+    document.querySelector("#gp4v-isolated-probe")?.remove();
+    const wrap = document.createElement("div");
+    wrap.id = "gp4v-isolated-probe";
+    wrap.style.position = "fixed";
+    wrap.style.left = "0";
+    wrap.style.bottom = "0";
+    wrap.style.zIndex = "2147483647";
+    const video = document.createElement("video");
+    video.id = "gp4v-isolated-video";
+    video.src = mediaUrl;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.muted = false;
+    video.style.width = "160px";
+    const button = document.createElement("button");
+    button.id = "gp4v-isolated-play";
+    button.textContent = "isolated play";
+    window.__irhaGp4vIsolated = { events: [], play: { outcome: "not-called", error: null } };
+    const snapshot = (eventName) => ({
+      event: eventName,
+      at: performance.now(),
+      paused: video.paused,
+      currentTime: video.currentTime,
+      duration: Number.isFinite(video.duration) ? video.duration : null,
+      readyState: video.readyState,
+      networkState: video.networkState,
+      videoWidth: video.videoWidth,
+      videoHeight: video.videoHeight,
+      error: video.error ? { code: video.error.code, message: video.error.message || null } : null,
+    });
+    for (const eventName of eventNames) video.addEventListener(eventName, () => window.__irhaGp4vIsolated.events.push(snapshot(eventName)));
+    button.addEventListener("click", async () => {
+      window.__irhaGp4vIsolated.play = { outcome: "pending", error: null, at: performance.now() };
+      try {
+        await video.play();
+        window.__irhaGp4vIsolated.play.outcome = "resolved";
+        window.__irhaGp4vIsolated.play.resolvedAt = performance.now();
+      } catch (error) {
+        window.__irhaGp4vIsolated.play.outcome = "rejected";
+        window.__irhaGp4vIsolated.play.rejectedAt = performance.now();
+        window.__irhaGp4vIsolated.play.error = { name: error?.name || null, message: error?.message || String(error || "") };
+      }
+    });
+    wrap.append(video, button);
+    document.body.appendChild(wrap);
+  }, MEDIA_URL, MEDIA_EVENTS);
+
+  const isolatedVideo = page.locator("#gp4v-isolated-video");
+  await page.locator("#gp4v-isolated-play").click();
+  try {
+    await page.waitForFunction(() => {
+      const node = document.querySelector("#gp4v-isolated-video");
+      return node instanceof HTMLVideoElement && !node.paused && node.currentTime > 0.2 && node.readyState >= 2;
+    }, undefined, { timeout: 8_000 });
+  } catch {
+    // The returned evidence classifies whether this is a browser/decoder or application-only failure.
+  }
+  const result = await page.evaluate(() => {
+    const node = document.querySelector("#gp4v-isolated-video");
+    const ranges = (list) => Array.from({ length: list.length }, (_, index) => ({ start: list.start(index), end: list.end(index) }));
+    return {
+      play: window.__irhaGp4vIsolated?.play || null,
+      events: window.__irhaGp4vIsolated?.events || [],
+      state: node instanceof HTMLVideoElement ? {
+        canPlayTypeMp4: node.canPlayType("video/mp4"),
+        currentSrc: node.currentSrc || null,
+        paused: node.paused,
+        ended: node.ended,
+        currentTime: node.currentTime,
+        duration: Number.isFinite(node.duration) ? node.duration : null,
+        readyState: node.readyState,
+        networkState: node.networkState,
+        videoWidth: node.videoWidth,
+        videoHeight: node.videoHeight,
+        buffered: ranges(node.buffered),
+        seekable: ranges(node.seekable),
+        error: node.error ? { code: node.error.code, message: node.error.message || null } : null,
+      } : null,
+    };
+  });
+  await page.evaluate(() => document.querySelector("#gp4v-isolated-probe")?.remove());
+  return result;
+}
+
+function responseHeaderSubset(headers) {
+  const names = ["content-type", "content-length", "accept-ranges", "content-range", "access-control-allow-origin", "cache-control", "etag", "last-modified"];
+  return Object.fromEntries(names.map((name) => [name, headers[name] ?? null]));
+}
+
 async function verifyWatchJourney(browser, label, contextOptions = {}) {
   const context = await browser.newContext(contextOptions);
   const page = await context.newPage();
   const mediaRequests = [];
+  const mediaResponses = [];
+  const mediaFailures = [];
+  const consoleErrors = [];
+  const pageErrors = [];
+  const journey = { label, contextOptions, mediaRequests, mediaResponses, mediaFailures, consoleErrors, pageErrors };
+  diagnostic.journeys.push(journey);
+  writeDiagnostic();
+
+  await installPlaybackInstrumentation(page);
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push({ text: message.text(), location: message.location() });
+  });
+  page.on("pageerror", (error) => pageErrors.push({ name: error.name, message: error.message, stack: error.stack || null }));
   page.on("request", (request) => {
-    if (request.url().includes(MEDIA_MARKER)) mediaRequests.push(request.url());
+    if (!request.url().includes(MEDIA_MARKER)) return;
+    const headers = request.headers();
+    mediaRequests.push({
+      url: request.url(),
+      method: request.method(),
+      range: headers.range || null,
+      resourceType: request.resourceType(),
+    });
+  });
+  page.on("response", async (response) => {
+    if (!response.url().includes(MEDIA_MARKER)) return;
+    try {
+      const headers = await response.allHeaders();
+      mediaResponses.push({
+        url: response.url(),
+        status: response.status(),
+        statusText: response.statusText(),
+        headers: responseHeaderSubset(headers),
+      });
+    } catch (error) {
+      mediaResponses.push({ url: response.url(), status: response.status(), headerReadError: error instanceof Error ? error.message : String(error) });
+    }
+  });
+  page.on("requestfailed", (request) => {
+    if (request.url().includes(MEDIA_MARKER)) mediaFailures.push({ url: request.url(), method: request.method(), failure: request.failure() });
   });
 
   try {
@@ -176,20 +452,40 @@ async function verifyWatchJourney(browser, label, contextOptions = {}) {
 
     const video = page.getByTestId("factory-video");
     await video.waitFor({ state: "visible", timeout: 20_000 });
-    await page.getByTestId("factory-video-play").click();
-    await page.waitForFunction(() => {
-      const node = document.querySelector('[data-testid="factory-video"]');
-      return node instanceof HTMLVideoElement && !node.paused && node.currentTime > 0.2 && node.readyState >= 2;
-    }, undefined, { timeout: 25_000 });
+    await attachMediaEventTimeline(video);
+    journey.beforePlay = await collectPagePlaybackEvidence(page, video);
+    journey.beforePlay.mediaRequestCount = mediaRequests.length;
+    writeDiagnostic();
 
-    const playback = await video.evaluate((node) => ({
-      paused: node.paused,
-      currentTime: node.currentTime,
-      duration: node.duration,
-      readyState: node.readyState,
-      videoWidth: node.videoWidth,
-      videoHeight: node.videoHeight,
-    }));
+    await page.getByTestId("factory-video-play").click();
+    try {
+      await page.waitForFunction(() => {
+        const node = document.querySelector('[data-testid="factory-video"]');
+        return node instanceof HTMLVideoElement && !node.paused && node.currentTime > 0.2 && node.readyState >= 2;
+      }, undefined, { timeout: 25_000 });
+    } catch (error) {
+      journey.playbackFailure = {
+        message: error instanceof Error ? error.message : String(error),
+        evidence: await collectPagePlaybackEvidence(page, video),
+        isolatedProbe: await isolatedPlaybackProbe(page),
+      };
+      writeDiagnostic();
+      const compact = {
+        state: journey.playbackFailure.evidence.state,
+        playCalls: journey.playbackFailure.evidence.playCalls,
+        mediaEvents: journey.playbackFailure.evidence.mediaEvents,
+        mediaRequests,
+        mediaResponses,
+        mediaFailures,
+        isolatedProbe: journey.playbackFailure.isolatedProbe,
+      };
+      const annotation = JSON.stringify(compact).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+      console.error(`::error title=GP-4V-R2 playback diagnostic::${annotation.slice(0, 55_000)}`);
+      throw new Error(`${label}: playback progression failed; diagnostic=${JSON.stringify(compact)}`);
+    }
+
+    const playback = await mediaState(video);
+    journey.playback = playback;
     assert(!playback.paused && playback.currentTime > 0.2 && playback.readyState >= 2, `${label}: Play contract failed ${JSON.stringify(playback)}`);
     assert(Number.isFinite(playback.duration) && playback.duration > 74 && playback.duration < 76, `${label}: unexpected duration ${playback.duration}`);
     assert(playback.videoWidth > 0 && playback.videoHeight > 0, `${label}: decoded dimensions unavailable`);
@@ -266,8 +562,15 @@ async function verifyWatchJourney(browser, label, contextOptions = {}) {
       homepageMp4BeforeIntent: 0,
       mediaRequestsAfterPlay: mediaRequests.length,
     };
+    journey.result = result;
+    journey.afterSuccessEvidence = await collectPagePlaybackEvidence(page, video);
+    writeDiagnostic();
     console.log(JSON.stringify(result));
     return result;
+  } catch (error) {
+    journey.failure = { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack || null : null };
+    writeDiagnostic();
+    throw error;
   } finally {
     await context.close();
   }
@@ -298,10 +601,17 @@ async function main() {
     await webkitBrowser.close();
   }
 
+  diagnostic.completedAt = new Date().toISOString();
+  diagnostic.status = "PASS";
+  writeDiagnostic();
   console.log("GP-4V-R2 browser acceptance: PASS");
 }
 
 main().catch((error) => {
+  diagnostic.completedAt = new Date().toISOString();
+  diagnostic.status = "FAIL";
+  diagnostic.failure = { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack || null : null };
+  writeDiagnostic();
   console.error(`GP-4V-R2 browser acceptance: FAIL — ${error instanceof Error ? error.stack || error.message : String(error)}`);
   process.exit(1);
 });
