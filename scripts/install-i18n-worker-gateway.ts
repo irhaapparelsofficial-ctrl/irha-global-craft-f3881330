@@ -13,6 +13,18 @@ function replaceOnce(source: string, search: string, replacement: string, label:
   return source.replace(search, replacement);
 }
 
+function readQuotedHtmlAttribute(tag: string, attribute: string): string | null {
+  const match = tag.match(new RegExp(`(?:^|\\s)${attribute}\\s*=\\s*(["'])(.*?)\\1`, "i"));
+  return match?.[2] ?? null;
+}
+
+function canonicalLinkTags(html: string): string[] {
+  return (html.match(/<link\b[^>]*>/gi) ?? []).filter((tag) => {
+    const rel = readQuotedHtmlAttribute(tag, "rel");
+    return rel?.split(/\s+/).some((token) => token.toLowerCase() === "canonical") ?? false;
+  });
+}
+
 function patchStaticBuyerResponse(worker: string): string {
   const functionStart = worker.indexOf("async function staticBuyerResponse(");
   if (functionStart < 0) throw new Error("Static buyer response function is missing");
@@ -66,7 +78,11 @@ export function installI18nWorkerGateway(distDir: string): void {
   if (!gatewayHtml.includes('data-irha-german-gateway="published"')) {
     throw new Error("German gateway HTML is not the reviewed published shell");
   }
-  if (!gatewayHtml.includes('<link rel="canonical" href="https://irhaapparels.com/de/"')) {
+  const canonicalLinks = canonicalLinkTags(gatewayHtml);
+  if (canonicalLinks.length !== 1) {
+    throw new Error(`German gateway HTML must contain exactly one canonical link, found ${canonicalLinks.length}`);
+  }
+  if (readQuotedHtmlAttribute(canonicalLinks[0], "href") !== "https://irhaapparels.com/de/") {
     throw new Error("German gateway HTML is missing its /de/ self canonical");
   }
 

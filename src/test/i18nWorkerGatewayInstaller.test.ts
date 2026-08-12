@@ -6,14 +6,16 @@ import { installI18nWorkerGateway } from "../../scripts/install-i18n-worker-gate
 
 const temporaryDirectories: string[] = [];
 
-function createFixture(): string {
+function createFixture(
+  canonicalMarkup = '<link data-irha-fallback-seo="true" href="https://irhaapparels.com/de/" rel="canonical" />',
+): string {
   const distDir = mkdtempSync(path.join(tmpdir(), "irha-i18n-worker-"));
   temporaryDirectories.push(distDir);
   mkdirSync(path.join(distDir, "de"), { recursive: true });
 
   writeFileSync(
     path.join(distDir, "de", "index.html"),
-    '<!doctype html><html lang="de" dir="ltr"><head><link rel="canonical" href="https://irhaapparels.com/de/" /></head><body><main data-irha-german-gateway="published">Deutsch</main></body></html>',
+    `<!doctype html><html lang="de" dir="ltr"><head>${canonicalMarkup}</head><body><main data-irha-german-gateway="published">Deutsch</main></body></html>`,
     "utf8",
   );
 
@@ -64,7 +66,7 @@ afterEach(() => {
 });
 
 describe("German locale gateway worker installer", () => {
-  it("installs a flat asset, a canonical slash redirect, and is idempotent", () => {
+  it("accepts the marked fallback canonical regardless of attribute order and installs idempotently", () => {
     const distDir = createFixture();
 
     installI18nWorkerGateway(distDir);
@@ -74,6 +76,7 @@ describe("German locale gateway worker installer", () => {
     const asset = readFileSync(path.join(distDir, "_seo-static", "de--gateway.irha"), "utf8");
 
     expect(asset).toContain('data-irha-german-gateway="published"');
+    expect(asset).toContain('data-irha-fallback-seo="true"');
     expect(worker).toContain('["/de", "/_seo-static/de--gateway.irha"]');
     expect(worker).toContain('["/de", "/de/"]');
     expect(worker).toContain("localeGatewayRedirect(request, url, localeGatewayTarget)");
@@ -81,5 +84,22 @@ describe("German locale gateway worker installer", () => {
     expect(worker).toContain("const contentLocationPath = LOCALE_GATEWAY_PATHS.get(pathname) || pathname;");
     expect(worker.match(/const LOCALE_GATEWAY_PATHS = new Map\(\[/g)).toHaveLength(1);
     expect(worker.match(/function localeGatewayRedirect\(/g)).toHaveLength(1);
+  });
+
+  it("rejects duplicate canonical ownership", () => {
+    const canonical = '<link data-irha-fallback-seo="true" rel="canonical" href="https://irhaapparels.com/de/" />';
+    const distDir = createFixture(`${canonical}${canonical}`);
+
+    expect(() => installI18nWorkerGateway(distDir)).toThrow(
+      "German gateway HTML must contain exactly one canonical link, found 2",
+    );
+  });
+
+  it("rejects a canonical that does not self-reference /de/", () => {
+    const distDir = createFixture('<link rel="canonical" href="https://irhaapparels.com/" />');
+
+    expect(() => installI18nWorkerGateway(distDir)).toThrow(
+      "German gateway HTML is missing its /de/ self canonical",
+    );
   });
 });
