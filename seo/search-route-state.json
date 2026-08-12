@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "canonicalOrigin": "https://irhaapparels.com",
-  "routeCount": 436,
+  "routeCount": 437,
   "routes": [
     {
       "url": "https://irhaapparels.com/",
@@ -138,6 +138,10 @@
     {
       "url": "https://irhaapparels.com/dirndl-manufacturer-austria",
       "digest": "sha256:0f6c2e4bf5b308cb356db1ce35dd1207f86369f2735454729a0ff652d30eecbe"
+    },
+    {
+      "url": "https://irhaapparels.com/factory-capability-video",
+      "digest": "sha256:ab49263515c8b575d0ad15f1fcff48f6739cec11ed420dc24173edf912e763bd"
     },
     {
       "url": "https://irhaapparels.com/factory-video-call",
@@ -1748,5 +1752,5 @@
       "digest": "sha256:09df4ccce2a607b067a6e5b184348c6e4becd37cd1c11526f3c1e980ef7ffbb7"
     }
   ],
-  "contentDigest": "sha256:9aecf09f445db5659da2bf42efa08661af08e7a556c305ae2a11d0a0d88ad1ca"
+  "contentDigest": "sha256:e0b0d1e320d67a3267fdd2a82fba3ebc845a019ee59e9e53a3123cedf9614f23"
 }
