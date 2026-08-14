@@ -301,13 +301,15 @@ async function mediaState(video) {
   });
 }
 
-async function collectPagePlaybackEvidence(page, video, persistedWatchPageEvidence = null) {
+async function collectPagePlaybackEvidence(page, persistedWatchPageEvidence = null) {
   const currentRoute = await page.evaluate(() => ({ url: location.href, pathname: location.pathname }));
-  const currentVideo = video || page.getByTestId("factory-video");
-  const videoElementPresentOnCurrentRoute = (await page.locator('[data-testid="factory-video"]').count()) > 0;
+  const currentVideo = page.locator('[data-testid="factory-video"]').first();
+  const currentVideoElementCount = await page.locator('[data-testid="factory-video"]').count();
+  const videoElementPresentOnCurrentRoute = currentRoute.pathname === WATCH_PATH && currentVideoElementCount > 0;
+  const persistedState = persistedWatchPageEvidence?.final?.state ?? persistedWatchPageEvidence?.state ?? null;
   const state = videoElementPresentOnCurrentRoute
     ? await mediaState(currentVideo)
-    : clonePlain(persistedWatchPageEvidence?.state ?? null);
+    : clonePlain(persistedState);
   const pageEvidence = await page.evaluate(() => ({
     playCalls: window.__irhaGp4vPlayCalls || [],
     mediaEvents: window.__irhaGp4vMediaEvents || [],
@@ -317,6 +319,7 @@ async function collectPagePlaybackEvidence(page, video, persistedWatchPageEviden
   }));
   return {
     videoElementPresentOnCurrentRoute,
+    currentVideoElementCount,
     currentRoute,
     state,
     persistedWatchPageEvidence: videoElementPresentOnCurrentRoute ? null : clonePlain(persistedWatchPageEvidence),
@@ -468,7 +471,7 @@ async function verifyWatchJourney(browser, label, contextOptions = {}) {
     const video = page.getByTestId("factory-video");
     await video.waitFor({ state: "visible", timeout: 20_000 });
     await attachMediaEventTimeline(video);
-    journey.beforePlay = await collectPagePlaybackEvidence(page, video);
+    journey.beforePlay = await collectPagePlaybackEvidence(page);
     journey.beforePlay.mediaRequestCount = mediaRequests.length;
     writeDiagnostic();
 
@@ -481,7 +484,7 @@ async function verifyWatchJourney(browser, label, contextOptions = {}) {
     } catch (error) {
       journey.playbackFailure = {
         message: error instanceof Error ? error.message : String(error),
-        evidence: await collectPagePlaybackEvidence(page, video),
+        evidence: await collectPagePlaybackEvidence(page),
         isolatedProbe: await isolatedPlaybackProbe(page),
       };
       writeDiagnostic();
@@ -538,7 +541,7 @@ async function verifyWatchJourney(browser, label, contextOptions = {}) {
     assert(afterExit.scrollWidth <= afterExit.clientWidth + 2, `${label}: horizontal overflow after exit`);
     assert(mediaRequests.length > 0, `${label}: Play did not request the MP4`);
 
-    const finalWatchPageEvidence = await collectPagePlaybackEvidence(page, video);
+    const finalWatchPageEvidence = await collectPagePlaybackEvidence(page);
     const result = {
       label,
       homeCanonical,
@@ -599,20 +602,20 @@ async function verifyWatchJourney(browser, label, contextOptions = {}) {
     }
     result.representative = representative;
 
-    journey.afterSuccessEvidence = await collectPagePlaybackEvidence(page, video, journey.watchPageEvidence.final);
+    journey.afterSuccessEvidence = await collectPagePlaybackEvidence(page, journey.watchPageEvidence);
     writeDiagnostic();
     console.log(JSON.stringify(result));
     return result;
   } catch (error) {
     journey.failure = { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack || null : null };
     try {
-      const persisted = journey.watchPageEvidence?.final || journey.playbackFailure?.evidence || journey.beforePlay || null;
-      journey.failureEvidence = await collectPagePlaybackEvidence(page, page.getByTestId("factory-video"), persisted);
+      const persisted = journey.watchPageEvidence || journey.playbackFailure?.evidence || journey.beforePlay || null;
+      journey.failureEvidence = await collectPagePlaybackEvidence(page, persisted);
     } catch (diagnosticError) {
       journey.failureEvidence = {
         videoElementPresentOnCurrentRoute: false,
         diagnosticCollectionError: diagnosticError instanceof Error ? diagnosticError.message : String(diagnosticError),
-        persistedWatchPageEvidence: clonePlain(journey.watchPageEvidence?.final || journey.playbackFailure?.evidence || journey.beforePlay || null),
+        persistedWatchPageEvidence: clonePlain(journey.watchPageEvidence || journey.playbackFailure?.evidence || journey.beforePlay || null),
       };
     }
     writeDiagnostic();
@@ -656,7 +659,7 @@ async function main() {
 main().catch((error) => {
   diagnostic.completedAt = new Date().toISOString();
   diagnostic.status = "FAIL";
-  diagnostic.failure = { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack || null : null };
+  diagnostic.failure = { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack || null };
   writeDiagnostic();
   console.error(`GP-4V-R2 browser acceptance: FAIL — ${error instanceof Error ? error.stack || error.message : String(error)}`);
   process.exit(1);
