@@ -659,7 +659,7 @@ async function main() {
 main().catch((error) => {
   diagnostic.completedAt = new Date().toISOString();
   diagnostic.status = "FAIL";
-  diagnostic.failure = { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack || null };
+  diagnostic.failure = { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack || null : null };
   writeDiagnostic();
   console.error(`GP-4V-R2 browser acceptance: FAIL — ${error instanceof Error ? error.stack || error.message : String(error)}`);
   process.exit(1);
