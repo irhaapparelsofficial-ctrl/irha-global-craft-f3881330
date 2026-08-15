@@ -1,12 +1,8 @@
 name: Actions Storage Cleanup
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/actions-storage-cleanup.yml"
   schedule:
-    - cron: "23 2 * * *"
+    - cron: "23 2 * * 0"
   workflow_dispatch:
 
 permissions:
@@ -22,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Delete old workflow artifacts
+      - name: Delete workflow artifacts older than 7 days
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -30,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          cutoff_epoch="$(date -u -d '1 day ago' +%s)"
+          cutoff_epoch="$(date -u -d '7 days ago' +%s)"
           deleted=0
           kept=0
           page=1
@@ -65,7 +61,7 @@ jobs:
           echo "Deleted artifacts: $deleted"
           echo "Kept recent artifacts: $kept"
           {
-            echo "## Actions storage cleanup"
-            echo "- Deleted artifacts older than 1 day: $deleted"
+            echo "## Weekly Actions storage cleanup"
+            echo "- Deleted artifacts older than 7 days: $deleted"
             echo "- Kept recent artifacts: $kept"
           } >> "$GITHUB_STEP_SUMMARY"

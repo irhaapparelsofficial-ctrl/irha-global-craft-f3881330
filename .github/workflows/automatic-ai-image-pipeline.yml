@@ -9,12 +9,6 @@ on:
       - "public/**/*.png"
       - "public/**/*.webp"
       - "public/**/*.avif"
-      - "scripts/image-ai/**"
-      - "supabase/functions/image-processing-gateway/**"
-      - "supabase/migrations/*automatic_ai_image_pipeline.sql"
-      - ".github/workflows/automatic-ai-image-pipeline.yml"
-  schedule:
-    - cron: "17,47 * * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -25,13 +19,10 @@ on:
         options:
           - canary
           - drain
-  issue_comment:
-    types: [created]
 
 permissions:
   contents: write
   id-token: write
-  issues: read
 
 concurrency:
   group: automatic-ai-image-pipeline-main
@@ -45,7 +36,7 @@ env:
 
 jobs:
   committed-images:
-    name: Normalize committed source images
+    name: Normalize newly committed source images
     if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[image-ai-generated]')
     runs-on: ubuntu-24.04
     timeout-minutes: 180
@@ -133,14 +124,7 @@ jobs:
 
   queue-plan:
     name: Resolve protected queue execution plan
-    if: >-
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'issue_comment' &&
-       github.event.issue.number == 375 &&
-       github.event.comment.user.login == 'irhaapparelsofficial-ctrl' &&
-       (github.event.comment.body == '/run-image-ai-canary' ||
-        github.event.comment.body == '/run-image-ai-drain'))
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     outputs:
       workers: ${{ steps.plan.outputs.workers }}
@@ -148,38 +132,22 @@ jobs:
       max_jobs: ${{ steps.plan.outputs.max_jobs }}
       mode: ${{ steps.plan.outputs.mode }}
     steps:
-      - name: Build bounded plan
+      - name: Build bounded manual plan
         id: plan
         shell: bash
         env:
           DISPATCH_MODE: ${{ inputs.mode }}
         run: |
           set -euo pipefail
-          mode="scheduled"
+          mode="${DISPATCH_MODE:-canary}"
           workers='["1"]'
           batch_limit=2
-          max_jobs=6
-          comment_body=""
-
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            mode="${DISPATCH_MODE:-canary}"
-          elif [ "$GITHUB_EVENT_NAME" = "issue_comment" ]; then
-            comment_body="$(jq -r '.comment.body // empty' "$GITHUB_EVENT_PATH")"
-            case "$comment_body" in
-              /run-image-ai-drain) mode="drain" ;;
-              /run-image-ai-canary) mode="canary" ;;
-              *) echo "Unsupported issue command in event payload: ${comment_body:-missing}"; exit 1 ;;
-            esac
-          fi
+          max_jobs=2
 
           if [ "$mode" = "drain" ]; then
             workers='["1","2","3","4"]'
             batch_limit=3
             max_jobs=6
-          elif [ "$mode" = "canary" ]; then
-            workers='["1"]'
-            batch_limit=2
-            max_jobs=2
           fi
 
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
@@ -189,10 +157,10 @@ jobs:
           {
             echo "## AI image queue plan"
             echo "- Mode: \`$mode\`"
+            echo "- Trigger: manual only"
             echo "- Workers: \`$workers\`"
             echo "- Claim limit: \`$batch_limit\`"
             echo "- Maximum jobs per worker: \`$max_jobs\`"
-            echo "- Issue command source: \`GITHUB_EVENT_PATH\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   admin-media-queue:
@@ -274,5 +242,5 @@ jobs:
             echo "- Claim limit: \`${{ needs.queue-plan.outputs.batch_limit }}\`"
             echo "- Maximum jobs: \`${{ needs.queue-plan.outputs.max_jobs }}\`"
             echo "- Original images: preserved"
-            echo "- Stale lock policy: database-controlled reclaim after 30 minutes"
+            echo "- Automatic polling: disabled"
           } >> "$GITHUB_STEP_SUMMARY"
