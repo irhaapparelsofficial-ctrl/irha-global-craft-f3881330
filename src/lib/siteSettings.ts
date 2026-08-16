@@ -56,6 +56,7 @@ export type GlobalSiteSettings = {
     facebook: string;
     linkedin: string;
     tiktok: string;
+    pinterest: string;
   };
   footer: {
     intro: string;
@@ -117,6 +118,7 @@ export const DEFAULT_GLOBAL_SITE_SETTINGS: GlobalSiteSettings = {
     facebook: PUBLIC_IDENTITY.socialProfiles.facebook,
     linkedin: PUBLIC_IDENTITY.socialProfiles.linkedin,
     tiktok: PUBLIC_IDENTITY.socialProfiles.tiktok,
+    pinterest: PUBLIC_IDENTITY.socialProfiles.pinterest,
   },
   footer: {
     intro: "B2B Custom Apparel Manufacturer",
