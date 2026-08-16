@@ -35,13 +35,14 @@ describe("canonical public identity", () => {
       "https://web.facebook.com/profile.php?id=61590950402472",
       "https://www.linkedin.com/company/irha-apparels",
       "https://www.tiktok.com/@irhaapparels",
+      "https://www.pinterest.com/irhaapparels/",
     ]);
   });
 
-  it("keeps sameAs limited to four unique controlled profiles and excludes WhatsApp", () => {
+  it("keeps sameAs limited to five unique controlled profiles and excludes WhatsApp", () => {
     const configuredProfiles = Object.values(PUBLIC_IDENTITY.socialProfiles);
-    expect(PUBLIC_IDENTITY.sameAs).toHaveLength(4);
-    expect(new Set(PUBLIC_IDENTITY.sameAs).size).toBe(4);
+    expect(PUBLIC_IDENTITY.sameAs).toHaveLength(5);
+    expect(new Set(PUBLIC_IDENTITY.sameAs).size).toBe(5);
     expect(PUBLIC_IDENTITY.sameAs).toEqual(configuredProfiles);
     expect(PUBLIC_IDENTITY.sameAs.join(" ")).not.toMatch(/wa\.me|whatsapp/i);
   });
@@ -117,6 +118,7 @@ describe("canonical public identity", () => {
         facebook: "https://example.com/wrong",
         linkedin: "https://example.com/wrong",
         tiktok: "https://example.com/wrong",
+        pinterest: "https://example.com/wrong",
       },
     } as never);
     expect(normalized.brand).toMatchObject({
