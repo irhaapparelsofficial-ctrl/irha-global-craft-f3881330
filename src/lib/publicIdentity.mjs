@@ -3,6 +3,7 @@ const socialProfiles = Object.freeze({
   facebook: "https://web.facebook.com/profile.php?id=61590950402472",
   linkedin: "https://www.linkedin.com/company/irha-apparels",
   tiktok: "https://www.tiktok.com/@irhaapparels",
+  pinterest: "https://www.pinterest.com/irhaapparels/",
 });
 
 export const PUBLIC_IDENTITY = Object.freeze({
@@ -43,6 +44,7 @@ export const PUBLIC_IDENTITY = Object.freeze({
     socialProfiles.facebook,
     socialProfiles.linkedin,
     socialProfiles.tiktok,
+    socialProfiles.pinterest,
   ]),
 });
 
