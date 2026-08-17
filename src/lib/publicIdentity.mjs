@@ -30,8 +30,8 @@ export const PUBLIC_IDENTITY = Object.freeze({
   }),
   responsiblePerson: Object.freeze({
     name: "Daim Ali",
-    title: "CEO",
-    display: "Daim Ali — CEO, Irha Apparels",
+    title: "Managing Director",
+    display: "Daim Ali — Managing Director, Irha Apparels",
   }),
   availability: Object.freeze({
     days: "Monday–Saturday",

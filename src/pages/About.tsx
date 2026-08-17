@@ -81,7 +81,7 @@ export default function About() {
           <div className="grid gap-px border border-border/60 bg-border/60 sm:grid-cols-2">
             <AccountabilityItem Icon={UserRound} label="Responsible person" value={PUBLIC_IDENTITY.responsiblePerson.name} note={`${PUBLIC_IDENTITY.responsiblePerson.title}, ${PUBLIC_IDENTITY.name}`} />
             <AccountabilityItem Icon={MapPin} label="Public location" value={PUBLIC_IDENTITY.address.display} note={PUBLIC_IDENTITY.availability.appointmentPolicy} />
-            <AccountabilityItem Icon={Phone} label="Telephone / WhatsApp" value={PUBLIC_IDENTITY.telephone} href={`tel:${PUBLIC_IDENTITY.telephoneHref}`} />
+            <AccountabilityItem Icon={Phone} label="Telephone" value={PUBLIC_IDENTITY.telephone} href={`tel:${PUBLIC_IDENTITY.telephoneHref}`} />
             <AccountabilityItem Icon={Mail} label="Business email" value={PUBLIC_IDENTITY.email} href={`mailto:${PUBLIC_IDENTITY.email}`} />
             <AccountabilityItem Icon={Clock3} label="Business availability" value={PUBLIC_IDENTITY.availability.days} note={PUBLIC_IDENTITY.availability.hours} className="sm:col-span-2" />
           </div>
@@ -91,7 +91,10 @@ export default function About() {
       <section className="py-24 text-center md:py-32">
         <div className="container-luxe max-w-3xl">
           <h2 className="font-display text-4xl leading-[1.05] md:text-5xl">Bring the requirement. We will review the <span className="text-gold italic">production path</span>.</h2>
-          <Link to="/inquiry?intent=rfq" className="mt-10 inline-flex bg-gradient-gold px-8 py-4 text-xs uppercase tracking-[0.3em] text-primary-foreground hover:shadow-gold">Start an inquiry</Link>
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
+            <Link to="/inquiry?intent=rfq" className="inline-flex min-h-12 items-center bg-gradient-gold px-8 text-xs uppercase tracking-[0.3em] text-primary-foreground hover:shadow-gold">Start an inquiry</Link>
+            <Link to="/contact" className="inline-flex min-h-12 items-center border border-border px-8 text-xs uppercase tracking-[0.3em] text-foreground hover:border-gold hover:text-gold">Contact Irha</Link>
+          </div>
         </div>
       </section>
     </>

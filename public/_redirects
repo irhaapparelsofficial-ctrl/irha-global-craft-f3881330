@@ -46,6 +46,12 @@
 /products/streetwear /products/streetwear-activewear 301
 /products/activewear /products/streetwear-activewear 301
 /products/streetwear/oversized-hoodie /products/streetwear-activewear/unisex/tops/oversized-pullover-hoodie 301
+/products/leisurewear /products/leisure-nightwear 301
+/products/leatherwear /products/premium-leather-apparel 301
+/products/leather-apparel /products/premium-leather-apparel 301
+/products/trachten /products/bavarian-trachten-wear 301
+/products/teamwear /products/sportswear 301
+/products/sportswear-teamwear /products/sportswear 301
 
 # Retain concrete Phase 0 taxonomy aliases whose targets remain current canonicals.
 /products/bavarian-men /products/bavarian-trachten-wear/men 301
