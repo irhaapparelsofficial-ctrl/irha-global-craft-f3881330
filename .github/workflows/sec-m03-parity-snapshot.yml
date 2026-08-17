@@ -1,0 +1,220 @@
+name: SEC M03 Parity Fix Controller
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/sec-m03-parity-snapshot.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build-fix:
+    if: github.event.pull_request.head.ref == 'codex/sec-m03-parity-snapshot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: production
+    env:
+      EXPECTED_MAIN: de04f0c4d380e094149493483b8113fa9d437b11
+      FIX_BRANCH: codex/sec-m03-parity-376-fix
+      SUPABASE_PROJECT_ID: pvzjiozismyxqrzmtfbi
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_MAIN }}
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Verify immutable source and empty fix branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_MAIN"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')" = "$EXPECTED_MAIN"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$FIX_BRANCH" --jq '.sha')" = "$EXPECTED_MAIN"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Apply exact parity invariant updates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, expected=1):
+              p = Path(path)
+              s = p.read_text()
+              if s.count(old) != expected:
+                  raise SystemExit(f'{path}: expected {expected} occurrences of {old!r}, found {s.count(old)}')
+              if new != old and s.count(new) != 0:
+                  raise SystemExit(f'{path}: replacement target already present unexpectedly: {new!r}')
+              p.write_text(s.replace(old, new))
+
+          replace(
+              'scripts/ci/generate-migration-provenance.mjs',
+              'if (result.payload.totals.live !== 375) {',
+              'if (result.payload.totals.live !== 376) {',
+          )
+          replace(
+              'scripts/ci/generate-migration-provenance.mjs',
+              '`Expected 375 live migrations, found ${result.payload.totals.live}`',
+              '`Expected 376 live migrations, found ${result.payload.totals.live}`',
+          )
+
+          replace(
+              'scripts/ci/generate-supabase-manifest.mjs',
+              'if (database.live_migrations.count !== 375)',
+              'if (database.live_migrations.count !== 376)',
+          )
+          replace(
+              'scripts/ci/generate-supabase-manifest.mjs',
+              '"Expected 375 live migrations"',
+              '"Expected 376 live migrations"',
+          )
+
+          replace(
+              'scripts/ci/run-sec-m03-parity-generation.mjs',
+              'const liveMigrationCount = 375;',
+              'const liveMigrationCount = 376;',
+          )
+          replace(
+              'scripts/ci/run-sec-m03-parity-generation.mjs',
+              '"if (result.payload.totals.live !== 374) {"',
+              '"if (result.payload.totals.live !== 375) {"',
+          )
+          replace(
+              'scripts/ci/run-sec-m03-parity-generation.mjs',
+              '"`Expected 374 live migrations, found ${result.payload.totals.live}`"',
+              '"`Expected 375 live migrations, found ${result.payload.totals.live}`"',
+          )
+          replace(
+              'scripts/ci/run-sec-m03-parity-generation.mjs',
+              '"if (database.live_migrations.count !== 374)"',
+              '"if (database.live_migrations.count !== 375)"',
+          )
+          replace(
+              'scripts/ci/run-sec-m03-parity-generation.mjs',
+              "'\"Expected 374 live migrations\"'",
+              "'\"Expected 375 live migrations\"'",
+          )
+
+          replace(
+              'scripts/verify-supabase-parity.mjs',
+              'assert.equal(provenance.payload.totals.live, 375);',
+              'assert.equal(provenance.payload.totals.live, 376);',
+          )
+          replace(
+              'scripts/verify-supabase-parity.mjs',
+              'assert.equal(provenance.payload.records.length, 375);',
+              'assert.equal(provenance.payload.records.length, 376);',
+          )
+          replace(
+              'scripts/verify-supabase-parity.mjs',
+              'assert.equal(provenance.payload.totals.P1, 4);',
+              'assert.equal(provenance.payload.totals.P1, 5);',
+          )
+          replace(
+              'scripts/verify-supabase-parity.mjs',
+              'assert.equal(new Set(provenance.payload.records.map((record) => record.version)).size, 375);',
+              'assert.equal(new Set(provenance.payload.records.map((record) => record.version)).size, 376);',
+          )
+
+          replace(
+              'supabase/reconciliation/SEC-M03-PARITY-CONTRACT.md',
+              'Live migration history: 375 entries; P1=4, P2=371, P3=0, P4=0, P5=0.',
+              'Live migration history: 376 entries; P1=5, P2=371, P3=0, P4=0, P5=0.',
+          )
+          replace(
+              'supabase/reconciliation/SEC-M03-PARITY-CONTRACT.md',
+              'independently require exactly 375 live migrations.',
+              'independently require exactly 376 live migrations.',
+          )
+          PY
+
+      - name: Regenerate exact authenticated parity evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}"
+          SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" \
+          MIGRATION_PROVENANCE_MODE=write \
+            node scripts/ci/generate-migration-provenance.mjs
+          SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" \
+          SUPABASE_MANIFEST_MODE=write \
+            node scripts/ci/generate-supabase-manifest.mjs
+
+      - name: Verify exact live and committed parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          provenance=supabase/deployment-parity/migration-provenance.json
+          manifest=supabase/deployment-parity/manifest.json
+          test "$(jq -r '.payload.totals.live' "$provenance")" = "376"
+          test "$(jq -r '.payload.totals.P1' "$provenance")" = "5"
+          test "$(jq -r '.payload.totals.P2' "$provenance")" = "371"
+          test "$(jq -r '.payload.totals.P5' "$provenance")" = "0"
+          test "$(jq -r '.database.live_migrations.count' "$manifest")" = "376"
+          test "$(jq -r '.payload.records[] | select(.version == "20260731151915") | .class' "$provenance")" = "P1"
+          test "$(jq -r '.payload.records[] | select(.version == "20260731151915") | .exact_repository_source.source_commit' "$provenance")" = "$EXPECTED_MAIN"
+
+          node scripts/verify-supabase-parity.mjs
+          SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" MIGRATION_PROVENANCE_MODE=verify node scripts/ci/generate-migration-provenance.mjs
+          SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" SUPABASE_MANIFEST_MODE=verify node scripts/ci/generate-supabase-manifest.mjs
+
+          before_provenance="$(sha256sum "$provenance" | awk '{print $1}')"
+          before_manifest="$(sha256sum "$manifest" | awk '{print $1}')"
+          SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" node scripts/ci/run-sec-m03-parity-generation.mjs
+          test "$(sha256sum "$provenance" | awk '{print $1}')" = "$before_provenance"
+          test "$(sha256sum "$manifest" | awk '{print $1}')" = "$before_manifest"
+          node scripts/verify-supabase-parity.mjs
+
+      - name: Enforce seven-file scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/allowed.txt <<'EOF'
+          scripts/ci/generate-migration-provenance.mjs
+          scripts/ci/generate-supabase-manifest.mjs
+          scripts/ci/run-sec-m03-parity-generation.mjs
+          scripts/verify-supabase-parity.mjs
+          supabase/deployment-parity/manifest.json
+          supabase/deployment-parity/migration-provenance.json
+          supabase/reconciliation/SEC-M03-PARITY-CONTRACT.md
+          EOF
+          sort -o /tmp/allowed.txt /tmp/allowed.txt
+          git diff --name-only | sort > /tmp/actual.txt
+          diff -u /tmp/allowed.txt /tmp/actual.txt
+          test "$(wc -l < /tmp/actual.txt | tr -d ' ')" = "7"
+          ! git diff --check
+          git diff --stat
+
+      - name: Publish focused fix branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "irhaapparelsofficial-ctrl"
+          git config user.email "294838484+irhaapparelsofficial-ctrl@users.noreply.github.com"
+          git checkout -B "$FIX_BRANCH" "$EXPECTED_MAIN"
+          git add \
+            scripts/ci/generate-migration-provenance.mjs \
+            scripts/ci/generate-supabase-manifest.mjs \
+            scripts/ci/run-sec-m03-parity-generation.mjs \
+            scripts/verify-supabase-parity.mjs \
+            supabase/deployment-parity/manifest.json \
+            supabase/deployment-parity/migration-provenance.json \
+            supabase/reconciliation/SEC-M03-PARITY-CONTRACT.md
+          git diff --cached --exit-code >/dev/null && { echo "No parity changes staged"; exit 1; } || true
+          git commit -m "fix(ci): align SEC-M03 parity with migration 376"
+          git push origin "HEAD:refs/heads/$FIX_BRANCH"
+          echo "fix_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
