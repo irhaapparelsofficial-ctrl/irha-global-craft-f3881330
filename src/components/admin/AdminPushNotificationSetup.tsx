@@ -35,6 +35,24 @@ function base64UrlToUint8Array(value: string) {
   return Uint8Array.from(raw, (character) => character.charCodeAt(0));
 }
 
+function sameApplicationServerKey(subscription: PushSubscription, vapidPublicKey: string) {
+  const applied = subscription.options?.applicationServerKey;
+  if (!applied) return false;
+  const appliedBytes = new Uint8Array(applied as ArrayBuffer);
+  let expectedBytes: Uint8Array;
+  try {
+    expectedBytes = base64UrlToUint8Array(vapidPublicKey);
+  } catch {
+    return false;
+  }
+  if (appliedBytes.length !== expectedBytes.length) return false;
+  for (let index = 0; index < appliedBytes.length; index += 1) {
+    if (appliedBytes[index] !== expectedBytes[index]) return false;
+  }
+  return true;
+}
+
+
 function isIos() {
   const navigatorWithPlatform = window.navigator as NavigatorWithStandalone;
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent)
