@@ -380,11 +380,12 @@ export default function AdminPushNotificationSetup() {
         <button
           type="button"
           data-owner-alert-setup-action="true"
-          onTouchEnd={(event) => {
-            event.preventDefault();
+          onClick={() => {
+            // One direct user-gesture path only. iOS Safari cancels a click that
+            // follows a preventDefault()-ed touchend, which made the button dead.
             void (config ? enable() : load());
           }}
-          onClick={() => void (config ? enable() : load())}
+
           disabled={busy || (blocked && supported && Notification.permission === "denied")}
           className="pointer-events-auto relative z-[1] mt-3 min-h-11 w-full touch-manipulation select-none rounded-xl bg-gold px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#07111f] disabled:cursor-not-allowed disabled:opacity-50"
           style={{ WebkitTapHighlightColor: "rgba(213, 173, 77, 0.22)" }}
