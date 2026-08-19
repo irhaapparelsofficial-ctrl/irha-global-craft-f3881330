@@ -264,25 +264,58 @@ export default function AdminPushNotificationSetup() {
     setBusy(true);
     setInteractionMessage("Tap received. Connecting this iPhone to owner alerts…");
     try {
-      const permission = Notification.permission === "granted"
-        ? "granted"
-        : await Notification.requestPermission();
+      let permission = Notification.permission;
+      if (permission !== "granted") {
+        setInteractionMessage("Requesting iPhone notification permission…");
+        permission = await Notification.requestPermission();
+      }
       if (permission !== "granted") {
         throw new Error(permission === "denied"
           ? "Notifications were blocked by iPhone settings."
           : "Notification permission was not granted.");
       }
 
-      setInteractionMessage("Notification permission granted. Creating the Apple push subscription…");
+      setInteractionMessage("Notification permission granted. Preparing the owner service worker…");
       const ready = await registerOwnerServiceWorker();
-      const existing = await ready.pushManager.getSubscription();
-      const next = existing || await ready.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: base64UrlToUint8Array(config.vapid_public_key),
-      });
+      setServiceWorkerActive(Boolean(ready.active));
 
-      setInteractionMessage("Apple push subscription created. Saving this device…");
-      await syncBackendSubscription(next);
+      setInteractionMessage("Service worker ready. Checking the existing push subscription…");
+      const existing = await ready.pushManager.getSubscription();
+      let next: PushSubscription | null = null;
+
+      if (existing) {
+        const keyMatches = sameApplicationServerKey(existing, config.vapid_public_key);
+        if (keyMatches) {
+          setInteractionMessage("Existing subscription found. Re-syncing it with the server…");
+          try {
+            await syncBackendSubscription(existing);
+            next = existing;
+          } catch (syncError) {
+            const reason = syncError instanceof Error ? syncError.message : "server rejected it";
+            setInteractionMessage(`Existing subscription could not be re-synced (${reason}). Replacing it…`);
+          }
+        } else {
+          setInteractionMessage("Existing subscription uses an old push key. Replacing it…");
+        }
+
+        if (!next) {
+          try {
+            await existing.unsubscribe();
+          } catch {
+            // An unsubscribe failure must not block creating a fresh subscription.
+          }
+        }
+      }
+
+      if (!next) {
+        setInteractionMessage("Creating a fresh Apple push subscription…");
+        next = await ready.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64UrlToUint8Array(config.vapid_public_key),
+        });
+        setInteractionMessage("Fresh subscription created. Saving this device…");
+        await syncBackendSubscription(next);
+      }
 
       setInteractionMessage("Device saved. Verifying the exact iPhone subscription…");
       await load();
@@ -291,6 +324,7 @@ export default function AdminPushNotificationSetup() {
         title: "Owner alerts are active",
         description: "This device is connected for visitor, inquiry and live-chat background alerts.",
       });
+
     } catch (error) {
       const message = error instanceof Error ? error.message : "Reconnect alerts from the installed Irha Admin app.";
       setInteractionMessage(message);
