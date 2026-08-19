@@ -35,6 +35,24 @@ function base64UrlToUint8Array(value: string) {
   return Uint8Array.from(raw, (character) => character.charCodeAt(0));
 }
 
+function sameApplicationServerKey(subscription: PushSubscription, vapidPublicKey: string) {
+  const applied = subscription.options?.applicationServerKey;
+  if (!applied) return false;
+  const appliedBytes = new Uint8Array(applied as ArrayBuffer);
+  let expectedBytes: Uint8Array;
+  try {
+    expectedBytes = base64UrlToUint8Array(vapidPublicKey);
+  } catch {
+    return false;
+  }
+  if (appliedBytes.length !== expectedBytes.length) return false;
+  for (let index = 0; index < appliedBytes.length; index += 1) {
+    if (appliedBytes[index] !== expectedBytes[index]) return false;
+  }
+  return true;
+}
+
+
 function isIos() {
   const navigatorWithPlatform = window.navigator as NavigatorWithStandalone;
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent)
@@ -79,15 +97,16 @@ async function syncBackendSubscription(subscription: PushSubscription) {
 }
 
 async function readBackendSubscription(userId: string, endpoint: string) {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("owner_push_subscriptions")
     .select("enabled,last_success_at,last_error")
     .eq("user_id", userId)
     .eq("endpoint", endpoint)
     .maybeSingle();
   if (error) throw error;
-  return (data ?? null) as BackendSubscription | null;
+  return (data ?? null) as unknown as BackendSubscription | null;
 }
+
 
 export default function AdminPushNotificationSetup() {
   const [config, setConfig] = useState<NotificationConfig | null>(null);
@@ -245,25 +264,58 @@ export default function AdminPushNotificationSetup() {
     setBusy(true);
     setInteractionMessage("Tap received. Connecting this iPhone to owner alerts…");
     try {
-      const permission = Notification.permission === "granted"
-        ? "granted"
-        : await Notification.requestPermission();
+      let permission: NotificationPermission = Notification.permission;
+      if (permission !== "granted") {
+        setInteractionMessage("Requesting iPhone notification permission…");
+        permission = await Notification.requestPermission();
+      }
       if (permission !== "granted") {
         throw new Error(permission === "denied"
           ? "Notifications were blocked by iPhone settings."
           : "Notification permission was not granted.");
       }
 
-      setInteractionMessage("Notification permission granted. Creating the Apple push subscription…");
+      setInteractionMessage("Notification permission granted. Preparing the owner service worker…");
       const ready = await registerOwnerServiceWorker();
-      const existing = await ready.pushManager.getSubscription();
-      const next = existing || await ready.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: base64UrlToUint8Array(config.vapid_public_key),
-      });
+      setServiceWorkerActive(Boolean(ready.active));
 
-      setInteractionMessage("Apple push subscription created. Saving this device…");
-      await syncBackendSubscription(next);
+      setInteractionMessage("Service worker ready. Checking the existing push subscription…");
+      const existing = await ready.pushManager.getSubscription();
+      let next: PushSubscription | null = null;
+
+      if (existing) {
+        const keyMatches = sameApplicationServerKey(existing, config.vapid_public_key);
+        if (keyMatches) {
+          setInteractionMessage("Existing subscription found. Re-syncing it with the server…");
+          try {
+            await syncBackendSubscription(existing);
+            next = existing;
+          } catch (syncError) {
+            const reason = syncError instanceof Error ? syncError.message : "server rejected it";
+            setInteractionMessage(`Existing subscription could not be re-synced (${reason}). Replacing it…`);
+          }
+        } else {
+          setInteractionMessage("Existing subscription uses an old push key. Replacing it…");
+        }
+
+        if (!next) {
+          try {
+            await existing.unsubscribe();
+          } catch {
+            // An unsubscribe failure must not block creating a fresh subscription.
+          }
+        }
+      }
+
+      if (!next) {
+        setInteractionMessage("Creating a fresh Apple push subscription…");
+        next = await ready.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64UrlToUint8Array(config.vapid_public_key),
+        });
+        setInteractionMessage("Fresh subscription created. Saving this device…");
+        await syncBackendSubscription(next);
+      }
 
       setInteractionMessage("Device saved. Verifying the exact iPhone subscription…");
       await load();
@@ -272,6 +324,7 @@ export default function AdminPushNotificationSetup() {
         title: "Owner alerts are active",
         description: "This device is connected for visitor, inquiry and live-chat background alerts.",
       });
+
     } catch (error) {
       const message = error instanceof Error ? error.message : "Reconnect alerts from the installed Irha Admin app.";
       setInteractionMessage(message);
@@ -327,11 +380,12 @@ export default function AdminPushNotificationSetup() {
         <button
           type="button"
           data-owner-alert-setup-action="true"
-          onTouchEnd={(event) => {
-            event.preventDefault();
+          onClick={() => {
+            // One direct user-gesture path only. iOS Safari cancels a click that
+            // follows a preventDefault()-ed touchend, which made the button dead.
             void (config ? enable() : load());
           }}
-          onClick={() => void (config ? enable() : load())}
+
           disabled={busy || (blocked && supported && Notification.permission === "denied")}
           className="pointer-events-auto relative z-[1] mt-3 min-h-11 w-full touch-manipulation select-none rounded-xl bg-gold px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#07111f] disabled:cursor-not-allowed disabled:opacity-50"
           style={{ WebkitTapHighlightColor: "rgba(213, 173, 77, 0.22)" }}

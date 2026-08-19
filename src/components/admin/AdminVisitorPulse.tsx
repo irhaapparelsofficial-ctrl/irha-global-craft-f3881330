@@ -98,7 +98,7 @@ export default function AdminVisitorPulse() {
       }
 
       setAuthorized(true);
-      const { data, error, count } = await supabase
+      const { data, error, count } = await (supabase as any)
         .from("crm_notifications")
         .select("id,body,created_at,status,archived_at,metadata", { count: "exact" })
         .eq("status", "unread")
@@ -108,7 +108,7 @@ export default function AdminVisitorPulse() {
         .limit(100);
       if (error) return;
 
-      const rows = (data ?? []) as VisitorNotification[];
+      const rows = (data ?? []) as unknown as VisitorNotification[];
       if (initialized.current && announceNew) {
         rows
           .filter((notification) => !seenNotificationIds.current.has(notification.id))

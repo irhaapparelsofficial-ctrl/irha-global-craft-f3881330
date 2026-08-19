@@ -24,13 +24,20 @@ describe("owner push notification recovery", () => {
     expect(source).not.toContain(".delete()");
   });
 
-  it("keeps the iPhone setup control touchable above fixed admin overlays", () => {
+  it("keeps the iPhone setup control touchable above fixed admin overlays with a single gesture handler", () => {
     expect(source).toContain('data-owner-alert-setup-action="true"');
-    expect(source).toContain("onTouchEnd=");
+    expect(source).not.toContain("onTouchEnd=");
     expect(source).toContain("pointer-events-auto");
     expect(source).toContain("touch-manipulation");
     expect(source).toContain("z-[110]");
   });
+
+  it("replaces an untrusted or stale local subscription instead of keeping an expired endpoint", () => {
+    expect(source).toContain("sameApplicationServerKey(existing, config.vapid_public_key)");
+    expect(source).toContain("await existing.unsubscribe();");
+    expect(source).toContain("Creating a fresh Apple push subscription…");
+  });
+
 
   it("never silently ignores a missing push configuration after a tap", () => {
     expect(source).toContain("Push configuration unavailable");
