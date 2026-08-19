@@ -264,7 +264,7 @@ export default function AdminPushNotificationSetup() {
     setBusy(true);
     setInteractionMessage("Tap received. Connecting this iPhone to owner alerts…");
     try {
-      let permission = Notification.permission;
+      let permission: NotificationPermission = Notification.permission;
       if (permission !== "granted") {
         setInteractionMessage("Requesting iPhone notification permission…");
         permission = await Notification.requestPermission();
