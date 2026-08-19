@@ -103,7 +103,6 @@
 # production redirect authority after validating each target against the built
 # SEO manifest. Do not reintroduce a broad /catalogue/* wildcard.
 
-
 # BEGIN GENERATED BUYER-READY REDIRECTS
 # Generated from 1281 approved aliases and the 254-product canonical manifest.
 /intl/de-AT/p135-oversized-t-shirt /products/streetwear-activewear/unisex/tops/oversized-t-shirt 301
