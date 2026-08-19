@@ -97,15 +97,16 @@ async function syncBackendSubscription(subscription: PushSubscription) {
 }
 
 async function readBackendSubscription(userId: string, endpoint: string) {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("owner_push_subscriptions")
     .select("enabled,last_success_at,last_error")
     .eq("user_id", userId)
     .eq("endpoint", endpoint)
     .maybeSingle();
   if (error) throw error;
-  return (data ?? null) as BackendSubscription | null;
+  return (data ?? null) as unknown as BackendSubscription | null;
 }
+
 
 export default function AdminPushNotificationSetup() {
   const [config, setConfig] = useState<NotificationConfig | null>(null);
