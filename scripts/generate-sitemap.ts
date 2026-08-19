@@ -54,7 +54,9 @@ const staticEntries: SitemapEntry[] = [
   { path: "/buyer-trust", changefreq: "monthly", priority: "0.85" },
   { path: "/factory-video-call", changefreq: "monthly", priority: "0.82" },
   { path: "/resources", changefreq: "monthly", priority: "0.78" },
+  { path: "/guides/importing-from-sialkot", changefreq: "monthly", priority: "0.76" },
   { path: "/faq", changefreq: "monthly", priority: "0.78" },
+
   { path: "/compliance", changefreq: "monthly", priority: "0.75" },
   { path: "/inquiry", changefreq: "monthly", priority: "0.85" },
   { path: "/repeat-order", changefreq: "monthly", priority: "0.72" },

@@ -64,7 +64,9 @@ const FactoryVideoCall = lazy(() => import("./pages/FactoryVideoCall"));
 const BuyerConfidence = lazy(() => import("./pages/BuyerConfidence"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const GuideImportingFromSialkot = lazy(() => import("./pages/GuideImportingFromSialkot"));
 const AdminRuntime = lazy(() => import("@/components/admin/AdminRuntime"));
+
 
 const queryClient = new QueryClient();
 
@@ -193,8 +195,10 @@ const App = () => (
                 <Route path="/factory-video-call" element={<FactoryVideoCall />} />
                 <Route path="/resources" element={<BuyerResources />} />
                 <Route path="/faq" element={<FAQ />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/guides/importing-from-sialkot" element={<GuideImportingFromSialkot />} />
+
                 <Route path="/sustainability" element={<Navigate to="/buyer-information#sustainability" replace />} />
                 <Route path="/shipping-returns" element={<Navigate to="/buyer-information#logistics" replace />} />
                 <Route path="/inquiry" element={<Inquiry />} />
