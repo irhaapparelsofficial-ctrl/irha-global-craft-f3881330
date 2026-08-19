@@ -171,6 +171,21 @@ export default function BuyerResources() {
         </div>
       </section>
 
+      <section className="py-16 border-y border-border/60 bg-card/25">
+        <div className="container-luxe max-w-5xl">
+          <p className="eyebrow mb-4">Regional Sourcing</p>
+          <h2 className="font-display text-3xl md:text-4xl leading-tight">Importing from Sialkot</h2>
+          <p className="mt-4 text-foreground/70 leading-relaxed max-w-3xl">
+            A practical B2B guide to export documentation, shipping methods and quality inspection workflows for international brands sourcing custom apparel from Sialkot, Pakistan.
+          </p>
+          <div className="mt-7">
+            <Link to="/guides/importing-from-sialkot" className="inline-flex items-center gap-2 border border-border/70 hover:border-gold hover:text-gold px-8 py-4 text-[10px] uppercase tracking-[0.24em]">
+              Read the Sialkot import guide <ArrowRight size={13} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="py-24 border-t border-border/60 bg-secondary/35">
         <div className="container-luxe max-w-4xl text-center">
           <h2 className="font-display text-3xl md:text-5xl leading-[1.04]">
@@ -189,6 +204,7 @@ export default function BuyerResources() {
           </div>
         </div>
       </section>
+
     </>
   );
 }
