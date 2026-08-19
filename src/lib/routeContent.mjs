@@ -64,7 +64,7 @@ export const CORE_ROUTE_CONTENT = Object.freeze({
     primaryCta: { href: "/inquiry?intent=rfq", label: "Start an inquiry" },
     secondaryCta: { href: "/contact", label: "View contact details" },
     sourceFile: "src/pages/About.tsx",
-    parityTokens: ["Built for serious", "B2B programs", "Sialkot-based custom apparel manufacturer", "Daim Ali", "CEO"],
+    parityTokens: ["Built for serious", "B2B programs", "Sialkot-based custom apparel manufacturer", PUBLIC_IDENTITY.responsiblePerson.name, PUBLIC_IDENTITY.responsiblePerson.title],
   }),
   "/contact": route({
     route: "/contact",
