@@ -72,28 +72,28 @@
       "name": "tumblr-oauth-callback",
       "registry": "supabase/deployment-parity/functions-f1.json",
       "repository_source": "supabase/functions/tumblr-oauth-callback/index.ts",
-      "minimum_version": 1,
+      "minimum_version": 3,
       "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "Repository-adopted Tumblr OAuth callback from production parity merge #891; exact deployed source verified before registry refresh"
+      "provenance": "Retired unused Tumblr integration; exact HTTP 410 repository source adopted from production free-fit cleanup 2026-09-06"
     },
     {
       "name": "tumblr-operator",
       "registry": "supabase/deployment-parity/functions-f1.json",
       "repository_source": "supabase/functions/tumblr-operator/index.ts",
-      "minimum_version": 14,
+      "minimum_version": 16,
       "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "Repository-adopted Tumblr operator from production parity merge #891; exact deployed source verified before registry refresh"
+      "provenance": "Retired unused Tumblr integration; exact HTTP 410 repository source adopted from production free-fit cleanup 2026-09-06"
     },
     {
       "name": "tumblr-operator-get",
       "registry": "supabase/deployment-parity/functions-f1.json",
       "repository_source": "supabase/functions/tumblr-operator-get/index.ts",
-      "minimum_version": 1,
+      "minimum_version": 3,
       "verify_jwt": false,
       "require_shared_limiter": false,
-      "provenance": "Repository-adopted Tumblr operator result proxy from production parity merge #891; exact deployed source verified before registry refresh"
+      "provenance": "Retired unused Tumblr integration; exact HTTP 410 repository source adopted from production free-fit cleanup 2026-09-06"
     }
   ]
 }
