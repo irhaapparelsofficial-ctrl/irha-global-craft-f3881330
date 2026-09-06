@@ -1,0 +1,2 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+Deno.serve(() => new Response(JSON.stringify({status:"retired",reason:"unused_social_integration_removed_20260906"}),{status:410,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}}));
