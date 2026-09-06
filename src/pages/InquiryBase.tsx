@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Check, MessageCircle, FileText, Package, BookOpe
 import SEO from "@/components/SEO";
 import SecureFileUpload from "@/components/SecureFileUpload";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
-import { createPublicInquiryReference } from "@/lib/publicLeadGateway";
+import { createPublicInquiryReference, submitPublicInquiry } from "@/lib/publicLeadGateway";
 
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -305,7 +305,7 @@ export default function Inquiry() {
     };
 
     try {
-      const { error } = await supabase.from("inquiries").insert({
+      const result = await submitPublicInquiry({
         name: draft.name!,
         email: draft.email!,
         company: draft.company ?? null,
@@ -318,16 +318,9 @@ export default function Inquiry() {
         intent: draft.intent,
         lead_context: leadContext,
         inquiry_ref: ref,
-      } as never);
-      if (error) {
-        // Only treat 23505 on inquiry_ref as idempotent success (retry after successful insert).
-        const e = error as { code?: string; message?: string };
-        const isDupOnRef =
-          e?.code === "23505" &&
-          typeof e?.message === "string" &&
-          e.message.toLowerCase().includes("inquiry_ref");
-        if (!isDupOnRef) throw error;
-      }
+        files: draft.files,
+      });
+      ref = result.reference || ref;
       clearDraft();
       setDone({ ref });
       setStep(5);
