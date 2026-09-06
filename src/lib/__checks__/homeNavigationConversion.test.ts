@@ -32,8 +32,10 @@ describe("homepage navigation and B2B conversion journey", () => {
     expect(entry).toContain("<InquiryBase />");
     expect(base).toContain("const INTENTS:");
     expect(base).toContain("<SecureFileUpload");
-    expect(base).toContain('supabase.from("inquiries").insert');
+    expect(base).toContain("submitPublicInquiry({");
+    expect(base).toContain("files: draft.files");
     expect(base).toContain("inquiry_ref: ref");
+    expect(base).not.toContain('supabase.from("inquiries").insert');
   });
 
   it("adds category-aware RFQ actions and keeps human support and WhatsApp escalation", () => {
